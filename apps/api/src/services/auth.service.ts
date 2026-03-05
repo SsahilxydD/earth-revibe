@@ -10,12 +10,12 @@ function generateTokens(userId: string, role: string) {
   const accessToken = jwt.sign(
     { userId, role },
     env.JWT_ACCESS_SECRET,
-    { expiresIn: env.JWT_ACCESS_EXPIRY }
+    { expiresIn: env.JWT_ACCESS_EXPIRY as string & jwt.SignOptions["expiresIn"] }
   );
   const refreshToken = jwt.sign(
     { userId, role },
     env.JWT_REFRESH_SECRET,
-    { expiresIn: env.JWT_REFRESH_EXPIRY }
+    { expiresIn: env.JWT_REFRESH_EXPIRY as string & jwt.SignOptions["expiresIn"] }
   );
   return { accessToken, refreshToken };
 }
@@ -185,7 +185,7 @@ export const authService = {
     const resetToken = jwt.sign(
       { userId: user.id, purpose: "password-reset" },
       env.JWT_ACCESS_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" as string & jwt.SignOptions["expiresIn"] }
     );
 
     // TODO: Send email with reset link containing resetToken

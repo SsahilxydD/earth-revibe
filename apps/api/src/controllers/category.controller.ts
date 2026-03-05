@@ -8,7 +8,7 @@ export const categoryController = {
   },
 
   async getCategoryBySlug(req: Request, res: Response) {
-    const category = await categoryService.getCategoryBySlug(req.params.slug);
+    const category = await categoryService.getCategoryBySlug(req.params.slug as string);
     res.json({ success: true, data: category });
   },
 
@@ -18,12 +18,12 @@ export const categoryController = {
   },
 
   async updateCategory(req: Request, res: Response) {
-    const category = await categoryService.updateCategory(req.params.id, req.body);
+    const category = await categoryService.updateCategory(req.params.id as string, req.body);
     res.json({ success: true, data: category });
   },
 
   async deleteCategory(req: Request, res: Response) {
-    await categoryService.deleteCategory(req.params.id);
+    await categoryService.deleteCategory(req.params.id as string);
     res.json({ success: true, message: "Category deleted successfully" });
   },
 

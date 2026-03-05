@@ -50,7 +50,7 @@ export const validate = (schemas: ValidationSchemas) => {
           });
         }
       } else {
-        req.params = result.data;
+        (req as any).params = result.data;
       }
     }
 

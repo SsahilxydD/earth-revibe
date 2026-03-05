@@ -8,7 +8,7 @@ export const productController = {
   },
 
   async getProductBySlug(req: Request, res: Response) {
-    const product = await productService.getProductBySlug(req.params.slug);
+    const product = await productService.getProductBySlug(req.params.slug as string);
     res.json({ success: true, data: product });
   },
 
@@ -18,18 +18,18 @@ export const productController = {
   },
 
   async updateProduct(req: Request, res: Response) {
-    const product = await productService.updateProduct(req.params.id, req.body);
+    const product = await productService.updateProduct(req.params.id as string, req.body);
     res.json({ success: true, data: product });
   },
 
   async deleteProduct(req: Request, res: Response) {
-    await productService.deleteProduct(req.params.id);
+    await productService.deleteProduct(req.params.id as string);
     res.json({ success: true, message: "Product archived successfully" });
   },
 
   async addProductVariants(req: Request, res: Response) {
     const variants = await productService.addProductVariants(
-      req.params.id,
+      req.params.id as string,
       req.body.variants
     );
     res.status(201).json({ success: true, data: variants });
@@ -37,14 +37,14 @@ export const productController = {
 
   async updateProductVariant(req: Request, res: Response) {
     const variant = await productService.updateProductVariant(
-      req.params.variantId,
+      req.params.variantId as string,
       req.body
     );
     res.json({ success: true, data: variant });
   },
 
   async deleteProductVariant(req: Request, res: Response) {
-    await productService.deleteProductVariant(req.params.variantId);
+    await productService.deleteProductVariant(req.params.variantId as string);
     res.json({ success: true, message: "Variant deleted successfully" });
   },
 };

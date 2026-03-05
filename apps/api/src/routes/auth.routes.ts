@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type IRouter } from "express";
 import { authController } from "../controllers/auth.controller";
 import { validate } from "../middleware/validate";
 import { authenticate } from "../middleware/auth";
@@ -11,7 +11,7 @@ import {
   refreshTokenSchema,
 } from "@earth-revibe/shared";
 
-const router = Router();
+const router: IRouter = Router();
 
 router.post("/register", validate({ body: registerSchema }), asyncHandler(authController.register));
 router.post("/login", validate({ body: loginSchema }), asyncHandler(authController.login));

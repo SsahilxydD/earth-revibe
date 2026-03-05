@@ -211,12 +211,14 @@ export const productService = {
       }
     }
 
+    const { categoryId, ...rest } = data;
     const product = await prisma.product.update({
       where: { id },
       data: {
-        ...data,
+        ...rest,
         ...(slug ? { slug } : {}),
-      },
+        ...(categoryId ? { category: { connect: { id: categoryId } } } : {}),
+      } as any,
       include: {
         category: {
           select: { id: true, name: true, slug: true },

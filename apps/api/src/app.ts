@@ -5,6 +5,9 @@ import { rateLimit } from "express-rate-limit";
 import { env } from "./config/env";
 import { errorHandler } from "./middleware/error-handler";
 import { authRouter } from "./routes/auth.routes";
+import { productRouter } from "./routes/product.routes";
+import { categoryRouter } from "./routes/category.routes";
+import { searchRouter } from "./routes/search.routes";
 
 const app: Express = express();
 
@@ -39,6 +42,9 @@ app.get("/api/v1/health", (_req, res) => {
 
 // API routes
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/products", productRouter);
+app.use("/api/v1/categories", categoryRouter);
+app.use("/api/v1/search", searchRouter);
 
 // Error handling (must be after all routes)
 app.use(errorHandler);
