@@ -1,10 +1,10 @@
-import express from "express";
+import express, { type Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { env } from "./config/env";
 
-const app = express();
+const app: Express = express();
 
 // Security middleware
 app.use(helmet());
