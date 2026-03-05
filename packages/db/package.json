@@ -1,0 +1,27 @@
+{
+  "name": "@earth-revibe/db",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx src/seed.ts",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.4.2"
+  },
+  "devDependencies": {
+    "@earth-revibe/tsconfig": "workspace:*",
+    "bcryptjs": "^2.4.3",
+    "prisma": "^7.4.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3"
+  }
+}
