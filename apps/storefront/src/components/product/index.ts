@@ -1,3 +1,8 @@
+export { ProductCard } from "./product-card";
+export { ProductGrid } from "./product-grid";
+export { FilterSidebar } from "./filter-sidebar";
+export { SortDropdown } from "./sort-dropdown";
+export { Pagination } from "./pagination";
 export { ImageGallery } from "./image-gallery";
 export { VariantSelector } from "./variant-selector";
 export { AddToCart } from "./add-to-cart";
