@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import { QueryProvider } from "@/providers/query-provider";
+import { ToastContainer } from "@/components/ui/toast";
 import "./globals.css";
 
 const playfairDisplay = Playfair_Display({
@@ -35,6 +36,7 @@ export default function RootLayout({
       <body className="bg-cream text-charcoal antialiased">
         <QueryProvider>
           {children}
+          <ToastContainer />
         </QueryProvider>
       </body>
     </html>
