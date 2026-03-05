@@ -35,9 +35,27 @@ export const orderQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+export const adminOrderQuerySchema = z.object({
+  status: z.nativeEnum(OrderStatus).optional(),
+  search: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  sortBy: z.enum(["createdAt", "totalAmount", "orderNumber"]).default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+export const addOrderNoteSchema = z.object({
+  content: z.string().min(1).max(1000),
+  isInternal: z.boolean().default(true),
+});
+
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;
 export type VerifyPaymentInput = z.infer<typeof verifyPaymentSchema>;
 export type CancelOrderInput = z.infer<typeof cancelOrderSchema>;
 export type ReturnRequestInput = z.infer<typeof returnRequestSchema>;
 export type OrderQuery = z.infer<typeof orderQuerySchema>;
+export type AdminOrderQuery = z.infer<typeof adminOrderQuerySchema>;
+export type AddOrderNoteInput = z.infer<typeof addOrderNoteSchema>;

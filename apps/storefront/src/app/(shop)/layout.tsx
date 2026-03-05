@@ -1,4 +1,5 @@
 import { Header, Footer, MobileBottomBar } from "@/components/layout";
+import { CartDrawer } from "@/components/cart/cart-drawer";
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +8,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       <main className="min-h-screen pb-16 lg:pb-0">{children}</main>
       <Footer />
       <MobileBottomBar />
+      <CartDrawer />
     </>
   );
 }

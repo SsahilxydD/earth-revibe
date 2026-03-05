@@ -38,4 +38,14 @@ export const authController = {
     const user = await authService.getMe(req.user!.id);
     res.json({ success: true, data: user });
   },
+
+  async updateProfile(req: Request, res: Response) {
+    const user = await authService.updateProfile(req.user!.id, req.body);
+    res.json({ success: true, data: user });
+  },
+
+  async changePassword(req: Request, res: Response) {
+    await authService.changePassword(req.user!.id, req.body);
+    res.json({ success: true, message: "Password changed successfully" });
+  },
 };

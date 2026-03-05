@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "@earth-revibe/db";
 import { env } from "../config/env";
 import { ApiError } from "../utils/api-error";
-import type { RegisterInput, LoginInput } from "@earth-revibe/shared";
+import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput } from "@earth-revibe/shared";
 
 // Helper: generate access + refresh token pair
 function generateTokens(userId: string, role: string) {
@@ -237,5 +237,46 @@ export const authService = {
 
     if (!user) throw ApiError.notFound("User not found");
     return user;
+  },
+
+  async updateProfile(userId: string, data: UpdateProfileInput) {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        avatar: data.avatar,
+      },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        role: true,
+        loyaltyPoints: true,
+        referralCode: true,
+        createdAt: true,
+      },
+    });
+    return user;
+  },
+
+  async changePassword(userId: string, data: ChangePasswordInput) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw ApiError.notFound("User not found");
+
+    const valid = await bcrypt.compare(data.currentPassword, user.passwordHash);
+    if (!valid) throw ApiError.badRequest("Current password is incorrect");
+
+    const passwordHash = await bcrypt.hash(data.newPassword, 12);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    await prisma.refreshToken.deleteMany({ where: { userId } });
   },
 };
