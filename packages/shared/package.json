@@ -1,0 +1,19 @@
+{
+  "name": "@earth-revibe/shared",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@earth-revibe/tsconfig": "workspace:*",
+    "typescript": "^5.9.3"
+  }
+}
