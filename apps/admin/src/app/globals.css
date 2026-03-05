@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* Earth Revibe Admin Design Tokens */
+@theme {
+  /* Primary Colors */
+  --color-forest-green: #2D5016;
+  --color-sage: #87A878;
+  --color-cream: #FAF7F2;
+  --color-warm-white: #FFFFFF;
+
+  /* Secondary Colors */
+  --color-terracotta: #C67B5C;
+  --color-sand: #D4C5A9;
+  --color-clay: #8B6F47;
+  --color-deep-earth: #3D2B1F;
+
+  /* Neutral Colors */
+  --color-charcoal: #2C2C2C;
+  --color-dark-gray: #4A4A4A;
+  --color-medium-gray: #8E8E8E;
+  --color-light-gray: #E5E5E5;
+  --color-off-white: #F5F5F5;
+
+  /* Semantic Colors */
+  --color-success: #4A7C59;
+  --color-warning: #D4A843;
+  --color-error: #C0392B;
+  --color-info: #5B8FA8;
+
+  /* Font Families */
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+/* Admin base styles */
+body {
+  font-family: var(--font-body);
+  color: var(--color-charcoal);
+  background-color: var(--color-off-white);
+}
