@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { env } from "./config/env";
 import { errorHandler } from "./middleware/error-handler";
+import { authRouter } from "./routes/auth.routes";
 
 const app: Express = express();
 
@@ -35,6 +36,9 @@ app.get("/api/v1/health", (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// API routes
+app.use("/api/v1/auth", authRouter);
 
 // Error handling (must be after all routes)
 app.use(errorHandler);
