@@ -1,0 +1,37 @@
+- document:
+  - banner
+  - heading "Log in" [ref=e1] [level=1]
+  - heading "Continue to Shopify" [ref=e2] [level=3]
+  - text: Email
+  - textbox "Email" [ref=e3]
+  - paragraph
+  - iframe
+  - button "Continue with email" [ref=e4] [disabled]:
+    - text: Continue with email
+    - img
+  - text: or
+  - button "Sign in with passkey" [ref=e5]:
+    - img
+    - paragraph: Sign in with passkey
+  - link [ref=e6]:
+    - /url: /login/external/apple/login?rid=ed7f1005-2def-4075-8bc5-355917d157f1
+  - link [ref=e7] [nth=1]:
+    - /url: /login/external/facebook/login?rid=ed7f1005-2def-4075-8bc5-355917d157f1
+  - link [ref=e8] [nth=2]:
+    - /url: /login/external/google/login?rid=ed7f1005-2def-4075-8bc5-355917d157f1
+  - paragraph:
+    - text: New to Shopify?
+    - link "Get started" [ref=e9]:
+      - /url: /signup?rid=ed7f1005-2def-4075-8bc5-355917d157f1
+      - text: Get started
+      - img
+  - contentinfo:
+    - link "Need Help?" [ref=e10]:
+      - /url: https://help.shopify.com/en/manual/your-account/logging-in#desktop
+    - text: By continuing, you agree to the
+    - link "Terms" [ref=e11]:
+      - /url: https://www.shopify.com/legal/terms
+    - text: and
+    - link "Privacy Policy" [ref=e12]:
+      - /url: https://www.shopify.com/legal/privacy
+    - text: .
