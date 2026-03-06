@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { api } from "@/lib/api-client";
 
 interface CartItem {
   variantId: string;
@@ -15,6 +16,10 @@ interface CartItem {
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
+  discountCode: string | null;
+  discountAmount: number;
+  discountError: string | null;
+  isApplyingDiscount: boolean;
 
   addItem: (item: CartItem) => void;
   removeItem: (variantId: string) => void;
@@ -25,6 +30,10 @@ interface CartState {
 
   getItemCount: () => number;
   getSubtotal: () => number;
+  getTotal: () => number;
+
+  applyDiscount: (code: string) => Promise<void>;
+  removeDiscount: () => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -32,6 +41,10 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      discountCode: null,
+      discountAmount: 0,
+      discountError: null,
+      isApplyingDiscount: false,
 
       addItem: (item) =>
         set((state) => {
@@ -62,13 +75,36 @@ export const useCartStore = create<CartState>()(
               ),
         })),
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], discountCode: null, discountAmount: 0 }),
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       setCartOpen: (open) => set({ isOpen: open }),
 
       getItemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
       getSubtotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      getTotal: () => Math.max(0, get().getSubtotal() - get().discountAmount),
+
+      applyDiscount: async (code: string) => {
+        set({ isApplyingDiscount: true, discountError: null });
+        try {
+          const subtotal = get().getSubtotal();
+          const res = await api.post("/discounts/validate", { code, orderValue: subtotal });
+          set({
+            discountCode: code,
+            discountAmount: res.data.discountAmount,
+          });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Invalid discount code";
+          set({ discountError: message, discountCode: null, discountAmount: 0 });
+        } finally {
+          set({ isApplyingDiscount: false });
+        }
+      },
+
+      removeDiscount: () => set({ discountCode: null, discountAmount: 0, discountError: null }),
     }),
-    { name: "earth-revibe-cart" }
+    {
+      name: "earth-revibe-cart",
+      partialize: (state) => ({ items: state.items }),
+    }
   )
 );

@@ -1,45 +1,101 @@
 @import "tailwindcss";
 
-/* Earth Revibe Design Tokens */
+:root {
+  /* Brand Colors from Kit */
+  --sage-light: #E7F6F1;
+  --sage: #8DB7AC;
+  --taupe: #97826F;
+  --dusty-teal: #9DBBBB;
+  --forest: #6D7B6E;
+  --chocolate: #583220;
+
+  /* Semantic colors */
+  --background: #FDFCFA;
+  --foreground: #583220;
+  --accent: #8DB7AC;
+  --muted: #97826F;
+
+  /* Design System Colors */
+  --card-bg: #F9F9F9;
+  --border-color: #E5E5E5;
+  --muted-text: #999999;
+  --secondary-text: #555555;
+  --primary-text: #111111;
+  --page-bg: #FAFAFA;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.06);
+
+  /* Typography Scale */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 24px;
+}
+
+/* @theme for Tailwind class compatibility — new palette + legacy aliases */
 @theme {
-  /* Primary Colors */
+  /* New brand colors */
+  --color-sage-light: #E7F6F1;
+  --color-sage: #8DB7AC;
+  --color-taupe: #97826F;
+  --color-dusty-teal: #9DBBBB;
+  --color-forest: #6D7B6E;
+  --color-chocolate: #583220;
+  --color-background: #FDFCFA;
+  --color-card-bg: #F9F9F9;
+  --color-border-color: #E5E5E5;
+  --color-muted-text: #999999;
+  --color-secondary-text: #555555;
+  --color-primary-text: #111111;
+  --color-page-bg: #FAFAFA;
+
+  /* Semantic */
+  --color-success: #4A7C59;
+  --color-warning: #D4A843;
+  --color-error: #C0392B;
+  --color-info: #5B8FA8;
+
+  /* Legacy color aliases (used by existing components) */
   --color-forest-green: #2D5016;
-  --color-sage: #87A878;
   --color-cream: #FAF7F2;
   --color-warm-white: #FFFFFF;
-
-  /* Secondary Colors */
   --color-terracotta: #C67B5C;
   --color-sand: #D4C5A9;
   --color-clay: #8B6F47;
   --color-deep-earth: #3D2B1F;
-
-  /* Neutral Colors */
   --color-charcoal: #2C2C2C;
   --color-dark-gray: #4A4A4A;
   --color-medium-gray: #8E8E8E;
   --color-light-gray: #E5E5E5;
   --color-off-white: #F5F5F5;
 
-  /* Semantic Colors */
-  --color-success: #4A7C59;
-  --color-warning: #D4A843;
-  --color-error: #C0392B;
-  --color-info: #5B8FA8;
-
-  /* Font Families */
+  /* Font Families (legacy aliases) */
   --font-heading: "Playfair Display", Georgia, serif;
   --font-body: "Inter", system-ui, sans-serif;
 }
 
-/* Base styles */
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+}
+
 body {
-  font-family: var(--font-body);
-  color: var(--color-charcoal);
-  background-color: var(--color-cream);
+  font-family: var(--font-sans);
+  color: var(--primary-text);
+  background-color: var(--background);
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
-  color: var(--color-deep-earth);
+  color: var(--chocolate);
 }

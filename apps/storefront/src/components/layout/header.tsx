@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Search, Heart, ShoppingBag, User, Menu, ChevronDown, LogOut, Package, Gift, Star } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCartStore } from "@/stores/cart-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -21,19 +23,38 @@ const navCategories = [
 export function Header() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const cartItemCount = useCartStore((s) => s.getItemCount());
-  const { isMobileMenuOpen, setMobileMenuOpen } = useUIStore();
+  const { isMobileMenuOpen, setMobileMenuOpen, isHeaderTransparent } = useUIStore();
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [isUserOpen, setIsUserOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isTransparent = isHeaderTransparent && !isScrolled;
+  const textColor = isTransparent ? "text-white" : "text-charcoal";
+  const hoverColor = isTransparent ? "hover:text-white/80" : "hover:text-forest-green";
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-light-gray">
+      <header
+        className={`sticky top-0 z-40 transition-all duration-300 ${
+          isTransparent
+            ? "bg-transparent"
+            : "bg-white/95 backdrop-blur-sm border-b border-light-gray"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Mobile menu button */}
             <button
-              className="lg:hidden p-2 -ml-2 text-charcoal"
+              className={`lg:hidden p-2 -ml-2 ${textColor}`}
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open menu"
             >
@@ -41,8 +62,14 @@ export function Header() {
             </button>
 
             {/* Logo */}
-            <Link href="/" className="font-heading text-xl lg:text-2xl font-bold text-deep-earth">
-              Earth Revibe
+            <Link href="/" className="relative h-10 w-32 lg:h-12 lg:w-40">
+              <Image
+                src={isTransparent ? "/Earth Revibe Logo White.png" : "/Earth Revibe Logo Black.png"}
+                alt="Earth Revibe"
+                fill
+                className="object-contain"
+                priority
+              />
             </Link>
 
             {/* Desktop Nav */}
@@ -52,30 +79,38 @@ export function Header() {
                 onMouseEnter={() => setIsShopOpen(true)}
                 onMouseLeave={() => setIsShopOpen(false)}
               >
-                <button className="flex items-center gap-1 text-sm font-medium text-charcoal hover:text-forest-green transition-colors">
+                <button className={`flex items-center gap-1 text-sm font-medium ${textColor} ${hoverColor} transition-colors`}>
                   Shop <ChevronDown size={16} />
                 </button>
-                {isShopOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-light-gray py-2">
-                    {navCategories.map((cat) => (
-                      <Link
-                        key={cat.href}
-                        href={cat.href}
-                        className="block px-4 py-2.5 text-sm text-charcoal hover:bg-cream hover:text-forest-green transition-colors"
-                      >
-                        {cat.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
+                <AnimatePresence>
+                  {isShopOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-light-gray py-2"
+                    >
+                      {navCategories.map((cat) => (
+                        <Link
+                          key={cat.href}
+                          href={cat.href}
+                          className="block px-4 py-2.5 text-sm text-charcoal hover:bg-cream hover:text-forest-green transition-colors"
+                        >
+                          {cat.name}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <Link href="/about" className="text-sm font-medium text-charcoal hover:text-forest-green transition-colors">
+              <Link href="/about" className={`text-sm font-medium ${textColor} ${hoverColor} transition-colors`}>
                 Our Story
               </Link>
-              <Link href="/blog" className="text-sm font-medium text-charcoal hover:text-forest-green transition-colors">
+              <Link href="/blog" className={`text-sm font-medium ${textColor} ${hoverColor} transition-colors`}>
                 Blog
               </Link>
-              <Link href="/contact" className="text-sm font-medium text-charcoal hover:text-forest-green transition-colors">
+              <Link href="/contact" className={`text-sm font-medium ${textColor} ${hoverColor} transition-colors`}>
                 Contact
               </Link>
             </nav>
@@ -84,19 +119,19 @@ export function Header() {
             <div className="flex items-center gap-2 lg:gap-4">
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="p-2 text-charcoal hover:text-forest-green transition-colors"
+                className={`p-2 ${textColor} ${hoverColor} transition-colors`}
                 aria-label="Search"
               >
                 <Search size={20} />
               </button>
 
-              <Link href="/account/wishlist" className="hidden sm:block p-2 text-charcoal hover:text-forest-green transition-colors">
+              <Link href="/account/wishlist" className={`hidden sm:block p-2 ${textColor} ${hoverColor} transition-colors`}>
                 <Heart size={20} />
               </Link>
 
               <button
                 onClick={() => useCartStore.getState().toggleCart()}
-                className="relative p-2 text-charcoal hover:text-forest-green transition-colors"
+                className={`relative p-2 ${textColor} ${hoverColor} transition-colors`}
                 aria-label="Cart"
               >
                 <ShoppingBag size={20} />
@@ -111,37 +146,43 @@ export function Header() {
               <div className="relative hidden sm:block">
                 <button
                   onClick={() => setIsUserOpen(!isUserOpen)}
-                  className="p-2 text-charcoal hover:text-forest-green transition-colors"
+                  className={`p-2 ${textColor} ${hoverColor} transition-colors`}
                   aria-label="Account"
                 >
                   <User size={20} />
                 </button>
-                {isUserOpen && (
-                  <div
-                    className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-light-gray py-2"
-                    onMouseLeave={() => setIsUserOpen(false)}
-                  >
-                    {isAuthenticated ? (
-                      <>
-                        <div className="px-4 py-2 border-b border-light-gray">
-                          <p className="text-sm font-medium text-deep-earth">{user?.firstName} {user?.lastName}</p>
-                          <p className="text-xs text-medium-gray">{user?.email}</p>
-                        </div>
-                        <Link href="/account/profile" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><User size={16} /> My Profile</Link>
-                        <Link href="/account/orders" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Package size={16} /> My Orders</Link>
-                        <Link href="/account/wishlist" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Heart size={16} /> Wishlist</Link>
-                        <Link href="/account/loyalty" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Star size={16} /> Loyalty Points</Link>
-                        <Link href="/account/referrals" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Gift size={16} /> Referrals</Link>
-                        <button onClick={logout} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-error hover:bg-cream"><LogOut size={16} /> Logout</button>
-                      </>
-                    ) : (
-                      <>
-                        <Link href="/auth/login" className="block px-4 py-2.5 text-sm text-charcoal hover:bg-cream font-medium">Login</Link>
-                        <Link href="/auth/register" className="block px-4 py-2.5 text-sm text-charcoal hover:bg-cream">Create Account</Link>
-                      </>
-                    )}
-                  </div>
-                )}
+                <AnimatePresence>
+                  {isUserOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-light-gray py-2"
+                      onMouseLeave={() => setIsUserOpen(false)}
+                    >
+                      {isAuthenticated ? (
+                        <>
+                          <div className="px-4 py-2 border-b border-light-gray">
+                            <p className="text-sm font-medium text-deep-earth">{user?.firstName} {user?.lastName}</p>
+                            <p className="text-xs text-medium-gray">{user?.email}</p>
+                          </div>
+                          <Link href="/account/profile" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><User size={16} /> My Profile</Link>
+                          <Link href="/account/orders" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Package size={16} /> My Orders</Link>
+                          <Link href="/account/wishlist" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Heart size={16} /> Wishlist</Link>
+                          <Link href="/account/loyalty" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Star size={16} /> Loyalty Points</Link>
+                          <Link href="/account/referrals" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Gift size={16} /> Referrals</Link>
+                          <button onClick={logout} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-error hover:bg-cream"><LogOut size={16} /> Logout</button>
+                        </>
+                      ) : (
+                        <>
+                          <Link href="/auth/login" className="block px-4 py-2.5 text-sm text-charcoal hover:bg-cream font-medium">Login</Link>
+                          <Link href="/auth/register" className="block px-4 py-2.5 text-sm text-charcoal hover:bg-cream">Create Account</Link>
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
