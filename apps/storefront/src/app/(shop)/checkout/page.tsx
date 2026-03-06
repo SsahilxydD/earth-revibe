@@ -1,30 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCartStore } from "@/stores/cart-store";
-import { Spinner } from "@/components/ui/spinner";
-import { AddressStep } from "@/components/checkout/address-step";
-import { ReviewStep } from "@/components/checkout/review-step";
+import { useRazorpayCheckout } from "@/hooks/use-razorpay-checkout";
+import { formatPrice } from "@earth-revibe/shared";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
   const items = useCartStore((s) => s.items);
-  const [step, setStep] = useState<"address" | "review">("address");
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const getSubtotal = useCartStore((s) => s.getSubtotal);
+  const { startCheckout, isProcessing } = useRazorpayCheckout();
+  const hasTriggered = useRef(false);
 
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/auth/login?redirect=/checkout");
     }
   }, [isAuthenticated, isLoading, router]);
 
+  // Auto-trigger Magic Checkout when page loads
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || items.length === 0 || hasTriggered.current) return;
+    hasTriggered.current = true;
+
+    const checkoutItems = items.map((item) => ({
+      variantId: item.variantId,
+      quantity: item.quantity,
+    }));
+
+    startCheckout(checkoutItems);
+  }, [isLoading, isAuthenticated, items, startCheckout]);
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Spinner size="lg" className="text-forest-green" />
+      <div className="bg-white min-h-screen flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -33,41 +48,68 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <h1 className="text-2xl font-semibold text-deep-earth mb-2">Your cart is empty</h1>
-        <p className="text-medium-gray">Add some items before checking out.</p>
+      <div className="bg-white min-h-screen">
+        <div className="h-16 lg:h-20" aria-hidden="true" />
+        <div className="flex flex-col items-center justify-center py-24">
+          <p className="text-[15px] text-slate-600 mb-2">Your cart is empty</p>
+          <Link
+            href="/products"
+            className="mt-4 h-11 px-8 flex items-center bg-black text-white text-[11px] tracking-[0.1em] uppercase rounded-full hover:bg-black/85 transition-colors"
+          >
+            Start Shopping
+          </Link>
+        </div>
       </div>
     );
   }
 
+  // Show a summary while Magic Checkout modal is open
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
-      <div className="flex items-center gap-2 mb-8">
-        <div className={`flex items-center gap-1.5 text-sm font-medium ${step === "address" ? "text-forest-green" : "text-medium-gray"}`}>
-          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === "address" ? "bg-forest-green text-white" : "bg-light-gray text-dark-gray"}`}>1</span>
-          Address
+    <div className="bg-white min-h-screen">
+      <div className="h-16 lg:h-20" aria-hidden="true" />
+      <div className="max-w-md mx-auto px-4 pt-12 pb-24">
+        <h1 className="text-[22px] font-medium text-black mb-6 text-center">Checkout</h1>
+
+        <div className="border border-slate-200 rounded-lg p-6 mb-6">
+          <p className="text-[13px] text-slate-500 mb-4">{items.length} item{items.length > 1 ? "s" : ""} in your order</p>
+          <div className="space-y-3">
+            {items.map((item) => (
+              <div key={item.variantId} className="flex justify-between text-[13px]">
+                <span className="text-slate-700">{item.productName} <span className="text-slate-400">x{item.quantity}</span></span>
+                <span className="text-slate-800">{formatPrice(item.price * item.quantity)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-slate-200 mt-4 pt-3 flex justify-between">
+            <span className="text-[14px] font-medium text-black">Subtotal</span>
+            <span className="text-[14px] font-medium text-black">{formatPrice(getSubtotal())}</span>
+          </div>
         </div>
-        <div className="w-8 h-px bg-light-gray" />
-        <div className={`flex items-center gap-1.5 text-sm font-medium ${step === "review" ? "text-forest-green" : "text-medium-gray"}`}>
-          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === "review" ? "bg-forest-green text-white" : "bg-light-gray text-dark-gray"}`}>2</span>
-          Review & Pay
-        </div>
+
+        {isProcessing ? (
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+            <p className="text-[13px] text-slate-500">Opening secure checkout...</p>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              const checkoutItems = items.map((item) => ({
+                variantId: item.variantId,
+                quantity: item.quantity,
+              }));
+              startCheckout(checkoutItems);
+            }}
+            className="w-full h-[52px] rounded-full bg-black text-white text-[14px] hover:bg-black/85 transition-colors"
+          >
+            Open Secure Checkout
+          </button>
+        )}
+
+        <p className="text-[11px] text-slate-400 text-center mt-4">
+          Powered by Razorpay Magic Checkout
+        </p>
       </div>
-
-      {step === "address" && (
-        <AddressStep
-          selectedAddressId={selectedAddressId}
-          onSelect={setSelectedAddressId}
-          onNext={() => setStep("review")}
-        />
-      )}
-
-      {step === "review" && selectedAddressId && (
-        <ReviewStep
-          addressId={selectedAddressId}
-          onBack={() => setStep("address")}
-        />
-      )}
     </div>
   );
 }

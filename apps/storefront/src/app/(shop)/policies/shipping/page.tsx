@@ -1,197 +1,243 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+'use client';
 
-export const metadata: Metadata = {
-  title: "Shipping Policy",
-  description:
-    "Earth Revibe shipping information — free delivery above Rs 1,499, delivery timelines across India, and order tracking.",
-};
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 
-export default function ShippingPolicyPage() {
+export default function ShippingPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12 lg:py-16">
-      {/* Breadcrumb */}
-      <nav className="mb-8">
-        <ol className="flex items-center gap-2 text-xs text-[var(--muted-text)]">
-          <li>
-            <Link href="/" className="hover:text-[var(--chocolate)] transition-colors">
-              Home
-            </Link>
-          </li>
-          <li>/</li>
-          <li className="text-[var(--primary-text)]">Shipping Policy</li>
-        </ol>
-      </nav>
+    <div className="min-h-screen bg-white pt-16">
+      {/* Header */}
+      <div className="px-6 py-12 lg:py-20 lg:px-10 border-b border-slate-100">
+        <div className="max-w-3xl mx-auto">
+          {/* Breadcrumb */}
+          <motion.nav
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-8"
+          >
+            <ol className="flex items-center gap-2 text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase">
+              <li>
+                <Link href="/" className="text-slate-400 hover:text-black transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li className="text-slate-300">/</li>
+              <li className="text-black">Shipping</li>
+            </ol>
+          </motion.nav>
 
-      {/* Title */}
-      <h1 className="font-[var(--font-display)] text-3xl lg:text-4xl font-semibold text-[var(--chocolate)] mb-2">
-        Shipping Policy
-      </h1>
-      <p className="text-sm text-[var(--muted-text)] mb-10">Last updated: March 2026</p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <h1 className="text-[24px] lg:text-[32px] font-[var(--font-cinzel)] font-medium tracking-[0.04em] text-black mb-3">
+              Shipping Policy
+            </h1>
+            <p className="text-[11px] text-slate-400 tracking-[0.08em]">
+              Last updated: January 2026
+            </p>
+          </motion.div>
+        </div>
+      </div>
 
-      {/* Content */}
-      <div className="space-y-8 text-[var(--secondary-text)] leading-relaxed">
-        <p>
-          At Earth Revibe, we are committed to delivering your sustainable fashion essentials
-          quickly and reliably. Here is everything you need to know about our shipping process.
-        </p>
+      {/* Free Delivery Highlight */}
+      <div className="px-6 py-12 lg:py-16 lg:px-10 border-b border-slate-100 bg-slate-50">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <p className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.2em] uppercase text-slate-400 mb-4">
+              Our Promise
+            </p>
+            <p className="text-[18px] lg:text-[22px] font-[var(--font-cinzel)] font-medium tracking-[0.02em] text-black leading-relaxed">
+              FREE Shipping on All Orders
+            </p>
+            <p className="text-[13px] text-slate-500 mt-2">No minimum order value required</p>
+          </motion.div>
+        </div>
+      </div>
 
-        {/* Delivery Areas */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Delivery Areas
-          </h2>
-          <p>
-            We currently ship to all serviceable pin codes across{" "}
-            <strong className="text-[var(--primary-text)]">India only</strong>. International
-            shipping is not available at this time. If you are ordering from outside India, please
-            check back — we plan to expand internationally in the future.
-          </p>
-        </section>
+      {/* Delivery Options */}
+      <div className="px-6 py-12 lg:py-16 lg:px-10 border-b border-slate-100">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <p className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.2em] uppercase text-slate-400 mb-6">
+              Delivery Timeframes
+            </p>
 
-        {/* Shipping Rates */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Shipping Rates
-          </h2>
-          <div className="border border-[var(--border-color)] rounded-lg overflow-hidden">
-            <div className="flex justify-between items-center px-5 py-4 bg-[var(--sage-light)]">
-              <span className="font-medium text-[var(--primary-text)]">
-                Orders above &#8377;1,499
-              </span>
-              <span className="font-semibold text-[var(--chocolate)]">FREE Shipping</span>
-            </div>
-            <div className="flex justify-between items-center px-5 py-4">
-              <span className="font-medium text-[var(--primary-text)]">
-                Orders below &#8377;1,499
-              </span>
-              <span className="font-semibold text-[var(--chocolate)]">&#8377;99 flat rate</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Delivery Times */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Delivery Times
-          </h2>
-          <p className="mb-3">
-            Orders are processed within 1&ndash;2 business days. Estimated delivery times after
-            dispatch:
-          </p>
-          <div className="border border-[var(--border-color)] rounded-lg overflow-hidden text-sm">
-            <div className="grid grid-cols-2 px-5 py-3 bg-[var(--card-bg)] font-medium text-[var(--primary-text)]">
-              <span>Region</span>
-              <span className="text-right">Estimated Delivery</span>
-            </div>
-            <div className="grid grid-cols-2 px-5 py-3 border-t border-[var(--border-color)]">
-              <div>
-                <p className="font-medium text-[var(--primary-text)]">Metro Cities</p>
-                <p className="text-xs text-[var(--muted-text)]">
-                  Delhi, Mumbai, Bangalore, Chennai, Kolkata, Hyderabad
-                </p>
+            <div className="space-y-0">
+              <div className="py-5 border-b border-slate-100 flex justify-between items-start">
+                <div>
+                  <p className="text-[13px] font-medium text-black">Metro Cities</p>
+                  <p className="text-[12px] text-slate-500 mt-1">Delhi, Mumbai, Bangalore, Chennai, Kolkata, Hyderabad</p>
+                </div>
+                <p className="text-[13px] font-medium text-black">3-5 days</p>
               </div>
-              <span className="text-right font-medium text-[var(--primary-text)]">2&ndash;4 days</span>
-            </div>
-            <div className="grid grid-cols-2 px-5 py-3 border-t border-[var(--border-color)] bg-[var(--card-bg)]">
-              <div>
-                <p className="font-medium text-[var(--primary-text)]">Rest of India</p>
-                <p className="text-xs text-[var(--muted-text)]">
-                  Tier 2 &amp; 3 cities, towns, and rural areas
-                </p>
+              <div className="py-5 border-b border-slate-100 flex justify-between items-start">
+                <div>
+                  <p className="text-[13px] font-medium text-black">Tier 2 Cities</p>
+                  <p className="text-[12px] text-slate-500 mt-1">Pune, Ahmedabad, Jaipur, Lucknow, etc.</p>
+                </div>
+                <p className="text-[13px] font-medium text-black">5-7 days</p>
               </div>
-              <span className="text-right font-medium text-[var(--primary-text)]">4&ndash;7 days</span>
+              <div className="py-5 border-b border-slate-100 flex justify-between items-start">
+                <div>
+                  <p className="text-[13px] font-medium text-black">Other Areas</p>
+                  <p className="text-[12px] text-slate-500 mt-1">Tier 3 cities and towns</p>
+                </div>
+                <p className="text-[13px] font-medium text-black">7-10 days</p>
+              </div>
+              <div className="py-5 flex justify-between items-start">
+                <div>
+                  <p className="text-[13px] font-medium text-black">Remote/Rural Areas</p>
+                  <p className="text-[12px] text-slate-500 mt-1">Hill stations, islands, remote locations</p>
+                </div>
+                <p className="text-[13px] font-medium text-black">10-14 days</p>
+              </div>
             </div>
-          </div>
-          <p className="mt-3 text-sm text-[var(--muted-text)] italic">
-            * Delivery times are estimates and may vary due to weather, holidays, or other factors
-            beyond our control.
-          </p>
-        </section>
 
-        {/* Order Tracking */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Order Tracking
-          </h2>
-          <p className="mb-2">Once your order has shipped:</p>
-          <ol className="list-decimal pl-6 space-y-1">
-            <li>You will receive an email and SMS with your tracking number.</li>
-            <li>Use the tracking link in the email to follow your shipment in real time.</li>
-            <li>
-              You can also track your order from your{" "}
-              <Link
-                href="/account/orders"
-                className="text-[var(--chocolate)] underline hover:no-underline"
-              >
-                account dashboard
-              </Link>
-              .
-            </li>
-          </ol>
-        </section>
+            <p className="text-[12px] text-slate-400 mt-4 italic">
+              *Delivery times are estimates and may vary due to factors beyond our control.
+            </p>
+          </motion.div>
+        </div>
+      </div>
 
-        {/* Shipping Partners */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Shipping Partners
-          </h2>
-          <p className="mb-2">
-            We work with trusted logistics partners to ensure safe and timely delivery:
-          </p>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>Delhivery</li>
-            <li>BlueDart</li>
-            <li>Shiprocket</li>
-            <li>India Post (for remote areas)</li>
-          </ul>
-          <p className="mt-2">
-            The carrier is automatically selected based on your pin code to ensure the fastest
-            possible delivery.
-          </p>
-        </section>
+      {/* Main Content */}
+      <div className="px-6 py-12 lg:py-16 lg:px-10">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="prose prose-slate max-w-none"
+          >
+            <div className="text-[14px] text-slate-600 leading-[1.9] space-y-8">
+              <p>
+                At Earth Revibe, we are committed to delivering your orders quickly and efficiently. Here&apos;s everything you need to know about our shipping.
+              </p>
 
-        {/* Delivery Attempts & Issues */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Delivery Attempts &amp; Issues
-          </h2>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>Our shipping partners will make up to 3 delivery attempts.</li>
-            <li>If delivery fails after 3 attempts, the package will be returned to us.</li>
-            <li>Please ensure your shipping address and phone number are correct at checkout.</li>
-            <li>
-              For any shipping issues, contact us at{" "}
-              <a
-                href="mailto:hello@earthrevibe.in"
-                className="text-[var(--chocolate)] underline hover:no-underline"
-              >
-                hello@earthrevibe.in
-              </a>{" "}
-              with your order number.
-            </li>
-          </ul>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Processing Time</h2>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Orders are processed within 1-2 business days</li>
+                  <li>Orders placed on weekends or holidays will be processed on the next business day</li>
+                  <li>You will receive an email confirmation with tracking information once your order ships</li>
+                </ul>
+              </section>
 
-        {/* Contact */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Contact Us
-          </h2>
-          <p className="mb-2">For shipping enquiries:</p>
-          <p>
-            Email:{" "}
-            <a
-              href="mailto:hello@earthrevibe.in"
-              className="text-[var(--chocolate)] underline hover:no-underline"
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Shipping Partners</h2>
+                <p>We work with trusted shipping partners including:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Shiprocket</li>
+                  <li>Delhivery</li>
+                  <li>BlueDart</li>
+                  <li>India Post</li>
+                </ul>
+                <p className="mt-2">The carrier is selected based on your location to ensure the fastest and most reliable delivery.</p>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Order Tracking</h2>
+                <p>Once your order ships:</p>
+                <ol className="list-decimal pl-6 mt-2 space-y-1">
+                  <li>You will receive an email with your tracking number</li>
+                  <li>Track your order using the link provided in the email</li>
+                  <li>You can also track your order at: <Link href="/track-order" className="text-black underline hover:no-underline">Track Order</Link></li>
+                </ol>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Shipping Restrictions</h2>
+                <p>We currently ship only within India. International shipping is not available at this time.</p>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Delivery Attempts</h2>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Our shipping partners will make up to 3 delivery attempts</li>
+                  <li>If delivery fails after 3 attempts, the package will be returned to us</li>
+                  <li>You will be contacted via email/phone before the package is returned</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Incorrect Address</h2>
+                <p>Please ensure your shipping address is correct before placing your order:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>We are not responsible for orders shipped to incorrect addresses provided by the customer</li>
+                  <li>Address changes can only be made before the order is shipped</li>
+                  <li>Contact us immediately if you need to update your address</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Missing or Lost Packages</h2>
+                <p>If your package appears to be lost:</p>
+                <ol className="list-decimal pl-6 mt-2 space-y-1">
+                  <li>Check your tracking information for the latest update</li>
+                  <li>Wait for the estimated delivery window to pass</li>
+                  <li>Contact us at <a href="mailto:earthrevibeofficial@gmail.com" className="text-black underline hover:no-underline">earthrevibeofficial@gmail.com</a> with your order number</li>
+                  <li>We will investigate with the shipping carrier and resolve the issue</li>
+                </ol>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Damaged Packages</h2>
+                <p>If you receive a damaged package:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Do not accept the delivery if the damage is visible</li>
+                  <li>If you&apos;ve already accepted, take photos immediately</li>
+                  <li>Contact us within 24 hours at <a href="mailto:earthrevibeofficial@gmail.com" className="text-black underline hover:no-underline">earthrevibeofficial@gmail.com</a></li>
+                  <li>We will arrange for a replacement at no extra cost</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Contact Us</h2>
+                <p>For shipping inquiries:</p>
+                <p className="mt-2">
+                  Email:{' '}
+                  <a href="mailto:earthrevibeofficial@gmail.com" className="text-black underline hover:no-underline">
+                    earthrevibeofficial@gmail.com
+                  </a>
+                </p>
+                <p className="mt-2 text-slate-500">
+                  Our customer service team is available Monday through Saturday, 10:00 AM to 7:00 PM IST.
+                </p>
+              </section>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Contact CTA */}
+      <div className="px-6 py-12 bg-slate-50 lg:py-16 lg:px-10">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <p className="text-[13px] text-slate-600 mb-6">
+              Have questions about shipping?
+            </p>
+            <Link
+              href="/contact"
+              className="inline-block px-8 py-3 bg-black text-white text-[11px] font-medium tracking-[0.08em] uppercase hover:bg-slate-800 transition-colors"
             >
-              hello@earthrevibe.in
-            </a>
-          </p>
-          <p className="mt-2 text-sm text-[var(--muted-text)]">
-            Our customer support team is available Monday to Saturday, 10:00 AM to 7:00 PM IST.
-          </p>
-        </section>
+              Contact Us
+            </Link>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

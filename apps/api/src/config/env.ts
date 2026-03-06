@@ -21,6 +21,9 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().optional(),
   FRONTEND_URL: z.string().default("http://localhost:3000"),
   ADMIN_URL: z.string().default("http://localhost:3001"),
+  SHIPROCKET_EMAIL: z.string().optional(),
+  SHIPROCKET_PASSWORD: z.string().optional(),
+  SHIPROCKET_PICKUP_PINCODE: z.string().default("110001"),
 });
 
 export const env = envSchema.parse(process.env);

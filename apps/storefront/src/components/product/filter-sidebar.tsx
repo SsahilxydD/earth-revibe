@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
 import { PRODUCT_SIZES, PRODUCT_COLORS } from "@earth-revibe/shared";
 import { useUIStore } from "@/stores/ui-store";
 
@@ -43,7 +42,6 @@ export function FilterSidebar({
     maxPrice: currentFilters.maxPrice || "",
   });
 
-  // Sync with URL changes
   useEffect(() => {
     setFilters({
       categories: parseMultiValue(currentFilters.category),
@@ -108,16 +106,16 @@ export function FilterSidebar({
     filters.maxPrice !== "";
 
   const filterContent = (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header with clear */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-heading font-semibold text-deep-earth">
+        <h2 className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.15em] uppercase text-slate-400">
           Filters
         </h2>
         {hasActiveFilters && (
           <button
             onClick={clearAll}
-            className="text-xs text-terracotta hover:text-terracotta/80 font-medium"
+            className="text-[10px] font-[var(--font-cinzel)] tracking-[0.08em] uppercase text-slate-500 hover:text-black transition-colors"
           >
             Clear All
           </button>
@@ -127,12 +125,14 @@ export function FilterSidebar({
       {/* Category filter */}
       {categories.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-charcoal mb-3">Category</h3>
-          <div className="space-y-2">
+          <h3 className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.1em] uppercase text-slate-500 mb-4">
+            Category
+          </h3>
+          <div className="space-y-3">
             {categories.map((cat) => (
               <label
                 key={cat.slug}
-                className="flex items-center gap-2 cursor-pointer group"
+                className="flex items-center gap-3 cursor-pointer group"
               >
                 <input
                   type="checkbox"
@@ -145,9 +145,9 @@ export function FilterSidebar({
                       ),
                     })
                   }
-                  className="w-4 h-4 rounded border-light-gray text-forest-green focus:ring-forest-green"
+                  className="w-3.5 h-3.5 border border-slate-300 text-black focus:ring-black accent-black"
                 />
-                <span className="text-sm text-dark-gray group-hover:text-charcoal">
+                <span className="text-[11px] text-slate-600 group-hover:text-black transition-colors">
                   {cat.name}
                 </span>
               </label>
@@ -158,7 +158,9 @@ export function FilterSidebar({
 
       {/* Size filter */}
       <div>
-        <h3 className="text-sm font-semibold text-charcoal mb-3">Size</h3>
+        <h3 className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.1em] uppercase text-slate-500 mb-4">
+          Size
+        </h3>
         <div className="flex flex-wrap gap-2">
           {PRODUCT_SIZES.map((size) => {
             const isActive = filters.sizes.includes(size);
@@ -170,10 +172,10 @@ export function FilterSidebar({
                     sizes: toggleArrayValue(filters.sizes, size),
                   })
                 }
-                className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+                className={`px-3 py-1.5 text-[10px] font-medium tracking-[0.06em] uppercase border transition-colors ${
                   isActive
-                    ? "bg-forest-green text-white border-forest-green"
-                    : "bg-white text-charcoal border-light-gray hover:border-sage"
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-black"
                 }`}
               >
                 {size}
@@ -185,7 +187,9 @@ export function FilterSidebar({
 
       {/* Color filter */}
       <div>
-        <h3 className="text-sm font-semibold text-charcoal mb-3">Color</h3>
+        <h3 className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.1em] uppercase text-slate-500 mb-4">
+          Color
+        </h3>
         <div className="flex flex-wrap gap-2">
           {PRODUCT_COLORS.map((color) => {
             const isActive = filters.colors.includes(color.name);
@@ -197,28 +201,28 @@ export function FilterSidebar({
                     colors: toggleArrayValue(filters.colors, color.name),
                   })
                 }
-                className={`relative w-8 h-8 rounded-full border-2 transition-all ${
+                className={`relative w-7 h-7 border-2 transition-all ${
                   isActive
-                    ? "border-forest-green scale-110"
-                    : "border-light-gray hover:border-sage"
+                    ? "border-black scale-110"
+                    : "border-slate-200 hover:border-slate-400"
                 }`}
                 title={color.name}
                 aria-label={color.name}
               >
                 <span
-                  className="absolute inset-[2px] rounded-full"
+                  className="absolute inset-[2px]"
                   style={{ backgroundColor: color.hex }}
                 />
                 {isActive && (
                   <span className="absolute inset-0 flex items-center justify-center">
                     <svg
-                      width="12"
-                      height="12"
+                      width="10"
+                      height="10"
                       viewBox="0 0 12 12"
                       fill="none"
                       className={
                         color.hex === "#FFFFFF" || color.hex === "#FFFDD0"
-                          ? "text-charcoal"
+                          ? "text-black"
                           : "text-white"
                       }
                     >
@@ -240,12 +244,12 @@ export function FilterSidebar({
 
       {/* Price range */}
       <div>
-        <h3 className="text-sm font-semibold text-charcoal mb-3">
+        <h3 className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.1em] uppercase text-slate-500 mb-4">
           Price Range
         </h3>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-medium-gray">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400">
               ₹
             </span>
             <input
@@ -257,12 +261,12 @@ export function FilterSidebar({
               onKeyDown={(e) => {
                 if (e.key === "Enter") applyFilters({ minPrice: filters.minPrice });
               }}
-              className="w-full pl-6 pr-2 py-2 text-sm border border-light-gray rounded-lg focus:outline-none focus:border-sage bg-white"
+              className="w-full pl-7 pr-2 py-2.5 text-[11px] border border-slate-200 focus:outline-none focus:border-black bg-white transition-colors"
             />
           </div>
-          <span className="text-medium-gray text-sm">-</span>
+          <span className="text-slate-300 text-[11px]">—</span>
           <div className="relative flex-1">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-medium-gray">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400">
               ₹
             </span>
             <input
@@ -274,7 +278,7 @@ export function FilterSidebar({
               onKeyDown={(e) => {
                 if (e.key === "Enter") applyFilters({ maxPrice: filters.maxPrice });
               }}
-              className="w-full pl-6 pr-2 py-2 text-sm border border-light-gray rounded-lg focus:outline-none focus:border-sage bg-white"
+              className="w-full pl-7 pr-2 py-2.5 text-[11px] border border-slate-200 focus:outline-none focus:border-black bg-white transition-colors"
             />
           </div>
         </div>
@@ -282,12 +286,14 @@ export function FilterSidebar({
 
       {/* Material filter */}
       <div>
-        <h3 className="text-sm font-semibold text-charcoal mb-3">Material</h3>
-        <div className="space-y-2">
+        <h3 className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.1em] uppercase text-slate-500 mb-4">
+          Material
+        </h3>
+        <div className="space-y-3">
           {MATERIALS.map((material) => (
             <label
               key={material}
-              className="flex items-center gap-2 cursor-pointer group"
+              className="flex items-center gap-3 cursor-pointer group"
             >
               <input
                 type="checkbox"
@@ -297,9 +303,9 @@ export function FilterSidebar({
                     materials: toggleArrayValue(filters.materials, material),
                   })
                 }
-                className="w-4 h-4 rounded border-light-gray text-forest-green focus:ring-forest-green"
+                className="w-3.5 h-3.5 border border-slate-300 text-black focus:ring-black accent-black"
               />
-              <span className="text-sm text-dark-gray group-hover:text-charcoal">
+              <span className="text-[11px] text-slate-600 group-hover:text-black transition-colors">
                 {material}
               </span>
             </label>
@@ -319,24 +325,26 @@ export function FilterSidebar({
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Overlay */}
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/30"
             onClick={() => setFilterDrawerOpen(false)}
           />
 
           {/* Drawer */}
-          <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-cream overflow-y-auto">
+          <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white overflow-y-auto">
             <div className="p-6">
               {/* Close button */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-heading font-semibold text-deep-earth">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.15em] uppercase text-slate-400">
                   Filters
                 </h2>
                 <button
                   onClick={() => setFilterDrawerOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-light-gray transition-colors"
+                  className="w-8 h-8 flex items-center justify-center hover:bg-slate-50 transition-colors"
                   aria-label="Close filters"
                 >
-                  <X size={18} />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
 
@@ -345,7 +353,7 @@ export function FilterSidebar({
               {/* Apply button for mobile */}
               <button
                 onClick={() => setFilterDrawerOpen(false)}
-                className="w-full mt-8 py-3 bg-forest-green text-white text-sm font-semibold rounded-lg hover:bg-forest-green/90 transition-colors"
+                className="w-full mt-8 py-3 bg-black text-white text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.15em] uppercase hover:bg-black/90 transition-colors"
               >
                 Apply Filters
               </button>

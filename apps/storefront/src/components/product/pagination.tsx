@@ -1,7 +1,5 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
-
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -14,18 +12,13 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
   }
 
   const pages: (number | "...")[] = [];
-
-  // Always show first page
   pages.push(1);
 
   if (current <= 3) {
-    // Near the beginning
     pages.push(2, 3, 4, "...", total);
   } else if (current >= total - 2) {
-    // Near the end
     pages.push("...", total - 3, total - 2, total - 1, total);
   } else {
-    // In the middle
     pages.push("...", current - 1, current, current + 1, "...", total);
   }
 
@@ -43,17 +36,19 @@ export function Pagination({
 
   return (
     <nav
-      className="flex items-center justify-center gap-1 mt-10"
+      className="flex items-center justify-center gap-1"
       aria-label="Pagination"
     >
       {/* Previous */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
-        className="flex items-center justify-center w-9 h-9 rounded-lg border border-light-gray text-charcoal hover:border-sage hover:text-forest-green disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-light-gray disabled:hover:text-charcoal transition-colors"
+        className="flex items-center justify-center w-8 h-8 border border-slate-200 text-slate-600 hover:border-black hover:text-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         aria-label="Previous page"
       >
-        <ChevronLeft size={16} />
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
       </button>
 
       {/* Page numbers */}
@@ -62,7 +57,7 @@ export function Pagination({
           return (
             <span
               key={`ellipsis-${idx}`}
-              className="flex items-center justify-center w-9 h-9 text-sm text-medium-gray"
+              className="flex items-center justify-center w-8 h-8 text-[11px] text-slate-400"
             >
               ...
             </span>
@@ -75,10 +70,10 @@ export function Pagination({
             key={page}
             onClick={() => onPageChange(page)}
             disabled={isActive}
-            className={`flex items-center justify-center w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center w-8 h-8 text-[11px] font-medium transition-colors ${
               isActive
-                ? "bg-forest-green text-white"
-                : "border border-light-gray text-charcoal hover:border-sage hover:text-forest-green"
+                ? "bg-black text-white"
+                : "border border-slate-200 text-slate-600 hover:border-black hover:text-black"
             }`}
             aria-label={`Page ${page}`}
             aria-current={isActive ? "page" : undefined}
@@ -92,10 +87,12 @@ export function Pagination({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
-        className="flex items-center justify-center w-9 h-9 rounded-lg border border-light-gray text-charcoal hover:border-sage hover:text-forest-green disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-light-gray disabled:hover:text-charcoal transition-colors"
+        className="flex items-center justify-center w-8 h-8 border border-slate-200 text-slate-600 hover:border-black hover:text-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         aria-label="Next page"
       >
-        <ChevronRight size={16} />
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
       </button>
     </nav>
   );

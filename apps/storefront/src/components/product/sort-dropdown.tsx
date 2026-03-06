@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
 
 const SORT_OPTIONS = [
   { label: "Newest", value: "createdAt-desc" },
@@ -39,18 +38,23 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 border border-light-gray rounded-lg text-sm bg-white hover:border-sage transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase bg-white hover:border-black transition-colors"
       >
-        <span className="text-medium-gray">Sort:</span>
-        <span className="text-charcoal font-medium">{selectedLabel}</span>
-        <ChevronDown
-          size={14}
-          className={`text-medium-gray transition-transform ${isOpen ? "rotate-180" : ""}`}
-        />
+        <span className="text-slate-400">Sort:</span>
+        <span className="text-black">{selectedLabel}</span>
+        <svg
+          className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-light-gray rounded-lg shadow-lg z-20 py-1">
+        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 shadow-lg z-20 py-1">
           {SORT_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -58,10 +62,10 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
                 onChange(option.value);
                 setIsOpen(false);
               }}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-off-white transition-colors ${
+              className={`w-full text-left px-4 py-2.5 text-[11px] tracking-[0.04em] hover:bg-slate-50 transition-colors ${
                 value === option.value
-                  ? "text-forest-green font-medium bg-off-white"
-                  : "text-charcoal"
+                  ? "text-black font-medium bg-slate-50"
+                  : "text-slate-600"
               }`}
             >
               {option.label}

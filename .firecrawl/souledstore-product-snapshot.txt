@@ -1,0 +1,270 @@
+- document:
+  - navigation:
+    - img "Logo"
+    - list:
+      - listitem:
+        - link "MEN" [ref=e1]:
+          - /url: /men
+      - listitem:
+        - link "WOMEN" [ref=e2]:
+          - /url: /women
+      - listitem:
+        - link "SNEAKERS" [ref=e3]:
+          - /url: /sneakers
+    - link "Logo" [ref=e4]:
+      - /url: /
+      - img "Logo"
+    - list:
+      - listitem:
+        - searchbox "What are you looking for?" [ref=e5]
+        - text: 
+        - img "search"
+      - listitem:
+        - img "wishlist"
+      - listitem:
+        - img "wishlist"
+      - listitem:
+        - img "Cart"
+  - img "404 Not Found"
+  - heading "Looks like this product is unavailable. Explore more awesome products on our website!" [ref=e6] [level=3]
+  - heading "You may also like:-" [ref=e7] [level=4]
+  - 'link "Cotton Linen: Soft Pink Cotton Linen Shirts Online Cotton Linen: Soft Pink Cotton Linen Shirts ₹ 1599"':
+    - /url: /product/solids-soft-pink-men-shirt?gte=0
+    - 'img "Cotton Linen: Soft Pink Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Soft Pink" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1599
+  - 'link "Cotton Linen: Striped Sienna Cotton Linen Shirts Online Cotton Linen: Striped Sienna Cotton Linen Shirts ₹ 1799"':
+    - /url: /product/tss-originals-cannoli-cream-men-linen-shirts?gte=0
+    - 'img "Cotton Linen: Striped Sienna Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Striped Sienna" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1799
+  - 'link "Disney: No Worries Oversized T-Shirts Online Disney: No Worries Oversized T-Shirts ₹ 1099"':
+    - /url: /product/disney-no-worries-men-oversized-t-shirts?gte=0
+    - 'img "Disney: No Worries Oversized T-Shirts Online"'
+    - 'heading "Disney: No Worries" [level=5]'
+    - text: Oversized T-Shirts ₹ 1099
+  - 'link "Cotton Linen: Coral Peach Cotton Linen Shirts Online Cotton Linen: Coral Peach Cotton Linen Shirts ₹ 1499"':
+    - /url: /product/solids-orange-men-cotton-linen-shirts?gte=0
+    - 'img "Cotton Linen: Coral Peach Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Coral Peach" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1499
+  - 'link "Cotton Linen: Ocean Blue Cotton Linen Shirts Online Cotton Linen: Ocean Blue Cotton Linen Shirts ₹ 1599"':
+    - /url: /product/solids-ocean-blue-cotton-linen-shirts?gte=0
+    - 'img "Cotton Linen: Ocean Blue Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Ocean Blue" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1599
+  - 'link "TSS Originals: Trident Oversized T-Shirts Online TSS Originals: Trident Oversized T-Shirts ₹ 1499"':
+    - /url: /product/tss-originals-trident-oversized-tshirt?gte=0
+    - 'img "TSS Originals: Trident Oversized T-Shirts Online"'
+    - 'heading "TSS Originals: Trident" [level=5]'
+    - text: Oversized T-Shirts ₹ 1499
+  - 'link "Ben 10: Omnitrix Oversized T-Shirts Online Ben 10: Omnitrix Oversized T-Shirts ₹ 1099"':
+    - /url: /product/men-oversized-fit-ben-omnitrix-t-shirts?gte=0
+    - 'img "Ben 10: Omnitrix Oversized T-Shirts Online"'
+    - 'heading "Ben 10: Omnitrix" [level=5]'
+    - text: Oversized T-Shirts ₹ 1099
+  - 'link "TSS Originals: Kurukshetra Super Oversized T-Shirts Online TSS Originals: Kurukshetra Super Oversized T-Shirts ₹ 1799"':
+    - /url: /product/tss-originals-kurukshetra-super-oversized-t-shirts?gte=0
+    - 'img "TSS Originals: Kurukshetra Super Oversized T-Shirts Online"'
+    - 'heading "TSS Originals: Kurukshetra" [level=5]'
+    - text: Super Oversized T-Shirts ₹ 1799
+  - 'link "Cotton Linen: Twilight Cotton Linen Shirts Online Cotton Linen: Twilight Cotton Linen Shirts ₹ 1599"':
+    - /url: /product/solids-dark-indigo-men-cotton-linen-shirts?gte=0
+    - 'img "Cotton Linen: Twilight Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Twilight" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1599
+  - 'link "Freedom: Brahmastra Oversized T-Shirts Online Freedom: Brahmastra Oversized T-Shirts ₹ 1299"':
+    - /url: /product/freedom-brahmastra-men-oversized-tshirt?gte=0
+    - 'img "Freedom: Brahmastra Oversized T-Shirts Online"'
+    - 'heading "Freedom: Brahmastra" [level=5]'
+    - text: Oversized T-Shirts ₹ 1299
+  - 'link "Peanuts: Gurgle Women Shackets Online Peanuts: Gurgle Women Shackets ₹ 1799"':
+    - /url: /product/women-shirts-peanuts-gurgle?gte=0
+    - 'img "Peanuts: Gurgle Women Shackets Online"'
+    - 'heading "Peanuts: Gurgle" [level=5]'
+    - text: Women Shackets ₹ 1799
+  - 'link "Urban Blaze: Mocha Men Low Top Sneakers Online Urban Blaze: Mocha Men Low Top Sneakers ₹ 2599"':
+    - /url: /product/tss-originals-mocha-swirl-men-low-top-sneakers?gte=0
+    - 'img "Urban Blaze: Mocha Men Low Top Sneakers Online"'
+    - 'heading "Urban Blaze: Mocha" [level=5]'
+    - text: Men Low Top Sneakers ₹ 2599
+  - 'link "TSS Originals: True Navy Oversized Full Sleeve T-Shirts Online TSS Originals: True Navy Oversized Full Sleeve T-Shirts ₹ 1299"':
+    - /url: /product/tss-originals-true-navy-oversized-full-sleeve-t-shirts?gte=0
+    - 'img "TSS Originals: True Navy Oversized Full Sleeve T-Shirts Online"'
+    - 'heading "TSS Originals: True Navy" [level=5]'
+    - text: Oversized Full Sleeve T-Shirts ₹ 1299
+  - 'link "Cotton Linen: Pearl White Cotton Linen Shirts Online Cotton Linen: Pearl White Cotton Linen Shirts ₹ 1499"':
+    - /url: /product/solids-pearl-white-men-cotton-linen-shirts?gte=0
+    - 'img "Cotton Linen: Pearl White Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Pearl White" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1499
+  - 'link "Korean Joggers: Milk Latte Korean Joggers Online Korean Joggers: Milk Latte Korean Joggers ₹ 1299"':
+    - /url: /product/korean-joggers-milk-latte?gte=0
+    - 'img "Korean Joggers: Milk Latte Korean Joggers Online"'
+    - 'heading "Korean Joggers: Milk Latte" [level=5]'
+    - text: Korean Joggers ₹ 1299
+  - 'link "Cotton Linen Pants: Ecru Cotton Linen Pants Online Cotton Linen Pants: Ecru Cotton Linen Pants ₹ 1899"':
+    - /url: /product/cotton-linen-pants-ecru-men?gte=0
+    - 'img "Cotton Linen Pants: Ecru Cotton Linen Pants Online"'
+    - 'heading "Cotton Linen Pants: Ecru" [level=5]'
+    - text: Cotton Linen Pants ₹ 1899
+  - 'link "Plaid: Black And Red Men Relaxed Shirts Online Plaid: Black And Red Men Relaxed Shirts ₹ 1599"':
+    - /url: /product/checks-black-and-red-men-oversized-shirt?gte=0
+    - 'img "Plaid: Black And Red Men Relaxed Shirts Online"'
+    - 'heading "Plaid: Black And Red" [level=5]'
+    - text: Men Relaxed Shirts ₹ 1599
+  - 'link "Cars: Lightning McQueen Oversized Jerseys Online Cars: Lightning McQueen Oversized Jerseys ₹ 1199"':
+    - /url: /product/disney-mcqueen-men-oversized-jersey?gte=0
+    - 'img "Cars: Lightning McQueen Oversized Jerseys Online"'
+    - 'heading "Cars: Lightning McQueen" [level=5]'
+    - text: Oversized Jerseys ₹ 1199
+  - 'link "Cotton Linen: Berry Cotton Linen Shirts Online Cotton Linen: Berry Cotton Linen Shirts ₹ 1499"':
+    - /url: /product/solids-maroon-shirts?gte=0
+    - 'img "Cotton Linen: Berry Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Berry" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1499
+  - 'link "Cotton Linen: Russet Brown Cotton Linen Shirts Online Cotton Linen: Russet Brown Cotton Linen Shirts ₹ 1499"':
+    - /url: /product/solids-rusty-red-men-shirt?gte=0
+    - 'img "Cotton Linen: Russet Brown Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Russet Brown" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1499
+  - 'link "Cotton Linen: Sky Blue Cotton Linen Shirts Online Cotton Linen: Sky Blue Cotton Linen Shirts ₹ 1599"':
+    - /url: /product/solids-sky-blue-cotton-linen-shirts?gte=0
+    - 'img "Cotton Linen: Sky Blue Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Sky Blue" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1599
+  - 'link "Cotton Linen: Ivy Green Cotton Linen Shirts Online Cotton Linen: Ivy Green Cotton Linen Shirts ₹ 1499"':
+    - /url: /product/solids-olive-men-cotton-linen-shirts?gte=0
+    - 'img "Cotton Linen: Ivy Green Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Ivy Green" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1499
+  - 'link "Harry Potter: Sorted Oversized T-Shirts Online Harry Potter: Sorted Oversized T-Shirts ₹ 1299"':
+    - /url: /product/oversized-tshirt-harry-potter-sorted-men?gte=0
+    - 'img "Harry Potter: Sorted Oversized T-Shirts Online"'
+    - 'heading "Harry Potter: Sorted" [level=5]'
+    - text: Oversized T-Shirts ₹ 1299
+  - 'link "Nomad: Compass Super Oversized T-Shirts Online Nomad: Compass Super Oversized T-Shirts ₹ 2299"':
+    - /url: /product/nomad-compass-oversized-tshirt?gte=0
+    - 'img "Nomad: Compass Super Oversized T-Shirts Online"'
+    - 'heading "Nomad: Compass" [level=5]'
+    - text: Super Oversized T-Shirts ₹ 2299
+  - 'link "Raptors V2: Canyon Dust Men Low Top Sneakers Online Raptors V2: Canyon Dust Men Low Top Sneakers ₹ 3499"':
+    - /url: /product/raptor-canyon-dust-men-low-top-sneakers?gte=0
+    - 'img "Raptors V2: Canyon Dust Men Low Top Sneakers Online"'
+    - 'heading "Raptors V2: Canyon Dust" [level=5]'
+    - text: Men Low Top Sneakers ₹ 3499
+  - 'link "Korean Joggers: Cloud Korean Joggers Online Korean Joggers: Cloud Korean Joggers ₹ 1299"':
+    - /url: /product/korean-joggers-cloud-men?gte=0
+    - 'img "Korean Joggers: Cloud Korean Joggers Online"'
+    - 'heading "Korean Joggers: Cloud" [level=5]'
+    - text: Korean Joggers ₹ 1299
+  - 'link "Batman: 3D Logo T-Shirts Online Batman: 3D Logo T-Shirts ₹ 799"':
+    - /url: /product/batman-3d-logo-tshirt?gte=0
+    - 'img "Batman: 3D Logo T-Shirts Online"'
+    - 'heading "Batman: 3D Logo" [level=5]'
+    - text: T-Shirts ₹ 799
+  - 'link "Stranger Things: Logo Oversized T-Shirts Online Stranger Things: Logo Oversized T-Shirts ₹ 1099"':
+    - /url: /product/stranger-things-logo-men-oversized-tshirt?gte=0
+    - 'img "Stranger Things: Logo Oversized T-Shirts Online"'
+    - 'heading "Stranger Things: Logo" [level=5]'
+    - text: Oversized T-Shirts ₹ 1099
+  - 'link "Cotton Linen: Deep Blue Cotton Linen Shirts Online Cotton Linen: Deep Blue Cotton Linen Shirts ₹ 1599"':
+    - /url: /product/solids-blue-men-cotton-linen-shirts?gte=0
+    - 'img "Cotton Linen: Deep Blue Cotton Linen Shirts Online"'
+    - 'heading "Cotton Linen: Deep Blue" [level=5]'
+    - text: Cotton Linen Shirts ₹ 1599
+  - 'link "Popeye: Iron Power Oversized Pullovers Online Popeye: Iron Power Oversized Pullovers ₹ 1999 ₹ 2299 ₹ 300 OFF"':
+    - /url: /product/popeye-iron-power-mens-oversized-pullovers?gte=0
+    - 'img "Popeye: Iron Power Oversized Pullovers Online"'
+    - 'heading "Popeye: Iron Power" [level=5]'
+    - text: Oversized Pullovers ₹ 1999 ₹ 2299 ₹ 300 OFF
+  - text: HOMEGROWN INDIAN BRAND
+  - heading "Over 6 Million Happy Customers" [ref=e8] [level=3]
+  - tablist:
+    - tabpanel:
+      - heading "NEED HELP" [ref=e9] [level=5]
+      - list:
+        - listitem:
+          - link "Contact Us" [ref=e10]:
+            - /url: /contact-us
+        - listitem:
+          - link "Track Order" [ref=e11]:
+            - /url: /orders
+        - listitem:
+          - link "Returns & Refunds" [ref=e12]:
+            - /url: /faqs
+        - listitem:
+          - link "FAQs" [ref=e13]:
+            - /url: /faqs
+        - listitem:
+          - link "My Account" [ref=e14]:
+            - /url: /profile
+      - heading "COMPANY" [ref=e15] [level=5]
+      - list:
+        - listitem:
+          - link "About Us" [ref=e16]:
+            - /url: /about-us
+        - listitem:
+          - link "Investor Relation" [ref=e17]:
+            - /url: /investor-relation
+        - listitem:
+          - link "Careers" [ref=e18]:
+            - /url: /careers
+        - listitem:
+          - link "Gift Vouchers" [ref=e19]:
+            - /url: /gift-voucher
+        - listitem:
+          - link "Community Initiatives" [ref=e20]:
+            - /url: /from-the-soul
+      - heading "MORE INFO" [ref=e21] [level=5]
+      - list:
+        - listitem:
+          - link "T&C" [ref=e22]:
+            - /url: /terms-and-conditions
+        - listitem:
+          - link "Privacy Policy" [ref=e23]:
+            - /url: /privacy-policy
+        - listitem:
+          - link "Sitemap" [ref=e24]:
+            - /url: /sitemap
+        - listitem:
+          - link "Get Notified" [ref=e25]:
+            - /url: /getnotified
+        - listitem:
+          - link "Blogs" [ref=e26]:
+            - /url: https://www.thesouledstore.com/blog
+      - heading "STORE NEAR ME" [ref=e27] [level=5]
+      - list
+      - list:
+        - listitem:  COD Available
+        - listitem:  30 Days Easy Returns & Exchanges
+        - listitem
+      - text: experience the souled store app
+      - link "Download app on google play store" [ref=e28]:
+        - /url: https://play.google.com/store/apps/details?id=com.thesouledstore
+        - img "Download app on google play store"
+      - link "Download app on apple app store" [ref=e29]:
+        - /url: https://apps.apple.com/in/app/thesouledstore/id1493897434
+        - img "Download app on apple app store"
+      - text: "Follow Us:"
+      - link "Facebook" [ref=e30]:
+        - /url: https://www.facebook.com/SouledStore
+        - text: 
+      - link "Instagram" [ref=e31]:
+        - /url: https://www.instagram.com/TheSouledStore/
+        - text: 
+      - link "Snapchat" [ref=e32]:
+        - /url: https://www.snapchat.com/add/thesouledstore
+        - text: 
+      - link "X" [ref=e33]:
+        - /url: https://twitter.com/TheSouledStore
+        - text: 𝕏
+      - separator
+      - tablist
+      - text: "100% Secure Payment: Shipping Partners:"
+      - img "DTDC"
+      - img "Delhivery"
+      - img "Ecom Express"
+      - img "XpressBees"
+      - paragraph:  The Souled Store 2026-27
+  - status

@@ -1,208 +1,220 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+'use client';
 
-export const metadata: Metadata = {
-  title: "Terms of Service",
-  description:
-    "Read the terms and conditions governing your use of the Earth Revibe website and purchase of our products.",
-};
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 
-export default function TermsOfServicePage() {
+export default function TermsPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12 lg:py-16">
-      {/* Breadcrumb */}
-      <nav className="mb-8">
-        <ol className="flex items-center gap-2 text-xs text-[var(--muted-text)]">
-          <li>
-            <Link href="/" className="hover:text-[var(--chocolate)] transition-colors">
-              Home
-            </Link>
-          </li>
-          <li>/</li>
-          <li className="text-[var(--primary-text)]">Terms of Service</li>
-        </ol>
-      </nav>
+    <div className="min-h-screen bg-white pt-16">
+      {/* Header */}
+      <div className="px-6 py-12 lg:py-20 lg:px-10 border-b border-slate-100">
+        <div className="max-w-3xl mx-auto">
+          {/* Breadcrumb */}
+          <motion.nav
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-8"
+          >
+            <ol className="flex items-center gap-2 text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase">
+              <li>
+                <Link href="/" className="text-slate-400 hover:text-black transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li className="text-slate-300">/</li>
+              <li className="text-black">Terms of Service</li>
+            </ol>
+          </motion.nav>
 
-      {/* Title */}
-      <h1 className="font-[var(--font-display)] text-3xl lg:text-4xl font-semibold text-[var(--chocolate)] mb-2">
-        Terms of Service
-      </h1>
-      <p className="text-sm text-[var(--muted-text)] mb-10">Last updated: March 2026</p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <h1 className="text-[24px] lg:text-[32px] font-[var(--font-cinzel)] font-medium tracking-[0.04em] text-black mb-3">
+              Terms of Service
+            </h1>
+            <p className="text-[11px] text-slate-400 tracking-[0.08em]">
+              Last updated: January 2026
+            </p>
+          </motion.div>
+        </div>
+      </div>
 
-      {/* Content */}
-      <div className="space-y-8 text-[var(--secondary-text)] leading-relaxed">
-        <p>
-          Welcome to Earth Revibe. These Terms of Service (&quot;Terms&quot;) govern your use of
-          our website and your purchase of products from us. By accessing or using our site, you
-          agree to be bound by these Terms. If you do not agree, please do not use our website.
-        </p>
+      {/* Main Content */}
+      <div className="px-6 py-12 lg:py-16 lg:px-10">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="prose prose-slate max-w-none"
+          >
+            <div className="text-[14px] text-slate-600 leading-[1.9] space-y-8">
+              <p>
+                Welcome to Earth Revibe. These Terms of Service (&quot;Terms&quot;) govern your use of our website earthrevibe.com and earthrevibe.store (the &quot;Site&quot;) and your purchase of products from us. By accessing or using our Site, you agree to be bound by these Terms.
+              </p>
 
-        {/* Acceptance of Terms */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Acceptance of Terms
-          </h2>
-          <p>
-            By accessing this website, you confirm that you are at least 18 years of age (or have
-            parental or guardian consent) and agree to comply with these Terms. We may update these
-            Terms from time to time, and your continued use of the site constitutes acceptance of
-            any changes.
-          </p>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">1. Acceptance of Terms</h2>
+                <p>
+                  By accessing this website, you confirm that you are at least 18 years old (or have parental consent) and agree to comply with these Terms. If you do not agree with any part of these Terms, you must not use our Site.
+                </p>
+              </section>
 
-        {/* Account Terms */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Account Terms
-          </h2>
-          <p className="mb-2">When you create an account on our site:</p>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>You are responsible for maintaining the confidentiality of your login credentials.</li>
-            <li>You are responsible for all activities that occur under your account.</li>
-            <li>You must provide accurate, current, and complete information during registration.</li>
-            <li>You must notify us immediately of any unauthorised use of your account.</li>
-            <li>
-              We reserve the right to suspend or terminate accounts that violate these Terms or
-              engage in fraudulent activity.
-            </li>
-          </ul>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">2. Products and Pricing</h2>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>All products are subject to availability</li>
+                  <li>We reserve the right to discontinue any product at any time</li>
+                  <li>Prices are listed in Indian Rupees (INR) and include applicable taxes</li>
+                  <li>We reserve the right to modify prices without prior notice</li>
+                  <li>Promotional offers and discounts are valid for limited periods as specified</li>
+                </ul>
+              </section>
 
-        {/* Products and Pricing */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Products and Pricing
-          </h2>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>All products are subject to availability.</li>
-            <li>We reserve the right to discontinue any product at any time without notice.</li>
-            <li>
-              All prices are listed in{" "}
-              <strong className="text-[var(--primary-text)]">Indian Rupees (INR)</strong> and are
-              inclusive of applicable GST.
-            </li>
-            <li>We reserve the right to modify prices without prior notice.</li>
-            <li>
-              Promotional offers and discount codes are valid for limited periods as specified and
-              cannot be combined unless stated otherwise.
-            </li>
-            <li>
-              Product images are for illustration purposes. Actual colours may vary slightly due
-              to screen settings and the natural characteristics of sustainable fabrics.
-            </li>
-          </ul>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">3. Orders and Payment</h2>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>By placing an order, you are making an offer to purchase products</li>
+                  <li>We reserve the right to refuse or cancel any order for any reason</li>
+                  <li>Payment must be made at the time of purchase through Razorpay</li>
+                  <li>We accept major credit cards, debit cards, UPI, and net banking</li>
+                  <li>All payment information is processed securely through Razorpay&apos;s PCI-DSS compliant payment gateway</li>
+                </ul>
+              </section>
 
-        {/* Payment */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Payment
-          </h2>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>Payment must be made in full at the time of purchase.</li>
-            <li>
-              We accept major credit cards, debit cards, UPI, net banking, and popular wallets
-              through our payment partner Razorpay.
-            </li>
-            <li>
-              All payment information is processed securely through Razorpay&apos;s PCI-DSS
-              compliant gateway.
-            </li>
-            <li>We reserve the right to refuse or cancel any order for any reason, including suspected fraud.</li>
-          </ul>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">4. Shipping and Delivery</h2>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li><strong>We offer FREE DELIVERY on all orders across India</strong></li>
+                  <li>Estimated delivery times are provided at checkout</li>
+                  <li>Delivery times may vary based on your location and other factors</li>
+                  <li>We are not responsible for delays caused by shipping carriers or customs</li>
+                  <li>Risk of loss passes to you upon delivery of the product</li>
+                </ul>
+              </section>
 
-        {/* Intellectual Property */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Intellectual Property
-          </h2>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>
-              All content on this site — including text, images, graphics, logos, product designs,
-              and branding — is the property of Earth Revibe and is protected by Indian and
-              international copyright laws.
-            </li>
-            <li>
-              You may not reproduce, distribute, modify, or create derivative works from our
-              content without prior written permission.
-            </li>
-            <li>The Earth Revibe name, logo, and all related marks are our registered trademarks.</li>
-          </ul>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">5. Returns and Refunds</h2>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li><strong>We offer a 72-HOUR HASSLE-FREE return policy</strong></li>
+                  <li>Please refer to our <Link href="/policies/returns" className="text-black underline hover:no-underline">Return & Refund Policy</Link> for complete details</li>
+                  <li>Items must be returned in original, unused condition with tags attached</li>
+                </ul>
+              </section>
 
-        {/* Limitation of Liability */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Limitation of Liability
-          </h2>
-          <p className="mb-2">To the fullest extent permitted by applicable law:</p>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>
-              Earth Revibe shall not be liable for any indirect, incidental, special, or
-              consequential damages arising from your use of the site or purchase of products.
-            </li>
-            <li>
-              Our total liability for any claim shall not exceed the amount you paid for the
-              specific product giving rise to the claim.
-            </li>
-            <li>
-              We do not guarantee that the website will be available at all times, error-free, or
-              free of viruses or other harmful components.
-            </li>
-          </ul>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">6. Intellectual Property</h2>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>All content on this Site, including text, images, logos, and designs, is the property of Earth Revibe</li>
+                  <li>You may not reproduce, distribute, or create derivative works without our written permission</li>
+                  <li>The Earth Revibe name, logo, and branding are our trademarks</li>
+                </ul>
+              </section>
 
-        {/* Governing Law */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Governing Law
-          </h2>
-          <p>
-            These Terms shall be governed by and construed in accordance with the laws of India. Any
-            disputes arising from or related to these Terms or your use of the website shall be
-            subject to the exclusive jurisdiction of the courts in New Delhi, India.
-          </p>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">7. User Conduct</h2>
+                <p>You agree not to:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Use the Site for any unlawful purpose</li>
+                  <li>Attempt to gain unauthorized access to any part of the Site</li>
+                  <li>Interfere with the proper functioning of the Site</li>
+                  <li>Submit false or misleading information</li>
+                  <li>Engage in any activity that could harm Earth Revibe or other users</li>
+                </ul>
+              </section>
 
-        {/* Changes to Terms */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Changes to These Terms
-          </h2>
-          <p>
-            We may revise these Terms at any time by updating this page. The &quot;Last updated&quot;
-            date at the top will reflect the most recent revision. We encourage you to review this
-            page periodically. Your continued use of the site after changes are posted constitutes
-            your acceptance of the revised Terms.
-          </p>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">8. Account Responsibilities</h2>
+                <p>If you create an account on our Site:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>You are responsible for maintaining the confidentiality of your account</li>
+                  <li>You are responsible for all activities under your account</li>
+                  <li>You must notify us immediately of any unauthorized use</li>
+                  <li>We reserve the right to terminate accounts that violate these Terms</li>
+                </ul>
+              </section>
 
-        {/* Contact */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Contact Us
-          </h2>
-          <p className="mb-2">
-            If you have questions about these Terms of Service, please contact us:
-          </p>
-          <p>
-            Email:{" "}
-            <a
-              href="mailto:hello@earthrevibe.in"
-              className="text-[var(--chocolate)] underline hover:no-underline"
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">9. Limitation of Liability</h2>
+                <p>To the fullest extent permitted by law:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Earth Revibe shall not be liable for any indirect, incidental, or consequential damages</li>
+                  <li>Our total liability shall not exceed the amount paid by you for the product in question</li>
+                  <li>We do not guarantee that the Site will be error-free or uninterrupted</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">10. Disclaimer of Warranties</h2>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Products are provided &quot;as is&quot; without warranties of any kind</li>
+                  <li>We make no warranties regarding the accuracy of product descriptions</li>
+                  <li>Colors may appear differently on your screen than in person</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">11. Indemnification</h2>
+                <p>
+                  You agree to indemnify and hold harmless Earth Revibe, its officers, directors, employees, and agents from any claims, damages, or expenses arising from your use of the Site or violation of these Terms.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">12. Governing Law</h2>
+                <p>
+                  These Terms shall be governed by and construed in accordance with the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts in India.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">13. Changes to Terms</h2>
+                <p>
+                  We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting to the Site. Your continued use of the Site constitutes acceptance of the modified Terms.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">14. Contact Information</h2>
+                <p>For questions about these Terms of Service, please contact us:</p>
+                <p className="mt-2">
+                  Email:{' '}
+                  <a href="mailto:earthrevibeofficial@gmail.com" className="text-black underline hover:no-underline">
+                    earthrevibeofficial@gmail.com
+                  </a>
+                </p>
+              </section>
+
+              <div className="mt-8 p-4 bg-slate-50 rounded">
+                <p className="text-[13px] text-slate-500 italic">
+                  By using Earth Revibe, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Contact CTA */}
+      <div className="px-6 py-12 bg-slate-50 lg:py-16 lg:px-10">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <p className="text-[13px] text-slate-600 mb-6">
+              Questions about our terms?
+            </p>
+            <Link
+              href="/contact"
+              className="inline-block px-8 py-3 bg-black text-white text-[11px] font-medium tracking-[0.08em] uppercase hover:bg-slate-800 transition-colors"
             >
-              hello@earthrevibe.in
-            </a>
-          </p>
-        </section>
-
-        {/* Acknowledgement */}
-        <div className="mt-4 p-5 bg-[var(--card-bg)] rounded-lg border border-[var(--border-color)]">
-          <p className="text-sm text-[var(--muted-text)] italic">
-            By using Earth Revibe, you acknowledge that you have read, understood, and agree to be
-            bound by these Terms of Service.
-          </p>
+              Contact Us
+            </Link>
+          </motion.div>
         </div>
       </div>
     </div>

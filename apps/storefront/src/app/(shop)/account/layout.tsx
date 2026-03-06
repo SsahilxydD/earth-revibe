@@ -39,25 +39,29 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   if (!isAuthenticated) return null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
+    <div className="bg-white min-h-screen">
+    <div className="h-16 lg:h-20" aria-hidden="true" />
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 pt-6 pb-24 lg:pb-12">
+      <div className="flex flex-col lg:flex-row lg:gap-12">
         {/* Sidebar */}
-        <aside className="lg:w-56 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-charcoal mb-4">My Account</h2>
-          <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+        <aside className="lg:w-48 flex-shrink-0">
+          <p className="hidden lg:block text-[10px] font-[var(--font-cinzel)] tracking-[0.15em] uppercase text-slate-400 mb-4">
+            My Account
+          </p>
+          <nav className="flex lg:flex-col gap-0 overflow-x-auto lg:overflow-visible pb-3 lg:pb-0 border-b border-slate-100 lg:border-b-0 mb-6 lg:mb-0">
             {accountNav.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2.5 lg:px-0 text-[12px] tracking-[0.04em] whitespace-nowrap transition-colors lg:border-l-2 ${
                     isActive
-                      ? "bg-forest-green/10 text-forest-green font-medium"
-                      : "text-dark-gray hover:bg-off-white hover:text-charcoal"
+                      ? "text-black lg:border-black lg:pl-3 font-medium"
+                      : "text-slate-500 hover:text-black lg:border-transparent lg:hover:pl-3 lg:hover:border-slate-200"
                   }`}
                 >
-                  <item.icon size={16} />
+                  <item.icon size={14} className="shrink-0" />
                   {item.label}
                 </Link>
               );
@@ -68,6 +72,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         {/* Content */}
         <main className="flex-1 min-w-0">{children}</main>
       </div>
+    </div>
     </div>
   );
 }

@@ -17,6 +17,12 @@ export const analyticsController = {
     res.json({ success: true, orders });
   },
 
+  async getHomeDashboard(req: Request, res: Response) {
+    const period = (req.query.period as string) || "today";
+    const data = await analyticsService.getHomeDashboard(period);
+    res.json({ success: true, ...data });
+  },
+
   async getAnalytics(req: Request, res: Response) {
     const period = (req.query.period as string) || "30d";
     const data = await analyticsService.getAnalytics(period);

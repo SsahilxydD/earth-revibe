@@ -16,6 +16,9 @@ import {
   ChevronRight,
   Leaf,
   X,
+  Tags,
+  Warehouse,
+  Bell,
 } from "lucide-react";
 import { useUIStore } from "@/stores/ui-store";
 
@@ -24,9 +27,12 @@ const navItems = [
   { label: "Products", href: "/products", icon: Package },
   { label: "Categories", href: "/categories", icon: FolderTree },
   { label: "Orders", href: "/orders", icon: ShoppingCart },
+  { label: "Inventory", href: "/inventory", icon: Warehouse },
+  { label: "Discounts", href: "/discounts", icon: Tags },
   { label: "Customers", href: "/customers", icon: Users },
   { label: "Blog", href: "/blog", icon: FileText },
   { label: "Support", href: "/support-tickets", icon: Headset },
+  { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
   { label: "Settings", href: "/settings", icon: Settings },
 ];

@@ -54,3 +54,69 @@ export function useAddOrderNote() {
     },
   });
 }
+
+// Shiprocket fulfillment hooks
+export function useCreateShipment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderNumber: string) =>
+      api.post(`/shipping/${orderNumber}/create-shipment`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-order"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+    },
+  });
+}
+
+export function useAssignAWB() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderNumber, courierCompanyId }: { orderNumber: string; courierCompanyId?: number }) =>
+      api.post(`/shipping/${orderNumber}/assign-awb`, courierCompanyId ? { courierCompanyId } : {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-order"] });
+    },
+  });
+}
+
+export function useGenerateLabel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderNumber: string) =>
+      api.post(`/shipping/${orderNumber}/label`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-order"] });
+    },
+  });
+}
+
+export function useGenerateManifest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderNumber: string) =>
+      api.post(`/shipping/${orderNumber}/manifest`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-order"] });
+    },
+  });
+}
+
+export function useOrderTracking(orderNumber: string) {
+  return useQuery({
+    queryKey: ["order-tracking", orderNumber],
+    queryFn: () => api.get(`/shipping/track/${orderNumber}`),
+    enabled: !!orderNumber,
+  });
+}
+
+export function useRefundOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderNumber, amount, reason }: { orderNumber: string; amount?: number; reason: string }) =>
+      api.post(`/admin/orders/${orderNumber}/refund`, { amount, reason }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-order"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+    },
+  });
+}

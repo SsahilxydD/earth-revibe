@@ -1,321 +1,339 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import * as fs from "fs";
+import * as path from "path";
 
 const prisma = new PrismaClient();
 
+// Simple CSV parser that handles quoted fields with commas
+function parseCSV(text: string): Record<string, string>[] {
+  const lines: string[][] = [];
+  let current: string[] = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"' && text[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        field += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ",") {
+        current.push(field);
+        field = "";
+      } else if (ch === "\n" || (ch === "\r" && text[i + 1] === "\n")) {
+        current.push(field);
+        field = "";
+        if (current.length > 1) lines.push(current);
+        current = [];
+        if (ch === "\r") i++;
+      } else {
+        field += ch;
+      }
+    }
+  }
+  if (field || current.length) {
+    current.push(field);
+    if (current.length > 1) lines.push(current);
+  }
+
+  const headers = lines[0];
+  return lines.slice(1).map((row) => {
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => {
+      obj[h.trim()] = (row[i] || "").trim();
+    });
+    return obj;
+  });
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\u201C/g, '"')
+    .replace(/\u201D/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getCategoryInfo(productCategory: string): { name: string; slug: string } {
+  const parts = productCategory.split(">").map((p) => p.trim());
+  const last = parts[parts.length - 1] || "Uncategorized";
+
+  const map: Record<string, { name: string; slug: string }> = {
+    "Shirts": { name: "Shirts", slug: "shirts" },
+    "T-Shirts": { name: "T-Shirts", slug: "t-shirts" },
+    "Polos": { name: "Polos", slug: "polos" },
+    "Cargo Pants": { name: "Cargo Pants", slug: "cargo-pants" },
+    "Trousers": { name: "Trousers", slug: "trousers" },
+    "Coats & Jackets": { name: "Outerwear", slug: "outerwear" },
+  };
+
+  return map[last] || { name: last, slug: last.toLowerCase().replace(/\s+/g, "-") };
+}
+
+const COLOR_MAP: Record<string, { name: string; hex: string }> = {
+  "marine-folklore": { name: "Teal", hex: "#008080" },
+  "vintage-herbarium-shirt": { name: "Cream", hex: "#FFFDD0" },
+  "a-to-a-maroon-graphic-tee": { name: "Maroon", hex: "#800000" },
+  "black-twill-straight-fit-cargo-pants": { name: "Black", hex: "#000000" },
+  "plain-blue-word-hunt-boxy-tee": { name: "Blue", hex: "#4169E1" },
+  "grey-contrast-stitch-puff-print-boxy-tee": { name: "Grey", hex: "#808080" },
+  "herbal-cotton-contrast-collar-branding-polo": { name: "Beige", hex: "#F5F5DC" },
+  "herbal-white-all-over-print-boxy-tee": { name: "White", hex: "#FFFFFF" },
+  "skin-conscious-embroidered-collar-boxy-shirt": { name: "Pink Beige", hex: "#E8C4B8" },
+  "twill-off-white-cotton-formal-trousers": { name: "Off White", hex: "#FAF0E6" },
+  "water-color-wave-graphic-boxy-tee": { name: "Blue", hex: "#4682B4" },
+  "cream-twill-all-over-star-print-boxy-shirt": { name: "Cream", hex: "#FFFDD0" },
+  "contrast-oversized-polo-with-unique-collar-branding": { name: "White", hex: "#FFFFFF" },
+  "green-twill-bellbottom-utility-pants": { name: "Green", hex: "#556B2F" },
+  "all-over-print-formal-boxy-polo": { name: "Green", hex: "#2E8B57" },
+  "cream-cotton-puff-print-boxy-tee": { name: "Cream", hex: "#FFFDD0" },
+  "olive-herbal-cotton-reflective-boxy-tee": { name: "Olive", hex: "#808000" },
+  "khakhi-shadow-twill-block-print-shacket": { name: "Khaki", hex: "#C3B091" },
+  "two-panel-minimal-branding-boxy-tee": { name: "Navy", hex: "#000080" },
+  "vintage-print-twill-straight-fit-pants": { name: "Beige", hex: "#F5F5DC" },
+  "blu-skin-cotton-oversized-stripe-boxy-fit-shirt": { name: "Blue Stripe", hex: "#6495ED" },
+  "aqua-blue-twill-cactus-printed-shacket": { name: "Aqua Blue", hex: "#00CED1" },
+  "white-black-twill-zipper-shacket": { name: "White & Black", hex: "#F0F0F0" },
+};
+
+interface ProductData {
+  handle: string;
+  title: string;
+  bodyHtml: string;
+  category: string;
+  price: number;
+  material: string;
+  careInstructions: string;
+  tags: string;
+  variants: { sku: string; size: string; stock: number; price: number }[];
+  images: { url: string; position: number; altText: string }[];
+}
+
 async function main() {
-  console.log("Seeding database...");
+  console.log("=== Earth Revibe Database Seed ===\n");
 
-  await prisma.$transaction(async (tx) => {
-    // ==========================================
-    // 1. Super Admin User
-    // ==========================================
-    const passwordHash = await bcrypt.hash("Admin@123456", 12);
+  // Parse CSV
+  const csvPath = path.resolve(__dirname, "../../../products_export_1.csv");
+  const csvText = fs.readFileSync(csvPath, "utf-8");
+  const rows = parseCSV(csvText);
+  console.log(`Parsed ${rows.length} CSV rows`);
 
-    const admin = await tx.user.upsert({
-      where: { email: "admin@earthrevibe.com" },
-      update: {},
-      create: {
-        email: "admin@earthrevibe.com",
-        passwordHash,
-        firstName: "Super",
-        lastName: "Admin",
-        role: "SUPER_ADMIN",
-        emailVerified: true,
-        referralCode: "ADMIN_REF",
-      },
-    });
+  // Group rows by product handle
+  const productMap = new Map<string, ProductData>();
 
-    console.log(`  Created admin user: ${admin.email}`);
+  for (const row of rows) {
+    const handle = row["Handle"];
+    if (!handle) continue;
 
-    // ==========================================
-    // 2. Categories
-    // ==========================================
-    const topsCategory = await tx.category.upsert({
-      where: { slug: "tops-basics" },
-      update: {},
-      create: {
-        name: "Tops & Basics",
-        slug: "tops-basics",
-        description: "Sustainable tops, tees, and basic essentials made from organic and recycled materials.",
-        sortOrder: 1,
-        isActive: true,
-      },
-    });
+    if (!productMap.has(handle)) {
+      productMap.set(handle, {
+        handle,
+        title: row["Title"] || "",
+        bodyHtml: row["Body (HTML)"] || "",
+        category: row["Product Category"] || "",
+        price: parseFloat(row["Variant Price"]) || 0,
+        material: row["Composition (product.metafields.custom.composition)"] || "",
+        careInstructions: row["Wash Instructions (product.metafields.custom.wash_instructions)"] || "",
+        tags: row["Tags"] || "",
+        variants: [],
+        images: [],
+      });
+    }
 
-    const bottomsCategory = await tx.category.upsert({
-      where: { slug: "bottoms-pants" },
-      update: {},
-      create: {
-        name: "Bottoms & Pants",
-        slug: "bottoms-pants",
-        description: "Eco-friendly bottoms, pants, and jeans crafted from sustainable fabrics.",
-        sortOrder: 2,
-        isActive: true,
-      },
-    });
+    const product = productMap.get(handle)!;
 
-    const outerwearCategory = await tx.category.upsert({
-      where: { slug: "outerwear-jackets" },
-      update: {},
-      create: {
-        name: "Outerwear & Jackets",
-        slug: "outerwear-jackets",
-        description: "Warm and stylish outerwear made with planet-friendly materials.",
-        sortOrder: 3,
-        isActive: true,
-      },
-    });
+    // Fill product details from first row with Title
+    if (row["Title"] && !product.title) {
+      product.title = row["Title"];
+      product.bodyHtml = row["Body (HTML)"] || "";
+      product.category = row["Product Category"] || "";
+      product.material = row["Composition (product.metafields.custom.composition)"] || "";
+      product.careInstructions = row["Wash Instructions (product.metafields.custom.wash_instructions)"] || "";
+    }
 
-    console.log("  Created 3 categories");
+    // Add variant
+    const sku = row["Variant SKU"];
+    const size = row["Option1 Value"];
+    if (sku && size) {
+      product.variants.push({
+        sku,
+        size: size.toUpperCase(),
+        stock: parseInt(row["Variant Inventory Qty"]) || 0,
+        price: parseFloat(row["Variant Price"]) || product.price,
+      });
+    }
 
-    // ==========================================
-    // 3. Products with Variants
-    // ==========================================
-    const sizes = ["M", "L", "XL"];
-    const colors = [
-      { name: "Forest Green", hex: "#228B22" },
-      { name: "Sand", hex: "#C2B280" },
-    ];
+    // Add image
+    const imageUrl = row["Image Src"];
+    if (imageUrl && !product.images.some((img) => img.url === imageUrl)) {
+      product.images.push({
+        url: imageUrl,
+        position: parseInt(row["Image Position"]) || 0,
+        altText: row["Image Alt Text"] || "",
+      });
+    }
+  }
 
-    const productsData = [
-      // Tops
-      {
-        name: "Organic Cotton Tee",
-        slug: "organic-cotton-tee",
-        description: "A classic crew-neck tee made from 100% GOTS-certified organic cotton. Soft, breathable, and gentle on the planet. Features a relaxed fit that is perfect for everyday wear.",
-        shortDescription: "Classic organic cotton crew-neck tee",
-        price: 2499,
-        compareAtPrice: 2999,
-        material: "100% Organic Cotton",
-        careInstructions: "Machine wash cold with like colours. Tumble dry low. Do not bleach.",
-        categoryId: topsCategory.id,
-        isFeatured: true,
-      },
-      {
-        name: "Linen Blend Shirt",
-        slug: "linen-blend-shirt",
-        description: "A lightweight button-down shirt crafted from a blend of organic linen and cotton. Perfect for warm weather with a relaxed, effortless look. Naturally breathable and temperature-regulating.",
-        shortDescription: "Lightweight organic linen-cotton blend shirt",
-        price: 3999,
-        compareAtPrice: 4799,
-        material: "60% Organic Linen, 40% Organic Cotton",
-        careInstructions: "Hand wash or machine wash on delicate cycle. Hang dry. Iron on medium heat.",
-        categoryId: topsCategory.id,
-        isFeatured: false,
-      },
-      // Bottoms
-      {
-        name: "Hemp Cargo Pants",
-        slug: "hemp-cargo-pants",
-        description: "Durable and versatile cargo pants made from a hemp-organic cotton blend. Features multiple utility pockets and a comfortable tapered fit. Hemp naturally requires less water and no pesticides to grow.",
-        shortDescription: "Durable hemp-cotton blend cargo pants",
-        price: 4499,
-        compareAtPrice: 5499,
-        material: "55% Hemp, 45% Organic Cotton",
-        careInstructions: "Machine wash cold. Tumble dry low. Becomes softer with each wash.",
-        categoryId: bottomsCategory.id,
-        isFeatured: true,
-      },
-      {
-        name: "Recycled Denim Jeans",
-        slug: "recycled-denim-jeans",
-        description: "Stylish straight-fit jeans crafted from recycled denim and organic cotton. Each pair diverts textile waste from landfills while delivering the classic denim look and feel you love.",
-        shortDescription: "Sustainable jeans from recycled denim",
-        price: 5499,
-        compareAtPrice: 6499,
-        material: "70% Recycled Denim, 30% Organic Cotton",
-        careInstructions: "Wash sparingly. Machine wash cold inside out. Hang dry to preserve colour.",
-        categoryId: bottomsCategory.id,
-        isFeatured: false,
-      },
-      // Outerwear
-      {
-        name: "Organic Wool Jacket",
-        slug: "organic-wool-jacket",
-        description: "A premium jacket made from certified organic wool sourced from ethically raised sheep. Features a tailored silhouette with warm insulation perfect for cool weather. Naturally water-resistant and breathable.",
-        shortDescription: "Premium ethically-sourced organic wool jacket",
-        price: 8999,
-        compareAtPrice: 10999,
-        material: "100% Certified Organic Wool",
-        careInstructions: "Dry clean only. Store in a breathable garment bag. Brush gently to remove surface dust.",
-        categoryId: outerwearCategory.id,
-        isFeatured: true,
-      },
-      {
-        name: "Recycled Fleece Hoodie",
-        slug: "recycled-fleece-hoodie",
-        description: "A cozy hoodie made from recycled polyester fleece, sourced from post-consumer plastic bottles. Features a kangaroo pocket, adjustable drawstring hood, and ribbed cuffs. Warm, soft, and planet-friendly.",
-        shortDescription: "Cozy hoodie from recycled plastic bottles",
-        price: 5999,
-        compareAtPrice: 7499,
-        material: "100% Recycled Polyester Fleece",
-        careInstructions: "Machine wash cold with a microfibre-catching bag. Tumble dry low. Do not iron.",
-        categoryId: outerwearCategory.id,
-        isFeatured: true,
-      },
-    ];
+  console.log(`Found ${productMap.size} products\n`);
 
-    for (const productData of productsData) {
-      const product = await tx.product.upsert({
-        where: { slug: productData.slug },
-        update: {},
-        create: {
-          name: productData.name,
-          slug: productData.slug,
-          description: productData.description,
-          shortDescription: productData.shortDescription,
-          price: productData.price,
-          compareAtPrice: productData.compareAtPrice,
-          material: productData.material,
-          careInstructions: productData.careInstructions,
-          status: "ACTIVE",
-          isFeatured: productData.isFeatured,
-          categoryId: productData.categoryId,
+  // Clean existing data (order matters for FK constraints)
+  console.log("Cleaning existing data...");
+  await prisma.productImage.deleteMany();
+  await prisma.cartItem.deleteMany();
+  await prisma.productVariant.deleteMany();
+  await prisma.wishlistItem.deleteMany();
+  await prisma.review.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.category.deleteMany();
+  console.log("  Done\n");
+
+  // 1. Admin user
+  console.log("Creating admin user...");
+  const passwordHash = await bcrypt.hash("Admin@123456", 12);
+  await prisma.user.upsert({
+    where: { email: "admin@earthrevibe.com" },
+    update: {},
+    create: {
+      email: "admin@earthrevibe.com",
+      passwordHash,
+      firstName: "Super",
+      lastName: "Admin",
+      role: "SUPER_ADMIN",
+      emailVerified: true,
+      referralCode: "ADMIN_REF",
+    },
+  });
+  console.log("  admin@earthrevibe.com / Admin@123456\n");
+
+  // 2. Categories
+  console.log("Creating categories...");
+  const categoryCache = new Map<string, string>();
+
+  for (const product of productMap.values()) {
+    const cat = getCategoryInfo(product.category);
+    if (!categoryCache.has(cat.slug)) {
+      const created = await prisma.category.create({
+        data: {
+          name: cat.name,
+          slug: cat.slug,
+          description: `${cat.name} collection by Earth Revibe`,
+          isActive: true,
         },
       });
+      categoryCache.set(cat.slug, created.id);
+      console.log(`  ${cat.name}`);
+    }
+  }
 
-      // Create variants: 3 sizes x 2 colours = 6 variants per product
-      const skuPrefix = productData.slug
-        .split("-")
-        .map((w) => w[0]?.toUpperCase())
-        .join("");
+  // 3. Products from CSV
+  console.log("\nCreating products...");
+  let count = 0;
 
-      for (const size of sizes) {
-        for (const color of colors) {
-          const colorCode = color.name === "Forest Green" ? "FG" : "SD";
-          const sku = `${skuPrefix}-${size}-${colorCode}`;
+  for (const data of productMap.values()) {
+    const cat = getCategoryInfo(data.category);
+    const categoryId = categoryCache.get(cat.slug)!;
+    const description = stripHtml(data.bodyHtml) || `${data.title} by Earth Revibe`;
+    const color = COLOR_MAP[data.handle] || { name: "Natural", hex: "#D2B48C" };
+    const isFeatured = (data.tags || "").toLowerCase().includes("stock");
 
-          await tx.productVariant.upsert({
-            where: { sku },
-            update: {},
-            create: {
-              productId: product.id,
-              sku,
-              size,
-              color: color.name,
-              colorHex: color.hex,
-              stock: 20,
-              lowStockThreshold: 5,
-              isActive: true,
-            },
-          });
-        }
-      }
+    const product = await prisma.product.create({
+      data: {
+        name: data.title,
+        slug: data.handle,
+        description,
+        shortDescription: description.length > 200 ? description.substring(0, 197) + "..." : description,
+        price: data.price,
+        material: data.material || undefined,
+        careInstructions: data.careInstructions || undefined,
+        status: "ACTIVE",
+        isFeatured,
+        categoryId,
+      },
+    });
 
-      // Create a primary product image placeholder
-      await tx.productImage.create({
+    // Create variants
+    for (const v of data.variants) {
+      await prisma.productVariant.create({
         data: {
           productId: product.id,
-          url: `https://placehold.co/800x1000?text=${encodeURIComponent(productData.name)}`,
-          publicId: `products/${productData.slug}-primary`,
-          altText: productData.name,
-          sortOrder: 0,
-          isPrimary: true,
+          sku: v.sku,
+          size: v.size,
+          color: color.name,
+          colorHex: color.hex,
+          stock: v.stock,
+          isActive: true,
         },
       });
-
-      console.log(`  Created product: ${product.name} with 6 variants`);
     }
 
-    // ==========================================
-    // 4. Store Settings
-    // ==========================================
-    await tx.storeSettings.upsert({
-      where: { id: "default-store-settings" },
-      update: {},
-      create: {
-        id: "default-store-settings",
-        storeName: "Earth Revibe",
-        contactEmail: "hello@earthrevibe.com",
-        contactPhone: "+91-9876543210",
-        socialInstagram: "https://instagram.com/earthrevibe",
-        socialFacebook: "https://facebook.com/earthrevibe",
-        socialTwitter: "https://twitter.com/earthrevibe",
-        freeShippingThreshold: 1499,
-        gstRate: 18,
-        returnWindowDays: 7,
-      },
-    });
-
-    console.log("  Created store settings");
-
-    // ==========================================
-    // 5. Loyalty Config
-    // ==========================================
-    await tx.loyaltyConfig.upsert({
-      where: { id: "default-loyalty-config" },
-      update: {},
-      create: {
-        id: "default-loyalty-config",
-        pointsPerRupee: 0.1,
-        pointRedemptionValue: 0.1,
-        welcomeBonus: 50,
-        reviewBonus: 25,
-        birthdayBonus: 100,
-        minRedeemPoints: 100,
-        isActive: true,
-      },
-    });
-
-    console.log("  Created loyalty config");
-
-    // ==========================================
-    // 6. Referral Config
-    // ==========================================
-    await tx.referralConfig.upsert({
-      where: { id: "default-referral-config" },
-      update: {},
-      create: {
-        id: "default-referral-config",
-        referrerReward: 100,
-        refereeReward: 50,
-        requirePurchase: true,
-        isActive: true,
-      },
-    });
-
-    console.log("  Created referral config");
-
-    // ==========================================
-    // 7. Shipping Zones
-    // ==========================================
-    const shippingZones = [
-      {
-        name: "Metro Cities",
-        states: ["Delhi", "Maharashtra", "Karnataka", "Tamil Nadu", "Telangana", "West Bengal"],
-        rate: 0,
-        minDays: 2,
-        maxDays: 4,
-        isActive: true,
-      },
-      {
-        name: "Rest of India",
-        states: [],
-        rate: 99,
-        minDays: 4,
-        maxDays: 7,
-        isActive: true,
-      },
-    ];
-
-    for (const zone of shippingZones) {
-      await tx.shippingZone.create({
-        data: zone,
+    // Create images
+    const sortedImages = data.images.sort((a, b) => a.position - b.position);
+    for (let i = 0; i < sortedImages.length; i++) {
+      await prisma.productImage.create({
+        data: {
+          productId: product.id,
+          url: sortedImages[i].url,
+          publicId: `shopify-${data.handle}-${i + 1}`,
+          altText: sortedImages[i].altText || data.title,
+          sortOrder: i,
+          isPrimary: i === 0,
+        },
       });
     }
 
-    console.log("  Created shipping zones");
+    count++;
+    console.log(`  [${count}/${productMap.size}] ${data.title} (${data.variants.length} variants, ${sortedImages.length} images)`);
+  }
+
+  // 4. Store settings
+  console.log("\nCreating store settings...");
+  await prisma.storeSettings.upsert({
+    where: { id: "default-store-settings" },
+    update: {},
+    create: {
+      id: "default-store-settings",
+      storeName: "Earth Revibe",
+      contactEmail: "hello@earthrevibe.com",
+      contactPhone: "+91-9876543210",
+      socialInstagram: "https://instagram.com/earthrevibe",
+      freeShippingThreshold: 1499,
+      gstRate: 18,
+      returnWindowDays: 7,
+    },
   });
 
-  console.log("Database seeded successfully!");
+  // 5. Shipping zones
+  await prisma.shippingZone.deleteMany();
+  await prisma.shippingZone.create({
+    data: { name: "Metro Cities", states: ["Delhi", "Maharashtra", "Karnataka", "Tamil Nadu", "Telangana", "West Bengal"], rate: 0, minDays: 2, maxDays: 4, isActive: true },
+  });
+  await prisma.shippingZone.create({
+    data: { name: "Rest of India", states: [], rate: 99, minDays: 4, maxDays: 7, isActive: true },
+  });
+
+  console.log("  Store settings & shipping zones created");
+
+  console.log(`\n=== Seeded ${count} products successfully! ===`);
 }
 
 main()
   .catch((e) => {
-    console.error("Error seeding database:", e);
+    console.error("Seed failed:", e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => prisma.$disconnect());

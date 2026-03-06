@@ -3,7 +3,7 @@ import { adminOrderService } from "../services/admin-order.service";
 
 export const adminOrderController = {
   async listOrders(req: Request, res: Response) {
-    const result = await adminOrderService.listOrders(req.query as any);
+    const result = await adminOrderService.listOrders(res.locals.validatedQuery || req.query);
     res.json({ success: true, ...result });
   },
 

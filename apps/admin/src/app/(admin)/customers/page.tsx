@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Eye, UserCheck, UserX } from "lucide-react";
+import { Search, Eye, UserCheck, UserX, Download } from "lucide-react";
 import { Button, Badge, Card, Select } from "@/components/ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { useCustomers, useToggleCustomerActive } from "@/hooks/use-customers";
+import { useCustomers, useToggleCustomerActive, useExportCustomersCSV } from "@/hooks/use-customers";
 
 const activeOptions = [
   { value: "", label: "All Customers" },
@@ -34,6 +34,7 @@ export default function CustomersPage() {
     isActive: isActive || undefined,
   });
   const toggleActive = useToggleCustomerActive();
+  const exportCSV = useExportCustomersCSV();
 
   const handleToggle = async (id: string, name: string, currentActive: boolean) => {
     const action = currentActive ? "deactivate" : "activate";
@@ -49,9 +50,24 @@ export default function CustomersPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-charcoal">Customers</h1>
-        <p className="text-sm text-medium-gray mt-1">View and manage customer accounts</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-charcoal">Customers</h1>
+          <p className="text-sm text-medium-gray mt-1">View and manage customer accounts</p>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            exportCSV.mutate(undefined, {
+              onSuccess: () => toast.success("Customers exported successfully"),
+              onError: (err: any) => toast.error(err.message || "Failed to export customers"),
+            });
+          }}
+          disabled={exportCSV.isPending}
+        >
+          <Download size={16} />
+          {exportCSV.isPending ? "Exporting..." : "Export CSV"}
+        </Button>
       </div>
 
       {/* Filters */}

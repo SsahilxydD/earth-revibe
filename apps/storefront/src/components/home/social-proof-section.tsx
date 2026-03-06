@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { SectionHeader } from "./section-header";
+import { motion } from 'framer-motion';
+import { SectionHeader } from './section-header';
 
 const reviews = [
-  { name: "Arjun S.", location: "Mumbai", text: "The quality is unmatched. These tees have become my daily uniform.", rating: 5 },
-  { name: "Priya M.", location: "Delhi", text: "Finally found basics that actually last. Worth every rupee.", rating: 5 },
-  { name: "Rahul K.", location: "Bangalore", text: "The fit is perfect and the fabric feels premium. Highly recommend.", rating: 5 },
+  { name: 'Arjun S.', location: 'Mumbai', text: 'The quality is unmatched. These tees have become my daily uniform.', rating: 5 },
+  { name: 'Priya M.', location: 'Delhi', text: 'Finally found basics that actually last. Worth every rupee.', rating: 5 },
+  { name: 'Rahul K.', location: 'Bangalore', text: 'The fit is perfect and the fabric feels premium. Highly recommend.', rating: 5 },
 ];
 
 export function SocialProofSection() {

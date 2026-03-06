@@ -3,7 +3,7 @@ import { productService } from "../services/product.service";
 
 export const productController = {
   async listProducts(req: Request, res: Response) {
-    const result = await productService.listProducts(req.query as any);
+    const result = await productService.listProducts(res.locals.validatedQuery || req.query);
     res.json({ success: true, data: result });
   },
 

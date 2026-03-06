@@ -1,193 +1,196 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+'use client';
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description:
-    "Learn how Earth Revibe collects, uses, and protects your personal information. Compliant with the Indian IT Act.",
-};
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 
-export default function PrivacyPolicyPage() {
+export default function PrivacyPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12 lg:py-16">
-      {/* Breadcrumb */}
-      <nav className="mb-8">
-        <ol className="flex items-center gap-2 text-xs text-[var(--muted-text)]">
-          <li>
-            <Link href="/" className="hover:text-[var(--chocolate)] transition-colors">
-              Home
-            </Link>
-          </li>
-          <li>/</li>
-          <li className="text-[var(--primary-text)]">Privacy Policy</li>
-        </ol>
-      </nav>
+    <div className="min-h-screen bg-white pt-16">
+      {/* Header */}
+      <div className="px-6 py-12 lg:py-20 lg:px-10 border-b border-slate-100">
+        <div className="max-w-3xl mx-auto">
+          {/* Breadcrumb */}
+          <motion.nav
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-8"
+          >
+            <ol className="flex items-center gap-2 text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase">
+              <li>
+                <Link href="/" className="text-slate-400 hover:text-black transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li className="text-slate-300">/</li>
+              <li className="text-black">Privacy Policy</li>
+            </ol>
+          </motion.nav>
 
-      {/* Title */}
-      <h1 className="font-[var(--font-display)] text-3xl lg:text-4xl font-semibold text-[var(--chocolate)] mb-2">
-        Privacy Policy
-      </h1>
-      <p className="text-sm text-[var(--muted-text)] mb-10">Last updated: March 2026</p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <h1 className="text-[24px] lg:text-[32px] font-[var(--font-cinzel)] font-medium tracking-[0.04em] text-black mb-3">
+              Privacy Policy
+            </h1>
+            <p className="text-[11px] text-slate-400 tracking-[0.08em]">
+              Last updated: January 2026
+            </p>
+          </motion.div>
+        </div>
+      </div>
 
-      {/* Content */}
-      <div className="space-y-8 text-[var(--secondary-text)] leading-relaxed">
-        <p>
-          Earth Revibe (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to
-          protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and
-          safeguard your information when you visit our website or make a purchase. This policy is
-          published in compliance with the Information Technology Act, 2000 and the Information
-          Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or
-          Information) Rules, 2011.
-        </p>
+      {/* Main Content */}
+      <div className="px-6 py-12 lg:py-16 lg:px-10">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="prose prose-slate max-w-none"
+          >
+            <div className="text-[14px] text-slate-600 leading-[1.9] space-y-8">
+              <p>
+                Earth Revibe (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website earthrevibe.com and earthrevibe.store.
+              </p>
 
-        {/* Information We Collect */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Information We Collect
-          </h2>
-          <p className="mb-3">
-            <strong className="text-[var(--primary-text)]">Personal Information</strong>
-          </p>
-          <p className="mb-2">
-            When you create an account or place an order, we may collect the following:
-          </p>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>Full name</li>
-            <li>Email address</li>
-            <li>Phone number</li>
-            <li>Shipping and billing address</li>
-            <li>Payment information (processed securely through Razorpay)</li>
-          </ul>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Information We Collect</h2>
+                <p className="mb-4"><strong>Personal Information</strong></p>
+                <p>When you make a purchase or attempt to make a purchase, we collect certain information from you, including:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Full name</li>
+                  <li>Email address</li>
+                  <li>Phone number</li>
+                  <li>Shipping address</li>
+                  <li>Billing address</li>
+                  <li>Payment information (processed securely through Razorpay)</li>
+                </ul>
 
-          <p className="mt-4 mb-2">
-            <strong className="text-[var(--primary-text)]">Automatically Collected Information</strong>
-          </p>
-          <p className="mb-2">
-            When you browse our website, we automatically collect certain device and usage data,
-            including:
-          </p>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>IP address and browser type</li>
-            <li>Operating system</li>
-            <li>Pages viewed and links clicked</li>
-            <li>Access times and referring URLs</li>
-          </ul>
-        </section>
+                <p className="mt-4 mb-4"><strong>Automatically Collected Information</strong></p>
+                <p>When you visit our website, we automatically collect certain information about your device, including:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>IP address</li>
+                  <li>Browser type</li>
+                  <li>Operating system</li>
+                  <li>Access times</li>
+                  <li>Pages viewed</li>
+                  <li>Links clicked</li>
+                </ul>
+              </section>
 
-        {/* How We Use Your Information */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            How We Use Your Information
-          </h2>
-          <p className="mb-2">We use the information we collect to:</p>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>Process and fulfil your orders</li>
-            <li>Send order confirmations and shipping updates</li>
-            <li>Communicate about products, services, and sustainability initiatives</li>
-            <li>Improve our website and customer experience</li>
-            <li>Prevent fraudulent transactions and protect against misuse</li>
-            <li>Comply with applicable legal obligations under Indian law</li>
-          </ul>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">How We Use Your Information</h2>
+                <p>We use the information we collect to:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Process and fulfill your orders</li>
+                  <li>Send order confirmations and shipping updates</li>
+                  <li>Communicate with you about products, services, and promotions</li>
+                  <li>Improve our website and customer experience</li>
+                  <li>Prevent fraudulent transactions and protect against theft</li>
+                  <li>Comply with legal obligations</li>
+                </ul>
+              </section>
 
-        {/* Data Sharing */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Data Sharing
-          </h2>
-          <p className="mb-2">We share your information only with:</p>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>Shipping partners (Delhivery, BlueDart, etc.) to deliver your orders</li>
-            <li>Payment processors (Razorpay) for secure transaction handling</li>
-            <li>Analytics providers who help us understand site usage</li>
-            <li>Law enforcement agencies, when required by law</li>
-          </ul>
-          <p className="mt-3 font-medium text-[var(--primary-text)]">
-            We do NOT sell, rent, or trade your personal information to third parties for marketing
-            purposes.
-          </p>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Sharing Your Information</h2>
+                <p>We share your information only with:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Shipping partners (to deliver your orders)</li>
+                  <li>Payment processors (Razorpay) for secure payment processing</li>
+                  <li>Service providers who assist in our operations</li>
+                  <li>Law enforcement, if required by law</li>
+                </ul>
+                <p className="mt-4 font-medium">We DO NOT sell, rent, or trade your personal information to third parties for marketing purposes.</p>
+              </section>
 
-        {/* Cookies */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Cookies
-          </h2>
-          <p>
-            We use cookies and similar tracking technologies to enhance your browsing experience,
-            remember your preferences, analyse site traffic, and personalise content. You can manage
-            cookie preferences through your browser settings, though disabling cookies may affect
-            certain site functionality.
-          </p>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Payment Security</h2>
+                <p>
+                  All payment transactions are processed through Razorpay, a PCI-DSS compliant payment gateway. We do not store your complete credit/debit card details on our servers. Your payment information is encrypted and handled securely.
+                </p>
+              </section>
 
-        {/* Security */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Security
-          </h2>
-          <p>
-            We implement industry-standard security measures to protect your personal data. All
-            payment transactions are processed through Razorpay, a PCI-DSS compliant payment
-            gateway. We do not store your complete credit or debit card details on our servers.
-            While we strive to protect your information, no method of electronic transmission or
-            storage is completely secure, and we cannot guarantee absolute security.
-          </p>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Cookies</h2>
+                <p>
+                  We use cookies to enhance your browsing experience, analyze site traffic, and personalize content. You can choose to disable cookies through your browser settings, though this may affect site functionality.
+                </p>
+              </section>
 
-        {/* Your Rights */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Your Rights
-          </h2>
-          <p className="mb-2">
-            Under applicable Indian data protection laws, you have the right to:
-          </p>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>Access the personal information we hold about you</li>
-            <li>Request correction of inaccurate or incomplete data</li>
-            <li>Request deletion of your personal information</li>
-            <li>Withdraw consent for marketing communications at any time</li>
-            <li>Lodge a grievance with our Grievance Officer</li>
-          </ul>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Data Retention</h2>
+                <p>
+                  We retain your personal information for as long as necessary to fulfill the purposes outlined in this policy, unless a longer retention period is required by law.
+                </p>
+              </section>
 
-        {/* Compliance with Indian IT Act */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Compliance with Indian IT Act
-          </h2>
-          <p>
-            This policy is published in accordance with the provisions of the Information Technology
-            Act, 2000 and the rules made thereunder, including the IT (Reasonable Security Practices
-            and Procedures and Sensitive Personal Data or Information) Rules, 2011. We maintain
-            reasonable security practices and procedures as mandated by Indian law for the
-            protection of sensitive personal data.
-          </p>
-        </section>
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Your Rights</h2>
+                <p>You have the right to:</p>
+                <ul className="list-disc pl-6 mt-2 space-y-1">
+                  <li>Access the personal information we hold about you</li>
+                  <li>Request correction of inaccurate information</li>
+                  <li>Request deletion of your personal information</li>
+                  <li>Opt-out of marketing communications</li>
+                </ul>
+                <p className="mt-4">
+                  To exercise these rights, contact us at{' '}
+                  <a href="mailto:earthrevibeofficial@gmail.com" className="text-black underline hover:no-underline">
+                    earthrevibeofficial@gmail.com
+                  </a>
+                </p>
+              </section>
 
-        {/* Contact */}
-        <section>
-          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--chocolate)] mb-3">
-            Contact Us
-          </h2>
-          <p className="mb-2">
-            If you have questions or concerns about this Privacy Policy, or wish to exercise any of
-            your rights, please contact us:
-          </p>
-          <p>
-            Email:{" "}
-            <a
-              href="mailto:hello@earthrevibe.in"
-              className="text-[var(--chocolate)] underline hover:no-underline"
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Children&apos;s Privacy</h2>
+                <p>
+                  Our website is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Changes to This Policy</h2>
+                <p>
+                  We may update this Privacy Policy from time to time. The updated version will be indicated by an updated &quot;Last Updated&quot; date at the top of this page.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium text-black mb-4">Contact Us</h2>
+                <p>If you have questions about this Privacy Policy, please contact us:</p>
+                <p className="mt-2">
+                  Email:{' '}
+                  <a href="mailto:earthrevibeofficial@gmail.com" className="text-black underline hover:no-underline">
+                    earthrevibeofficial@gmail.com
+                  </a>
+                </p>
+              </section>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Contact CTA */}
+      <div className="px-6 py-12 bg-slate-50 lg:py-16 lg:px-10">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <p className="text-[13px] text-slate-600 mb-6">
+              Questions about our privacy practices?
+            </p>
+            <Link
+              href="/contact"
+              className="inline-block px-8 py-3 bg-black text-white text-[11px] font-medium tracking-[0.08em] uppercase hover:bg-slate-800 transition-colors"
             >
-              hello@earthrevibe.in
-            </a>
-          </p>
-          <p className="mt-2 text-sm text-[var(--muted-text)]">
-            Our customer support team is available Monday to Saturday, 10:00 AM to 7:00 PM IST.
-          </p>
-        </section>
+              Contact Us
+            </Link>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

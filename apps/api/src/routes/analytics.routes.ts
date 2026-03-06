@@ -9,6 +9,7 @@ const router: IRouter = Router();
 router.use(authenticate);
 router.use(authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 
+router.get("/home", asyncHandler(analyticsController.getHomeDashboard));
 router.get("/dashboard", asyncHandler(analyticsController.getDashboardStats));
 router.get("/revenue-chart", asyncHandler(analyticsController.getRevenueChart));
 router.get("/recent-orders", asyncHandler(analyticsController.getRecentOrders));

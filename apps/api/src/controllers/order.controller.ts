@@ -13,7 +13,7 @@ export const orderController = {
   },
 
   async listOrders(req: Request, res: Response) {
-    const result = await orderService.listOrders(req.user!.id, req.query as any);
+    const result = await orderService.listOrders(req.user!.id, res.locals.validatedQuery || req.query);
     res.json({ success: true, data: result });
   },
 

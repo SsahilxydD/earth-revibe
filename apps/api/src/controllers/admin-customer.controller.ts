@@ -15,6 +15,14 @@ export const adminCustomerController = {
     res.json({ success: true, ...result });
   },
 
+  async exportCSV(_req: Request, res: Response) {
+    const csv = await adminCustomerService.exportCustomersCSV();
+    const date = new Date().toISOString().split("T")[0];
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="customers-${date}.csv"`);
+    res.send(csv);
+  },
+
   async getCustomer(req: Request, res: Response) {
     const id = req.params.id as string;
     const customer = await adminCustomerService.getCustomer(id);

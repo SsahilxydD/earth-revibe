@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Minus, Plus, ShoppingBag } from "lucide-react";
-import { Button } from "@/components/ui";
 import { useCartStore } from "@/stores/cart-store";
+import { useRazorpayCheckout } from "@/hooks/use-razorpay-checkout";
 import { toast } from "@/components/ui/toast";
 
 interface AddToCartProps {
@@ -24,11 +22,19 @@ interface AddToCartProps {
 }
 
 export function AddToCart({ variant, product, disabled }: AddToCartProps) {
-  const [quantity, setQuantity] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
+  const items = useCartStore((s) => s.items);
+  const { startCheckout, isProcessing } = useRazorpayCheckout();
 
-  const handleAdd = () => {
+  const currentQtyInCart = variant ? (items.find((i) => i.variantId === variant.id)?.quantity || 0) : 0;
+  const stockLeft = variant ? variant.stock - currentQtyInCart : 0;
+
+  const addToCart = () => {
     if (!variant) return;
+    if (stockLeft <= 0) {
+      toast.error("No more stock available");
+      return;
+    }
     addItem({
       variantId: variant.id,
       productName: product.name,
@@ -37,41 +43,52 @@ export function AddToCart({ variant, product, disabled }: AddToCartProps) {
       size: variant.size,
       color: variant.color,
       price: Number(variant.price || product.price),
-      quantity,
+      quantity: 1,
+      stock: variant.stock,
     });
     toast.success(`${product.name} added to cart`);
-    setQuantity(1);
   };
 
-  return (
-    <div className="flex items-center gap-4">
-      {/* Quantity */}
-      <div className="flex items-center border border-light-gray rounded-lg">
-        <button
-          onClick={() => setQuantity(Math.max(1, quantity - 1))}
-          className="p-2.5 text-charcoal hover:text-forest-green transition-colors"
-        >
-          <Minus size={16} />
-        </button>
-        <span className="w-10 text-center text-sm font-medium">{quantity}</span>
-        <button
-          onClick={() => setQuantity(Math.min(variant?.stock || 10, quantity + 1))}
-          className="p-2.5 text-charcoal hover:text-forest-green transition-colors"
-        >
-          <Plus size={16} />
-        </button>
-      </div>
+  const buyNow = () => {
+    if (!variant) return;
+    // Add to cart first so it's tracked
+    addToCart();
+    // Open Magic Checkout directly with this item
+    startCheckout([{ variantId: variant.id, quantity: 1 }]);
+  };
 
-      {/* Add to cart button */}
-      <Button
-        onClick={handleAdd}
-        disabled={disabled || !variant || variant.stock === 0}
-        size="lg"
-        className="flex-1"
+  const needsSelection = disabled || !variant;
+  const outOfStock = variant && variant.stock === 0;
+
+  return (
+    <div className="flex flex-col gap-3 pt-2">
+      <button
+        onClick={addToCart}
+        disabled={needsSelection || !!outOfStock}
+        className={`w-full h-[50px] rounded-full text-[11px] tracking-[0.12em] uppercase transition-colors border ${
+          needsSelection
+            ? "border-slate-200 text-slate-400 cursor-default"
+            : outOfStock
+            ? "border-slate-200 text-slate-400 cursor-not-allowed"
+            : "border-black text-black hover:bg-black hover:text-white"
+        }`}
       >
-        <ShoppingBag size={20} />
-        {!variant ? "Select options" : variant.stock === 0 ? "Out of Stock" : "Add to Cart"}
-      </Button>
+        {needsSelection ? "Add to Bag" : outOfStock ? "Out of Stock" : "Add to Bag"}
+      </button>
+
+      <button
+        onClick={buyNow}
+        disabled={needsSelection || !!outOfStock || isProcessing}
+        className={`w-full h-[50px] rounded-full text-[11px] tracking-[0.12em] uppercase transition-colors ${
+          needsSelection || outOfStock
+            ? "bg-slate-900 text-white opacity-40 cursor-not-allowed"
+            : isProcessing
+            ? "bg-black/70 text-white cursor-wait"
+            : "bg-black text-white hover:bg-black/85"
+        }`}
+      >
+        {isProcessing ? "Processing..." : "Buy Now"}
+      </button>
     </div>
   );
 }

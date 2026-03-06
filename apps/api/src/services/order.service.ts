@@ -4,6 +4,7 @@ import { ApiError } from "../utils/api-error";
 import { razorpay } from "../config/razorpay";
 import { env } from "../config/env";
 import { generateOrderNumber } from "@earth-revibe/shared";
+import { shiprocketService } from "./shiprocket.service";
 import type { CreateOrderInput, VerifyPaymentInput, OrderQuery, CancelOrderInput } from "@earth-revibe/shared";
 
 export const orderService = {
@@ -105,7 +106,7 @@ export const orderService = {
     }
 
     // Calculate totals
-    const shippingAmount = subtotal >= 999 ? 0 : 99; // Free shipping over ₹999
+    const shippingAmount = 0;
     const totalBeforeTax = subtotal - discountAmount - loyaltyDiscount + shippingAmount;
     const taxAmount = 0; // Inclusive pricing, no additional tax
     const totalAmount = Math.max(totalBeforeTax + taxAmount, 0);
@@ -326,6 +327,11 @@ export const orderService = {
     if (cart) {
       await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     }
+
+    // Auto-create Shiprocket shipment (non-blocking)
+    shiprocketService.createShiprocketOrder(payment.order.id).catch((err) => {
+      console.error(`[Shiprocket] Failed to create shipment for order ${payment.order.id}:`, err);
+    });
 
     return { orderNumber: payment.order.orderNumber, pointsEarned };
   },

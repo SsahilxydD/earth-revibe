@@ -10,6 +10,7 @@ router.use(authenticate);
 router.use(authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 
 router.get("/", asyncHandler(adminCustomerController.listCustomers));
+router.get("/export-csv", asyncHandler(adminCustomerController.exportCSV));
 router.get("/:id", asyncHandler(adminCustomerController.getCustomer));
 router.put("/:id/toggle-active", asyncHandler(adminCustomerController.toggleActive));
 

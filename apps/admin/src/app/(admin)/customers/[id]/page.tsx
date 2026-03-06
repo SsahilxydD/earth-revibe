@@ -2,11 +2,18 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, ShoppingBag, Star, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, ShoppingBag, Star, UserCheck, UserX, TrendingUp } from "lucide-react";
 import { Button, Badge, Card } from "@/components/ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useCustomer, useToggleCustomerActive } from "@/hooks/use-customers";
+
+const segmentVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
+  VIP: "success",
+  Regular: "info",
+  New: "warning",
+  "At Risk": "error",
+};
 
 const statusVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
   PLACED: "info",
@@ -90,6 +97,11 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             <Badge variant={customer.isActive ? "success" : "error"}>
               {customer.isActive ? "Active" : "Inactive"}
             </Badge>
+            {customer.segment && (
+              <Badge variant={segmentVariant[customer.segment] || "default"}>
+                {customer.segment}
+              </Badge>
+            )}
           </div>
           <p className="text-sm text-medium-gray mt-1">Customer since {formatDate(customer.createdAt)}</p>
         </div>
@@ -107,7 +119,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         {/* Main column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <Card>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
@@ -127,6 +139,17 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 <div>
                   <p className="text-2xl font-semibold text-charcoal">{formatPrice(customer.totalSpent || 0)}</p>
                   <p className="text-xs text-medium-gray">Total Spent</p>
+                </div>
+              </div>
+            </Card>
+            <Card>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-deep-earth/10 flex items-center justify-center">
+                  <TrendingUp size={20} className="text-deep-earth" />
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold text-charcoal">{formatPrice(customer.avgOrderValue || 0)}</p>
+                  <p className="text-xs text-medium-gray">Avg Order Value</p>
                 </div>
               </div>
             </Card>

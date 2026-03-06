@@ -1,360 +1,358 @@
-"use client";
+'use client';
 
-import { useState, type FormEvent } from "react";
-import {
-  Package,
-  CheckCircle,
-  Truck,
-  MapPin,
-  Circle,
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
-import { api } from "@/lib/api-client";
-import { Badge } from "@/components/ui";
-
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
-
-interface OrderData {
-  orderNumber: string;
-  status: string;
-  createdAt: string;
-  totalAmount: number | string;
-  items?: { id: string; productName: string; quantity: number }[];
-  statusHistory?: { id: string; status: string; createdAt: string; note?: string }[];
-}
-
-/* ------------------------------------------------------------------ */
-/*  Constants                                                          */
-/* ------------------------------------------------------------------ */
-
-const TRACKING_STATUSES = [
-  "PLACED",
-  "CONFIRMED",
-  "PROCESSING",
-  "SHIPPED",
-  "DELIVERED",
-] as const;
-
-const STATUS_META: Record<
-  string,
-  { label: string; icon: React.ElementType; description: string }
-> = {
-  PLACED: {
-    label: "Order Placed",
-    icon: Package,
-    description: "Your order has been received",
-  },
-  CONFIRMED: {
-    label: "Confirmed",
-    icon: CheckCircle,
-    description: "Order confirmed by seller",
-  },
-  PROCESSING: {
-    label: "Processing",
-    icon: Circle,
-    description: "Your order is being prepared",
-  },
-  SHIPPED: {
-    label: "Shipped",
-    icon: Truck,
-    description: "Your order is on its way",
-  },
-  DELIVERED: {
-    label: "Delivered",
-    icon: MapPin,
-    description: "Order delivered successfully",
-  },
-};
-
-const statusBadgeVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
-  PLACED: "info",
-  CONFIRMED: "info",
-  PROCESSING: "warning",
-  SHIPPED: "warning",
-  OUT_FOR_DELIVERY: "warning",
-  DELIVERED: "success",
-  CANCELLED: "error",
-  RETURNED: "error",
-  REFUNDED: "default",
-};
-
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                            */
-/* ------------------------------------------------------------------ */
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function formatDateTime(date: string) {
-  return new Date(date).toLocaleString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { api } from '@/lib/api-client';
 
 export default function TrackOrderPage() {
-  const [orderNumber, setOrderNumber] = useState("");
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [order, setOrder] = useState<OrderData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  async function handleSubmit(e: FormEvent) {
+  const [order, setOrder] = useState<any>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderNumber.trim() || !email.trim()) return;
-
-    setLoading(true);
-    setError(null);
+    setError('');
     setOrder(null);
+
+    if (!orderNumber.trim() || !email.trim()) {
+      setError('Please enter both order number and email address.');
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
-      const data = await api.get<OrderData>(`/orders/${encodeURIComponent(orderNumber.trim())}`);
-      setOrder(data);
-    } catch (err: unknown) {
-      const apiErr = err as { status?: number; message?: string };
-      if (apiErr.status === 401) {
-        setError(
-          "This order requires authentication. Please log in to your account to view order details."
-        );
-      } else if (apiErr.status === 404) {
-        setError(
-          "Order not found. Please check your order number and try again."
-        );
-      } else {
-        setError(
-          apiErr.message || "Something went wrong. Please try again later."
-        );
-      }
+      const result = await api.get(`/orders/${encodeURIComponent(orderNumber)}?email=${encodeURIComponent(email)}`);
+      setOrder(result);
+    } catch (err: any) {
+      setError(err.message || 'Order not found. Please check your order number and email address.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }
-
-  function handleRetry() {
-    setError(null);
-    setOrder(null);
-  }
-
-  /* ---- Derive timeline state from order ---- */
-  const currentStatusIndex = order
-    ? TRACKING_STATUSES.indexOf(
-        order.status as (typeof TRACKING_STATUSES)[number]
-      )
-    : -1;
+  };
 
   return (
-    <div className="max-w-lg mx-auto py-12 lg:py-16 px-4">
-      {/* Title */}
-      <h1 className="font-heading text-3xl lg:text-4xl text-chocolate text-center mb-2">
-        Track Your Order
-      </h1>
-      <p className="text-center text-muted-text mb-8">
-        Enter your order number and email to track your order status.
-      </p>
-
-      {/* ---- Form ---- */}
-      {!order && !error && (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="orderNumber"
-              className="block text-sm font-medium text-secondary-text mb-1"
-            >
-              Order Number
-            </label>
-            <input
-              id="orderNumber"
-              type="text"
-              required
-              value={orderNumber}
-              onChange={(e) => setOrderNumber(e.target.value)}
-              placeholder="e.g. ER-20260305-ABC123"
-              className="w-full border border-border-color rounded-lg px-4 py-3 text-primary-text placeholder:text-muted-text focus:outline-none focus:ring-2 focus:ring-[var(--sage)] transition-colors"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-secondary-text mb-1"
-            >
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email used for the order"
-              className="w-full border border-border-color rounded-lg px-4 py-3 text-primary-text placeholder:text-muted-text focus:outline-none focus:ring-2 focus:ring-[var(--sage)] transition-colors"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-[var(--chocolate)] text-white w-full py-3 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
+    <div className="min-h-screen bg-white pt-16">
+      {/* Header */}
+      <div className="px-6 py-12 lg:py-20 lg:px-10 border-b border-slate-100">
+        <div className="max-w-xl mx-auto">
+          {/* Breadcrumb */}
+          <motion.nav
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-8"
           >
-            {loading ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                Tracking...
-              </>
-            ) : (
-              "Track Order"
-            )}
-          </button>
-        </form>
-      )}
+            <ol className="flex items-center gap-2 text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase">
+              <li>
+                <Link href="/" className="text-slate-400 hover:text-black transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li className="text-slate-300">/</li>
+              <li className="text-black">Track Order</li>
+            </ol>
+          </motion.nav>
 
-      {/* ---- Error State ---- */}
-      {error && (
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center mx-auto">
-            <AlertCircle size={32} className="text-error" />
-          </div>
-          <p className="text-secondary-text">{error}</p>
-          <button
-            onClick={handleRetry}
-            className="bg-[var(--chocolate)] text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
           >
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {/* ---- Result Display ---- */}
-      {order && (
-        <div className="space-y-6">
-          {/* Order summary header */}
-          <div className="bg-card-bg rounded-xl p-5 border border-border-color">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-sm text-muted-text">Order Number</p>
-                <p className="text-lg font-semibold text-primary-text">
-                  {order.orderNumber}
-                </p>
-              </div>
-              <Badge variant={statusBadgeVariant[order.status] || "default"}>
-                {order.status.replace(/_/g, " ")}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-text">
-              Placed on {formatDate(order.createdAt)}
+            <h1 className="text-[24px] lg:text-[32px] font-[var(--font-cinzel)] font-medium tracking-[0.04em] text-black mb-4">
+              Track Your Order
+            </h1>
+            <p className="text-[14px] text-slate-500">
+              Enter your order number and email to track your shipment.
             </p>
-          </div>
+          </motion.div>
+        </div>
+      </div>
 
-          {/* Status Timeline */}
-          <div className="bg-card-bg rounded-xl p-5 border border-border-color">
-            <h2 className="font-heading text-xl text-chocolate mb-5">
-              Order Status
-            </h2>
+      {/* Track Form */}
+      <div className="px-6 py-12 lg:py-16 lg:px-10">
+        <div className="max-w-md mx-auto">
+          <motion.form
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            <div>
+              <label className="block text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-500 mb-2">
+                Order Number
+              </label>
+              <input
+                type="text"
+                value={orderNumber}
+                onChange={(e) => setOrderNumber(e.target.value)}
+                placeholder="e.g., ER-2024-12345"
+                className="w-full px-4 py-3 text-[14px] border border-slate-200 focus:border-black focus:outline-none transition-colors"
+              />
+            </div>
 
-            <div className="relative">
-              {TRACKING_STATUSES.map((status, index) => {
-                const meta = STATUS_META[status];
-                const Icon = meta.icon;
+            <div>
+              <label className="block text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-500 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="The email used for your order"
+                className="w-full px-4 py-3 text-[14px] border border-slate-200 focus:border-black focus:outline-none transition-colors"
+              />
+            </div>
 
-                const isPast = currentStatusIndex >= 0 && index < currentStatusIndex;
-                const isCurrent = index === currentStatusIndex;
-                const isFuture = currentStatusIndex < 0 || index > currentStatusIndex;
+            {error && (
+              <p className="text-[13px] text-red-600">{error}</p>
+            )}
 
-                /* Find matching history entry for timestamp */
-                const historyEntry = order.statusHistory?.find(
-                  (h) => h.status === status
-                );
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-4 bg-black text-white text-[12px] font-medium tracking-[0.08em] uppercase hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                  />
+                  Tracking...
+                </>
+              ) : (
+                'Track Order'
+              )}
+            </button>
+          </motion.form>
+        </div>
+      </div>
 
-                return (
-                  <div key={status} className="flex gap-4 relative">
-                    {/* Vertical line + icon */}
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          isCurrent
-                            ? "bg-[var(--sage)] text-white"
-                            : isPast
-                              ? "bg-success/20 text-success"
-                              : "bg-light-gray text-muted-text"
-                        }`}
-                      >
-                        {isPast ? (
-                          <CheckCircle size={16} />
-                        ) : (
-                          <Icon size={16} />
-                        )}
+      {/* Order Details */}
+      {order && (
+        <div className="px-6 py-12 lg:py-16 lg:px-10 border-t border-slate-100">
+          <div className="max-w-2xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white border border-slate-200 p-6"
+            >
+              <h2 className="text-[16px] font-[var(--font-cinzel)] font-medium tracking-[0.04em] text-black mb-4">
+                Order {order.id || order.orderNumber}
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-500 mb-1">
+                    Status
+                  </p>
+                  <p className="text-[14px] text-black">{order.status}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-500 mb-1">
+                    Order Date
+                  </p>
+                  <p className="text-[14px] text-black">{order.date || order.createdAt}</p>
+                </div>
+
+                {/* Tracking Information */}
+                {order.tracking && (
+                  <div className="bg-slate-50 p-4 rounded border border-slate-100">
+                    <p className="text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-500 mb-3">
+                      Tracking Information
+                    </p>
+                    <div className="space-y-2">
+                      {order.tracking.carrier && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] text-slate-500">Carrier:</span>
+                          <span className="text-[13px] font-medium text-black">{order.tracking.carrier}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[12px] text-slate-500">Tracking #:</span>
+                        <span className="text-[13px] font-mono text-black">{order.tracking.number}</span>
                       </div>
-                      {/* Connector line (not on last item) */}
-                      {index < TRACKING_STATUSES.length - 1 && (
-                        <div
-                          className={`w-0.5 flex-1 min-h-8 ${
-                            isPast ? "bg-success/40" : "bg-light-gray"
-                          }`}
-                        />
-                      )}
-                    </div>
-
-                    {/* Text */}
-                    <div className={`pb-6 ${isFuture ? "opacity-40" : ""}`}>
-                      <p
-                        className={`font-medium text-sm ${
-                          isCurrent
-                            ? "text-[var(--chocolate)]"
-                            : isPast
-                              ? "text-primary-text"
-                              : "text-muted-text"
-                        }`}
-                      >
-                        {meta.label}
-                      </p>
-                      <p className="text-xs text-muted-text mt-0.5">
-                        {meta.description}
-                      </p>
-                      {historyEntry && (
-                        <p className="text-xs text-secondary-text mt-1">
-                          {formatDateTime(historyEntry.createdAt)}
-                        </p>
-                      )}
-                      {historyEntry?.note && (
-                        <p className="text-xs text-secondary-text italic mt-0.5">
-                          {historyEntry.note}
-                        </p>
+                      {order.tracking.url && (
+                        <a
+                          href={order.tracking.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-black text-white text-[11px] font-medium tracking-[0.08em] uppercase hover:bg-slate-800 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          Track Shipment
+                        </a>
                       )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                )}
 
-          {/* Back / track another */}
-          <button
-            onClick={() => {
-              setOrder(null);
-              setOrderNumber("");
-              setEmail("");
-            }}
-            className="w-full border border-border-color text-secondary-text py-3 rounded-lg font-medium hover:bg-card-bg transition-colors"
-          >
-            Track Another Order
-          </button>
+                {order.deliveredDate && (
+                  <div>
+                    <p className="text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-500 mb-1">
+                      Delivered
+                    </p>
+                    <p className="text-[14px] text-black">{order.deliveredDate}</p>
+                  </div>
+                )}
+                {order.estimatedDelivery && !order.deliveredDate && (
+                  <div>
+                    <p className="text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-500 mb-1">
+                      Estimated Delivery
+                    </p>
+                    <p className="text-[14px] text-black">{order.estimatedDelivery}</p>
+                  </div>
+                )}
+
+                {/* Shipping Address */}
+                {order.shippingAddress && (
+                  <div>
+                    <p className="text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-500 mb-1">
+                      Shipping To
+                    </p>
+                    <p className="text-[13px] text-black">{order.shippingAddress.name}</p>
+                    <p className="text-[13px] text-slate-600">{order.shippingAddress.address}</p>
+                    <p className="text-[13px] text-slate-600">
+                      {order.shippingAddress.city}{order.shippingAddress.state ? `, ${order.shippingAddress.state}` : ''} {order.shippingAddress.pincode}
+                    </p>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-slate-200">
+                  <p className="text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-500 mb-2">
+                    Items
+                  </p>
+                  <div className="space-y-2">
+                    {order.items?.map((item: any, index: number) => (
+                      <div key={index} className="flex items-center gap-3 text-[13px]">
+                        <span className="text-slate-600">{item.quantity}x</span>
+                        <span className="text-black">{item.name || item.productName}</span>
+                        <span className="text-slate-500 ml-auto">
+                          {item.price != null ? `Rs. ${Number(item.price).toLocaleString('en-IN')}` : ''}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-slate-200">
+                  <div className="flex justify-between items-center">
+                    <p className="text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-500">
+                      Total
+                    </p>
+                    <p className="text-[16px] font-medium text-black">
+                      Rs. {(typeof order.total === 'number' ? (order.total >= 1000 ? order.total / 100 : order.total) : Number(order.totalAmount || 0)).toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
       )}
+
+      {/* Alternative Options */}
+      <div className="px-6 py-12 lg:py-16 lg:px-10 border-t border-slate-100">
+        <div className="max-w-xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <p className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.2em] uppercase text-slate-400 mb-6">
+              Other Ways to Track
+            </p>
+
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[13px] font-medium text-black mb-1">Check Your Email</p>
+                  <p className="text-[13px] text-slate-500 leading-[1.7]">
+                    We sent a tracking link to your email when your order shipped.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[13px] font-medium text-black mb-1">Sign In to Your Account</p>
+                  <p className="text-[13px] text-slate-500 leading-[1.7]">
+                    View all your orders and tracking info in My Orders.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Order Status Guide */}
+      <div className="px-6 py-12 lg:py-16 lg:px-10 bg-slate-50">
+        <div className="max-w-xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <p className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.2em] uppercase text-slate-400 mb-6">
+              Order Status Guide
+            </p>
+
+            <div className="space-y-4">
+              {[
+                { color: 'bg-slate-300', status: 'Processing', desc: 'We\'re preparing your order' },
+                { color: 'bg-amber-400', status: 'Shipped', desc: 'Your order is on the way' },
+                { color: 'bg-blue-400', status: 'Out for Delivery', desc: 'Arriving today' },
+                { color: 'bg-green-500', status: 'Delivered', desc: 'Enjoy your purchase!' },
+              ].map((item) => (
+                <div key={item.status} className="flex items-center gap-4">
+                  <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
+                  <span className="text-[13px] text-slate-600">
+                    <strong className="text-black font-medium">{item.status}</strong> — {item.desc}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Contact CTA */}
+      <div className="px-6 py-12 lg:py-16 lg:px-10">
+        <div className="max-w-xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <p className="text-[13px] text-slate-600 mb-6">
+              Need help with your order?
+            </p>
+            <Link
+              href="/contact"
+              className="inline-block px-8 py-3 bg-black text-white text-[11px] font-medium tracking-[0.08em] uppercase hover:bg-slate-800 transition-colors"
+            >
+              Contact Us
+            </Link>
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

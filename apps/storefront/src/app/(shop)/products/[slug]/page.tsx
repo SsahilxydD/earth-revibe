@@ -1,17 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Heart, ChevronDown, Truck, RotateCcw, Shield } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { formatPrice } from "@earth-revibe/shared";
 import { ImageGallery } from "@/components/product/image-gallery";
 import { VariantSelector } from "@/components/product/variant-selector";
 import { AddToCart } from "@/components/product/add-to-cart";
 import { ProductReviews } from "@/components/product/product-reviews";
-import { Skeleton } from "@/components/ui";
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -24,26 +22,54 @@ export default function ProductDetailPage() {
     queryFn: () => api.get(`/products/${slug}`),
   });
 
+  // Auto-select when only one option exists — must be before any early returns
+  useEffect(() => {
+    if (!product) return;
+    const colors = Array.from(new Set((product.variants || []).map((v: any) => String(v.color))));
+    const sizes = Array.from(new Set((product.variants || []).map((v: any) => String(v.size))));
+    if (colors.length === 1) setSelectedColor(colors[0] as string);
+    if (sizes.length === 1) setSelectedSize(sizes[0] as string);
+  }, [product]);
+
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Skeleton className="aspect-[3/4] w-full rounded-xl" />
-          <div className="space-y-4">
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-6 w-1/4" />
-            <Skeleton className="h-32 w-full" />
+      <div className="bg-white min-h-screen">
+        <div className="h-16 lg:h-20" aria-hidden="true" />
+        <div className="px-3 sm:px-4 md:px-10 max-w-7xl mx-auto py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
+            <div className="aspect-[3/4] w-full bg-slate-100 animate-pulse" />
+            <div className="space-y-4 py-4">
+              <div className="h-3 w-1/4 bg-slate-100 animate-pulse" />
+              <div className="h-5 w-3/4 bg-slate-100 animate-pulse" />
+              <div className="h-4 w-1/4 bg-slate-100 animate-pulse" />
+              <div className="h-24 w-full bg-slate-100 animate-pulse mt-8" />
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!product) return <div className="text-center py-16 text-medium-gray">Product not found</div>;
+  if (!product) {
+    return (
+      <div className="bg-white min-h-screen">
+        <div className="h-16 lg:h-20" aria-hidden="true" />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 80px)' }}>
+          <div className="text-center">
+            <h1 className="font-[var(--font-cinzel)] text-2xl text-black mb-4">Product Not Found</h1>
+            <p className="text-slate-500 text-[12px]">The product you&apos;re looking for doesn&apos;t exist.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const selectedVariant = product.variants?.find(
-    (v: any) => v.size === selectedSize && v.color === selectedColor
-  );
+  const hasVariants = product.variants?.length > 0;
+
+  const selectedVariant = hasVariants
+    ? product.variants.find((v: any) => v.size === selectedSize && v.color === selectedColor) || null
+    : { id: product.id, size: "", color: "", stock: 999, price: product.price };
+
   const price = selectedVariant?.price ? Number(selectedVariant.price) : Number(product.price);
   const compareAt = product.compareAtPrice ? Number(product.compareAtPrice) : null;
 
@@ -54,107 +80,115 @@ export default function ProductDetailPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* Breadcrumb */}
-      <nav className="text-sm text-medium-gray mb-6">
-        <Link href="/" className="hover:text-forest-green">Home</Link>
-        <span className="mx-2">/</span>
-        <Link href="/products" className="hover:text-forest-green">Products</Link>
-        <span className="mx-2">/</span>
-        <span className="text-charcoal">{product.name}</span>
-      </nav>
+    <div className="bg-white min-h-screen">
+      {/* Spacer for fixed navbar */}
+      <div className="h-16 lg:h-20" aria-hidden="true" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-        {/* Image Gallery */}
-        <ImageGallery images={product.images || []} />
+      <div className="px-3 sm:px-4 md:px-10 max-w-7xl mx-auto py-6 pb-24 lg:pb-8">
+        {/* Breadcrumb */}
+        <nav className="flex flex-wrap items-center gap-2 text-[11px] tracking-[0.08em] uppercase text-slate-500 mb-6 font-[var(--font-cinzel)] font-semibold">
+          <Link href="/" className="hover:text-slate-900 transition-colors">Home</Link>
+          <span className="text-slate-400">&gt;</span>
+          <Link href="/products" className="hover:text-slate-900 transition-colors">All</Link>
+          <span className="text-slate-400">&gt;</span>
+          <span className="text-slate-900 truncate max-w-[200px]">{product.name}</span>
+        </nav>
 
-        {/* Product Info */}
-        <div className="space-y-6">
-          {product.category && (
-            <p className="text-xs font-semibold text-sage uppercase tracking-wide">{product.category.name}</p>
-          )}
-          <h1 className="text-2xl lg:text-3xl font-heading font-semibold text-deep-earth">{product.name}</h1>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
+          {/* Image Gallery */}
+          <ImageGallery images={product.images || []} />
 
-          {/* Price */}
-          <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold text-charcoal">{formatPrice(price)}</span>
-            {compareAt && compareAt > price && (
-              <>
-                <span className="text-lg text-medium-gray line-through">{formatPrice(compareAt)}</span>
-                <span className="text-sm font-semibold text-terracotta">
-                  {Math.round(((compareAt - price) / compareAt) * 100)}% OFF
-                </span>
-              </>
+          {/* Product Info */}
+          <div className="space-y-4 lg:py-2">
+            {product.category && (
+              <p className="text-[10px] tracking-[0.12em] uppercase text-slate-400">
+                {product.category.name}
+              </p>
             )}
-          </div>
 
-          {product.shortDescription && (
-            <p className="text-dark-gray">{product.shortDescription}</p>
-          )}
+            <h1 className="text-[16px] md:text-[18px] font-medium tracking-[0.02em] text-black leading-snug">
+              {product.name}
+            </h1>
 
-          {/* Variant Selector */}
-          {product.variants?.length > 0 && (
-            <VariantSelector
-              variants={product.variants}
-              selectedSize={selectedSize}
-              selectedColor={selectedColor}
-              onSizeChange={setSelectedSize}
-              onColorChange={setSelectedColor}
-            />
-          )}
-
-          {/* Add to Cart */}
-          <AddToCart
-            variant={selectedVariant || null}
-            product={product}
-            disabled={!selectedSize || !selectedColor}
-          />
-
-          {/* Wishlist */}
-          <button className="flex items-center gap-2 text-sm text-dark-gray hover:text-forest-green transition-colors">
-            <Heart size={18} /> Add to Wishlist
-          </button>
-
-          {/* Quick info badges */}
-          <div className="flex gap-6 pt-4 border-t border-light-gray">
-            <div className="flex items-center gap-2 text-xs text-dark-gray">
-              <Truck size={16} className="text-forest-green" /> Free shipping over Rs 2,000
+            {/* Price */}
+            <div className="flex items-baseline gap-3">
+              <span className="text-[15px] text-black">
+                {formatPrice(price)}
+              </span>
+              {compareAt && compareAt > price && (
+                <>
+                  <span className="text-[13px] text-slate-400 line-through">{formatPrice(compareAt)}</span>
+                  <span className="text-[10px] font-medium tracking-[0.06em] uppercase text-red-500">
+                    {Math.round(((compareAt - price) / compareAt) * 100)}% off
+                  </span>
+                </>
+              )}
             </div>
-            <div className="flex items-center gap-2 text-xs text-dark-gray">
-              <RotateCcw size={16} className="text-forest-green" /> 7-day returns
-            </div>
-            <div className="flex items-center gap-2 text-xs text-dark-gray">
-              <Shield size={16} className="text-forest-green" /> Secure payment
-            </div>
-          </div>
 
-          {/* Accordion sections */}
-          <div className="border-t border-light-gray pt-4 space-y-0">
-            {accordions.map((acc) => (
-              <div key={acc.id} className="border-b border-light-gray">
-                <button
-                  onClick={() => setOpenAccordion(openAccordion === acc.id ? null : acc.id)}
-                  className="flex items-center justify-between w-full py-4 text-sm font-medium text-charcoal"
-                >
-                  {acc.title}
-                  <ChevronDown size={16} className={`transition-transform ${openAccordion === acc.id ? "rotate-180" : ""}`} />
-                </button>
-                {openAccordion === acc.id && (
-                  <div className="pb-4 text-sm text-dark-gray leading-relaxed whitespace-pre-line">
-                    {acc.content}
-                  </div>
-                )}
+            {product.shortDescription && (
+              <p className="text-[12px] leading-[1.8] text-slate-600 pt-1">{product.shortDescription}</p>
+            )}
+
+            {/* Variant Selector */}
+            {product.variants?.length > 0 && (
+              <div className="pt-2">
+                <VariantSelector
+                  variants={product.variants}
+                  selectedSize={selectedSize}
+                  selectedColor={selectedColor}
+                  onSizeChange={setSelectedSize}
+                  onColorChange={setSelectedColor}
+                />
               </div>
-            ))}
+            )}
+
+            {/* Add to Cart + Buy Now */}
+            <div className="pt-1">
+              <AddToCart
+                variant={selectedVariant || null}
+                product={product}
+                disabled={!selectedSize || !selectedColor}
+              />
+            </div>
+
+            {/* Accordion sections */}
+            <div className="border-t border-slate-100 pt-2 space-y-0">
+              {accordions.map((acc) => (
+                <div key={acc.id} className="border-b border-slate-100">
+                  <button
+                    onClick={() => setOpenAccordion(openAccordion === acc.id ? null : acc.id)}
+                    className="flex items-center justify-between w-full py-4 text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase text-black"
+                  >
+                    {acc.title}
+                    <svg
+                      className={`w-3.5 h-3.5 text-slate-400 transition-transform ${openAccordion === acc.id ? "rotate-180" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {openAccordion === acc.id && (
+                    <div className="pb-4 text-[12px] text-slate-600 leading-[1.9] whitespace-pre-line">
+                      {acc.content}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Reviews */}
-      <section className="mt-16">
-        <h2 className="text-xl font-heading font-semibold text-deep-earth mb-6">Customer Reviews</h2>
-        <ProductReviews reviews={product.reviews || []} />
-      </section>
+        {/* Reviews */}
+        <section className="mt-16 border-t border-slate-100 pt-12">
+          <h2 className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.15em] uppercase text-slate-400 mb-8">
+            Customer Reviews
+          </h2>
+          <ProductReviews reviews={product.reviews || []} />
+        </section>
+      </div>
     </div>
   );
 }

@@ -1,199 +1,224 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Search, Heart, ShoppingBag, User, Menu, ChevronDown, LogOut, Package, Gift, Star } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAuthStore } from "@/stores/auth-store";
-import { useCartStore } from "@/stores/cart-store";
-import { useUIStore } from "@/stores/ui-store";
-import { MobileNav } from "./mobile-nav";
-import { SearchBar } from "./search-bar";
+import Link from 'next/link';
+import Image from 'next/image';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useCartStore } from '@/stores/cart-store';
+import { useUIStore } from '@/stores/ui-store';
 
-const navCategories = [
-  { name: "All Products", href: "/products" },
-  { name: "Tops & Basics", href: "/categories/tops-basics" },
-  { name: "Bottoms & Pants", href: "/categories/bottoms-pants" },
-  { name: "Outerwear & Jackets", href: "/categories/outerwear-jackets" },
-  { name: "New Arrivals", href: "/collections/new-arrivals" },
-  { name: "Bestsellers", href: "/collections/bestsellers" },
+const menuCategories = [
+  { name: 'All Products', slug: 'all-products', href: '/products' },
+  { name: 'T-Shirts', slug: 't-shirts', href: '/categories/t-shirts' },
+  { name: 'Shirts', slug: 'shirts', href: '/categories/shirts' },
+  { name: 'Polos', slug: 'polos', href: '/categories/polos' },
+  { name: 'Cargo Pants', slug: 'cargo-pants', href: '/categories/cargo-pants' },
+  { name: 'Trousers', slug: 'trousers', href: '/categories/trousers' },
+  { name: 'Outerwear', slug: 'outerwear', href: '/categories/outerwear' },
 ];
 
 export function Header() {
-  const { user, isAuthenticated, logout } = useAuthStore();
-  const cartItemCount = useCartStore((s) => s.getItemCount());
-  const { isMobileMenuOpen, setMobileMenuOpen, isHeaderTransparent } = useUIStore();
-  const [isShopOpen, setIsShopOpen] = useState(false);
-  const [isUserOpen, setIsUserOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { isHeaderTransparent } = useUIStore();
+  const totalItems = useCartStore((s) => s.getItemCount());
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    setIsMounted(true);
   }, []);
 
-  const isTransparent = isHeaderTransparent && !isScrolled;
-  const textColor = isTransparent ? "text-white" : "text-charcoal";
-  const hoverColor = isTransparent ? "hover:text-white/80" : "hover:text-forest-green";
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isMobileMenuOpen]);
+
+  const scrolledState = !isHeaderTransparent || isScrolled;
+  const logoSrc = (scrolledState || isMobileMenuOpen)
+    ? '/Earth Revibe Logo Black.png'
+    : '/Earth Revibe Logo White.png';
 
   return (
     <>
-      <header
-        className={`sticky top-0 z-40 transition-all duration-300 ${
-          isTransparent
-            ? "bg-transparent"
-            : "bg-white/95 backdrop-blur-sm border-b border-light-gray"
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-500 ${
+          isMobileMenuOpen
+            ? 'bg-white'
+            : scrolledState
+              ? 'bg-white'
+              : 'bg-transparent'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Mobile menu button */}
-            <button
-              className={`lg:hidden p-2 -ml-2 ${textColor}`}
-              onClick={() => setMobileMenuOpen(true)}
-              aria-label="Open menu"
-            >
-              <Menu size={24} />
-            </button>
-
-            {/* Logo */}
-            <Link href="/" className="relative h-10 w-32 lg:h-12 lg:w-40">
-              <Image
-                src={isTransparent ? "/Earth Revibe Logo White.png" : "/Earth Revibe Logo Black.png"}
-                alt="Earth Revibe"
-                fill
-                className="object-contain"
-                priority
-              />
-            </Link>
-
-            {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-8">
-              <div
-                className="relative"
-                onMouseEnter={() => setIsShopOpen(true)}
-                onMouseLeave={() => setIsShopOpen(false)}
+        <nav className="w-full px-5 sm:px-8 lg:px-12">
+          <div className="grid grid-cols-3 items-center h-16 lg:h-20 w-full">
+            {/* Left - Menu Button */}
+            <div className="flex justify-start">
+              <motion.button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                type="button"
+                aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+                className={`flex items-center gap-3 py-2 transition-colors duration-300 ${
+                  scrolledState || isMobileMenuOpen ? 'text-black hover:text-black/70' : 'text-white hover:text-white/70'
+                }`}
+                whileTap={{ scale: 0.95 }}
               >
-                <button className={`flex items-center gap-1 text-sm font-medium ${textColor} ${hoverColor} transition-colors`}>
-                  Shop <ChevronDown size={16} />
-                </button>
-                <AnimatePresence>
-                  {isShopOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-light-gray py-2"
-                    >
-                      {navCategories.map((cat) => (
-                        <Link
-                          key={cat.href}
-                          href={cat.href}
-                          className="block px-4 py-2.5 text-sm text-charcoal hover:bg-cream hover:text-forest-green transition-colors"
-                        >
-                          {cat.name}
-                        </Link>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              <Link href="/about" className={`text-sm font-medium ${textColor} ${hoverColor} transition-colors`}>
-                Our Story
-              </Link>
-              <Link href="/blog" className={`text-sm font-medium ${textColor} ${hoverColor} transition-colors`}>
-                Blog
-              </Link>
-              <Link href="/contact" className={`text-sm font-medium ${textColor} ${hoverColor} transition-colors`}>
-                Contact
-              </Link>
-            </nav>
+                <div className="w-[18px] h-[10px] flex flex-col justify-between">
+                  <motion.span
+                    className="block h-[2px] w-full bg-current origin-center"
+                    animate={isMobileMenuOpen ? { rotate: 45, y: 4 } : { rotate: 0, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                  <motion.span
+                    className="block h-[2px] w-full bg-current origin-center"
+                    animate={isMobileMenuOpen ? { rotate: -45, y: -4 } : { rotate: 0, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+                <span className="text-sm font-medium tracking-wide hidden sm:block">Shop</span>
+              </motion.button>
+            </div>
 
-            {/* Right icons */}
-            <div className="flex items-center gap-2 lg:gap-4">
-              <button
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className={`p-2 ${textColor} ${hoverColor} transition-colors`}
-                aria-label="Search"
+            {/* Center - Logo */}
+            <div className="flex justify-center">
+              <Link href="/" className={isMobileMenuOpen ? 'hidden sm:block' : 'block'}>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative h-7 sm:h-[34px] w-[100px] sm:w-[119px]"
+                >
+                  <Image
+                    key={logoSrc}
+                    src={logoSrc}
+                    alt="Earth Revibe"
+                    fill
+                    sizes="(max-width: 640px) 100px, 119px"
+                    className="object-contain"
+                    loading="eager"
+                    priority
+                  />
+                </motion.div>
+              </Link>
+            </div>
+
+            {/* Right - Icons */}
+            <div className="flex justify-end items-center gap-3 sm:gap-2 lg:gap-4">
+              {/* Wishlist */}
+              <Link
+                href="/account/wishlist"
+                className={`${isMobileMenuOpen ? 'block' : 'hidden'} lg:block relative p-2 transition-colors duration-300 ${
+                  scrolledState || isMobileMenuOpen ? 'text-black hover:text-black/70' : 'text-white hover:text-white/70'
+                }`}
+                aria-label="Wishlist"
               >
-                <Search size={20} />
-              </button>
-
-              <Link href="/account/wishlist" className={`hidden sm:block p-2 ${textColor} ${hoverColor} transition-colors`}>
-                <Heart size={20} />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                </svg>
               </Link>
 
-              <button
+              {/* Account */}
+              <Link
+                href="/account/profile"
+                className={`${isMobileMenuOpen ? 'block' : 'hidden'} sm:block relative p-2 transition-colors duration-300 ${
+                  scrolledState || isMobileMenuOpen ? 'text-black hover:text-black/70' : 'text-white hover:text-white/70'
+                }`}
+                aria-label="Account"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+              </Link>
+
+              {/* Cart */}
+              <motion.button
                 onClick={() => useCartStore.getState().toggleCart()}
-                className={`relative p-2 ${textColor} ${hoverColor} transition-colors`}
+                className={`relative p-2 transition-colors duration-300 ${
+                  scrolledState || isMobileMenuOpen ? 'text-black hover:text-black/70' : 'text-white hover:text-white/70'
+                }`}
+                whileTap={{ scale: 0.95 }}
                 aria-label="Cart"
               >
-                <ShoppingBag size={20} />
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-forest-green text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartItemCount > 9 ? "9+" : cartItemCount}
-                  </span>
-                )}
-              </button>
-
-              {/* User dropdown */}
-              <div className="relative hidden sm:block">
-                <button
-                  onClick={() => setIsUserOpen(!isUserOpen)}
-                  className={`p-2 ${textColor} ${hoverColor} transition-colors`}
-                  aria-label="Account"
-                >
-                  <User size={20} />
-                </button>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
                 <AnimatePresence>
-                  {isUserOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-light-gray py-2"
-                      onMouseLeave={() => setIsUserOpen(false)}
+                  {isMounted && totalItems > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute top-0 right-0 bg-black text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-medium"
                     >
-                      {isAuthenticated ? (
-                        <>
-                          <div className="px-4 py-2 border-b border-light-gray">
-                            <p className="text-sm font-medium text-deep-earth">{user?.firstName} {user?.lastName}</p>
-                            <p className="text-xs text-medium-gray">{user?.email}</p>
-                          </div>
-                          <Link href="/account/profile" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><User size={16} /> My Profile</Link>
-                          <Link href="/account/orders" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Package size={16} /> My Orders</Link>
-                          <Link href="/account/wishlist" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Heart size={16} /> Wishlist</Link>
-                          <Link href="/account/loyalty" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Star size={16} /> Loyalty Points</Link>
-                          <Link href="/account/referrals" className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream"><Gift size={16} /> Referrals</Link>
-                          <button onClick={logout} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-error hover:bg-cream"><LogOut size={16} /> Logout</button>
-                        </>
-                      ) : (
-                        <>
-                          <Link href="/auth/login" className="block px-4 py-2.5 text-sm text-charcoal hover:bg-cream font-medium">Login</Link>
-                          <Link href="/auth/register" className="block px-4 py-2.5 text-sm text-charcoal hover:bg-cream">Create Account</Link>
-                        </>
-                      )}
-                    </motion.div>
+                      {totalItems}
+                    </motion.span>
                   )}
                 </AnimatePresence>
-              </div>
+              </motion.button>
             </div>
           </div>
-        </div>
+        </nav>
+      </motion.header>
 
-        {/* Search bar (slides down when open) */}
-        {isSearchOpen && <SearchBar onClose={() => setIsSearchOpen(false)} />}
-      </header>
-
-      {/* Mobile nav drawer */}
-      <MobileNav isOpen={isMobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      {/* Full Screen Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-white z-40 pt-16 lg:pt-20"
+          >
+            <motion.div
+              className="h-full flex flex-col justify-start pt-8 px-10 sm:px-14 pb-20 lg:pb-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <nav className="border-t border-transparent">
+                {menuCategories.map((category, index) => (
+                  <motion.div
+                    key={category.slug}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{
+                      delay: 0.05 + index * 0.04,
+                      duration: 0.3,
+                      ease: [0.22, 1, 0.36, 1]
+                    }}
+                    className="border-b border-transparent"
+                  >
+                    <Link
+                      href={category.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-between py-4 group text-slate-500 hover:text-black transition-colors duration-300"
+                    >
+                      <span className="text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase group-hover:text-black transition-colors duration-300">
+                        {category.name}
+                      </span>
+                      <span className="text-[11px] text-slate-400 group-hover:text-black transition-colors duration-300">
+                        →
+                      </span>
+                    </Link>
+                  </motion.div>
+                ))}
+              </nav>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

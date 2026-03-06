@@ -36,7 +36,8 @@ export const validate = (schemas: ValidationSchemas) => {
           });
         }
       } else {
-        (req as any).query = result.data;
+        // Express 5: req.query is a read-only getter, store validated data in res.locals
+        _res.locals.validatedQuery = result.data;
       }
     }
 
@@ -50,7 +51,8 @@ export const validate = (schemas: ValidationSchemas) => {
           });
         }
       } else {
-        (req as any).params = result.data;
+        // Express 5: req.params is a read-only getter, store validated data in res.locals
+        _res.locals.validatedParams = result.data;
       }
     }
 

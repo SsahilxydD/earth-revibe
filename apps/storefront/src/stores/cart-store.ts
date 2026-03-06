@@ -11,6 +11,7 @@ interface CartItem {
   color: string;
   price: number;
   quantity: number;
+  stock?: number;
 }
 
 interface CartState {
@@ -50,15 +51,18 @@ export const useCartStore = create<CartState>()(
         set((state) => {
           const existing = state.items.find((i) => i.variantId === item.variantId);
           if (existing) {
+            const maxQty = item.stock ?? existing.stock ?? 999;
+            const newQty = Math.min(existing.quantity + item.quantity, maxQty);
             return {
               items: state.items.map((i) =>
                 i.variantId === item.variantId
-                  ? { ...i, quantity: i.quantity + item.quantity }
+                  ? { ...i, quantity: newQty, stock: item.stock ?? i.stock }
                   : i
               ),
             };
           }
-          return { items: [...state.items, item] };
+          const maxQty = item.stock ?? 999;
+          return { items: [...state.items, { ...item, quantity: Math.min(item.quantity, maxQty) }] };
         }),
 
       removeItem: (variantId) =>
@@ -70,9 +74,11 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           items: quantity <= 0
             ? state.items.filter((i) => i.variantId !== variantId)
-            : state.items.map((i) =>
-                i.variantId === variantId ? { ...i, quantity } : i
-              ),
+            : state.items.map((i) => {
+                if (i.variantId !== variantId) return i;
+                const maxQty = i.stock ?? 999;
+                return { ...i, quantity: Math.min(quantity, maxQty) };
+              }),
         })),
 
       clearCart: () => set({ items: [], discountCode: null, discountAmount: 0 }),
