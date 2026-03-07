@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
-import { razorpay } from "../config/razorpay";
+import { getRazorpay } from "../config/razorpay";
 import { env } from "../config/env";
 import { generateOrderNumber } from "@earth-revibe/shared";
 import { shiprocketService } from "./shiprocket.service";
@@ -114,7 +114,7 @@ export const orderService = {
     const orderNumber = generateOrderNumber();
 
     // Create Razorpay order
-    const razorpayOrder = await razorpay.orders.create({
+    const razorpayOrder = await getRazorpay().orders.create({
       amount: Math.round(totalAmount * 100), // Razorpay expects paise
       currency: "INR",
       receipt: orderNumber,

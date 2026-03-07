@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma, Prisma } from "@earth-revibe/db";
-import { razorpay } from "../config/razorpay";
+import { getRazorpay } from "../config/razorpay";
 import { ApiError } from "../utils/api-error";
 
 export const adminRefundController = {
@@ -64,7 +64,7 @@ export const adminRefundController = {
     }
 
     // Issue refund via Razorpay
-    const refundResult = await razorpay.payments.refund(
+    const refundResult = await getRazorpay().payments.refund(
       order.payment.razorpayPaymentId,
       {
         amount: refundAmountInPaise,

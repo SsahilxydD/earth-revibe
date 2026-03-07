@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
-import { razorpay } from "../config/razorpay";
+import { getRazorpay } from "../config/razorpay";
 import { env } from "../config/env";
 import { generateOrderNumber } from "@earth-revibe/shared";
 import { shiprocketService } from "./shiprocket.service";
@@ -89,7 +89,7 @@ export const checkoutService = {
     const orderNumber = generateOrderNumber();
 
     // Create Razorpay order with line_items for Magic Checkout
-    const razorpayOrder = await razorpay.orders.create({
+    const razorpayOrder = await getRazorpay().orders.create({
       amount: Math.round(totalBeforeShipping * 100), // paise — shipping added by Razorpay via shipping-info API
       currency: "INR",
       receipt: orderNumber,
@@ -267,7 +267,7 @@ export const checkoutService = {
     const effectiveUserId = pending.userId;
 
     // Fetch the full Razorpay order — contains customer phone, email, address, shipping fee, promotions
-    const rzpOrder = await razorpay.orders.fetch(data.razorpayOrderId) as any;
+    const rzpOrder = await getRazorpay().orders.fetch(data.razorpayOrderId) as any;
     const customerDetails = rzpOrder.customer_details || {};
     const rzpAddress = customerDetails.shipping_address;
 
