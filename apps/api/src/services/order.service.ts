@@ -167,7 +167,7 @@ export const orderService = {
     return {
       order,
       razorpayOrderId: razorpayOrder.id,
-      razorpayKeyId: env.RAZORPAY_KEY_ID,
+      razorpayKeyId: env.RAZORPAY_KEY_ID ?? "",
       amount: totalAmount,
     };
   },

@@ -137,7 +137,7 @@ export const checkoutService = {
 
     return {
       razorpayOrderId: razorpayOrder.id,
-      razorpayKeyId: env.RAZORPAY_KEY_ID,
+      razorpayKeyId: env.RAZORPAY_KEY_ID ?? "",
       amount: totalBeforeShipping,
       orderNumber,
       prefill,

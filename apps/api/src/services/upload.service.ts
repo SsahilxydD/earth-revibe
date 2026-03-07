@@ -1,6 +1,14 @@
 import { env } from "../config/env";
 
-const CF_UPLOAD_URL = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/images/v1`;
+function requireCloudflare() {
+  if (!env.CLOUDFLARE_ACCOUNT_ID || !env.CLOUDFLARE_IMAGES_API_TOKEN) {
+    throw new Error("Cloudflare Images is not configured — set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_IMAGES_API_TOKEN");
+  }
+  return {
+    accountId: env.CLOUDFLARE_ACCOUNT_ID,
+    apiToken: env.CLOUDFLARE_IMAGES_API_TOKEN,
+  };
+}
 
 export interface UploadResult {
   id: string;
@@ -17,15 +25,16 @@ export async function uploadToCloudflare(
   filename: string,
   mimeType: string
 ): Promise<UploadResult> {
+  const cf = requireCloudflare();
   const formData = new FormData();
   const blob = new Blob([buffer], { type: mimeType });
   formData.append("file", blob, filename);
   formData.append("requireSignedURLs", "false");
 
-  const res = await fetch(CF_UPLOAD_URL, {
+  const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${cf.accountId}/images/v1`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env.CLOUDFLARE_IMAGES_API_TOKEN}`,
+      Authorization: `Bearer ${cf.apiToken}`,
     },
     body: formData,
   });
@@ -46,7 +55,7 @@ export async function uploadToCloudflare(
 
   return {
     id: data.result.id,
-    url: data.result.variants[0] ?? `https://imagedelivery.net/${env.CLOUDFLARE_ACCOUNT_ID}/${data.result.id}/public`,
+    url: data.result.variants[0] ?? `https://imagedelivery.net/${cf.accountId}/${data.result.id}/public`,
     variants: data.result.variants,
   };
 }
@@ -55,12 +64,13 @@ export async function uploadToCloudflare(
  * Delete an image from Cloudflare Images by ID.
  */
 export async function deleteFromCloudflare(imageId: string): Promise<void> {
+  const cf = requireCloudflare();
   const res = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/images/v1/${imageId}`,
+    `https://api.cloudflare.com/client/v4/accounts/${cf.accountId}/images/v1/${imageId}`,
     {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${env.CLOUDFLARE_IMAGES_API_TOKEN}`,
+        Authorization: `Bearer ${cf.apiToken}`,
       },
     }
   );
