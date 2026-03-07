@@ -1,4 +1,6 @@
 import express, { type Express } from "express";
+import compression from "compression";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
@@ -33,12 +35,18 @@ import { sanitize } from "./middleware/sanitize";
 
 const app: Express = express();
 
+// Compression
+app.use(compression());
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
   origin: [env.FRONTEND_URL, env.ADMIN_URL],
   credentials: true,
 }));
+
+// Cookie parsing
+app.use(cookieParser());
 
 // Body parsing
 app.use(express.json({ limit: "10mb" }));
@@ -60,14 +68,8 @@ app.get("/api/v1/health", (_req, res) => {
   res.json({
     success: true,
     message: "Earth Revibe API is running",
-    environment: env.NODE_ENV,
     timestamp: new Date().toISOString(),
   });
-});
-
-// Health check (required by Railway/Render)
-app.get("/api/v1/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 // API routes

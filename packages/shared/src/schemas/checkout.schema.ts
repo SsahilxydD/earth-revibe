@@ -10,6 +10,7 @@ export const createMagicCheckoutSchema = z.object({
   items: z.array(magicCheckoutLineItemSchema).min(1),
   discountCode: z.string().optional(),
   loyaltyPointsToUse: z.coerce.number().int().min(0).default(0),
+  guestEmail: z.string().email().optional(),
 });
 
 // Razorpay sends this to our shipping info endpoint

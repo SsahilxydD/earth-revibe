@@ -4,9 +4,11 @@ import { use } from "react";
 import Link from "next/link";
 import { CheckCircle, Package, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui";
+import { useAuthStore } from "@/stores/auth-store";
 
 export default function OrderConfirmationPage({ params }: { params: Promise<{ orderNumber: string }> }) {
   const { orderNumber } = use(params);
+  const { isAuthenticated } = useAuthStore();
 
   return (
     <div className="max-w-lg mx-auto px-4 py-16 text-center">
@@ -27,13 +29,31 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
         </p>
       </div>
 
+      {!isAuthenticated && (
+        <div className="bg-slate-50 rounded-xl p-5 mb-8 text-left">
+          <p className="text-sm font-medium text-charcoal mb-1">
+            Create an account to track your order
+          </p>
+          <p className="text-xs text-medium-gray mb-3">
+            Save your details for faster checkout next time and earn loyalty points.
+          </p>
+          <Link href={`/auth/register?redirect=/account/orders`}>
+            <Button variant="secondary" className="text-sm">
+              Create Account
+            </Button>
+          </Link>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <Link href="/account/orders">
-          <Button variant="secondary">
-            <Package size={18} />
-            View My Orders
-          </Button>
-        </Link>
+        {isAuthenticated && (
+          <Link href="/account/orders">
+            <Button variant="secondary">
+              <Package size={18} />
+              View My Orders
+            </Button>
+          </Link>
+        )}
         <Link href="/products">
           <Button>
             Continue Shopping

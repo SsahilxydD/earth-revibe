@@ -10,12 +10,18 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Button, Input, Select, Textarea, Card } from "@/components/ui";
 import { api } from "@/lib/api-client";
+import { VariantEditor } from "./variant-editor";
+import { ImageManager } from "./image-manager";
 
 interface ProductFormProps {
   defaultValues?: Partial<CreateProductInput>;
   onSubmit: (data: CreateProductInput) => Promise<void>;
   isSubmitting: boolean;
   submitLabel: string;
+  /** When editing, pass the product id and related data */
+  productId?: string;
+  variants?: any[];
+  images?: any[];
 }
 
 export function ProductForm({
@@ -23,6 +29,9 @@ export function ProductForm({
   onSubmit,
   isSubmitting,
   submitLabel,
+  productId,
+  variants,
+  images,
 }: ProductFormProps) {
   const { data: categories } = useQuery({
     queryKey: ["admin-categories"],
@@ -32,6 +41,7 @@ export function ProductForm({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<CreateProductInput>({
     resolver: zodResolver(createProductSchema) as any,
@@ -41,6 +51,8 @@ export function ProductForm({
       ...defaultValues,
     },
   });
+
+  const currentPrice = watch("price");
 
   const statusOptions = [
     { value: ProductStatus.DRAFT, label: "Draft" },
@@ -136,6 +148,23 @@ export function ProductForm({
               />
             </div>
           </Card>
+
+          {/* Image Management - only shown when editing (product has been saved) */}
+          {productId && (
+            <ImageManager
+              productId={productId}
+              images={images || []}
+            />
+          )}
+
+          {/* Variant Management - only shown when editing */}
+          {productId && (
+            <VariantEditor
+              productId={productId}
+              variants={variants || []}
+              basePrice={Number(currentPrice) || Number(defaultValues?.price) || 0}
+            />
+          )}
         </div>
 
         {/* Sidebar - right 1/3 */}
@@ -174,6 +203,19 @@ export function ProductForm({
               </label>
             </div>
           </Card>
+
+          {/* Helpful hint for new products */}
+          {!productId && (
+            <Card>
+              <div className="text-xs text-medium-gray">
+                <p className="font-medium text-charcoal mb-1">Images & Variants</p>
+                <p>
+                  Save the product first, then you can add images and
+                  variants from the edit page.
+                </p>
+              </div>
+            </Card>
+          )}
         </div>
       </div>
 

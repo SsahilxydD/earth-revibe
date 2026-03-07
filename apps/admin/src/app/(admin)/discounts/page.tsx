@@ -28,7 +28,7 @@ const activeOptions = [
 
 const discountTypeOptions = [
   { value: "PERCENTAGE", label: "Percentage (%)" },
-  { value: "FIXED", label: "Fixed Amount" },
+  { value: "FLAT", label: "Fixed Amount" },
 ];
 
 function formatPrice(amount: number | string) {

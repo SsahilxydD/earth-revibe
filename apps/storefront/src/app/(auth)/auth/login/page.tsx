@@ -34,7 +34,7 @@ function LoginForm() {
     setIsLoading(true);
     try {
       const result = await api.post("/auth/login", data);
-      login(result.user, result.accessToken, result.refreshToken);
+      login(result.user);
       toast.success("Welcome back!");
       router.push(redirect);
     } catch (err: any) {

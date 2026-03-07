@@ -103,7 +103,7 @@ export const productService = {
     };
   },
 
-  async getProductBySlug(slug: string) {
+  async getProductBySlug(slug: string, includeAll = false) {
     const product = await prisma.product.findUnique({
       where: { slug },
       include: {
@@ -111,7 +111,7 @@ export const productService = {
           orderBy: { sortOrder: "asc" },
         },
         variants: {
-          where: { isActive: true },
+          ...(includeAll ? {} : { where: { isActive: true } }),
           orderBy: { createdAt: "asc" },
         },
         reviews: {
@@ -298,5 +298,100 @@ export const productService = {
     }
 
     await prisma.productVariant.delete({ where: { id: variantId } });
+  },
+
+  // ---- Product Image Management ----
+
+  async addProductImage(
+    productId: string,
+    data: { url: string; publicId: string; altText?: string }
+  ) {
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product) {
+      throw ApiError.notFound("Product not found");
+    }
+
+    // Check if this is the first image — make it primary automatically
+    const existingCount = await prisma.productImage.count({ where: { productId } });
+
+    const image = await prisma.productImage.create({
+      data: {
+        productId,
+        url: data.url,
+        publicId: data.publicId,
+        altText: data.altText,
+        sortOrder: existingCount,
+        isPrimary: existingCount === 0,
+      },
+    });
+
+    return image;
+  },
+
+  async deleteProductImage(imageId: string) {
+    const existing = await prisma.productImage.findUnique({ where: { id: imageId } });
+    if (!existing) {
+      throw ApiError.notFound("Product image not found");
+    }
+
+    await prisma.productImage.delete({ where: { id: imageId } });
+
+    // If this was the primary image, promote the next one
+    if (existing.isPrimary) {
+      const nextImage = await prisma.productImage.findFirst({
+        where: { productId: existing.productId },
+        orderBy: { sortOrder: "asc" },
+      });
+      if (nextImage) {
+        await prisma.productImage.update({
+          where: { id: nextImage.id },
+          data: { isPrimary: true },
+        });
+      }
+    }
+
+    return existing;
+  },
+
+  async setProductImagePrimary(imageId: string) {
+    const image = await prisma.productImage.findUnique({ where: { id: imageId } });
+    if (!image) {
+      throw ApiError.notFound("Product image not found");
+    }
+
+    // Remove primary from all images of this product, then set the chosen one
+    await prisma.productImage.updateMany({
+      where: { productId: image.productId },
+      data: { isPrimary: false },
+    });
+
+    const updated = await prisma.productImage.update({
+      where: { id: imageId },
+      data: { isPrimary: true },
+    });
+
+    return updated;
+  },
+
+  async reorderProductImages(productId: string, imageIds: string[]) {
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product) {
+      throw ApiError.notFound("Product not found");
+    }
+
+    // Update sort order for each image
+    await Promise.all(
+      imageIds.map((id, index) =>
+        prisma.productImage.update({
+          where: { id },
+          data: { sortOrder: index },
+        })
+      )
+    );
+
+    return prisma.productImage.findMany({
+      where: { productId },
+      orderBy: { sortOrder: "asc" },
+    });
   },
 };

@@ -14,9 +14,10 @@ export default function NewProductPage() {
 
   const handleSubmit = async (data: CreateProductInput) => {
     try {
-      await createProduct.mutateAsync(data);
-      toast.success("Product created successfully");
-      router.push("/products");
+      const product = await createProduct.mutateAsync(data);
+      toast.success("Product created. Add images and variants below.");
+      // Redirect to edit page so user can immediately add images/variants
+      router.push(`/products/${product.slug}/edit`);
     } catch (err: any) {
       toast.error(err.message || "Failed to create product");
     }

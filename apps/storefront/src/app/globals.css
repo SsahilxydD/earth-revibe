@@ -112,6 +112,12 @@ body {
   color: white;
 }
 
+/* Keyboard focus indicators */
+*:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {
@@ -188,7 +194,7 @@ header nav > div > div:last-child {
 }
 
 /* Footer styles */
-footer h1,
+footer h2,
 footer h3,
 footer a,
 footer p,
@@ -197,7 +203,7 @@ footer input {
   font-family: var(--font-sans) !important;
 }
 
-footer h1 {
+footer h2 {
   font-size: 14px !important;
   font-weight: 400 !important;
   letter-spacing: 0.12em !important;
@@ -211,7 +217,7 @@ footer h1 {
 }
 
 @media (max-width: 768px) {
-  footer h1 {
+  footer h2 {
     font-size: 11px !important;
     letter-spacing: 0.1em !important;
     margin-bottom: 0.75rem !important;

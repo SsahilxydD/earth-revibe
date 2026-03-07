@@ -24,7 +24,7 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       const result = await api.post("/auth/register", data);
-      login(result.user, result.accessToken, result.refreshToken);
+      login(result.user);
       toast.success("Account created successfully!");
       router.push("/");
     } catch (err: any) {

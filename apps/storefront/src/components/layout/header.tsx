@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/stores/cart-store';
 import { useUIStore } from '@/stores/ui-store';
+import { SearchBar } from './search-bar';
 
 const menuCategories = [
   { name: 'All Products', slug: 'all-products', href: '/products' },
@@ -21,6 +22,7 @@ export function Header() {
   const { isHeaderTransparent } = useUIStore();
   const totalItems = useCartStore((s) => s.getItemCount());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -42,6 +44,17 @@ export function Header() {
     }
     return () => { document.body.style.overflow = 'unset'; };
   }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isSearchOpen) setIsSearchOpen(false);
+        if (isMobileMenuOpen) setIsMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen, isMobileMenuOpen]);
 
   const scrolledState = !isHeaderTransparent || isScrolled;
   const logoSrc = (scrolledState || isMobileMenuOpen)
@@ -115,6 +128,20 @@ export function Header() {
 
             {/* Right - Icons */}
             <div className="flex justify-end items-center gap-3 sm:gap-2 lg:gap-4">
+              {/* Search */}
+              <motion.button
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className={`relative p-2 transition-colors duration-300 ${
+                  scrolledState || isMobileMenuOpen ? 'text-black hover:text-black/70' : 'text-white hover:text-white/70'
+                }`}
+                whileTap={{ scale: 0.95 }}
+                aria-label={isSearchOpen ? 'Close search' : 'Open search'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+              </motion.button>
+
               {/* Wishlist */}
               <Link
                 href="/account/wishlist"
@@ -170,6 +197,31 @@ export function Header() {
           </div>
         </nav>
       </motion.header>
+
+      {/* Search Bar Overlay */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed top-16 lg:top-20 left-0 right-0 z-40"
+            >
+              <SearchBar onClose={() => setIsSearchOpen(false)} />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/20 z-30"
+              onClick={() => setIsSearchOpen(false)}
+            />
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Full Screen Menu */}
       <AnimatePresence>

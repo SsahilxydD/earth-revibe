@@ -9,7 +9,6 @@ import {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
-  refreshTokenSchema,
   updateProfileSchema,
   changePasswordSchema,
 } from "@earth-revibe/shared";
@@ -18,7 +17,7 @@ const router: IRouter = Router();
 
 router.post("/register", registerRateLimit, validate({ body: registerSchema }), asyncHandler(authController.register));
 router.post("/login", loginRateLimit, validate({ body: loginSchema }), asyncHandler(authController.login));
-router.post("/refresh", validate({ body: refreshTokenSchema }), asyncHandler(authController.refresh));
+router.post("/refresh", asyncHandler(authController.refresh));
 router.post("/logout", asyncHandler(authController.logout));
 router.post("/forgot-password", passwordResetRateLimit, validate({ body: forgotPasswordSchema }), asyncHandler(authController.forgotPassword));
 router.post("/reset-password", validate({ body: resetPasswordSchema }), asyncHandler(authController.resetPassword));

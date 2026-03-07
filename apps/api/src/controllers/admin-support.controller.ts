@@ -11,30 +11,30 @@ export const adminSupportController = {
       search: req.query.search as string | undefined,
     };
     const result = await supportService.listAllTickets(query as any);
-    res.json({ success: true, ...result });
+    res.json({ success: true, data: result });
   },
 
   async getTicket(req: Request, res: Response) {
     const ticketNumber = req.params.ticketNumber as string;
     const ticket = await supportService.getTicket(ticketNumber);
-    res.json({ success: true, ticket });
+    res.json({ success: true, data: ticket });
   },
 
   async updateStatus(req: Request, res: Response) {
     const ticketNumber = req.params.ticketNumber as string;
     const ticket = await supportService.updateStatus(ticketNumber, req.body.status);
-    res.json({ success: true, ticket });
+    res.json({ success: true, data: ticket });
   },
 
   async assignTicket(req: Request, res: Response) {
     const ticketNumber = req.params.ticketNumber as string;
     const ticket = await supportService.assignTicket(ticketNumber, req.body.assignedTo);
-    res.json({ success: true, ticket });
+    res.json({ success: true, data: ticket });
   },
 
   async reply(req: Request, res: Response) {
     const ticketNumber = req.params.ticketNumber as string;
     const message = await supportService.adminReply(req.user!.id, ticketNumber, req.body);
-    res.status(201).json({ success: true, message });
+    res.status(201).json({ success: true, data: message });
   },
 };

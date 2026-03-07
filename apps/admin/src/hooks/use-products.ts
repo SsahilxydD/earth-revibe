@@ -28,7 +28,7 @@ export function useProducts(params: ProductListParams = {}) {
 export function useProduct(slug: string) {
   return useQuery({
     queryKey: ["admin-product", slug],
-    queryFn: () => api.get(`/products/${slug}`),
+    queryFn: () => api.get(`/admin/products/${slug}`),
     enabled: !!slug,
   });
 }
@@ -117,6 +117,107 @@ export function useImportProductsCSV() {
       api.post("/admin/products/import-csv", { csv: csvContent }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+    },
+  });
+}
+
+// ---- Variant Hooks ----
+
+export function useAddProductVariants() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ productId, variants }: { productId: string; variants: any[] }) =>
+      api.post(`/products/${productId}/variants`, { variants }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+    },
+  });
+}
+
+export function useUpdateProductVariant() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ variantId, data }: { variantId: string; data: any }) =>
+      api.put(`/products/variants/${variantId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+    },
+  });
+}
+
+export function useDeleteProductVariant() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variantId: string) =>
+      api.delete(`/products/variants/${variantId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+    },
+  });
+}
+
+// ---- Image Hooks ----
+
+export function useAddProductImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ productId, data }: { productId: string; data: { url: string; publicId: string; altText?: string } }) =>
+      api.post(`/products/${productId}/images`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+    },
+  });
+}
+
+export function useDeleteProductImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (imageId: string) =>
+      api.delete(`/products/images/${imageId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+    },
+  });
+}
+
+export function useSetProductImagePrimary() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (imageId: string) =>
+      api.put(`/products/images/${imageId}/primary`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+    },
+  });
+}
+
+export function useUploadImage() {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("adminAccessToken")
+          : null;
+      const API_BASE =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`${API_BASE}/upload/image`, {
+        method: "POST",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error?.message || "Failed to upload image");
+      }
+
+      const json = await res.json();
+      return json as { success: boolean; url: string; id: string };
     },
   });
 }

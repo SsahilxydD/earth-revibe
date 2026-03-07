@@ -80,6 +80,9 @@ export default function EditProductPage({
         onSubmit={handleSubmit}
         isSubmitting={updateProduct.isPending}
         submitLabel="Update Product"
+        productId={product.id}
+        variants={product.variants || []}
+        images={product.images || []}
       />
     </div>
   );

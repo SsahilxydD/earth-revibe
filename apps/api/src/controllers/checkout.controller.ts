@@ -1,9 +1,18 @@
 import type { Request, Response } from "express";
 import { checkoutService } from "../services/checkout.service";
+import { ApiError } from "../utils/api-error";
 
 export const checkoutController = {
   async createMagicOrder(req: Request, res: Response) {
-    const result = await checkoutService.createMagicOrder(req.user!.id, req.body);
+    const userId = req.user?.id ?? null;
+    const guestEmail: string | undefined = req.body.guestEmail;
+
+    // Must be authenticated OR provide a guest email
+    if (!userId && !guestEmail) {
+      throw ApiError.badRequest("Please log in or provide an email to continue");
+    }
+
+    const result = await checkoutService.createMagicOrder(userId, req.body);
     res.status(201).json({ success: true, data: result });
   },
 
@@ -27,7 +36,8 @@ export const checkoutController = {
   },
 
   async verifyPayment(req: Request, res: Response) {
-    const result = await checkoutService.verifyMagicPayment(req.user!.id, req.body);
+    const userId = req.user?.id ?? null;
+    const result = await checkoutService.verifyMagicPayment(userId, req.body);
     res.json({ success: true, data: result });
   },
 };

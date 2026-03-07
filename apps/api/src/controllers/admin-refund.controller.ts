@@ -75,59 +75,62 @@ export const adminRefundController = {
     const refundAmountDecimal = refundAmountInPaise / 100;
     const isFullRefund = refundAmountInPaise === paymentAmountInPaise;
 
-    // Update payment record
-    await prisma.payment.update({
-      where: { id: order.payment.id },
-      data: {
-        status: isFullRefund ? "REFUNDED" : "PARTIALLY_REFUNDED",
-        refundId: refundResult.id,
-        refundAmount: refundAmountDecimal,
-      },
-    });
-
-    // Update order status
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { status: "REFUNDED" },
-    });
-
-    // Create order status history entry
-    await prisma.orderStatusHistory.create({
-      data: {
-        orderId: order.id,
-        status: "REFUNDED",
-        note: `Refund of ₹${refundAmountDecimal.toFixed(2)} issued. Reason: ${reason.trim()}`,
-        changedBy: req.user!.id,
-      },
-    });
-
-    // Restore stock for all order items
-    for (const item of order.items) {
-      await prisma.productVariant.update({
-        where: { id: item.variantId },
-        data: { stock: { increment: item.quantity } },
-      });
-    }
-
-    // Restore loyalty points if any were used
-    if (order.loyaltyPointsUsed > 0) {
-      await prisma.user.update({
-        where: { id: order.userId },
+    // Wrap all DB writes in a transaction for data integrity
+    await prisma.$transaction(async (tx) => {
+      // Update payment record
+      await tx.payment.update({
+        where: { id: order.payment!.id },
         data: {
-          loyaltyPoints: { increment: order.loyaltyPointsUsed },
+          status: isFullRefund ? "REFUNDED" : "PARTIALLY_REFUNDED",
+          refundId: refundResult.id,
+          refundAmount: refundAmountDecimal,
         },
       });
 
-      await prisma.loyaltyTransaction.create({
+      // Update order status
+      await tx.order.update({
+        where: { id: order.id },
+        data: { status: "REFUNDED" },
+      });
+
+      // Create order status history entry
+      await tx.orderStatusHistory.create({
         data: {
-          userId: order.userId,
-          type: "ADJUSTED",
-          points: order.loyaltyPointsUsed,
-          description: `Points restored from refunded order #${orderNumber}`,
           orderId: order.id,
+          status: "REFUNDED",
+          note: `Refund of ₹${refundAmountDecimal.toFixed(2)} issued. Reason: ${reason.trim()}`,
+          changedBy: req.user!.id,
         },
       });
-    }
+
+      // Restore stock for all order items
+      for (const item of order.items) {
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: { stock: { increment: item.quantity } },
+        });
+      }
+
+      // Restore loyalty points if any were used (only for authenticated users)
+      if (order.loyaltyPointsUsed > 0 && order.userId) {
+        await tx.user.update({
+          where: { id: order.userId },
+          data: {
+            loyaltyPoints: { increment: order.loyaltyPointsUsed },
+          },
+        });
+
+        await tx.loyaltyTransaction.create({
+          data: {
+            userId: order.userId,
+            type: "ADJUSTED",
+            points: order.loyaltyPointsUsed,
+            description: `Points restored from refunded order #${orderNumber}`,
+            orderId: order.id,
+          },
+        });
+      }
+    });
 
     res.json({
       success: true,

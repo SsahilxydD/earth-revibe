@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Package, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
@@ -112,7 +113,7 @@ export default function OrdersPage() {
                       {order.items.slice(0, 3).map((item: any) => (
                         <div key={item.id} className="w-10 h-10 rounded bg-off-white flex items-center justify-center">
                           {item.productImage ? (
-                            <img src={item.productImage} alt="" className="w-full h-full object-cover rounded" />
+                            <Image src={item.productImage} alt="" width={40} height={40} className="object-cover rounded" />
                           ) : (
                             <Package size={14} className="text-medium-gray" />
                           )}

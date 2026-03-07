@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Poppins, Playfair_Display, Cinzel } from "next/font/google";
 import { QueryProvider } from "@/providers/query-provider";
+import { AuthProvider } from "@/providers/auth-provider";
 import { ToastContainer } from "@/components/ui/toast";
 import "./globals.css";
 
@@ -65,7 +66,9 @@ export default function RootLayout({
     <html lang="en" className={`${cormorant.variable} ${poppins.variable} ${playfair.variable} ${cinzel.variable}`}>
       <body className="font-[var(--font-sans)] antialiased bg-[var(--background)]">
         <QueryProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
           <ToastContainer />
         </QueryProvider>
       </body>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, Trash2, ShoppingBag } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
@@ -68,12 +69,15 @@ export default function WishlistPage() {
                 <Trash2 size={14} className="text-error" />
               </button>
               <Link href={`/products/${item.product.slug}`}>
-                <div className="aspect-[3/4] rounded-lg bg-off-white mb-3 overflow-hidden">
+                <div className="aspect-[3/4] rounded-lg bg-off-white mb-3 overflow-hidden relative">
                   {item.product.images?.[0]?.url ? (
-                    <img
+                    <Image
                       src={item.product.images[0].url}
                       alt={item.product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

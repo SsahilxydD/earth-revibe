@@ -15,7 +15,7 @@ export default function RevenueChart() {
     queryFn: () => api.get("/admin/analytics/revenue-chart"),
   });
 
-  const chartData = data?.data || [];
+  const chartData = Array.isArray(data) ? data : [];
 
   return (
     <Card>

@@ -33,6 +33,14 @@ export function FilterSidebar({
 }: FilterSidebarProps) {
   const { isFilterDrawerOpen, setFilterDrawerOpen } = useUIStore();
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFilterDrawerOpen(false);
+    };
+    if (isFilterDrawerOpen) document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [isFilterDrawerOpen, setFilterDrawerOpen]);
+
   const [openSections, setOpenSections] = useState<Set<string>>(
     new Set(["size", "color", "price", "material"])
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { formatPrice } from '@earth-revibe/shared';
 
@@ -119,12 +120,13 @@ export function ProductCard({ product, index = 0, sizes }: ProductCardProps) {
           >
             {productImages.length > 0 ? (
               productImages.map((image, idx) => (
-                <div key={idx} className="h-full flex-shrink-0 w-full">
-                  <img
+                <div key={idx} className="h-full flex-shrink-0 w-full relative">
+                  <Image
                     src={image}
                     alt={`${product.name} - Image ${idx + 1}`}
-                    className="w-full h-full object-cover object-top"
-                    draggable={false}
+                    fill
+                    className="object-cover object-top"
+                    sizes="50vw"
                     loading="lazy"
                   />
                 </div>
@@ -154,14 +156,15 @@ export function ProductCard({ product, index = 0, sizes }: ProductCardProps) {
           <div className="h-full hidden md:block relative">
             {desktopImages.length > 0 ? (
               desktopImages.map((image, idx) => (
-                <img
+                <Image
                   key={idx}
                   src={image}
                   alt={`${product.name} - Image ${idx + 1}`}
-                  className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-200 ${
+                  fill
+                  className={`object-cover object-top transition-opacity duration-200 ${
                     idx === hoverImageIndex ? 'opacity-100' : 'opacity-0'
                   }`}
-                  draggable={false}
+                  sizes="25vw"
                   loading={idx === 0 ? 'eager' : 'lazy'}
                 />
               ))

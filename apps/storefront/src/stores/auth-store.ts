@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { api } from "@/lib/api-client";
 
 interface User {
   id: string;
@@ -19,8 +20,9 @@ interface AuthState {
   clearUser: () => void;
   setLoading: (loading: boolean) => void;
 
-  login: (user: User, accessToken: string, refreshToken: string) => void;
-  logout: () => void;
+  login: (user: User) => void;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -32,15 +34,25 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearUser: () => set({ user: null, isAuthenticated: false, isLoading: false }),
   setLoading: (isLoading) => set({ isLoading }),
 
-  login: (user, accessToken, refreshToken) => {
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
+  login: (user) => {
     set({ user, isAuthenticated: true, isLoading: false });
   },
 
-  logout: () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+  logout: async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // Ignore errors — cookies are cleared server-side
+    }
     set({ user: null, isAuthenticated: false, isLoading: false });
+  },
+
+  checkAuth: async () => {
+    try {
+      const user = await api.get<User>("/auth/me");
+      set({ user, isAuthenticated: true, isLoading: false });
+    } catch {
+      set({ user: null, isAuthenticated: false, isLoading: false });
+    }
   },
 }));

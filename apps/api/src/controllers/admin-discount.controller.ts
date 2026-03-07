@@ -31,11 +31,13 @@ export const adminDiscountController = {
 
     res.json({
       success: true,
-      discounts,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      data: {
+        discounts,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   },
 
@@ -43,7 +45,7 @@ export const adminDiscountController = {
     const id = req.params.id as string;
     const discount = await prisma.discountCode.findUnique({ where: { id } });
     if (!discount) throw ApiError.notFound("Discount code not found");
-    res.json({ success: true, discount });
+    res.json({ success: true, data: discount });
   },
 
   async createDiscount(req: Request, res: Response) {
@@ -78,7 +80,7 @@ export const adminDiscountController = {
       },
     });
 
-    res.status(201).json({ success: true, discount });
+    res.status(201).json({ success: true, data: discount });
   },
 
   async updateDiscount(req: Request, res: Response) {
@@ -126,7 +128,7 @@ export const adminDiscountController = {
       },
     });
 
-    res.json({ success: true, discount });
+    res.json({ success: true, data: discount });
   },
 
   async deleteDiscount(req: Request, res: Response) {
@@ -150,6 +152,6 @@ export const adminDiscountController = {
       data: { isActive: !discount.isActive },
     });
 
-    res.json({ success: true, discount: updated });
+    res.json({ success: true, data: updated });
   },
 };

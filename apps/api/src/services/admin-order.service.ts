@@ -11,6 +11,7 @@ export const adminOrderService = {
     if (search) {
       where.OR = [
         { orderNumber: { contains: search, mode: "insensitive" } },
+        { guestEmail: { contains: search, mode: "insensitive" } },
         { user: { email: { contains: search, mode: "insensitive" } } },
         { user: { firstName: { contains: search, mode: "insensitive" } } },
         { user: { lastName: { contains: search, mode: "insensitive" } } },

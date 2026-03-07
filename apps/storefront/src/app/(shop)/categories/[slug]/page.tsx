@@ -33,9 +33,10 @@ function CategoryContent() {
     .map(([k, v]) => `${k}=${encodeURIComponent(v!)}`)
     .join("&");
 
-  const { data: categoryData, isLoading: categoryLoading } = useQuery({
+  const { data: categoryData, isLoading: categoryLoading, isError: categoryError } = useQuery({
     queryKey: ["category", slug],
     queryFn: () => api.get(`/categories/${slug}`),
+    retry: false,
   });
 
   const { data, isLoading } = useQuery({
@@ -55,7 +56,29 @@ function CategoryContent() {
     router.push(`/categories/${slug}?${current.toString()}`);
   };
 
-  const categoryName = categoryData?.category?.name || categoryData?.name || slug;
+  const categoryName = categoryData?.name || slug;
+
+  if (categoryError) {
+    return (
+      <div className="bg-white min-h-screen">
+        <div className="h-16 lg:h-20" aria-hidden="true" />
+        <div className="flex flex-col items-center justify-center py-32 px-6">
+          <p className="text-[13px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase text-slate-800 mb-2">
+            Category not found
+          </p>
+          <p className="text-[12px] text-slate-500 text-center mb-6">
+            The category you&apos;re looking for doesn&apos;t exist or has been removed.
+          </p>
+          <a
+            href="/categories"
+            className="text-[11px] font-[var(--font-cinzel)] tracking-[0.1em] uppercase border border-black px-6 py-2.5 hover:bg-black hover:text-white transition-colors"
+          >
+            Browse Collections
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen">
@@ -140,13 +163,15 @@ function CategoryContent() {
               <>
                 <ProductGrid products={data?.products || []} />
                 {data?.totalPages > 1 && (
-                  <Pagination
-                    currentPage={data.page}
-                    totalPages={data.totalPages}
-                    onPageChange={(page) =>
-                      updateParams({ page: String(page) })
-                    }
-                  />
+                  <div className="mt-16 mb-8">
+                    <Pagination
+                      currentPage={data.page}
+                      totalPages={data.totalPages}
+                      onPageChange={(page) =>
+                        updateParams({ page: String(page) })
+                      }
+                    />
+                  </div>
                 )}
               </>
             )}

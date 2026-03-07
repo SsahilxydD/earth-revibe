@@ -12,26 +12,6 @@ interface ApiResponse<T = any> {
 }
 
 class ApiClient {
-  private getToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("accessToken");
-  }
-
-  private getRefreshToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("refreshToken");
-  }
-
-  private setTokens(accessToken: string, refreshToken: string) {
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-  }
-
-  private clearTokens() {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-  }
-
   private refreshPromise: Promise<boolean> | null = null;
 
   private async refreshAccessToken(): Promise<boolean> {
@@ -43,29 +23,18 @@ class ApiClient {
   }
 
   private async _doRefresh(): Promise<boolean> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) return false;
-
     try {
       const res = await fetch(`${API_BASE}/auth/refresh`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
       });
 
-      if (!res.ok) {
-        this.clearTokens();
-        return false;
-      }
+      if (!res.ok) return false;
 
       const data = await res.json();
-      if (data.success && data.data) {
-        this.setTokens(data.data.accessToken, data.data.refreshToken);
-        return true;
-      }
-      return false;
+      return data.success === true;
     } catch {
-      this.clearTokens();
       return false;
     }
   }
@@ -75,28 +44,28 @@ class ApiClient {
     options: RequestInit = {},
     signal?: AbortSignal
   ): Promise<T> {
-    const token = this.getToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
     };
 
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
     let res = await fetch(`${API_BASE}${path}`, {
       ...options,
       headers,
+      credentials: "include",
       signal,
     });
 
     // If 401, try refresh
-    if (res.status === 401 && token) {
+    if (res.status === 401) {
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
-        headers["Authorization"] = `Bearer ${this.getToken()}`;
-        res = await fetch(`${API_BASE}${path}`, { ...options, headers, signal });
+        res = await fetch(`${API_BASE}${path}`, {
+          ...options,
+          headers,
+          credentials: "include",
+          signal,
+        });
       }
     }
 

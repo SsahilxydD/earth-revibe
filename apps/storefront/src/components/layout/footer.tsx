@@ -81,7 +81,7 @@ export function Footer() {
           {/* Links */}
           <div className="grid grid-cols-3 gap-2 px-2">
             <div className="text-center">
-              <h1 className="text-[11px] font-[var(--font-sans)] font-normal tracking-[0.1em] uppercase text-slate-800 mb-3">Shop</h1>
+              <h2 className="text-[11px] font-[var(--font-sans)] font-normal tracking-[0.1em] uppercase text-slate-800 mb-3">Shop</h2>
               <ul className="space-y-[6px]">
                 {footerLinks.shop.map((link) => (
                   <li key={link.name}>
@@ -93,7 +93,7 @@ export function Footer() {
               </ul>
             </div>
             <div className="text-center">
-              <h1 className="text-[11px] font-[var(--font-sans)] font-normal tracking-[0.1em] uppercase text-slate-800 mb-3">Help</h1>
+              <h2 className="text-[11px] font-[var(--font-sans)] font-normal tracking-[0.1em] uppercase text-slate-800 mb-3">Help</h2>
               <ul className="space-y-[6px]">
                 {footerLinks.help.map((link) => (
                   <li key={link.name}>
@@ -105,7 +105,7 @@ export function Footer() {
               </ul>
             </div>
             <div className="text-center">
-              <h1 className="text-[11px] font-[var(--font-sans)] font-normal tracking-[0.1em] uppercase text-slate-800 mb-3">Company</h1>
+              <h2 className="text-[11px] font-[var(--font-sans)] font-normal tracking-[0.1em] uppercase text-slate-800 mb-3">Company</h2>
               <ul className="space-y-[6px]">
                 {footerLinks.company.map((link) => (
                   <li key={link.name}>
@@ -120,7 +120,7 @@ export function Footer() {
 
           {/* Newsletter */}
           <div className="mt-8 pt-8 border-t border-slate-100 px-2">
-            <h1 className="text-[11px] font-[var(--font-sans)] font-normal tracking-[0.12em] uppercase text-slate-800 mb-4 text-center">Newsletter</h1>
+            <h2 className="text-[11px] font-[var(--font-sans)] font-normal tracking-[0.12em] uppercase text-slate-800 mb-4 text-center">Newsletter</h2>
             <form onSubmit={handleNewsletterSubmit} className="space-y-2">
               <div className="flex gap-2">
                 <input
@@ -176,7 +176,7 @@ export function Footer() {
           {/* Links Grid */}
           <div className="grid grid-cols-3 mb-12 w-full px-16 lg:px-32 xl:px-48">
             <div className="text-center">
-              <h1 className="text-[14px] font-[var(--font-sans)] font-normal tracking-[0.12em] uppercase text-slate-800 mb-5">Shop</h1>
+              <h2 className="text-[14px] font-[var(--font-sans)] font-normal tracking-[0.12em] uppercase text-slate-800 mb-5">Shop</h2>
               <ul className="space-y-3">
                 {footerLinks.shop.map((link) => (
                   <li key={link.name}>
@@ -188,7 +188,7 @@ export function Footer() {
               </ul>
             </div>
             <div className="text-center">
-              <h1 className="text-[14px] font-[var(--font-sans)] font-normal tracking-[0.12em] uppercase text-slate-800 mb-5">Help</h1>
+              <h2 className="text-[14px] font-[var(--font-sans)] font-normal tracking-[0.12em] uppercase text-slate-800 mb-5">Help</h2>
               <ul className="space-y-3">
                 {footerLinks.help.map((link) => (
                   <li key={link.name}>
@@ -200,7 +200,7 @@ export function Footer() {
               </ul>
             </div>
             <div className="text-center">
-              <h1 className="text-[14px] font-[var(--font-sans)] font-normal tracking-[0.12em] uppercase text-slate-800 mb-5">Company</h1>
+              <h2 className="text-[14px] font-[var(--font-sans)] font-normal tracking-[0.12em] uppercase text-slate-800 mb-5">Company</h2>
               <ul className="space-y-3">
                 {footerLinks.company.map((link) => (
                   <li key={link.name}>
@@ -215,7 +215,7 @@ export function Footer() {
 
           {/* Newsletter at Bottom */}
           <div className="pt-8 border-t border-slate-100 text-center">
-            <h1 className="text-[14px] font-[var(--font-sans)] font-normal tracking-[0.12em] uppercase text-slate-800 mb-5">Newsletter</h1>
+            <h2 className="text-[14px] font-[var(--font-sans)] font-normal tracking-[0.12em] uppercase text-slate-800 mb-5">Newsletter</h2>
             <p className="text-[12px] text-slate-500 mb-6 font-[var(--font-sans)] font-light">Subscribe for updates</p>
             <form onSubmit={handleNewsletterSubmit} className="space-y-3">
               <div className="flex gap-2 max-w-md mx-auto items-center">

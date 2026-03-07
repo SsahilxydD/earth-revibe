@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { api } from "@/lib/api-client";
 
@@ -18,6 +19,15 @@ export function SearchBar({ onClose }: SearchBarProps) {
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   useEffect(() => {
     if (query.length < 2) {
@@ -69,14 +79,14 @@ export function SearchBar({ onClose }: SearchBarProps) {
               <div>
                 <p className="text-xs font-semibold text-medium-gray uppercase tracking-wide mb-1">Categories</p>
                 {results.categories.map((cat: any) => (
-                  <a
+                  <Link
                     key={cat.slug}
                     href={`/categories/${cat.slug}`}
                     onClick={onClose}
                     className="block py-1.5 text-sm text-charcoal hover:text-forest-green"
                   >
                     {cat.name}
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
@@ -84,14 +94,14 @@ export function SearchBar({ onClose }: SearchBarProps) {
               <div>
                 <p className="text-xs font-semibold text-medium-gray uppercase tracking-wide mb-1">Products</p>
                 {results.products.map((product: any) => (
-                  <a
+                  <Link
                     key={product.slug}
                     href={`/products/${product.slug}`}
                     onClick={onClose}
                     className="block py-1.5 text-sm text-charcoal hover:text-forest-green"
                   >
                     {product.name}
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}

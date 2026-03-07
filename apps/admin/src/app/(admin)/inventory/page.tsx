@@ -86,7 +86,7 @@ export default function InventoryPage() {
   const adjustStock = useAdjustStock();
   const bulkUpdateStock = useBulkUpdateStock();
 
-  const variants = data?.data || [];
+  const variants = data?.variants || [];
   const totalPages = data?.totalPages || 1;
   const total = data?.total || 0;
 

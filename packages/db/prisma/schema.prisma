@@ -68,8 +68,8 @@ model RefreshToken {
 
 model Address {
   id         String  @id @default(cuid())
-  userId     String
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   label      String  @default("Home")
   fullName   String
   phone      String
@@ -241,8 +241,9 @@ model CartItem {
 model Order {
   id              String        @id @default(cuid())
   orderNumber     String        @unique
-  userId          String
-  user            User          @relation(fields: [userId], references: [id])
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
+  guestEmail      String?
   addressId       String
   address         Address       @relation(fields: [addressId], references: [id])
   status          OrderStatus   @default(PLACED)
@@ -741,7 +742,8 @@ model ShippingZone {
 model PendingCheckout {
   id                String   @id @default(cuid())
   orderNumber       String   @unique
-  userId            String
+  userId            String?
+  guestEmail        String?
   razorpayOrderId   String   @unique
   discountCode      String?
   loyaltyPointsToUse Int     @default(0)

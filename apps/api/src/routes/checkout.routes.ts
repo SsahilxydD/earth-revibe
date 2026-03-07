@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { checkoutController } from "../controllers/checkout.controller";
-import { authenticate } from "../middleware/auth";
+import { optionalAuthenticate } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import { asyncHandler } from "../utils/async-handler";
 import {
@@ -13,17 +13,17 @@ import {
 
 const router: IRouter = Router();
 
-// Authenticated endpoints (user-facing)
+// Checkout endpoints — support both authenticated and guest users
 router.post(
   "/create-order",
-  authenticate,
+  optionalAuthenticate,
   validate({ body: createMagicCheckoutSchema }),
   asyncHandler(checkoutController.createMagicOrder)
 );
 
 router.post(
   "/verify-payment",
-  authenticate,
+  optionalAuthenticate,
   validate({ body: verifyPaymentSchema }),
   asyncHandler(checkoutController.verifyPayment)
 );

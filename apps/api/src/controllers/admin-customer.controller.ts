@@ -12,7 +12,7 @@ export const adminCustomerController = {
       sortOrder: (req.query.sortOrder as string) || "desc",
     };
     const result = await adminCustomerService.listCustomers(query);
-    res.json({ success: true, ...result });
+    res.json({ success: true, data: result });
   },
 
   async exportCSV(_req: Request, res: Response) {
@@ -26,12 +26,12 @@ export const adminCustomerController = {
   async getCustomer(req: Request, res: Response) {
     const id = req.params.id as string;
     const customer = await adminCustomerService.getCustomer(id);
-    res.json({ success: true, customer });
+    res.json({ success: true, data: customer });
   },
 
   async toggleActive(req: Request, res: Response) {
     const id = req.params.id as string;
     const result = await adminCustomerService.toggleActive(id);
-    res.json({ success: true, ...result });
+    res.json({ success: true, data: result });
   },
 };

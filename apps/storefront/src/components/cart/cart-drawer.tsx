@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -78,6 +78,14 @@ export function CartDrawer() {
   const subtotal = getSubtotal();
   const total = getTotal();
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setCartOpen(false);
+    };
+    if (isOpen) document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [isOpen, setCartOpen]);
+
   const handleCheckout = () => {
     setCartOpen(false);
     router.push('/checkout');
@@ -151,14 +159,16 @@ export function CartDrawer() {
                       <div className="flex items-center border border-slate-200">
                         <button
                           onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                          className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-black transition-colors text-[11px]"
+                          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-black transition-colors text-[11px]"
+                          aria-label={`Decrease quantity of ${item.productName}`}
                         >
                           −
                         </button>
-                        <span className="w-6 text-center text-[10px] text-black">{item.quantity}</span>
+                        <span className="w-6 text-center text-[10px] text-black" aria-live="polite">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                          className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-black transition-colors text-[11px]"
+                          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-black transition-colors text-[11px]"
+                          aria-label={`Increase quantity of ${item.productName}`}
                         >
                           +
                         </button>

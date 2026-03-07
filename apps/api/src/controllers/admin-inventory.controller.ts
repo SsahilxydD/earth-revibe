@@ -72,11 +72,13 @@ export const adminInventoryController = {
 
     res.json({
       success: true,
-      data: variants,
-      page,
-      limit,
-      total,
-      totalPages,
+      data: {
+        variants,
+        page,
+        limit,
+        total,
+        totalPages,
+      },
     });
   },
 
@@ -148,11 +150,13 @@ export const adminInventoryController = {
 
     res.json({
       success: true,
-      data: updated,
-      adjustment,
-      reason,
-      previousStock: variant.stock,
-      newStock,
+      data: {
+        variant: updated,
+        adjustment,
+        reason,
+        previousStock: variant.stock,
+        newStock,
+      },
     });
   },
 
@@ -187,8 +191,10 @@ export const adminInventoryController = {
 
     res.json({
       success: true,
-      data: results,
-      updatedCount: results.length,
+      data: {
+        results,
+        updatedCount: results.length,
+      },
     });
   },
 

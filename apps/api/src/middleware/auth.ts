@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "@earth-revibe/db";
 import { env } from "../config/env";
 import { ApiError } from "../utils/api-error";
+import { getAccessTokenFromRequest } from "../utils/cookies";
 import type { UserRole } from "@earth-revibe/shared";
 
 interface JwtPayload {
@@ -15,13 +16,11 @@ export const authenticate = async (
   _res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers.authorization;
+  const token = getAccessTokenFromRequest(req);
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!token) {
     throw ApiError.unauthorized("No token provided");
   }
-
-  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
@@ -48,6 +47,47 @@ export const authenticate = async (
     if (error instanceof ApiError) throw error;
     throw ApiError.unauthorized("Invalid or expired token");
   }
+};
+
+/**
+ * Optional authentication — sets req.user if a valid token is present,
+ * but does NOT reject the request if no token is provided.
+ * Used for guest-capable endpoints like guest checkout.
+ */
+export const optionalAuthenticate = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) => {
+  const token = getAccessTokenFromRequest(req);
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+      },
+    });
+
+    if (user && user.isActive) {
+      req.user = user;
+    }
+  } catch {
+    // Token invalid or expired — proceed as guest
+  }
+
+  next();
 };
 
 export const authorize = (...roles: UserRole[]) => {

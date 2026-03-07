@@ -99,7 +99,7 @@ function ProductsContent() {
           <FilterSidebar
             onFilterChange={updateParams}
             currentFilters={params}
-            categories={categoriesData?.categories || []}
+            categories={Array.isArray(categoriesData) ? categoriesData : []}
           />
         </div>
 
@@ -109,7 +109,7 @@ function ProductsContent() {
             <FilterSidebar
               onFilterChange={updateParams}
               currentFilters={params}
-              categories={categoriesData?.categories || []}
+              categories={Array.isArray(categoriesData) ? categoriesData : []}
             />
           </div>
 

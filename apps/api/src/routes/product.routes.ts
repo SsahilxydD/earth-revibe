@@ -28,4 +28,10 @@ router.post("/:id/variants", authenticate, authorize(UserRole.ADMIN, UserRole.SU
 router.put("/variants/:variantId", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate({ body: productVariantSchema.partial() }), asyncHandler(productController.updateProductVariant));
 router.delete("/variants/:variantId", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.deleteProductVariant));
 
+// Image routes (admin only)
+router.post("/:id/images", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.addProductImage));
+router.delete("/images/:imageId", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.deleteProductImage));
+router.put("/images/:imageId/primary", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.setProductImagePrimary));
+router.put("/:id/images/reorder", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.reorderProductImages));
+
 export { router as productRouter };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface ImageGalleryProps {
@@ -58,10 +59,12 @@ export function ImageGallery({ images }: ImageGalleryProps) {
         <div className="flex h-full touch-pan-y">
           {images.map((image, index) => (
             <div key={index} className="flex-[0_0_100%] min-w-0 relative h-full">
-              <img
+              <Image
                 src={image.url}
                 alt={image.altText || "Product image"}
-                className="w-full h-full object-cover transition-transform duration-300"
+                fill
+                className="object-cover transition-transform duration-300"
+                sizes="(max-width: 768px) 100vw, 50vw"
                 style={
                   isZoomed && index === selectedIndex
                     ? { transform: "scale(1.5)", transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` }
@@ -122,11 +125,11 @@ export function ImageGallery({ images }: ImageGalleryProps) {
             <button
               key={index}
               onClick={() => scrollTo(index)}
-              className={`shrink-0 w-14 h-[72px] overflow-hidden border transition-colors ${
+              className={`shrink-0 w-14 h-[72px] overflow-hidden border transition-colors relative ${
                 index === selectedIndex ? "border-black" : "border-transparent hover:border-slate-300"
               }`}
             >
-              <img src={image.url} alt={image.altText || ""} className="w-full h-full object-cover" />
+              <Image src={image.url} alt={image.altText || ""} fill className="object-cover" sizes="80px" />
             </button>
           ))}
         </div>

@@ -10,6 +10,7 @@ router.use(authenticate);
 router.use(authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 
 router.get("/export-csv", asyncHandler(adminProductController.exportCSV));
+router.get("/:slug", asyncHandler(adminProductController.getProduct));
 router.post("/import-csv", asyncHandler(adminProductController.importCSV));
 router.put("/bulk-update", asyncHandler(adminProductController.bulkUpdate));
 

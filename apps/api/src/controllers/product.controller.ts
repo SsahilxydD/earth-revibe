@@ -47,4 +47,32 @@ export const productController = {
     await productService.deleteProductVariant(req.params.variantId as string);
     res.json({ success: true, message: "Variant deleted successfully" });
   },
+
+  async addProductImage(req: Request, res: Response) {
+    const image = await productService.addProductImage(
+      req.params.id as string,
+      req.body
+    );
+    res.status(201).json({ success: true, data: image });
+  },
+
+  async deleteProductImage(req: Request, res: Response) {
+    await productService.deleteProductImage(req.params.imageId as string);
+    res.json({ success: true, message: "Image deleted successfully" });
+  },
+
+  async setProductImagePrimary(req: Request, res: Response) {
+    const image = await productService.setProductImagePrimary(
+      req.params.imageId as string
+    );
+    res.json({ success: true, data: image });
+  },
+
+  async reorderProductImages(req: Request, res: Response) {
+    const images = await productService.reorderProductImages(
+      req.params.id as string,
+      req.body.imageIds
+    );
+    res.json({ success: true, data: images });
+  },
 };

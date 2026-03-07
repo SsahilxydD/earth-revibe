@@ -13,8 +13,8 @@ export const createDiscountSchema = z.object({
   applicableCategories: z.array(z.string()).default([]),
   applicableProducts: z.array(z.string()).default([]),
   isActive: z.boolean().default(true),
-  startsAt: z.string().datetime(),
-  expiresAt: z.string().datetime(),
+  startsAt: z.coerce.date(),
+  expiresAt: z.coerce.date(),
 });
 
 export const updateDiscountSchema = createDiscountSchema.partial();

@@ -19,7 +19,7 @@ interface CheckoutItem {
 }
 
 interface UseRazorpayCheckoutReturn {
-  startCheckout: (items: CheckoutItem[], discountCode?: string) => Promise<void>;
+  startCheckout: (items: CheckoutItem[], discountCode?: string, guestEmail?: string) => Promise<void>;
   isProcessing: boolean;
 }
 
@@ -44,8 +44,9 @@ export function useRazorpayCheckout(): UseRazorpayCheckoutReturn {
   const { isAuthenticated } = useAuthStore();
 
   const startCheckout = useCallback(
-    async (items: CheckoutItem[], discountCode?: string) => {
-      if (!isAuthenticated) {
+    async (items: CheckoutItem[], discountCode?: string, guestEmail?: string) => {
+      // Must be authenticated OR provide a guest email
+      if (!isAuthenticated && !guestEmail) {
         router.push("/auth/login?redirect=/checkout");
         return;
       }
@@ -58,6 +59,7 @@ export function useRazorpayCheckout(): UseRazorpayCheckoutReturn {
           items,
           discountCode,
           loyaltyPointsToUse: 0,
+          ...(guestEmail ? { guestEmail } : {}),
         });
 
         // 2. Load the Magic Checkout script

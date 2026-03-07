@@ -5,8 +5,11 @@ import SmoothScroll from "@/components/ui/smooth-scroll";
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
     <SmoothScroll>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-black focus:text-white focus:px-4 focus:py-2 focus:text-sm">
+        Skip to main content
+      </a>
       <Header />
-      <main>{children}</main>
+      <main id="main-content">{children}</main>
       <Footer />
       <MobileBottomBar />
       <CartDrawer />
