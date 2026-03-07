@@ -39,7 +39,7 @@ export const orderService = {
 
     // Calculate subtotal
     let subtotal = 0;
-    const orderItems = cart.items.map((item) => {
+    const orderItems = cart.items.map((item: any) => {
       const unitPrice = Number(item.variant.price) || Number(item.variant.product.price);
       const totalPrice = unitPrice * item.quantity;
       subtotal += totalPrice;
@@ -189,7 +189,7 @@ export const orderService = {
       .update(body)
       .digest("hex");
 
-    if (expectedSignature !== data.razorpaySignature) {
+    if (!crypto.timingSafeEqual(Buffer.from(expectedSignature, "hex"), Buffer.from(data.razorpaySignature, "hex"))) {
       // Mark payment as failed
       await prisma.payment.update({
         where: { id: payment.id },
@@ -198,142 +198,150 @@ export const orderService = {
       throw ApiError.badRequest("Payment verification failed");
     }
 
-    // Update payment
-    await prisma.payment.update({
-      where: { id: payment.id },
-      data: {
-        razorpayPaymentId: data.razorpayPaymentId,
-        razorpaySignature: data.razorpaySignature,
-        status: "CAPTURED",
-        paidAt: new Date(),
-      },
-    });
-
-    // Update order status
-    await prisma.order.update({
-      where: { id: payment.order.id },
-      data: { status: "CONFIRMED" },
-    });
-
-    await prisma.orderStatusHistory.create({
-      data: {
-        orderId: payment.order.id,
-        status: "CONFIRMED",
-        note: "Payment received",
-      },
-    });
-
-    // Deduct stock
-    const orderItems = await prisma.orderItem.findMany({
-      where: { orderId: payment.order.id },
-    });
-    for (const item of orderItems) {
-      await prisma.productVariant.update({
-        where: { id: item.variantId },
-        data: { stock: { decrement: item.quantity } },
-      });
-    }
-
-    // Deduct loyalty points if used
-    if (payment.order.loyaltyPointsUsed > 0) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { loyaltyPoints: { decrement: payment.order.loyaltyPointsUsed } },
-      });
-      await prisma.loyaltyTransaction.create({
+    // Wrap all post-verification writes in a transaction for data integrity
+    const { orderNumber, pointsEarned } = await prisma.$transaction(async (tx) => {
+      // Update payment
+      await tx.payment.update({
+        where: { id: payment.id },
         data: {
-          userId,
-          type: "REDEEMED",
-          points: -payment.order.loyaltyPointsUsed,
-          description: `Redeemed for order #${payment.order.orderNumber}`,
-          orderId: payment.order.id,
+          razorpayPaymentId: data.razorpayPaymentId,
+          razorpaySignature: data.razorpaySignature,
+          status: "CAPTURED",
+          paidAt: new Date(),
         },
       });
-    }
 
-    // Earn loyalty points (1 point per ₹100 spent)
-    const pointsEarned = Math.floor(Number(payment.order.totalAmount) / 100);
-    if (pointsEarned > 0) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { loyaltyPoints: { increment: pointsEarned } },
-      });
-      await prisma.order.update({
+      // Update order status
+      await tx.order.update({
         where: { id: payment.order.id },
-        data: { loyaltyPointsEarned: pointsEarned },
+        data: { status: "CONFIRMED" },
       });
-      await prisma.loyaltyTransaction.create({
+
+      await tx.orderStatusHistory.create({
         data: {
-          userId,
-          type: "EARNED",
-          points: pointsEarned,
-          description: `Earned from order #${payment.order.orderNumber}`,
           orderId: payment.order.id,
+          status: "CONFIRMED",
+          note: "Payment received",
         },
       });
-    }
 
-    // Handle referral conversion (first purchase by referred user)
-    const orderCount = await prisma.order.count({
-      where: { userId, status: { not: "CANCELLED" } },
-    });
-    if (orderCount === 1) {
-      const referral = await prisma.referral.findUnique({
-        where: { refereeId: userId },
+      // Deduct stock with guard against negative stock
+      const orderItems = await tx.orderItem.findMany({
+        where: { orderId: payment.order.id },
       });
-      if (referral && referral.status === "SIGNED_UP") {
-        const REFERRER_REWARD = 100;
-        const REFEREE_REWARD = 50;
-
-        await prisma.referral.update({
-          where: { id: referral.id },
-          data: {
-            status: "CONVERTED",
-            referrerReward: REFERRER_REWARD,
-            refereeReward: REFEREE_REWARD,
-          },
+      for (const item of orderItems) {
+        const result = await tx.productVariant.updateMany({
+          where: { id: item.variantId, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
         });
+        if (result.count === 0) {
+          throw ApiError.badRequest(`Insufficient stock for variant ${item.variantId}`);
+        }
+      }
 
-        await prisma.user.update({
-          where: { id: referral.referrerId },
-          data: { loyaltyPoints: { increment: REFERRER_REWARD } },
-        });
-        await prisma.loyaltyTransaction.create({
-          data: {
-            userId: referral.referrerId,
-            type: "BONUS",
-            points: REFERRER_REWARD,
-            description: "Referral reward - friend made first purchase",
-          },
-        });
-
-        await prisma.user.update({
+      // Deduct loyalty points if used
+      if (payment.order.loyaltyPointsUsed > 0) {
+        await tx.user.update({
           where: { id: userId },
-          data: { loyaltyPoints: { increment: REFEREE_REWARD } },
+          data: { loyaltyPoints: { decrement: payment.order.loyaltyPointsUsed } },
         });
-        await prisma.loyaltyTransaction.create({
+        await tx.loyaltyTransaction.create({
           data: {
             userId,
-            type: "BONUS",
-            points: REFEREE_REWARD,
-            description: "Welcome bonus - first purchase reward",
+            type: "REDEEMED",
+            points: -payment.order.loyaltyPointsUsed,
+            description: `Redeemed for order #${payment.order.orderNumber}`,
+            orderId: payment.order.id,
           },
         });
       }
-    }
 
-    // Clear cart
-    const cart = await prisma.cart.findUnique({ where: { userId } });
-    if (cart) {
-      await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
-    }
+      // Earn loyalty points (1 point per ₹100 spent)
+      const pointsEarned = Math.floor(Number(payment.order.totalAmount) / 100);
+      if (pointsEarned > 0) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { loyaltyPoints: { increment: pointsEarned } },
+        });
+        await tx.order.update({
+          where: { id: payment.order.id },
+          data: { loyaltyPointsEarned: pointsEarned },
+        });
+        await tx.loyaltyTransaction.create({
+          data: {
+            userId,
+            type: "EARNED",
+            points: pointsEarned,
+            description: `Earned from order #${payment.order.orderNumber}`,
+            orderId: payment.order.id,
+          },
+        });
+      }
 
-    // Auto-create Shiprocket shipment (non-blocking)
+      // Handle referral conversion (first purchase by referred user)
+      const orderCount = await tx.order.count({
+        where: { userId, status: { not: "CANCELLED" } },
+      });
+      if (orderCount === 1) {
+        const referral = await tx.referral.findUnique({
+          where: { refereeId: userId },
+        });
+        if (referral && referral.status === "SIGNED_UP") {
+          const REFERRER_REWARD = 100;
+          const REFEREE_REWARD = 50;
+
+          await tx.referral.update({
+            where: { id: referral.id },
+            data: {
+              status: "CONVERTED",
+              referrerReward: REFERRER_REWARD,
+              refereeReward: REFEREE_REWARD,
+            },
+          });
+
+          await tx.user.update({
+            where: { id: referral.referrerId },
+            data: { loyaltyPoints: { increment: REFERRER_REWARD } },
+          });
+          await tx.loyaltyTransaction.create({
+            data: {
+              userId: referral.referrerId,
+              type: "BONUS",
+              points: REFERRER_REWARD,
+              description: "Referral reward - friend made first purchase",
+            },
+          });
+
+          await tx.user.update({
+            where: { id: userId },
+            data: { loyaltyPoints: { increment: REFEREE_REWARD } },
+          });
+          await tx.loyaltyTransaction.create({
+            data: {
+              userId,
+              type: "BONUS",
+              points: REFEREE_REWARD,
+              description: "Welcome bonus - first purchase reward",
+            },
+          });
+        }
+      }
+
+      // Clear cart
+      const cart = await tx.cart.findUnique({ where: { userId } });
+      if (cart) {
+        await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+      }
+
+      return { orderNumber: payment.order.orderNumber, pointsEarned };
+    });
+
+    // Auto-create Shiprocket shipment (non-blocking, outside transaction)
     shiprocketService.createShiprocketOrder(payment.order.id).catch((err) => {
       console.error(`[Shiprocket] Failed to create shipment for order ${payment.order.id}:`, err);
     });
 
-    return { orderNumber: payment.order.orderNumber, pointsEarned };
+    return { orderNumber, pointsEarned };
   },
 
   async listOrders(userId: string, query: OrderQuery) {
@@ -390,39 +398,41 @@ export const orderService = {
       throw ApiError.badRequest("Order cannot be cancelled at this stage");
     }
 
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { status: "CANCELLED" },
-    });
-
-    await prisma.orderStatusHistory.create({
-      data: {
-        orderId: order.id,
-        status: "CANCELLED",
-        note: data.reason,
-        changedBy: userId,
-      },
-    });
-
-    // Restore stock
-    const items = await prisma.orderItem.findMany({ where: { orderId: order.id } });
-    for (const item of items) {
-      await prisma.productVariant.update({
-        where: { id: item.variantId },
-        data: { stock: { increment: item.quantity } },
+    return await prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: order.id },
+        data: { status: "CANCELLED" },
       });
-    }
 
-    // Restore loyalty points if used
-    if (order.loyaltyPointsUsed > 0) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { loyaltyPoints: { increment: order.loyaltyPointsUsed } },
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: order.id,
+          status: "CANCELLED",
+          note: data.reason,
+          changedBy: userId,
+        },
       });
-    }
 
-    // TODO: Initiate refund via Razorpay if payment was captured
+      // Restore stock
+      const items = await tx.orderItem.findMany({ where: { orderId: order.id } });
+      for (const item of items) {
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: { stock: { increment: item.quantity } },
+        });
+      }
 
-    return { orderNumber: order.orderNumber };
+      // Restore loyalty points if used
+      if (order.loyaltyPointsUsed > 0) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { loyaltyPoints: { increment: order.loyaltyPointsUsed } },
+        });
+      }
+
+      // TODO: Initiate refund via Razorpay if payment was captured
+
+      return { orderNumber: order.orderNumber };
+    });
   },
 };

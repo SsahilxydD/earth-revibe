@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
+import { productService } from "../services/product.service";
 import slugify from "slugify";
 
 function escapeCSVField(value: string): string {
@@ -44,6 +45,14 @@ function parseCSVLine(line: string): string[] {
 }
 
 export const adminProductController = {
+  async getProduct(req: Request, res: Response) {
+    const product = await productService.getProductBySlug(
+      req.params.slug as string,
+      true // includeAll — show inactive variants too
+    );
+    res.json({ success: true, data: product });
+  },
+
   async exportCSV(_req: Request, res: Response) {
     const products = await (prisma.product as any).findMany({
       include: {
@@ -133,7 +142,7 @@ export const adminProductController = {
     // Pre-fetch all categories for matching
     const categories = await prisma.category.findMany();
     const categoryMap = new Map(
-      categories.map((c) => [c.name.toLowerCase(), c.id])
+      categories.map((c: { name: string; id: string }) => [c.name.toLowerCase(), c.id])
     );
 
     const created: string[] = [];
@@ -167,7 +176,7 @@ export const adminProductController = {
           continue;
         }
 
-        const compareAtPrice = compareAtPriceStr
+        const compareAtPrice: number | undefined = compareAtPriceStr
           ? parseFloat(compareAtPriceStr)
           : undefined;
 
@@ -326,7 +335,7 @@ export const adminProductController = {
     });
 
     if (existingProducts.length !== productIds.length) {
-      const foundIds = new Set(existingProducts.map((p) => p.id));
+      const foundIds = new Set(existingProducts.map((p: { id: string }) => p.id));
       const missingIds = productIds.filter((id: string) => !foundIds.has(id));
       throw ApiError.badRequest(
         `Products not found: ${missingIds.join(", ")}`

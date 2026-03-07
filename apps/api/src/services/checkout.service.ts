@@ -16,9 +16,16 @@ import type {
 export const checkoutService = {
   /**
    * Create a Razorpay order with line_items for Magic Checkout.
-   * We don't require an address — Magic Checkout collects it.
+   * Supports both authenticated users (userId) and guest checkout (guestEmail).
    */
-  async createMagicOrder(userId: string, data: CreateMagicCheckoutInput) {
+  async createMagicOrder(userId: string | null, data: CreateMagicCheckoutInput) {
+    const guestEmail = data.guestEmail;
+    const isGuest = !userId;
+
+    if (isGuest && !guestEmail) {
+      throw ApiError.badRequest("Guest checkout requires an email address");
+    }
+
     // Fetch variants with product data
     const variantIds = data.items.map((i: { variantId: string }) => i.variantId);
     const variants = await prisma.productVariant.findMany({
@@ -39,7 +46,7 @@ export const checkoutService = {
     let lineItemsTotal = 0;
 
     for (const reqItem of data.items) {
-      const variant = variants.find((v) => v.id === reqItem.variantId);
+      const variant = variants.find((v: any) => v.id === reqItem.variantId);
       if (!variant) throw ApiError.badRequest(`Variant ${reqItem.variantId} not found`);
       if (variant.stock < reqItem.quantity) {
         throw ApiError.badRequest(`${variant.product.name} (${variant.size}) only has ${variant.stock} in stock`);
@@ -68,9 +75,9 @@ export const checkoutService = {
       discountAmount = await calculateDiscount(data.discountCode, lineItemsTotal);
     }
 
-    // Apply loyalty points
+    // Apply loyalty points (only for authenticated users)
     let loyaltyDiscount = 0;
-    if (data.loyaltyPointsToUse > 0) {
+    if (!isGuest && data.loyaltyPointsToUse > 0) {
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user || user.loyaltyPoints < data.loyaltyPointsToUse) {
         throw ApiError.badRequest("Insufficient loyalty points");
@@ -89,21 +96,22 @@ export const checkoutService = {
       line_items_total: Math.round(lineItemsTotal * 100),
       line_items: lineItems,
       notes: {
-        userId,
+        userId: userId || "guest",
+        guestEmail: guestEmail || "",
         discountCode: data.discountCode || "",
-        loyaltyPointsToUse: String(data.loyaltyPointsToUse),
+        loyaltyPointsToUse: String(isGuest ? 0 : data.loyaltyPointsToUse),
       },
     } as any);
 
     // Store pending order data so we can finalize after payment
-    // We use a lightweight "pending checkout" record
     await prisma.pendingCheckout.create({
       data: {
         orderNumber,
-        userId,
+        userId: userId || undefined,
+        guestEmail: guestEmail || undefined,
         razorpayOrderId: razorpayOrder.id,
         discountCode: data.discountCode || null,
-        loyaltyPointsToUse: data.loyaltyPointsToUse,
+        loyaltyPointsToUse: isGuest ? 0 : data.loyaltyPointsToUse,
         subtotal: lineItemsTotal,
         discountAmount,
         loyaltyDiscount,
@@ -111,22 +119,28 @@ export const checkoutService = {
       },
     });
 
-    // Get user info for prefill
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { email: true, firstName: true, lastName: true, phone: true },
-    });
+    // Get user info for prefill (or use guest email)
+    let prefill = { name: "", email: guestEmail || "", contact: "" };
+    if (!isGuest) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, firstName: true, lastName: true, phone: true },
+      });
+      if (user) {
+        prefill = {
+          name: `${user.firstName} ${user.lastName}`.trim(),
+          email: user.email,
+          contact: user.phone || "",
+        };
+      }
+    }
 
     return {
       razorpayOrderId: razorpayOrder.id,
       razorpayKeyId: env.RAZORPAY_KEY_ID,
       amount: totalBeforeShipping,
       orderNumber,
-      prefill: {
-        name: user ? `${user.firstName} ${user.lastName}`.trim() : "",
-        email: user?.email || "",
-        contact: user?.phone || "",
-      },
+      prefill,
     };
   },
 
@@ -170,7 +184,7 @@ export const checkoutService = {
       orderBy: { createdAt: "desc" },
     });
 
-    const promotions = discounts.map((d) => ({
+    const promotions = discounts.map((d: any) => ({
       code: d.code,
       summary: d.type === "PERCENTAGE"
         ? `${d.value}% off${d.maxDiscountAmount ? ` (up to ₹${d.maxDiscountAmount})` : ""}`
@@ -220,9 +234,9 @@ export const checkoutService = {
 
   /**
    * Verify Magic Checkout payment and create the final order.
-   * Syncs customer data (phone, email, address) from Razorpay back to our DB.
+   * Supports both authenticated users and guest checkout.
    */
-  async verifyMagicPayment(userId: string, data: VerifyPaymentInput) {
+  async verifyMagicPayment(userId: string | null, data: VerifyPaymentInput) {
     // Verify HMAC signature
     const body = data.razorpayOrderId + "|" + data.razorpayPaymentId;
     const expectedSignature = crypto
@@ -230,16 +244,24 @@ export const checkoutService = {
       .update(body)
       .digest("hex");
 
-    if (expectedSignature !== data.razorpaySignature) {
+    if (!crypto.timingSafeEqual(Buffer.from(expectedSignature, "hex"), Buffer.from(data.razorpaySignature, "hex"))) {
       throw ApiError.badRequest("Payment verification failed");
     }
 
-    // Find the pending checkout
-    const pending = await prisma.pendingCheckout.findFirst({
-      where: { razorpayOrderId: data.razorpayOrderId, userId },
+    // Find the pending checkout — match by razorpayOrderId (works for both guest and authenticated)
+    const pending = await prisma.pendingCheckout.findUnique({
+      where: { razorpayOrderId: data.razorpayOrderId },
     });
 
     if (!pending) throw ApiError.notFound("Checkout session not found");
+
+    // Security: if an authenticated user is verifying, ensure it matches the pending checkout's userId
+    if (userId && pending.userId && pending.userId !== userId) {
+      throw ApiError.forbidden("Checkout session does not belong to this user");
+    }
+
+    const isGuest = !pending.userId;
+    const effectiveUserId = pending.userId;
 
     // Fetch the full Razorpay order — contains customer phone, email, address, shipping fee, promotions
     const rzpOrder = await razorpay.orders.fetch(data.razorpayOrderId) as any;
@@ -247,25 +269,25 @@ export const checkoutService = {
     const rzpAddress = customerDetails.shipping_address;
 
     // ──────────────────────────────────────────────
-    // 1. Sync customer contact info back to user profile
+    // 1. Sync customer contact info back to user profile (authenticated only)
     // ──────────────────────────────────────────────
-    const customerPhone = customerDetails.contact?.replace(/^\+91/, "") || "";
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { phone: true, email: true },
-    });
-
-    // Update phone if user doesn't have one yet (Razorpay captured it)
-    if (customerPhone && (!user?.phone)) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { phone: customerPhone },
+    if (!isGuest && effectiveUserId) {
+      const customerPhone = customerDetails.contact?.replace(/^\+91/, "") || "";
+      const user = await prisma.user.findUnique({
+        where: { id: effectiveUserId },
+        select: { phone: true, email: true },
       });
+
+      if (customerPhone && (!user?.phone)) {
+        await prisma.user.update({
+          where: { id: effectiveUserId },
+          data: { phone: customerPhone },
+        });
+      }
     }
 
     // ──────────────────────────────────────────────
-    // 2. Save shipping address — avoid duplicates by matching pinCode + line1
+    // 2. Save shipping address
     // ──────────────────────────────────────────────
     let addressId: string;
 
@@ -275,20 +297,36 @@ export const checkoutService = {
       const fullName = rzpAddress.name || `${rzpAddress.first_name || ""} ${rzpAddress.last_name || ""}`.trim();
       const phone = customerDetails.contact || "";
 
-      // Check if we already have this address (same pincode + first line)
-      const existingAddr = await prisma.address.findFirst({
-        where: { userId, pinCode, line1 },
-      });
+      if (!isGuest && effectiveUserId) {
+        // For authenticated users, check for existing address to avoid duplicates
+        const existingAddr = await prisma.address.findFirst({
+          where: { userId: effectiveUserId, pinCode, line1 },
+        });
 
-      if (existingAddr) {
-        addressId = existingAddr.id;
+        if (existingAddr) {
+          addressId = existingAddr.id;
+        } else {
+          const addressCount = await prisma.address.count({ where: { userId: effectiveUserId } });
+          const address = await prisma.address.create({
+            data: {
+              userId: effectiveUserId,
+              label: rzpAddress.tag || "Home",
+              fullName,
+              phone,
+              line1,
+              line2: rzpAddress.line2 || "",
+              city: rzpAddress.city || "",
+              state: rzpAddress.state || "",
+              pinCode,
+              isDefault: addressCount === 0,
+            },
+          });
+          addressId = address.id;
+        }
       } else {
-        // First address for this user? Make it default
-        const addressCount = await prisma.address.count({ where: { userId } });
-
+        // For guest users, create an address without a user link
         const address = await prisma.address.create({
           data: {
-            userId,
             label: rzpAddress.tag || "Home",
             fullName,
             phone,
@@ -297,20 +335,24 @@ export const checkoutService = {
             city: rzpAddress.city || "",
             state: rzpAddress.state || "",
             pinCode,
-            isDefault: addressCount === 0,
+            isDefault: false,
           },
         });
         addressId = address.id;
       }
     } else {
-      // Fallback: get user's default address
-      const defaultAddr = await prisma.address.findFirst({
-        where: { userId, isDefault: true },
-      });
-      if (!defaultAddr) {
-        throw ApiError.badRequest("No shipping address found");
+      if (!isGuest && effectiveUserId) {
+        // Fallback: get user's default address
+        const defaultAddr = await prisma.address.findFirst({
+          where: { userId: effectiveUserId, isDefault: true },
+        });
+        if (!defaultAddr) {
+          throw ApiError.badRequest("No shipping address found");
+        }
+        addressId = defaultAddr.id;
+      } else {
+        throw ApiError.badRequest("No shipping address provided for guest checkout");
       }
-      addressId = defaultAddr.id;
     }
 
     // ──────────────────────────────────────────────
@@ -329,7 +371,7 @@ export const checkoutService = {
 
     let subtotal = 0;
     const orderItems = cartItems.map((ci) => {
-      const variant = variants.find((v) => v.id === ci.variantId)!;
+      const variant = variants.find((v: any) => v.id === ci.variantId)!;
       const unitPrice = Number(variant.price) || Number(variant.product.price);
       const totalPrice = unitPrice * ci.quantity;
       subtotal += totalPrice;
@@ -346,7 +388,7 @@ export const checkoutService = {
     });
 
     // ──────────────────────────────────────────────
-    // 4. Use Razorpay's actual shipping fee (from shipping-info callback)
+    // 4. Calculate totals
     // ──────────────────────────────────────────────
     const discountAmount = Number(pending.discountAmount);
     const loyaltyDiscount = Number(pending.loyaltyDiscount);
@@ -360,131 +402,152 @@ export const checkoutService = {
       discountCodeId = dc?.id || null;
     }
 
-    // Create order in DB
-    const order = await prisma.order.create({
-      data: {
-        orderNumber: pending.orderNumber,
-        userId,
-        addressId,
-        subtotal,
-        discountAmount,
-        shippingAmount,
-        taxAmount: 0,
-        totalAmount,
-        loyaltyPointsUsed: pending.loyaltyPointsToUse,
-        discountCodeId,
-        items: { create: orderItems },
-        payment: {
-          create: {
-            razorpayOrderId: data.razorpayOrderId,
-            razorpayPaymentId: data.razorpayPaymentId,
-            razorpaySignature: data.razorpaySignature,
-            amount: totalAmount,
-            status: "CAPTURED",
-            paidAt: new Date(),
+    // Resolve the guest email (from pending checkout or Razorpay customer details)
+    const guestEmail = pending.guestEmail || customerDetails.email || null;
+
+    // Wrap all DB writes in a transaction for data integrity
+    const { orderId, orderNumber: finalOrderNumber, pointsEarned } = await prisma.$transaction(async (tx) => {
+      // Create order in DB
+      const order = await tx.order.create({
+        data: {
+          orderNumber: pending.orderNumber,
+          userId: effectiveUserId || undefined,
+          guestEmail: isGuest ? guestEmail : undefined,
+          addressId,
+          subtotal,
+          discountAmount,
+          shippingAmount,
+          taxAmount: 0,
+          totalAmount,
+          loyaltyPointsUsed: pending.loyaltyPointsToUse,
+          discountCodeId,
+          items: { create: orderItems },
+          payment: {
+            create: {
+              razorpayOrderId: data.razorpayOrderId,
+              razorpayPaymentId: data.razorpayPaymentId,
+              razorpaySignature: data.razorpaySignature,
+              amount: totalAmount,
+              status: "CAPTURED",
+              paidAt: new Date(),
+            },
+          },
+          status: "CONFIRMED",
+          statusHistory: {
+            create: {
+              status: "CONFIRMED",
+              note: isGuest
+                ? "Payment received via Magic Checkout (guest)"
+                : "Payment received via Magic Checkout",
+            },
           },
         },
-        status: "CONFIRMED",
-        statusHistory: {
-          create: { status: "CONFIRMED", note: "Payment received via Magic Checkout" },
-        },
-      },
-    });
+      });
 
-    // Update discount usage count
-    if (discountCodeId) {
-      await prisma.discountCode.update({
-        where: { id: discountCodeId },
-        data: { usageCount: { increment: 1 } },
-      });
-    }
-
-    // Deduct stock
-    for (const ci of cartItems) {
-      await prisma.productVariant.update({
-        where: { id: ci.variantId },
-        data: { stock: { decrement: ci.quantity } },
-      });
-    }
-
-    // Deduct loyalty points
-    if (pending.loyaltyPointsToUse > 0) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { loyaltyPoints: { decrement: pending.loyaltyPointsToUse } },
-      });
-      await prisma.loyaltyTransaction.create({
-        data: {
-          userId,
-          type: "REDEEMED",
-          points: -pending.loyaltyPointsToUse,
-          description: `Redeemed for order #${pending.orderNumber}`,
-          orderId: order.id,
-        },
-      });
-    }
-
-    // Earn loyalty points (1 per ₹100)
-    const pointsEarned = Math.floor(totalAmount / 100);
-    if (pointsEarned > 0) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { loyaltyPoints: { increment: pointsEarned } },
-      });
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { loyaltyPointsEarned: pointsEarned },
-      });
-      await prisma.loyaltyTransaction.create({
-        data: {
-          userId,
-          type: "EARNED",
-          points: pointsEarned,
-          description: `Earned from order #${pending.orderNumber}`,
-          orderId: order.id,
-        },
-      });
-    }
-
-    // Handle referral (first purchase)
-    const orderCount = await prisma.order.count({
-      where: { userId, status: { not: "CANCELLED" } },
-    });
-    if (orderCount === 1) {
-      const referral = await prisma.referral.findUnique({ where: { refereeId: userId } });
-      if (referral && referral.status === "SIGNED_UP") {
-        const REFERRER_REWARD = 100;
-        const REFEREE_REWARD = 50;
-        await prisma.referral.update({
-          where: { id: referral.id },
-          data: { status: "CONVERTED", referrerReward: REFERRER_REWARD, refereeReward: REFEREE_REWARD },
-        });
-        await prisma.user.update({ where: { id: referral.referrerId }, data: { loyaltyPoints: { increment: REFERRER_REWARD } } });
-        await prisma.loyaltyTransaction.create({
-          data: { userId: referral.referrerId, type: "BONUS", points: REFERRER_REWARD, description: "Referral reward - friend made first purchase" },
-        });
-        await prisma.user.update({ where: { id: userId }, data: { loyaltyPoints: { increment: REFEREE_REWARD } } });
-        await prisma.loyaltyTransaction.create({
-          data: { userId, type: "BONUS", points: REFEREE_REWARD, description: "Welcome bonus - first purchase reward" },
+      // Update discount usage count
+      if (discountCodeId) {
+        await tx.discountCode.update({
+          where: { id: discountCodeId },
+          data: { usageCount: { increment: 1 } },
         });
       }
-    }
 
-    // Clear cart
-    const cart = await prisma.cart.findUnique({ where: { userId } });
-    if (cart) {
-      await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
-    }
+      // Deduct stock with guard against negative stock
+      for (const ci of cartItems) {
+        const result = await tx.productVariant.updateMany({
+          where: { id: ci.variantId, stock: { gte: ci.quantity } },
+          data: { stock: { decrement: ci.quantity } },
+        });
+        if (result.count === 0) {
+          throw ApiError.badRequest(`Insufficient stock for variant ${ci.variantId}`);
+        }
+      }
 
-    // Clean up pending checkout
-    await prisma.pendingCheckout.delete({ where: { id: pending.id } });
+      // Loyalty points and referrals — only for authenticated users
+      let pointsEarned = 0;
+      if (!isGuest && effectiveUserId) {
+        // Deduct loyalty points
+        if (pending.loyaltyPointsToUse > 0) {
+          await tx.user.update({
+            where: { id: effectiveUserId },
+            data: { loyaltyPoints: { decrement: pending.loyaltyPointsToUse } },
+          });
+          await tx.loyaltyTransaction.create({
+            data: {
+              userId: effectiveUserId,
+              type: "REDEEMED",
+              points: -pending.loyaltyPointsToUse,
+              description: `Redeemed for order #${pending.orderNumber}`,
+              orderId: order.id,
+            },
+          });
+        }
 
-    // Auto-create Shiprocket shipment (non-blocking — don't fail the order if Shiprocket is down)
-    shiprocketService.createShiprocketOrder(order.id).catch((err) => {
-      console.error(`[Shiprocket] Failed to create shipment for order ${order.id}:`, err);
+        // Earn loyalty points (1 per 100)
+        pointsEarned = Math.floor(totalAmount / 100);
+        if (pointsEarned > 0) {
+          await tx.user.update({
+            where: { id: effectiveUserId },
+            data: { loyaltyPoints: { increment: pointsEarned } },
+          });
+          await tx.order.update({
+            where: { id: order.id },
+            data: { loyaltyPointsEarned: pointsEarned },
+          });
+          await tx.loyaltyTransaction.create({
+            data: {
+              userId: effectiveUserId,
+              type: "EARNED",
+              points: pointsEarned,
+              description: `Earned from order #${pending.orderNumber}`,
+              orderId: order.id,
+            },
+          });
+        }
+
+        // Handle referral (first purchase)
+        const orderCount = await tx.order.count({
+          where: { userId: effectiveUserId, status: { not: "CANCELLED" } },
+        });
+        if (orderCount === 1) {
+          const referral = await tx.referral.findUnique({ where: { refereeId: effectiveUserId } });
+          if (referral && referral.status === "SIGNED_UP") {
+            const REFERRER_REWARD = 100;
+            const REFEREE_REWARD = 50;
+            await tx.referral.update({
+              where: { id: referral.id },
+              data: { status: "CONVERTED", referrerReward: REFERRER_REWARD, refereeReward: REFEREE_REWARD },
+            });
+            await tx.user.update({ where: { id: referral.referrerId }, data: { loyaltyPoints: { increment: REFERRER_REWARD } } });
+            await tx.loyaltyTransaction.create({
+              data: { userId: referral.referrerId, type: "BONUS", points: REFERRER_REWARD, description: "Referral reward - friend made first purchase" },
+            });
+            await tx.user.update({ where: { id: effectiveUserId }, data: { loyaltyPoints: { increment: REFEREE_REWARD } } });
+            await tx.loyaltyTransaction.create({
+              data: { userId: effectiveUserId, type: "BONUS", points: REFEREE_REWARD, description: "Welcome bonus - first purchase reward" },
+            });
+          }
+        }
+
+        // Clear cart
+        const cart = await tx.cart.findUnique({ where: { userId: effectiveUserId } });
+        if (cart) {
+          await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+        }
+      }
+
+      // Clean up pending checkout
+      await tx.pendingCheckout.delete({ where: { id: pending.id } });
+
+      return { orderId: order.id, orderNumber: pending.orderNumber, pointsEarned };
     });
 
-    return { orderNumber: pending.orderNumber, pointsEarned };
+    // Auto-create Shiprocket shipment (non-blocking, outside transaction)
+    shiprocketService.createShiprocketOrder(orderId).catch((err) => {
+      console.error(`[Shiprocket] Failed to create shipment for order ${orderId}:`, err);
+    });
+
+    return { orderNumber: finalOrderNumber, pointsEarned };
   },
 };
 
