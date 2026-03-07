@@ -1,0 +1,58 @@
+{
+  "version": "3.5",
+  "project": "earth-revibe",
+  "memory": {
+    "namespace": "earth-revibe",
+    "sharedNamespaces": ["earth-revibe-api-contract"]
+  },
+  "swarms": {
+    "storefront-swarm": {
+      "root": "apps/storefront",
+      "topology": "hierarchical",
+      "maxAgents": 6,
+      "agentType": "specialized",
+      "antiDrift": true,
+      "checkpointEvery": 5,
+      "sharedMemory": ["earth-revibe-api-contract"],
+      "defaultAgents": ["architect", "coder", "reviewer", "tester"]
+    },
+    "admin-swarm": {
+      "root": "apps/admin",
+      "topology": "hierarchical",
+      "maxAgents": 6,
+      "agentType": "specialized",
+      "antiDrift": true,
+      "checkpointEvery": 5,
+      "sharedMemory": ["earth-revibe-api-contract"],
+      "defaultAgents": ["architect", "coder", "reviewer", "tester"]
+    },
+    "api-swarm": {
+      "root": "apps/api",
+      "topology": "hierarchical",
+      "maxAgents": 6,
+      "agentType": "specialized",
+      "antiDrift": true,
+      "checkpointEvery": 5,
+      "sharedMemory": ["earth-revibe-api-contract"],
+      "defaultAgents": ["architect", "coder", "reviewer", "tester", "security-architect"]
+    },
+    "shared-swarm": {
+      "root": "packages",
+      "topology": "mesh",
+      "maxAgents": 4,
+      "agentType": "specialized",
+      "antiDrift": true,
+      "checkpointEvery": 3,
+      "defaultAgents": ["architect", "coder", "reviewer"]
+    }
+  },
+  "routing": {
+    "enabled": true,
+    "learningRate": "high",
+    "fallbackAgent": "coder"
+  },
+  "tokenOptimizer": {
+    "enabled": true,
+    "strategy": "adaptive"
+  }
+}
