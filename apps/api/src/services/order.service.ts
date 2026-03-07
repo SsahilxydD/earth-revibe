@@ -183,6 +183,9 @@ export const orderService = {
     if (payment.order.userId !== userId) throw ApiError.forbidden("Not your order");
 
     // Verify signature
+    if (!env.RAZORPAY_KEY_SECRET) {
+      throw ApiError.badRequest("Razorpay is not configured");
+    }
     const body = data.razorpayOrderId + "|" + data.razorpayPaymentId;
     const expectedSignature = crypto
       .createHmac("sha256", env.RAZORPAY_KEY_SECRET)

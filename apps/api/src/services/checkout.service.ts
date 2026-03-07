@@ -238,6 +238,9 @@ export const checkoutService = {
    */
   async verifyMagicPayment(userId: string | null, data: VerifyPaymentInput) {
     // Verify HMAC signature
+    if (!env.RAZORPAY_KEY_SECRET) {
+      throw ApiError.badRequest("Razorpay is not configured");
+    }
     const body = data.razorpayOrderId + "|" + data.razorpayPaymentId;
     const expectedSignature = crypto
       .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
