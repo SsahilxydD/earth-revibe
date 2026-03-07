@@ -28,6 +28,7 @@ import { adminDiscountRouter } from "./routes/admin-discount.routes";
 import { adminInventoryRouter } from "./routes/admin-inventory.routes";
 import { adminProductRouter } from "./routes/admin-product.routes";
 import { adminNotificationRouter } from "./routes/admin-notification.routes";
+import { uploadRouter } from "./routes/upload.routes";
 import { sanitize } from "./middleware/sanitize";
 
 const app: Express = express();
@@ -64,6 +65,11 @@ app.get("/api/v1/health", (_req, res) => {
   });
 });
 
+// Health check (required by Railway/Render)
+app.get("/api/v1/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 // API routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/products", productRouter);
@@ -89,6 +95,7 @@ app.use("/api/v1/admin/discounts", adminDiscountRouter);
 app.use("/api/v1/admin/inventory", adminInventoryRouter);
 app.use("/api/v1/admin/products", adminProductRouter);
 app.use("/api/v1/admin/notifications", adminNotificationRouter);
+app.use("/api/v1/upload", uploadRouter);
 
 // Error handling (must be after all routes)
 app.use(errorHandler);
