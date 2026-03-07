@@ -35,6 +35,9 @@ import { sanitize } from "./middleware/sanitize";
 
 const app: Express = express();
 
+// Trust proxy (Railway sits behind a reverse proxy)
+app.set("trust proxy", 1);
+
 // Compression
 app.use(compression());
 
