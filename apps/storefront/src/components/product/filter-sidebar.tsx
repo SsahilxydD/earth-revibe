@@ -172,7 +172,7 @@ export function FilterSidebar({
                     sizes: toggleArrayValue(filters.sizes, size),
                   })
                 }
-                className={`px-3 py-1.5 text-[10px] font-medium tracking-[0.06em] uppercase border transition-colors ${
+                className={`px-3 py-1.5 min-h-[44px] text-[10px] font-medium tracking-[0.06em] uppercase border transition-colors ${
                   isActive
                     ? "bg-black text-white border-black"
                     : "bg-white text-slate-600 border-slate-200 hover:border-black"
@@ -201,7 +201,7 @@ export function FilterSidebar({
                     colors: toggleArrayValue(filters.colors, color.name),
                   })
                 }
-                className={`relative w-7 h-7 border-2 transition-all ${
+                className={`relative w-11 h-11 border-2 transition-all ${
                   isActive
                     ? "border-black scale-110"
                     : "border-slate-200 hover:border-slate-400"
@@ -339,7 +339,7 @@ export function FilterSidebar({
                 </h2>
                 <button
                   onClick={() => setFilterDrawerOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center hover:bg-slate-50 transition-colors"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-slate-50 transition-colors"
                   aria-label="Close filters"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>

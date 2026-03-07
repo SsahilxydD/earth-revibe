@@ -157,7 +157,7 @@ export default function ProductDetailPage() {
                 <div key={acc.id} className="border-b border-slate-100">
                   <button
                     onClick={() => setOpenAccordion(openAccordion === acc.id ? null : acc.id)}
-                    className="flex items-center justify-between w-full py-4 text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase text-black"
+                    className="flex items-center justify-between w-full py-4 min-h-[44px] text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase text-black"
                   >
                     {acc.title}
                     <svg

@@ -37,9 +37,34 @@ export function useUpdateOrderStatus() {
   return useMutation({
     mutationFn: ({ orderNumber, status, note }: { orderNumber: string; status: string; note?: string }) =>
       api.put(`/admin/orders/${orderNumber}/status`, { status, note }),
-    onSuccess: () => {
+    onMutate: async ({ orderNumber, status }) => {
+      // Cancel any in-flight refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["admin-order", orderNumber] });
+
+      // Snapshot the previous value for rollback
+      const previousOrder = queryClient.getQueryData(["admin-order", orderNumber]);
+
+      // Optimistically patch the cached order status
+      queryClient.setQueryData(["admin-order", orderNumber], (old: any) => {
+        if (!old?.order) return old;
+        return {
+          ...old,
+          order: { ...old.order, status },
+        };
+      });
+
+      return { previousOrder, orderNumber };
+    },
+    onError: (_err, _variables, context) => {
+      // Roll back to the snapshot on failure
+      if (context?.previousOrder !== undefined) {
+        queryClient.setQueryData(["admin-order", context.orderNumber], context.previousOrder);
+      }
+    },
+    onSettled: (_data, _err, { orderNumber }) => {
+      // Always sync the server truth after mutation settles
+      queryClient.invalidateQueries({ queryKey: ["admin-order", orderNumber] });
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-order"] });
     },
   });
 }

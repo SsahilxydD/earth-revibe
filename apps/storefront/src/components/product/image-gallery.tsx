@@ -103,11 +103,13 @@ export function ImageGallery({ images }: ImageGalleryProps) {
               <button
                 key={index}
                 onClick={() => scrollTo(index)}
-                className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  index === selectedIndex ? "bg-black" : "bg-black/30"
-                }`}
+                className="flex items-center justify-center w-6 h-6 min-h-[44px]"
                 aria-label={`Go to image ${index + 1}`}
-              />
+              >
+                <span className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                  index === selectedIndex ? "bg-black" : "bg-black/30"
+                }`} />
+              </button>
             ))}
           </div>
         )}

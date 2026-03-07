@@ -51,7 +51,14 @@ export default function DashboardPage() {
 
       {/* Metrics strip - compact horizontal card with sparklines */}
       {isLoading ? (
-        <Skeleton className="h-[68px] w-full rounded-xl" />
+        <div className="bg-white rounded-xl border border-light-gray flex divide-x divide-light-gray overflow-hidden">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex-1 px-4 py-3 space-y-2">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-5 w-20" />
+            </div>
+          ))}
+        </div>
       ) : (
         <MetricsStrip metrics={metrics} />
       )}

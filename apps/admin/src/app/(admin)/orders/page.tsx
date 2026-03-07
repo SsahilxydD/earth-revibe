@@ -93,10 +93,36 @@ export default function OrdersPage() {
       {/* Orders table */}
       <Card padding={false}>
         {isLoading ? (
-          <div className="p-6 space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-light-gray bg-off-white/50">
+                  <th className="text-left px-6 py-3 font-medium text-medium-gray">Order</th>
+                  <th className="text-left px-6 py-3 font-medium text-medium-gray">Customer</th>
+                  <th className="text-left px-6 py-3 font-medium text-medium-gray">Date</th>
+                  <th className="text-left px-6 py-3 font-medium text-medium-gray">Status</th>
+                  <th className="text-left px-6 py-3 font-medium text-medium-gray">Payment</th>
+                  <th className="text-right px-6 py-3 font-medium text-medium-gray">Total</th>
+                  <th className="text-right px-6 py-3 font-medium text-medium-gray">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="border-b border-light-gray last:border-0">
+                    <td className="px-6 py-3"><Skeleton className="h-4 w-20" /></td>
+                    <td className="px-6 py-3">
+                      <Skeleton className="h-4 w-28 mb-1" />
+                      <Skeleton className="h-3 w-36" />
+                    </td>
+                    <td className="px-6 py-3"><Skeleton className="h-4 w-24" /></td>
+                    <td className="px-6 py-3"><Skeleton className="h-5 w-20 rounded-full" /></td>
+                    <td className="px-6 py-3"><Skeleton className="h-5 w-20 rounded-full" /></td>
+                    <td className="px-6 py-3 flex justify-end"><Skeleton className="h-4 w-16" /></td>
+                    <td className="px-6 py-3"><Skeleton className="h-6 w-6 ml-auto rounded-md" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : !data?.orders?.length ? (
           <div className="p-12 text-center">

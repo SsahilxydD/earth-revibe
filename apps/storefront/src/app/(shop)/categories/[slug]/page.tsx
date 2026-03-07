@@ -85,7 +85,7 @@ function CategoryContent() {
           </p>
           <div className="flex items-center gap-2">
             <button
-              className="lg:hidden flex items-center gap-1.5 px-3 py-2 border border-slate-200 text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase hover:border-black transition-colors"
+              className="lg:hidden flex items-center gap-1.5 px-3 py-2 min-h-[44px] border border-slate-200 text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase hover:border-black transition-colors"
               onClick={() => setFilterDrawerOpen(true)}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>

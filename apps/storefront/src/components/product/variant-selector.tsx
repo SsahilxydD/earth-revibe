@@ -65,7 +65,7 @@ export function VariantSelector({
                   onClick={() => onColorChange(color.name)}
                   disabled={!available}
                   title={color.name}
-                  className={`w-8 h-8 border-2 transition-all relative ${
+                  className={`w-11 h-11 border-2 transition-all relative ${
                     selected ? "border-black scale-110" : "border-slate-200"
                   } ${!available ? "opacity-25 cursor-not-allowed" : "hover:border-slate-400"}`}
                 >
@@ -100,7 +100,7 @@ export function VariantSelector({
                 key={size}
                 onClick={() => onSizeChange(size)}
                 disabled={!available}
-                className={`h-10 text-[11px] font-medium tracking-[0.04em] uppercase border text-center transition-all ${
+                className={`h-11 min-h-[44px] text-[11px] font-medium tracking-[0.04em] uppercase border text-center transition-all ${
                   selected
                     ? "bg-black text-white border-black"
                     : available

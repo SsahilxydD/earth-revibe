@@ -60,7 +60,7 @@ export function MobileBottomBar() {
             <Link
               key={tab.name}
               href={tab.href}
-              className={`flex flex-col items-center gap-1 px-3 py-2 relative ${
+              className={`flex flex-col items-center gap-1 px-3 py-2 min-h-[44px] justify-center relative ${
                 isActive ? "text-black" : "text-slate-400"
               }`}
             >
