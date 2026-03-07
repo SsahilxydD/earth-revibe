@@ -14,9 +14,10 @@ interface ProductCardProps {
     category?: { name: string } | null;
   };
   index?: number;
+  sizes?: string[];
 }
 
-export function ProductCard({ product, index = 0 }: ProductCardProps) {
+export function ProductCard({ product, index = 0, sizes }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [hoverImageIndex, setHoverImageIndex] = useState(0);
@@ -28,6 +29,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const containerWidth = useRef(0);
 
   const price = Number(product.price);
+  const compareAtPrice = product.compareAtPrice != null ? Number(product.compareAtPrice) : null;
+  const isOnSale = compareAtPrice !== null && compareAtPrice > price;
   const productImages = product.images?.map(img => img.url).slice(0, 6) || [];
 
   // Tutorial animation for first card
@@ -183,15 +186,40 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           </div>
         </div>
 
-        {/* Quick Add - desktop only */}
+        {/* Sale badge */}
+        {isOnSale && (
+          <span className="absolute top-2 left-2 z-20 bg-black text-white text-[9px] tracking-[0.1em] uppercase px-2 py-0.5">
+            Sale
+          </span>
+        )}
+
+        {/* Quick Add - desktop only, circle cart icon */}
         <div
-          className={`hidden md:block absolute bottom-0 left-0 right-0 bg-black/75 text-white text-center py-2 text-[12px] tracking-[0.5px] uppercase cursor-pointer transition-opacity duration-200 z-10 ${
+          className={`hidden md:flex absolute bottom-2 right-2 z-10 w-9 h-9 bg-white items-center justify-center shadow-md cursor-pointer transition-opacity duration-200 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          Quick Add
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
         </div>
       </Link>
+
+      {/* Size chips */}
+      {sizes && sizes.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2 px-1">
+          {sizes.map((size) => (
+            <span
+              key={size}
+              className="text-[9px] tracking-[0.04em] text-slate-500 border border-slate-200 px-1.5 py-0.5"
+            >
+              {size}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Text Block */}
       <div style={{ marginTop: '10px', paddingLeft: '4px', paddingRight: '4px' }}>
@@ -201,8 +229,15 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               {product.name}
             </p>
           </Link>
-          <span className="text-[13px] font-semibold text-[#222] flex-shrink-0">
-            {formatPrice(price)}
+          <span className="flex-shrink-0">
+            {isOnSale ? (
+              <>
+                <span className="line-through text-slate-400 text-[11px]">{formatPrice(compareAtPrice!)}</span>
+                <span className="text-[13px] font-semibold text-[#222] ml-1">{formatPrice(price)}</span>
+              </>
+            ) : (
+              <span className="text-[13px] font-semibold text-[#222]">{formatPrice(price)}</span>
+            )}
           </span>
         </div>
       </div>

@@ -8,7 +8,6 @@ import { FilterSidebar } from "@/components/product/filter-sidebar";
 import { SortDropdown } from "@/components/product/sort-dropdown";
 import { Pagination } from "@/components/product/pagination";
 import { useUIStore } from "@/stores/ui-store";
-import Link from "next/link";
 import { Suspense } from "react";
 
 function CategoryContent() {
@@ -63,46 +62,49 @@ function CategoryContent() {
       {/* Spacer for fixed navbar */}
       <div className="h-16 lg:h-20" aria-hidden="true" />
 
-      <div className="px-3 sm:px-4 md:px-10 max-w-7xl mx-auto py-6 pb-24 lg:pb-6">
-        {/* Breadcrumb */}
-        <nav className="flex flex-wrap items-center gap-2 text-[11px] tracking-[0.08em] uppercase text-slate-500 mb-6 font-[var(--font-cinzel)] font-semibold">
-          <Link href="/" className="hover:text-slate-900 transition-colors">Home</Link>
-          <span className="text-slate-400">&gt;</span>
-          <Link href="/products" className="hover:text-slate-900 transition-colors">All</Link>
-          <span className="text-slate-400">&gt;</span>
-          <span className="text-slate-900">
-            {categoryLoading ? (
-              <span className="inline-block h-3 w-20 bg-slate-100 animate-pulse" />
-            ) : (
-              categoryName
-            )}
-          </span>
-        </nav>
+      {/* Hero / Banner — full-width, no horizontal padding */}
+      <div className="relative h-48 md:h-64 w-full bg-gradient-to-br from-[#2c2c2c] via-[#3a3028] to-[#1a1a1a] flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/30" />
+        <h1 className="relative z-10 text-4xl md:text-6xl font-[var(--font-cinzel)] tracking-[0.25em] uppercase text-white text-center px-4">
+          {categoryLoading ? (
+            <span className="inline-block h-10 w-64 bg-white/10 animate-pulse rounded" />
+          ) : (
+            categoryName
+          )}
+        </h1>
+      </div>
 
-        <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-          <p className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-400">
-            {data?.total > 0 ? `${data.total} ${data.total === 1 ? 'product' : 'products'}` : '\u00A0'}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              className="lg:hidden flex items-center gap-1.5 px-3 py-2 min-h-[44px] border border-slate-200 text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase hover:border-black transition-colors"
-              onClick={() => setFilterDrawerOpen(true)}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              Filters
-            </button>
-            <SortDropdown
-              value={`${params.sortBy}-${params.sortOrder}`}
-              onChange={(val) => {
-                const [sortBy, sortOrder] = val.split("-");
-                updateParams({ sortBy, sortOrder });
-              }}
-            />
-          </div>
+      {/* "Discover …" subtitle */}
+      <p className="text-center text-[10px] tracking-[0.2em] uppercase font-[var(--font-cinzel)] text-slate-400 py-4 border-b border-slate-100">
+        Discover {categoryLoading ? slug : categoryName}
+      </p>
+
+      {/* Sort / Filter bar */}
+      <div className="flex items-center justify-between border-b border-slate-100 py-3 px-4 md:px-10">
+        <p className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-400">
+          {data?.total > 0 ? `${data.total} ${data.total === 1 ? 'product' : 'products'}` : '\u00A0'}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            className="lg:hidden flex items-center gap-1.5 px-3 py-2 min-h-[44px] border border-slate-200 text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase hover:border-black transition-colors"
+            onClick={() => setFilterDrawerOpen(true)}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filters
+          </button>
+          <SortDropdown
+            value={`${params.sortBy}-${params.sortOrder}`}
+            onChange={(val) => {
+              const [sortBy, sortOrder] = val.split("-");
+              updateParams({ sortBy, sortOrder });
+            }}
+          />
         </div>
+      </div>
 
+      <div className="px-3 sm:px-4 md:px-10 max-w-7xl mx-auto py-6 pb-24 lg:pb-6">
         {/* Mobile filter drawer — fixed overlay, outside flex flow */}
         <div className="lg:hidden">
           <FilterSidebar
