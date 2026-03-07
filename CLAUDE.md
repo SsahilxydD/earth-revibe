@@ -21,20 +21,60 @@ pnpm db:push      # push schema to database
 pnpm db:seed      # seed database
 ```
 
-## Ruflo Agent Routing
+## Ruflo — MANDATORY WORKFLOW
 
-| Task | Command |
-|------|---------|
-| New feature design | `ruflo --agent architect --task "..."` |
-| Implementation | `ruflo --agent coder --task "..."` |
-| Code review | `ruflo --agent reviewer --task "..."` |
-| Write tests | `ruflo --agent tester --task "..."` |
-| Security audit | `ruflo --agent security-architect --task "..."` |
-| Performance | `ruflo --agent perf-analyzer --task "..."` |
-| Storefront work | add `--swarm storefront-swarm` |
-| Admin work | add `--swarm admin-swarm` |
-| API work | add `--swarm api-swarm` |
-| Shared/DB work | add `--swarm shared-swarm` |
+**Every task MUST follow this order. No exceptions.**
+
+### Step 1 — Query memory BEFORE reading any file
+
+```bash
+ruflo memory search -q "<what you're about to build>"
+ruflo memory search -q "<component or feature name>"
+```
+
+If memory has the answer, skip reading files. Memory is always faster and cheaper.
+
+### Step 2 — Use swarm, NOT single agents
+
+```bash
+# Start the right swarm for the work area
+ruflo swarm start --name earth-revibe --objective "<task description>" --max-agents 6
+
+# Or target a specific app swarm
+ruflo swarm start --name storefront-swarm --objective "<task>" --max-agents 4
+ruflo swarm start --name admin-swarm --objective "<task>" --max-agents 4
+ruflo swarm start --name api-swarm --objective "<task>" --max-agents 4
+```
+
+Swarms assign roles automatically: architect, coder, reviewer, tester. Do not spawn individual agents manually.
+
+### Step 3 — Store results in memory after every task
+
+```bash
+ruflo memory store -k "<feature-name>" --value "<what was built, key file paths, design decisions>"
+```
+
+Post-commit hook auto-stores commit summaries. Manually store design decisions.
+
+### Swarm Role Reference
+
+| Role | Responsibility |
+|------|---------------|
+| architect | Plans approach, reads memory, defines interfaces |
+| coder | Implements — always queries memory first |
+| reviewer | Checks code matches spec and memory conventions |
+| tester | Writes and runs tests |
+| security-architect | Audits auth, input validation, API security |
+
+### Quick memory commands
+
+```bash
+ruflo memory search -q "query"        # semantic search
+ruflo memory list                      # list all keys
+ruflo memory retrieve -k "key"        # get specific key
+ruflo memory stats                     # see what's stored
+ruflo neural query --prompt "question" # ask trained model
+```
 
 ## Key Conventions
 
