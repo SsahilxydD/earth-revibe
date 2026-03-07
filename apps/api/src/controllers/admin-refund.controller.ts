@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { razorpay } from "../config/razorpay";
 import { ApiError } from "../utils/api-error";
 
@@ -76,7 +76,7 @@ export const adminRefundController = {
     const isFullRefund = refundAmountInPaise === paymentAmountInPaise;
 
     // Wrap all DB writes in a transaction for data integrity
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Update payment record
       await tx.payment.update({
         where: { id: order.payment!.id },

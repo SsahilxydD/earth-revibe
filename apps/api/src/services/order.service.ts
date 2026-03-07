@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 import { razorpay } from "../config/razorpay";
 import { env } from "../config/env";
@@ -199,7 +199,7 @@ export const orderService = {
     }
 
     // Wrap all post-verification writes in a transaction for data integrity
-    const { orderNumber, pointsEarned } = await prisma.$transaction(async (tx) => {
+    const { orderNumber, pointsEarned } = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Update payment
       await tx.payment.update({
         where: { id: payment.id },
@@ -398,7 +398,7 @@ export const orderService = {
       throw ApiError.badRequest("Order cannot be cancelled at this stage");
     }
 
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.order.update({
         where: { id: order.id },
         data: { status: "CANCELLED" },

@@ -141,7 +141,7 @@ export const adminProductController = {
 
     // Pre-fetch all categories for matching
     const categories = await prisma.category.findMany();
-    const categoryMap = new Map(
+    const categoryMap = new Map<string, string>(
       categories.map((c: { name: string; id: string }) => [c.name.toLowerCase(), c.id])
     );
 

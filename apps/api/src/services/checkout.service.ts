@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 import { razorpay } from "../config/razorpay";
 import { env } from "../config/env";
@@ -406,7 +406,7 @@ export const checkoutService = {
     const guestEmail = pending.guestEmail || customerDetails.email || null;
 
     // Wrap all DB writes in a transaction for data integrity
-    const { orderId, orderNumber: finalOrderNumber, pointsEarned } = await prisma.$transaction(async (tx) => {
+    const { orderId, orderNumber: finalOrderNumber, pointsEarned } = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Create order in DB
       const order = await tx.order.create({
         data: {
