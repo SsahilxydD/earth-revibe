@@ -7,13 +7,13 @@ export const authController = {
   async register(req: Request, res: Response) {
     const result = await authService.register(req.body);
     setAuthCookies(res, result.accessToken, result.refreshToken);
-    res.status(201).json({ success: true, data: { user: result.user } });
+    res.status(201).json({ success: true, data: result });
   },
 
   async login(req: Request, res: Response) {
     const result = await authService.login(req.body);
     setAuthCookies(res, result.accessToken, result.refreshToken);
-    res.json({ success: true, data: { user: result.user } });
+    res.json({ success: true, data: result });
   },
 
   async refresh(req: Request, res: Response) {
@@ -23,7 +23,7 @@ export const authController = {
     }
     const tokens = await authService.refreshToken(refreshToken);
     setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
-    res.json({ success: true, data: { message: "Tokens refreshed" } });
+    res.json({ success: true, data: tokens });
   },
 
   async logout(req: Request, res: Response) {

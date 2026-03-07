@@ -91,7 +91,18 @@ class ApiClient {
       }
     }
 
-    const json: ApiResponse<T> = await res.json();
+    let json: ApiResponse<T>;
+    try {
+      json = await res.json();
+    } catch {
+      throw {
+        status: res.status,
+        code: "NETWORK_ERROR",
+        message: res.status === 0
+          ? "Cannot reach the API server. Check CORS or network."
+          : `Server returned non-JSON response (${res.status})`,
+      };
+    }
 
     if (!res.ok || !json.success) {
       throw {

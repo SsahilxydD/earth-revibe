@@ -9,7 +9,7 @@ const REFRESH_COOKIE = "refresh_token";
 const baseCookieOptions: CookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: "strict",
+  sameSite: isProduction ? "none" : "strict",
 };
 
 export function setAuthCookies(
