@@ -32,7 +32,17 @@ class ApiClient {
     localStorage.removeItem("adminRefreshToken");
   }
 
+  private refreshPromise: Promise<boolean> | null = null;
+
   private async refreshAccessToken(): Promise<boolean> {
+    if (this.refreshPromise) return this.refreshPromise;
+    this.refreshPromise = this._doRefresh().finally(() => {
+      this.refreshPromise = null;
+    });
+    return this.refreshPromise;
+  }
+
+  private async _doRefresh(): Promise<boolean> {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) return false;
 
@@ -60,7 +70,7 @@ class ApiClient {
     }
   }
 
-  async request<T = any>(path: string, options: RequestInit = {}): Promise<T> {
+  async request<T = any>(path: string, options: RequestInit = {}, signal?: AbortSignal): Promise<T> {
     const token = this.getToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -71,13 +81,13 @@ class ApiClient {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    let res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    let res = await fetch(`${API_BASE}${path}`, { ...options, headers, signal });
 
     if (res.status === 401 && token) {
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
         headers["Authorization"] = `Bearer ${this.getToken()}`;
-        res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+        res = await fetch(`${API_BASE}${path}`, { ...options, headers, signal });
       }
     }
 
@@ -95,8 +105,8 @@ class ApiClient {
     return json.data as T;
   }
 
-  get<T = any>(path: string) {
-    return this.request<T>(path, { method: "GET" });
+  get<T = any>(path: string, signal?: AbortSignal) {
+    return this.request<T>(path, { method: "GET" }, signal);
   }
 
   post<T = any>(path: string, body?: any) {
