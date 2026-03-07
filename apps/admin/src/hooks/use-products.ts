@@ -73,7 +73,7 @@ export function useExportProductsCSV() {
           ? localStorage.getItem("adminAccessToken")
           : null;
       const API_BASE =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
       const res = await fetch(`${API_BASE}/admin/products/export-csv`, {
         method: "GET",
         headers: {
@@ -199,7 +199,7 @@ export function useUploadImage() {
           ? localStorage.getItem("adminAccessToken")
           : null;
       const API_BASE =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
       const formData = new FormData();
       formData.append("file", file);
 

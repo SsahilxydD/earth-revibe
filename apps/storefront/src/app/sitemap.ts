@@ -1,5 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://earthrevibe.com";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
 
 type SitemapEntry = {
   url: string;
@@ -25,10 +25,11 @@ export default async function sitemap() {
   let blogPages: SitemapEntry[] = [];
 
   try {
+    const timeout = AbortSignal.timeout(10000);
     const [productsRes, categoriesRes, blogRes] = await Promise.all([
-      fetch(`${API_URL}/products?limit=1000`).then((r) => r.json()).catch(() => ({ data: { products: [] } })),
-      fetch(`${API_URL}/categories`).then((r) => r.json()).catch(() => ({ data: [] })),
-      fetch(`${API_URL}/blog`).then((r) => r.json()).catch(() => ({ data: { posts: [] } })),
+      fetch(`${API_URL}/products?limit=1000`, { signal: timeout }).then((r) => r.json()).catch(() => ({ data: { products: [] } })),
+      fetch(`${API_URL}/categories`, { signal: timeout }).then((r) => r.json()).catch(() => ({ data: [] })),
+      fetch(`${API_URL}/blog`, { signal: timeout }).then((r) => r.json()).catch(() => ({ data: { posts: [] } })),
     ]);
 
     const products = productsRes?.data?.products || [];
