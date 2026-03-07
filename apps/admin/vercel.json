@@ -2,8 +2,5 @@
   "framework": "nextjs",
   "buildCommand": "cd ../.. && pnpm turbo build --filter=@earth-revibe/admin",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "outputDirectory": ".next",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@api_url"
-  }
+  "outputDirectory": ".next"
 }

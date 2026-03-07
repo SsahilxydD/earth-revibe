@@ -40,3 +40,5 @@ npm-debug.log*
 coverage/
 .env.production
 .env.development
+.vercel/
+vectors.db

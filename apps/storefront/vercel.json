@@ -2,10 +2,5 @@
   "framework": "nextjs",
   "buildCommand": "cd ../.. && pnpm turbo build --filter=@earth-revibe/storefront",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "outputDirectory": ".next",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@api_url",
-    "NEXT_PUBLIC_GA4_MEASUREMENT_ID": "@ga4_measurement_id",
-    "NEXT_PUBLIC_RAZORPAY_KEY_ID": "@razorpay_key_id"
-  }
+  "outputDirectory": ".next"
 }
