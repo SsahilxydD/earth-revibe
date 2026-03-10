@@ -121,6 +121,31 @@ app.get("/api/v1/internal/debug-auth", async (req, res) => {
       const jwks = createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
       const { payload } = await jwtVerify(token, jwks);
       results.supabaseJwt = { success: true, email: payload.email, appMeta: payload.app_metadata };
+
+      // Try the upsert
+      try {
+        const { prisma } = await import("@earth-revibe/db");
+        const email = payload.email as string;
+        const appMeta = payload.app_metadata as any;
+        const userMeta = payload.user_metadata as any;
+        const user = await prisma.user.upsert({
+          where: { email },
+          update: { ...(appMeta?.role ? { role: appMeta.role } : {}), lastLoginAt: new Date() },
+          create: {
+            email,
+            passwordHash: "supabase-managed",
+            firstName: userMeta?.first_name || email.split("@")[0],
+            lastName: userMeta?.last_name || "",
+            role: appMeta?.role || "CUSTOMER",
+            emailVerified: true,
+            isActive: true,
+          },
+          select: { id: true, email: true, role: true, isActive: true },
+        });
+        results.upsert = { success: true, user };
+      } catch (e: any) {
+        results.upsert = { success: false, error: e.message, code: e.code };
+      }
     } catch (e: any) {
       results.supabaseJwt = { success: false, error: e.message, code: e.code };
     }

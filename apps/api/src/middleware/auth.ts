@@ -82,8 +82,8 @@ async function verifyToken(token: string) {
       });
 
       if (user.isActive) return user;
-    } catch {
-      // Not a valid Supabase JWT either
+    } catch (err) {
+      console.error("[auth] Supabase JWT verification failed:", err);
     }
   }
 
