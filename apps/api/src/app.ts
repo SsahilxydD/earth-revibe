@@ -92,66 +92,7 @@ app.get("/api/v1/health", (_req, res) => {
     success: true,
     message: "Earth Revibe API is running",
     timestamp: new Date().toISOString(),
-    version: "3e9f8a3", // deploy marker — remove after debugging
-    supabaseConfigured: !!env.SUPABASE_URL,
   });
-});
-
-// DEBUG: temporary endpoint to diagnose JWT verification — DELETE after fixing
-app.get("/api/v1/internal/debug-auth", async (req, res) => {
-  const { createRemoteJWKSet, jwtVerify } = await import("jose");
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
-  if (!token) { res.json({ error: "no token" }); return; }
-
-  const results: any = { supabaseUrl: env.SUPABASE_URL, jwksUrl: env.SUPABASE_URL ? `${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json` : null };
-
-  // Try custom JWT
-  try {
-    const jwt = await import("jsonwebtoken");
-    const decoded = jwt.default.verify(token, env.JWT_ACCESS_SECRET);
-    results.customJwt = { success: true, payload: decoded };
-  } catch (e: any) {
-    results.customJwt = { success: false, error: e.message };
-  }
-
-  // Try Supabase JWKS
-  if (env.SUPABASE_URL) {
-    try {
-      const jwks = createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
-      const { payload } = await jwtVerify(token, jwks);
-      results.supabaseJwt = { success: true, email: payload.email, appMeta: payload.app_metadata };
-
-      // Try the upsert
-      try {
-        const { prisma } = await import("@earth-revibe/db");
-        const email = payload.email as string;
-        const appMeta = payload.app_metadata as any;
-        const userMeta = payload.user_metadata as any;
-        const user = await prisma.user.upsert({
-          where: { email },
-          update: { ...(appMeta?.role ? { role: appMeta.role } : {}), lastLoginAt: new Date() },
-          create: {
-            email,
-            passwordHash: "supabase-managed",
-            firstName: userMeta?.first_name || email.split("@")[0],
-            lastName: userMeta?.last_name || "",
-            role: appMeta?.role || "CUSTOMER",
-            emailVerified: true,
-            isActive: true,
-          },
-          select: { id: true, email: true, role: true, isActive: true },
-        });
-        results.upsert = { success: true, user };
-      } catch (e: any) {
-        results.upsert = { success: false, error: e.message, code: e.code };
-      }
-    } catch (e: any) {
-      results.supabaseJwt = { success: false, error: e.message, code: e.code };
-    }
-  }
-
-  res.json(results);
 });
 
 // Cleanup stale pending checkouts (older than 2 hours) — can be called by cron/external monitor
