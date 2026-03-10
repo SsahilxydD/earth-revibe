@@ -97,6 +97,38 @@ app.get("/api/v1/health", (_req, res) => {
   });
 });
 
+// DEBUG: temporary endpoint to diagnose JWT verification — DELETE after fixing
+app.get("/api/v1/internal/debug-auth", async (req, res) => {
+  const { createRemoteJWKSet, jwtVerify } = await import("jose");
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+  if (!token) { res.json({ error: "no token" }); return; }
+
+  const results: any = { supabaseUrl: env.SUPABASE_URL, jwksUrl: env.SUPABASE_URL ? `${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json` : null };
+
+  // Try custom JWT
+  try {
+    const jwt = await import("jsonwebtoken");
+    const decoded = jwt.default.verify(token, env.JWT_ACCESS_SECRET);
+    results.customJwt = { success: true, payload: decoded };
+  } catch (e: any) {
+    results.customJwt = { success: false, error: e.message };
+  }
+
+  // Try Supabase JWKS
+  if (env.SUPABASE_URL) {
+    try {
+      const jwks = createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
+      const { payload } = await jwtVerify(token, jwks);
+      results.supabaseJwt = { success: true, email: payload.email, appMeta: payload.app_metadata };
+    } catch (e: any) {
+      results.supabaseJwt = { success: false, error: e.message, code: e.code };
+    }
+  }
+
+  res.json(results);
+});
+
 // Cleanup stale pending checkouts (older than 2 hours) — can be called by cron/external monitor
 app.post("/api/v1/internal/cleanup", async (_req, res) => {
   try {
