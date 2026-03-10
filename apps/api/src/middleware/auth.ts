@@ -28,7 +28,8 @@ const SUPABASE_JWKS = env.SUPABASE_URL
 
 /**
  * Try verifying with custom JWT first, then fall back to Supabase JWT.
- * Returns the authenticated user or null.
+ * For Supabase JWTs, auto-provisions the User record if it doesn't exist
+ * and reads role from app_metadata — no manual DB setup needed.
  */
 async function verifyToken(token: string) {
   // 1. Try custom JWT (app-issued tokens — HS256)
@@ -50,11 +51,37 @@ async function verifyToken(token: string) {
       const email = payload.email as string | undefined;
       if (!email) return null;
 
-      const user = await prisma.user.findUnique({
+      // Read role from Supabase app_metadata (set via Supabase dashboard)
+      const appMeta = payload.app_metadata as Record<string, any> | undefined;
+      const supabaseRole = appMeta?.role as string | undefined;
+
+      // User metadata for display name
+      const userMeta = payload.user_metadata as Record<string, any> | undefined;
+
+      // Auto-provision: upsert user on every Supabase-authenticated request.
+      // If the user exists, sync the role from app_metadata (source of truth).
+      // If the user doesn't exist, create them automatically.
+      const user = await prisma.user.upsert({
         where: { email },
+        update: {
+          // Sync role from Supabase app_metadata if set, otherwise keep DB value
+          ...(supabaseRole ? { role: supabaseRole as any } : {}),
+          lastLoginAt: new Date(),
+        },
+        create: {
+          email,
+          passwordHash: "supabase-managed",
+          firstName: userMeta?.first_name || userMeta?.name?.split(" ")[0] || email.split("@")[0],
+          lastName: userMeta?.last_name || userMeta?.name?.split(" ").slice(1).join(" ") || "",
+          role: (supabaseRole as any) || "CUSTOMER",
+          emailVerified: true,
+          isActive: true,
+          lastLoginAt: new Date(),
+        },
         select: userSelect,
       });
-      if (user && user.isActive) return user;
+
+      if (user.isActive) return user;
     } catch {
       // Not a valid Supabase JWT either
     }
