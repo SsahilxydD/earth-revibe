@@ -86,21 +86,12 @@ app.use(rateLimit({
   legacyHeaders: false,
 }));
 
-// Health check with DB connectivity test
-app.get("/api/v1/health", async (_req, res) => {
-  let dbStatus = "unknown";
-  try {
-    const { prisma } = await import("@earth-revibe/db");
-    await prisma.$queryRaw`SELECT 1`;
-    dbStatus = "connected";
-  } catch (err: any) {
-    dbStatus = `error: ${err.message}`;
-  }
+// Health check
+app.get("/api/v1/health", (_req, res) => {
   res.json({
     success: true,
     message: "Earth Revibe API is running",
     timestamp: new Date().toISOString(),
-    db: dbStatus,
   });
 });
 
