@@ -44,7 +44,27 @@ app.use(compression());
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: [env.FRONTEND_URL, env.ADMIN_URL],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    const allowed = [env.FRONTEND_URL, env.ADMIN_URL].filter(Boolean);
+
+    // Exact match or Vercel preview URLs for our apps
+    if (
+      allowed.includes(origin) ||
+      origin.endsWith(".vercel.app")
+    ) {
+      return callback(null, true);
+    }
+
+    // In development, allow localhost on any port
+    if (env.NODE_ENV === "development" && origin.startsWith("http://localhost")) {
+      return callback(null, true);
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
 }));
 
