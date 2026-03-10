@@ -134,6 +134,18 @@ model Product {
   fit             String?
   printType       String?
   washInstructions String?
+  vendor          String?
+  productType     String?
+  ageGroup        String?
+  colorPattern    String?
+  fabric          String?
+  neckline        String?
+  outerwearFeatures String?
+  pantsLengthType String?
+  sleeveLengthType String?
+  targetGender    String?
+  topLengthType   String?
+  waistRise       String?
   status          ProductStatus @default(DRAFT)
   isFeatured      Boolean       @default(false)
   categoryId      String
@@ -164,7 +176,7 @@ model ProductImage {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   url       String
-  publicId  String
+  publicId  String  @default("")
   altText   String?
   sortOrder Int     @default(0)
   isPrimary Boolean @default(false)
@@ -179,11 +191,14 @@ model ProductVariant {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   sku       String  @unique
   size      String
-  color     String
+  color     String  @default("")
   colorHex  String?
   price     Decimal? @db.Decimal(10, 2)
   stock     Int     @default(0)
   lowStockThreshold Int @default(5)
+  barcode   String?
+  weight    Decimal? @db.Decimal(10, 2)
+  weightUnit String? @default("g")
   isActive  Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
