@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { prisma } from "@earth-revibe/db";
 import { env } from "../config/env";
 import { ApiError } from "../utils/api-error";
@@ -11,13 +12,6 @@ interface JwtPayload {
   role: string;
 }
 
-interface SupabaseJwtPayload {
-  sub: string;
-  email: string;
-  role: string;
-  aud: string;
-}
-
 const userSelect = {
   id: true,
   email: true,
@@ -27,12 +21,17 @@ const userSelect = {
   isActive: true,
 } as const;
 
+// Supabase JWKS for ES256 token verification — cached automatically by jose
+const SUPABASE_JWKS = env.SUPABASE_URL
+  ? createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`))
+  : null;
+
 /**
  * Try verifying with custom JWT first, then fall back to Supabase JWT.
  * Returns the authenticated user or null.
  */
 async function verifyToken(token: string) {
-  // 1. Try custom JWT (app-issued tokens)
+  // 1. Try custom JWT (app-issued tokens — HS256)
   try {
     const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
     const user = await prisma.user.findUnique({
@@ -44,14 +43,15 @@ async function verifyToken(token: string) {
     // Not a valid custom JWT — try Supabase
   }
 
-  // 2. Try Supabase JWT
-  if (env.SUPABASE_JWT_SECRET) {
+  // 2. Try Supabase JWT (ES256 — verified via JWKS)
+  if (SUPABASE_JWKS) {
     try {
-      const decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET) as SupabaseJwtPayload;
-      if (!decoded.email) return null;
+      const { payload } = await jwtVerify(token, SUPABASE_JWKS);
+      const email = payload.email as string | undefined;
+      if (!email) return null;
 
       const user = await prisma.user.findUnique({
-        where: { email: decoded.email },
+        where: { email },
         select: userSelect,
       });
       if (user && user.isActive) return user;
