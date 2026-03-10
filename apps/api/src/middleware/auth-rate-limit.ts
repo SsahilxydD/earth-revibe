@@ -1,9 +1,9 @@
 import { rateLimit } from "express-rate-limit";
 
-// Strict limit for login: 5 attempts per 15 minutes per IP
+// Login: 15 attempts per 15 minutes per IP
 export const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 5,
+  limit: 15,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: {
