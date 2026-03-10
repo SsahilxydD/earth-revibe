@@ -92,6 +92,8 @@ app.get("/api/v1/health", (_req, res) => {
     success: true,
     message: "Earth Revibe API is running",
     timestamp: new Date().toISOString(),
+    version: "3e9f8a3", // deploy marker — remove after debugging
+    supabaseConfigured: !!env.SUPABASE_URL,
   });
 });
 
