@@ -11,6 +11,58 @@ interface JwtPayload {
   role: string;
 }
 
+interface SupabaseJwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+  aud: string;
+}
+
+const userSelect = {
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  role: true,
+  isActive: true,
+} as const;
+
+/**
+ * Try verifying with custom JWT first, then fall back to Supabase JWT.
+ * Returns the authenticated user or null.
+ */
+async function verifyToken(token: string) {
+  // 1. Try custom JWT (app-issued tokens)
+  try {
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: userSelect,
+    });
+    if (user && user.isActive) return user;
+  } catch {
+    // Not a valid custom JWT — try Supabase
+  }
+
+  // 2. Try Supabase JWT
+  if (env.SUPABASE_JWT_SECRET) {
+    try {
+      const decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET) as SupabaseJwtPayload;
+      if (!decoded.email) return null;
+
+      const user = await prisma.user.findUnique({
+        where: { email: decoded.email },
+        select: userSelect,
+      });
+      if (user && user.isActive) return user;
+    } catch {
+      // Not a valid Supabase JWT either
+    }
+  }
+
+  return null;
+}
+
 export const authenticate = async (
   req: Request,
   _res: Response,
@@ -22,31 +74,14 @@ export const authenticate = async (
     throw ApiError.unauthorized("No token provided");
   }
 
-  try {
-    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
+  const user = await verifyToken(token);
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-      },
-    });
-
-    if (!user || !user.isActive) {
-      throw ApiError.unauthorized("User not found or inactive");
-    }
-
-    req.user = user;
-    next();
-  } catch (error) {
-    if (error instanceof ApiError) throw error;
+  if (!user) {
     throw ApiError.unauthorized("Invalid or expired token");
   }
+
+  req.user = user;
+  next();
 };
 
 /**
@@ -65,26 +100,9 @@ export const optionalAuthenticate = async (
     return next();
   }
 
-  try {
-    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
-
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-      },
-    });
-
-    if (user && user.isActive) {
-      req.user = user;
-    }
-  } catch {
-    // Token invalid or expired — proceed as guest
+  const user = await verifyToken(token);
+  if (user) {
+    req.user = user;
   }
 
   next();

@@ -1,69 +1,47 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/stores/auth-store";
-import { api } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase/client";
 import { Spinner } from "@/components/ui/spinner";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isAuthenticated, isLoading, setUser, clearUser } = useAuthStore();
-  const checkedRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Prevent duplicate checks (React Strict Mode / dependency re-runs)
-    if (checkedRef.current) return;
-    checkedRef.current = true;
+    const supabase = createClient();
 
-    async function checkAuth() {
-      const token = localStorage.getItem("adminAccessToken");
-      if (!token) {
-        clearUser();
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
         router.replace("/login");
         return;
       }
 
-      try {
-        const user = await api.get("/auth/me");
-        if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-          api.clearTokens();
-          clearUser();
-          router.replace("/login");
-          return;
-        }
-        setUser(user);
-      } catch (err: any) {
-        // Only redirect to login for auth-related errors (401, 403)
-        // For network errors, keep the user on the page with loading state
-        if (err?.status === 401 || err?.status === 403) {
-          api.clearTokens();
-          clearUser();
-          router.replace("/login");
-        } else {
-          // Network error or server error — retry once after a short delay
-          try {
-            await new Promise((r) => setTimeout(r, 1000));
-            const user = await api.get("/auth/me");
-            if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-              api.clearTokens();
-              clearUser();
-              router.replace("/login");
-              return;
-            }
-            setUser(user);
-          } catch {
-            api.clearTokens();
-            clearUser();
-            router.replace("/login");
-          }
-        }
-      }
+      setIsAuthenticated(true);
+      setIsLoading(false);
     }
 
-    checkAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    checkSession();
+
+    // Listen for auth state changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!session) {
+          setIsAuthenticated(false);
+          router.replace("/login");
+        } else {
+          setIsAuthenticated(true);
+          setIsLoading(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [router]);
 
   if (isLoading) {
     return (

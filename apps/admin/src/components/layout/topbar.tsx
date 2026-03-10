@@ -14,9 +14,8 @@ import {
   Headset,
   AlertTriangle,
 } from "lucide-react";
-import { useAuthStore } from "@/stores/auth-store";
+import { createClient } from "@/lib/supabase/client";
 import { useUIStore } from "@/stores/ui-store";
-import { api } from "@/lib/api-client";
 import {
   useNotifications,
   useNotificationCount,
@@ -36,10 +35,10 @@ const notificationConfig: Record<
 
 export function Topbar() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
   const { setMobileSidebarOpen } = useUIStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -47,6 +46,13 @@ export function Topbar() {
   const { data: notifications, isLoading: notificationsLoading } = useNotifications();
 
   const count = notificationCount?.count ?? 0;
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserEmail(session?.user?.email ?? null);
+    });
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -62,19 +68,13 @@ export function Topbar() {
   }, []);
 
   const handleLogout = async () => {
-    try {
-      const refreshToken = localStorage.getItem("adminRefreshToken");
-      if (refreshToken) {
-        await api.post("/auth/logout", { refreshToken });
-      }
-    } catch {
-      // Ignore errors on logout
-    }
-    logout();
+    const supabase = createClient();
+    await supabase.auth.signOut();
     router.push("/login");
   };
 
-  const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "AD";
+  const displayName = userEmail?.split("@")[0] ?? "Admin";
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-light-gray h-16 flex items-center px-4 lg:px-6">
@@ -195,7 +195,7 @@ export function Topbar() {
             <span className="text-xs font-semibold text-white">{initials}</span>
           </div>
           <span className="hidden sm:block text-sm font-medium text-charcoal">
-            {user?.firstName} {user?.lastName}
+            {displayName}
           </span>
           <ChevronDown size={16} className="text-medium-gray" />
         </button>
@@ -203,8 +203,8 @@ export function Topbar() {
         {isDropdownOpen && (
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg border border-light-gray shadow-lg py-1 z-50">
             <div className="px-4 py-2 border-b border-light-gray">
-              <p className="text-sm font-medium text-charcoal">{user?.firstName} {user?.lastName}</p>
-              <p className="text-xs text-medium-gray">{user?.email}</p>
+              <p className="text-sm font-medium text-charcoal">{displayName}</p>
+              <p className="text-xs text-medium-gray">{userEmail}</p>
             </div>
             <button
               onClick={handleLogout}

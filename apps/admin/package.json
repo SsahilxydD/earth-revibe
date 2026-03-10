@@ -21,7 +21,9 @@
     "react-hook-form": "^7.71.2",
     "recharts": "^3.7.0",
     "zod": "^4.3.6",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.11",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.4"
   },
   "devDependencies": {
     "@earth-revibe/tsconfig": "workspace:*",

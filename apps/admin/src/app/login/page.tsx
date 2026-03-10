@@ -8,12 +8,10 @@ import { loginSchema, type LoginInput } from "@earth-revibe/shared";
 import { Leaf } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
-import { api } from "@/lib/api-client";
-import { useAuthStore } from "@/stores/auth-store";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const login = useAuthStore((s) => s.login);
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -27,17 +25,20 @@ export default function AdminLoginPage() {
   const onSubmit = async (data: LoginInput) => {
     setIsLoading(true);
     try {
-      const result = await api.post("/auth/login", data);
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
 
-      // Check admin role
-      if (result.user.role !== "ADMIN" && result.user.role !== "SUPER_ADMIN") {
-        toast.error("Access denied. Admin privileges required.");
+      if (error) {
+        toast.error(error.message || "Invalid credentials");
         return;
       }
 
-      login(result.user, result.accessToken, result.refreshToken);
       toast.success("Welcome back!");
       router.push("/dashboard");
+      router.refresh();
     } catch (err: any) {
       toast.error(err.message || "Invalid credentials");
     } finally {

@@ -1,3 +1,5 @@
+import { createClient } from "@/lib/supabase/client";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
 
 interface ApiResponse<T = any> {
@@ -12,66 +14,21 @@ interface ApiResponse<T = any> {
 }
 
 class ApiClient {
-  private getToken(): string | null {
+  /** Get access token from Supabase session — Supabase handles refresh automatically */
+  private async getToken(): Promise<string | null> {
     if (typeof window === "undefined") return null;
-    return localStorage.getItem("adminAccessToken");
-  }
-
-  private getRefreshToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("adminRefreshToken");
-  }
-
-  private setTokens(accessToken: string, refreshToken: string) {
-    localStorage.setItem("adminAccessToken", accessToken);
-    localStorage.setItem("adminRefreshToken", refreshToken);
-  }
-
-  clearTokens() {
-    localStorage.removeItem("adminAccessToken");
-    localStorage.removeItem("adminRefreshToken");
-  }
-
-  private refreshPromise: Promise<boolean> | null = null;
-
-  private async refreshAccessToken(): Promise<boolean> {
-    if (this.refreshPromise) return this.refreshPromise;
-    this.refreshPromise = this._doRefresh().finally(() => {
-      this.refreshPromise = null;
-    });
-    return this.refreshPromise;
-  }
-
-  private async _doRefresh(): Promise<boolean> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) return false;
 
     try {
-      const res = await fetch(`${API_BASE}/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (!res.ok) {
-        this.clearTokens();
-        return false;
-      }
-
-      const data = await res.json();
-      if (data.success && data.data) {
-        this.setTokens(data.data.accessToken, data.data.refreshToken);
-        return true;
-      }
-      return false;
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token ?? null;
     } catch {
-      this.clearTokens();
-      return false;
+      return null;
     }
   }
 
   async request<T = any>(path: string, options: RequestInit = {}, signal?: AbortSignal): Promise<T> {
-    const token = this.getToken();
+    const token = await this.getToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
@@ -81,15 +38,7 @@ class ApiClient {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    let res = await fetch(`${API_BASE}${path}`, { ...options, headers, signal });
-
-    if (res.status === 401 && token) {
-      const refreshed = await this.refreshAccessToken();
-      if (refreshed) {
-        headers["Authorization"] = `Bearer ${this.getToken()}`;
-        res = await fetch(`${API_BASE}${path}`, { ...options, headers, signal });
-      }
-    }
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers, signal });
 
     let json: ApiResponse<T>;
     try {

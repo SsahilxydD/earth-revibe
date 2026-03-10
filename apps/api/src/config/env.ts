@@ -24,6 +24,7 @@ const envSchema = z.object({
   SHIPROCKET_EMAIL: z.string().optional(),
   SHIPROCKET_PASSWORD: z.string().optional(),
   SHIPROCKET_PICKUP_PINCODE: z.string().default("110001"),
+  SUPABASE_JWT_SECRET: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
