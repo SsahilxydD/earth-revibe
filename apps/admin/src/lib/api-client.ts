@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/client";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
+// Ensure API_BASE is always an absolute URL - guard against missing https:// protocol
+function resolveApiBase(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
+  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+  return `https://${raw}`;
+}
+const API_BASE = resolveApiBase();
 
 interface ApiResponse<T = any> {
   success: boolean;
