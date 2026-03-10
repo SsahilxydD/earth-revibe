@@ -17,7 +17,7 @@ export const categoryService = {
       },
     });
 
-    return categories.map((cat: any) => ({
+    return categories.map((cat) => ({
       id: cat.id,
       name: cat.name,
       slug: cat.slug,

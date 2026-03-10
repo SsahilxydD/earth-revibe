@@ -1,4 +1,4 @@
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 import type { CreateTicketInput, CreateTicketMessageInput, TicketQuery } from "@earth-revibe/shared";
 
@@ -38,7 +38,7 @@ export const supportService = {
   },
 
   async listMyTickets(userId: string, page: number = 1, limit: number = 20, status?: string) {
-    const where: any = { userId };
+    const where: Prisma.SupportTicketWhereInput = { userId };
     if (status) where.status = status;
 
     const [tickets, total] = await Promise.all([
@@ -103,7 +103,7 @@ export const supportService = {
   },
 
   async listAllTickets(query: TicketQuery & { search?: string }) {
-    const where: any = {};
+    const where: Prisma.SupportTicketWhereInput = {};
     if (query.status) where.status = query.status;
     if (query.priority) where.priority = query.priority;
     if (query.search) {

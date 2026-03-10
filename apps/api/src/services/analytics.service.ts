@@ -83,9 +83,9 @@ export const analyticsService = {
       },
     });
 
-    return orders.map((o: any) => ({
+    return orders.map((o) => ({
       id: o.orderNumber,
-      customer: o.user ? `${o.user.firstName} ${o.user.lastName}` : (o as any).guestEmail || "Guest",
+      customer: o.user ? `${o.user.firstName} ${o.user.lastName}` : o.guestEmail || "Guest",
       total: o.totalAmount,
       status: o.status,
       date: o.createdAt.toISOString().split("T")[0],
@@ -221,13 +221,13 @@ export const analyticsService = {
         conversionRate: { value: 0, change: 0 },
         onlineSessions: { value: 0, change: 0 },
       },
-      topProducts: topProducts.map((p: any) => ({
+      topProducts: topProducts.map((p) => ({
         name: p.name,
         quantity: Number(p.quantity),
         revenue: Number(p.revenue),
       })),
-      salesOverTime: revenueByDay.map((r: any) => ({ date: String(r.date), revenue: Number(r.revenue) })),
-      ordersByStatus: ordersByStatus.map((s: any) => ({ status: s.status, count: s._count })),
+      salesOverTime: revenueByDay.map((r) => ({ date: String(r.date), revenue: Number(r.revenue) })),
+      ordersByStatus: ordersByStatus.map((s) => ({ status: s.status, count: s._count })),
     };
   },
 
@@ -285,14 +285,14 @@ export const analyticsService = {
     ]);
 
     return {
-      ordersByStatus: ordersByStatus.map((s: any) => ({ status: s.status, count: s._count })),
-      revenueByDay: revenueByDay.map((r: any) => ({ date: String(r.date), revenue: Number(r.revenue) })),
-      topProducts: topProducts.map((p: any) => ({
+      ordersByStatus: ordersByStatus.map((s) => ({ status: s.status, count: s._count })),
+      revenueByDay: revenueByDay.map((r) => ({ date: String(r.date), revenue: Number(r.revenue) })),
+      topProducts: topProducts.map((p) => ({
         name: p.name,
         quantity: Number(p.quantity),
         revenue: Number(p.revenue),
       })),
-      customerGrowth: customerGrowth.map((c: any) => ({ month: c.month, count: Number(c.count) })),
+      customerGrowth: customerGrowth.map((c) => ({ month: c.month, count: Number(c.count) })),
       avgOrderValue: avgOrderValue._avg.totalAmount || 0,
       totalOrders: avgOrderValue._count,
       totalTickets,

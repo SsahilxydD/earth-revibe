@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 
 export const adminInventoryController = {
@@ -11,7 +11,7 @@ export const adminInventoryController = {
     const sortBy = (req.query.sortBy as string) || "stock_asc";
     const threshold = Number(req.query.threshold) || 10;
 
-    const where: any = {};
+    const where: Prisma.ProductVariantWhereInput = {};
 
     if (search) {
       where.product = {
@@ -25,7 +25,7 @@ export const adminInventoryController = {
       where.stock = 0;
     }
 
-    let orderBy: any;
+    let orderBy: Prisma.ProductVariantOrderByWithRelationInput;
     switch (sortBy) {
       case "stock_desc":
         orderBy = { stock: "desc" };

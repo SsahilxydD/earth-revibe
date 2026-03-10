@@ -1,5 +1,5 @@
 import slugify from "slugify";
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 import type {
   CreateProductInput,
@@ -31,7 +31,7 @@ export const productService = {
     } = query;
 
     // Build where clause dynamically
-    const where: Record<string, unknown> = {};
+    const where: Prisma.ProductWhereInput = {};
 
     // Default to ACTIVE for public queries (when no status filter specified)
     if (status) {
@@ -45,9 +45,10 @@ export const productService = {
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
-      where.price = {};
-      if (minPrice !== undefined) (where.price as Record<string, unknown>).gte = minPrice;
-      if (maxPrice !== undefined) (where.price as Record<string, unknown>).lte = maxPrice;
+      const priceFilter: Prisma.DecimalFilter = {};
+      if (minPrice !== undefined) priceFilter.gte = minPrice;
+      if (maxPrice !== undefined) priceFilter.lte = maxPrice;
+      where.price = priceFilter;
     }
 
     if (material) {
@@ -77,7 +78,7 @@ export const productService = {
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
-        where: where as any,
+        where,
         skip,
         take: limit,
         orderBy: { [sortBy]: sortOrder },
@@ -91,7 +92,7 @@ export const productService = {
           },
         },
       }),
-      prisma.product.count({ where: where as any }),
+      prisma.product.count({ where }),
     ]);
 
     return {

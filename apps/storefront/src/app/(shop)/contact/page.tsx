@@ -63,15 +63,23 @@ export default function ContactPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const subject = encodeURIComponent(`[${formData.subject}] Contact Form: ${formData.name}`);
+    const body = encodeURIComponent(
+      `Name: ${formData.name}\nEmail: ${formData.email}\nSubject: ${formData.subject}\n\n${formData.message}`
+    );
+    const mailtoUrl = `mailto:hello@earthrevibe.com?subject=${subject}&body=${body}`;
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+    window.location.href = mailtoUrl;
+
+    // Show success after a brief moment to let the mail client open
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+    }, 500);
   };
 
   return (
@@ -161,10 +169,10 @@ export default function ContactPage() {
                     </svg>
                   </motion.div>
                   <h3 className="text-[14px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase text-black mb-2">
-                    Message Sent
+                    Email Client Opened
                   </h3>
                   <p className="text-[13px] text-slate-500 mb-6">
-                    We&apos;ll get back to you within 24 hours.
+                    Please send the email from your mail app. We&apos;ll get back to you within 24 hours.
                   </p>
                   <button
                     onClick={() => {

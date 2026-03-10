@@ -181,22 +181,26 @@ export const authService = {
     // Don't reveal if user exists
     if (!user) return;
 
-    // Generate reset token (simple JWT with short expiry)
+    // Include a hash of the current password in the token payload.
+    // This makes the token single-use: once the password is changed,
+    // the hash won't match and the token becomes invalid.
+    const pwHashFragment = user.passwordHash.slice(-8);
     const resetToken = jwt.sign(
-      { userId: user.id, purpose: "password-reset" },
+      { userId: user.id, purpose: "password-reset", ph: pwHashFragment },
       env.JWT_ACCESS_SECRET,
       { expiresIn: "1h" as string & jwt.SignOptions["expiresIn"] }
     );
 
-    // TODO: Send email with reset link containing resetToken
-    // For now, log it in development
-    if (env.NODE_ENV === "development") {
-      console.log(`Password reset token for ${email}: ${resetToken}`);
-    }
+    const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    // Log the reset link — in production, this should be sent via email service
+    // (e.g., SendGrid, AWS SES, Resend). The URL is logged so admins can
+    // manually assist users until email integration is complete.
+    console.log(`[Password Reset] User: ${email} | Link: ${resetUrl}`);
   },
 
   async resetPassword(token: string, newPassword: string) {
-    let decoded: { userId: string; purpose: string };
+    let decoded: { userId: string; purpose: string; ph?: string };
     try {
       decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as typeof decoded;
     } catch {
@@ -205,6 +209,14 @@ export const authService = {
 
     if (decoded.purpose !== "password-reset") {
       throw ApiError.badRequest("Invalid token");
+    }
+
+    // Verify token hasn't been used (password hasn't changed since token was issued)
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    if (!user) throw ApiError.badRequest("Invalid token");
+
+    if (decoded.ph && user.passwordHash.slice(-8) !== decoded.ph) {
+      throw ApiError.badRequest("This reset link has already been used");
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 12);

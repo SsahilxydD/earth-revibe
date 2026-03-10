@@ -12,6 +12,12 @@ export const adminRefundController = {
       throw ApiError.badRequest("Refund reason is required");
     }
 
+    if (amount !== undefined) {
+      if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
+        throw ApiError.badRequest("Refund amount must be a positive number");
+      }
+    }
+
     // Find order with payment and items
     const order = await prisma.order.findUnique({
       where: { orderNumber },
@@ -87,48 +93,72 @@ export const adminRefundController = {
         },
       });
 
-      // Update order status
-      await tx.order.update({
-        where: { id: order.id },
-        data: { status: "REFUNDED" },
-      });
+      // Update order status — only set REFUNDED on full refund
+      const newOrderStatus = isFullRefund ? "REFUNDED" : order.status;
+      if (isFullRefund) {
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: "REFUNDED" },
+        });
+      }
 
       // Create order status history entry
       await tx.orderStatusHistory.create({
         data: {
           orderId: order.id,
-          status: "REFUNDED",
-          note: `Refund of ₹${refundAmountDecimal.toFixed(2)} issued. Reason: ${reason.trim()}`,
+          status: isFullRefund ? "REFUNDED" : order.status,
+          note: isFullRefund
+            ? `Full refund of ₹${refundAmountDecimal.toFixed(2)} issued. Reason: ${reason.trim()}`
+            : `Partial refund of ₹${refundAmountDecimal.toFixed(2)} issued. Reason: ${reason.trim()}`,
           changedBy: req.user!.id,
         },
       });
 
-      // Restore stock for all order items
-      for (const item of order.items) {
-        await tx.productVariant.update({
-          where: { id: item.variantId },
-          data: { stock: { increment: item.quantity } },
-        });
+      // Only restore stock on full refund
+      if (isFullRefund) {
+        for (const item of order.items) {
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: { increment: item.quantity } },
+          });
+        }
       }
 
-      // Restore loyalty points if any were used (only for authenticated users)
-      if (order.loyaltyPointsUsed > 0 && order.userId) {
-        await tx.user.update({
-          where: { id: order.userId },
-          data: {
-            loyaltyPoints: { increment: order.loyaltyPointsUsed },
-          },
-        });
+      // Only restore loyalty points on full refund
+      if (isFullRefund && order.userId) {
+        // Restore used loyalty points
+        if (order.loyaltyPointsUsed > 0) {
+          await tx.user.update({
+            where: { id: order.userId },
+            data: { loyaltyPoints: { increment: order.loyaltyPointsUsed } },
+          });
+          await tx.loyaltyTransaction.create({
+            data: {
+              userId: order.userId,
+              type: "ADJUSTED",
+              points: order.loyaltyPointsUsed,
+              description: `Points restored from refunded order #${orderNumber}`,
+              orderId: order.id,
+            },
+          });
+        }
 
-        await tx.loyaltyTransaction.create({
-          data: {
-            userId: order.userId,
-            type: "ADJUSTED",
-            points: order.loyaltyPointsUsed,
-            description: `Points restored from refunded order #${orderNumber}`,
-            orderId: order.id,
-          },
-        });
+        // Claw back earned loyalty points
+        if (order.loyaltyPointsEarned > 0) {
+          await tx.user.update({
+            where: { id: order.userId },
+            data: { loyaltyPoints: { decrement: order.loyaltyPointsEarned } },
+          });
+          await tx.loyaltyTransaction.create({
+            data: {
+              userId: order.userId,
+              type: "ADJUSTED",
+              points: -order.loyaltyPointsEarned,
+              description: `Points reversed from refunded order #${orderNumber}`,
+              orderId: order.id,
+            },
+          });
+        }
       }
     });
 
@@ -139,7 +169,7 @@ export const adminRefundController = {
         orderNumber: order.orderNumber,
         refundAmount: refundAmountDecimal,
         isFullRefund,
-        status: "REFUNDED",
+        status: isFullRefund ? "REFUNDED" : "PARTIALLY_REFUNDED",
       },
     });
   },

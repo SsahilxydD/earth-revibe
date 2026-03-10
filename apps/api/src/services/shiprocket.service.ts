@@ -71,7 +71,7 @@ export const shiprocketService = {
     if (!order.address) throw new Error("Order has no address");
 
     // Build line items for Shiprocket
-    const orderItems: ShiprocketOrderItem[] = order.items.map((item: any) => ({
+    const orderItems: ShiprocketOrderItem[] = order.items.map((item) => ({
       name: item.productName,
       sku: item.variantId,
       units: item.quantity,
@@ -79,7 +79,7 @@ export const shiprocketService = {
     }));
 
     // Calculate total weight (estimate 300g per item)
-    const totalWeight = Math.max(order.items.reduce((w: number, i: any) => w + i.quantity * 0.3, 0), 0.5);
+    const totalWeight = Math.max(order.items.reduce((w, i) => w + i.quantity * 0.3, 0), 0.5);
 
     const customerName = order.address.fullName || (order.user ? `${order.user.firstName} ${order.user.lastName}` : "Guest");
     const customerPhone = order.address.phone || order.user?.phone || "";
@@ -99,7 +99,7 @@ export const shiprocketService = {
         billing_pincode: order.address.pinCode,
         billing_state: order.address.state,
         billing_country: "India",
-        billing_email: order.user?.email || (order as any).guestEmail || "",
+        billing_email: order.user?.email || order.guestEmail || "",
         billing_phone: customerPhone.replace(/^\+91/, ""),
         shipping_is_billing: true,
         order_items: orderItems,
@@ -113,7 +113,7 @@ export const shiprocketService = {
     });
 
     // Save Shiprocket order ID to our DB
-    await (prisma.order.update as any)({
+    await prisma.order.update({
       where: { id: orderId },
       data: {
         shiprocketOrderId: srOrder.order_id,
@@ -140,8 +140,9 @@ export const shiprocketService = {
    * Request AWB (tracking number) assignment for a shipment.
    */
   async assignAWB(orderId: string, courierCompanyId?: number) {
-    const order: any = await prisma.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { id: orderId },
+      select: { shiprocketShipmentId: true },
     });
 
     if (!order?.shiprocketShipmentId) {
@@ -149,7 +150,7 @@ export const shiprocketService = {
     }
 
     // If no courier specified, let Shiprocket pick the best one
-    const body: any = { shipment_id: order.shiprocketShipmentId };
+    const body: Record<string, unknown> = { shipment_id: order.shiprocketShipmentId };
     if (courierCompanyId) {
       body.courier_id = courierCompanyId;
     }
@@ -163,7 +164,7 @@ export const shiprocketService = {
     const courierName = result.response?.data?.courier_name;
 
     if (awbCode) {
-      await (prisma.order.update as any)({
+      await prisma.order.update({
         where: { id: orderId },
         data: {
           awbCode,
@@ -202,8 +203,9 @@ export const shiprocketService = {
    * Get tracking info for an order.
    */
   async getTracking(orderId: string) {
-    const order: any = await prisma.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { id: orderId },
+      select: { awbCode: true, courierName: true, trackingUrl: true },
     });
 
     if (!order?.awbCode) {

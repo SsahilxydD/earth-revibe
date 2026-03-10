@@ -58,10 +58,10 @@ app.use(express.urlencoded({ extended: true }));
 // Input sanitization
 app.use(sanitize);
 
-// Rate limiting
+// Rate limiting — 1000 requests per 15 minutes per IP (storefront makes 5-10 requests per page load)
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 100,
+  limit: 1000,
   standardHeaders: "draft-7",
   legacyHeaders: false,
 }));
@@ -73,6 +73,20 @@ app.get("/api/v1/health", (_req, res) => {
     message: "Earth Revibe API is running",
     timestamp: new Date().toISOString(),
   });
+});
+
+// Cleanup stale pending checkouts (older than 2 hours) — can be called by cron/external monitor
+app.post("/api/v1/internal/cleanup", async (_req, res) => {
+  try {
+    const { prisma } = await import("@earth-revibe/db");
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const result = await prisma.pendingCheckout.deleteMany({
+      where: { createdAt: { lt: twoHoursAgo } },
+    });
+    res.json({ success: true, data: { deletedCount: result.count } });
+  } catch {
+    res.status(500).json({ success: false, error: { code: "CLEANUP_FAILED", message: "Cleanup failed" } });
+  }
 });
 
 // API routes

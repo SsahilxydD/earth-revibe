@@ -24,9 +24,9 @@ export const referralService = {
 
     const stats = {
       total: referrals.length,
-      signedUp: referrals.filter((r: any) => r.status === "SIGNED_UP").length,
-      converted: referrals.filter((r: any) => r.status === "CONVERTED").length,
-      totalRewardsEarned: referrals.reduce((sum: number, r: any) => sum + (r.referrerReward || 0), 0),
+      signedUp: referrals.filter((r) => r.status === "SIGNED_UP").length,
+      converted: referrals.filter((r) => r.status === "CONVERTED").length,
+      totalRewardsEarned: referrals.reduce((sum, r) => sum + (r.referrerReward || 0), 0),
     };
 
     return { referrals, stats };

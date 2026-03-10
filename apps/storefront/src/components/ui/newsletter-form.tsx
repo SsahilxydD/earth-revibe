@@ -21,7 +21,7 @@ export function NewsletterForm() {
     }
     setStatus("success");
     setEmail("");
-    setTimeout(() => setStatus("idle"), 3000);
+    setTimeout(() => setStatus("idle"), 5000);
   };
 
   return (
@@ -40,7 +40,7 @@ export function NewsletterForm() {
       >
         <Send size={16} />
       </button>
-      {status === "success" && <p className="text-xs text-[var(--sage)] mt-1 absolute">Subscribed!</p>}
+      {status === "success" && <p className="text-xs text-[var(--sage)] mt-1 absolute">Thank you! We&apos;ll notify you when we launch our newsletter.</p>}
     </form>
   );
 }

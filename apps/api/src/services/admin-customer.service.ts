@@ -1,4 +1,4 @@
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 
 interface CustomerQuery {
@@ -13,7 +13,7 @@ interface CustomerQuery {
 export const adminCustomerService = {
   async listCustomers(query: CustomerQuery) {
     const { search, isActive, page, limit, sortBy, sortOrder } = query;
-    const where: Record<string, unknown> = { role: "CUSTOMER" };
+    const where: Prisma.UserWhereInput = { role: "CUSTOMER" };
 
     if (isActive !== undefined) where.isActive = isActive;
     if (search) {
@@ -27,7 +27,7 @@ export const adminCustomerService = {
 
     const [customers, total] = await Promise.all([
       prisma.user.findMany({
-        where: where as any,
+        where,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { [sortBy]: sortOrder },
@@ -44,7 +44,7 @@ export const adminCustomerService = {
           _count: { select: { orders: true } },
         },
       }),
-      prisma.user.count({ where: where as any }),
+      prisma.user.count({ where }),
     ]);
 
     return { customers, total, page, limit, totalPages: Math.ceil(total / limit) };
@@ -105,7 +105,7 @@ export const adminCustomerService = {
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
       const recentOrderCount = await prisma.order.count({
         where: { userId: id, createdAt: { gte: ninetyDaysAgo } },
-      } as any);
+      });
       if (recentOrderCount === 0) {
         segment = "At Risk";
       }
@@ -120,8 +120,10 @@ export const adminCustomerService = {
   },
 
   async exportCustomersCSV() {
+    // Single query: fetch customers with order count and total spent using groupBy
+    // This avoids N+1 queries (previously one aggregate query per customer)
     const customers = await prisma.user.findMany({
-      where: { role: "CUSTOMER" } as any,
+      where: { role: "CUSTOMER" },
       select: {
         id: true,
         email: true,
@@ -133,36 +135,41 @@ export const adminCustomerService = {
         createdAt: true,
         _count: { select: { orders: true } },
       },
+      take: 10000, // Cap to prevent memory issues
     });
 
-    // Fetch total spent for each customer
+    // Batch fetch total spent for all customers in one query
+    const spentByUser = await prisma.order.groupBy({
+      by: ["userId"],
+      where: {
+        userId: { in: customers.map((c) => c.id) },
+        status: { notIn: ["CANCELLED", "REFUNDED"] },
+      },
+      _sum: { totalAmount: true },
+    });
+
+    const spentMap = new Map(
+      spentByUser.map((row) => [row.userId, Number(row._sum.totalAmount) || 0])
+    );
+
+    const escapeCsv = (val: string) => {
+      if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+        return `"${val.replace(/"/g, '""')}"`;
+      }
+      return val;
+    };
+
     const rows: string[] = [];
     rows.push("Name,Email,Phone,Orders,Total Spent,Loyalty Points,Status,Joined Date");
 
     for (const customer of customers) {
-      const totalSpent = await prisma.order.aggregate({
-        where: {
-          userId: customer.id,
-          status: { notIn: ["CANCELLED", "REFUNDED"] },
-        },
-        _sum: { totalAmount: true },
-      });
-
       const name = `${customer.firstName || ""} ${customer.lastName || ""}`.trim();
       const phone = customer.phone || "";
       const orders = customer._count?.orders || 0;
-      const spent = Number(totalSpent._sum.totalAmount) || 0;
+      const spent = spentMap.get(customer.id) || 0;
       const loyalty = customer.loyaltyPoints || 0;
       const status = customer.isActive ? "Active" : "Inactive";
       const joined = new Date(customer.createdAt).toISOString().split("T")[0];
-
-      // Escape CSV fields that may contain commas or quotes
-      const escapeCsv = (val: string) => {
-        if (val.includes(",") || val.includes('"') || val.includes("\n")) {
-          return `"${val.replace(/"/g, '""')}"`;
-        }
-        return val;
-      };
 
       rows.push(
         [

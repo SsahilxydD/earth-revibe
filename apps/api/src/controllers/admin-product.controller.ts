@@ -54,7 +54,7 @@ export const adminProductController = {
   },
 
   async exportCSV(_req: Request, res: Response) {
-    const products = await (prisma.product as any).findMany({
+    const products = await prisma.product.findMany({
       include: {
         category: { select: { name: true } },
         variants: { select: { sku: true, stock: true } },
@@ -74,10 +74,10 @@ export const adminProductController = {
       "Created Date",
     ];
 
-    const rows = products.map((product: any) => {
-      const skus = product.variants.map((v: any) => v.sku).join("; ");
+    const rows = products.map((product) => {
+      const skus = product.variants.map((v) => v.sku).join("; ");
       const totalStock = product.variants.reduce(
-        (sum: number, v: any) => sum + (v.stock || 0),
+        (sum, v) => sum + (v.stock || 0),
         0
       );
 
@@ -208,7 +208,7 @@ export const adminProductController = {
 
         if (existing) {
           // Update existing
-          const updateData: any = {
+          const updateData: Record<string, unknown> = {
             name,
             price,
             status: status.toUpperCase(),
@@ -220,7 +220,7 @@ export const adminProductController = {
             updateData.category = { connect: { id: categoryId } };
           }
 
-          await (prisma.product as any).update({
+          await prisma.product.update({
             where: { id: existing.id },
             data: updateData,
           });
@@ -240,7 +240,7 @@ export const adminProductController = {
             categoryId = firstCategory.id;
           }
 
-          await (prisma.product as any).create({
+          await prisma.product.create({
             data: {
               name,
               slug,
@@ -256,10 +256,10 @@ export const adminProductController = {
           });
           created.push(name);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         errors.push({
           row: i + 1,
-          message: err.message || "Unexpected error",
+          message: err instanceof Error ? err.message : "Unexpected error",
         });
       }
     }
@@ -291,7 +291,7 @@ export const adminProductController = {
     }
 
     // Build update data from allowed fields
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (updates.price !== undefined) {
       const price = parseFloat(updates.price);
       if (isNaN(price) || price < 0) {
@@ -343,7 +343,7 @@ export const adminProductController = {
     }
 
     // Apply bulk update using updateMany
-    const result = await (prisma.product as any).updateMany({
+    const result = await prisma.product.updateMany({
       where: { id: { in: productIds } },
       data: updateData,
     });

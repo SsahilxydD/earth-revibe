@@ -22,33 +22,33 @@ export const adminNotificationController = {
       pendingSupportCount,
     ] = await Promise.all([
       // New orders (PLACED or CONFIRMED) in last 24 hours
-      (prisma.order as any).count({
+      prisma.order.count({
         where: {
           status: { in: ["PLACED", "CONFIRMED"] },
           createdAt: { gte: twentyFourHoursAgo },
         },
       }),
       // Low stock variants (stock > 0 and stock < 10)
-      (prisma.productVariant as any).count({
+      prisma.productVariant.count({
         where: {
           stock: { gt: 0, lt: 10 },
         },
       }),
       // Out of stock variants (stock = 0)
-      (prisma.productVariant as any).count({
+      prisma.productVariant.count({
         where: {
           stock: 0,
         },
       }),
       // Failed payments in last 24 hours
-      (prisma.payment as any).count({
+      prisma.payment.count({
         where: {
           status: "FAILED",
           createdAt: { gte: twentyFourHoursAgo },
         },
       }),
       // Pending support tickets (OPEN or IN_PROGRESS)
-      (prisma.supportTicket as any).count({
+      prisma.supportTicket.count({
         where: {
           status: { in: ["OPEN", "IN_PROGRESS"] },
         },
@@ -117,20 +117,20 @@ export const adminNotificationController = {
     const [newOrderCount, outOfStockCount, failedPaymentCount] =
       await Promise.all([
         // New orders (PLACED or CONFIRMED) in last 24 hours — high priority
-        (prisma.order as any).count({
+        prisma.order.count({
           where: {
             status: { in: ["PLACED", "CONFIRMED"] },
             createdAt: { gte: twentyFourHoursAgo },
           },
         }),
         // Out of stock variants — high priority
-        (prisma.productVariant as any).count({
+        prisma.productVariant.count({
           where: {
             stock: 0,
           },
         }),
         // Failed payments in last 24 hours — high priority
-        (prisma.payment as any).count({
+        prisma.payment.count({
           where: {
             status: "FAILED",
             createdAt: { gte: twentyFourHoursAgo },

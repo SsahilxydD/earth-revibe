@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { checkoutController } from "../controllers/checkout.controller";
 import { optionalAuthenticate } from "../middleware/auth";
 import { validate } from "../middleware/validate";
+import { verifyRazorpayCallback } from "../middleware/razorpay-verify";
 import { asyncHandler } from "../utils/async-handler";
 import {
   createMagicCheckoutSchema,
@@ -28,21 +29,24 @@ router.post(
   asyncHandler(checkoutController.verifyPayment)
 );
 
-// Razorpay server-to-server callbacks (no user auth)
+// Razorpay server-to-server callbacks — verify signature before processing
 router.post(
   "/shipping-info",
+  verifyRazorpayCallback,
   validate({ body: shippingInfoRequestSchema }),
   asyncHandler(checkoutController.shippingInfo)
 );
 
 router.post(
   "/promotions",
+  verifyRazorpayCallback,
   validate({ body: getPromotionsRequestSchema }),
   asyncHandler(checkoutController.getPromotions)
 );
 
 router.post(
   "/promotions/apply",
+  verifyRazorpayCallback,
   validate({ body: applyPromotionRequestSchema }),
   asyncHandler(checkoutController.applyPromotion)
 );

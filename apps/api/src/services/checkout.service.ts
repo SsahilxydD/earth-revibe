@@ -42,11 +42,11 @@ export const checkoutService = {
     }
 
     // Check stock and build line items
-    const lineItems: any[] = [];
+    const lineItems: Array<Record<string, unknown>> = [];
     let lineItemsTotal = 0;
 
     for (const reqItem of data.items) {
-      const variant = variants.find((v: any) => v.id === reqItem.variantId);
+      const variant = variants.find((v) => v.id === reqItem.variantId);
       if (!variant) throw ApiError.badRequest(`Variant ${reqItem.variantId} not found`);
       if (variant.stock < reqItem.quantity) {
         throw ApiError.badRequest(`${variant.product.name} (${variant.size}) only has ${variant.stock} in stock`);
@@ -69,10 +69,22 @@ export const checkoutService = {
       });
     }
 
+    // Collect product/category IDs for discount applicability check
+    const cartProductIds = variants.map((v) => v.product.id);
+    const cartCategoryIds: string[] = [];
+    // Category IDs require a separate lookup if not already included
+    if (data.discountCode) {
+      const productsWithCat = await prisma.product.findMany({
+        where: { id: { in: cartProductIds } },
+        select: { id: true, categoryId: true },
+      });
+      cartCategoryIds.push(...productsWithCat.map((p) => p.categoryId));
+    }
+
     // Apply discount if provided
     let discountAmount = 0;
     if (data.discountCode) {
-      discountAmount = await calculateDiscount(data.discountCode, lineItemsTotal);
+      discountAmount = await calculateDiscount(data.discountCode, lineItemsTotal, userId, cartProductIds, cartCategoryIds);
     }
 
     // Apply loyalty points (only for authenticated users)
@@ -82,7 +94,16 @@ export const checkoutService = {
       if (!user || user.loyaltyPoints < data.loyaltyPointsToUse) {
         throw ApiError.badRequest("Insufficient loyalty points");
       }
-      loyaltyDiscount = data.loyaltyPointsToUse;
+
+      // Check minimum redemption threshold
+      const loyaltyConfig = await prisma.loyaltyConfig.findFirst({ where: { isActive: true } });
+      if (loyaltyConfig && data.loyaltyPointsToUse < loyaltyConfig.minRedeemPoints) {
+        throw ApiError.badRequest(`Minimum ${loyaltyConfig.minRedeemPoints} points required for redemption`);
+      }
+
+      // Cap loyalty discount at remaining amount after discount
+      const maxLoyaltyDiscount = Math.max(lineItemsTotal - discountAmount, 0);
+      loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
     }
 
     const totalBeforeShipping = Math.max(lineItemsTotal - discountAmount - loyaltyDiscount, 0);
@@ -184,7 +205,7 @@ export const checkoutService = {
       orderBy: { createdAt: "desc" },
     });
 
-    const promotions = discounts.map((d: any) => ({
+    const promotions = discounts.map((d) => ({
       code: d.code,
       summary: d.type === "PERCENTAGE"
         ? `${d.value}% off${d.maxDiscountAmount ? ` (up to ₹${d.maxDiscountAmount})` : ""}`
@@ -224,7 +245,7 @@ export const checkoutService = {
           description: `Discount code ${data.code} applied`,
         },
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = err instanceof ApiError ? err.message : "Invalid code";
       return {
         error: { code: "INVALID_PROMOTION", message },
@@ -247,7 +268,9 @@ export const checkoutService = {
       .update(body)
       .digest("hex");
 
-    if (!crypto.timingSafeEqual(Buffer.from(expectedSignature, "hex"), Buffer.from(data.razorpaySignature, "hex"))) {
+    const expectedBuf = Buffer.from(expectedSignature, "hex");
+    const receivedBuf = Buffer.from(data.razorpaySignature, "hex");
+    if (expectedBuf.length !== receivedBuf.length || !crypto.timingSafeEqual(expectedBuf, receivedBuf)) {
       throw ApiError.badRequest("Payment verification failed");
     }
 
@@ -374,7 +397,7 @@ export const checkoutService = {
 
     let subtotal = 0;
     const orderItems = cartItems.map((ci) => {
-      const variant = variants.find((v: any) => v.id === ci.variantId)!;
+      const variant = variants.find((v) => v.id === ci.variantId)!;
       const unitPrice = Number(variant.price) || Number(variant.product.price);
       const totalPrice = unitPrice * ci.quantity;
       subtotal += totalPrice;
@@ -555,7 +578,13 @@ export const checkoutService = {
 };
 
 /** Helper: calculate discount amount for a given code and subtotal */
-async function calculateDiscount(code: string, subtotal: number): Promise<number> {
+async function calculateDiscount(
+  code: string,
+  subtotal: number,
+  userId?: string | null,
+  cartProductIds?: string[],
+  cartCategoryIds?: string[],
+): Promise<number> {
   const discount = await prisma.discountCode.findUnique({ where: { code } });
 
   if (!discount || !discount.isActive) {
@@ -567,6 +596,29 @@ async function calculateDiscount(code: string, subtotal: number): Promise<number
   if (discount.usageLimit && discount.usageCount >= discount.usageLimit) {
     throw ApiError.badRequest("Discount code usage limit reached");
   }
+
+  // Per-user limit check
+  if (userId) {
+    const userUsageCount = await prisma.order.count({
+      where: { userId, discountCodeId: discount.id, status: { not: "CANCELLED" } },
+    });
+    if (userUsageCount >= discount.perUserLimit) {
+      throw ApiError.badRequest("You have already used this discount code the maximum number of times");
+    }
+  }
+
+  // Applicable products/categories check
+  if (discount.applicableProducts.length > 0 && cartProductIds?.length) {
+    if (!cartProductIds.some((id) => discount.applicableProducts.includes(id))) {
+      throw ApiError.badRequest("This discount code is not applicable to the items in your cart");
+    }
+  }
+  if (discount.applicableCategories.length > 0 && cartCategoryIds?.length) {
+    if (!cartCategoryIds.some((id) => discount.applicableCategories.includes(id))) {
+      throw ApiError.badRequest("This discount code is not applicable to the items in your cart");
+    }
+  }
+
   if (discount.minOrderValue && subtotal < Number(discount.minOrderValue)) {
     throw ApiError.badRequest(`Minimum order value is ₹${discount.minOrderValue}`);
   }
@@ -577,8 +629,15 @@ async function calculateDiscount(code: string, subtotal: number): Promise<number
     if (discount.maxDiscountAmount) {
       discountAmount = Math.min(discountAmount, Number(discount.maxDiscountAmount));
     }
+  } else if (discount.type === "FLAT") {
+    // Cap flat discount at subtotal to prevent free orders
+    discountAmount = Math.min(Number(discount.value), subtotal);
+  } else if (discount.type === "FREE_SHIPPING") {
+    discountAmount = 0;
+  } else if (discount.type === "BUY_X_GET_Y") {
+    throw ApiError.badRequest("This discount type is not yet supported");
   } else {
-    discountAmount = Number(discount.value);
+    discountAmount = 0;
   }
 
   return discountAmount;

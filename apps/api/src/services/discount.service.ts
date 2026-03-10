@@ -3,7 +3,7 @@ import { ApiError } from "../utils/api-error";
 import type { ValidateDiscountInput } from "@earth-revibe/shared";
 
 export const discountService = {
-  async validateDiscount(data: ValidateDiscountInput) {
+  async validateDiscount(data: ValidateDiscountInput, userId?: string) {
     const discount = await prisma.discountCode.findUnique({
       where: { code: data.code },
     });
@@ -21,19 +21,35 @@ export const discountService = {
       throw ApiError.badRequest("Discount code usage limit reached");
     }
 
+    // Per-user limit check
+    if (userId) {
+      const userUsageCount = await prisma.order.count({
+        where: { userId, discountCodeId: discount.id, status: { not: "CANCELLED" } },
+      });
+      if (userUsageCount >= discount.perUserLimit) {
+        throw ApiError.badRequest("You have already used this discount code the maximum number of times");
+      }
+    }
+
     if (discount.minOrderValue && data.orderTotal < Number(discount.minOrderValue)) {
       throw ApiError.badRequest(`Minimum order value is ₹${discount.minOrderValue}`);
     }
 
-    // Calculate discount amount
+    // Calculate discount amount — handle all types
     let discountAmount: number;
     if (discount.type === "PERCENTAGE") {
       discountAmount = data.orderTotal * (Number(discount.value) / 100);
       if (discount.maxDiscountAmount) {
         discountAmount = Math.min(discountAmount, Number(discount.maxDiscountAmount));
       }
-    } else {
+    } else if (discount.type === "FLAT") {
       discountAmount = Math.min(Number(discount.value), data.orderTotal);
+    } else if (discount.type === "FREE_SHIPPING") {
+      discountAmount = 0;
+    } else if (discount.type === "BUY_X_GET_Y") {
+      throw ApiError.badRequest("This discount type is not yet supported");
+    } else {
+      discountAmount = 0;
     }
 
     return {

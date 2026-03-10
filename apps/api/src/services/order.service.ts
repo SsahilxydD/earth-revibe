@@ -7,6 +7,19 @@ import { generateOrderNumber } from "@earth-revibe/shared";
 import { shiprocketService } from "./shiprocket.service";
 import type { CreateOrderInput, VerifyPaymentInput, OrderQuery, CancelOrderInput } from "@earth-revibe/shared";
 
+/** Valid order status transitions */
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  PLACED: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["PROCESSING", "CANCELLED"],
+  PROCESSING: ["SHIPPED", "CANCELLED"],
+  SHIPPED: ["OUT_FOR_DELIVERY", "DELIVERED"],
+  OUT_FOR_DELIVERY: ["DELIVERED"],
+  DELIVERED: ["RETURNED", "REFUNDED"],
+  CANCELLED: [],
+  RETURNED: ["REFUNDED"],
+  REFUNDED: [],
+};
+
 export const orderService = {
   async createOrder(userId: string, data: CreateOrderInput) {
     // Get user's cart
@@ -18,7 +31,7 @@ export const orderService = {
             variant: {
               include: {
                 product: {
-                  select: { id: true, name: true, price: true, images: { where: { isPrimary: true }, take: 1 } },
+                  select: { id: true, name: true, price: true, categoryId: true, images: { where: { isPrimary: true }, take: 1 } },
                 },
               },
             },
@@ -39,7 +52,7 @@ export const orderService = {
 
     // Calculate subtotal
     let subtotal = 0;
-    const orderItems = cart.items.map((item: any) => {
+    const orderItems = cart.items.map((item) => {
       const unitPrice = Number(item.variant.price) || Number(item.variant.product.price);
       const totalPrice = unitPrice * item.quantity;
       subtotal += totalPrice;
@@ -55,6 +68,10 @@ export const orderService = {
         variantColor: item.variant.color,
       };
     });
+
+    // Collect product/category IDs for discount applicability check
+    const cartProductIds = cart.items.map((item) => item.variant.product.id);
+    const cartCategoryIds = cart.items.map((item) => item.variant.product.categoryId);
 
     // Apply discount code if provided
     let discountAmount = 0;
@@ -77,18 +94,47 @@ export const orderService = {
         throw ApiError.badRequest("Discount code usage limit reached");
       }
 
+      // Per-user limit check
+      const userUsageCount = await prisma.order.count({
+        where: { userId, discountCodeId: discount.id, status: { not: "CANCELLED" } },
+      });
+      if (userUsageCount >= discount.perUserLimit) {
+        throw ApiError.badRequest("You have already used this discount code the maximum number of times");
+      }
+
+      // Applicable products/categories check
+      if (discount.applicableProducts.length > 0) {
+        const hasApplicableProduct = cartProductIds.some((id) => discount.applicableProducts.includes(id));
+        if (!hasApplicableProduct) {
+          throw ApiError.badRequest("This discount code is not applicable to the items in your cart");
+        }
+      }
+      if (discount.applicableCategories.length > 0) {
+        const hasApplicableCategory = cartCategoryIds.some((id) => discount.applicableCategories.includes(id));
+        if (!hasApplicableCategory) {
+          throw ApiError.badRequest("This discount code is not applicable to the items in your cart");
+        }
+      }
+
       if (discount.minOrderValue && subtotal < Number(discount.minOrderValue)) {
         throw ApiError.badRequest(`Minimum order value is ₹${discount.minOrderValue}`);
       }
 
-      // Calculate discount
+      // Calculate discount — handle all types
       if (discount.type === "PERCENTAGE") {
         discountAmount = subtotal * (Number(discount.value) / 100);
         if (discount.maxDiscountAmount) {
           discountAmount = Math.min(discountAmount, Number(discount.maxDiscountAmount));
         }
-      } else {
-        discountAmount = Number(discount.value);
+      } else if (discount.type === "FLAT") {
+        // Cap flat discount at subtotal to prevent free orders
+        discountAmount = Math.min(Number(discount.value), subtotal);
+      } else if (discount.type === "FREE_SHIPPING") {
+        // Shipping is already free; discount amount stays 0
+        discountAmount = 0;
+      } else if (discount.type === "BUY_X_GET_Y") {
+        // BUY_X_GET_Y not yet implemented — treat as invalid
+        throw ApiError.badRequest("This discount type is not yet supported");
       }
 
       discountCodeId = discount.id;
@@ -101,8 +147,16 @@ export const orderService = {
       if (!user || user.loyaltyPoints < data.loyaltyPointsToUse) {
         throw ApiError.badRequest("Insufficient loyalty points");
       }
-      // 1 point = ₹1
-      loyaltyDiscount = data.loyaltyPointsToUse;
+
+      // Check minimum redemption threshold from LoyaltyConfig
+      const loyaltyConfig = await prisma.loyaltyConfig.findFirst({ where: { isActive: true } });
+      if (loyaltyConfig && data.loyaltyPointsToUse < loyaltyConfig.minRedeemPoints) {
+        throw ApiError.badRequest(`Minimum ${loyaltyConfig.minRedeemPoints} points required for redemption`);
+      }
+
+      // Cap loyalty discount at remaining amount after discount
+      const maxLoyaltyDiscount = Math.max(subtotal - discountAmount, 0);
+      loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
     }
 
     // Calculate totals
@@ -120,49 +174,54 @@ export const orderService = {
       receipt: orderNumber,
     });
 
-    // Create order in DB
-    const order = await prisma.order.create({
-      data: {
-        orderNumber,
-        userId,
-        addressId: data.addressId,
-        subtotal,
-        discountAmount,
-        shippingAmount,
-        taxAmount,
-        totalAmount,
-        loyaltyPointsUsed: data.loyaltyPointsToUse,
-        discountCodeId,
-        items: {
-          create: orderItems,
-        },
-        payment: {
-          create: {
-            razorpayOrderId: razorpayOrder.id,
-            amount: totalAmount,
-            status: "PENDING",
-          },
-        },
-        statusHistory: {
-          create: {
-            status: "PLACED",
-            note: "Order placed, awaiting payment",
-          },
-        },
-      },
-      include: {
-        items: true,
-        payment: true,
-      },
-    });
+    // Wrap DB writes in a transaction for atomicity (order + discount usage)
+    const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Atomically increment discount usage inside transaction for consistency
+      if (discountCodeId) {
+        await tx.discountCode.update({
+          where: { id: discountCodeId },
+          data: { usageCount: { increment: 1 } },
+        });
+      }
 
-    // Update discount usage count
-    if (discountCodeId) {
-      await prisma.discountCode.update({
-        where: { id: discountCodeId },
-        data: { usageCount: { increment: 1 } },
+      // Create order in DB
+      const createdOrder = await tx.order.create({
+        data: {
+          orderNumber,
+          userId,
+          addressId: data.addressId,
+          subtotal,
+          discountAmount,
+          shippingAmount,
+          taxAmount,
+          totalAmount,
+          loyaltyPointsUsed: loyaltyDiscount,
+          discountCodeId,
+          items: {
+            create: orderItems,
+          },
+          payment: {
+            create: {
+              razorpayOrderId: razorpayOrder.id,
+              amount: totalAmount,
+              status: "PENDING",
+            },
+          },
+          statusHistory: {
+            create: {
+              status: "PLACED",
+              note: "Order placed, awaiting payment",
+            },
+          },
+        },
+        include: {
+          items: true,
+          payment: true,
+        },
       });
-    }
+
+      return createdOrder;
+    });
 
     return {
       order,
@@ -192,7 +251,10 @@ export const orderService = {
       .update(body)
       .digest("hex");
 
-    if (!crypto.timingSafeEqual(Buffer.from(expectedSignature, "hex"), Buffer.from(data.razorpaySignature, "hex"))) {
+    // Guard against mismatched buffer lengths (timingSafeEqual throws on length mismatch)
+    const expectedBuf = Buffer.from(expectedSignature, "hex");
+    const receivedBuf = Buffer.from(data.razorpaySignature, "hex");
+    if (expectedBuf.length !== receivedBuf.length || !crypto.timingSafeEqual(expectedBuf, receivedBuf)) {
       // Mark payment as failed
       await prisma.payment.update({
         where: { id: payment.id },
@@ -349,12 +411,12 @@ export const orderService = {
 
   async listOrders(userId: string, query: OrderQuery) {
     const { status, page, limit } = query;
-    const where: Record<string, unknown> = { userId };
+    const where: Prisma.OrderWhereInput = { userId };
     if (status) where.status = status;
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
-        where: where as any,
+        where,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
@@ -363,7 +425,7 @@ export const orderService = {
           payment: { select: { status: true, method: true, paidAt: true } },
         },
       }),
-      prisma.order.count({ where: where as any }),
+      prisma.order.count({ where }),
     ]);
 
     return { orders, total, page, limit, totalPages: Math.ceil(total / limit) };
@@ -431,9 +493,110 @@ export const orderService = {
           where: { id: userId },
           data: { loyaltyPoints: { increment: order.loyaltyPointsUsed } },
         });
+        await tx.loyaltyTransaction.create({
+          data: {
+            userId,
+            type: "ADJUSTED",
+            points: order.loyaltyPointsUsed,
+            description: `Points restored from cancelled order #${order.orderNumber}`,
+            orderId: order.id,
+          },
+        });
       }
 
-      // TODO: Initiate refund via Razorpay if payment was captured
+      // Claw back earned loyalty points
+      if (order.loyaltyPointsEarned > 0) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { loyaltyPoints: { decrement: order.loyaltyPointsEarned } },
+        });
+        await tx.loyaltyTransaction.create({
+          data: {
+            userId,
+            type: "ADJUSTED",
+            points: -order.loyaltyPointsEarned,
+            description: `Points reversed from cancelled order #${order.orderNumber}`,
+            orderId: order.id,
+          },
+        });
+      }
+
+      // Claw back referral rewards if this was the referred user's first purchase
+      const referral = await tx.referral.findUnique({
+        where: { refereeId: userId },
+      });
+      if (referral && referral.status === "CONVERTED") {
+        // Check if user has any other non-cancelled orders
+        const otherOrders = await tx.order.count({
+          where: { userId, status: { not: "CANCELLED" }, id: { not: order.id } },
+        });
+        if (otherOrders === 0) {
+          // Revert referral status and claw back rewards
+          const referrerReward = referral.referrerReward || 0;
+          const refereeReward = referral.refereeReward || 0;
+
+          await tx.referral.update({
+            where: { id: referral.id },
+            data: { status: "SIGNED_UP", referrerReward: 0, refereeReward: 0 },
+          });
+
+          if (referrerReward > 0) {
+            await tx.user.update({
+              where: { id: referral.referrerId },
+              data: { loyaltyPoints: { decrement: referrerReward } },
+            });
+            await tx.loyaltyTransaction.create({
+              data: {
+                userId: referral.referrerId,
+                type: "ADJUSTED",
+                points: -referrerReward,
+                description: `Referral reward reversed - referred user cancelled order #${order.orderNumber}`,
+              },
+            });
+          }
+
+          if (refereeReward > 0) {
+            await tx.user.update({
+              where: { id: userId },
+              data: { loyaltyPoints: { decrement: refereeReward } },
+            });
+            await tx.loyaltyTransaction.create({
+              data: {
+                userId,
+                type: "ADJUSTED",
+                points: -refereeReward,
+                description: `Welcome bonus reversed - order #${order.orderNumber} cancelled`,
+              },
+            });
+          }
+        }
+      }
+
+      // Initiate Razorpay refund if payment was captured
+      if (order.payment && order.payment.status === "CAPTURED" && order.payment.razorpayPaymentId) {
+        try {
+          const refundAmountInPaise = Math.round(Number(order.payment.amount) * 100);
+          const refundResult = await getRazorpay().payments.refund(
+            order.payment.razorpayPaymentId,
+            {
+              amount: refundAmountInPaise,
+              notes: { reason: data.reason, orderNumber },
+            }
+          );
+
+          await tx.payment.update({
+            where: { id: order.payment.id },
+            data: {
+              status: "REFUNDED",
+              refundId: refundResult.id,
+              refundAmount: Number(order.payment.amount),
+            },
+          });
+        } catch (refundErr) {
+          // Log but don't fail the cancellation — admin can manually refund
+          console.error(`[Refund] Failed to auto-refund order ${orderNumber}:`, refundErr);
+        }
+      }
 
       return { orderNumber: order.orderNumber };
     });

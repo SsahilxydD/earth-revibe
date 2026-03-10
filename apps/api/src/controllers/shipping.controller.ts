@@ -22,8 +22,9 @@ export const shippingController = {
   /** Admin: push order to Shiprocket */
   async createShipment(req: Request, res: Response) {
     const orderNumber = req.params.orderNumber as string;
-    const order: any = await prisma.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { orderNumber },
+      select: { id: true, shiprocketOrderId: true, status: true },
     });
 
     if (!order) throw ApiError.notFound("Order not found");
@@ -41,8 +42,9 @@ export const shippingController = {
   /** Admin: assign AWB (tracking number) */
   async assignAWB(req: Request, res: Response) {
     const orderNumber = req.params.orderNumber as string;
-    const order: any = await prisma.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { orderNumber },
+      select: { id: true, awbCode: true },
     });
 
     if (!order) throw ApiError.notFound("Order not found");
@@ -57,8 +59,9 @@ export const shippingController = {
   /** Admin: generate shipping label */
   async generateLabel(req: Request, res: Response) {
     const orderNumber = req.params.orderNumber as string;
-    const order: any = await prisma.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { orderNumber },
+      select: { shiprocketShipmentId: true },
     });
 
     if (!order?.shiprocketShipmentId) throw ApiError.badRequest("No shipment found");
@@ -70,8 +73,9 @@ export const shippingController = {
   /** Admin: generate manifest */
   async generateManifest(req: Request, res: Response) {
     const orderNumber = req.params.orderNumber as string;
-    const order: any = await prisma.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { orderNumber },
+      select: { shiprocketShipmentId: true },
     });
 
     if (!order?.shiprocketShipmentId) throw ApiError.badRequest("No shipment found");

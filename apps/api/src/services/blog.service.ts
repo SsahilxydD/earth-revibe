@@ -1,4 +1,4 @@
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 import type { CreateBlogPostInput, UpdateBlogPostInput, CreateBlogCategoryInput, CreateBlogTagInput } from "@earth-revibe/shared";
 
@@ -15,7 +15,7 @@ function calcReadTime(content: string): number {
 
 export const blogService = {
   async listPublished(page: number = 1, limit: number = 12, categorySlug?: string) {
-    const where: any = { status: "PUBLISHED", publishedAt: { lte: new Date() } };
+    const where: Prisma.BlogPostWhereInput = { status: "PUBLISHED", publishedAt: { lte: new Date() } };
     if (categorySlug) {
       where.categories = { some: { category: { slug: categorySlug } } };
     }
@@ -61,7 +61,7 @@ export const blogService = {
   },
 
   async listAll(page: number = 1, limit: number = 20, status?: string, search?: string) {
-    const where: any = {};
+    const where: Prisma.BlogPostWhereInput = {};
     if (status) where.status = status;
     if (search) {
       where.OR = [

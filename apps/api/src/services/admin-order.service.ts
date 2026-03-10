@@ -1,11 +1,24 @@
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 import type { AdminOrderQuery, UpdateOrderStatusInput, AddOrderNoteInput } from "@earth-revibe/shared";
+
+/** Valid order status transitions — enforces a state machine */
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  PLACED: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["PROCESSING", "CANCELLED"],
+  PROCESSING: ["SHIPPED", "CANCELLED"],
+  SHIPPED: ["OUT_FOR_DELIVERY", "DELIVERED"],
+  OUT_FOR_DELIVERY: ["DELIVERED"],
+  DELIVERED: ["RETURNED", "REFUNDED"],
+  CANCELLED: [],
+  RETURNED: ["REFUNDED"],
+  REFUNDED: [],
+};
 
 export const adminOrderService = {
   async listOrders(query: AdminOrderQuery) {
     const { status, search, startDate, endDate, page, limit, sortBy, sortOrder } = query;
-    const where: Record<string, unknown> = {};
+    const where: Prisma.OrderWhereInput = {};
 
     if (status) where.status = status;
     if (search) {
@@ -18,14 +31,15 @@ export const adminOrderService = {
       ];
     }
     if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) (where.createdAt as any).gte = new Date(startDate);
-      if (endDate) (where.createdAt as any).lte = new Date(endDate);
+      const createdAt: Prisma.DateTimeFilter = {};
+      if (startDate) createdAt.gte = new Date(startDate);
+      if (endDate) createdAt.lte = new Date(endDate);
+      where.createdAt = createdAt;
     }
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
-        where: where as any,
+        where,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { [sortBy]: sortOrder },
@@ -35,7 +49,7 @@ export const adminOrderService = {
           payment: { select: { status: true, method: true, paidAt: true } },
         },
       }),
-      prisma.order.count({ where: where as any }),
+      prisma.order.count({ where }),
     ]);
 
     return { orders, total, page, limit, totalPages: Math.ceil(total / limit) };
@@ -65,6 +79,14 @@ export const adminOrderService = {
   async updateStatus(orderNumber: string, adminId: string, data: UpdateOrderStatusInput) {
     const order = await prisma.order.findUnique({ where: { orderNumber } });
     if (!order) throw ApiError.notFound("Order not found");
+
+    // Enforce valid status transitions
+    const allowedTransitions = VALID_TRANSITIONS[order.status] || [];
+    if (!allowedTransitions.includes(data.status)) {
+      throw ApiError.badRequest(
+        `Cannot transition from ${order.status} to ${data.status}. Allowed: ${allowedTransitions.join(", ") || "none"}`
+      );
+    }
 
     await prisma.order.update({
       where: { id: order.id },

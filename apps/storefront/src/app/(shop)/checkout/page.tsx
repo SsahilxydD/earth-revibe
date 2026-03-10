@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCartStore } from "@/stores/cart-store";
 import { useRazorpayCheckout } from "@/hooks/use-razorpay-checkout";
+import { api } from "@/lib/api-client";
 import { formatPrice } from "@earth-revibe/shared";
 
 export default function CheckoutPage() {
@@ -12,24 +13,54 @@ export default function CheckoutPage() {
   const items = useCartStore((s) => s.items);
   const getSubtotal = useCartStore((s) => s.getSubtotal);
   const { startCheckout, isProcessing } = useRazorpayCheckout();
-  const hasTriggered = useRef(false);
 
   const [guestEmail, setGuestEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [showGuestForm, setShowGuestForm] = useState(false);
 
-  // Auto-trigger Magic Checkout for authenticated users
-  useEffect(() => {
-    if (isLoading || !isAuthenticated || items.length === 0 || hasTriggered.current) return;
-    hasTriggered.current = true;
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountLoading, setDiscountLoading] = useState(false);
+  const [discountError, setDiscountError] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<{
+    code: string;
+    type: string;
+    value: number;
+    amount: number;
+  } | null>(null);
 
-    const checkoutItems = items.map((item) => ({
-      variantId: item.variantId,
-      quantity: item.quantity,
-    }));
+  const handleApplyDiscount = async () => {
+    const code = discountCode.trim();
+    if (!code) return;
 
-    startCheckout(checkoutItems);
-  }, [isLoading, isAuthenticated, items, startCheckout]);
+    setDiscountLoading(true);
+    setDiscountError("");
+
+    try {
+      const result = await api.get<{
+        valid: boolean;
+        discount: { type: string; value: number; code: string };
+        discountAmount: number;
+      }>(`/discounts/validate?code=${encodeURIComponent(code)}&orderTotal=${getSubtotal()}`);
+
+      setAppliedDiscount({
+        code: result.discount.code,
+        type: result.discount.type,
+        value: result.discount.value,
+        amount: result.discountAmount,
+      });
+    } catch (err: any) {
+      setDiscountError(err.message || "Invalid discount code");
+      setAppliedDiscount(null);
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCode("");
+    setDiscountError("");
+  };
 
   if (isLoading) {
     return (
@@ -69,7 +100,7 @@ export default function CheckoutPage() {
       quantity: item.quantity,
     }));
 
-    startCheckout(checkoutItems, undefined, guestEmail);
+    startCheckout(checkoutItems, appliedDiscount?.code, guestEmail);
   };
 
   const handleAuthenticatedCheckout = () => {
@@ -77,7 +108,7 @@ export default function CheckoutPage() {
       variantId: item.variantId,
       quantity: item.quantity,
     }));
-    startCheckout(checkoutItems);
+    startCheckout(checkoutItems, appliedDiscount?.code);
   };
 
   // Show a summary while Magic Checkout modal is open
@@ -101,6 +132,69 @@ export default function CheckoutPage() {
             <span className="text-[14px] font-medium text-black">Subtotal</span>
             <span className="text-[14px] font-medium text-black">{formatPrice(getSubtotal())}</span>
           </div>
+
+          {appliedDiscount && (
+            <div className="flex justify-between mt-2">
+              <span className="text-[13px] text-green-700">Discount ({appliedDiscount.code})</span>
+              <span className="text-[13px] text-green-700">-{formatPrice(appliedDiscount.amount)}</span>
+            </div>
+          )}
+
+          {appliedDiscount && (
+            <div className="border-t border-slate-200 mt-2 pt-2 flex justify-between">
+              <span className="text-[14px] font-medium text-black">Total</span>
+              <span className="text-[14px] font-medium text-black">
+                {formatPrice(getSubtotal() - appliedDiscount.amount)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Discount Code */}
+        <div className="border border-slate-200 rounded-lg p-4 mb-6">
+          <p className="text-[12px] font-medium text-slate-600 mb-3 tracking-wide uppercase">Discount Code</p>
+          {appliedDiscount ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] text-green-700 font-medium">{appliedDiscount.code}</span>
+                <span className="text-[12px] text-green-600">
+                  ({appliedDiscount.type === "PERCENTAGE" ? `${appliedDiscount.value}% off` : `${formatPrice(appliedDiscount.value)} off`})
+                </span>
+              </div>
+              <button
+                onClick={handleRemoveDiscount}
+                className="text-[12px] text-slate-400 hover:text-red-500 transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={discountCode}
+                  onChange={(e) => {
+                    setDiscountCode(e.target.value.toUpperCase());
+                    if (discountError) setDiscountError("");
+                  }}
+                  placeholder="Enter code"
+                  className="flex-1 h-[40px] px-3 border border-slate-200 rounded-lg text-[13px] focus:outline-none focus:border-black transition-colors"
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyDiscount()}
+                />
+                <button
+                  onClick={handleApplyDiscount}
+                  disabled={!discountCode.trim() || discountLoading}
+                  className="h-[40px] px-5 bg-black text-white text-[12px] tracking-wide uppercase rounded-lg hover:bg-black/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {discountLoading ? "..." : "Apply"}
+                </button>
+              </div>
+              {discountError && (
+                <p className="text-[12px] text-red-500 mt-2">{discountError}</p>
+              )}
+            </>
+          )}
         </div>
 
         {isProcessing ? (

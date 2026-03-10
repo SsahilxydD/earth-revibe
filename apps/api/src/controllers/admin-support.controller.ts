@@ -10,7 +10,7 @@ export const adminSupportController = {
       priority: req.query.priority as string | undefined,
       search: req.query.search as string | undefined,
     };
-    const result = await supportService.listAllTickets(query as any);
+    const result = await supportService.listAllTickets(query);
     res.json({ success: true, data: result });
   },
 

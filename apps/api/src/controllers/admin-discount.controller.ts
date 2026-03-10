@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 
 export const adminDiscountController = {
@@ -10,7 +10,7 @@ export const adminDiscountController = {
     const isActive = req.query.isActive as string | undefined;
     const type = req.query.type as string | undefined;
 
-    const where: Record<string, unknown> = {};
+    const where: Prisma.DiscountCodeWhereInput = {};
 
     if (search) {
       where.code = { contains: search, mode: "insensitive" };
@@ -21,12 +21,12 @@ export const adminDiscountController = {
 
     const [discounts, total] = await Promise.all([
       prisma.discountCode.findMany({
-        where: where as any,
+        where,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
       }),
-      prisma.discountCode.count({ where: where as any }),
+      prisma.discountCode.count({ where }),
     ]);
 
     res.json({
