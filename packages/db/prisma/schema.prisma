@@ -122,6 +122,18 @@ model Product {
   compareAtPrice  Decimal?      @db.Decimal(10, 2)
   material        String?
   careInstructions String?      @db.Text
+  seoTitle        String?
+  seoDescription  String?       @db.Text
+  productDetails  String?       @db.Text
+  returnsInfo     String?
+  shippingInfo    String?
+  origin          String?
+  composition     String?
+  measurements    String?
+  fabricWeight    String?
+  fit             String?
+  printType       String?
+  washInstructions String?
   status          ProductStatus @default(DRAFT)
   isFeatured      Boolean       @default(false)
   categoryId      String

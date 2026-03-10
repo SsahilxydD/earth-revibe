@@ -130,21 +130,103 @@ export function ProductForm({
 
           <Card>
             <h3 className="text-base font-semibold text-charcoal mb-4">
-              Details
+              Product Metafields
             </h3>
             <div className="space-y-4">
+              <Textarea
+                label="Product Details"
+                placeholder="Key product details..."
+                rows={3}
+                error={errors.productDetails?.message}
+                {...register("productDetails")}
+              />
               <Input
                 label="Material"
                 placeholder="100% Organic Cotton"
                 error={errors.material?.message}
                 {...register("material")}
               />
+              <Input
+                label="Composition"
+                placeholder="100% Cotton."
+                error={errors.composition?.message}
+                {...register("composition")}
+              />
+              <Input
+                label="Fabric Weight"
+                placeholder="260 GSM"
+                error={errors.fabricWeight?.message}
+                {...register("fabricWeight")}
+              />
+              <Input
+                label="Fit"
+                placeholder="Relaxed Fit Silhouette"
+                error={errors.fit?.message}
+                {...register("fit")}
+              />
+              <Input
+                label="Measurements"
+                placeholder="Boxy Fit."
+                error={errors.measurements?.message}
+                {...register("measurements")}
+              />
+              <Input
+                label="Print Type"
+                placeholder="Bold Screen Prints on Front and Back..."
+                error={errors.printType?.message}
+                {...register("printType")}
+              />
               <Textarea
-                label="Care Instructions"
-                placeholder="Machine wash cold..."
-                rows={3}
+                label="Care / Wash Instructions"
+                placeholder="Machine Cold Wash, No Bleaching"
+                rows={2}
                 error={errors.careInstructions?.message}
                 {...register("careInstructions")}
+              />
+              <Input
+                label="Wash Instructions"
+                placeholder="Machine Cold Wash, No Bleaching"
+                error={errors.washInstructions?.message}
+                {...register("washInstructions")}
+              />
+              <Input
+                label="Origin"
+                placeholder="Proudly Made in India"
+                error={errors.origin?.message}
+                {...register("origin")}
+              />
+              <Input
+                label="Returns Info"
+                placeholder="72 Hours Hassle Free Returns and Exchange"
+                error={errors.returnsInfo?.message}
+                {...register("returnsInfo")}
+              />
+              <Input
+                label="Shipping Info"
+                placeholder="Free Delivery Only on Prepaid Orders"
+                error={errors.shippingInfo?.message}
+                {...register("shippingInfo")}
+              />
+            </div>
+          </Card>
+
+          <Card>
+            <h3 className="text-base font-semibold text-charcoal mb-4">
+              SEO / Search Engine Listing
+            </h3>
+            <div className="space-y-4">
+              <Input
+                label="SEO Title"
+                placeholder="Page title for search engines (max 70 chars)"
+                error={errors.seoTitle?.message}
+                {...register("seoTitle")}
+              />
+              <Textarea
+                label="SEO Description"
+                placeholder="Meta description for search engines (max 160 chars)"
+                rows={3}
+                error={errors.seoDescription?.message}
+                {...register("seoDescription")}
               />
             </div>
           </Card>

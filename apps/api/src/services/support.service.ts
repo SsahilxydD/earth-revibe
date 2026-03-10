@@ -39,7 +39,7 @@ export const supportService = {
 
   async listMyTickets(userId: string, page: number = 1, limit: number = 20, status?: string) {
     const where: Prisma.SupportTicketWhereInput = { userId };
-    if (status) where.status = status;
+    if (status) where.status = status as "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 
     const [tickets, total] = await Promise.all([
       prisma.supportTicket.findMany({

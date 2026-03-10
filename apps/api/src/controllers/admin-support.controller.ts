@@ -1,16 +1,16 @@
 import type { Request, Response } from "express";
+import type { TicketStatus, TicketPriority } from "@earth-revibe/shared";
 import { supportService } from "../services/support.service";
 
 export const adminSupportController = {
   async listAll(req: Request, res: Response) {
-    const query = {
+    const result = await supportService.listAllTickets({
       page: Number(req.query.page) || 1,
       limit: Number(req.query.limit) || 20,
-      status: req.query.status as string | undefined,
-      priority: req.query.priority as string | undefined,
+      status: req.query.status as TicketStatus | undefined,
+      priority: req.query.priority as TicketPriority | undefined,
       search: req.query.search as string | undefined,
-    };
-    const result = await supportService.listAllTickets(query);
+    });
     res.json({ success: true, data: result });
   },
 

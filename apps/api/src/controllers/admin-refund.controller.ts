@@ -94,7 +94,6 @@ export const adminRefundController = {
       });
 
       // Update order status — only set REFUNDED on full refund
-      const newOrderStatus = isFullRefund ? "REFUNDED" : order.status;
       if (isFullRefund) {
         await tx.order.update({
           where: { id: order.id },

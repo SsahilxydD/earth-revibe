@@ -1,4 +1,4 @@
-import { prisma, Prisma } from "@earth-revibe/db";
+import { prisma, Prisma, type BlogPostStatus } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 import type { CreateBlogPostInput, UpdateBlogPostInput, CreateBlogCategoryInput, CreateBlogTagInput } from "@earth-revibe/shared";
 
@@ -62,7 +62,7 @@ export const blogService = {
 
   async listAll(page: number = 1, limit: number = 20, status?: string, search?: string) {
     const where: Prisma.BlogPostWhereInput = {};
-    if (status) where.status = status;
+    if (status) where.status = status as BlogPostStatus;
     if (search) {
       where.OR = [
         { title: { contains: search, mode: "insensitive" } },

@@ -17,7 +17,7 @@ export const adminDiscountController = {
     }
     if (isActive === "true") where.isActive = true;
     if (isActive === "false") where.isActive = false;
-    if (type) where.type = type;
+    if (type) where.type = type as Prisma.EnumDiscountTypeFilter;
 
     const [discounts, total] = await Promise.all([
       prisma.discountCode.findMany({

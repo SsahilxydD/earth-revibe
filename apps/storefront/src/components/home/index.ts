@@ -5,3 +5,4 @@ export { SectionHeader } from './section-header';
 export { ProductGridSkeleton } from './product-grid-skeleton';
 export { ShopAllLink } from './shop-all-link';
 export { ViewAllLink } from './view-all-link';
+export { SpinWheel } from './spin-wheel';

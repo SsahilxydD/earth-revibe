@@ -250,7 +250,7 @@ export const adminProductController = {
                 compareAtPrice !== undefined && !isNaN(compareAtPrice)
                   ? compareAtPrice
                   : undefined,
-              status: status.toUpperCase(),
+              status: status.toUpperCase() as "DRAFT" | "ACTIVE" | "ARCHIVED",
               categoryId,
             },
           });

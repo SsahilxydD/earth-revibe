@@ -7,19 +7,6 @@ import { generateOrderNumber } from "@earth-revibe/shared";
 import { shiprocketService } from "./shiprocket.service";
 import type { CreateOrderInput, VerifyPaymentInput, OrderQuery, CancelOrderInput } from "@earth-revibe/shared";
 
-/** Valid order status transitions */
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  PLACED: ["CONFIRMED", "CANCELLED"],
-  CONFIRMED: ["PROCESSING", "CANCELLED"],
-  PROCESSING: ["SHIPPED", "CANCELLED"],
-  SHIPPED: ["OUT_FOR_DELIVERY", "DELIVERED"],
-  OUT_FOR_DELIVERY: ["DELIVERED"],
-  DELIVERED: ["RETURNED", "REFUNDED"],
-  CANCELLED: [],
-  RETURNED: ["REFUNDED"],
-  REFUNDED: [],
-};
-
 export const orderService = {
   async createOrder(userId: string, data: CreateOrderInput) {
     // Get user's cart
