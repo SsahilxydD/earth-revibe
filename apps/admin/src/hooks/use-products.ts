@@ -1,5 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase/client";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
+
+/** Get auth token from Supabase session for raw fetch calls that bypass the API client */
+async function getAuthToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 interface ProductListParams {
   page?: number;
@@ -68,12 +83,7 @@ export function useDeleteProduct() {
 export function useExportProductsCSV() {
   return useMutation({
     mutationFn: async () => {
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("adminAccessToken")
-          : null;
-      const API_BASE =
-        process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
+      const token = await getAuthToken();
       const res = await fetch(`${API_BASE}/admin/products/export-csv`, {
         method: "GET",
         headers: {
@@ -194,12 +204,7 @@ export function useSetProductImagePrimary() {
 export function useUploadImage() {
   return useMutation({
     mutationFn: async (file: File) => {
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("adminAccessToken")
-          : null;
-      const API_BASE =
-        process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
+      const token = await getAuthToken();
       const formData = new FormData();
       formData.append("file", file);
 

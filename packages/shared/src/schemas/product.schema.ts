@@ -7,7 +7,10 @@ export const createProductSchema = z.object({
   description: z.string().min(10),
   shortDescription: z.string().max(500).optional(),
   price: z.coerce.number().positive(),
-  compareAtPrice: z.coerce.number().positive().optional(),
+  compareAtPrice: z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : v),
+    z.coerce.number().positive().optional(),
+  ),
   material: z.string().optional(),
   careInstructions: z.string().optional(),
   seoTitle: z.string().max(70).optional(),

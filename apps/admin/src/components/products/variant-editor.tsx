@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save, X } from "lucide-react";
+import { Plus, Trash2, Save, X, Pencil } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
 import {
@@ -272,9 +272,9 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                           <button
                             onClick={() => handleStartEdit(variant)}
                             className="p-1 rounded hover:bg-off-white text-dark-gray"
-                            title="Edit"
+                            title="Edit variant"
                           >
-                            <Save size={14} />
+                            <Pencil size={14} />
                           </button>
                           <button
                             onClick={() => handleDelete(variant.id)}

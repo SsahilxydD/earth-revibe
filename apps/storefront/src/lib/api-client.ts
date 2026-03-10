@@ -49,27 +49,53 @@ class ApiClient {
       ...(options.headers as Record<string, string>),
     };
 
-    let res = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers,
-      credentials: "include",
-      signal,
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers,
+        credentials: "include",
+        signal,
+      });
+    } catch (err) {
+      throw {
+        status: 0,
+        code: "NETWORK_ERROR",
+        message: "Cannot reach the server. Check your connection or try again.",
+      };
+    }
 
     // If 401, try refresh
     if (res.status === 401) {
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
-        res = await fetch(`${API_BASE}${path}`, {
-          ...options,
-          headers,
-          credentials: "include",
-          signal,
-        });
+        try {
+          res = await fetch(`${API_BASE}${path}`, {
+            ...options,
+            headers,
+            credentials: "include",
+            signal,
+          });
+        } catch {
+          throw {
+            status: 0,
+            code: "NETWORK_ERROR",
+            message: "Cannot reach the server. Check your connection or try again.",
+          };
+        }
       }
     }
 
-    const json: ApiResponse<T> = await res.json();
+    let json: ApiResponse<T>;
+    try {
+      json = await res.json();
+    } catch {
+      throw {
+        status: res.status,
+        code: "PARSE_ERROR",
+        message: `Server returned an invalid response (${res.status})`,
+      };
+    }
 
     if (!res.ok || !json.success) {
       throw {

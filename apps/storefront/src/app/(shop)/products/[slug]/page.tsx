@@ -17,9 +17,10 @@ export default function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [openAccordion, setOpenAccordion] = useState<string | null>("details");
 
-  const { data: product, isLoading } = useQuery({
+  const { data: product, isLoading, isError, error } = useQuery({
     queryKey: ["product", slug],
     queryFn: () => api.get(`/products/${slug}`),
+    retry: (failureCount, err: any) => err?.status !== 404 && failureCount < 2,
   });
 
   // Auto-select when only one option exists — must be before any early returns
@@ -44,6 +45,35 @@ export default function ProductDetailPage() {
               <div className="h-4 w-1/4 bg-slate-100 animate-pulse" />
               <div className="h-24 w-full bg-slate-100 animate-pulse mt-8" />
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    const is404 = (error as any)?.status === 404;
+    return (
+      <div className="bg-white min-h-screen">
+        <div className="h-16 lg:h-20" aria-hidden="true" />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 80px)' }}>
+          <div className="text-center px-6">
+            <h1 className="font-[var(--font-cinzel)] text-2xl text-black mb-4">
+              {is404 ? "Product Not Found" : "Something Went Wrong"}
+            </h1>
+            <p className="text-slate-500 text-[12px] mb-6">
+              {is404
+                ? "The product you're looking for doesn't exist."
+                : (error as any)?.message || "We couldn't load this product. Please try again."}
+            </p>
+            {!is404 && (
+              <button
+                onClick={() => window.location.reload()}
+                className="text-[11px] font-medium tracking-[0.06em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
+              >
+                Try Again
+              </button>
+            )}
           </div>
         </div>
       </div>

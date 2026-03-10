@@ -44,15 +44,21 @@ export function FeaturedSection({
   productsToShow = 8,
   showViewAll = true,
 }: FeaturedSectionProps) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['featured-products', categorySlug, productsToShow],
     queryFn: () =>
       api.get<ProductsResponse>(
         `/products?category=${encodeURIComponent(categorySlug)}&limit=${productsToShow}`
       ),
+    retry: 2,
   });
 
   const products = data?.products ?? [];
+
+  // Don't render the section at all if it errored or has no products
+  if (isError || (!isLoading && products.length === 0)) {
+    return null;
+  }
 
   return (
     <section className="pt-16 lg:pt-24 pb-8 lg:pb-12 bg-white">

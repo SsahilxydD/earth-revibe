@@ -17,7 +17,7 @@ export default function EditProductPage({
 }) {
   const { slug } = use(params);
   const router = useRouter();
-  const { data: product, isLoading } = useProduct(slug);
+  const { data: product, isLoading, isError, error } = useProduct(slug);
   const updateProduct = useUpdateProduct();
 
   const handleSubmit = async (data: CreateProductInput) => {
@@ -34,6 +34,23 @@ export default function EditProductPage({
     return (
       <div className="flex items-center justify-center py-20">
         <Spinner size="lg" className="text-deep-earth" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-20 space-y-3">
+        <p className="text-charcoal font-medium">Failed to load product</p>
+        <p className="text-sm text-medium-gray">
+          {(error as any)?.message || "Something went wrong. Check your connection and try again."}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-sm text-deep-earth hover:underline"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -73,6 +90,18 @@ export default function EditProductPage({
           compareAtPrice: product.compareAtPrice || undefined,
           material: product.material || undefined,
           careInstructions: product.careInstructions || undefined,
+          productDetails: product.productDetails || undefined,
+          composition: product.composition || undefined,
+          fabricWeight: product.fabricWeight || undefined,
+          fit: product.fit || undefined,
+          measurements: product.measurements || undefined,
+          printType: product.printType || undefined,
+          washInstructions: product.washInstructions || undefined,
+          origin: product.origin || undefined,
+          returnsInfo: product.returnsInfo || undefined,
+          shippingInfo: product.shippingInfo || undefined,
+          seoTitle: product.seoTitle || undefined,
+          seoDescription: product.seoDescription || undefined,
           status: product.status,
           isFeatured: product.isFeatured,
           categoryId: product.categoryId,
