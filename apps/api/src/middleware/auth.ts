@@ -21,10 +21,17 @@ const userSelect = {
   isActive: true,
 } as const;
 
-// Supabase JWKS for ES256 token verification — cached automatically by jose
-const SUPABASE_JWKS = env.SUPABASE_URL
-  ? createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`))
-  : null;
+// Lazy-initialized Supabase JWKS — avoids module-load timing issues
+let _supabaseJwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+function getSupabaseJWKS() {
+  if (!env.SUPABASE_URL) return null;
+  if (!_supabaseJwks) {
+    _supabaseJwks = createRemoteJWKSet(
+      new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`)
+    );
+  }
+  return _supabaseJwks;
+}
 
 /**
  * Try verifying with custom JWT first, then fall back to Supabase JWT.
@@ -45,9 +52,10 @@ async function verifyToken(token: string) {
   }
 
   // 2. Try Supabase JWT (ES256 — verified via JWKS)
-  if (SUPABASE_JWKS) {
+  const supabaseJwks = getSupabaseJWKS();
+  if (supabaseJwks) {
     try {
-      const { payload } = await jwtVerify(token, SUPABASE_JWKS);
+      const { payload } = await jwtVerify(token, supabaseJwks);
       const email = payload.email as string | undefined;
       if (!email) return null;
 
@@ -83,8 +91,10 @@ async function verifyToken(token: string) {
 
       if (user.isActive) return user;
     } catch (err) {
-      console.error("[auth] Supabase JWT verification failed:", err);
+      console.error("[auth] Supabase JWT path failed:", err);
     }
+  } else {
+    console.warn("[auth] SUPABASE_JWKS is null — SUPABASE_URL:", env.SUPABASE_URL);
   }
 
   return null;
