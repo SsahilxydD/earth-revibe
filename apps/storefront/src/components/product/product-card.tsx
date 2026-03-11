@@ -92,8 +92,7 @@ export function ProductCard({ product, index = 0, sizes }: ProductCardProps) {
 
   return (
     <div
-      className="product-tile animate-[fadeUp_0.5s_ease-out_forwards]"
-      style={{ animationDelay: `${index * 0.06}s` }}
+      className="product-tile group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => { setIsHovered(false); setHoverImageIndex(0); }}
     >
@@ -126,7 +125,7 @@ export function ProductCard({ product, index = 0, sizes }: ProductCardProps) {
                     alt={`${product.name} - Image ${idx + 1}`}
                     fill
                     className="object-cover object-top"
-                    sizes="50vw"
+                    sizes="(max-width: 768px) 50vw, 33vw"
                     loading="lazy"
                   />
                 </div>
@@ -164,7 +163,7 @@ export function ProductCard({ product, index = 0, sizes }: ProductCardProps) {
                   className={`object-cover object-top transition-opacity duration-200 ${
                     idx === hoverImageIndex ? 'opacity-100' : 'opacity-0'
                   }`}
-                  sizes="25vw"
+                  sizes="33vw"
                   loading={idx === 0 ? 'eager' : 'lazy'}
                 />
               ))
