@@ -31,7 +31,7 @@ export default function SupportTicketsPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
 
-  const { data, isLoading } = useAdminTickets(page, status || undefined, priority || undefined, search || undefined);
+  const { data, isLoading, isError } = useAdminTickets(page, status || undefined, priority || undefined, search || undefined);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +66,12 @@ export default function SupportTicketsPage() {
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+          </div>
+        ) : isError ? (
+          <div className="py-8 text-center">
+            <p className="text-charcoal font-medium mb-1">Failed to load tickets</p>
+            <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
           </div>
         ) : !data?.tickets?.length ? (
           <p className="text-medium-gray py-8 text-center">No tickets found.</p>

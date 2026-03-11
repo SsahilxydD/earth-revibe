@@ -236,12 +236,14 @@ export const productService = {
       }
     }
 
-    const { categoryId, ...rest } = data;
+    const { categoryId, price, compareAtPrice, ...rest } = data;
     const product = await prisma.product.update({
       where: { id },
       data: {
         ...rest,
         ...(slug ? { slug } : {}),
+        ...(price !== undefined ? { price: String(price) } : {}),
+        ...(compareAtPrice !== undefined ? { compareAtPrice: String(compareAtPrice) } : {}),
         ...(categoryId ? { category: { connect: { id: categoryId } } } : {}),
       } as any,
       include: {

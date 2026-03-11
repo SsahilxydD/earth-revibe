@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "mcp__plugin_context7_context7__resolve-library-id"
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "Bash(xargs grep:*)",
+      "Bash(find c:/work/earth_revibe -name *.log -o -name *.err)",
+      "Bash(ls -la c:/work/earth_revibe/*.csv)",
+      "Bash(find /c/work/earth_revibe -path */node_modules/.pnpm/@prisma/client -name index.d.ts)",
+      "Bash(xargs cat:*)",
+      "Bash(npx tsc:*)"
     ]
-  }
+  },
+  "disabledMcpjsonServers": [
+    "claude-flow"
+  ]
 }

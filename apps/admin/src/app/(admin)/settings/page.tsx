@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Card, Button, Input, Select } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
+import { api } from "@/lib/api-client";
 
 export default function GeneralSettingsPage() {
   const [storeName, setStoreName] = useState("Earth Revibe");
@@ -32,10 +33,27 @@ export default function GeneralSettingsPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    // TODO: connect to API when settings endpoint is built
-    await new Promise((r) => setTimeout(r, 500));
-    toast.success("Settings saved");
-    setSaving(false);
+    try {
+      await api.put("/admin/settings", {
+        storeName,
+        legalName,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        pincode,
+        timezone,
+        unitSystem,
+        weightUnit,
+        orderPrefix,
+      });
+      toast.success("Settings saved");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

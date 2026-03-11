@@ -22,7 +22,7 @@ export default function BlogListPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
 
-  const { data, isLoading } = useBlogPosts(page, status || undefined, search || undefined);
+  const { data, isLoading, isError } = useBlogPosts(page, status || undefined, search || undefined);
   const deleteMutation = useDeleteBlogPost();
 
   const handleSearch = (e: React.FormEvent) => {
@@ -60,6 +60,12 @@ export default function BlogListPage() {
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+          </div>
+        ) : isError ? (
+          <div className="py-8 text-center">
+            <p className="text-charcoal font-medium mb-1">Failed to load blog posts</p>
+            <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
           </div>
         ) : !data?.posts?.length ? (
           <p className="text-medium-gray py-8 text-center">No blog posts found.</p>

@@ -14,7 +14,7 @@ const AnalyticsCharts = dynamic(() => import("@/components/analytics/analytics-c
 export default function AnalyticsPage() {
   const [period, setPeriod] = useState("30d");
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["analytics", period],
     queryFn: () => api.get(`/admin/analytics/detailed?period=${period}`),
   });
@@ -46,6 +46,14 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
         </div>
+      ) : isError ? (
+        <Card>
+          <div className="py-12 text-center">
+            <p className="text-charcoal font-medium mb-1">Failed to load analytics</p>
+            <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
+            <button onClick={() => window.location.reload()} className="text-sm font-medium text-deep-earth hover:underline">Retry</button>
+          </div>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard

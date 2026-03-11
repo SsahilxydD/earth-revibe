@@ -88,7 +88,7 @@ export default function DiscountsPage() {
   const [form, setForm] = useState<DiscountFormData>(emptyForm);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data, isLoading } = useDiscounts({
+  const { data, isLoading, isError } = useDiscounts({
     page,
     limit: 20,
     search: search || undefined,
@@ -245,6 +245,12 @@ export default function DiscountsPage() {
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
+          </div>
+        ) : isError ? (
+          <div className="p-12 text-center">
+            <p className="text-charcoal font-medium mb-1">Failed to load discounts</p>
+            <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
           </div>
         ) : !data?.discounts?.length ? (
           <div className="p-12 text-center">

@@ -27,7 +27,7 @@ export default function CustomersPage() {
   const [isActive, setIsActive] = useState("");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useCustomers({
+  const { data, isLoading, isError } = useCustomers({
     page,
     limit: 20,
     search: search || undefined,
@@ -99,6 +99,12 @@ export default function CustomersPage() {
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
+          </div>
+        ) : isError ? (
+          <div className="p-12 text-center">
+            <p className="text-charcoal font-medium mb-1">Failed to load customers</p>
+            <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
           </div>
         ) : !data?.customers?.length ? (
           <div className="p-12 text-center">

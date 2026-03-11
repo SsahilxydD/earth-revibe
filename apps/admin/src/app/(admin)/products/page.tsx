@@ -63,7 +63,7 @@ export default function ProductsPage() {
   const [newStatus, setNewStatus] = useState("ACTIVE");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data, isLoading } = useProducts({
+  const { data, isLoading, isError } = useProducts({
     page,
     limit: 20,
     status: status || undefined,
@@ -279,6 +279,12 @@ export default function ProductsPage() {
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
+          </div>
+        ) : isError ? (
+          <div className="p-12 text-center">
+            <p className="text-charcoal font-medium mb-1">Failed to load products</p>
+            <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
           </div>
         ) : !products.length ? (
           <div className="p-12 text-center">

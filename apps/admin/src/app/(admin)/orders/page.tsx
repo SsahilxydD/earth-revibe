@@ -53,7 +53,7 @@ export default function OrdersPage() {
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useOrders({
+  const { data, isLoading, isError } = useOrders({
     page,
     limit: 20,
     status: status || undefined,
@@ -123,6 +123,12 @@ export default function OrdersPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : isError ? (
+          <div className="p-12 text-center">
+            <p className="text-charcoal font-medium mb-1">Failed to load orders</p>
+            <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
           </div>
         ) : !data?.orders?.length ? (
           <div className="p-12 text-center">

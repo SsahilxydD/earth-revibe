@@ -184,12 +184,6 @@ export function ProductForm({
                 {...register("careInstructions")}
               />
               <Input
-                label="Wash Instructions"
-                placeholder="Machine Cold Wash, No Bleaching"
-                error={errors.washInstructions?.message}
-                {...register("washInstructions")}
-              />
-              <Input
                 label="Origin"
                 placeholder="Proudly Made in India"
                 error={errors.origin?.message}

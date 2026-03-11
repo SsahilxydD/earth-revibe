@@ -30,6 +30,7 @@ import { adminDiscountRouter } from "./routes/admin-discount.routes";
 import { adminInventoryRouter } from "./routes/admin-inventory.routes";
 import { adminProductRouter } from "./routes/admin-product.routes";
 import { adminNotificationRouter } from "./routes/admin-notification.routes";
+import { adminSettingsRouter } from "./routes/admin-settings.routes";
 import { uploadRouter } from "./routes/upload.routes";
 import { sanitize } from "./middleware/sanitize";
 
@@ -134,6 +135,7 @@ app.use("/api/v1/admin/discounts", adminDiscountRouter);
 app.use("/api/v1/admin/inventory", adminInventoryRouter);
 app.use("/api/v1/admin/products", adminProductRouter);
 app.use("/api/v1/admin/notifications", adminNotificationRouter);
+app.use("/api/v1/admin/settings", adminSettingsRouter);
 app.use("/api/v1/upload", uploadRouter);
 
 // Error handling (must be after all routes)

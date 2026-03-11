@@ -73,7 +73,7 @@ export default function InventoryPage() {
   const [bulkModal, setBulkModal] = useState(false);
   const [bulkStockValue, setBulkStockValue] = useState("");
 
-  const { data, isLoading } = useInventory({
+  const { data, isLoading, isError } = useInventory({
     page,
     limit: 20,
     search: search || undefined,
@@ -317,6 +317,12 @@ export default function InventoryPage() {
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
+          </div>
+        ) : isError ? (
+          <div className="p-12 text-center">
+            <p className="text-charcoal font-medium mb-1">Failed to load inventory</p>
+            <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
           </div>
         ) : !variants.length ? (
           <div className="p-12 text-center">
