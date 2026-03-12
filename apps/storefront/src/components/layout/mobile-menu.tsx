@@ -15,40 +15,40 @@ interface NavSection {
 const NAV_SECTIONS: NavSection[] = [
   {
     label: "NEW ARRIVALS",
-    href: "/collections/new-arrivals",
+    href: "/categories/new-arrivals",
   },
   {
     label: "MEN",
-    href: "/collections/men",
+    href: "/categories/men",
     children: [
-      { label: "T-Shirts", href: "/collections/men-tshirts" },
-      { label: "Hoodies", href: "/collections/men-hoodies" },
-      { label: "Joggers", href: "/collections/men-joggers" },
-      { label: "Shorts", href: "/collections/men-shorts" },
-      { label: "View All", href: "/collections/men" },
+      { label: "T-Shirts", href: "/categories/men-tshirts" },
+      { label: "Hoodies", href: "/categories/men-hoodies" },
+      { label: "Joggers", href: "/categories/men-joggers" },
+      { label: "Shorts", href: "/categories/men-shorts" },
+      { label: "View All", href: "/categories/men" },
     ],
   },
   {
     label: "WOMEN",
-    href: "/collections/women",
+    href: "/categories/women",
     children: [
-      { label: "T-Shirts", href: "/collections/women-tshirts" },
-      { label: "Hoodies", href: "/collections/women-hoodies" },
-      { label: "Joggers", href: "/collections/women-joggers" },
-      { label: "View All", href: "/collections/women" },
+      { label: "T-Shirts", href: "/categories/women-tshirts" },
+      { label: "Hoodies", href: "/categories/women-hoodies" },
+      { label: "Joggers", href: "/categories/women-joggers" },
+      { label: "View All", href: "/categories/women" },
     ],
   },
   {
     label: "OVERSIZED",
-    href: "/collections/oversized",
+    href: "/categories/oversized",
   },
   {
-    label: "COLLECTIONS",
-    href: "/collections",
+    label: "ALL PRODUCTS",
+    href: "/products",
   },
   {
     label: "SALE",
-    href: "/collections/sale",
+    href: "/categories/sale",
   },
 ];
 

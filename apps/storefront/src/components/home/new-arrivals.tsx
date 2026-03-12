@@ -121,7 +121,7 @@ export function NewArrivals({ products }: NewArrivalsProps) {
       transition={{ duration: 0.6 }}
       className="px-4 md:px-8 lg:px-12 py-[var(--section-spacing-mobile)] md:py-[var(--section-spacing-desktop)]"
     >
-      <SectionHeader title="Just Dropped" viewAllHref="/collections/new-arrivals" />
+      <SectionHeader title="Just Dropped" viewAllHref="/categories/new-arrivals" />
 
       {/* Mobile: horizontal scroll */}
       <div className="relative md:hidden">

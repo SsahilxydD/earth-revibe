@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingBag } from "lucide-react";
 import { cn, formatPrice, getImageUrl } from "@/lib/utils";
-import type { Product } from "@/lib/types";
+import type { Product } from "@/types";
 
 interface ProductCardProps {
   product: Product;

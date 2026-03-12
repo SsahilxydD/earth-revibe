@@ -3,27 +3,25 @@
 import Link from "next/link";
 
 const SHOP_LINKS = [
-  { label: "New Arrivals", href: "/collections/new-arrivals" },
-  { label: "Men", href: "/collections/men" },
-  { label: "Women", href: "/collections/women" },
-  { label: "Oversized", href: "/collections/oversized" },
-  { label: "Sale", href: "/collections/sale" },
+  { label: "New Arrivals", href: "/categories/new-arrivals" },
+  { label: "Men", href: "/categories/men" },
+  { label: "Women", href: "/categories/women" },
+  { label: "Oversized", href: "/categories/oversized" },
+  { label: "Sale", href: "/categories/sale" },
 ];
 
 const CUSTOMER_LINKS = [
-  { label: "Track Order", href: "/account/orders" },
-  { label: "Returns & Exchanges", href: "/pages/returns" },
-  { label: "Shipping Policy", href: "/pages/shipping" },
-  { label: "FAQs", href: "/pages/faq" },
-  { label: "Contact Us", href: "/pages/contact" },
+  { label: "Track Order", href: "/track-order" },
+  { label: "Returns & Exchanges", href: "/policies/returns" },
+  { label: "Shipping Policy", href: "/policies/shipping" },
+  { label: "FAQs", href: "/faq" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 const ABOUT_LINKS = [
-  { label: "Our Story", href: "/pages/about" },
-  { label: "Sustainability", href: "/pages/sustainability" },
-  { label: "Careers", href: "/pages/careers" },
-  { label: "Privacy Policy", href: "/pages/privacy" },
-  { label: "Terms of Service", href: "/pages/terms" },
+  { label: "Our Story", href: "/about" },
+  { label: "Privacy Policy", href: "/policies/privacy" },
+  { label: "Terms of Service", href: "/policies/terms" },
 ];
 
 function FooterColumn({

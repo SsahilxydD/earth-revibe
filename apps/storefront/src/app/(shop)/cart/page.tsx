@@ -133,7 +133,7 @@ function EmptyCart() {
       <p className="mt-2 text-sm text-[var(--color-muted)]">
         Looks like you haven&apos;t added anything to your cart yet.
       </p>
-      <Link href="/collections/new-arrivals">
+      <Link href="/categories/new-arrivals">
         <Button size="lg" className="mt-8">
           Browse Products
         </Button>
@@ -210,7 +210,7 @@ export default function CartPage() {
             ))}
           </div>
           <Link
-            href="/collections/new-arrivals"
+            href="/categories/new-arrivals"
             className="mt-6 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
           >
             Continue Shopping

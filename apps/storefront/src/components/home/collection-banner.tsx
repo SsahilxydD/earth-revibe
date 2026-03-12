@@ -9,22 +9,22 @@ interface CollectionCard {
 const COLLECTIONS: CollectionCard[] = [
   {
     title: "New Arrivals",
-    href: "/collections/new-arrivals",
+    href: "/categories/new-arrivals",
     gradient: "from-zinc-900 to-zinc-700",
   },
   {
     title: "Oversized Tees",
-    href: "/collections/oversized-tees",
+    href: "/categories/oversized-tees",
     gradient: "from-neutral-800 to-stone-600",
   },
   {
     title: "Streetwear",
-    href: "/collections/streetwear",
+    href: "/categories/streetwear",
     gradient: "from-gray-900 to-gray-600",
   },
   {
     title: "Sale",
-    href: "/collections/sale",
+    href: "/categories/sale",
     gradient: "from-red-900 to-red-700",
   },
 ];

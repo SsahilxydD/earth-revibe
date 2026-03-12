@@ -45,7 +45,7 @@ async function fetchCollections(): Promise<Collection[]> {
       "https://earth-revibeapi-production.up.railway.app/api/v1";
     const baseUrl = apiBase.startsWith("http") ? apiBase : `https://${apiBase}`;
 
-    const res = await fetch(`${baseUrl}/collections?limit=100`, {
+    const res = await fetch(`${baseUrl}/categories?limit=100`, {
       next: { revalidate: 3600 },
     });
 
@@ -93,7 +93,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${SITE_URL}/collections`,
+      url: `${SITE_URL}/products`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
@@ -163,7 +163,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const collectionPages: MetadataRoute.Sitemap = collections.map(
     (collection) => ({
-      url: `${SITE_URL}/collections/${collection.slug}`,
+      url: `${SITE_URL}/categories/${collection.slug}`,
       lastModified: collection.updatedAt
         ? new Date(collection.updatedAt)
         : new Date(),

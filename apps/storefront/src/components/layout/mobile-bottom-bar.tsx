@@ -10,7 +10,7 @@ import { useUiStore } from "@/stores/ui-store";
 const NAV_ITEMS = [
   { label: "Home", href: "/", icon: Home },
   { label: "Search", href: "#search", icon: Search },
-  { label: "Wishlist", href: "/wishlist", icon: Heart },
+  { label: "Wishlist", href: "/account/wishlist", icon: Heart },
   { label: "Cart", href: "#cart", icon: ShoppingBag },
 ] as const;
 

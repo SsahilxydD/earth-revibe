@@ -116,7 +116,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
       transition={{ duration: 0.6 }}
       className="px-4 md:px-8 lg:px-12 py-[var(--section-spacing-mobile)] md:py-[var(--section-spacing-desktop)]"
     >
-      <SectionHeader title="Trending Now" viewAllHref="/collections" />
+      <SectionHeader title="Trending Now" viewAllHref="/products" />
 
       {/* Mobile: horizontal scroll */}
       <div className="relative md:hidden">

@@ -53,7 +53,7 @@ function ConfirmationContent() {
       </p>
 
       <div className="mt-8 flex flex-col gap-3">
-        <Link href="/collections/new-arrivals">
+        <Link href="/categories/new-arrivals">
           <Button fullWidth size="lg">
             Continue Shopping
           </Button>

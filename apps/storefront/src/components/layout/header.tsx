@@ -9,12 +9,12 @@ import { useUiStore } from "@/stores/ui-store";
 import { SearchOverlay } from "./search-overlay";
 
 const NAV_LINKS = [
-  { label: "NEW ARRIVALS", href: "/collections/new-arrivals" },
-  { label: "MEN", href: "/collections/men" },
-  { label: "WOMEN", href: "/collections/women" },
-  { label: "OVERSIZED", href: "/collections/oversized" },
-  { label: "COLLECTIONS", href: "/collections" },
-  { label: "SALE", href: "/collections/sale" },
+  { label: "NEW ARRIVALS", href: "/categories/new-arrivals" },
+  { label: "MEN", href: "/categories/men" },
+  { label: "WOMEN", href: "/categories/women" },
+  { label: "OVERSIZED", href: "/categories/oversized" },
+  { label: "ALL PRODUCTS", href: "/products" },
+  { label: "SALE", href: "/categories/sale" },
 ];
 
 export function Header() {
@@ -93,7 +93,7 @@ export function Header() {
               <Search className="h-5 w-5" />
             </button>
             <Link
-              href="/wishlist"
+              href="/account/wishlist"
               className="hidden h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--color-surface)] transition-colors sm:flex"
               aria-label="Wishlist"
             >
