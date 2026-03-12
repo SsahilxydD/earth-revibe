@@ -388,7 +388,7 @@ describe("adminInventoryController.updateStock", () => {
     // NaN satisfies typeof === 'number' but is not a valid stock value;
     // the controller checks stock < 0 — NaN < 0 is false, but
     // passing undefined covers the undefined branch; we test a real NaN too.
-    const { req, res } = setup({ stock: NaN });
+    const { req: _req, res: _res } = setup({ stock: NaN });
     // NaN is typeof 'number' and NaN < 0 is false, NaN === undefined is false.
     // The controller only rejects undefined, non-number, or negative — NaN
     // passes the current guards. This test documents that behaviour and ensures

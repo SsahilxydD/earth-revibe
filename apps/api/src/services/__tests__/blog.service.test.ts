@@ -144,6 +144,7 @@ describe("blogService.create", () => {
       title: "Hello World",
       content: "Some content here",
       excerpt: "Short",
+      status: "DRAFT" as any,
     });
 
     const createCall = vi.mocked(prisma.blogPost.create).mock.calls[0][0] as any;
@@ -158,6 +159,7 @@ describe("blogService.create", () => {
       title: "Top 10 Tips & Tricks!",
       content: "Content here",
       excerpt: "Short",
+      status: "DRAFT" as any,
     });
 
     const createCall = vi.mocked(prisma.blogPost.create).mock.calls[0][0] as any;
@@ -173,6 +175,7 @@ describe("blogService.create", () => {
       slug: "custom-slug",
       content: "Content",
       excerpt: "Short",
+      status: "DRAFT" as any,
     });
 
     const createCall = vi.mocked(prisma.blogPost.create).mock.calls[0][0] as any;
@@ -189,6 +192,7 @@ describe("blogService.create", () => {
         title: "Hello World",
         content: "Content",
         excerpt: "Short",
+        status: "DRAFT" as any,
       })
     ).rejects.toThrow(ApiError);
 
@@ -197,6 +201,7 @@ describe("blogService.create", () => {
         title: "Hello World",
         content: "Content",
         excerpt: "Short",
+        status: "DRAFT" as any,
       })
     ).rejects.toMatchObject({ statusCode: 409, code: "CONFLICT" });
   });
@@ -211,6 +216,7 @@ describe("blogService.create", () => {
       title: "Test",
       content: fourHundredWords,
       excerpt: "Short",
+      status: "DRAFT" as any,
     });
 
     const createCall = vi.mocked(prisma.blogPost.create).mock.calls[0][0] as any;
@@ -225,6 +231,7 @@ describe("blogService.create", () => {
       title: "Test",
       content: "Short.",
       excerpt: "Short",
+      status: "DRAFT" as any,
     });
 
     const createCall = vi.mocked(prisma.blogPost.create).mock.calls[0][0] as any;
@@ -240,7 +247,7 @@ describe("blogService.create", () => {
       title: "Test Post",
       content: "Some content",
       excerpt: "Short",
-      status: "PUBLISHED",
+      status: "PUBLISHED" as any,
     });
     const after = new Date();
 
@@ -259,7 +266,7 @@ describe("blogService.create", () => {
       title: "Draft Post",
       content: "Some content",
       excerpt: "Short",
-      status: "DRAFT",
+      status: "DRAFT" as any,
     });
 
     const createCall = vi.mocked(prisma.blogPost.create).mock.calls[0][0] as any;
@@ -274,6 +281,7 @@ describe("blogService.create", () => {
       title: "Test",
       content: "Content",
       excerpt: "Short",
+      status: "DRAFT" as any,
       categoryIds: ["cat-1", "cat-2"],
       tagIds: ["tag-1"],
     });
@@ -376,7 +384,7 @@ describe("blogService.update", () => {
     vi.mocked(prisma.blogPost.update).mockResolvedValue({ ...mockPost } as any);
 
     const before = new Date();
-    await blogService.update("post-1", { status: "PUBLISHED" });
+    await blogService.update("post-1", { status: "PUBLISHED" as any });
 
     const updateCall = vi.mocked(prisma.blogPost.update).mock.calls[0][0] as any;
     expect(updateCall.data.publishedAt).toBeInstanceOf(Date);
@@ -391,7 +399,7 @@ describe("blogService.update", () => {
     } as any);
     vi.mocked(prisma.blogPost.update).mockResolvedValue({ ...mockPost } as any);
 
-    await blogService.update("post-1", { status: "PUBLISHED" });
+    await blogService.update("post-1", { status: "PUBLISHED" as any });
 
     const updateCall = vi.mocked(prisma.blogPost.update).mock.calls[0][0] as any;
     // The expression: status===PUBLISHED && !existing.publishedAt => false, so publishedAt update

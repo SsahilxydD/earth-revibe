@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { productService } from "../product.service";
-import { ApiError } from "../../utils/api-error";
 
 // ---------------------------------------------------------------------------
 // Mock @earth-revibe/db — must appear before any import that resolves the module
@@ -56,7 +55,7 @@ const makeCategory = (overrides = {}) => ({
 
 const FIXED_DATE = new Date("2026-01-01T00:00:00.000Z");
 
-const makeProduct = (overrides = {}) => ({
+const makeProduct = (_overrides = {}) => ({
   id: "prod-1",
   name: "Eco Tee",
   slug: "eco-tee",
@@ -107,7 +106,7 @@ const makeImage = (overrides = {}) => ({
 const makeProductQuery = (overrides = {}) => ({
   page: 1,
   limit: 20,
-  sortBy: "createdAt",
+  sortBy: "createdAt" as const,
   sortOrder: "desc" as const,
   ...overrides,
 });

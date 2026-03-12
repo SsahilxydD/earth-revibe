@@ -757,9 +757,9 @@ describe("JWKS lazy initialization", () => {
     // is not possible in vitest without a full isolateModules call.
     // Instead, verify the behaviour indirectly: if createRemoteJWKSet was
     // ever called, it received the correct URL pattern.
-    const allCalls = mocks.mockCreateRemoteJWKSet.mock.calls;
+    const allCalls = mocks.mockCreateRemoteJWKSet.mock.calls as unknown as unknown[][];
     if (allCalls.length > 0) {
-      const urlArg = allCalls[0][0] as URL;
+      const urlArg = allCalls[0]![0] as URL;
       expect(urlArg.toString()).toBe(
         "https://test-project.supabase.co/auth/v1/.well-known/jwks.json"
       );

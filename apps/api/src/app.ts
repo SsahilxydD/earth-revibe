@@ -110,7 +110,7 @@ app.get("/api/v1/health", (_req, res) => {
 app.post("/api/v1/internal/cleanup", async (_req, res) => {
   try {
     const { prisma } = await import("@earth-revibe/db");
-    const { restoreExpiredReservations } = await import("./services/checkout.service");
+    const { restoreExpiredReservations } = await import("./services/checkout.service.js");
 
     // 1. Restore stock for expired reservations, then delete them
     const restoredCount = await restoreExpiredReservations();

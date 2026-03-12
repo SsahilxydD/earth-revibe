@@ -196,6 +196,7 @@ describe("authService.register", () => {
     const result = await authService.register({
       email: "test@example.com",
       password: "Password1",
+      confirmPassword: "Password1",
       firstName: "Alice",
       lastName: "Smith",
       phone: "9876543210",
@@ -224,6 +225,7 @@ describe("authService.register", () => {
       authService.register({
         email: "dup@example.com",
         password: "Password1",
+        confirmPassword: "Password1",
         firstName: "Alice",
         lastName: "Smith",
       })
@@ -245,6 +247,7 @@ describe("authService.register", () => {
       authService.register({
         email: "dup@example.com",
         password: "Password1",
+        confirmPassword: "Password1",
         firstName: "Alice",
         lastName: "Smith",
       })
@@ -261,6 +264,7 @@ describe("authService.register", () => {
       authService.register({
         email: "test@example.com",
         password: "Password1",
+        confirmPassword: "Password1",
         firstName: "Alice",
         lastName: "Smith",
       })
@@ -293,6 +297,7 @@ describe("authService.register", () => {
     await authService.register({
       email: "new@example.com",
       password: "Password1",
+      confirmPassword: "Password1",
       firstName: "Bob",
       lastName: "Jones",
       referralCode: "REVIBE-REF001",
@@ -329,6 +334,7 @@ describe("authService.register", () => {
     await authService.register({
       email: "new@example.com",
       password: "Password1",
+      confirmPassword: "Password1",
       firstName: "Bob",
       lastName: "Jones",
       referralCode: "REVIBE-INVALID",
@@ -356,6 +362,7 @@ describe("authService.register", () => {
       authService.register({
         email: "test@example.com",
         password: "Password1",
+        confirmPassword: "Password1",
         firstName: "Alice",
         lastName: "Smith",
       })
@@ -384,6 +391,7 @@ describe("authService.register", () => {
       authService.register({
         email: "test@example.com",
         password: "Password1",
+        confirmPassword: "Password1",
         firstName: "Alice",
         lastName: "Smith",
       })
@@ -980,6 +988,7 @@ describe("ApiError type assertions", () => {
       await authService.register({
         email: "dup@example.com",
         password: "Password1",
+        confirmPassword: "Password1",
         firstName: "Alice",
         lastName: "Smith",
       });

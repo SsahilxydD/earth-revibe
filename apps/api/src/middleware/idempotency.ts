@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { prisma } from "@earth-revibe/db";
+import { prisma, Prisma } from "@earth-revibe/db";
 import { logger } from "../config/logger";
 
 const IDEMPOTENCY_KEY_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -64,7 +64,7 @@ export function idempotency(endpoint: string) {
           status: "PROCESSING",
           userId,
           endpoint,
-          response: null,
+          response: Prisma.JsonNull,
           expiresAt: new Date(Date.now() + IDEMPOTENCY_KEY_TTL_MS),
         },
       });

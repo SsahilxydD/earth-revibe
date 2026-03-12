@@ -1,10 +1,11 @@
 import { Router } from "express";
+import type { Router as RouterType } from "express";
 import crypto from "crypto";
 import { prisma } from "@earth-revibe/db";
 import { env } from "../config/env";
 import { logger } from "../config/logger";
 
-const router = Router();
+const router: RouterType = Router();
 
 router.post("/razorpay", async (req, res) => {
   const signature = req.headers["x-razorpay-signature"] as string;
@@ -47,7 +48,7 @@ router.post("/razorpay", async (req, res) => {
             data: {
               status: "CAPTURED",
               razorpayPaymentId: paymentEntity.id,
-              method: mapPaymentMethod(paymentEntity.method),
+              method: mapPaymentMethod(paymentEntity.method) as any,
               paidAt: new Date(),
             },
           });

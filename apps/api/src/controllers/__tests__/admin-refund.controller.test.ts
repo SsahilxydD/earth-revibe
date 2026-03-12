@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Request, Response } from "express";
 import { adminRefundController } from "../admin-refund.controller";
-import { ApiError } from "../../utils/api-error";
+
 
 // ---------------------------------------------------------------------------
 // Mocks

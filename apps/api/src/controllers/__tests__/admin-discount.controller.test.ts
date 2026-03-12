@@ -39,7 +39,7 @@ function makeRes(): Response & {
 } {
   const res = {
     _status: 200,
-    _json: undefined,
+    _json: undefined as unknown,
     _message: "",
     status(code: number) {
       this._status = code;
@@ -58,7 +58,7 @@ function makeRes(): Response & {
 }
 
 // Typed shorthand for the mocked prisma discount methods
-const mockDiscountCode = prisma.discountCode as {
+const mockDiscountCode = prisma.discountCode as unknown as {
   findMany: ReturnType<typeof vi.fn>;
   count: ReturnType<typeof vi.fn>;
   findUnique: ReturnType<typeof vi.fn>;

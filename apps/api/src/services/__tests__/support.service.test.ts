@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { supportService } from "../support.service";
-import { ApiError } from "../../utils/api-error";
 
 vi.mock("@earth-revibe/db", () => ({
   prisma: {
@@ -52,7 +51,7 @@ describe("supportService.listAllTickets", () => {
     vi.mocked(prisma.supportTicket.findMany).mockResolvedValue([mockTicket] as any);
     vi.mocked(prisma.supportTicket.count).mockResolvedValue(1);
 
-    const result = await supportService.listAllTickets({});
+    const result = await supportService.listAllTickets({ page: 1, limit: 20 });
 
     expect(result.tickets).toHaveLength(1);
     expect(result.total).toBe(1);
@@ -65,7 +64,7 @@ describe("supportService.listAllTickets", () => {
     vi.mocked(prisma.supportTicket.findMany).mockResolvedValue([]);
     vi.mocked(prisma.supportTicket.count).mockResolvedValue(0);
 
-    await supportService.listAllTickets({ status: "OPEN" as any });
+    await supportService.listAllTickets({ page: 1, limit: 20, status: "OPEN" as any });
 
     expect(prisma.supportTicket.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ status: "OPEN" }) })
@@ -76,7 +75,7 @@ describe("supportService.listAllTickets", () => {
     vi.mocked(prisma.supportTicket.findMany).mockResolvedValue([]);
     vi.mocked(prisma.supportTicket.count).mockResolvedValue(0);
 
-    await supportService.listAllTickets({ priority: "HIGH" as any });
+    await supportService.listAllTickets({ page: 1, limit: 20, priority: "HIGH" as any });
 
     expect(prisma.supportTicket.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ priority: "HIGH" }) })
@@ -87,7 +86,7 @@ describe("supportService.listAllTickets", () => {
     vi.mocked(prisma.supportTicket.findMany).mockResolvedValue([]);
     vi.mocked(prisma.supportTicket.count).mockResolvedValue(0);
 
-    await supportService.listAllTickets({ search: "damaged" });
+    await supportService.listAllTickets({ page: 1, limit: 20, search: "damaged" });
 
     const call = vi.mocked(prisma.supportTicket.findMany).mock.calls[0][0] as any;
     expect(call.where.OR).toEqual([

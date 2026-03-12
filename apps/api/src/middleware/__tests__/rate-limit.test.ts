@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { request, cleanupTestData, makeRegisterPayload, isSupabaseConfigured } from "../../test/helpers";
+import { request, cleanupTestData, makeRegisterPayload } from "../../test/helpers";
 
 // Rate-limit integration tests are skipped in suite runs — they require real
 // rate limits (3/hour register) which conflict with other auth tests.

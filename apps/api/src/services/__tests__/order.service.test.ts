@@ -209,7 +209,6 @@ import { orderService } from "../order.service";
 // Fixed dates and constants
 // ---------------------------------------------------------------------------
 
-const FIXED_DATE = new Date("2026-01-01T00:00:00.000Z");
 const USER_ID = "user-001";
 const ORDER_NUMBER = "ORD-TEST-001";
 
@@ -351,7 +350,7 @@ function makePaymentRecord(overrides: Record<string, unknown> = {}) {
 // ---------------------------------------------------------------------------
 function restoreTxMock() {
   mockTransaction.mockImplementation(
-    async (cb: (tx: unknown) => unknown) => cb({
+    async (cb: (tx: any) => unknown) => cb({
       productVariant: {
         findUnique: mockTxProductVariantFindUnique,
         updateMany: mockTxProductVariantUpdateMany,
