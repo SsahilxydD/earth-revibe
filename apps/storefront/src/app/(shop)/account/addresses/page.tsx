@@ -1,117 +1,348 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Plus, Trash2 } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { MapPin, Plus, Pencil, Trash2, X, Star } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api-client";
-import { Button, Card } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
-import { AddressForm } from "@/components/checkout/address-form";
-import type { AddressInput } from "@earth-revibe/shared";
+import { useToast } from "@/providers";
+
+interface Address {
+  id: string;
+  fullName: string;
+  phone: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  isDefault: boolean;
+}
+
+interface AddressForm {
+  fullName: string;
+  phone: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  isDefault: boolean;
+}
+
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry",
+] as const;
 
 export default function AddressesPage() {
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const { data: addresses, isLoading } = useQuery({
     queryKey: ["addresses"],
-    queryFn: () => api.get("/addresses"),
+    queryFn: () => api.get<Address[]>("/addresses"),
   });
 
-  const addAddress = useMutation({
-    mutationFn: (data: AddressInput) => api.post("/addresses", data),
+  const createMutation = useMutation({
+    mutationFn: (data: AddressForm) => api.post("/addresses", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["addresses"] });
-      setShowForm(false);
-      toast.success("Address added");
+      closeForm();
+      addToast("Address added", "success");
     },
-    onError: (err: any) => toast.error(err.message || "Failed to add address"),
+    onError: (err: any) => {
+      addToast(err?.message || "Failed to add address", "error");
+    },
   });
 
-  const deleteAddress = useMutation({
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: AddressForm }) =>
+      api.put(`/addresses/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["addresses"] });
+      closeForm();
+      addToast("Address updated", "success");
+    },
+    onError: (err: any) => {
+      addToast(err?.message || "Failed to update address", "error");
+    },
+  });
+
+  const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/addresses/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["addresses"] });
-      toast.success("Address removed");
+      addToast("Address removed", "success");
     },
-    onError: (err: any) => toast.error(err.message || "Failed to remove address"),
+    onError: (err: any) => {
+      addToast(err?.message || "Failed to delete address", "error");
+    },
   });
 
+  const editingAddress = editingId
+    ? addresses?.find((a) => a.id === editingId)
+    : null;
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<AddressForm>({
+    values: editingAddress
+      ? {
+          fullName: editingAddress.fullName,
+          phone: editingAddress.phone,
+          line1: editingAddress.line1,
+          line2: editingAddress.line2 || "",
+          city: editingAddress.city,
+          state: editingAddress.state,
+          pinCode: editingAddress.pinCode,
+          isDefault: editingAddress.isDefault,
+        }
+      : {
+          fullName: "",
+          phone: "",
+          line1: "",
+          line2: "",
+          city: "",
+          state: "",
+          pinCode: "",
+          isDefault: false,
+        },
+  });
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    reset();
+  };
+
+  const openEdit = (id: string) => {
+    setEditingId(id);
+    setShowForm(true);
+  };
+
+  const onSubmit = (data: AddressForm) => {
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this address?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Spinner className="h-6 w-6" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-charcoal">Saved Addresses</h1>
-        <Button onClick={() => setShowForm(true)} size="sm">
-          <Plus size={16} />
-          Add Address
-        </Button>
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-sm font-bold uppercase tracking-wider">
+          Saved Addresses
+        </h2>
+        {!showForm && (
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditingId(null);
+              reset();
+              setShowForm(true);
+            }}
+          >
+            <Plus size={16} />
+            Add Address
+          </Button>
+        )}
       </div>
 
-      {isLoading ? (
-        <div className="space-y-4">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-36 w-full" />
-          ))}
-        </div>
-      ) : !addresses?.length ? (
-        <Card>
-          <div className="text-center py-12">
-            <MapPin size={48} className="mx-auto text-light-gray mb-4" />
-            <p className="text-medium-gray mb-4">No saved addresses yet</p>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus size={16} />
-              Add Your First Address
-            </Button>
+      {/* Address Form */}
+      {showForm && (
+        <div className="mb-6 rounded-xl border border-[var(--color-border)] p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wider">
+              {editingId ? "Edit Address" : "New Address"}
+            </h3>
+            <button
+              onClick={closeForm}
+              className="text-[var(--color-muted)] hover:text-[var(--color-text)]"
+              aria-label="Close form"
+            >
+              <X size={20} />
+            </button>
           </div>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {addresses.map((addr: any) => (
-            <Card key={addr.id} className="relative">
-              {addr.isDefault && (
-                <span className="absolute top-3 right-3 text-[10px] font-medium tracking-[0.06em] uppercase bg-black text-white px-2 py-0.5">
-                  Default
-                </span>
-              )}
-              <div className="flex items-start gap-3">
-                <MapPin size={16} className="text-medium-gray mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  {addr.label && (
-                    <p className="text-[11px] font-medium tracking-[0.08em] uppercase text-slate-500 mb-1">
-                      {addr.label}
-                    </p>
-                  )}
-                  <p className="text-sm font-medium text-charcoal">{addr.fullName}</p>
-                  <p className="text-sm text-medium-gray mt-0.5">{addr.line1}</p>
-                  {addr.line2 && <p className="text-sm text-medium-gray">{addr.line2}</p>}
-                  <p className="text-sm text-medium-gray">
-                    {addr.city}, {addr.state} – {addr.pinCode}
-                  </p>
-                  <p className="text-sm text-medium-gray mt-0.5">+91 {addr.phone}</p>
-                </div>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={() => deleteAddress.mutate(addr.id)}
-                  disabled={deleteAddress.isPending}
-                  className="flex items-center gap-1.5 text-[11px] tracking-[0.06em] uppercase text-slate-400 hover:text-red-500 transition-colors disabled:opacity-50"
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input
+                label="Full Name"
+                error={errors.fullName?.message}
+                {...register("fullName", {
+                  required: "Full name is required",
+                })}
+              />
+              <Input
+                label="Phone"
+                type="tel"
+                error={errors.phone?.message}
+                {...register("phone", {
+                  required: "Phone is required",
+                  pattern: {
+                    value: /^[6-9]\d{9}$/,
+                    message: "Enter a valid 10-digit number",
+                  },
+                })}
+              />
+            </div>
+            <Input
+              label="Address Line 1"
+              error={errors.line1?.message}
+              {...register("line1", {
+                required: "Address is required",
+              })}
+            />
+            <Input
+              label="Address Line 2 (Optional)"
+              {...register("line2")}
+            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Input
+                label="City"
+                error={errors.city?.message}
+                {...register("city", { required: "City is required" })}
+              />
+              <div className="w-full">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                  State
+                </label>
+                <select
+                  className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
+                  {...register("state", { required: "State is required" })}
                 >
-                  <Trash2 size={13} />
-                  Remove
-                </button>
+                  <option value="">Select state</option>
+                  {INDIAN_STATES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+                {errors.state && (
+                  <p className="mt-1 text-xs text-[var(--color-sale)]">
+                    {errors.state.message}
+                  </p>
+                )}
               </div>
-            </Card>
-          ))}
+              <Input
+                label="Pin Code"
+                error={errors.pinCode?.message}
+                {...register("pinCode", {
+                  required: "Pin code is required",
+                  pattern: {
+                    value: /^\d{6}$/,
+                    message: "Enter a valid 6-digit pin code",
+                  },
+                })}
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[var(--color-primary)]"
+                {...register("isDefault")}
+              />
+              <span className="text-[var(--color-muted)]">
+                Set as default address
+              </span>
+            </label>
+            <div className="flex gap-3">
+              <Button
+                type="submit"
+                loading={createMutation.isPending || updateMutation.isPending}
+              >
+                {editingId ? "Update Address" : "Save Address"}
+              </Button>
+              <Button type="button" variant="ghost" onClick={closeForm}>
+                Cancel
+              </Button>
+            </div>
+          </form>
         </div>
       )}
 
-      <AddressForm
-        isOpen={showForm}
-        onClose={() => setShowForm(false)}
-        onSubmit={async (data) => addAddress.mutate(data)}
-        isSubmitting={addAddress.isPending}
-      />
+      {/* Address Cards */}
+      {(!addresses || addresses.length === 0) && !showForm ? (
+        <div className="flex min-h-[30vh] flex-col items-center justify-center text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface)]">
+            <MapPin size={28} className="text-[var(--color-muted)]" />
+          </div>
+          <h3 className="mb-2 text-lg font-bold">No Saved Addresses</h3>
+          <p className="mb-4 text-sm text-[var(--color-muted)]">
+            Add an address to speed up checkout.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {addresses?.map((address) => (
+            <div
+              key={address.id}
+              className="relative rounded-xl border border-[var(--color-border)] p-5"
+            >
+              {address.isDefault && (
+                <div className="mb-2 flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)]">
+                  <Star size={12} className="fill-current" />
+                  Default Address
+                </div>
+              )}
+              <p className="text-sm font-bold">{address.fullName}</p>
+              <div className="mt-1 space-y-0.5 text-sm text-[var(--color-muted)]">
+                <p>{address.line1}</p>
+                {address.line2 && <p>{address.line2}</p>}
+                <p>
+                  {address.city}, {address.state} {address.pinCode}
+                </p>
+                <p>Phone: {address.phone}</p>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => openEdit(address.id)}
+                  className="flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline"
+                >
+                  <Pencil size={12} />
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(address.id)}
+                  className="flex items-center gap-1 text-xs font-semibold text-[var(--color-sale)] hover:underline"
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 size={12} />
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

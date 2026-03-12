@@ -1,40 +1,43 @@
+"use client";
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { api } from "@/lib/api-client";
 
-interface CartItem {
-  variantId: string;
-  productName: string;
-  productSlug: string;
-  productImage?: string;
+export interface CartItem {
+  id: string;
+  productId: string;
+  name: string;
+  slug: string;
+  image: string;
+  price: number;
+  compareAtPrice?: number;
   size: string;
   color: string;
-  price: number;
   quantity: number;
-  stock?: number;
+  maxQuantity: number;
 }
 
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
-  discountCode: string | null;
+  discountCode: string;
   discountAmount: number;
-  discountError: string | null;
-  isApplyingDiscount: boolean;
 
-  addItem: (item: CartItem) => void;
-  removeItem: (variantId: string) => void;
-  updateQuantity: (variantId: string, quantity: number) => void;
-  clearCart: () => void;
+  openCart: () => void;
+  closeCart: () => void;
   toggleCart: () => void;
-  setCartOpen: (open: boolean) => void;
+
+  addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
+
+  applyDiscount: (code: string, amount: number) => void;
+  removeDiscount: () => void;
 
   getItemCount: () => number;
   getSubtotal: () => number;
   getTotal: () => number;
-
-  applyDiscount: (code: string) => Promise<void>;
-  removeDiscount: () => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -42,75 +45,88 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
-      discountCode: null,
+      discountCode: "",
       discountAmount: 0,
-      discountError: null,
-      isApplyingDiscount: false,
 
-      addItem: (item) =>
-        set((state) => {
-          const existing = state.items.find((i) => i.variantId === item.variantId);
-          if (existing) {
-            const maxQty = item.stock ?? existing.stock ?? 999;
-            const newQty = Math.min(existing.quantity + item.quantity, maxQty);
-            return {
-              items: state.items.map((i) =>
-                i.variantId === item.variantId
-                  ? { ...i, quantity: newQty, stock: item.stock ?? i.stock }
-                  : i
-              ),
-            };
-          }
-          const maxQty = item.stock ?? 999;
-          return { items: [...state.items, { ...item, quantity: Math.min(item.quantity, maxQty) }] };
-        }),
-
-      removeItem: (variantId) =>
-        set((state) => ({
-          items: state.items.filter((i) => i.variantId !== variantId),
-        })),
-
-      updateQuantity: (variantId, quantity) =>
-        set((state) => ({
-          items: quantity <= 0
-            ? state.items.filter((i) => i.variantId !== variantId)
-            : state.items.map((i) => {
-                if (i.variantId !== variantId) return i;
-                const maxQty = i.stock ?? 999;
-                return { ...i, quantity: Math.min(quantity, maxQty) };
-              }),
-        })),
-
-      clearCart: () => set({ items: [], discountCode: null, discountAmount: 0 }),
+      openCart: () => set({ isOpen: true }),
+      closeCart: () => set({ isOpen: false }),
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
-      setCartOpen: (open) => set({ isOpen: open }),
 
-      getItemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
-      getSubtotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
-      getTotal: () => Math.max(0, get().getSubtotal() - get().discountAmount),
+      addItem: (item) => {
+        const { items } = get();
+        const existingIndex = items.findIndex(
+          (i) =>
+            i.productId === item.productId &&
+            i.size === item.size &&
+            i.color === item.color
+        );
 
-      applyDiscount: async (code: string) => {
-        set({ isApplyingDiscount: true, discountError: null });
-        try {
-          const subtotal = get().getSubtotal();
-          const res = await api.post("/discounts/validate", { code, orderValue: subtotal });
-          set({
-            discountCode: code,
-            discountAmount: res.data.discountAmount,
-          });
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : "Invalid discount code";
-          set({ discountError: message, discountCode: null, discountAmount: 0 });
-        } finally {
-          set({ isApplyingDiscount: false });
+        if (existingIndex > -1) {
+          const existing = items[existingIndex];
+          const newQuantity = Math.min(
+            existing.quantity + (item.quantity || 1),
+            existing.maxQuantity
+          );
+          const updatedItems = items.map((i, idx) =>
+            idx === existingIndex ? { ...i, quantity: newQuantity } : i
+          );
+          set({ items: updatedItems, isOpen: true });
+        } else {
+          const newItem: CartItem = {
+            ...item,
+            quantity: item.quantity || 1,
+          };
+          set({ items: [...items, newItem], isOpen: true });
         }
       },
 
-      removeDiscount: () => set({ discountCode: null, discountAmount: 0, discountError: null }),
+      removeItem: (id) => {
+        set((state) => ({
+          items: state.items.filter((i) => i.id !== id),
+        }));
+      },
+
+      updateQuantity: (id, quantity) => {
+        if (quantity < 1) return;
+        set((state) => ({
+          items: state.items.map((i) =>
+            i.id === id
+              ? { ...i, quantity: Math.min(quantity, i.maxQuantity) }
+              : i
+          ),
+        }));
+      },
+
+      clearCart: () => set({ items: [], discountCode: "", discountAmount: 0 }),
+
+      applyDiscount: (code, amount) =>
+        set({ discountCode: code, discountAmount: amount }),
+
+      removeDiscount: () => set({ discountCode: "", discountAmount: 0 }),
+
+      getItemCount: () => {
+        return get().items.reduce((sum, i) => sum + i.quantity, 0);
+      },
+
+      getSubtotal: () => {
+        return get().items.reduce(
+          (sum, i) => sum + i.price * i.quantity,
+          0
+        );
+      },
+
+      getTotal: () => {
+        const subtotal = get().getSubtotal();
+        return Math.max(0, subtotal - get().discountAmount);
+      },
     }),
     {
       name: "earth-revibe-cart",
-      partialize: (state) => ({ items: state.items }),
+      partialize: (state) => ({
+        items: state.items,
+        discountCode: state.discountCode,
+        discountAmount: state.discountAmount,
+      }),
     }
   )
 );

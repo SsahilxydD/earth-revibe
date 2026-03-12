@@ -2,79 +2,103 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Home, Search, Heart, ShoppingBag } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart-store";
+import { useUiStore } from "@/stores/ui-store";
 
-function HomeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-      <path d="M9 21V12h6v9" />
-    </svg>
-  );
-}
-
-function ShopIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7" />
-      <rect x="14" y="3" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" />
-    </svg>
-  );
-}
-
-function CartIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-    </svg>
-  );
-}
-
-function AccountIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-    </svg>
-  );
-}
-
-const tabs = [
-  { name: "Home", href: "/", Icon: HomeIcon },
-  { name: "Shop", href: "/products", Icon: ShopIcon },
-  { name: "Cart", href: "/cart", Icon: CartIcon, showBadge: true },
-  { name: "Account", href: "/account/profile", Icon: AccountIcon },
-];
+const NAV_ITEMS = [
+  { label: "Home", href: "/", icon: Home },
+  { label: "Search", href: "#search", icon: Search },
+  { label: "Wishlist", href: "/wishlist", icon: Heart },
+  { label: "Cart", href: "#cart", icon: ShoppingBag },
+] as const;
 
 export function MobileBottomBar() {
   const pathname = usePathname();
-  const cartItemCount = useCartStore((s) => s.getItemCount());
+  const itemCount = useCartStore((s) => s.getItemCount());
+  const openCart = useCartStore((s) => s.openCart);
+  const { openSearch } = useUiStore();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 lg:hidden pb-[env(safe-area-inset-bottom)]">
-      <div className="flex items-center justify-around h-16">
-        {tabs.map((tab) => {
-          const isActive = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-white md:hidden">
+      <nav className="flex items-center justify-around px-2 py-2">
+        {NAV_ITEMS.map((item) => {
+          const isActive = item.href === pathname;
+          const Icon = item.icon;
+
+          if (item.href === "#search") {
+            return (
+              <button
+                key={item.label}
+                onClick={openSearch}
+                className="flex flex-col items-center gap-0.5 px-3 py-1"
+                aria-label={item.label}
+              >
+                <Icon className="h-5 w-5 text-[var(--color-muted)]" />
+                <span className="text-[10px] text-[var(--color-muted)]">
+                  {item.label}
+                </span>
+              </button>
+            );
+          }
+
+          if (item.href === "#cart") {
+            return (
+              <button
+                key={item.label}
+                onClick={openCart}
+                className="relative flex flex-col items-center gap-0.5 px-3 py-1"
+                aria-label={item.label}
+              >
+                <Icon className="h-5 w-5 text-[var(--color-muted)]" />
+                {itemCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-primary)] text-[9px] font-bold text-white">
+                    {itemCount > 99 ? "99+" : itemCount}
+                  </span>
+                )}
+                <span className="text-[10px] text-[var(--color-muted)]">
+                  {item.label}
+                </span>
+              </button>
+            );
+          }
+
           return (
             <Link
-              key={tab.name}
-              href={tab.href}
-              className={`flex flex-col items-center gap-1 px-3 py-2 min-h-[44px] justify-center relative ${
-                isActive ? "text-black" : "text-slate-400"
-              }`}
+              key={item.label}
+              href={item.href}
+              className="flex flex-col items-center gap-0.5 px-3 py-1"
+              aria-label={item.label}
             >
-              <tab.Icon />
-              {tab.showBadge && cartItemCount > 0 && (
-                <span className="absolute -top-0.5 right-0 bg-black text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                  {cartItemCount > 9 ? "9+" : cartItemCount}
-                </span>
+              <Icon
+                className={cn(
+                  "h-5 w-5",
+                  isActive
+                    ? "text-[var(--color-primary)]"
+                    : "text-[var(--color-muted)]"
+                )}
+              />
+              <span
+                className={cn(
+                  "text-[10px]",
+                  isActive
+                    ? "font-semibold text-[var(--color-primary)]"
+                    : "text-[var(--color-muted)]"
+                )}
+              >
+                {item.label}
+              </span>
+              {isActive && (
+                <span className="absolute -bottom-0.5 h-0.5 w-5 rounded-full bg-[var(--color-primary)]" />
               )}
-              <span className="text-[10px] font-medium">{tab.name}</span>
             </Link>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+
+      {/* Safe area spacer for iOS */}
+      <div className="h-[env(safe-area-inset-bottom)]" />
+    </div>
   );
 }

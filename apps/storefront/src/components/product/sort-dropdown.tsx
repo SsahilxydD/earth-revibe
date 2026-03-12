@@ -1,32 +1,39 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const SORT_OPTIONS = [
-  { label: "Newest", value: "createdAt-desc" },
-  { label: "Price: Low to High", value: "price-asc" },
-  { label: "Price: High to Low", value: "price-desc" },
-  { label: "Name: A-Z", value: "name-asc" },
-] as const;
-
-interface SortDropdownProps {
-  value: string;
-  onChange: (value: string) => void;
+interface SortOption {
+  label: string;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
 }
 
-export function SortDropdown({ value, onChange }: SortDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+const SORT_OPTIONS: SortOption[] = [
+  { label: "Newest", sortBy: "createdAt", sortOrder: "desc" },
+  { label: "Price: Low to High", sortBy: "price", sortOrder: "asc" },
+  { label: "Price: High to Low", sortBy: "price", sortOrder: "desc" },
+  { label: "Most Popular", sortBy: "reviewCount", sortOrder: "desc" },
+];
 
-  const selectedLabel =
-    SORT_OPTIONS.find((opt) => opt.value === value)?.label || "Newest";
+interface SortDropdownProps {
+  currentSort: string;
+  onSortChange: (sortBy: string, sortOrder: "asc" | "desc") => void;
+}
+
+export function SortDropdown({ currentSort, onSortChange }: SortDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const selectedOption =
+    SORT_OPTIONS.find(
+      (opt) => `${opt.sortBy}-${opt.sortOrder}` === currentSort
+    ) || SORT_OPTIONS[0];
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     }
@@ -35,42 +42,42 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
   }, []);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div ref={ref} className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 text-[11px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase bg-white hover:border-black transition-colors"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="flex items-center gap-1.5 border border-[var(--color-border)] px-3 py-2 text-sm font-medium transition-colors hover:border-[var(--color-text)]"
       >
-        <span className="text-slate-400">Sort:</span>
-        <span className="text-black">{selectedLabel}</span>
-        <svg
-          className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        <span>Sort: {selectedOption.label}</span>
+        <ChevronDown
+          size={14}
+          className={cn(
+            "transition-transform",
+            isOpen && "rotate-180"
+          )}
+        />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 shadow-lg z-20 py-1">
-          {SORT_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => {
-                onChange(option.value);
-                setIsOpen(false);
-              }}
-              className={`w-full text-left px-4 py-2.5 text-[11px] tracking-[0.04em] hover:bg-slate-50 transition-colors ${
-                value === option.value
-                  ? "text-black font-medium bg-slate-50"
-                  : "text-slate-600"
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
+        <div className="animate-slide-down absolute right-0 top-full z-30 mt-1 min-w-[200px] border border-[var(--color-border)] bg-white shadow-lg">
+          {SORT_OPTIONS.map((option) => {
+            const value = `${option.sortBy}-${option.sortOrder}`;
+            const isSelected = value === `${selectedOption.sortBy}-${selectedOption.sortOrder}`;
+            return (
+              <button
+                key={value}
+                onClick={() => {
+                  onSortChange(option.sortBy, option.sortOrder);
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  "block w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-[var(--color-surface)]",
+                  isSelected && "font-semibold"
+                )}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

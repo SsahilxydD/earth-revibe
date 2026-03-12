@@ -1,57 +1,108 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { forgotPasswordSchema, type ForgotPasswordInput } from "@earth-revibe/shared";
-import { Button, Input } from "@/components/ui";
+import Link from "next/link";
+import { ArrowLeft, Mail } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api-client";
 
-export default function ForgotPasswordPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+interface ForgotPasswordForm {
+  email: string;
+}
 
-  const { register, handleSubmit, formState: { errors } } = useForm<ForgotPasswordInput>({
-    resolver: zodResolver(forgotPasswordSchema),
+export default function ForgotPasswordPage() {
+  const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ForgotPasswordForm>({
+    defaultValues: { email: "" },
   });
 
-  const onSubmit = async (data: ForgotPasswordInput) => {
-    setIsLoading(true);
+  const onSubmit = async (data: ForgotPasswordForm) => {
+    setServerError("");
     try {
       await api.post("/auth/forgot-password", data);
-      setSent(true);
-    } catch {
-      // Still show success (don't reveal if email exists)
-      setSent(true);
-    } finally {
-      setIsLoading(false);
+      setSubmitted(true);
+    } catch (err: any) {
+      setServerError(err?.message || "Something went wrong");
     }
   };
 
-  if (sent) {
+  if (submitted) {
     return (
       <div className="text-center">
-        <h1 className="text-2xl font-heading font-semibold text-deep-earth mb-2">Check Your Email</h1>
-        <p className="text-sm text-medium-gray mb-6">If an account exists with that email, we&apos;ve sent a password reset link.</p>
-        <Link href="/auth/login" className="text-sm text-forest-green font-medium hover:underline">Back to Login</Link>
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-surface)]">
+          <Mail size={24} className="text-[var(--color-primary)]" />
+        </div>
+        <h1 className="mb-2 text-xl font-bold uppercase tracking-wider">
+          Check Your Email
+        </h1>
+        <p className="mb-6 text-sm text-[var(--color-muted)]">
+          If an account exists with that email, we&apos;ve sent password reset
+          instructions to your inbox.
+        </p>
+        <Link
+          href="/auth/login"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:underline"
+        >
+          <ArrowLeft size={16} />
+          Back to Login
+        </Link>
       </div>
     );
   }
 
   return (
-    <>
-      <h1 className="text-2xl font-heading font-semibold text-deep-earth text-center mb-2">Reset Password</h1>
-      <p className="text-sm text-medium-gray text-center mb-6">Enter your email to receive a reset link</p>
+    <div>
+      <h1 className="mb-2 text-center text-xl font-bold uppercase tracking-wider">
+        Forgot Password
+      </h1>
+      <p className="mb-6 text-center text-sm text-[var(--color-muted)]">
+        Enter your email and we&apos;ll send you a link to reset your password.
+      </p>
+
+      {serverError && (
+        <div className="mb-4 rounded-[var(--button-radius)] bg-red-50 px-4 py-3 text-sm text-[var(--color-sale)]">
+          {serverError}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input label="Email" type="email" placeholder="you@example.com" error={errors.email?.message} {...register("email")} />
-        <Button type="submit" isLoading={isLoading} className="w-full">Send Reset Link</Button>
+        <Input
+          label="Email"
+          type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+          error={errors.email?.message}
+          {...register("email", {
+            required: "Email is required",
+            pattern: {
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: "Invalid email address",
+            },
+          })}
+        />
+
+        <Button type="submit" fullWidth loading={isSubmitting} size="lg">
+          Send Reset Link
+        </Button>
       </form>
 
-      <p className="text-sm text-center text-medium-gray mt-6">
-        <Link href="/auth/login" className="text-forest-green font-medium hover:underline">Back to Login</Link>
+      <p className="mt-6 text-center">
+        <Link
+          href="/auth/login"
+          className="inline-flex items-center gap-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-text)]"
+        >
+          <ArrowLeft size={16} />
+          Back to Login
+        </Link>
       </p>
-    </>
+    </div>
   );
 }

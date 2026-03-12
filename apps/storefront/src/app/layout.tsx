@@ -1,60 +1,48 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Poppins, Playfair_Display, Cinzel } from "next/font/google";
-import { QueryProvider } from "@/providers/query-provider";
-import { AuthProvider } from "@/providers/auth-provider";
-import { ToastContainer } from "@/components/ui/toast";
+import { Archivo_Narrow, Poppins } from "next/font/google";
+import { Providers } from "@/providers";
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-serif",
+const archivoNarrow = Archivo_Narrow({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  variable: "--font-archivo",
   display: "swap",
-  preload: true,
+  weight: ["400", "500", "600", "700"],
 });
 
 const poppins = Poppins({
-  variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  variable: "--font-poppins",
   display: "swap",
-  preload: true,
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  display: "swap",
-  preload: true,
-});
-
-const cinzel = Cinzel({
-  variable: "--font-cinzel",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  display: "swap",
-  preload: true,
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: "Earth Revibe | Sustainable Fashion Essentials",
-    template: "%s | Earth Revibe",
-  },
+  title: "Earth Revibe | Streetwear for the Culture",
   description:
-    "Natural landscapes, minimal product shots, and authentic storytelling. Sustainable fashion essentials crafted with care.",
-  keywords: ["sustainable fashion", "earth tones", "natural clothing", "eco-friendly", "minimal fashion"],
-  icons: {
-    icon: [{ url: "/favicon.ico", sizes: "any" }],
-    apple: [{ url: "/Earth%20Revibe%20Logo%20Black.png", type: "image/png" }],
+    "Shop the freshest Indian streetwear. Oversized tees, hoodies, joggers and more. Free shipping on orders above Rs.999.",
+  keywords: [
+    "streetwear",
+    "Indian streetwear",
+    "oversized tees",
+    "hoodies",
+    "earth revibe",
+  ],
+  openGraph: {
+    title: "Earth Revibe | Streetwear for the Culture",
+    description:
+      "Shop the freshest Indian streetwear. Oversized tees, hoodies, joggers and more.",
+    type: "website",
+    locale: "en_IN",
+    siteName: "Earth Revibe",
   },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover",
+  maximumScale: 5,
+  themeColor: "#121212",
 };
 
 export default function RootLayout({
@@ -63,14 +51,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${poppins.variable} ${playfair.variable} ${cinzel.variable}`}>
-      <body className="font-[var(--font-sans)] antialiased bg-[var(--background)]">
-        <QueryProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-          <ToastContainer />
-        </QueryProvider>
+    <html
+      lang="en"
+      className={`${archivoNarrow.variable} ${poppins.variable}`}
+    >
+      <body>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

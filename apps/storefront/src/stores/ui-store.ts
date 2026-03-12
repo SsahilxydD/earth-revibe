@@ -1,31 +1,39 @@
+"use client";
+
 import { create } from "zustand";
 
-interface UIState {
+interface UiState {
   isMobileMenuOpen: boolean;
   isSearchOpen: boolean;
-  isFilterDrawerOpen: boolean;
-  isHeaderTransparent: boolean;
+  announcementDismissed: boolean;
 
+  openMobileMenu: () => void;
+  closeMobileMenu: () => void;
   toggleMobileMenu: () => void;
-  setMobileMenuOpen: (open: boolean) => void;
+
+  openSearch: () => void;
+  closeSearch: () => void;
   toggleSearch: () => void;
-  setSearchOpen: (open: boolean) => void;
-  toggleFilterDrawer: () => void;
-  setFilterDrawerOpen: (open: boolean) => void;
-  setHeaderTransparent: (transparent: boolean) => void;
+
+  dismissAnnouncement: () => void;
+  resetAnnouncement: () => void;
 }
 
-export const useUIStore = create<UIState>((set) => ({
+export const useUiStore = create<UiState>()((set) => ({
   isMobileMenuOpen: false,
   isSearchOpen: false,
-  isFilterDrawerOpen: false,
-  isHeaderTransparent: false,
+  announcementDismissed: false,
 
-  toggleMobileMenu: () => set((s) => ({ isMobileMenuOpen: !s.isMobileMenuOpen })),
-  setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
-  toggleSearch: () => set((s) => ({ isSearchOpen: !s.isSearchOpen })),
-  setSearchOpen: (open) => set({ isSearchOpen: open }),
-  toggleFilterDrawer: () => set((s) => ({ isFilterDrawerOpen: !s.isFilterDrawerOpen })),
-  setFilterDrawerOpen: (open) => set({ isFilterDrawerOpen: open }),
-  setHeaderTransparent: (transparent) => set({ isHeaderTransparent: transparent }),
+  openMobileMenu: () => set({ isMobileMenuOpen: true }),
+  closeMobileMenu: () => set({ isMobileMenuOpen: false }),
+  toggleMobileMenu: () =>
+    set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
+
+  openSearch: () => set({ isSearchOpen: true }),
+  closeSearch: () => set({ isSearchOpen: false }),
+  toggleSearch: () =>
+    set((state) => ({ isSearchOpen: !state.isSearchOpen })),
+
+  dismissAnnouncement: () => set({ announcementDismissed: true }),
+  resetAnnouncement: () => set({ announcementDismissed: false }),
 }));

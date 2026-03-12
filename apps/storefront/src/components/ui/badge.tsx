@@ -1,22 +1,29 @@
-"use client";
+import { cn } from "@/lib/utils";
+
+type BadgeVariant = "sale" | "soldOut" | "new" | "default";
 
 interface BadgeProps {
-  variant?: "default" | "success" | "warning" | "error" | "info";
+  variant?: BadgeVariant;
   children: React.ReactNode;
   className?: string;
 }
 
-const variantStyles = {
-  default: "bg-light-gray text-dark-gray",
-  success: "bg-success/10 text-success",
-  warning: "bg-warning/10 text-warning",
-  error: "bg-error/10 text-error",
-  info: "bg-info/10 text-info",
+const variantStyles: Record<BadgeVariant, string> = {
+  sale: "bg-[var(--color-sale)] text-white",
+  soldOut: "bg-[var(--color-sold-out)] text-white",
+  new: "bg-[var(--color-primary)] text-white",
+  default: "bg-[var(--color-surface)] text-[var(--color-text)]",
 };
 
-export function Badge({ variant = "default", children, className = "" }: BadgeProps) {
+export function Badge({ variant = "default", children, className }: BadgeProps) {
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-semibold ${variantStyles[variant]} ${className}`}>
+    <span
+      className={cn(
+        "inline-block rounded-[var(--badge-radius)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+        variantStyles[variant],
+        className
+      )}
+    >
       {children}
     </span>
   );

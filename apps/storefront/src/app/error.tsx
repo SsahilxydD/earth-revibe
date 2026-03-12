@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
-export default function RootError({
+export default function Error({
   error,
   reset,
 }: {
@@ -10,43 +10,57 @@ export default function RootError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Root error boundary caught:', error);
+    console.error("Application error:", error);
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-6">
-      <div className="max-w-md w-full text-center">
-        <div className="w-16 h-16 mx-auto mb-8 border border-slate-200 rounded-full flex items-center justify-center">
-          <svg
-            className="w-7 h-7 text-slate-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-            />
-          </svg>
-        </div>
-
-        <h1 className="text-[20px] font-[var(--font-cinzel)] font-medium tracking-[0.04em] text-black mb-3">
-          Something Went Wrong
-        </h1>
-        <p className="text-[13px] text-slate-500 leading-relaxed mb-8">
-          We encountered an unexpected error. Please try again, and if the
-          problem persists, contact us at hello@earthrevibe.com.
-        </p>
-
-        <button
-          onClick={reset}
-          className="h-11 px-8 bg-black text-white text-[11px] font-medium tracking-[0.1em] uppercase rounded-full hover:bg-black/85 transition-colors"
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-sale)]/10">
+        <svg
+          className="h-8 w-8 text-[var(--color-sale)]"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          Try Again
-        </button>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+          />
+        </svg>
       </div>
+
+      <h1 className="mt-6 text-2xl font-bold uppercase tracking-wider">
+        Something Went Wrong
+      </h1>
+      <p className="mt-3 max-w-md text-sm text-[var(--color-muted)]">
+        An unexpected error occurred. Please try again or contact support if
+        the problem persists.
+      </p>
+
+      {process.env.NODE_ENV === "development" && (
+        <div className="mt-4 max-w-lg rounded-[var(--button-radius)] bg-[var(--color-surface)] p-4 text-left">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Error Details (dev only)
+          </p>
+          <p className="mt-1 break-all text-xs text-[var(--color-sale)]">
+            {error.message}
+          </p>
+          {error.digest && (
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
+              Digest: {error.digest}
+            </p>
+          )}
+        </div>
+      )}
+
+      <button
+        onClick={reset}
+        className="mt-8 inline-flex items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#2a2a2a]"
+      >
+        Try Again
+      </button>
     </div>
   );
 }

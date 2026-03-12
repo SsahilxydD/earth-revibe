@@ -1,181 +1,224 @@
 "use client";
 
-import { useSearchParams, useRouter, useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import { ProductGrid } from "@/components/product/product-grid";
-import { FilterSidebar } from "@/components/product/filter-sidebar";
+import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import { ProductCard } from "@/components/product/product-card";
+import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
+import { FilterSidebar, type FilterState } from "@/components/product/filter-sidebar";
 import { SortDropdown } from "@/components/product/sort-dropdown";
-import { Pagination } from "@/components/product/pagination";
-import { useUIStore } from "@/stores/ui-store";
-import { Suspense } from "react";
+import { useInfiniteProducts, useCategories } from "@/hooks/use-products";
+
+function parseSort(sort: string | null): { sortBy: string; sortOrder: "asc" | "desc" } {
+  switch (sort) {
+    case "price-asc":
+      return { sortBy: "price", sortOrder: "asc" };
+    case "price-desc":
+      return { sortBy: "price", sortOrder: "desc" };
+    case "popular":
+      return { sortBy: "reviewCount", sortOrder: "desc" };
+    default:
+      return { sortBy: "createdAt", sortOrder: "desc" };
+  }
+}
+
+function sortToParam(sortBy: string, sortOrder: "asc" | "desc"): string {
+  if (sortBy === "price" && sortOrder === "asc") return "price-asc";
+  if (sortBy === "price" && sortOrder === "desc") return "price-desc";
+  if (sortBy === "reviewCount") return "popular";
+  return "newest";
+}
 
 function CategoryContent() {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { setFilterDrawerOpen } = useUIStore();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const slug = params.slug as string;
 
-  const params = {
-    page: searchParams.get("page") || "1",
-    limit: "20",
-    sortBy: searchParams.get("sortBy") || "createdAt",
-    sortOrder: searchParams.get("sortOrder") || "desc",
-    size: searchParams.get("size") || undefined,
-    color: searchParams.get("color") || undefined,
-    minPrice: searchParams.get("minPrice") || undefined,
-    maxPrice: searchParams.get("maxPrice") || undefined,
-    material: searchParams.get("material") || undefined,
-  };
+  const { data: categories } = useCategories();
+  const currentCategory = categories?.find((c) => c.slug === slug);
 
-  const productQueryString = Object.entries({ ...params, category: slug })
-    .filter(([_, v]) => v !== undefined)
-    .map(([k, v]) => `${k}=${encodeURIComponent(v!)}`)
-    .join("&");
+  const sort = searchParams.get("sort");
+  const minPriceRaw = searchParams.get("minPrice");
+  const maxPriceRaw = searchParams.get("maxPrice");
+  const size = searchParams.get("size") || "";
+  const color = searchParams.get("color") || "";
 
-  const { data: categoryData, isLoading: categoryLoading, isError: categoryError } = useQuery({
-    queryKey: ["category", slug],
-    queryFn: () => api.get(`/categories/${slug}`),
-    retry: false,
-  });
+  const { sortBy, sortOrder } = parseSort(sort);
+  const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
+  const maxPrice = maxPriceRaw ? Number(maxPriceRaw) : undefined;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["products", "category", slug, productQueryString],
-    queryFn: () => api.get(`/products?${productQueryString}`),
-  });
+  const queryParams = useMemo(
+    () => ({
+      category: slug,
+      sortBy,
+      sortOrder,
+      minPrice,
+      maxPrice,
+      sizes: size ? [size] : undefined,
+      colors: color ? [color] : undefined,
+      limit: 12,
+    }),
+    [slug, sortBy, sortOrder, minPrice, maxPrice, size, color]
+  );
 
-  const updateParams = (updates: Record<string, string | undefined>) => {
-    const current = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value) current.set(key, value);
-      else current.delete(key);
-    });
-    if (!("page" in updates)) {
-      current.set("page", "1");
-    }
-    router.push(`/categories/${slug}?${current.toString()}`);
-  };
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+  } = useInfiniteProducts(queryParams);
 
-  const categoryName = categoryData?.name || slug;
-
-  if (categoryError) {
-    return (
-      <div className="bg-white min-h-screen">
-        <div className="h-16 lg:h-20" aria-hidden="true" />
-        <div className="flex flex-col items-center justify-center py-32 px-6">
-          <p className="text-[13px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase text-slate-800 mb-2">
-            Category not found
-          </p>
-          <p className="text-[12px] text-slate-500 text-center mb-6">
-            The category you&apos;re looking for doesn&apos;t exist or has been removed.
-          </p>
-          <a
-            href="/categories"
-            className="text-[11px] font-[var(--font-cinzel)] tracking-[0.1em] uppercase border border-black px-6 py-2.5 hover:bg-black hover:text-white transition-colors"
-          >
-            Browse Collections
-          </a>
-        </div>
-      </div>
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" }
     );
-  }
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const updateParams = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      const p = new URLSearchParams(searchParams.toString());
+      for (const [key, value] of Object.entries(updates)) {
+        if (value) {
+          p.set(key, value);
+        } else {
+          p.delete(key);
+        }
+      }
+      const qs = p.toString();
+      router.push(`/categories/${slug}${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [searchParams, router, slug]
+  );
+
+  const handleFilterChange = useCallback(
+    (filters: FilterState) => {
+      updateParams({
+        minPrice: filters.minPrice !== undefined ? String(filters.minPrice) : undefined,
+        maxPrice: filters.maxPrice !== undefined ? String(filters.maxPrice) : undefined,
+        size: filters.size || undefined,
+        color: filters.color || undefined,
+      });
+    },
+    [updateParams]
+  );
+
+  const handleSortChange = useCallback(
+    (newSortBy: string, newSortOrder: "asc" | "desc") => {
+      updateParams({ sort: sortToParam(newSortBy, newSortOrder) });
+    },
+    [updateParams]
+  );
+
+  const allProducts = useMemo(
+    () => data?.pages.flatMap((page) => page.products ?? []) ?? [],
+    [data]
+  );
+
+  const totalCount = data?.pages[0]?.pagination.total ?? 0;
+  const categoryName = currentCategory?.name || slug.replace(/-/g, " ");
+
+  const currentFilters: FilterState = {
+    category: slug,
+    minPrice,
+    maxPrice,
+    size,
+    color,
+  };
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* Spacer for fixed navbar */}
-      <div className="h-16 lg:h-20" aria-hidden="true" />
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <nav className="mb-4 flex items-center gap-1 text-xs text-[var(--color-muted)]">
+        <Link href="/" className="transition-colors hover:text-[var(--color-text)]">
+          Home
+        </Link>
+        <ChevronRight size={12} />
+        <Link href="/products" className="transition-colors hover:text-[var(--color-text)]">
+          Products
+        </Link>
+        <ChevronRight size={12} />
+        <span className="capitalize text-[var(--color-text)]">{categoryName}</span>
+      </nav>
 
-      {/* Hero / Banner — full-width, no horizontal padding */}
-      <div className="relative h-48 md:h-64 w-full bg-gradient-to-br from-[#2c2c2c] via-[#3a3028] to-[#1a1a1a] flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/30" />
-        <h1 className="relative z-10 text-4xl md:text-6xl font-[var(--font-cinzel)] tracking-[0.25em] uppercase text-white text-center px-4">
-          {categoryLoading ? (
-            <span className="inline-block h-10 w-64 bg-white/10 animate-pulse rounded" />
-          ) : (
-            categoryName
+      {/* Header */}
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-xl font-bold uppercase tracking-wider md:text-2xl">
+            {categoryName}
+          </h1>
+          {!isLoading && (
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
+              {totalCount} {totalCount === 1 ? "product" : "products"}
+            </p>
           )}
-        </h1>
-      </div>
-
-      {/* "Discover …" subtitle */}
-      <p className="text-center text-[10px] tracking-[0.2em] uppercase font-[var(--font-cinzel)] text-slate-400 py-4 border-b border-slate-100">
-        Discover {categoryLoading ? slug : categoryName}
-      </p>
-
-      {/* Sort / Filter bar */}
-      <div className="flex items-center justify-between border-b border-slate-100 py-3 px-4 md:px-10">
-        <p className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-400">
-          {data?.total > 0 ? `${data.total} ${data.total === 1 ? 'product' : 'products'}` : '\u00A0'}
-        </p>
-        <div className="flex items-center gap-2">
-          <button
-            className="lg:hidden flex items-center gap-1.5 px-3 py-2 min-h-[44px] border border-slate-200 text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase hover:border-black transition-colors"
-            onClick={() => setFilterDrawerOpen(true)}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            Filters
-          </button>
+        </div>
+        <div className="flex items-center gap-3">
+          <FilterSidebar filters={currentFilters} onFilterChange={handleFilterChange} />
           <SortDropdown
-            value={`${params.sortBy}-${params.sortOrder}`}
-            onChange={(val) => {
-              const [sortBy, sortOrder] = val.split("-");
-              updateParams({ sortBy, sortOrder });
-            }}
+            currentSort={`${sortBy}-${sortOrder}`}
+            onSortChange={handleSortChange}
           />
         </div>
       </div>
 
-      <div className="px-3 sm:px-4 md:px-10 max-w-7xl mx-auto py-6 pb-24 lg:pb-6">
-        {/* Mobile filter drawer — fixed overlay, outside flex flow */}
-        <div className="lg:hidden">
-          <FilterSidebar
-            onFilterChange={updateParams}
-            currentFilters={params}
-          />
-        </div>
+      {/* Content */}
+      <div className="flex gap-8">
+        <FilterSidebar filters={currentFilters} onFilterChange={handleFilterChange} />
 
-        <div className="flex lg:gap-10">
-          {/* Desktop filter sidebar */}
-          <div className="hidden lg:block w-56 shrink-0">
-            <FilterSidebar
-              onFilterChange={updateParams}
-              currentFilters={params}
-            />
-          </div>
-
-          {/* Products */}
-          <div className="flex-1">
-            {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1.5 gap-y-5 sm:gap-x-3 sm:gap-y-6 md:gap-x-4 md:gap-y-8">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <div className="aspect-[3/4] w-full bg-slate-100 animate-pulse" />
-                    <div className="px-1">
-                      <div className="h-3 w-3/4 bg-slate-100 animate-pulse" />
-                      <div className="h-3 w-1/3 bg-slate-100 animate-pulse mt-2" />
-                    </div>
-                  </div>
+        <div className="flex-1">
+          {isLoading ? (
+            <ProductGridSkeleton />
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <h3 className="text-lg font-semibold">Something went wrong</h3>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                Could not load products. Please try again.
+              </p>
+            </div>
+          ) : allProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-4 text-5xl">:/</div>
+              <h3 className="text-lg font-semibold">No products found</h3>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                No products in this category yet.
+              </p>
+              <Link
+                href="/products"
+                className="mt-4 border border-[var(--color-primary)] px-6 py-2 text-sm font-semibold transition-colors hover:bg-[var(--color-surface)]"
+              >
+                Browse All Products
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-1 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+                {allProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
-            ) : (
-              <>
-                <ProductGrid products={data?.products || []} />
-                {data?.totalPages > 1 && (
-                  <div className="mt-16 mb-8">
-                    <Pagination
-                      currentPage={data.page}
-                      totalPages={data.totalPages}
-                      onPageChange={(page) =>
-                        updateParams({ page: String(page) })
-                      }
-                    />
+              <div ref={loadMoreRef} className="flex justify-center py-8">
+                {isFetchingNextPage && (
+                  <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-primary)]" />
+                    Loading more...
                   </div>
                 )}
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -184,26 +227,7 @@ function CategoryContent() {
 
 export default function CategoryPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="bg-white min-h-screen">
-          <div className="h-16 lg:h-20" aria-hidden="true" />
-          <div className="px-3 sm:px-4 md:px-10 max-w-7xl mx-auto py-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1.5 gap-y-5 sm:gap-x-3 sm:gap-y-6 md:gap-x-4 md:gap-y-8">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="space-y-3">
-                  <div className="aspect-[3/4] w-full bg-slate-100 animate-pulse" />
-                  <div className="px-1">
-                    <div className="h-3 w-3/4 bg-slate-100 animate-pulse" />
-                    <div className="h-3 w-1/3 bg-slate-100 animate-pulse mt-2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<ProductGridSkeleton />}>
       <CategoryContent />
     </Suspense>
   );

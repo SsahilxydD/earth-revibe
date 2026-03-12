@@ -1,261 +1,277 @@
 "use client";
 
-import { use, useState } from "react";
+import { use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Package } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Package, Truck, CheckCircle } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api-client";
-import { Button, Badge, Card, Input } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
-import { Skeleton } from "@/components/ui/skeleton";
+import { formatPrice, formatDate, getImageUrl } from "@/lib/utils";
 
-const statusVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
-  PLACED: "info",
-  CONFIRMED: "info",
-  PROCESSING: "warning",
-  SHIPPED: "warning",
-  OUT_FOR_DELIVERY: "warning",
-  DELIVERED: "success",
-  CANCELLED: "error",
-  RETURNED: "error",
-  REFUNDED: "default",
+interface OrderItem {
+  id: string;
+  name: string;
+  image: string;
+  variant: string;
+  size: string;
+  color: string;
+  quantity: number;
+  price: number;
+}
+
+interface OrderDetail {
+  id: string;
+  orderNumber: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItem[];
+  shippingAddress: {
+    fullName: string;
+    line1: string;
+    line2: string;
+    city: string;
+    state: string;
+    pinCode: string;
+    phone: string;
+  };
+  payment: {
+    method: string;
+    last4: string;
+    status: string;
+  };
+  subtotal: number;
+  discount: number;
+  shipping: number;
+  tax: number;
+  total: number;
+}
+
+const TIMELINE_STEPS = [
+  { key: "confirmed", label: "Confirmed", icon: CheckCircle },
+  { key: "processing", label: "Processing", icon: Package },
+  { key: "shipped", label: "Shipped", icon: Truck },
+  { key: "delivered", label: "Delivered", icon: CheckCircle },
+] as const;
+
+const STATUS_ORDER: Record<string, number> = {
+  pending: 0,
+  confirmed: 1,
+  processing: 2,
+  shipped: 3,
+  delivered: 4,
 };
 
-function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(Number(amount));
-}
-
-function formatDateTime(date: string) {
-  return new Date(date).toLocaleString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-export default function OrderDetailPage({ params }: { params: Promise<{ orderNumber: string }> }) {
+export default function OrderDetailPage({
+  params,
+}: {
+  params: Promise<{ orderNumber: string }>;
+}) {
   const { orderNumber } = use(params);
-  const queryClient = useQueryClient();
-  const [cancelReason, setCancelReason] = useState("");
-  const [showCancel, setShowCancel] = useState(false);
 
   const { data: order, isLoading } = useQuery({
-    queryKey: ["my-order", orderNumber],
-    queryFn: () => api.get(`/orders/${orderNumber}`),
-  });
-
-  const cancelOrder = useMutation({
-    mutationFn: (reason: string) => api.post(`/orders/${orderNumber}/cancel`, { reason }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-order", orderNumber] });
-      queryClient.invalidateQueries({ queryKey: ["my-orders"] });
-      toast.success("Order cancelled");
-      setShowCancel(false);
-    },
-    onError: (err: any) => toast.error(err.message || "Failed to cancel order"),
+    queryKey: ["order", orderNumber],
+    queryFn: () => api.get<OrderDetail>(`/orders/${orderNumber}`),
+    enabled: !!orderNumber,
   });
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-64 w-full" />
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Spinner className="h-6 w-6" />
       </div>
     );
   }
 
   if (!order) {
     return (
-      <div className="text-center py-12">
-        <p className="text-medium-gray">Order not found</p>
-        <Link href="/account/orders" className="text-forest-green hover:underline mt-2 inline-block">
-          Back to orders
+      <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+        <h2 className="mb-2 text-lg font-bold">Order Not Found</h2>
+        <Link
+          href="/account/orders"
+          className="text-sm text-[var(--color-muted)] hover:underline"
+        >
+          Back to Orders
         </Link>
       </div>
     );
   }
 
-  const canCancel = ["PLACED", "CONFIRMED", "PROCESSING"].includes(order.status);
+  const currentStep = STATUS_ORDER[order.status] ?? 0;
+  const isCancelled = order.status === "cancelled";
 
   return (
-    <div className="space-y-6">
+    <div>
+      <Link
+        href="/account/orders"
+        className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-text)]"
+      >
+        <ArrowLeft size={16} />
+        Back to Orders
+      </Link>
+
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/account/orders" className="p-2 rounded-lg hover:bg-off-white transition-colors">
-          <ArrowLeft size={20} className="text-dark-gray" />
-        </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold text-charcoal">Order #{order.orderNumber}</h1>
-            <Badge variant={statusVariant[order.status] || "default"}>
-              {order.status.replace(/_/g, " ")}
-            </Badge>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold">Order #{order.orderNumber}</h2>
+          <p className="text-sm text-[var(--color-muted)]">
+            Placed on {formatDate(order.createdAt)}
+          </p>
+        </div>
+        {isCancelled && (
+          <span className="rounded-[var(--badge-radius)] bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-red-800">
+            Cancelled
+          </span>
+        )}
+      </div>
+
+      {/* Status Timeline */}
+      {!isCancelled && (
+        <div className="mb-8 rounded-xl border border-[var(--color-border)] p-6">
+          <div className="flex items-center justify-between">
+            {TIMELINE_STEPS.map((step, i) => {
+              const isCompleted = currentStep >= i + 1;
+              const isCurrent = currentStep === i + 1;
+              return (
+                <div
+                  key={step.key}
+                  className="flex flex-1 flex-col items-center"
+                >
+                  <div className="relative flex items-center justify-center">
+                    {i > 0 && (
+                      <div
+                        className={`absolute right-1/2 h-0.5 w-[calc(100%+2rem)] sm:w-[calc(100%+4rem)] ${
+                          isCompleted
+                            ? "bg-[var(--color-primary)]"
+                            : "bg-[var(--color-border)]"
+                        }`}
+                        style={{ transform: "translateX(-50%)" }}
+                      />
+                    )}
+                    <div
+                      className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full ${
+                        isCompleted || isCurrent
+                          ? "bg-[var(--color-primary)] text-white"
+                          : "bg-[var(--color-surface)] text-[var(--color-muted)]"
+                      }`}
+                    >
+                      <step.icon size={16} />
+                    </div>
+                  </div>
+                  <span
+                    className={`mt-2 text-[10px] font-semibold uppercase tracking-wider ${
+                      isCompleted || isCurrent
+                        ? "text-[var(--color-primary)]"
+                        : "text-[var(--color-muted)]"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
-          <p className="text-sm text-medium-gray mt-1">{formatDateTime(order.createdAt)}</p>
+        </div>
+      )}
+
+      {/* Items */}
+      <div className="mb-8">
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
+          Items
+        </h3>
+        <div className="space-y-3">
+          {order.items.map((item) => (
+            <div
+              key={item.id}
+              className="flex gap-4 rounded-xl border border-[var(--color-border)] p-4"
+            >
+              <div className="h-20 w-16 shrink-0 overflow-hidden rounded-lg bg-[var(--color-surface)]">
+                {item.image && (
+                  <img
+                    src={getImageUrl(item.image, 160)}
+                    alt={item.name}
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold">{item.name}</p>
+                <p className="text-xs text-[var(--color-muted)]">
+                  {[item.size, item.color].filter(Boolean).join(" / ")}
+                </p>
+                <p className="text-xs text-[var(--color-muted)]">
+                  Qty: {item.quantity}
+                </p>
+              </div>
+              <p className="shrink-0 text-sm font-bold">
+                {formatPrice(item.price * item.quantity)}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Items */}
-          <Card>
-            <h3 className="text-base font-semibold text-charcoal mb-4">Items</h3>
-            <div className="space-y-3">
-              {order.items.map((item: any) => (
-                <div key={item.id} className="flex items-center gap-4 py-2 border-b border-light-gray last:border-0">
-                  <div className="w-16 h-16 rounded-lg bg-off-white flex items-center justify-center flex-shrink-0">
-                    {item.productImage ? (
-                      <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover rounded-lg" />
-                    ) : (
-                      <Package size={24} className="text-medium-gray" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-charcoal">{item.productName}</p>
-                    <p className="text-sm text-medium-gray">
-                      {item.variantSize} / {item.variantColor} &middot; Qty: {item.quantity}
-                    </p>
-                    <p className="text-sm font-medium text-charcoal mt-1">{formatPrice(item.totalPrice)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Totals */}
-            <div className="mt-4 pt-4 border-t border-light-gray space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-medium-gray">Subtotal</span>
-                <span className="text-charcoal">{formatPrice(order.subtotal)}</span>
-              </div>
-              {Number(order.discountAmount) > 0 && (
-                <div className="flex justify-between text-forest-green">
-                  <span>Discount {order.discountCode ? `(${order.discountCode.code})` : ""}</span>
-                  <span>-{formatPrice(order.discountAmount)}</span>
-                </div>
-              )}
-              {Number(order.shippingAmount) > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-medium-gray">Shipping</span>
-                  <span className="text-charcoal">{formatPrice(order.shippingAmount)}</span>
-                </div>
-              )}
-              {order.loyaltyPointsUsed > 0 && (
-                <div className="flex justify-between text-forest-green">
-                  <span>Loyalty Points ({order.loyaltyPointsUsed} pts)</span>
-                  <span>-{formatPrice(order.loyaltyPointsUsed)}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-semibold text-base pt-2 border-t border-light-gray">
-                <span>Total</span>
-                <span>{formatPrice(order.totalAmount)}</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Status Timeline */}
-          <Card>
-            <h3 className="text-base font-semibold text-charcoal mb-4">Order Timeline</h3>
-            <div className="space-y-4">
-              {order.statusHistory?.map((entry: any, i: number) => (
-                <div key={entry.id} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className={`w-3 h-3 rounded-full mt-1 ${i === 0 ? "bg-forest-green" : "bg-light-gray"}`} />
-                    {i < order.statusHistory.length - 1 && <div className="w-0.5 flex-1 bg-light-gray mt-1" />}
-                  </div>
-                  <div className="pb-4">
-                    <div className="flex items-center gap-2">
-                      <Badge variant={statusVariant[entry.status] || "default"}>
-                        {entry.status.replace(/_/g, " ")}
-                      </Badge>
-                      <span className="text-xs text-medium-gray">{formatDateTime(entry.createdAt)}</span>
-                    </div>
-                    {entry.note && <p className="text-sm text-dark-gray mt-1">{entry.note}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* Shipping Address */}
+        <div className="rounded-xl border border-[var(--color-border)] p-5">
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wider">
+            Shipping Address
+          </h3>
+          <div className="space-y-1 text-sm text-[var(--color-muted)]">
+            <p className="font-medium text-[var(--color-text)]">
+              {order.shippingAddress.fullName}
+            </p>
+            <p>{order.shippingAddress.line1}</p>
+            {order.shippingAddress.line2 && (
+              <p>{order.shippingAddress.line2}</p>
+            )}
+            <p>
+              {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
+              {order.shippingAddress.pinCode}
+            </p>
+            <p>Phone: {order.shippingAddress.phone}</p>
+          </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {order.address && (
-            <Card>
-              <h3 className="text-base font-semibold text-charcoal mb-3">Shipping Address</h3>
-              <div className="text-sm text-dark-gray space-y-1">
-                <p className="font-medium text-charcoal">{order.address.fullName}</p>
-                <p>{order.address.line1}</p>
-                {order.address.line2 && <p>{order.address.line2}</p>}
-                <p>{order.address.city}, {order.address.state} {order.address.pinCode}</p>
-                <p>{order.address.phone}</p>
-              </div>
-            </Card>
+        {/* Payment & Totals */}
+        <div className="rounded-xl border border-[var(--color-border)] p-5">
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wider">
+            Payment Summary
+          </h3>
+          {order.payment && (
+            <p className="mb-3 text-sm text-[var(--color-muted)]">
+              {order.payment.method}
+              {order.payment.last4 && ` ending in ${order.payment.last4}`}
+            </p>
           )}
-
-          <Card>
-            <h3 className="text-base font-semibold text-charcoal mb-3">Payment</h3>
-            <div className="text-sm space-y-2">
-              <div className="flex justify-between">
-                <span className="text-medium-gray">Status</span>
-                <Badge variant={order.payment?.status === "CAPTURED" ? "success" : "warning"}>
-                  {order.payment?.status || "Pending"}
-                </Badge>
-              </div>
-              {order.payment?.paidAt && (
-                <div className="flex justify-between">
-                  <span className="text-medium-gray">Paid</span>
-                  <span className="text-charcoal">{formatDateTime(order.payment.paidAt)}</span>
-                </div>
-              )}
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-[var(--color-muted)]">Subtotal</span>
+              <span>{formatPrice(order.subtotal)}</span>
             </div>
-          </Card>
-
-          {canCancel && (
-            <Card>
-              {!showCancel ? (
-                <Button variant="ghost" className="w-full text-error" onClick={() => setShowCancel(true)}>
-                  Cancel Order
-                </Button>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-charcoal">Reason for cancellation</p>
-                  <Input
-                    value={cancelReason}
-                    onChange={(e) => setCancelReason(e.target.value)}
-                    placeholder="Why are you cancelling?"
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      disabled={cancelReason.length < 5 || cancelOrder.isPending}
-                      onClick={() => cancelOrder.mutate(cancelReason)}
-                    >
-                      Confirm Cancel
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setShowCancel(false)}>
-                      Keep Order
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
-          )}
-
-          {order.loyaltyPointsEarned > 0 && (
-            <Card>
-              <p className="text-sm text-medium-gray">
-                You earned <span className="font-semibold text-forest-green">{order.loyaltyPointsEarned} loyalty points</span> from this order!
-              </p>
-            </Card>
-          )}
+            {order.discount > 0 && (
+              <div className="flex justify-between">
+                <span className="text-[var(--color-muted)]">Discount</span>
+                <span className="text-green-600">
+                  -{formatPrice(order.discount)}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-[var(--color-muted)]">Shipping</span>
+              <span>
+                {order.shipping === 0 ? "Free" : formatPrice(order.shipping)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--color-muted)]">Tax</span>
+              <span>{formatPrice(order.tax)}</span>
+            </div>
+            <div className="flex justify-between border-t border-[var(--color-border)] pt-2 font-bold">
+              <span>Total</span>
+              <span>{formatPrice(order.total)}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

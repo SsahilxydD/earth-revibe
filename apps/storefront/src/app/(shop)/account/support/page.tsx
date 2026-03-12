@@ -1,171 +1,254 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import Link from "next/link";
-import { Plus, MessageSquare, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  HelpCircle,
+  Plus,
+  ChevronRight,
+  X,
+  MessageSquare,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api-client";
-import { Button, Card, Badge, Input, Skeleton } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
+import { formatDate } from "@/lib/utils";
+import { useToast } from "@/providers";
 
-const statusVariant: Record<string, "success" | "warning" | "info" | "default"> = {
-  OPEN: "info",
-  IN_PROGRESS: "warning",
-  RESOLVED: "success",
-  CLOSED: "default",
-};
-
-const categories = ["Order Issue", "Payment", "Shipping", "Returns & Refunds", "Product Question", "Account", "Other"];
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+interface Ticket {
+  id: string;
+  ticketNumber: string;
+  subject: string;
+  category: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
+interface NewTicketForm {
+  subject: string;
+  category: string;
+  message: string;
+}
+
+const CATEGORIES = [
+  "Order Issue",
+  "Return & Refund",
+  "Payment",
+  "Shipping",
+  "Product Inquiry",
+  "Account",
+  "Other",
+] as const;
+
+const TICKET_STATUS_STYLES: Record<string, { bg: string; text: string }> = {
+  open: { bg: "bg-blue-100", text: "text-blue-800" },
+  "in-progress": { bg: "bg-yellow-100", text: "text-yellow-800" },
+  waiting: { bg: "bg-purple-100", text: "text-purple-800" },
+  resolved: { bg: "bg-green-100", text: "text-green-800" },
+  closed: { bg: "bg-gray-100", text: "text-gray-800" },
+};
+
 export default function SupportPage() {
-  const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("");
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ subject: "", category: "Order Issue", description: "" });
 
-  const qc = useQueryClient();
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["my-tickets", page, statusFilter],
-    queryFn: () => {
-      const params = new URLSearchParams({ page: String(page) });
-      if (statusFilter) params.set("status", statusFilter);
-      return api.get(`/support?${params}`);
-    },
+  const { data: tickets, isLoading } = useQuery({
+    queryKey: ["support-tickets"],
+    queryFn: () => api.get<Ticket[]>("/support/tickets"),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => api.post("/support", data),
+    mutationFn: (data: NewTicketForm) => api.post("/support/tickets", data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["my-tickets"] });
-      toast.success("Ticket created! We'll get back to you soon.");
+      queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
       setShowForm(false);
-      setForm({ subject: "", category: "Order Issue", description: "" });
+      reset();
+      addToast("Ticket created successfully", "success");
     },
-    onError: (err: any) => toast.error(err.message || "Failed to create ticket"),
+    onError: (err: any) => {
+      addToast(err?.message || "Failed to create ticket", "error");
+    },
   });
 
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    createMutation.mutate(form);
-  };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<NewTicketForm>({
+    defaultValues: { subject: "", category: "", message: "" },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Spinner className="h-6 w-6" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-charcoal">Support</h1>
-        <Button onClick={() => setShowForm(!showForm)}>
-          {showForm ? <><X size={16} /> Cancel</> : <><Plus size={16} /> New Ticket</>}
-        </Button>
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-sm font-bold uppercase tracking-wider">
+          Support Tickets
+        </h2>
+        {!showForm && (
+          <Button size="sm" onClick={() => setShowForm(true)}>
+            <Plus size={16} />
+            New Ticket
+          </Button>
+        )}
       </div>
 
-      {/* Create form */}
+      {/* New Ticket Form */}
       {showForm && (
-        <Card>
-          <h3 className="text-base font-semibold text-charcoal mb-4">Create a Support Ticket</h3>
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Subject *</label>
-              <Input
-                value={form.subject}
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                placeholder="Brief description of your issue"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Category</label>
+        <div className="mb-6 rounded-xl border border-[var(--color-border)] p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wider">
+              New Ticket
+            </h3>
+            <button
+              onClick={() => {
+                setShowForm(false);
+                reset();
+              }}
+              className="text-[var(--color-muted)] hover:text-[var(--color-text)]"
+              aria-label="Close form"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <form
+            onSubmit={handleSubmit((data) => createMutation.mutate(data))}
+            className="space-y-4"
+          >
+            <Input
+              label="Subject"
+              placeholder="Brief description of your issue"
+              error={errors.subject?.message}
+              {...register("subject", {
+                required: "Subject is required",
+                minLength: { value: 5, message: "Too short" },
+              })}
+            />
+            <div className="w-full">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Category
+              </label>
               <select
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full rounded-lg border border-light-gray px-3 py-2 text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/20 focus:border-forest-green"
+                className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
+                {...register("category", {
+                  required: "Please select a category",
+                })}
               >
-                {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                <option value="">Select a category</option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
+              {errors.category && (
+                <p className="mt-1 text-xs text-[var(--color-sale)]">
+                  {errors.category.message}
+                </p>
+              )}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Description *</label>
+            <div className="w-full">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Message
+              </label>
               <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                rows={4}
-                required
-                className="w-full rounded-lg border border-light-gray px-3 py-2 text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/20 focus:border-forest-green resize-none"
+                className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
+                rows={5}
                 placeholder="Describe your issue in detail..."
+                {...register("message", {
+                  required: "Message is required",
+                  minLength: { value: 20, message: "Please provide more detail" },
+                })}
               />
+              {errors.message && (
+                <p className="mt-1 text-xs text-[var(--color-sale)]">
+                  {errors.message.message}
+                </p>
+              )}
             </div>
-            <div className="flex justify-end">
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Submitting..." : "Submit Ticket"}
+            <div className="flex gap-3">
+              <Button type="submit" loading={createMutation.isPending}>
+                Submit Ticket
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setShowForm(false);
+                  reset();
+                }}
+              >
+                Cancel
               </Button>
             </div>
           </form>
-        </Card>
+        </div>
       )}
 
-      {/* Filter */}
-      <div className="flex gap-2">
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="rounded-lg border border-light-gray px-3 py-2 text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/20 focus:border-forest-green"
-        >
-          <option value="">All Tickets</option>
-          <option value="OPEN">Open</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="RESOLVED">Resolved</option>
-          <option value="CLOSED">Closed</option>
-        </select>
-      </div>
-
-      {/* Tickets list */}
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
-        </div>
-      ) : !data?.tickets?.length ? (
-        <Card>
-          <div className="text-center py-8">
-            <MessageSquare size={40} className="mx-auto text-light-gray mb-3" />
-            <p className="text-medium-gray">No support tickets yet.</p>
-            <p className="text-sm text-medium-gray mt-1">Need help? Create a ticket above.</p>
+      {/* Tickets List */}
+      {(!tickets || tickets.length === 0) && !showForm ? (
+        <div className="flex min-h-[30vh] flex-col items-center justify-center text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface)]">
+            <HelpCircle size={28} className="text-[var(--color-muted)]" />
           </div>
-        </Card>
+          <h3 className="mb-2 text-lg font-bold">No Support Tickets</h3>
+          <p className="mb-4 text-sm text-[var(--color-muted)]">
+            Need help? Create a new ticket and we&apos;ll get back to you.
+          </p>
+        </div>
       ) : (
         <div className="space-y-3">
-          {data.tickets.map((ticket: any) => (
-            <Link key={ticket.id} href={`/account/support/${ticket.ticketNumber}`}>
-              <Card className="hover:shadow-sm transition-shadow cursor-pointer">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-medium-gray">{ticket.ticketNumber}</span>
-                      <Badge variant={statusVariant[ticket.status] || "default"}>
-                        {ticket.status.replace("_", " ")}
-                      </Badge>
-                    </div>
-                    <h3 className="font-medium text-charcoal">{ticket.subject}</h3>
-                    <p className="text-xs text-medium-gray mt-1">{ticket.category} &middot; {formatDate(ticket.updatedAt)}</p>
+          {tickets?.map((ticket) => {
+            const statusStyle =
+              TICKET_STATUS_STYLES[ticket.status] ||
+              TICKET_STATUS_STYLES.open;
+            return (
+              <Link
+                key={ticket.id}
+                href={`/account/support/${ticket.ticketNumber}`}
+                className="flex items-center justify-between rounded-xl border border-[var(--color-border)] p-4 transition-colors hover:bg-[var(--color-surface)]"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <MessageSquare
+                      size={14}
+                      className="text-[var(--color-muted)]"
+                    />
+                    <span className="text-sm font-bold">
+                      #{ticket.ticketNumber}
+                    </span>
+                    <span
+                      className={`rounded-[var(--badge-radius)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusStyle.bg} ${statusStyle.text}`}
+                    >
+                      {ticket.status}
+                    </span>
                   </div>
-                  <span className="flex items-center gap-1 text-xs text-medium-gray">
-                    <MessageSquare size={12} /> {ticket._count?.messages || 0}
-                  </span>
+                  <p className="mt-1 truncate text-sm">{ticket.subject}</p>
+                  <div className="mt-1 flex gap-3 text-xs text-[var(--color-muted)]">
+                    <span>{ticket.category}</span>
+                    <span>{formatDate(ticket.createdAt)}</span>
+                  </div>
                 </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4">
-          <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-          <span className="text-xs text-medium-gray">Page {data.page} of {data.totalPages}</span>
-          <Button variant="ghost" size="sm" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+                <ChevronRight
+                  size={18}
+                  className="shrink-0 text-[var(--color-muted)]"
+                />
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

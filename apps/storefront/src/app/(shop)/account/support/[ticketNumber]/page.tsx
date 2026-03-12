@@ -1,122 +1,224 @@
 "use client";
 
-import { use, useState } from "react";
+import { use } from "react";
+import { useForm } from "react-hook-form";
 import Link from "next/link";
-import { ArrowLeft, Send, User } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Send, User, Headphones } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api-client";
-import { useAuthStore } from "@/stores/auth-store";
-import { Button, Card, Badge, Spinner } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
+import { formatDate } from "@/lib/utils";
+import { useToast } from "@/providers";
 
-const statusVariant: Record<string, "success" | "warning" | "info" | "default"> = {
-  OPEN: "info",
-  IN_PROGRESS: "warning",
-  RESOLVED: "success",
-  CLOSED: "default",
-};
-
-function formatDateTime(date: string) {
-  return new Date(date).toLocaleString("en-IN", {
-    day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-  });
+interface Message {
+  id: string;
+  sender: "customer" | "agent";
+  senderName: string;
+  body: string;
+  createdAt: string;
 }
 
-export default function TicketDetailPage({ params }: { params: Promise<{ ticketNumber: string }> }) {
+interface TicketDetail {
+  id: string;
+  ticketNumber: string;
+  subject: string;
+  category: string;
+  status: string;
+  createdAt: string;
+  messages: Message[];
+}
+
+interface ReplyForm {
+  message: string;
+}
+
+const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
+  open: { bg: "bg-blue-100", text: "text-blue-800" },
+  "in-progress": { bg: "bg-yellow-100", text: "text-yellow-800" },
+  waiting: { bg: "bg-purple-100", text: "text-purple-800" },
+  resolved: { bg: "bg-green-100", text: "text-green-800" },
+  closed: { bg: "bg-gray-100", text: "text-gray-800" },
+};
+
+export default function TicketDetailPage({
+  params,
+}: {
+  params: Promise<{ ticketNumber: string }>;
+}) {
   const { ticketNumber } = use(params);
-  const { user } = useAuthStore();
-  const [reply, setReply] = useState("");
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
 
   const { data: ticket, isLoading } = useQuery({
-    queryKey: ["my-ticket", ticketNumber],
-    queryFn: () => api.get(`/support/${ticketNumber}`),
+    queryKey: ["support-ticket", ticketNumber],
+    queryFn: () =>
+      api.get<TicketDetail>(`/support/tickets/${ticketNumber}`),
+    enabled: !!ticketNumber,
   });
 
   const replyMutation = useMutation({
-    mutationFn: (content: string) => api.post(`/support/${ticketNumber}/messages`, { content }),
+    mutationFn: (data: ReplyForm) =>
+      api.post(`/support/tickets/${ticketNumber}/reply`, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["my-ticket", ticketNumber] });
-      toast.success("Message sent");
-      setReply("");
+      queryClient.invalidateQueries({
+        queryKey: ["support-ticket", ticketNumber],
+      });
+      reset();
+      addToast("Reply sent", "success");
     },
-    onError: (err: any) => toast.error(err.message || "Failed to send message"),
+    onError: (err: any) => {
+      addToast(err?.message || "Failed to send reply", "error");
+    },
   });
 
-  const handleReply = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reply.trim()) return;
-    replyMutation.mutate(reply);
-  };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ReplyForm>({
+    defaultValues: { message: "" },
+  });
 
-  if (isLoading) return <div className="flex justify-center py-20"><Spinner /></div>;
-  if (!ticket) return <p className="text-center py-20 text-medium-gray">Ticket not found.</p>;
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Spinner className="h-6 w-6" />
+      </div>
+    );
+  }
+
+  if (!ticket) {
+    return (
+      <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+        <h2 className="mb-2 text-lg font-bold">Ticket Not Found</h2>
+        <Link
+          href="/account/support"
+          className="text-sm text-[var(--color-muted)] hover:underline"
+        >
+          Back to Support
+        </Link>
+      </div>
+    );
+  }
+
+  const statusStyle =
+    STATUS_STYLES[ticket.status] || STATUS_STYLES.open;
+  const isClosed = ticket.status === "closed" || ticket.status === "resolved";
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/account/support">
-          <Button variant="ghost" size="sm"><ArrowLeft size={16} /></Button>
-        </Link>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-charcoal">{ticket.ticketNumber}</h1>
-            <Badge variant={statusVariant[ticket.status] || "default"}>{ticket.status.replace("_", " ")}</Badge>
+    <div>
+      <Link
+        href="/account/support"
+        className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-text)]"
+      >
+        <ArrowLeft size={16} />
+        Back to Support
+      </Link>
+
+      {/* Ticket Info */}
+      <div className="mb-6 rounded-xl border border-[var(--color-border)] p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold">{ticket.subject}</h2>
+            <div className="mt-1 flex flex-wrap gap-3 text-xs text-[var(--color-muted)]">
+              <span>#{ticket.ticketNumber}</span>
+              <span>{ticket.category}</span>
+              <span>{formatDate(ticket.createdAt)}</span>
+            </div>
           </div>
-          <p className="text-sm text-medium-gray">{ticket.category}</p>
+          <span
+            className={`shrink-0 rounded-[var(--badge-radius)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusStyle.bg} ${statusStyle.text}`}
+          >
+            {ticket.status}
+          </span>
         </div>
       </div>
 
-      <Card>
-        <h2 className="text-lg font-semibold text-charcoal mb-4">{ticket.subject}</h2>
-
-        <div className="space-y-4 max-h-[500px] overflow-y-auto">
-          {ticket.messages?.map((msg: any) => {
-            const isMe = msg.user?.id === user?.id;
-            const isStaff = msg.user?.role === "ADMIN" || msg.user?.role === "SUPER_ADMIN" || msg.user?.role === "SUPPORT_STAFF";
-            return (
-              <div key={msg.id} className={`flex gap-3 ${isMe ? "flex-row-reverse" : ""}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  isStaff ? "bg-forest-green" : "bg-forest-green/10"
-                }`}>
-                  <User size={14} className={isStaff ? "text-white" : "text-forest-green"} />
-                </div>
-                <div className={`max-w-[80%] ${isMe ? "text-right" : ""}`}>
-                  <div className={`rounded-lg px-4 py-3 ${isMe ? "bg-forest-green/5" : "bg-off-white"}`}>
-                    <p className="text-sm text-charcoal whitespace-pre-wrap">{msg.content}</p>
-                  </div>
-                  <p className="text-[10px] text-medium-gray mt-1">
-                    {isStaff ? "Support Team" : `${msg.user?.firstName}`} &middot; {formatDateTime(msg.createdAt)}
-                  </p>
-                </div>
+      {/* Messages */}
+      <div className="mb-6 space-y-4">
+        {ticket.messages.map((msg) => {
+          const isCustomer = msg.sender === "customer";
+          return (
+            <div
+              key={msg.id}
+              className={`flex gap-3 ${isCustomer ? "flex-row-reverse" : ""}`}
+            >
+              <div
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                  isCustomer
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "bg-[var(--color-surface)] text-[var(--color-muted)]"
+                }`}
+              >
+                {isCustomer ? <User size={14} /> : <Headphones size={14} />}
               </div>
-            );
-          })}
-        </div>
-      </Card>
+              <div
+                className={`max-w-[80%] rounded-xl px-4 py-3 ${
+                  isCustomer
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "border border-[var(--color-border)] bg-[var(--color-surface)]"
+                }`}
+              >
+                <div className="mb-1 flex items-center gap-2">
+                  <span
+                    className={`text-xs font-semibold ${
+                      isCustomer ? "text-white/80" : "text-[var(--color-muted)]"
+                    }`}
+                  >
+                    {msg.senderName}
+                  </span>
+                  <span
+                    className={`text-[10px] ${
+                      isCustomer ? "text-white/60" : "text-[var(--color-muted)]"
+                    }`}
+                  >
+                    {formatDate(msg.createdAt)}
+                  </span>
+                </div>
+                <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-      {ticket.status !== "CLOSED" && (
-        <Card>
-          <form onSubmit={handleReply} className="flex gap-3">
+      {/* Reply Form */}
+      {!isClosed ? (
+        <form
+          onSubmit={handleSubmit((data) => replyMutation.mutate(data))}
+          className="flex gap-3"
+        >
+          <div className="flex-1">
             <textarea
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              placeholder="Type your message..."
-              rows={2}
-              required
-              className="flex-1 rounded-lg border border-light-gray px-3 py-2 text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-forest-green/20 focus:border-forest-green resize-none"
+              className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
+              rows={3}
+              placeholder="Type your reply..."
+              {...register("message", {
+                required: "Message is required",
+              })}
             />
-            <Button type="submit" disabled={replyMutation.isPending || !reply.trim()}>
-              <Send size={16} />
-            </Button>
-          </form>
-        </Card>
-      )}
-
-      {ticket.status === "CLOSED" && (
-        <Card>
-          <p className="text-sm text-medium-gray text-center py-2">This ticket is closed. Create a new ticket if you need further assistance.</p>
-        </Card>
+            {errors.message && (
+              <p className="mt-1 text-xs text-[var(--color-sale)]">
+                {errors.message.message}
+              </p>
+            )}
+          </div>
+          <Button
+            type="submit"
+            loading={replyMutation.isPending}
+            className="shrink-0 self-end"
+          >
+            <Send size={16} />
+            Send
+          </Button>
+        </form>
+      ) : (
+        <div className="rounded-xl bg-[var(--color-surface)] px-4 py-3 text-center text-sm text-[var(--color-muted)]">
+          This ticket is {ticket.status}. Create a new ticket if you need
+          further assistance.
+        </div>
       )}
     </div>
   );

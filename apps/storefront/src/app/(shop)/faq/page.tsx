@@ -1,257 +1,242 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const faqData = [
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+interface FaqCategory {
+  title: string;
+  items: FaqItem[];
+}
+
+const FAQ_DATA: FaqCategory[] = [
   {
-    category: 'Shipping',
-    questions: [
+    title: "Orders",
+    items: [
       {
-        q: 'What are the delivery times?',
-        a: 'Standard delivery takes 5-7 business days within India. Express shipping is available for 2-3 business day delivery. International orders typically arrive within 10-15 business days depending on the destination country.',
+        question: "How do I place an order?",
+        answer:
+          "Simply browse our collection, select the items you love, choose your size and colour, and add them to your cart. Proceed to checkout, enter your shipping details, and complete the payment. You will receive an order confirmation email once your order is placed.",
       },
       {
-        q: 'How much does shipping cost?',
-        a: 'We offer free standard shipping on all orders above Rs. 999. For orders below Rs. 999, a flat shipping fee of Rs. 99 applies. Express shipping is available at Rs. 199 regardless of order value. International shipping rates are calculated at checkout based on destination and package weight.',
+        question: "Can I modify or cancel my order?",
+        answer:
+          "You can modify or cancel your order within 1 hour of placing it. After that, the order goes into processing and cannot be changed. Please contact our support team at hello@earthrevibe.com for assistance.",
       },
       {
-        q: 'How can I track my order?',
-        a: 'Once your order is shipped, you will receive a tracking number via email and SMS. You can use this number to track your package on our website under \'My Orders\', or directly on the courier partner\'s website. Real-time tracking updates are available for all domestic shipments.',
+        question: "How do I track my order?",
+        answer:
+          "Once your order is shipped, you will receive a tracking link via email and SMS. You can also track your order from your account dashboard or use our Track Order page with your order number.",
+      },
+      {
+        question: "What if I receive a damaged or incorrect item?",
+        answer:
+          "We're sorry if that happens! Please contact us within 48 hours of receiving your order with photos of the damaged or incorrect item. We will arrange a replacement or refund immediately.",
       },
     ],
   },
   {
-    category: 'Returns',
-    questions: [
+    title: "Shipping",
+    items: [
       {
-        q: 'What is your return policy?',
-        a: 'We offer a hassle-free 30-day return policy for all unused items in their original condition with tags attached. Sale items can be returned within 15 days. Items must be unworn, unwashed, and free of any alterations to be eligible for a return.',
+        question: "What are the shipping charges?",
+        answer:
+          "We offer free shipping on all orders above Rs.999. For orders below Rs.999, a flat shipping fee of Rs.79 applies. We ship across India via trusted courier partners.",
       },
       {
-        q: 'How do I initiate a return?',
-        a: 'To initiate a return, log in to your account, go to \'My Orders\', select the order, and click \'Return Item\'. Choose your reason for return and schedule a pickup. Our courier partner will collect the item from your doorstep. You can also email us at hello@earthrevibe.com with your order number.',
+        question: "How long does delivery take?",
+        answer:
+          "Standard delivery takes 5-7 business days for metro cities and 7-10 business days for other locations. Express delivery (2-3 business days) is available at an additional charge for select pin codes.",
       },
       {
-        q: 'How long does it take to receive a refund?',
-        a: 'Once we receive and inspect the returned item, refunds are processed within 3-5 business days. The amount will be credited to your original payment method. Bank processing times may add an additional 2-5 business days for the refund to reflect in your account.',
-      },
-    ],
-  },
-  {
-    category: 'Products',
-    questions: [
-      {
-        q: 'What materials do you use?',
-        a: 'We use premium, sustainably sourced materials including 100% organic Supima cotton, Belgian linen, and Japanese denim. All our fabrics are GOTS (Global Organic Textile Standard) certified and free from harmful chemicals. We prioritise materials that are both luxurious to wear and gentle on the planet.',
+        question: "Do you ship internationally?",
+        answer:
+          "Currently, we only ship within India. We are working on expanding our shipping to other countries. Stay tuned to our newsletter for updates!",
       },
       {
-        q: 'How do I find my correct size?',
-        a: 'Each product page includes a detailed size guide with measurements in both centimetres and inches. We recommend measuring yourself and comparing with our size chart for the best fit. If you are between sizes, we generally recommend sizing up for a relaxed fit or sizing down for a more tailored look.',
-      },
-      {
-        q: 'How should I care for my garments?',
-        a: 'To keep your Earth Revibe pieces looking their best, we recommend machine washing on a gentle cycle with cold water and air drying when possible. Avoid bleach and harsh detergents. For linen items, a cool iron works best. Detailed care instructions are printed on each garment\'s label and listed on the product page.',
+        question: "Can I change my shipping address after placing an order?",
+        answer:
+          "Address changes can be made within 1 hour of placing the order. After that, we cannot guarantee a change as the order may have already been dispatched. Contact support immediately if you need to update your address.",
       },
     ],
   },
   {
-    category: 'Orders',
-    questions: [
+    title: "Returns & Exchanges",
+    items: [
       {
-        q: 'Can I modify or cancel my order after placing it?',
-        a: 'You can modify or cancel your order within 2 hours of placing it, provided it has not already been shipped. To make changes, go to \'My Orders\' in your account or contact our support team immediately at hello@earthrevibe.com. Once an order is in transit, it cannot be cancelled but can be returned after delivery.',
+        question: "What is your return policy?",
+        answer:
+          "We offer a 7-day easy return policy from the date of delivery. Items must be unused, unwashed, and in their original packaging with all tags attached. Sale items and innerwear are not eligible for returns.",
       },
       {
-        q: 'What payment methods do you accept?',
-        a: 'We accept all major credit and debit cards (Visa, Mastercard, Amex, RuPay), UPI payments, net banking, and popular wallets. EMI options are available on orders above Rs. 3,000. We also offer Cash on Delivery (COD) for domestic orders up to Rs. 10,000.',
+        question: "How do I initiate a return?",
+        answer:
+          "Log in to your account, go to your order history, and select the item you wish to return. Choose your reason and schedule a pickup. Our courier partner will collect the item from your doorstep.",
+      },
+      {
+        question: "How long does the refund take?",
+        answer:
+          "Once we receive and inspect the returned item, your refund will be processed within 5-7 business days. The amount will be credited back to your original payment method.",
+      },
+      {
+        question: "Can I exchange an item for a different size?",
+        answer:
+          "Yes! You can exchange items for a different size within 7 days of delivery, subject to availability. The process is the same as a return, just select 'Exchange' instead.",
+      },
+    ],
+  },
+  {
+    title: "Payments",
+    items: [
+      {
+        question: "What payment methods do you accept?",
+        answer:
+          "We accept all major payment methods including UPI (Google Pay, PhonePe, Paytm), credit and debit cards (Visa, Mastercard, Rupay), net banking, wallets, and Cash on Delivery (COD). All online payments are processed securely through Razorpay.",
+      },
+      {
+        question: "Is Cash on Delivery (COD) available?",
+        answer:
+          "Yes, COD is available for orders up to Rs.5,000 at select pin codes. A nominal COD fee of Rs.49 applies. COD availability is shown at checkout based on your delivery pin code.",
+      },
+      {
+        question: "Is my payment information secure?",
+        answer:
+          "Absolutely. All payment transactions are processed through Razorpay, which is PCI DSS Level 1 compliant. We never store your card details on our servers. Your payment information is encrypted end-to-end.",
+      },
+      {
+        question: "My payment failed but money was debited. What should I do?",
+        answer:
+          "Don't worry! If your payment failed but the amount was debited, it will be automatically refunded within 5-7 business days. If you don't see the refund, please contact our support team with your transaction details.",
+      },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      {
+        question: "How do I create an account?",
+        answer:
+          "Click on the user icon in the header and select 'Register'. You can sign up with your email address and create a password, or use your Google account for quick registration.",
+      },
+      {
+        question: "I forgot my password. How do I reset it?",
+        answer:
+          "Click on 'Login' and then 'Forgot Password'. Enter your registered email address and we will send you a password reset link. The link is valid for 24 hours.",
+      },
+      {
+        question: "How do I update my account details?",
+        answer:
+          "Log in to your account and go to 'Profile Settings'. You can update your name, email, phone number, and manage your saved addresses from there.",
+      },
+      {
+        question: "How do I delete my account?",
+        answer:
+          "We are sorry to see you go. To delete your account, please email us at hello@earthrevibe.com from your registered email address. Your account and all associated data will be permanently deleted within 30 days.",
       },
     ],
   },
 ];
 
-export default function FAQPage() {
-  const [openItem, setOpenItem] = useState<string | null>(null);
-
-  const toggleItem = (id: string) => {
-    setOpenItem(prev => prev === id ? null : id);
-  };
-
+function AccordionItem({
+  item,
+  isOpen,
+  onToggle,
+}: {
+  item: FaqItem;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
   return (
-    <div className="min-h-screen bg-white pt-16">
-      {/* Header */}
-      <motion.div
-        className="px-6 py-16 lg:py-24 lg:px-10 text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
+    <div className="border-b border-[var(--color-border)]">
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center justify-between py-4 text-left"
+        aria-expanded={isOpen}
       >
-        <div className="max-w-2xl mx-auto faq-header-container">
-          <motion.p
-            className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.2em] uppercase text-slate-400 mb-4"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            Support
-          </motion.p>
-          <motion.h1
-            className="text-[32px] lg:text-[48px] font-[var(--font-cinzel)] font-medium tracking-[0.02em] text-black mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            How can we help?
-          </motion.h1>
-          <motion.p
-            className="text-[14px] lg:text-[15px] text-slate-500 leading-relaxed"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            Find answers to common questions below, or{' '}
-            <Link href="/contact" className="text-black underline underline-offset-4 hover:no-underline transition-all">
-              get in touch
-            </Link>
-            {' '}with our team.
-          </motion.p>
-        </div>
-      </motion.div>
-
-      {/* FAQ Sections */}
-      <div className="px-6 pb-12 lg:pb-20 lg:px-10">
-        <div className="max-w-2xl mx-auto faq-container">
-          {faqData.map((section, sectionIndex) => (
-            <motion.section
-              key={sectionIndex}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{
-                duration: 0.6,
-                delay: sectionIndex * 0.1,
-                ease: [0.25, 0.1, 0.25, 1]
-              }}
-              className="faq-section"
-            >
-              <p className="text-[14px] lg:text-[16px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase text-black mb-4">
-                {section.category}
-              </p>
-
-              <div>
-                {section.questions.map((item, itemIndex) => {
-                  const id = `${sectionIndex}-${itemIndex}`;
-                  const isOpen = openItem === id;
-
-                  return (
-                    <div
-                      key={itemIndex}
-                      className="overflow-hidden"
-                    >
-                      <motion.button
-                        onClick={() => toggleItem(id)}
-                        className="w-full flex items-center justify-between pt-5 pb-5 text-left group"
-                        whileHover={{ x: 4 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <span className={`text-[13px] pr-8 transition-colors duration-300 ${
-                          isOpen ? 'text-black' : 'text-slate-500 group-hover:text-black'
-                        }`}>
-                          {item.q}
-                        </span>
-                        <motion.span
-                          className="text-[20px] text-slate-300 flex-shrink-0 w-6 h-6 flex items-center justify-center"
-                          animate={{ rotate: isOpen ? 45 : 0 }}
-                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                        >
-                          +
-                        </motion.span>
-                      </motion.button>
-
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{
-                              height: "auto",
-                              opacity: 1,
-                              transition: {
-                                height: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
-                                opacity: { duration: 0.3, delay: 0.1 }
-                              }
-                            }}
-                            exit={{
-                              height: 0,
-                              opacity: 0,
-                              transition: {
-                                height: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] },
-                                opacity: { duration: 0.2 }
-                              }
-                            }}
-                          >
-                            <motion.p
-                              className="pb-6 text-[12px] lg:text-[13px] text-slate-500 leading-[1.9] pr-12 max-w-2xl"
-                              initial={{ y: -10 }}
-                              animate={{ y: 0 }}
-                              transition={{ duration: 0.3, delay: 0.1 }}
-                            >
-                              {item.a}
-                            </motion.p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.section>
-          ))}
+        <span className="pr-4 text-sm font-semibold">{item.question}</span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 text-[var(--color-muted)] transition-transform duration-200",
+            isOpen && "rotate-180"
+          )}
+        />
+      </button>
+      <div
+        className={cn(
+          "grid transition-all duration-200",
+          isOpen ? "grid-rows-[1fr] pb-4" : "grid-rows-[0fr]"
+        )}
+      >
+        <div className="overflow-hidden">
+          <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+            {item.answer}
+          </p>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Contact CTA */}
-      <motion.div
-        className="px-6 py-16 lg:py-20 bg-slate-50"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-      >
-        <div className="max-w-2xl mx-auto text-center faq-contact-cta">
-          <motion.p
-            className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.2em] uppercase text-slate-400 mb-3"
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            Still have questions?
-          </motion.p>
-          <motion.p
-            className="text-[18px] lg:text-[22px] font-[var(--font-cinzel)] font-medium tracking-[0.02em] text-black mb-8"
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            We&apos;re here to help
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <Link
-              href="/contact"
-              className="inline-block px-10 py-4 bg-black text-white text-[11px] font-medium tracking-[0.12em] uppercase hover:bg-slate-800 transition-all duration-300 hover:tracking-[0.15em]"
-            >
-              Contact Us
-            </Link>
-          </motion.div>
-        </div>
-      </motion.div>
+function FaqSection({ category }: { category: FaqCategory }) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold uppercase tracking-wider">
+        {category.title}
+      </h2>
+      <div className="mt-4">
+        {category.items.map((item, idx) => (
+          <AccordionItem
+            key={idx}
+            item={item}
+            isOpen={openIndex === idx}
+            onToggle={() =>
+              setOpenIndex((prev) => (prev === idx ? null : idx))
+            }
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function FaqPage() {
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold uppercase tracking-wider">
+          Frequently Asked Questions
+        </h1>
+        <p className="mt-2 text-sm text-[var(--color-muted)]">
+          Find answers to the most common questions about orders, shipping,
+          returns, and more.
+        </p>
+      </div>
+
+      <div className="mt-10 space-y-10">
+        {FAQ_DATA.map((category) => (
+          <FaqSection key={category.title} category={category} />
+        ))}
+      </div>
+
+      <div className="mt-12 rounded-[var(--button-radius)] bg-[var(--color-surface)] p-6 text-center">
+        <p className="text-sm font-semibold">Still have questions?</p>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Our support team is here to help. Reach out to us anytime.
+        </p>
+        <a
+          href="mailto:hello@earthrevibe.com"
+          className="mt-3 inline-block rounded-[var(--button-radius)] bg-[var(--color-primary)] px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#2a2a2a]"
+        >
+          Contact Support
+        </a>
+      </div>
     </div>
   );
 }

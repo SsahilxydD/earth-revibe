@@ -1,155 +1,233 @@
 "use client";
 
+import { Suspense, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import { ProductGrid } from "@/components/product/product-grid";
-import { Pagination } from "@/components/product/pagination";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Search, ChevronRight, X } from "lucide-react";
+import { ProductCard } from "@/components/product/product-card";
+import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
+import { SortDropdown } from "@/components/product/sort-dropdown";
+import { useInfiniteProducts } from "@/hooks/use-products";
+
+function parseSort(sort: string | null): { sortBy: string; sortOrder: "asc" | "desc" } {
+  switch (sort) {
+    case "price-asc":
+      return { sortBy: "price", sortOrder: "asc" };
+    case "price-desc":
+      return { sortBy: "price", sortOrder: "desc" };
+    case "popular":
+      return { sortBy: "reviewCount", sortOrder: "desc" };
+    default:
+      return { sortBy: "createdAt", sortOrder: "desc" };
+  }
+}
+
+function sortToParam(sortBy: string, sortOrder: "asc" | "desc"): string {
+  if (sortBy === "price" && sortOrder === "asc") return "price-asc";
+  if (sortBy === "price" && sortOrder === "desc") return "price-desc";
+  if (sortBy === "reviewCount") return "popular";
+  return "newest";
+}
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const q = searchParams.get("q") || "";
-  const page = searchParams.get("page") || "1";
+  const query = searchParams.get("q") || "";
+  const sort = searchParams.get("sort");
+  const { sortBy, sortOrder } = parseSort(sort);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["search", q, page],
-    queryFn: () => api.get(`/search?q=${encodeURIComponent(q)}&page=${page}&limit=20`),
-    enabled: q.length > 0,
-  });
+  const [searchInput, setSearchInput] = useState(query);
 
-  const updatePage = (newPage: number) => {
-    const current = new URLSearchParams(searchParams.toString());
-    current.set("page", String(newPage));
-    router.push(`/search?${current.toString()}`);
-  };
+  // Sync input with URL query
+  useEffect(() => {
+    setSearchInput(query);
+  }, [query]);
+
+  const queryParams = useMemo(
+    () => ({
+      search: query || undefined,
+      sortBy,
+      sortOrder,
+      limit: 12,
+    }),
+    [query, sortBy, sortOrder]
+  );
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+  } = useInfiniteProducts(queryParams);
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const handleSearch = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const trimmed = searchInput.trim();
+      if (trimmed) {
+        router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+      }
+    },
+    [searchInput, router]
+  );
+
+  const handleSortChange = useCallback(
+    (newSortBy: string, newSortOrder: "asc" | "desc") => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("sort", sortToParam(newSortBy, newSortOrder));
+      router.push(`/search?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router]
+  );
+
+  const clearSearch = useCallback(() => {
+    setSearchInput("");
+    router.push("/search");
+  }, [router]);
+
+  const allProducts = useMemo(
+    () => data?.pages.flatMap((page) => page.products ?? []) ?? [],
+    [data]
+  );
+
+  const totalCount = data?.pages[0]?.pagination.total ?? 0;
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* Spacer for fixed navbar */}
-      <div className="h-16 lg:h-20" aria-hidden="true" />
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <nav className="mb-4 flex items-center gap-1 text-xs text-[var(--color-muted)]">
+        <Link href="/" className="transition-colors hover:text-[var(--color-text)]">
+          Home
+        </Link>
+        <ChevronRight size={12} />
+        <span className="text-[var(--color-text)]">Search</span>
+      </nav>
 
-      {/* Hero strip */}
-      <div className="bg-slate-50 border-b border-slate-100">
-        <div className="px-3 sm:px-4 md:px-10 max-w-7xl mx-auto py-8 sm:py-10">
-          <h1 className="text-[13px] sm:text-[15px] font-[var(--font-cinzel)] font-semibold tracking-[0.10em] uppercase text-slate-900">
-            {q ? (
-              <>
-                Search results for{" "}
-                <span className="text-slate-500">&lsquo;{q}&rsquo;</span>
-              </>
-            ) : (
-              "Search"
-            )}
-          </h1>
+      {/* Search input */}
+      <form onSubmit={handleSearch} className="mb-8">
+        <div className="relative mx-auto max-w-xl">
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
+          />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search products..."
+            className="h-12 w-full border border-[var(--color-border)] bg-white pl-11 pr-10 text-sm outline-none transition-colors focus:border-[var(--color-primary)]"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+              aria-label="Clear search"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
-      </div>
+      </form>
 
-      <div className="px-3 sm:px-4 md:px-10 max-w-7xl mx-auto pt-6 pb-24 lg:pb-10">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-[11px] tracking-[0.08em] uppercase text-slate-500 mb-6 font-[var(--font-cinzel)] font-semibold">
-          <Link href="/" className="hover:text-slate-900 transition-colors">Home</Link>
-          <span className="text-slate-400">&gt;</span>
-          <span className="text-slate-900">Search</span>
-        </nav>
+      {/* Results header */}
+      {query && (
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-lg font-semibold">
+              {isLoading
+                ? `Searching for "${query}"...`
+                : `Results for "${query}"`}
+            </h1>
+            {!isLoading && (
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                {totalCount} {totalCount === 1 ? "product" : "products"} found
+              </p>
+            )}
+          </div>
+          <SortDropdown
+            currentSort={`${sortBy}-${sortOrder}`}
+            onSortChange={handleSortChange}
+          />
+        </div>
+      )}
 
-        {/* Product count */}
-        <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-          <p className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.12em] uppercase text-slate-400">
-            {!q
-              ? "Enter a search term to find products"
-              : isLoading
-                ? "\u00A0"
-                : data?.total > 0
-                  ? `${data.total} ${data.total === 1 ? "result" : "results"}`
-                  : "0 results"}
+      {/* Results */}
+      {!query ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Search size={48} className="mb-4 text-[var(--color-border)]" />
+          <h2 className="text-lg font-semibold">Search our store</h2>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            Type a keyword to find products.
           </p>
         </div>
-
-        {/* Results */}
-        {!q ? (
-          <div className="flex flex-col items-center justify-center py-24 px-6">
-            <svg
-              className="w-16 h-16 text-slate-200 mb-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1}
-                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-              />
-            </svg>
-            <p className="text-[13px] font-[var(--font-cinzel)] font-medium tracking-[0.08em] uppercase text-slate-800 mb-2">
-              Search our collection
-            </p>
-            <p className="text-[12px] text-slate-500 text-center">
-              Enter a search term above to find products.
-            </p>
-          </div>
-        ) : isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1.5 gap-y-5 sm:gap-x-3 sm:gap-y-6 md:gap-x-4 md:gap-y-8">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="space-y-3">
-                <div className="aspect-[3/4] w-full bg-slate-100 animate-pulse" />
-                <div className="px-1">
-                  <div className="h-3 w-3/4 bg-slate-100 animate-pulse" />
-                  <div className="h-3 w-1/3 bg-slate-100 animate-pulse mt-2" />
-                </div>
-              </div>
+      ) : isLoading ? (
+        <ProductGridSkeleton />
+      ) : isError ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <h3 className="text-lg font-semibold">Something went wrong</h3>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            Could not complete the search. Please try again.
+          </p>
+        </div>
+      ) : allProducts.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-4 text-5xl">:/</div>
+          <h3 className="text-lg font-semibold">
+            No results found for &ldquo;{query}&rdquo;
+          </h3>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            Try a different keyword or browse our collections.
+          </p>
+          <Link
+            href="/products"
+            className="mt-4 border border-[var(--color-primary)] px-6 py-2 text-sm font-semibold transition-colors hover:bg-[var(--color-surface)]"
+          >
+            Browse All Products
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-1 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+            {allProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
-        ) : (
-          <>
-            <ProductGrid products={data?.products || []} />
-            {data?.totalPages > 1 && (
-              <div className="mt-16 mb-8">
-                <Pagination
-                  currentPage={data.page}
-                  totalPages={data.totalPages}
-                  onPageChange={updatePage}
-                />
+          <div ref={loadMoreRef} className="flex justify-center py-8">
+            {isFetchingNextPage && (
+              <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-primary)]" />
+                Loading more...
               </div>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
 export default function SearchPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="bg-white min-h-screen">
-          <div className="h-16 lg:h-20" aria-hidden="true" />
-          <div className="bg-slate-50 border-b border-slate-100">
-            <div className="px-3 sm:px-4 md:px-10 max-w-7xl mx-auto py-8 sm:py-10">
-              <div className="h-4 w-48 bg-slate-200 animate-pulse" />
-            </div>
-          </div>
-          <div className="px-3 sm:px-4 md:px-10 max-w-7xl mx-auto py-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1.5 gap-y-5 sm:gap-x-3 sm:gap-y-6 md:gap-x-4 md:gap-y-8">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="space-y-3">
-                  <div className="aspect-[3/4] w-full bg-slate-100 animate-pulse" />
-                  <div className="px-1">
-                    <div className="h-3 w-3/4 bg-slate-100 animate-pulse" />
-                    <div className="h-3 w-1/3 bg-slate-100 animate-pulse mt-2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<ProductGridSkeleton />}>
       <SearchContent />
     </Suspense>
   );

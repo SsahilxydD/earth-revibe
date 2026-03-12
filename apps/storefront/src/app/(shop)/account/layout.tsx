@@ -1,78 +1,137 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { User, Package, Heart, Star, Gift, MapPin, Headset } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  User,
+  Package,
+  MapPin,
+  Heart,
+  Star,
+  Gift,
+  HelpCircle,
+  LogOut,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
-import { Spinner } from "@/components/ui";
+import { Spinner } from "@/components/ui/spinner";
 
-const accountNav = [
-  { label: "Profile", href: "/account/profile", icon: User },
-  { label: "Orders", href: "/account/orders", icon: Package },
-  { label: "Wishlist", href: "/account/wishlist", icon: Heart },
-  { label: "Addresses", href: "/account/addresses", icon: MapPin },
-  { label: "Loyalty Points", href: "/account/loyalty", icon: Star },
-  { label: "Referrals", href: "/account/referrals", icon: Gift },
-  { label: "Support", href: "/account/support", icon: Headset },
-];
+const NAV_ITEMS = [
+  { href: "/account/profile", label: "Profile", icon: User },
+  { href: "/account/orders", label: "Orders", icon: Package },
+  { href: "/account/addresses", label: "Addresses", icon: MapPin },
+  { href: "/account/wishlist", label: "Wishlist", icon: Heart },
+  { href: "/account/loyalty", label: "Loyalty Points", icon: Star },
+  { href: "/account/referrals", label: "Referrals", icon: Gift },
+  { href: "/account/support", label: "Support", icon: HelpCircle },
+] as const;
 
-export default function AccountLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuthStore();
-  const router = useRouter();
+export default function AccountLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isLoading, isAuthenticated, checkAuth, logout } =
+    useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
+      router.push("/auth/login");
     }
-  }, [isLoading, isAuthenticated, router, pathname]);
+  }, [isLoading, isAuthenticated, router]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/auth/login");
+  };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Spinner size="lg" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Spinner className="h-8 w-8" />
       </div>
     );
   }
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
-    <div className="bg-white min-h-screen">
-    <div className="h-16 lg:h-20" aria-hidden="true" />
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 pt-6 pb-24 lg:pb-12">
-      <div className="flex flex-col lg:flex-row lg:gap-12">
-        {/* Sidebar */}
-        <aside className="lg:w-48 flex-shrink-0">
-          <p className="hidden lg:block text-[10px] font-[var(--font-cinzel)] tracking-[0.15em] uppercase text-slate-400 mb-4">
-            My Account
-          </p>
-          <nav className="flex lg:flex-col gap-0 overflow-x-auto lg:overflow-visible pb-3 lg:pb-0 border-b border-slate-100 lg:border-b-0 mb-6 lg:mb-0">
-            {accountNav.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+    <div className="mx-auto max-w-7xl px-4 py-8 md:py-12">
+      <h1 className="mb-6 text-2xl font-bold uppercase tracking-wider md:mb-8">
+        My Account
+      </h1>
+
+      {/* Mobile tabs - horizontal scroll */}
+      <div className="mb-6 flex gap-1 overflow-x-auto border-b border-[var(--color-border)] pb-px md:hidden hide-scrollbar">
+        {NAV_ITEMS.map((item) => {
+          const isActive =
+            pathname === item.href || pathname.startsWith(item.href + "/");
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors",
+                isActive
+                  ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+                  : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)]"
+              )}
+            >
+              <item.icon size={14} />
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-8 md:gap-12">
+        {/* Desktop sidebar */}
+        <aside className="hidden w-56 shrink-0 md:block">
+          <nav className="space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-2 px-3 py-2.5 lg:px-0 text-[12px] tracking-[0.04em] whitespace-nowrap transition-colors lg:border-l-2 ${
+                  className={cn(
+                    "flex items-center gap-3 rounded-[var(--button-radius)] px-4 py-2.5 text-sm font-medium transition-colors",
                     isActive
-                      ? "text-black lg:border-black lg:pl-3 font-medium"
-                      : "text-slate-500 hover:text-black lg:border-transparent lg:hover:pl-3 lg:hover:border-slate-200"
-                  }`}
+                      ? "bg-[var(--color-primary)] text-white"
+                      : "text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                  )}
                 >
-                  <item.icon size={14} className="shrink-0" />
+                  <item.icon size={18} />
                   {item.label}
                 </Link>
               );
             })}
           </nav>
+          <div className="mt-6 border-t border-[var(--color-border)] pt-4">
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-[var(--button-radius)] px-4 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface)] hover:text-[var(--color-sale)]"
+            >
+              <LogOut size={18} />
+              Log Out
+            </button>
+          </div>
         </aside>
 
-        {/* Content */}
-        <main className="flex-1 min-w-0">{children}</main>
+        {/* Main content */}
+        <main className="min-w-0 flex-1">{children}</main>
       </div>
-    </div>
     </div>
   );
 }

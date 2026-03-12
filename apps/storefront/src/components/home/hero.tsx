@@ -1,203 +1,162 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { useUIStore } from '@/stores/ui-store';
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
-const heroSections = [
+interface Slide {
+  heading: string;
+  subtitle: string;
+  cta: string;
+  href: string;
+  image: string;
+}
+
+const SLIDES: Slide[] = [
   {
-    id: 'default-1',
-    titleAccent: 'Essentials',
-    bgColor: '#97826F',
-    bgImage: '/poster1.png',
-    gradientColor: '#8B6234',
-    href: '/products',
+    heading: "DEFINE YOUR STYLE",
+    subtitle: "New collection just dropped",
+    cta: "SHOP NOW",
+    href: "/collections/new-arrivals",
+    image: "/poster1.png",
   },
   {
-    id: 'default-2',
-    titleAccent: 'Luxe',
-    bgColor: '#8DB7AC',
-    bgImage: '/poster2.png',
-    gradientColor: '#EAD9CC',
-    href: '/products',
+    heading: "OVERSIZED IS THE NEW COOL",
+    subtitle: "Comfort meets crazy",
+    cta: "EXPLORE",
+    href: "/collections/oversized",
+    image: "/poster2.png",
   },
   {
-    id: 'default-3',
-    titleAccent: 'Polos',
-    bgColor: '#97826F',
-    bgImage: '/sample_product.png',
-    gradientColor: '#8A8C80',
-    href: '/products',
-  },
-  {
-    id: 'default-4',
-    titleAccent: 'Bottomwear',
-    bgColor: '#6D7B6E',
-    bgImage: '/poster3.png',
-    gradientColor: '#8A8C80',
-    href: '/categories/bottoms-pants',
+    heading: "UPTO 50% OFF",
+    subtitle: "End of season sale",
+    cta: "SHOP SALE",
+    href: "/collections/sale",
+    image: "/poster3.png",
   },
 ];
 
+const AUTO_ROTATE_MS = 5000;
+
 export function Hero() {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { setHeaderTransparent } = useUIStore();
+  const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(1);
+
+  const goTo = useCallback(
+    (index: number) => {
+      setDirection(index > current ? 1 : -1);
+      setCurrent(index);
+    },
+    [current],
+  );
 
   useEffect(() => {
-    setHeaderTransparent(true);
-    return () => setHeaderTransparent(false);
-  }, [setHeaderTransparent]);
+    const timer = setInterval(() => {
+      setDirection(1);
+      setCurrent((prev) => (prev + 1) % SLIDES.length);
+    }, AUTO_ROTATE_MS);
+    return () => clearInterval(timer);
+  }, []);
 
-  const getWidth = (index: number) => {
-    const defaultWidth = 100 / heroSections.length;
-    if (hoveredIndex === null) return defaultWidth;
-    if (hoveredIndex === index) return 55;
-    return 45 / (heroSections.length - 1);
+  const slide = SLIDES[current];
+
+  const slideVariants = {
+    enter: (dir: number) => ({
+      x: dir > 0 ? "100%" : "-100%",
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (dir: number) => ({
+      x: dir > 0 ? "-100%" : "100%",
+      opacity: 0,
+    }),
   };
 
   return (
-    <div ref={heroRef}>
-      {/* Mobile: Full Screen Stacked Layout */}
-      <div className="lg:hidden flex flex-col gap-[4px] bg-[#FDFCFA]">
-        {heroSections.map((section, index) => (
-          <section
-            key={section.id}
-            className="relative h-screen w-full overflow-hidden"
-            style={{ backgroundColor: section.bgColor }}
-          >
-            <Link
-              href={section.href}
-              className="absolute inset-0 z-30"
-              aria-label={`Shop ${section.titleAccent}`}
-              prefetch={false}
-            />
+    <section className="relative w-full h-[60vh] md:h-[calc(100vh-80px)] overflow-hidden bg-[var(--color-primary)]">
+      <AnimatePresence initial={false} custom={direction} mode="wait">
+        <motion.div
+          key={current}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0"
+        >
+          <Image
+            src={slide.image}
+            alt={slide.heading}
+            fill
+            priority={current === 0}
+            className="object-cover"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-black/40" />
 
-            <Image
-              src={section.bgImage}
-              alt={section.titleAccent}
-              fill
-              sizes="100vw"
-              className="object-cover object-center"
-              priority={index === 0}
-            />
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+            <motion.h1
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-white tracking-tight leading-none"
+            >
+              {slide.heading}
+            </motion.h1>
 
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(to top, ${section.gradientColor}cc 0%, ${section.gradientColor}33 25%, transparent 50%)`
-              }}
-            />
-
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6 pointer-events-none">
-              <motion.div
-                className="absolute top-[55%] -translate-y-1/2"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                viewport={{ once: true, amount: 0.5 }}
-              >
-                <h1 className="font-[var(--font-display)] text-5xl sm:text-6xl font-normal text-white drop-shadow-lg">
-                  {section.titleAccent}
-                </h1>
-              </motion.div>
-
-              <motion.div
-                className="absolute top-[82%]"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                viewport={{ once: true, amount: 0.5 }}
-              >
-                <span className="inline-flex items-center justify-center w-[100px] h-[40px] border-2 border-white text-white text-sm tracking-[0.15em] font-medium transition-all duration-300 backdrop-blur-sm bg-white/10">
-                  Shop Now
-                </span>
-              </motion.div>
-            </div>
-          </section>
-        ))}
-      </div>
-
-      {/* Desktop: Interactive Row Layout */}
-      <div
-        className="hidden lg:flex h-screen bg-[#FDFCFA]"
-        onMouseLeave={() => setHoveredIndex(null)}
-      >
-        {heroSections.map((section, index) => (
-          <motion.div
-            key={section.id}
-            className="relative h-full overflow-hidden bg-black"
-            animate={{ width: `${getWidth(index)}%` }}
-            transition={{ type: 'spring', stiffness: 200, damping: 25, mass: 0.8 }}
-            onMouseEnter={() => setHoveredIndex(index)}
-          >
-            <Link
-              href={section.href}
-              className="absolute inset-0 z-10"
-              aria-label={`Shop ${section.titleAccent}`}
-              prefetch={false}
-            />
+            <motion.p
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.35, duration: 0.5 }}
+              className="mt-3 md:mt-5 text-sm sm:text-base md:text-lg text-white/80 tracking-wider uppercase"
+            >
+              {slide.subtitle}
+            </motion.p>
 
             <motion.div
-              className="h-full w-full relative"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
             >
-              <motion.div
-                className="h-full w-full relative"
-                animate={{ scale: hoveredIndex === index ? 1.1 : 1 }}
-                style={{
-                  transformOrigin: section.titleAccent === 'Bottomwear'
-                    ? 'center 85%'
-                    : 'center 30%',
-                }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
+              <Link
+                href={slide.href}
+                className={cn(
+                  "mt-6 md:mt-8 inline-block px-8 py-3 md:px-10 md:py-4",
+                  "bg-white text-[var(--color-primary)] text-xs md:text-sm font-semibold",
+                  "uppercase tracking-[0.15em]",
+                  "rounded-[var(--button-radius)]",
+                  "hover:bg-white/90 transition-colors",
+                )}
               >
-                <Image
-                  src={section.bgImage}
-                  alt={section.titleAccent}
-                  fill
-                  sizes="100vw"
-                  className="object-cover"
-                  style={{
-                    objectPosition: section.titleAccent === 'Bottomwear'
-                      ? 'center 85%'
-                      : 'center 30%',
-                  }}
-                  loading={index === 0 ? 'eager' : 'lazy'}
-                />
-              </motion.div>
-
-              <motion.div
-                className="absolute inset-0 bg-black"
-                animate={{
-                  opacity: hoveredIndex === null ? 0 : hoveredIndex === index ? 0 : 0.3
-                }}
-                transition={{ duration: 0.3 }}
-              />
-
-              <div className="absolute bottom-0 left-0 right-0 p-8 z-20">
-                <motion.div
-                  className="origin-bottom-left will-change-transform"
-                  animate={{
-                    scale: hoveredIndex === index ? 2.286 : 1,
-                    opacity: hoveredIndex === null ? 1 : hoveredIndex === index ? 1 : 0.7
-                  }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                >
-                  <h2 className="font-[var(--font-display)] text-white drop-shadow-lg text-[1.75rem]">
-                    {section.titleAccent}
-                  </h2>
-                </motion.div>
-              </div>
+                {slide.cta}
+              </Link>
             </motion.div>
-          </motion.div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Dot navigation */}
+      <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-2.5 z-10">
+        {SLIDES.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goTo(index)}
+            aria-label={`Go to slide ${index + 1}`}
+            className={cn(
+              "h-2 rounded-full transition-all duration-300",
+              index === current
+                ? "w-8 bg-white"
+                : "w-2 bg-white/50 hover:bg-white/70",
+            )}
+          />
         ))}
       </div>
-    </div>
+    </section>
   );
 }

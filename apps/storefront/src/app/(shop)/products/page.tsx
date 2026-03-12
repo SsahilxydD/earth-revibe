@@ -1,120 +1,233 @@
 "use client";
 
+import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/product/product-card";
-import { Pagination } from "@/components/product/pagination";
-import { Suspense } from "react";
+import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
+import { FilterSidebar, type FilterState } from "@/components/product/filter-sidebar";
+import { SortDropdown } from "@/components/product/sort-dropdown";
+import { useInfiniteProducts } from "@/hooks/use-products";
+
+function parseSort(sort: string | null): { sortBy: string; sortOrder: "asc" | "desc" } {
+  switch (sort) {
+    case "price-asc":
+      return { sortBy: "price", sortOrder: "asc" };
+    case "price-desc":
+      return { sortBy: "price", sortOrder: "desc" };
+    case "popular":
+      return { sortBy: "reviewCount", sortOrder: "desc" };
+    default:
+      return { sortBy: "createdAt", sortOrder: "desc" };
+  }
+}
+
+function sortToParam(sortBy: string, sortOrder: "asc" | "desc"): string {
+  if (sortBy === "price" && sortOrder === "asc") return "price-asc";
+  if (sortBy === "price" && sortOrder === "desc") return "price-desc";
+  if (sortBy === "reviewCount") return "popular";
+  return "newest";
+}
 
 function ProductsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const params = {
-    page: searchParams.get("page") || "1",
-    limit: "24",
-    sortBy: searchParams.get("sortBy") || "createdAt",
-    sortOrder: searchParams.get("sortOrder") || "desc",
-  };
+  const category = searchParams.get("category") || "";
+  const sort = searchParams.get("sort");
+  const minPriceRaw = searchParams.get("minPrice");
+  const maxPriceRaw = searchParams.get("maxPrice");
+  const size = searchParams.get("size") || "";
+  const color = searchParams.get("color") || "";
+  const search = searchParams.get("search") || "";
 
-  const queryString = Object.entries(params)
-    .filter(([_, v]) => v !== undefined)
-    .map(([k, v]) => `${k}=${encodeURIComponent(v!)}`)
-    .join("&");
+  const { sortBy, sortOrder } = parseSort(sort);
+  const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
+  const maxPrice = maxPriceRaw ? Number(maxPriceRaw) : undefined;
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["products", queryString],
-    queryFn: () => api.get(`/products?${queryString}`),
-    retry: 2,
-  });
+  const queryParams = useMemo(
+    () => ({
+      category: category || undefined,
+      sortBy,
+      sortOrder,
+      minPrice,
+      maxPrice,
+      sizes: size ? [size] : undefined,
+      colors: color ? [color] : undefined,
+      search: search || undefined,
+      limit: 12,
+    }),
+    [category, sortBy, sortOrder, minPrice, maxPrice, size, color, search]
+  );
 
-  const updateParams = (updates: Record<string, string | undefined>) => {
-    const current = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value) current.set(key, value);
-      else current.delete(key);
-    });
-    router.push(`/products?${current.toString()}`);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+  } = useInfiniteProducts(queryParams);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const updateParams = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [key, value] of Object.entries(updates)) {
+        if (value) {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      }
+      router.push(`/products?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router]
+  );
+
+  const handleFilterChange = useCallback(
+    (filters: FilterState) => {
+      updateParams({
+        category: filters.category || undefined,
+        minPrice: filters.minPrice !== undefined ? String(filters.minPrice) : undefined,
+        maxPrice: filters.maxPrice !== undefined ? String(filters.maxPrice) : undefined,
+        size: filters.size || undefined,
+        color: filters.color || undefined,
+      });
+    },
+    [updateParams]
+  );
+
+  const handleSortChange = useCallback(
+    (newSortBy: string, newSortOrder: "asc" | "desc") => {
+      updateParams({ sort: sortToParam(newSortBy, newSortOrder) });
+    },
+    [updateParams]
+  );
+
+  const allProducts = useMemo(
+    () => data?.pages.flatMap((page) => page.products ?? []) ?? [],
+    [data]
+  );
+
+  const totalCount = data?.pages[0]?.pagination.total ?? 0;
+
+  const currentFilters: FilterState = {
+    category,
+    minPrice,
+    maxPrice,
+    size,
+    color,
   };
 
   return (
-    <div className="bg-white min-h-screen">
-      <div className="h-16 lg:h-20" aria-hidden="true" />
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <nav className="mb-4 flex items-center gap-1 text-xs text-[var(--color-muted)]">
+        <Link href="/" className="transition-colors hover:text-[var(--color-text)]">
+          Home
+        </Link>
+        <ChevronRight size={12} />
+        <span className="text-[var(--color-text)]">
+          {search ? `Search: "${search}"` : "All Products"}
+        </span>
+      </nav>
 
-      {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-[1px] bg-slate-100">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="bg-white">
-              <div className="aspect-[3/4] w-full bg-slate-50 animate-pulse" />
-              <div className="p-4">
-                <div className="h-3 w-3/4 bg-slate-100 animate-pulse" />
-                <div className="h-3 w-1/3 bg-slate-100 animate-pulse mt-2" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : isError ? (
-        <div className="flex flex-col items-center justify-center py-24 px-6">
-          <p className="text-[13px] font-medium text-slate-800 mb-1">
-            Unable to load products
-          </p>
-          <p className="text-[12px] text-slate-500 text-center mb-4">
-            {(error as any)?.message || "Something went wrong. Please try again."}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="text-[11px] font-medium tracking-[0.06em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-[1px] bg-slate-100">
-            {(data?.products || []).map((product: any, index: number) => (
-              <div key={product.slug || product.id} className="bg-white">
-                <ProductCard product={product} index={index} />
-              </div>
-            ))}
-          </div>
-          {data?.totalPages > 1 && (
-            <div className="py-12 flex justify-center">
-              <Pagination
-                currentPage={data.page}
-                totalPages={data.totalPages}
-                onPageChange={(page) =>
-                  updateParams({ page: String(page) })
-                }
-              />
-            </div>
+      {/* Header */}
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-xl font-bold uppercase tracking-wider md:text-2xl">
+            {search ? `Results for "${search}"` : "All Products"}
+          </h1>
+          {!isLoading && (
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
+              {totalCount} {totalCount === 1 ? "product" : "products"}
+            </p>
           )}
-        </>
-      )}
+        </div>
+        <div className="flex items-center gap-3">
+          <FilterSidebar filters={currentFilters} onFilterChange={handleFilterChange} />
+          <SortDropdown
+            currentSort={`${sortBy}-${sortOrder}`}
+            onSortChange={handleSortChange}
+          />
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex gap-8">
+        {/* Desktop filter sidebar */}
+        <FilterSidebar filters={currentFilters} onFilterChange={handleFilterChange} />
+
+        {/* Product grid */}
+        <div className="flex-1">
+          {isLoading ? (
+            <ProductGridSkeleton />
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <h3 className="text-lg font-semibold">Something went wrong</h3>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                Could not load products. Please try again.
+              </p>
+            </div>
+          ) : allProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-4 text-5xl">:/</div>
+              <h3 className="text-lg font-semibold">No products found</h3>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                Try adjusting your filters or search terms.
+              </p>
+              <button
+                onClick={() => router.push("/products")}
+                className="mt-4 border border-[var(--color-primary)] px-6 py-2 text-sm font-semibold transition-colors hover:bg-[var(--color-surface)]"
+              >
+                Clear Filters
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-1 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+                {allProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+
+              {/* Load more trigger */}
+              <div ref={loadMoreRef} className="flex justify-center py-8">
+                {isFetchingNextPage && (
+                  <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-primary)]" />
+                    Loading more...
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function ProductsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="bg-white min-h-screen">
-          <div className="h-16 lg:h-20" aria-hidden="true" />
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-[1px] bg-slate-100">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="bg-white">
-                <div className="aspect-[3/4] w-full bg-slate-50 animate-pulse" />
-                <div className="p-4">
-                  <div className="h-3 w-3/4 bg-slate-100 animate-pulse" />
-                  <div className="h-3 w-1/3 bg-slate-100 animate-pulse mt-2" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<ProductGridSkeleton />}>
       <ProductsContent />
     </Suspense>
   );

@@ -1,27 +1,29 @@
-'use client';
-
-import { motion } from 'framer-motion';
+import Link from "next/link";
 
 interface SectionHeaderProps {
-  subtitle: string;
   title: string;
+  viewAllHref?: string;
+  viewAllLabel?: string;
 }
 
-export function SectionHeader({ subtitle, title }: SectionHeaderProps) {
+export function SectionHeader({
+  title,
+  viewAllHref,
+  viewAllLabel = "View All",
+}: SectionHeaderProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-      className="text-center mb-12 lg:mb-16 px-6 lg:px-14"
-    >
-      <p className="text-[10px] font-[var(--font-cinzel)] font-medium tracking-[0.2em] uppercase text-slate-400 mb-3">
-        {subtitle}
-      </p>
-      <h2 className="text-[24px] lg:text-[32px] font-[var(--font-cinzel)] font-medium tracking-[0.02em] text-black">
+    <div className="flex items-center justify-between mb-6 md:mb-8">
+      <h2 className="text-sm md:text-base font-semibold uppercase tracking-[0.2em] text-[var(--color-primary)]">
         {title}
       </h2>
-    </motion.div>
+      {viewAllHref && (
+        <Link
+          href={viewAllHref}
+          className="text-xs md:text-sm uppercase tracking-wider text-[var(--color-muted)] underline underline-offset-4 hover:text-[var(--color-primary)] transition-colors"
+        >
+          {viewAllLabel}
+        </Link>
+      )}
+    </div>
   );
 }

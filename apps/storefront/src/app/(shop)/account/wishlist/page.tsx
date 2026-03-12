@@ -2,105 +2,169 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Trash2, ShoppingBag } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Heart, ShoppingBag, Trash2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api-client";
-import { Button, Card } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
-import { Skeleton } from "@/components/ui/skeleton";
+import { formatPrice, getImageUrl } from "@/lib/utils";
+import { useCartStore } from "@/stores/cart-store";
+import { useToast } from "@/providers";
 
-function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(Number(amount));
+interface WishlistItem {
+  id: string;
+  productId: string;
+  name: string;
+  slug: string;
+  image: string;
+  price: number;
+  compareAtPrice: number | null;
+  inStock: boolean;
 }
 
 export default function WishlistPage() {
   const queryClient = useQueryClient();
+  const addItem = useCartStore((s) => s.addItem);
+  const { addToast } = useToast();
 
   const { data: items, isLoading } = useQuery({
     queryKey: ["wishlist"],
-    queryFn: () => api.get("/wishlist"),
+    queryFn: () => api.get<WishlistItem[]>("/wishlist"),
   });
 
-  const removeItem = useMutation({
-    mutationFn: (productId: string) => api.delete(`/wishlist/${productId}`),
+  const removeMutation = useMutation({
+    mutationFn: (productId: string) =>
+      api.delete(`/wishlist/${productId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
-      toast.success("Removed from wishlist");
+      addToast("Removed from wishlist", "success");
     },
-    onError: (err: any) => toast.error(err.message || "Failed to remove"),
+    onError: (err: any) => {
+      addToast(err?.message || "Failed to remove item", "error");
+    },
   });
 
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-charcoal">My Wishlist</h1>
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Spinner className="h-6 w-6" />
+      </div>
+    );
+  }
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-72 w-full" />
-          ))}
+  if (!items || items.length === 0) {
+    return (
+      <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface)]">
+          <Heart size={28} className="text-[var(--color-muted)]" />
         </div>
-      ) : !items?.length ? (
-        <Card>
-          <div className="text-center py-12">
-            <Heart size={48} className="mx-auto text-light-gray mb-4" />
-            <p className="text-medium-gray mb-4">Your wishlist is empty</p>
-            <Link href="/products">
-              <Button>
-                <ShoppingBag size={16} />
-                Browse Products
-              </Button>
-            </Link>
-          </div>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map((item: any) => (
-            <Card key={item.id} className="group relative">
-              <button
-                onClick={() => removeItem.mutate(item.product.id)}
-                className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white shadow-sm hover:bg-error/10 transition-colors"
-                title="Remove from wishlist"
-              >
-                <Trash2 size={14} className="text-error" />
-              </button>
-              <Link href={`/products/${item.product.slug}`}>
-                <div className="aspect-[3/4] rounded-lg bg-off-white mb-3 overflow-hidden relative">
-                  {item.product.images?.[0]?.url ? (
-                    <Image
-                      src={item.product.images[0].url}
-                      alt={item.product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      loading="lazy"
+        <h2 className="mb-2 text-lg font-bold">Your Wishlist Is Empty</h2>
+        <p className="mb-6 text-sm text-[var(--color-muted)]">
+          Save items you love and come back to them later.
+        </p>
+        <Link
+          href="/collections"
+          className="inline-flex items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#2a2a2a]"
+        >
+          Browse Collections
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="mb-6 text-sm font-bold uppercase tracking-wider">
+        Wishlist ({items.length} {items.length === 1 ? "item" : "items"})
+      </h2>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="group relative rounded-xl border border-[var(--color-border)] overflow-hidden"
+          >
+            <Link href={`/products/${item.slug}`}>
+              <div className="aspect-[2/3] bg-[var(--color-surface)] relative overflow-hidden">
+                {item.image ? (
+                  <Image
+                    src={getImageUrl(item.image, 400)}
+                    alt={item.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <ShoppingBag
+                      size={32}
+                      className="text-[var(--color-muted)]"
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ShoppingBag size={32} className="text-light-gray" />
-                    </div>
-                  )}
-                </div>
-                <h3 className="font-medium text-charcoal group-hover:text-forest-green transition-colors truncate">
-                  {item.product.name}
-                </h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="font-semibold text-charcoal">{formatPrice(item.product.price)}</span>
-                  {item.product.compareAtPrice && Number(item.product.compareAtPrice) > Number(item.product.price) && (
-                    <span className="text-sm text-medium-gray line-through">
-                      {formatPrice(item.product.compareAtPrice)}
+                  </div>
+                )}
+                {!item.inStock && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                    <span className="rounded-[var(--badge-radius)] bg-white px-3 py-1 text-xs font-bold uppercase">
+                      Sold Out
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
+              </div>
+            </Link>
+
+            <div className="p-3">
+              <Link href={`/products/${item.slug}`}>
+                <h3 className="text-xs font-semibold leading-tight line-clamp-2">
+                  {item.name}
+                </h3>
               </Link>
-            </Card>
-          ))}
-        </div>
-      )}
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="text-sm font-bold">
+                  {formatPrice(item.price)}
+                </span>
+                {item.compareAtPrice && item.compareAtPrice > item.price && (
+                  <span className="text-xs text-[var(--color-muted)] line-through">
+                    {formatPrice(item.compareAtPrice)}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => removeMutation.mutate(item.productId)}
+                  disabled={removeMutation.isPending}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--button-radius)] border border-[var(--color-border)] text-[var(--color-muted)] transition-colors hover:border-[var(--color-sale)] hover:text-[var(--color-sale)]"
+                  aria-label="Remove from wishlist"
+                >
+                  <Trash2 size={14} />
+                </button>
+                {item.inStock && (
+                  <button
+                    onClick={() => {
+                      addItem({
+                        id: `${item.productId}-default`,
+                        productId: item.productId,
+                        name: item.name,
+                        slug: item.slug,
+                        image: item.image,
+                        price: item.price,
+                        compareAtPrice: item.compareAtPrice || undefined,
+                        size: "M",
+                        color: "Default",
+                        maxQuantity: 10,
+                      });
+                      addToast("Added to cart", "success");
+                    }}
+                    className="flex h-8 flex-1 items-center justify-center gap-1 rounded-[var(--button-radius)] bg-[var(--color-primary)] text-[10px] font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#2a2a2a]"
+                  >
+                    <ShoppingBag size={12} />
+                    Add to Cart
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

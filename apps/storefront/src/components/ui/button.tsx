@@ -1,41 +1,68 @@
-"use client";
-
-import { forwardRef } from "react";
+import { forwardRef, type ButtonHTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
 import { Spinner } from "./spinner";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
-  size?: "sm" | "md" | "lg";
-  isLoading?: boolean;
-  children: React.ReactNode;
+type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
+type ButtonSize = "sm" | "md" | "lg";
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  loading?: boolean;
+  fullWidth?: boolean;
 }
 
-const variantStyles = {
-  primary: "bg-forest-green text-white hover:bg-forest-green/90 active:bg-forest-green/80",
-  secondary: "border-[1.5px] border-forest-green text-forest-green hover:bg-forest-green hover:text-white",
-  ghost: "text-forest-green hover:bg-cream",
-  danger: "bg-error text-white hover:bg-error/90",
+const variantStyles: Record<ButtonVariant, string> = {
+  primary:
+    "bg-[var(--color-primary)] text-white hover:bg-[#2a2a2a] active:bg-[#000]",
+  secondary:
+    "bg-white text-[var(--color-primary)] border border-[var(--color-primary)] hover:bg-[var(--color-surface)]",
+  danger:
+    "bg-[var(--color-sale)] text-white hover:bg-[#b82222] active:bg-[#a01e1e]",
+  ghost:
+    "bg-transparent text-[var(--color-primary)] hover:bg-[var(--color-surface)]",
 };
 
-const sizeStyles = {
-  sm: "px-4 py-2 text-sm h-9",
-  md: "px-6 py-3 text-base h-11",
-  lg: "px-8 py-4 text-lg h-[52px]",
+const sizeStyles: Record<ButtonSize, string> = {
+  sm: "px-3 py-1.5 text-xs",
+  md: "px-5 py-2.5 text-sm",
+  lg: "px-7 py-3.5 text-base",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = "primary", size = "md", isLoading, disabled, children, className = "", ...props }, ref) => {
+  (
+    {
+      variant = "primary",
+      size = "md",
+      loading = false,
+      fullWidth = false,
+      disabled,
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     return (
       <button
         ref={ref}
-        disabled={disabled || isLoading}
-        className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+        disabled={disabled || loading}
+        className={cn(
+          "inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wider transition-colors duration-200",
+          "rounded-[var(--button-radius)]",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          variantStyles[variant],
+          sizeStyles[size],
+          fullWidth && "w-full",
+          className
+        )}
         {...props}
       >
-        {isLoading && <Spinner size="sm" />}
+        {loading && <Spinner className="h-4 w-4" />}
         {children}
       </button>
     );
   }
 );
+
 Button.displayName = "Button";
