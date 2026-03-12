@@ -1,5 +1,6 @@
 import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
+import { APP_CONSTANTS } from "../config/constants";
 
 interface CustomerQuery {
   search?: string;
@@ -135,7 +136,7 @@ export const adminCustomerService = {
         createdAt: true,
         _count: { select: { orders: true } },
       },
-      take: 10000, // Cap to prevent memory issues
+      take: APP_CONSTANTS.MAX_CSV_EXPORT_ROWS, // Cap to prevent memory issues
     });
 
     // Batch fetch total spent for all customers in one query

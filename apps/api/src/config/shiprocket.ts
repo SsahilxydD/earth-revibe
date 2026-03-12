@@ -1,4 +1,6 @@
 import { env } from "./env";
+import { APP_CONSTANTS } from "./constants";
+import { createCircuitBreaker } from "../utils/circuit-breaker";
 
 const SHIPROCKET_BASE = "https://apiv2.shiprocket.in/v1/external";
 
@@ -32,15 +34,14 @@ export async function getShiprocketToken(): Promise<string> {
 
   const data: any = await res.json();
   cachedToken = data.token;
-  // Cache for 9 days (Shiprocket tokens last 10 days)
-  tokenExpiry = Date.now() + 9 * 24 * 60 * 60 * 1000;
+  tokenExpiry = Date.now() + APP_CONSTANTS.SHIPROCKET_TOKEN_CACHE_MS;
   return cachedToken!;
 }
 
 /**
- * Make an authenticated request to the Shiprocket API.
+ * Internal implementation of authenticated Shiprocket API requests.
  */
-export async function shiprocketRequest<T = any>(
+async function _shiprocketRequest<T = any>(
   path: string,
   options: { method?: string; body?: any } = {}
 ): Promise<T> {
@@ -62,4 +63,20 @@ export async function shiprocketRequest<T = any>(
   }
 
   return data as T;
+}
+
+const shiprocketBreaker = createCircuitBreaker(
+  _shiprocketRequest,
+  "shiprocket",
+  { timeout: 15000, resetTimeout: 60000 }
+);
+
+/**
+ * Make an authenticated request to the Shiprocket API, protected by circuit breaker.
+ */
+export async function shiprocketRequest<T = any>(
+  path: string,
+  options: { method?: string; body?: any } = {}
+): Promise<T> {
+  return shiprocketBreaker.fire(path, options) as Promise<T>;
 }

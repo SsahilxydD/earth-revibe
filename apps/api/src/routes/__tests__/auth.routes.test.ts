@@ -1,7 +1,9 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { request, createTestUser, cleanupTestData, generateTestToken, makeRegisterPayload } from "../../test/helpers";
+import { request, cleanupTestData, makeRegisterPayload, isSupabaseConfigured } from "../../test/helpers";
 
-describe("Auth Routes", () => {
+const describeIf = isSupabaseConfigured() ? describe : describe.skip;
+
+describeIf("Auth Routes", () => {
   const createdUserIds: string[] = [];
 
   afterEach(async () => {
@@ -63,16 +65,17 @@ describe("Auth Routes", () => {
 
   describe("POST /api/v1/auth/login", () => {
     it("should login with valid credentials (200)", async () => {
-      const { user, password } = await createTestUser();
-      createdUserIds.push(user.id);
+      const payload = makeRegisterPayload();
+      const registerRes = await request.post("/api/v1/auth/register").send(payload);
+      createdUserIds.push(registerRes.body.data.user.id);
 
       const res = await request
         .post("/api/v1/auth/login")
-        .send({ email: user.email, password })
+        .send({ email: payload.email, password: payload.password })
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.user.id).toBe(user.id);
+      expect(res.body.data.user.email).toBe(payload.email);
       expect(res.body.data.accessToken).toBeDefined();
     });
 
@@ -88,17 +91,17 @@ describe("Auth Routes", () => {
 
   describe("GET /api/v1/auth/me", () => {
     it("should return user profile with valid token (200)", async () => {
-      const { user } = await createTestUser();
-      createdUserIds.push(user.id);
-      const token = generateTestToken(user.id);
+      const payload = makeRegisterPayload();
+      const registerRes = await request.post("/api/v1/auth/register").send(payload);
+      const { accessToken } = registerRes.body.data;
+      createdUserIds.push(registerRes.body.data.user.id);
 
       const res = await request
         .get("/api/v1/auth/me")
-        .set("Authorization", `Bearer ${token}`)
+        .set("Authorization", `Bearer ${accessToken}`)
         .expect(200);
 
-      expect(res.body.data.id).toBe(user.id);
-      expect(res.body.data.email).toBe(user.email);
+      expect(res.body.data.email).toBe(payload.email);
     });
 
     it("should reject missing token (401)", async () => {
@@ -115,12 +118,13 @@ describe("Auth Routes", () => {
 
   describe("POST /api/v1/auth/refresh", () => {
     it("should return new tokens (200)", async () => {
-      const { user, password } = await createTestUser();
-      createdUserIds.push(user.id);
+      const payload = makeRegisterPayload();
+      const registerRes = await request.post("/api/v1/auth/register").send(payload);
+      createdUserIds.push(registerRes.body.data.user.id);
 
       const loginRes = await request
         .post("/api/v1/auth/login")
-        .send({ email: user.email, password });
+        .send({ email: payload.email, password: payload.password });
 
       const res = await request
         .post("/api/v1/auth/refresh")
@@ -134,19 +138,20 @@ describe("Auth Routes", () => {
 
   describe("PUT /api/v1/auth/password", () => {
     it("should change password with valid current password (200)", async () => {
-      const { user, password } = await createTestUser();
-      createdUserIds.push(user.id);
-      const token = generateTestToken(user.id);
+      const payload = makeRegisterPayload();
+      const registerRes = await request.post("/api/v1/auth/register").send(payload);
+      const { accessToken } = registerRes.body.data;
+      createdUserIds.push(registerRes.body.data.user.id);
 
       await request
         .put("/api/v1/auth/password")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ currentPassword: password, newPassword: "NewPass123", confirmNewPassword: "NewPass123" })
+        .set("Authorization", `Bearer ${accessToken}`)
+        .send({ currentPassword: payload.password, newPassword: "NewPass123", confirmNewPassword: "NewPass123" })
         .expect(200);
 
       await request
         .post("/api/v1/auth/login")
-        .send({ email: user.email, password: "NewPass123" })
+        .send({ email: payload.email, password: "NewPass123" })
         .expect(200);
     });
   });

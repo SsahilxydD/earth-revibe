@@ -16,7 +16,7 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   phone         String?   @unique
-  passwordHash  String
+  passwordHash  String    @default("supabase-managed")
   firstName     String
   lastName      String
   avatar        String?
@@ -778,8 +778,26 @@ model PendingCheckout {
   discountAmount    Decimal  @db.Decimal(10, 2) @default(0)
   loyaltyDiscount   Decimal  @db.Decimal(10, 2) @default(0)
   itemsJson         String
+  stockReserved     Boolean  @default(false)
+  reservedAt        DateTime?
   createdAt         DateTime @default(now())
 
   @@index([userId])
+  @@index([createdAt])
   @@map("pending_checkouts")
+}
+
+model IdempotencyKey {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  userId    String
+  status    String   // PROCESSING, COMPLETED, FAILED
+  endpoint  String
+  response  Json?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([key, userId])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
 }

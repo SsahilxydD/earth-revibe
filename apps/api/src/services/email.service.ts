@@ -1,13 +1,15 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import { env } from "../config/env";
+import { logger } from "../config/logger";
+import { createCircuitBreaker } from "../utils/circuit-breaker";
 
 let transporter: Transporter | null = null;
 
 function getTransporter(): Transporter | null {
   if (transporter) return transporter;
   if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
-    console.warn("[Email] SMTP not configured — emails will be logged to console");
+    logger.warn("SMTP not configured -- emails will be logged");
     return null;
   }
   transporter = nodemailer.createTransport({
@@ -36,13 +38,23 @@ ${body}
 </div></body></html>`;
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+async function _sendMailViaSMTP(to: string, subject: string, html: string): Promise<void> {
   const t = getTransporter();
   if (!t) {
-    console.log(`[Email] TO: ${to} | SUBJECT: ${subject}\n${html.replace(/<[^>]*>/g, "").substring(0, 300)}`);
+    logger.info({ to, subject }, "Email logged (SMTP not configured)");
     return;
   }
   await t.sendMail({ from: `"Earth Revibe" <${fromAddress}>`, to, subject, html, text: html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() });
+}
+
+const emailBreaker = createCircuitBreaker(
+  _sendMailViaSMTP,
+  "email-smtp",
+  { timeout: 15000, resetTimeout: 60000 }
+);
+
+async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+  return emailBreaker.fire(to, subject, html) as Promise<void>;
 }
 
 export const emailService = {

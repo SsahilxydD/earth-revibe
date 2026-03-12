@@ -3,6 +3,8 @@ import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 import { getRazorpay } from "../config/razorpay";
 import { env } from "../config/env";
+import { logger } from "../config/logger";
+import { APP_CONSTANTS } from "../config/constants";
 import { generateOrderNumber } from "@earth-revibe/shared";
 import { shiprocketService } from "./shiprocket.service";
 import type {
@@ -124,21 +126,59 @@ export const checkoutService = {
       },
     } as any);
 
-    // Store pending order data so we can finalize after payment
-    await prisma.pendingCheckout.create({
-      data: {
-        orderNumber,
-        userId: userId || undefined,
-        guestEmail: guestEmail || undefined,
-        razorpayOrderId: razorpayOrder.id,
-        discountCode: data.discountCode || null,
-        loyaltyPointsToUse: isGuest ? 0 : data.loyaltyPointsToUse,
-        subtotal: lineItemsTotal,
-        discountAmount,
-        loyaltyDiscount,
-        itemsJson: JSON.stringify(data.items),
-      },
-    });
+    // Reserve inventory and store pending checkout atomically
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Re-validate prices and reserve stock inside a Serializable transaction
+      for (const reqItem of data.items) {
+        const currentVariant = await tx.productVariant.findUnique({
+          where: { id: reqItem.variantId },
+          select: { price: true, stock: true, product: { select: { price: true, name: true } } },
+        });
+        if (!currentVariant) {
+          throw ApiError.badRequest(`Product variant is no longer available`);
+        }
+        const currentPrice = Number(currentVariant.price) || Number(currentVariant.product.price);
+        const expectedVariant = variants.find((v) => v.id === reqItem.variantId)!;
+        const expectedPrice = Number(expectedVariant.price) || Number(expectedVariant.product.price);
+        if (currentPrice !== expectedPrice) {
+          throw ApiError.conflict(
+            `Price changed for ${currentVariant.product.name}. Please refresh your cart.`
+          );
+        }
+        if (currentVariant.stock < reqItem.quantity) {
+          throw ApiError.conflict(
+            `Insufficient stock for ${currentVariant.product.name}. Only ${currentVariant.stock} available.`
+          );
+        }
+
+        // Decrement stock to reserve
+        const result = await tx.productVariant.updateMany({
+          where: { id: reqItem.variantId, stock: { gte: reqItem.quantity } },
+          data: { stock: { decrement: reqItem.quantity } },
+        });
+        if (result.count === 0) {
+          throw ApiError.conflict(`Stock reservation failed for ${currentVariant.product.name}`);
+        }
+      }
+
+      // Store pending order data so we can finalize after payment
+      await tx.pendingCheckout.create({
+        data: {
+          orderNumber,
+          userId: userId || undefined,
+          guestEmail: guestEmail || undefined,
+          razorpayOrderId: razorpayOrder.id,
+          discountCode: data.discountCode || null,
+          loyaltyPointsToUse: isGuest ? 0 : data.loyaltyPointsToUse,
+          subtotal: lineItemsTotal,
+          discountAmount,
+          loyaltyDiscount,
+          itemsJson: JSON.stringify(data.items),
+          stockReserved: true,
+          reservedAt: new Date(),
+        },
+      });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
     // Get user info for prefill (or use guest email)
     let prefill = { name: "", email: guestEmail || "", contact: "" };
@@ -478,14 +518,17 @@ export const checkoutService = {
         });
       }
 
-      // Deduct stock with guard against negative stock
-      for (const ci of cartItems) {
-        const result = await tx.productVariant.updateMany({
-          where: { id: ci.variantId, stock: { gte: ci.quantity } },
-          data: { stock: { decrement: ci.quantity } },
-        });
-        if (result.count === 0) {
-          throw ApiError.badRequest(`Insufficient stock for variant ${ci.variantId}`);
+      // Stock was already reserved during createMagicOrder (Serializable transaction).
+      // If somehow stock was NOT reserved (legacy pending checkouts), deduct now.
+      if (!pending.stockReserved) {
+        for (const ci of cartItems) {
+          const result = await tx.productVariant.updateMany({
+            where: { id: ci.variantId, stock: { gte: ci.quantity } },
+            data: { stock: { decrement: ci.quantity } },
+          });
+          if (result.count === 0) {
+            throw ApiError.badRequest(`Insufficient stock for variant ${ci.variantId}`);
+          }
         }
       }
 
@@ -538,8 +581,8 @@ export const checkoutService = {
         if (orderCount === 1) {
           const referral = await tx.referral.findUnique({ where: { refereeId: effectiveUserId } });
           if (referral && referral.status === "SIGNED_UP") {
-            const REFERRER_REWARD = 100;
-            const REFEREE_REWARD = 50;
+            const REFERRER_REWARD = APP_CONSTANTS.REFERRER_REWARD_POINTS;
+            const REFEREE_REWARD = APP_CONSTANTS.REFEREE_REWARD_POINTS;
             await tx.referral.update({
               where: { id: referral.id },
               data: { status: "CONVERTED", referrerReward: REFERRER_REWARD, refereeReward: REFEREE_REWARD },
@@ -570,12 +613,50 @@ export const checkoutService = {
 
     // Auto-create Shiprocket shipment (non-blocking, outside transaction)
     shiprocketService.createShiprocketOrder(orderId).catch((err) => {
-      console.error(`[Shiprocket] Failed to create shipment for order ${orderId}:`, err);
+      logger.error({ err, orderId }, "Failed to create Shiprocket shipment");
     });
 
     return { orderNumber: finalOrderNumber, pointsEarned };
   },
 };
+
+/**
+ * Restore reserved stock for expired/failed pending checkouts.
+ * Called by the cleanup endpoint.
+ */
+export async function restoreExpiredReservations(): Promise<number> {
+  const twoHoursAgo = new Date(Date.now() - APP_CONSTANTS.CHECKOUT_EXPIRY_MS);
+
+  const expiredCheckouts = await prisma.pendingCheckout.findMany({
+    where: {
+      createdAt: { lt: twoHoursAgo },
+      stockReserved: true,
+    },
+  });
+
+  let restoredCount = 0;
+
+  for (const checkout of expiredCheckouts) {
+    const cartItems: { variantId: string; quantity: number }[] = JSON.parse(checkout.itemsJson);
+
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Restore stock for each reserved item
+      for (const item of cartItems) {
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: { stock: { increment: item.quantity } },
+        });
+      }
+
+      // Delete the expired pending checkout
+      await tx.pendingCheckout.delete({ where: { id: checkout.id } });
+    });
+
+    restoredCount++;
+  }
+
+  return restoredCount;
+}
 
 /** Helper: calculate discount amount for a given code and subtotal */
 async function calculateDiscount(

@@ -2,9 +2,17 @@ import { beforeAll, afterAll } from "vitest";
 import { prisma } from "@earth-revibe/db";
 
 beforeAll(async () => {
-  await prisma.$connect();
+  try {
+    await prisma.$connect();
+  } catch {
+    // DB connection is optional for unit tests with mocks
+  }
 });
 
 afterAll(async () => {
-  await prisma.$disconnect();
+  try {
+    await prisma.$disconnect();
+  } catch {
+    // Ignore disconnect errors
+  }
 });

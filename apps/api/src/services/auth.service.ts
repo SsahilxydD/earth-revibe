@@ -1,24 +1,9 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { prisma } from "@earth-revibe/db";
 import { env } from "../config/env";
+import { logger } from "../config/logger";
 import { ApiError } from "../utils/api-error";
+import { getSupabaseAdmin, getSupabaseAnon } from "../config/supabase";
 import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput } from "@earth-revibe/shared";
-
-// Helper: generate access + refresh token pair
-function generateTokens(userId: string, role: string) {
-  const accessToken = jwt.sign(
-    { userId, role },
-    env.JWT_ACCESS_SECRET,
-    { expiresIn: env.JWT_ACCESS_EXPIRY as string & jwt.SignOptions["expiresIn"] }
-  );
-  const refreshToken = jwt.sign(
-    { userId, role },
-    env.JWT_REFRESH_SECRET,
-    { expiresIn: env.JWT_REFRESH_EXPIRY as string & jwt.SignOptions["expiresIn"] }
-  );
-  return { accessToken, refreshToken };
-}
 
 // Helper: generate referral code from user ID
 function generateReferralCode(userId: string): string {
@@ -28,33 +13,71 @@ function generateReferralCode(userId: string): string {
 }
 
 export const authService = {
+  /**
+   * Register a new user via Supabase Auth, then create a Prisma User record
+   * with referral processing.
+   */
   async register(data: RegisterInput) {
-    // Check if email exists
-    const existing = await prisma.user.findUnique({ where: { email: data.email } });
-    if (existing) throw ApiError.conflict("Email already registered");
+    const supabase = getSupabaseAdmin();
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(data.password, 12);
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
+    // 1. Create user in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true, // auto-confirm email
+      user_metadata: {
+        first_name: data.firstName,
+        last_name: data.lastName,
         phone: data.phone,
-        passwordHash,
+      },
+      app_metadata: {
+        role: "CUSTOMER",
       },
     });
 
-    // Generate referral code
+    if (authError) {
+      if (authError.message?.includes("already been registered") || authError.status === 422) {
+        throw ApiError.conflict("Email already registered");
+      }
+      logger.error({ err: authError }, "Supabase createUser failed");
+      throw ApiError.internal("Registration failed");
+    }
+
+    // 2. Create Prisma User record
+    let user;
+    try {
+      user = await prisma.user.create({
+        data: {
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          passwordHash: "supabase-managed",
+          emailVerified: true,
+          isActive: true,
+        },
+      });
+    } catch (err: any) {
+      // Rollback: delete the Supabase user if Prisma creation fails
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      if (err.code === "P2002") {
+        const target = err.meta?.target;
+        if (Array.isArray(target) && target.includes("phone")) {
+          throw ApiError.conflict("Phone number already registered");
+        }
+        throw ApiError.conflict("Email already registered");
+      }
+      throw err;
+    }
+
+    // 3. Generate referral code
     const referralCode = generateReferralCode(user.id);
     await prisma.user.update({
       where: { id: user.id },
       data: { referralCode },
     });
 
-    // Process referral if code provided
+    // 4. Process referral if code provided
     if (data.referralCode) {
       const referrer = await prisma.user.findUnique({
         where: { referralCode: data.referralCode },
@@ -70,17 +93,17 @@ export const authService = {
       }
     }
 
-    // Generate tokens
-    const tokens = generateTokens(user.id, user.role);
-
-    // Store refresh token
-    await prisma.refreshToken.create({
-      data: {
-        token: tokens.refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      },
+    // 5. Sign in to get tokens
+    const supabaseAnon = getSupabaseAnon();
+    const { data: signInData, error: signInError } = await supabaseAnon.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
     });
+
+    if (signInError || !signInData.session) {
+      logger.error({ err: signInError }, "Supabase signIn after register failed");
+      throw ApiError.internal("Registration succeeded but sign-in failed");
+    }
 
     return {
       user: {
@@ -91,35 +114,56 @@ export const authService = {
         role: user.role,
         referralCode,
       },
-      ...tokens,
+      accessToken: signInData.session.access_token,
+      refreshToken: signInData.session.refresh_token,
     };
   },
 
+  /**
+   * Login via Supabase Auth.
+   */
   async login(data: LoginInput) {
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
-    if (!user) throw ApiError.unauthorized("Invalid email or password");
-
-    if (!user.isActive) throw ApiError.forbidden("Account is deactivated");
-
-    const valid = await bcrypt.compare(data.password, user.passwordHash);
-    if (!valid) throw ApiError.unauthorized("Invalid email or password");
-
-    // Update last login
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
+    const supabaseAnon = getSupabaseAnon();
+    const { data: signInData, error } = await supabaseAnon.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
     });
 
-    const tokens = generateTokens(user.id, user.role);
+    if (error) {
+      throw ApiError.unauthorized("Invalid email or password");
+    }
 
-    // Store refresh token
-    await prisma.refreshToken.create({
-      data: {
-        token: tokens.refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    if (!signInData.session) {
+      throw ApiError.unauthorized("Invalid email or password");
+    }
+
+    // Auto-provision / sync Prisma user (same logic as middleware)
+    const user = await prisma.user.upsert({
+      where: { email: data.email },
+      update: { lastLoginAt: new Date() },
+      create: {
+        email: data.email,
+        passwordHash: "supabase-managed",
+        firstName: signInData.user.user_metadata?.first_name || data.email.split("@")[0],
+        lastName: signInData.user.user_metadata?.last_name || "",
+        emailVerified: true,
+        isActive: true,
+        lastLoginAt: new Date(),
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        referralCode: true,
+        isActive: true,
       },
     });
+
+    if (!user.isActive) {
+      throw ApiError.forbidden("Account is deactivated");
+    }
 
     return {
       user: {
@@ -130,104 +174,77 @@ export const authService = {
         role: user.role,
         referralCode: user.referralCode,
       },
-      ...tokens,
+      accessToken: signInData.session.access_token,
+      refreshToken: signInData.session.refresh_token,
     };
   },
 
+  /**
+   * Refresh session via Supabase.
+   */
   async refreshToken(token: string) {
-    // Verify the refresh token JWT
-    let decoded: { userId: string; role: string };
-    try {
-      decoded = jwt.verify(token, env.JWT_REFRESH_SECRET) as typeof decoded;
-    } catch {
-      throw ApiError.unauthorized("Invalid refresh token");
+    const supabaseAnon = getSupabaseAnon();
+    const { data, error } = await supabaseAnon.auth.refreshSession({ refresh_token: token });
+
+    if (error || !data.session) {
+      throw ApiError.unauthorized("Invalid or expired refresh token");
     }
 
-    // Check if token exists in DB
-    const stored = await prisma.refreshToken.findUnique({ where: { token } });
-    if (!stored || stored.expiresAt < new Date()) {
-      if (stored) await prisma.refreshToken.delete({ where: { id: stored.id } });
-      throw ApiError.unauthorized("Refresh token expired");
-    }
+    return {
+      accessToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+    };
+  },
 
-    // Delete old token (rotation)
-    await prisma.refreshToken.delete({ where: { id: stored.id } });
+  /**
+   * Logout — revoke the Supabase session.
+   */
+  async logout(refreshToken: string) {
+    // Supabase Admin can sign out users by ID, but we only have the refresh token.
+    // Best effort: just let the token expire naturally.
+    // If we had the Supabase user ID, we could use admin.signOut(userId).
+    // For now, the client-side signOut() handles session cleanup.
+    void refreshToken;
+  },
 
-    // Get user
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
-    if (!user || !user.isActive) throw ApiError.unauthorized("User not found");
-
-    // Generate new tokens
-    const tokens = generateTokens(user.id, user.role);
-
-    // Store new refresh token
-    await prisma.refreshToken.create({
-      data: {
-        token: tokens.refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
+  /**
+   * Send a password reset email via Supabase.
+   */
+  async forgotPassword(email: string) {
+    const supabaseAnon = getSupabaseAnon();
+    const { error } = await supabaseAnon.auth.resetPasswordForEmail(email, {
+      redirectTo: `${env.FRONTEND_URL}/reset-password`,
     });
 
-    return tokens;
+    if (error) {
+      // Don't reveal if email exists — log and swallow
+      logger.error({ err: error, email }, "Supabase resetPasswordForEmail failed");
+    }
   },
 
-  async logout(refreshToken: string) {
-    await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
-  },
+  /**
+   * Reset password using a Supabase recovery token.
+   * The frontend exchanges the recovery token via Supabase client,
+   * then calls this endpoint with the new password.
+   */
+  async resetPassword(accessToken: string, newPassword: string) {
+    const supabase = getSupabaseAdmin();
 
-  async forgotPassword(email: string) {
-    const user = await prisma.user.findUnique({ where: { email } });
-    // Don't reveal if user exists
-    if (!user) return;
-
-    // Include a hash of the current password in the token payload.
-    // This makes the token single-use: once the password is changed,
-    // the hash won't match and the token becomes invalid.
-    const pwHashFragment = user.passwordHash.slice(-8);
-    const resetToken = jwt.sign(
-      { userId: user.id, purpose: "password-reset", ph: pwHashFragment },
-      env.JWT_ACCESS_SECRET,
-      { expiresIn: "1h" as string & jwt.SignOptions["expiresIn"] }
-    );
-
-    const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-
-    // Log the reset link — in production, this should be sent via email service
-    // (e.g., SendGrid, AWS SES, Resend). The URL is logged so admins can
-    // manually assist users until email integration is complete.
-    console.log(`[Password Reset] User: ${email} | Link: ${resetUrl}`);
-  },
-
-  async resetPassword(token: string, newPassword: string) {
-    let decoded: { userId: string; purpose: string; ph?: string };
-    try {
-      decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as typeof decoded;
-    } catch {
+    // Verify the access token to get the user
+    const { data: userData, error: verifyError } = await supabase.auth.getUser(accessToken);
+    if (verifyError || !userData.user) {
       throw ApiError.badRequest("Invalid or expired reset token");
     }
 
-    if (decoded.purpose !== "password-reset") {
-      throw ApiError.badRequest("Invalid token");
-    }
-
-    // Verify token hasn't been used (password hasn't changed since token was issued)
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
-    if (!user) throw ApiError.badRequest("Invalid token");
-
-    if (decoded.ph && user.passwordHash.slice(-8) !== decoded.ph) {
-      throw ApiError.badRequest("This reset link has already been used");
-    }
-
-    const passwordHash = await bcrypt.hash(newPassword, 12);
-
-    await prisma.user.update({
-      where: { id: decoded.userId },
-      data: { passwordHash },
+    // Update password in Supabase
+    const { error } = await supabase.auth.admin.updateUserById(userData.user.id, {
+      password: newPassword,
     });
 
-    // Invalidate all refresh tokens for this user
-    await prisma.refreshToken.deleteMany({ where: { userId: decoded.userId } });
+    if (error) {
+      logger.error({ err: error }, "Supabase password update failed");
+      throw ApiError.internal("Password reset failed");
+    }
   },
 
   async getMe(userId: string) {
@@ -276,19 +293,46 @@ export const authService = {
     return user;
   },
 
+  /**
+   * Change password via Supabase Admin API.
+   */
   async changePassword(userId: string, data: ChangePasswordInput) {
+    // Find the user's email to look up their Supabase ID
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw ApiError.notFound("User not found");
 
-    const valid = await bcrypt.compare(data.currentPassword, user.passwordHash);
-    if (!valid) throw ApiError.badRequest("Current password is incorrect");
-
-    const passwordHash = await bcrypt.hash(data.newPassword, 12);
-    await prisma.user.update({
-      where: { id: userId },
-      data: { passwordHash },
+    // Verify current password by attempting sign-in
+    const supabaseAnon = getSupabaseAnon();
+    const { error: verifyError } = await supabaseAnon.auth.signInWithPassword({
+      email: user.email,
+      password: data.currentPassword,
     });
 
-    await prisma.refreshToken.deleteMany({ where: { userId } });
+    if (verifyError) {
+      throw ApiError.badRequest("Current password is incorrect");
+    }
+
+    // Find Supabase user by email and update password
+    const supabase = getSupabaseAdmin();
+    const { data: supabaseUsers, error: listError } = await supabase.auth.admin.listUsers();
+
+    if (listError) {
+      logger.error({ err: listError }, "Failed to list Supabase users");
+      throw ApiError.internal("Password change failed");
+    }
+
+    const supabaseUser = supabaseUsers.users.find((u) => u.email === user.email);
+    if (!supabaseUser) {
+      throw ApiError.internal("User not found in auth provider");
+    }
+
+    const { error: updateError } = await supabase.auth.admin.updateUserById(supabaseUser.id, {
+      password: data.newPassword,
+    });
+
+    if (updateError) {
+      logger.error({ err: updateError }, "Supabase password update failed");
+      throw ApiError.internal("Password change failed");
+    }
   },
 };

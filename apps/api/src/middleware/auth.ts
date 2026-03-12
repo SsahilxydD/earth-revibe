@@ -1,16 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { prisma } from "@earth-revibe/db";
 import { env } from "../config/env";
+import { logger } from "../config/logger";
 import { ApiError } from "../utils/api-error";
 import { getAccessTokenFromRequest } from "../utils/cookies";
 import type { UserRole } from "@earth-revibe/shared";
-
-interface JwtPayload {
-  userId: string;
-  role: string;
-}
 
 const userSelect = {
   id: true,
@@ -21,10 +16,9 @@ const userSelect = {
   isActive: true,
 } as const;
 
-// Lazy-initialized Supabase JWKS — avoids module-load timing issues
+// Lazy-initialized Supabase JWKS
 let _supabaseJwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 function getSupabaseJWKS() {
-  if (!env.SUPABASE_URL) return null;
   if (!_supabaseJwks) {
     _supabaseJwks = createRemoteJWKSet(
       new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`)
@@ -34,67 +28,48 @@ function getSupabaseJWKS() {
 }
 
 /**
- * Try verifying with custom JWT first, then fall back to Supabase JWT.
- * For Supabase JWTs, auto-provisions the User record if it doesn't exist
- * and reads role from app_metadata — no manual DB setup needed.
+ * Verify a Supabase JWT via JWKS and auto-provision/sync the Prisma User.
+ * Reads role from app_metadata and display name from user_metadata.
  */
 async function verifyToken(token: string) {
-  // 1. Try custom JWT (app-issued tokens — HS256)
+  const jwks = getSupabaseJWKS();
+
   try {
-    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+    const { payload } = await jwtVerify(token, jwks);
+    const email = payload.email as string | undefined;
+    if (!email) return null;
+
+    // Read role from Supabase app_metadata
+    const appMeta = payload.app_metadata as Record<string, any> | undefined;
+    const supabaseRole = appMeta?.role as string | undefined;
+
+    // User metadata for display name
+    const userMeta = payload.user_metadata as Record<string, any> | undefined;
+
+    // Auto-provision: upsert user on every authenticated request.
+    // Syncs role from app_metadata (source of truth).
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: {
+        ...(supabaseRole ? { role: supabaseRole as any } : {}),
+        lastLoginAt: new Date(),
+      },
+      create: {
+        email,
+        passwordHash: "supabase-managed",
+        firstName: userMeta?.first_name || userMeta?.name?.split(" ")[0] || email.split("@")[0],
+        lastName: userMeta?.last_name || userMeta?.name?.split(" ").slice(1).join(" ") || "",
+        role: (supabaseRole as any) || "CUSTOMER",
+        emailVerified: true,
+        isActive: true,
+        lastLoginAt: new Date(),
+      },
       select: userSelect,
     });
-    if (user && user.isActive) return user;
-  } catch {
-    // Not a valid custom JWT — try Supabase
-  }
 
-  // 2. Try Supabase JWT (ES256 — verified via JWKS)
-  const supabaseJwks = getSupabaseJWKS();
-  if (supabaseJwks) {
-    try {
-      const { payload } = await jwtVerify(token, supabaseJwks);
-      const email = payload.email as string | undefined;
-      if (!email) return null;
-
-      // Read role from Supabase app_metadata (set via Supabase dashboard)
-      const appMeta = payload.app_metadata as Record<string, any> | undefined;
-      const supabaseRole = appMeta?.role as string | undefined;
-
-      // User metadata for display name
-      const userMeta = payload.user_metadata as Record<string, any> | undefined;
-
-      // Auto-provision: upsert user on every Supabase-authenticated request.
-      // If the user exists, sync the role from app_metadata (source of truth).
-      // If the user doesn't exist, create them automatically.
-      const user = await prisma.user.upsert({
-        where: { email },
-        update: {
-          // Sync role from Supabase app_metadata if set, otherwise keep DB value
-          ...(supabaseRole ? { role: supabaseRole as any } : {}),
-          lastLoginAt: new Date(),
-        },
-        create: {
-          email,
-          passwordHash: "supabase-managed",
-          firstName: userMeta?.first_name || userMeta?.name?.split(" ")[0] || email.split("@")[0],
-          lastName: userMeta?.last_name || userMeta?.name?.split(" ").slice(1).join(" ") || "",
-          role: (supabaseRole as any) || "CUSTOMER",
-          emailVerified: true,
-          isActive: true,
-          lastLoginAt: new Date(),
-        },
-        select: userSelect,
-      });
-
-      if (user.isActive) return user;
-    } catch (err) {
-      console.error("[auth] Supabase JWT path failed:", err);
-    }
-  } else {
-    console.warn("[auth] SUPABASE_JWKS is null — SUPABASE_URL:", env.SUPABASE_URL);
+    if (user.isActive) return user;
+  } catch (err) {
+    logger.error({ err }, "Supabase JWT verification failed");
   }
 
   return null;

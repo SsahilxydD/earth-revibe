@@ -5,8 +5,13 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(5000),
   DATABASE_URL: z.string().url(),
   DIRECT_URL: z.string().optional(),
-  JWT_ACCESS_SECRET: z.string().min(32),
-  JWT_REFRESH_SECRET: z.string().min(32),
+  // Supabase Auth (primary auth provider)
+  SUPABASE_URL: z.string().url(),
+  SUPABASE_ANON_KEY: z.string().min(1),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  // Legacy JWT secrets — kept optional for backward compat during migration
+  JWT_ACCESS_SECRET: z.string().optional(),
+  JWT_REFRESH_SECRET: z.string().optional(),
   JWT_ACCESS_EXPIRY: z.string().default("15m"),
   JWT_REFRESH_EXPIRY: z.string().default("7d"),
   RAZORPAY_KEY_ID: z.string().optional(),
@@ -24,7 +29,6 @@ const envSchema = z.object({
   SHIPROCKET_EMAIL: z.string().optional(),
   SHIPROCKET_PASSWORD: z.string().optional(),
   SHIPROCKET_PICKUP_PINCODE: z.string().default("110001"),
-  SUPABASE_URL: z.string().url().optional(),
 });
 
 export const env = envSchema.parse(process.env);

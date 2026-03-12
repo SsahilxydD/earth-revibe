@@ -2,6 +2,7 @@ import { Router } from "express";
 import crypto from "crypto";
 import { prisma } from "@earth-revibe/db";
 import { env } from "../config/env";
+import { logger } from "../config/logger";
 
 const router = Router();
 
@@ -10,7 +11,7 @@ router.post("/razorpay", async (req, res) => {
   const webhookSecret = env.RAZORPAY_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    console.warn("[Webhook] RAZORPAY_WEBHOOK_SECRET not configured");
+    logger.warn("RAZORPAY_WEBHOOK_SECRET not configured");
     res.status(200).json({ success: true });
     return;
   }
@@ -23,14 +24,14 @@ router.post("/razorpay", async (req, res) => {
     .digest("hex");
 
   if (signature !== expectedSignature) {
-    console.warn("[Webhook] Invalid Razorpay signature");
+    logger.warn("Invalid Razorpay signature");
     res.status(200).json({ success: false });
     return;
   }
 
   const event = req.body?.event;
   const payload = req.body?.payload;
-  console.log(`[Webhook] Razorpay event: ${event}`);
+  logger.info({ event }, "Razorpay webhook event");
 
   try {
     switch (event) {
@@ -108,10 +109,10 @@ router.post("/razorpay", async (req, res) => {
       }
 
       default:
-        console.log(`[Webhook] Unhandled event: ${event}`);
+        logger.info({ event }, "Unhandled webhook event");
     }
   } catch (err) {
-    console.error(`[Webhook] Error processing ${event}:`, err);
+    logger.error({ err, event }, "Webhook processing error");
   }
 
   // Always return 200 to prevent Razorpay retries

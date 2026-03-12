@@ -4,8 +4,12 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
+import pinoHttp from "pino-http";
 import { env } from "./config/env";
+import { logger } from "./config/logger";
+import { APP_CONSTANTS } from "./config/constants";
 import { errorHandler } from "./middleware/error-handler";
+import { auditLog } from "./middleware/audit-log";
 import { authRouter } from "./routes/auth.routes";
 import { productRouter } from "./routes/product.routes";
 import { categoryRouter } from "./routes/category.routes";
@@ -38,6 +42,12 @@ const app: Express = express();
 
 // Trust proxy (Railway sits behind a reverse proxy)
 app.set("trust proxy", 1);
+
+// Structured request logging
+app.use(pinoHttp({ logger }));
+
+// Audit logging for mutating requests (POST, PUT, PATCH, DELETE)
+app.use(auditLog);
 
 // Compression
 app.use(compression());
@@ -79,10 +89,10 @@ app.use(express.urlencoded({ extended: true }));
 // Input sanitization
 app.use(sanitize);
 
-// Rate limiting — 1000 requests per 15 minutes per IP (storefront makes 5-10 requests per page load)
+// Rate limiting — per IP (storefront makes 5-10 requests per page load)
 app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 1000,
+  windowMs: APP_CONSTANTS.RATE_LIMIT_WINDOW_MS,
+  limit: APP_CONSTANTS.RATE_LIMIT_MAX,
   standardHeaders: "draft-7",
   legacyHeaders: false,
 }));
@@ -96,16 +106,41 @@ app.get("/api/v1/health", (_req, res) => {
   });
 });
 
-// Cleanup stale pending checkouts (older than 2 hours) — can be called by cron/external monitor
+// Cleanup stale pending checkouts, restore reserved stock, and purge expired idempotency keys
 app.post("/api/v1/internal/cleanup", async (_req, res) => {
   try {
     const { prisma } = await import("@earth-revibe/db");
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const { restoreExpiredReservations } = await import("./services/checkout.service");
+
+    // 1. Restore stock for expired reservations, then delete them
+    const restoredCount = await restoreExpiredReservations();
+
+    // 2. Delete remaining non-reserved expired checkouts
+    const cutoff = new Date(Date.now() - APP_CONSTANTS.CHECKOUT_EXPIRY_MS);
     const result = await prisma.pendingCheckout.deleteMany({
-      where: { createdAt: { lt: twoHoursAgo } },
+      where: { createdAt: { lt: cutoff } },
     });
-    res.json({ success: true, data: { deletedCount: result.count } });
-  } catch {
+
+    // 3. Clean expired idempotency keys
+    const idempotencyResult = await prisma.idempotencyKey.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    });
+
+    logger.info(
+      { restoredCount, checkoutsDeleted: result.count, idempotencyKeysDeleted: idempotencyResult.count },
+      "Cleanup completed"
+    );
+
+    res.json({
+      success: true,
+      data: {
+        reservationsRestored: restoredCount,
+        checkoutsDeleted: result.count,
+        idempotencyKeysDeleted: idempotencyResult.count,
+      },
+    });
+  } catch (err) {
+    logger.error({ err }, "Cleanup failed");
     res.status(500).json({ success: false, error: { code: "CLEANUP_FAILED", message: "Cleanup failed" } });
   }
 });

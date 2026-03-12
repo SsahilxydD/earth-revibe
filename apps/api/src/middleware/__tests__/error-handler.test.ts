@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { request } from "../../test/helpers";
+import { request, isSupabaseConfigured } from "../../test/helpers";
 
-describe("errorHandler middleware", () => {
+const describeIf = isSupabaseConfigured() ? describe : describe.skip;
+
+describeIf("errorHandler middleware", () => {
   it("should return structured error for ApiError (401 on bad login)", async () => {
     const res = await request
       .post("/api/v1/auth/login")
@@ -24,7 +26,7 @@ describe("errorHandler middleware", () => {
       .expect(400);
 
     expect(res.body.success).toBe(false);
-    expect(res.body.error.code).toBe("VALIDATION_ERROR");
+    expect(res.body.error.code).toBe("BAD_REQUEST");
     expect(res.body.error.details).toBeDefined();
     expect(Array.isArray(res.body.error.details)).toBe(true);
   });

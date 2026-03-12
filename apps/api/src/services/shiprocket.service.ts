@@ -1,6 +1,7 @@
 import { prisma } from "@earth-revibe/db";
 import { shiprocketRequest } from "../config/shiprocket";
 import { env } from "../config/env";
+import { APP_CONSTANTS } from "../config/constants";
 
 interface ShiprocketOrderItem {
   name: string;
@@ -78,8 +79,11 @@ export const shiprocketService = {
       selling_price: Number(item.unitPrice),
     }));
 
-    // Calculate total weight (estimate 300g per item)
-    const totalWeight = Math.max(order.items.reduce((w, i) => w + i.quantity * 0.3, 0), 0.5);
+    // Calculate total weight (estimate per item from constants)
+    const totalWeight = Math.max(
+      order.items.reduce((w, i) => w + i.quantity * APP_CONSTANTS.DEFAULT_ITEM_WEIGHT_KG, 0),
+      APP_CONSTANTS.MIN_SHIPPING_WEIGHT_KG
+    );
 
     const customerName = order.address.fullName || (order.user ? `${order.user.firstName} ${order.user.lastName}` : "Guest");
     const customerPhone = order.address.phone || order.user?.phone || "";

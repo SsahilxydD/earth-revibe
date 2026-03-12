@@ -1,4 +1,5 @@
 import { env } from "../config/env";
+import { createCircuitBreaker } from "../utils/circuit-breaker";
 
 function requireCloudflare() {
   if (!env.CLOUDFLARE_ACCOUNT_ID || !env.CLOUDFLARE_IMAGES_API_TOKEN) {
@@ -17,10 +18,9 @@ export interface UploadResult {
 }
 
 /**
- * Upload a file buffer to Cloudflare Images.
- * Returns the image ID and public variant URL.
+ * Internal: upload a file buffer to Cloudflare Images.
  */
-export async function uploadToCloudflare(
+async function _uploadToCloudflare(
   buffer: Buffer,
   filename: string,
   mimeType: string
@@ -61,9 +61,9 @@ export async function uploadToCloudflare(
 }
 
 /**
- * Delete an image from Cloudflare Images by ID.
+ * Internal: delete an image from Cloudflare Images by ID.
  */
-export async function deleteFromCloudflare(imageId: string): Promise<void> {
+async function _deleteFromCloudflare(imageId: string): Promise<void> {
   const cf = requireCloudflare();
   const res = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${cf.accountId}/images/v1/${imageId}`,
@@ -81,9 +81,40 @@ export async function deleteFromCloudflare(imageId: string): Promise<void> {
   }
 }
 
+const uploadBreaker = createCircuitBreaker(
+  _uploadToCloudflare,
+  "cloudflare-upload",
+  { timeout: 30000 }
+);
+
+const deleteBreaker = createCircuitBreaker(
+  _deleteFromCloudflare,
+  "cloudflare-delete",
+  { timeout: 15000 }
+);
+
+/**
+ * Upload a file buffer to Cloudflare Images, protected by circuit breaker.
+ * Returns the image ID and public variant URL.
+ */
+export async function uploadToCloudflare(
+  buffer: Buffer,
+  filename: string,
+  mimeType: string
+): Promise<UploadResult> {
+  return uploadBreaker.fire(buffer, filename, mimeType) as Promise<UploadResult>;
+}
+
+/**
+ * Delete an image from Cloudflare Images by ID, protected by circuit breaker.
+ */
+export async function deleteFromCloudflare(imageId: string): Promise<void> {
+  return deleteBreaker.fire(imageId) as Promise<void>;
+}
+
 /**
  * Extract Cloudflare image ID from a full variant URL.
- * e.g. https://imagedelivery.net/<hash>/<id>/public → <id>
+ * e.g. https://imagedelivery.net/<hash>/<id>/public -> <id>
  */
 export function extractImageId(url: string): string | null {
   const match = url.match(/imagedelivery\.net\/[^/]+\/([^/]+)\//);

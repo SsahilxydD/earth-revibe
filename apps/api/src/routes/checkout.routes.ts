@@ -3,6 +3,7 @@ import { checkoutController } from "../controllers/checkout.controller";
 import { optionalAuthenticate } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import { verifyRazorpayCallback } from "../middleware/razorpay-verify";
+import { idempotency } from "../middleware/idempotency";
 import { asyncHandler } from "../utils/async-handler";
 import {
   createMagicCheckoutSchema,
@@ -18,6 +19,7 @@ const router: IRouter = Router();
 router.post(
   "/create-order",
   optionalAuthenticate,
+  idempotency("checkout/create-order"),
   validate({ body: createMagicCheckoutSchema }),
   asyncHandler(checkoutController.createMagicOrder)
 );
@@ -25,6 +27,7 @@ router.post(
 router.post(
   "/verify-payment",
   optionalAuthenticate,
+  idempotency("checkout/verify-payment"),
   validate({ body: verifyPaymentSchema }),
   asyncHandler(checkoutController.verifyPayment)
 );

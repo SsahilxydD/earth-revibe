@@ -1,9 +1,11 @@
 import { rateLimit } from "express-rate-limit";
 
+const isTest = process.env.NODE_ENV === "test";
+
 // Login: 15 attempts per 15 minutes per IP
 export const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 15,
+  limit: isTest ? 1000 : 15,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: {
@@ -18,7 +20,7 @@ export const loginRateLimit = rateLimit({
 // Register: 3 per hour per IP
 export const registerRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
-  limit: 3,
+  limit: isTest ? 1000 : 3,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: {
@@ -33,7 +35,7 @@ export const registerRateLimit = rateLimit({
 // Password reset: 3 per hour per IP
 export const passwordResetRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
-  limit: 3,
+  limit: isTest ? 1000 : 3,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: {

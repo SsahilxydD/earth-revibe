@@ -1,4 +1,5 @@
 import { prisma } from "@earth-revibe/db";
+import { APP_CONSTANTS } from "../config/constants";
 
 export const analyticsService = {
   async getDashboardStats() {
@@ -38,7 +39,7 @@ export const analyticsService = {
         where: { role: "CUSTOMER", createdAt: { gte: startOfWeek } },
       }),
       prisma.product.count({ where: { status: "ACTIVE" } }),
-      prisma.productVariant.count({ where: { stock: { lte: 5 } } }),
+      prisma.productVariant.count({ where: { stock: { lte: APP_CONSTANTS.LOW_STOCK_THRESHOLD } } }),
     ]);
 
     const thisMonthRev = Number(totalRevenue._sum.totalAmount || 0);

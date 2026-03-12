@@ -1,7 +1,16 @@
-import { describe, it, expect } from "vitest";
-import { request } from "../../test/helpers";
+import { describe, it, expect, afterEach } from "vitest";
+import { request, cleanupTestData, makeRegisterPayload, isSupabaseConfigured } from "../../test/helpers";
 
-describe("sanitize middleware", () => {
+const describeIf = isSupabaseConfigured() ? describe : describe.skip;
+
+describeIf("sanitize middleware", () => {
+  const createdUserIds: string[] = [];
+
+  afterEach(async () => {
+    await cleanupTestData(createdUserIds);
+    createdUserIds.length = 0;
+  });
+
   it("should strip HTML tags from request body", async () => {
     const res = await request
       .post("/api/v1/auth/login")
@@ -15,19 +24,18 @@ describe("sanitize middleware", () => {
   });
 
   it("should handle nested objects", async () => {
+    const payload = makeRegisterPayload({
+      firstName: "<b>Bold</b>Name",
+      lastName: "Normal",
+    });
+
     const res = await request
       .post("/api/v1/auth/register")
-      .send({
-        email: "clean@test.com",
-        password: "Test1234",
-        confirmPassword: "Test1234",
-        firstName: "<b>Bold</b>Name",
-        lastName: "Normal",
-        phone: "9876543210",
-      });
+      .send(payload);
 
     if (res.body.success) {
       expect(res.body.data.user.firstName).toBe("BoldName");
+      createdUserIds.push(res.body.data.user.id);
     }
     expect(res.status).toBeLessThan(500);
   });

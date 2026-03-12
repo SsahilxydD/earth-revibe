@@ -1,5 +1,6 @@
 import type { Response, CookieOptions } from "express";
 import { env } from "../config/env";
+import { APP_CONSTANTS } from "../config/constants";
 
 const isProduction = env.NODE_ENV === "production";
 
@@ -20,13 +21,13 @@ export function setAuthCookies(
   res.cookie(ACCESS_COOKIE, accessToken, {
     ...baseCookieOptions,
     path: "/",
-    maxAge: 15 * 60 * 1000, // 15 minutes
+    maxAge: 60 * 60 * 1000, // 1 hour (matches Supabase JWT default)
   });
 
   res.cookie(REFRESH_COOKIE, refreshToken, {
     ...baseCookieOptions,
     path: "/api/v1/auth",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: APP_CONSTANTS.REFRESH_TOKEN_EXPIRY_MS,
   });
 }
 

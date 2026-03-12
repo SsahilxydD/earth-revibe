@@ -3,6 +3,8 @@ import { prisma, Prisma } from "@earth-revibe/db";
 import { ApiError } from "../utils/api-error";
 import { getRazorpay } from "../config/razorpay";
 import { env } from "../config/env";
+import { logger } from "../config/logger";
+import { APP_CONSTANTS } from "../config/constants";
 import { generateOrderNumber } from "@earth-revibe/shared";
 import { shiprocketService } from "./shiprocket.service";
 import type { CreateOrderInput, VerifyPaymentInput, OrderQuery, CancelOrderInput } from "@earth-revibe/shared";
@@ -161,8 +163,42 @@ export const orderService = {
       receipt: orderNumber,
     });
 
-    // Wrap DB writes in a transaction for atomicity (order + discount usage)
+    // Wrap DB writes in a Serializable transaction for atomicity + consistency
     const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Re-validate prices and stock inside transaction to prevent stale-data races
+      for (const item of cart.items) {
+        const currentVariant = await tx.productVariant.findUnique({
+          where: { id: item.variantId },
+          select: { price: true, stock: true, product: { select: { price: true, name: true } } },
+        });
+        if (!currentVariant) {
+          throw ApiError.badRequest(`Product variant is no longer available`);
+        }
+        const currentPrice = Number(currentVariant.price) || Number(currentVariant.product.price);
+        const cartPrice = Number(item.variant.price) || Number(item.variant.product.price);
+        if (currentPrice !== cartPrice) {
+          throw ApiError.conflict(
+            `Price changed for ${currentVariant.product.name}. Please refresh your cart.`
+          );
+        }
+        if (currentVariant.stock < item.quantity) {
+          throw ApiError.conflict(
+            `Insufficient stock for ${currentVariant.product.name}. Only ${currentVariant.stock} available.`
+          );
+        }
+      }
+
+      // Reserve stock by decrementing inside the transaction
+      for (const item of cart.items) {
+        const result = await tx.productVariant.updateMany({
+          where: { id: item.variantId, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
+        });
+        if (result.count === 0) {
+          throw ApiError.conflict(`Stock reservation failed for variant ${item.variantId}`);
+        }
+      }
+
       // Atomically increment discount usage inside transaction for consistency
       if (discountCodeId) {
         await tx.discountCode.update({
@@ -208,7 +244,7 @@ export const orderService = {
       });
 
       return createdOrder;
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
     return {
       order,
@@ -277,19 +313,8 @@ export const orderService = {
         },
       });
 
-      // Deduct stock with guard against negative stock
-      const orderItems = await tx.orderItem.findMany({
-        where: { orderId: payment.order.id },
-      });
-      for (const item of orderItems) {
-        const result = await tx.productVariant.updateMany({
-          where: { id: item.variantId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
-        });
-        if (result.count === 0) {
-          throw ApiError.badRequest(`Insufficient stock for variant ${item.variantId}`);
-        }
-      }
+      // Stock was already decremented at order creation time (Serializable transaction).
+      // No stock deduction needed here — payment verification only confirms the charge.
 
       // Deduct loyalty points if used
       if (payment.order.loyaltyPointsUsed > 0) {
@@ -339,8 +364,8 @@ export const orderService = {
           where: { refereeId: userId },
         });
         if (referral && referral.status === "SIGNED_UP") {
-          const REFERRER_REWARD = 100;
-          const REFEREE_REWARD = 50;
+          const REFERRER_REWARD = APP_CONSTANTS.REFERRER_REWARD_POINTS;
+          const REFEREE_REWARD = APP_CONSTANTS.REFEREE_REWARD_POINTS;
 
           await tx.referral.update({
             where: { id: referral.id },
@@ -390,7 +415,7 @@ export const orderService = {
 
     // Auto-create Shiprocket shipment (non-blocking, outside transaction)
     shiprocketService.createShiprocketOrder(payment.order.id).catch((err) => {
-      console.error(`[Shiprocket] Failed to create shipment for order ${payment.order.id}:`, err);
+      logger.error({ err, orderId: payment.order.id }, "Failed to create Shiprocket shipment");
     });
 
     return { orderNumber, pointsEarned };
@@ -581,7 +606,7 @@ export const orderService = {
           });
         } catch (refundErr) {
           // Log but don't fail the cancellation — admin can manually refund
-          console.error(`[Refund] Failed to auto-refund order ${orderNumber}:`, refundErr);
+          logger.error({ err: refundErr, orderNumber }, "Failed to auto-refund order");
         }
       }
 
