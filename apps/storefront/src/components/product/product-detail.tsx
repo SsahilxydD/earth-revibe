@@ -404,7 +404,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
   return (
     <div>
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-1 text-xs text-[var(--color-muted)]">
           <Link href="/" className="transition-colors hover:text-[var(--color-text)]">

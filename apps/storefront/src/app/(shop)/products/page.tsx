@@ -137,7 +137,7 @@ function ProductsContent() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
+    <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-6 lg:px-8">
       {/* Breadcrumb */}
       <nav className="mb-4 flex items-center gap-1 text-xs text-[var(--color-muted)]">
         <Link href="/" className="transition-colors hover:text-[var(--color-text)]">
@@ -196,7 +196,7 @@ function ProductsContent() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-[1px] bg-slate-100 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-[1px] bg-slate-100 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {allProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

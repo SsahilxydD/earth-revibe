@@ -114,7 +114,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.6 }}
-      className="px-4 md:px-8 lg:px-12 py-[var(--section-spacing-mobile)] md:py-[var(--section-spacing-desktop)]"
+      className="mx-auto max-w-[1440px] px-4 md:px-8 lg:px-12 py-[var(--section-spacing-mobile)] md:py-[var(--section-spacing-desktop)]"
     >
       <SectionHeader title="Trending Now" viewAllHref="/products" />
 
@@ -145,8 +145,8 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
       </div>
 
       {/* Desktop: grid */}
-      <div className="hidden md:grid md:grid-cols-4 gap-4 lg:gap-6">
-        {products.slice(0, 8).map((product) => (
+      <div className="hidden md:grid md:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+        {products.slice(0, 10).map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>

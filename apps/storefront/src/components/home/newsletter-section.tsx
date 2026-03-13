@@ -68,7 +68,7 @@ export function NewsletterSection() {
       transition={{ duration: 0.6 }}
       className="bg-[var(--color-surface)] py-12 md:py-20 px-4 md:px-8"
     >
-      <div className="max-w-xl mx-auto text-center">
+      <div className="max-w-2xl mx-auto text-center">
         <h2 className="text-sm md:text-base font-semibold uppercase tracking-[0.2em] text-[var(--color-primary)]">
           Join the Tribe
         </h2>
