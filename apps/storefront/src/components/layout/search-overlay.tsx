@@ -107,7 +107,7 @@ export function SearchOverlay() {
         onClick={closeSearch}
       />
       <div className="absolute left-0 right-0 top-0 bg-white animate-slide-down shadow-xl">
-        <div className="mx-auto max-w-[1440px] px-4 py-6 lg:px-8">
+        <div className="px-4 py-6 md:px-8 lg:px-12 xl:px-20">
           {/* Search input */}
           <form onSubmit={handleSubmit} className="relative">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--color-muted)]" />

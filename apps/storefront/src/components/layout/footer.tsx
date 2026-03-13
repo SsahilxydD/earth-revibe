@@ -57,7 +57,7 @@ export function Footer() {
     <footer className="bg-[var(--color-primary)] text-white">
       {/* Newsletter */}
       <div className="border-b border-white/10">
-        <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-4 px-4 py-10 sm:flex-row sm:justify-between lg:px-8">
+        <div className="flex flex-col items-center gap-4 px-4 py-10 sm:flex-row sm:justify-between md:px-8 lg:px-12 xl:px-20">
           <div>
             <h3 className="text-sm font-bold uppercase tracking-[0.2em]">
               Join the Culture
@@ -87,7 +87,7 @@ export function Footer() {
       </div>
 
       {/* Columns */}
-      <div className="mx-auto max-w-[1440px] px-4 py-12 lg:px-8">
+      <div className="px-4 py-12 md:px-8 lg:px-12 xl:px-20">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           <FooterColumn title="Shop" links={SHOP_LINKS} />
           <FooterColumn title="Customer Service" links={CUSTOMER_LINKS} />
@@ -148,7 +148,7 @@ export function Footer() {
 
       {/* Bottom */}
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-5 lg:px-8">
+        <div className="flex items-center justify-between px-4 py-5 md:px-8 lg:px-12 xl:px-20">
           <p className="text-xs text-white/40">
             &copy; {new Date().getFullYear()} Earth Revibe. All rights reserved.
           </p>

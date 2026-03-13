@@ -119,7 +119,7 @@ export function NewArrivals({ products }: NewArrivalsProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.6 }}
-      className="mx-auto max-w-[1440px] px-4 md:px-8 lg:px-12 py-[var(--section-spacing-mobile)] md:py-[var(--section-spacing-desktop)]"
+      className="px-4 md:px-8 lg:px-12 xl:px-20 py-[var(--section-spacing-mobile)] md:py-[var(--section-spacing-desktop)]"
     >
       <SectionHeader title="Just Dropped" viewAllHref="/categories/new-arrivals" />
 

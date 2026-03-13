@@ -39,7 +39,7 @@ export default function AboutPage() {
     <div>
       {/* Hero Section */}
       <section className="bg-[var(--color-primary)] py-20 text-white">
-        <div className="mx-auto max-w-[1440px] px-4 text-center lg:px-8">
+        <div className="px-4 text-center md:px-8 lg:px-12 xl:px-20">
           <h1 className="text-3xl font-bold uppercase tracking-[0.2em] sm:text-4xl">
             Our Story
           </h1>
@@ -54,7 +54,7 @@ export default function AboutPage() {
 
       {/* Mission Section */}
       <section className="py-16">
-        <div className="mx-auto grid max-w-[1440px] gap-12 px-4 lg:grid-cols-2 lg:px-8">
+        <div className="grid gap-12 px-4 md:px-8 lg:grid-cols-2 lg:px-12 xl:px-20">
           <div>
             <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-muted)]">
               Our Mission
@@ -101,7 +101,7 @@ export default function AboutPage() {
 
       {/* Values Grid */}
       <section className="bg-[var(--color-surface)] py-16">
-        <div className="mx-auto max-w-[1440px] px-4 lg:px-8">
+        <div className="px-4 md:px-8 lg:px-12 xl:px-20">
           <h2 className="text-center text-2xl font-bold uppercase tracking-wider">
             What We Stand For
           </h2>

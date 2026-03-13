@@ -31,7 +31,7 @@ const COLLECTIONS: CollectionCard[] = [
 
 export function CollectionBanner() {
   return (
-    <section className="mx-auto max-w-[1440px] px-4 md:px-8 lg:px-12 py-[var(--section-spacing-mobile)] md:py-[var(--section-spacing-desktop)]">
+    <section className="px-4 md:px-8 lg:px-12 xl:px-20 py-[var(--section-spacing-mobile)] md:py-[var(--section-spacing-desktop)]">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {COLLECTIONS.map((collection) => (
           <Link

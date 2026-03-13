@@ -11,7 +11,7 @@ export default function CategoriesPage() {
   const { data: categories, isLoading, isError } = useCategories();
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-6 lg:px-8">
+    <div className="px-4 py-6 md:px-8 lg:px-12 xl:px-20">
       {/* Breadcrumb */}
       <nav className="mb-4 flex items-center gap-1 text-xs text-[var(--color-muted)]">
         <Link href="/" className="transition-colors hover:text-[var(--color-text)]">

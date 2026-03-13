@@ -42,7 +42,7 @@ export function Header() {
       >
         <div
           className={cn(
-            "mx-auto flex max-w-[1440px] items-center justify-between px-4 transition-all duration-300 lg:px-8",
+            "flex items-center justify-between px-4 transition-all duration-300 md:px-8 lg:px-12 xl:px-20",
             scrolled ? "py-2" : "py-3"
           )}
         >

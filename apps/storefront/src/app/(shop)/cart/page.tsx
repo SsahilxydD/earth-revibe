@@ -182,7 +182,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-[1440px] px-4 py-8 lg:px-8">
+      <div className="px-4 py-8 md:px-8 lg:px-12 xl:px-20">
         <h1 className="text-2xl font-bold uppercase tracking-wider">
           Shopping Cart
         </h1>
@@ -192,7 +192,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 py-8 lg:px-8">
+    <div className="px-4 py-8 md:px-8 lg:px-12 xl:px-20">
       <h1 className="text-2xl font-bold uppercase tracking-wider">
         Shopping Cart
       </h1>

@@ -65,7 +65,7 @@ export default function AccountLayout({
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-6 lg:px-8 md:py-12">
+    <div className="px-4 py-8 md:px-8 lg:px-12 xl:px-20 md:py-12">
       <h1 className="mb-6 text-2xl font-bold uppercase tracking-wider md:mb-8">
         My Account
       </h1>
