@@ -4,10 +4,10 @@ import Link from "next/link";
 
 const SHOP_LINKS = [
   { label: "New Arrivals", href: "/categories/new-arrivals" },
-  { label: "Men", href: "/categories/men" },
-  { label: "Women", href: "/categories/women" },
-  { label: "Oversized", href: "/categories/oversized" },
-  { label: "Sale", href: "/categories/sale" },
+  { label: "Shirts", href: "/categories/shirts" },
+  { label: "T-Shirts", href: "/categories/t-shirts" },
+  { label: "Outerwear", href: "/categories/outerwear" },
+  { label: "Bestsellers", href: "/categories/bestsellers" },
 ];
 
 const CUSTOMER_LINKS = [

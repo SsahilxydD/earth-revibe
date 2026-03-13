@@ -10,11 +10,11 @@ import { SearchOverlay } from "./search-overlay";
 
 const NAV_LINKS = [
   { label: "NEW ARRIVALS", href: "/categories/new-arrivals" },
-  { label: "MEN", href: "/categories/men" },
-  { label: "WOMEN", href: "/categories/women" },
-  { label: "OVERSIZED", href: "/categories/oversized" },
+  { label: "SHIRTS", href: "/categories/shirts" },
+  { label: "T-SHIRTS", href: "/categories/t-shirts" },
+  { label: "OUTERWEAR", href: "/categories/outerwear" },
   { label: "ALL PRODUCTS", href: "/products" },
-  { label: "SALE", href: "/categories/sale" },
+  { label: "BESTSELLERS", href: "/categories/bestsellers" },
 ];
 
 export function Header() {

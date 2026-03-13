@@ -27,6 +27,23 @@ export const productKeys = {
   categories: ['categories'] as const,
 };
 
+// ─── Normalize API Response ──────────────────────────────────────────────────
+// The API returns flat pagination (total, page, limit, totalPages) at the top level,
+// but our types expect a nested `pagination` object. Normalize to always have both.
+
+function normalizePaginated<T>(raw: any): PaginatedResponse<T> {
+  if (raw.pagination) return raw;
+  return {
+    ...raw,
+    pagination: {
+      page: raw.page ?? 1,
+      limit: raw.limit ?? 12,
+      total: raw.total ?? 0,
+      totalPages: raw.totalPages ?? 0,
+    },
+  };
+}
+
 // ─── Build Query String ─────────────────────────────────────────────────────
 
 function buildProductQuery(params: ProductListParams): string {
@@ -57,8 +74,8 @@ export function useProducts(
 ) {
   return useQuery<PaginatedResponse<Product>, ApiError>({
     queryKey: productKeys.list(params),
-    queryFn: ({ signal }) =>
-      api.get<PaginatedResponse<Product>>(`/products${buildProductQuery(params)}`, signal),
+    queryFn: async ({ signal }) =>
+      normalizePaginated<Product>(await api.get(`/products${buildProductQuery(params)}`, signal)),
     ...options,
   });
 }
@@ -82,13 +99,13 @@ export function useProduct(
 export function useInfiniteProducts(params: Omit<ProductListParams, 'page'> = {}) {
   return useInfiniteQuery<PaginatedResponse<Product>, ApiError>({
     queryKey: [...productKeys.lists(), 'infinite', params],
-    queryFn: ({ pageParam, signal }) => {
+    queryFn: async ({ pageParam, signal }) => {
       const query = buildProductQuery({
         ...params,
         page: pageParam as number,
         limit: params.limit || 12,
       });
-      return api.get<PaginatedResponse<Product>>(`/products${query}`, signal);
+      return normalizePaginated<Product>(await api.get(`/products${query}`, signal));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
@@ -106,11 +123,11 @@ export function useRelatedProducts(
 ) {
   return useQuery<PaginatedResponse<Product>, ApiError>({
     queryKey: productKeys.related(categorySlug ?? '', excludeId),
-    queryFn: ({ signal }) =>
-      api.get<PaginatedResponse<Product>>(
+    queryFn: async ({ signal }) =>
+      normalizePaginated<Product>(await api.get(
         `/products?category=${categorySlug}&limit=12&sortBy=createdAt&sortOrder=desc`,
         signal
-      ),
+      )),
     enabled: !!categorySlug,
     select: (data) => ({
       ...data,

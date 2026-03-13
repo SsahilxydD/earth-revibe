@@ -13,18 +13,18 @@ const COLLECTIONS: CollectionCard[] = [
     gradient: "from-zinc-900 to-zinc-700",
   },
   {
-    title: "Oversized Tees",
-    href: "/categories/oversized-tees",
+    title: "Shirts",
+    href: "/categories/shirts",
     gradient: "from-neutral-800 to-stone-600",
   },
   {
-    title: "Streetwear",
-    href: "/categories/streetwear",
+    title: "Outerwear",
+    href: "/categories/outerwear",
     gradient: "from-gray-900 to-gray-600",
   },
   {
-    title: "Sale",
-    href: "/categories/sale",
+    title: "Bestsellers",
+    href: "/categories/bestsellers",
     gradient: "from-red-900 to-red-700",
   },
 ];

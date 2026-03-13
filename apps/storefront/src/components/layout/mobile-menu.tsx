@@ -18,37 +18,24 @@ const NAV_SECTIONS: NavSection[] = [
     href: "/categories/new-arrivals",
   },
   {
-    label: "MEN",
-    href: "/categories/men",
-    children: [
-      { label: "T-Shirts", href: "/categories/men-tshirts" },
-      { label: "Hoodies", href: "/categories/men-hoodies" },
-      { label: "Joggers", href: "/categories/men-joggers" },
-      { label: "Shorts", href: "/categories/men-shorts" },
-      { label: "View All", href: "/categories/men" },
-    ],
+    label: "SHIRTS",
+    href: "/categories/shirts",
   },
   {
-    label: "WOMEN",
-    href: "/categories/women",
-    children: [
-      { label: "T-Shirts", href: "/categories/women-tshirts" },
-      { label: "Hoodies", href: "/categories/women-hoodies" },
-      { label: "Joggers", href: "/categories/women-joggers" },
-      { label: "View All", href: "/categories/women" },
-    ],
+    label: "T-SHIRTS",
+    href: "/categories/t-shirts",
   },
   {
-    label: "OVERSIZED",
-    href: "/categories/oversized",
+    label: "OUTERWEAR",
+    href: "/categories/outerwear",
   },
   {
     label: "ALL PRODUCTS",
     href: "/products",
   },
   {
-    label: "SALE",
-    href: "/categories/sale",
+    label: "BESTSELLERS",
+    href: "/categories/bestsellers",
   },
 ];
 

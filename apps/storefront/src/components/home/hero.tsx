@@ -26,14 +26,14 @@ const SLIDES: Slide[] = [
     heading: "OVERSIZED IS THE NEW COOL",
     subtitle: "Comfort meets crazy",
     cta: "EXPLORE",
-    href: "/categories/oversized",
+    href: "/categories/outerwear",
     image: "/poster2.png",
   },
   {
     heading: "UPTO 50% OFF",
     subtitle: "End of season sale",
     cta: "SHOP SALE",
-    href: "/categories/sale",
+    href: "/products",
     image: "/poster3.png",
   },
 ];

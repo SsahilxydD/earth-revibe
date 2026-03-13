@@ -292,6 +292,11 @@ export interface PaginatedResponse<T> {
   orders?: T[];
   items?: T[];
   pagination: Pagination;
+  // API may return flat pagination fields instead of nested `pagination` object
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
 }
 
 // ─── Product Query Params ───────────────────────────────────────────────────
