@@ -14,16 +14,18 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
+  const images = product.images ?? [];
+
   const primaryImage = useMemo(() => {
-    const sorted = [...product.images].sort((a, b) => a.sortOrder - b.sortOrder);
+    const sorted = [...images].sort((a, b) => a.sortOrder - b.sortOrder);
     return sorted.find((img) => img.isPrimary) || sorted[0] || null;
-  }, [product.images]);
+  }, [images]);
 
   const secondaryImage = useMemo(() => {
-    const sorted = [...product.images].sort((a, b) => a.sortOrder - b.sortOrder);
+    const sorted = [...images].sort((a, b) => a.sortOrder - b.sortOrder);
     const primary = sorted.find((img) => img.isPrimary) || sorted[0];
     return sorted.find((img) => img !== primary) || null;
-  }, [product.images]);
+  }, [images]);
 
   const isOnSale =
     product.compareAtPrice !== null &&
@@ -41,16 +43,18 @@ export function ProductCard({ product }: ProductCardProps) {
     return created >= fourteenDaysAgo;
   }, [product.createdAt]);
 
+  const variants = product.variants ?? [];
+
   const colorVariants = useMemo(() => {
     const seen = new Set<string>();
-    return product.variants.filter((v) => {
+    return variants.filter((v) => {
       if (!v.color || !v.colorHex || seen.has(v.color)) return false;
       seen.add(v.color);
       return true;
     });
-  }, [product.variants]);
+  }, [variants]);
 
-  const isOutOfStock = product.variants.length > 0 && product.variants.every((v) => v.stock <= 0);
+  const isOutOfStock = variants.length > 0 && variants.every((v) => v.stock <= 0);
 
   return (
     <div className="group relative">
