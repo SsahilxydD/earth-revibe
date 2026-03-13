@@ -52,10 +52,32 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         <h1 className="text-2xl font-semibold text-charcoal">Settings</h1>
       </div>
 
+      {/* Mobile nav (horizontal scroll) */}
+      <div className="md:hidden w-full overflow-x-auto pb-2 -mx-1 mb-2">
+        <div className="flex gap-1 px-1 min-w-max">
+          {settingsNav.map((item) => {
+            const active = isActive(item.href, item.exact);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  active
+                    ? "bg-deep-earth text-white"
+                    : "bg-off-white text-dark-gray hover:bg-light-gray"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="flex gap-6">
         {/* Sidebar */}
         <nav className="w-56 flex-shrink-0 hidden md:block">
-          <div className="space-y-0.5 sticky top-20">
+          <div className="space-y-0.5 sticky top-16">
             {settingsNav.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href, item.exact);
@@ -76,28 +98,6 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
             })}
           </div>
         </nav>
-
-        {/* Mobile nav (horizontal scroll) */}
-        <div className="md:hidden w-full overflow-x-auto pb-2 -mx-1 mb-2">
-          <div className="flex gap-1 px-1 min-w-max">
-            {settingsNav.map((item) => {
-              const active = isActive(item.href, item.exact);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                    active
-                      ? "bg-deep-earth text-white"
-                      : "bg-off-white text-dark-gray hover:bg-light-gray"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">{children}</div>

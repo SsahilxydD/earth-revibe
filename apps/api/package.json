@@ -14,7 +14,7 @@
   "dependencies": {
     "@earth-revibe/db": "workspace:*",
     "@earth-revibe/shared": "workspace:*",
-    "@supabase/supabase-js": "^2.49.4",
+    "@supabase/supabase-js": "^2.99.0",
     "cloudinary": "^2.9.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
@@ -44,6 +44,7 @@
     "@types/node": "^22.0.0",
     "@types/nodemailer": "^6.4.17",
     "@types/opossum": "^8.1.9",
+    "@types/pino-http": "^6.1.0",
     "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "^4.0.18",
     "dotenv": "^17.3.1",

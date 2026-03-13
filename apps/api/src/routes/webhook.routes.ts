@@ -124,7 +124,7 @@ function mapPaymentMethod(method: string): string | undefined {
   const map: Record<string, string> = {
     upi: "UPI",
     card: "CARD",
-    netbanking: "NET_BANKING",
+    netbanking: "NETBANKING",
     wallet: "WALLET",
     emi: "EMI",
   };

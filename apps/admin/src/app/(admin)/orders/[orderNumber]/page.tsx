@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Package, Send, Truck, Tag, MapPin, CreditCard, Undo2, Printer, FileText, ExternalLink } from "lucide-react";
 import { Button, Badge, Card, Select } from "@/components/ui";
+import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import {
@@ -507,34 +508,28 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
       </div>
 
       {/* Refund Modal */}
-      {showRefundModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setShowRefundModal(false)} />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-md shadow-xl z-10">
-            <h3 className="text-lg font-semibold text-charcoal mb-4">Initiate Refund</h3>
-            <p className="text-sm text-medium-gray mb-4">
-              This will issue a full refund of {formatPrice(order.totalAmount)} via Razorpay.
-            </p>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Reason</label>
-                <textarea
-                  value={refundReason}
-                  onChange={(e) => setRefundReason(e.target.value)}
-                  placeholder="Enter refund reason..."
-                  className="w-full px-3 py-2 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20 min-h-[80px]"
-                />
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button variant="ghost" onClick={() => setShowRefundModal(false)}>Cancel</Button>
-                <Button onClick={handleRefund} disabled={!refundReason.trim() || refundOrder.isPending} className="bg-red-600 hover:bg-red-700">
-                  {refundOrder.isPending ? "Processing..." : "Confirm Refund"}
-                </Button>
-              </div>
-            </div>
+      <Modal isOpen={showRefundModal} onClose={() => setShowRefundModal(false)} title="Initiate Refund" size="sm">
+        <p className="text-sm text-medium-gray mb-4">
+          This will issue a full refund of {formatPrice(order.totalAmount)} via Razorpay.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-charcoal mb-1">Reason</label>
+            <textarea
+              value={refundReason}
+              onChange={(e) => setRefundReason(e.target.value)}
+              placeholder="Enter refund reason..."
+              className="w-full px-3 py-2 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20 min-h-[80px]"
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="ghost" onClick={() => setShowRefundModal(false)}>Cancel</Button>
+            <Button onClick={handleRefund} disabled={!refundReason.trim() || refundOrder.isPending} className="bg-red-600 hover:bg-red-700">
+              {refundOrder.isPending ? "Processing..." : "Confirm Refund"}
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

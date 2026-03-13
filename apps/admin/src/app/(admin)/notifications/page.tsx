@@ -140,9 +140,9 @@ export default function NotificationsPage() {
               <h2 className="text-sm font-semibold text-charcoal uppercase tracking-wider">
                 High Priority
               </h2>
-              {highPriority.map((notification) => (
+              {highPriority.map((notification, index) => (
                 <NotificationCard
-                  key={notification.type}
+                  key={`${notification.type}-${index}`}
                   notification={notification}
                 />
               ))}
@@ -155,9 +155,9 @@ export default function NotificationsPage() {
               <h2 className="text-sm font-semibold text-charcoal uppercase tracking-wider">
                 Medium Priority
               </h2>
-              {mediumPriority.map((notification) => (
+              {mediumPriority.map((notification, index) => (
                 <NotificationCard
-                  key={notification.type}
+                  key={`${notification.type}-${index}`}
                   notification={notification}
                 />
               ))}

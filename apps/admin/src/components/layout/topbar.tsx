@@ -140,7 +140,7 @@ export function Topbar() {
                 </div>
               ) : (
                 <div className="py-1">
-                  {notifications.map((notification: AdminNotification) => {
+                  {notifications.map((notification: AdminNotification, index: number) => {
                     const config = notificationConfig[notification.type];
                     const Icon = config?.icon ?? Bell;
                     const colorClass = config?.color ?? "text-gray-600 bg-gray-50";
@@ -149,7 +149,7 @@ export function Topbar() {
 
                     return (
                       <Link
-                        key={notification.type}
+                        key={`${notification.type}-${index}`}
                         href={href}
                         onClick={() => setIsNotificationOpen(false)}
                         className="flex items-start gap-3 px-4 py-3 hover:bg-off-white transition-colors"

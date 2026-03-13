@@ -223,25 +223,18 @@ export function FilterSidebar({ filters, onFilterChange }: FilterSidebarProps) {
 
   return (
     <>
-      {/* Mobile filter button */}
+      {/* Filter button */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="flex items-center gap-1.5 border border-[var(--color-border)] px-3 py-2 text-sm font-medium transition-colors hover:border-[var(--color-text)] lg:hidden"
+        className="flex items-center gap-1.5 border border-[var(--color-border)] px-3 py-2 text-sm font-medium transition-colors hover:border-[var(--color-text)]"
       >
         <SlidersHorizontal size={14} />
         Filters
       </button>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden w-[240px] shrink-0 lg:block">
-        <div className="sticky top-24">
-          <FilterContent filters={filters} onFilterChange={onFilterChange} />
-        </div>
-      </aside>
-
-      {/* Mobile drawer */}
+      {/* Drawer overlay */}
       {isMobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/40"

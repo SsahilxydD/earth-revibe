@@ -17,6 +17,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
+        setIsLoading(false);
         router.replace("/login");
         return;
       }

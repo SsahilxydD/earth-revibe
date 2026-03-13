@@ -260,7 +260,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                         </div>
                       </td>
                       <td className="py-2 px-2 text-right text-charcoal">
-                        {variant.price ? `$${Number(variant.price).toFixed(0)}` : "\u2014"}
+                        {variant.price ? `₹${Number(variant.price).toLocaleString('en-IN')}` : "\u2014"}
                       </td>
                       <td className="py-2 px-2 text-right">
                         <span className={variant.stock <= variant.lowStockThreshold ? "text-error font-medium" : "text-charcoal"}>
