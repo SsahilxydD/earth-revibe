@@ -39,7 +39,13 @@ router.post(
       req.file.mimetype
     );
     logger.info({ provider: result.provider, id: result.id }, "Image uploaded successfully");
-    res.json({ success: true, url: result.url, id: result.id, provider: result.provider });
+    res.json({
+      success: true,
+      url: result.url,
+      thumbnailUrl: result.thumbnailUrl,
+      id: result.id,
+      provider: result.provider,
+    });
   })
 );
 

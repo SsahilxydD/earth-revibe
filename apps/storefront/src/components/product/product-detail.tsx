@@ -210,7 +210,7 @@ function ImageGallery({ images, productName }: { images: ProductImage[]; product
               )}
             >
               <Image
-                src={getImageUrl(img.url, 150)}
+                src={getImageUrl(img.url, 150, img.thumbnailUrl)}
                 alt={img.altText || `${productName} thumbnail ${idx + 1}`}
                 fill
                 sizes="72px"

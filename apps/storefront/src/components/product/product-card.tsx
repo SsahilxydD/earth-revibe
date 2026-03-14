@@ -60,10 +60,10 @@ export function ProductCard({ product }: ProductCardProps) {
     <div className="group relative">
       <Link href={`/products/${product.slug}`} className="block">
         {/* Image container */}
-        <div className="relative aspect-[2/3] w-full overflow-hidden bg-[var(--color-surface)]">
+        <div className="relative aspect-[2/3] w-full overflow-hidden bg-white">
           {primaryImage && (
             <Image
-              src={getImageUrl(primaryImage.url, 600)}
+              src={getImageUrl(primaryImage.url, 600, primaryImage.thumbnailUrl)}
               alt={primaryImage.altText || product.name}
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -75,7 +75,7 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
           {secondaryImage && (
             <Image
-              src={getImageUrl(secondaryImage.url, 600)}
+              src={getImageUrl(secondaryImage.url, 600, secondaryImage.thumbnailUrl)}
               alt={secondaryImage.altText || product.name}
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"

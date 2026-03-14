@@ -14,6 +14,7 @@ import {
 interface ProductImage {
   id: string;
   url: string;
+  thumbnailUrl?: string | null;
   publicId: string;
   altText?: string | null;
   sortOrder: number;
@@ -43,7 +44,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
 
     for (const file of Array.from(files)) {
       try {
-        // Upload to Cloudflare via API
+        // Upload image (full quality to Supabase, thumbnail to Cloudflare if configured)
         const uploadResult = await uploadImage.mutateAsync(file);
 
         // Link to product
@@ -51,6 +52,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
           productId,
           data: {
             url: uploadResult.url,
+            thumbnailUrl: uploadResult.thumbnailUrl,
             publicId: uploadResult.id,
             altText: file.name.replace(/\.[^/.]+$/, ""),
           },

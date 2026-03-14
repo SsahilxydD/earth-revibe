@@ -168,7 +168,7 @@ export function useDeleteProductVariant() {
 export function useAddProductImage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, data }: { productId: string; data: { url: string; publicId: string; altText?: string } }) =>
+    mutationFn: ({ productId, data }: { productId: string; data: { url: string; thumbnailUrl?: string; publicId: string; altText?: string } }) =>
       api.post(`/products/${productId}/images`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-product"] });
@@ -219,7 +219,7 @@ export function useUploadImage() {
       }
 
       const json = await res.json();
-      return json as { success: boolean; url: string; id: string };
+      return json as { success: boolean; url: string; thumbnailUrl: string; id: string };
     },
   });
 }

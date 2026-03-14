@@ -21,11 +21,29 @@ export function formatDate(date: string): string {
   return `${day} ${month} ${year}`;
 }
 
-export function getImageUrl(url: string, width?: number): string {
+/**
+ * Get the best image URL for a given width.
+ * - For thumbnails/listings (width <= 600), prefer thumbnailUrl (Cloudflare) when available.
+ * - For full-quality detail views (width > 600 or unspecified), use the original url (Supabase).
+ * - Legacy Cloudinary URLs still get width transforms applied.
+ */
+export function getImageUrl(url: string, width?: number, thumbnailUrl?: string | null): string {
   if (!url) return "/placeholder.png";
+
+  // For small sizes, use the thumbnail (Cloudflare) if available
+  if (width && width <= 600 && thumbnailUrl) {
+    // Cloudflare Image Delivery URLs support /w=N variant suffix
+    if (thumbnailUrl.includes("imagedelivery.net")) {
+      return thumbnailUrl.replace(/\/public$/, `/w=${width}`);
+    }
+    return thumbnailUrl;
+  }
+
+  // Legacy Cloudinary support
   if (width && url.includes("cloudinary.com")) {
     return url.replace("/upload/", `/upload/w_${width},f_auto,q_auto/`);
   }
+
   return url;
 }
 

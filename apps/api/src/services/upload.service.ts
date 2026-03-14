@@ -13,8 +13,11 @@ export const imageProvider = useCloudflare ? "cloudflare" : "supabase";
 
 export interface UploadResult {
   id: string;
+  /** Full-quality original image (always Supabase Storage) */
   url: string;
-  provider: "cloudflare" | "supabase";
+  /** Optimized thumbnail URL (Cloudflare Images when configured, otherwise same as url) */
+  thumbnailUrl: string;
+  provider: "supabase" | "dual";
   variants: string[];
 }
 
@@ -47,11 +50,17 @@ async function ensureBucket(): Promise<void> {
   bucketReady = true;
 }
 
+interface InternalUploadResult {
+  id: string;
+  url: string;
+  variants: string[];
+}
+
 async function _uploadToSupabase(
   buffer: Buffer,
   filename: string,
   mimeType: string
-): Promise<UploadResult> {
+): Promise<InternalUploadResult> {
   await ensureBucket();
 
   const supabase = getSupabaseAdmin();
@@ -75,7 +84,6 @@ async function _uploadToSupabase(
   return {
     id: storagePath,
     url: urlData.publicUrl,
-    provider: "supabase",
     variants: [urlData.publicUrl],
   };
 }
@@ -94,7 +102,7 @@ async function _uploadToCloudflare(
   buffer: Buffer,
   filename: string,
   mimeType: string
-): Promise<UploadResult> {
+): Promise<InternalUploadResult> {
   const formData = new FormData();
   const blob = new Blob([buffer], { type: mimeType });
   formData.append("file", blob, filename);
@@ -128,7 +136,6 @@ async function _uploadToCloudflare(
     url:
       data.result.variants[0] ??
       `https://imagedelivery.net/${env.CLOUDFLARE_ACCOUNT_ID}/${data.result.id}/public`,
-    provider: "cloudflare",
     variants: data.result.variants,
   };
 }
@@ -150,52 +157,99 @@ async function _deleteFromCloudflare(imageId: string): Promise<void> {
 
 // ─── Circuit breakers ────────────────────────────────────────────────────────
 
-const uploadBreaker = createCircuitBreaker(
-  useCloudflare ? _uploadToCloudflare : _uploadToSupabase,
-  useCloudflare ? "cloudflare-upload" : "supabase-upload",
+const supabaseUploadBreaker = createCircuitBreaker(
+  _uploadToSupabase,
+  "supabase-upload",
   { timeout: 30000 }
 );
 
-const deleteBreaker = createCircuitBreaker(
-  useCloudflare ? _deleteFromCloudflare : _deleteFromSupabase,
-  useCloudflare ? "cloudflare-delete" : "supabase-delete",
+const supabaseDeleteBreaker = createCircuitBreaker(
+  _deleteFromSupabase,
+  "supabase-delete",
   { timeout: 15000 }
 );
+
+const cloudflareUploadBreaker = useCloudflare
+  ? createCircuitBreaker(_uploadToCloudflare, "cloudflare-upload", { timeout: 30000 })
+  : null;
+
+const cloudflareDeleteBreaker = useCloudflare
+  ? createCircuitBreaker(_deleteFromCloudflare, "cloudflare-delete", { timeout: 15000 })
+  : null;
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
- * Upload an image. Automatically uses Cloudflare Images if configured,
- * otherwise falls back to Supabase Storage.
+ * Upload an image.
+ * - Full-quality original always goes to Supabase Storage.
+ * - If Cloudflare Images is configured, a copy is also uploaded there for
+ *   optimized thumbnail delivery.
  */
 export async function uploadImage(
   buffer: Buffer,
   filename: string,
   mimeType: string
 ): Promise<UploadResult> {
+  // 1. Always upload full-quality to Supabase Storage
+  let supabaseResult: { id: string; url: string };
   try {
-    return await (uploadBreaker.fire(buffer, filename, mimeType) as Promise<UploadResult>);
+    const res = await (supabaseUploadBreaker.fire(buffer, filename, mimeType) as Promise<{ id: string; url: string }>);
+    supabaseResult = res;
   } catch (err) {
     if (err instanceof ApiError) throw err;
     const msg = err instanceof Error ? err.message : String(err);
-    logger.error({ provider: imageProvider, error: msg }, "Image upload failed");
-    throw ApiError.internal(`Image upload failed (${imageProvider}): ${msg}`);
+    logger.error({ error: msg }, "Supabase image upload failed");
+    throw ApiError.internal(`Image upload failed (supabase): ${msg}`);
   }
+
+  // 2. If Cloudflare is configured, also upload for thumbnail variants
+  let thumbnailUrl = supabaseResult.url;
+  let cfVariants: string[] = [];
+  if (cloudflareUploadBreaker) {
+    try {
+      const cfResult = await (cloudflareUploadBreaker.fire(buffer, filename, mimeType) as Promise<{ id: string; url: string; variants: string[] }>);
+      thumbnailUrl = cfResult.url;
+      cfVariants = cfResult.variants;
+      logger.info({ cfId: cfResult.id }, "Cloudflare thumbnail uploaded");
+    } catch (err) {
+      // Cloudflare thumbnail is non-critical — log and continue with Supabase URL
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.warn({ error: msg }, "Cloudflare thumbnail upload failed, using Supabase URL for thumbnails");
+    }
+  }
+
+  return {
+    id: supabaseResult.id,
+    url: supabaseResult.url,
+    thumbnailUrl,
+    provider: cloudflareUploadBreaker ? "dual" : "supabase",
+    variants: cfVariants.length > 0 ? cfVariants : [supabaseResult.url],
+  };
 }
 
 /**
- * Delete an image by ID. Routes to the correct provider based on the ID format.
- * - Supabase IDs contain a dot (uuid.ext)
- * - Cloudflare IDs are UUIDs without extension
+ * Delete an image. Always deletes from Supabase. If Cloudflare is configured
+ * and a thumbnail ID is provided, also deletes the Cloudflare copy.
  */
-export async function deleteImage(imageId: string): Promise<void> {
+export async function deleteImage(imageId: string, thumbnailId?: string): Promise<void> {
+  // Delete from Supabase (full-quality original)
   try {
-    return await (deleteBreaker.fire(imageId) as Promise<void>);
+    await (supabaseDeleteBreaker.fire(imageId) as Promise<void>);
   } catch (err) {
     if (err instanceof ApiError) throw err;
     const msg = err instanceof Error ? err.message : String(err);
-    logger.error({ provider: imageProvider, error: msg }, "Image delete failed");
-    throw ApiError.internal(`Image delete failed (${imageProvider}): ${msg}`);
+    logger.error({ error: msg }, "Supabase image delete failed");
+    throw ApiError.internal(`Image delete failed (supabase): ${msg}`);
+  }
+
+  // Delete Cloudflare thumbnail if applicable
+  if (cloudflareDeleteBreaker && thumbnailId) {
+    try {
+      await (cloudflareDeleteBreaker.fire(thumbnailId) as Promise<void>);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.warn({ thumbnailId, error: msg }, "Cloudflare thumbnail delete failed");
+    }
   }
 }
 

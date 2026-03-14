@@ -68,7 +68,10 @@ export interface ApiSuccessResponse<T = unknown> {
 
 export interface ProductImage {
   id: string;
+  /** Full-quality original image (Supabase Storage) */
   url: string;
+  /** Optimized thumbnail (Cloudflare Images when available, otherwise null) */
+  thumbnailUrl: string | null;
   altText: string | null;
   isPrimary: boolean;
   sortOrder: number;

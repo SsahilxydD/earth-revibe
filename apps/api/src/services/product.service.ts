@@ -331,7 +331,7 @@ export const productService = {
 
   async addProductImage(
     productId: string,
-    data: { url: string; publicId: string; altText?: string }
+    data: { url: string; thumbnailUrl?: string; publicId: string; altText?: string }
   ) {
     const product = await prisma.product.findUnique({ where: { id: productId } });
     if (!product) {
@@ -345,6 +345,7 @@ export const productService = {
       data: {
         productId,
         url: data.url,
+        thumbnailUrl: data.thumbnailUrl || null,
         publicId: data.publicId,
         altText: data.altText,
         sortOrder: existingCount,

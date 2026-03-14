@@ -14,7 +14,7 @@ interface Product {
   slug: string;
   price: number;
   compareAtPrice?: number | null;
-  images?: { url: string; alt?: string }[];
+  images?: { url: string; thumbnailUrl?: string | null; alt?: string }[];
   category?: { name: string } | null;
 }
 
@@ -23,8 +23,10 @@ interface NewArrivalsProps {
 }
 
 function ArrivalCard({ product }: { product: Product }) {
-  const primaryImage = product.images?.[0]?.url || "/placeholder.png";
-  const secondaryImage = product.images?.[1]?.url;
+  const primaryImg = product.images?.[0];
+  const secondaryImg = product.images?.[1];
+  const primaryImage = primaryImg?.url || "/placeholder.png";
+  const secondaryImage = secondaryImg?.url;
   const hasDiscount =
     product.compareAtPrice && product.compareAtPrice > product.price;
   const discountPercent = hasDiscount
@@ -41,7 +43,7 @@ function ArrivalCard({ product }: { product: Product }) {
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-[var(--color-surface)]">
         <Image
-          src={getImageUrl(primaryImage, 400)}
+          src={getImageUrl(primaryImage, 400, primaryImg?.thumbnailUrl)}
           alt={product.name}
           fill
           className={cn(
@@ -54,7 +56,7 @@ function ArrivalCard({ product }: { product: Product }) {
         />
         {secondaryImage && (
           <Image
-            src={getImageUrl(secondaryImage, 400)}
+            src={getImageUrl(secondaryImage, 400, secondaryImg?.thumbnailUrl)}
             alt={`${product.name} - alternate view`}
             fill
             className="object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
