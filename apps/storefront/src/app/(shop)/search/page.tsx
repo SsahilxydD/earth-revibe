@@ -150,7 +150,7 @@ function SearchContent() {
 
       {/* Results header */}
       {query && (
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="mb-8 flex flex-col gap-4 md:mb-10 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-lg font-semibold">
               {isLoading
