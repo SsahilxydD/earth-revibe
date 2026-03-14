@@ -234,6 +234,8 @@ function ImageGallery({ images, productName }: { images: ProductImage[]; product
                 alt={activeImage.altText || productName}
                 fill
                 sizes="(max-width: 1024px) 60vw, 50vw"
+                quality={100}
+                unoptimized
                 className={cn(
                   "object-cover transition-transform duration-300",
                   isZoomed && "scale-150"
@@ -263,6 +265,8 @@ function ImageGallery({ images, productName }: { images: ProductImage[]; product
               alt={activeImage.altText || productName}
               fill
               sizes="100vw"
+              quality={100}
+                unoptimized
               className="object-cover"
               priority
             />
