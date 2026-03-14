@@ -345,7 +345,6 @@ export const productService = {
       data: {
         productId,
         url: data.url,
-        thumbnailUrl: data.thumbnailUrl || null,
         publicId: data.publicId,
         altText: data.altText,
         sortOrder: existingCount,
