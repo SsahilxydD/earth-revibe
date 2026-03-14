@@ -663,15 +663,18 @@ export function ProductDetail({ product }: ProductDetailProps) {
       </div>
 
       {/* Fixed mobile bottom dock — always visible */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-white px-4 pb-[env(safe-area-inset-bottom)] lg:hidden">
-        {/* Product name + price row */}
-        <div className="flex items-center justify-between border-b border-[var(--color-border)] py-2.5">
+      <div
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border)] bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.08)] lg:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        {/* Row 1: Product name + price | Quantity */}
+        <div className="flex items-center justify-between px-4 py-2">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold uppercase">{product.name}</p>
+            <p className="truncate text-xs font-semibold uppercase">{product.name}</p>
             <div className="flex items-baseline gap-2">
               <span
                 className={cn(
-                  "text-sm font-semibold",
+                  "text-sm font-bold",
                   isOnSale && "text-[var(--color-sale)]"
                 )}
               >
@@ -684,12 +687,10 @@ export function ProductDetail({ product }: ProductDetailProps) {
               )}
             </div>
           </div>
-
-          {/* Quantity counter */}
           <div className="ml-3 inline-flex shrink-0 items-center border border-[var(--color-border)]">
             <button
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="flex h-8 w-8 items-center justify-center transition-colors hover:bg-[var(--color-surface)]"
+              className="flex h-8 w-8 items-center justify-center"
               aria-label="Decrease quantity"
             >
               <Minus size={12} />
@@ -701,7 +702,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
               onClick={() =>
                 setQuantity((q) => Math.min(selectedVariant?.stock ?? 99, q + 1))
               }
-              className="flex h-8 w-8 items-center justify-center transition-colors hover:bg-[var(--color-surface)]"
+              className="flex h-8 w-8 items-center justify-center"
               aria-label="Increase quantity"
             >
               <Plus size={12} />
@@ -709,25 +710,25 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </div>
         </div>
 
-        {/* Action buttons row */}
-        <div className="flex gap-2 pt-2.5 pb-2">
+        {/* Row 2: Add to Cart + Buy Now */}
+        <div className="flex gap-2 px-4 pb-3">
           <button
             onClick={handleAddToCart}
             disabled={!canAddToCart || isAdding}
             className={cn(
-              "flex h-11 flex-1 items-center justify-center text-xs font-bold uppercase tracking-wider transition-opacity",
+              "flex h-12 flex-1 items-center justify-center text-sm font-bold uppercase tracking-wider",
               canAddToCart
-                ? "bg-[var(--color-primary)] text-white hover:opacity-90"
+                ? "bg-[var(--color-primary)] text-white"
                 : "cursor-not-allowed bg-[var(--color-sold-out)] text-white"
             )}
           >
-            {isAdding ? <Loader2 size={14} className="animate-spin" /> : "Add to Cart"}
+            {isAdding ? <Loader2 size={16} className="animate-spin" /> : "Add to Cart"}
           </button>
           <button
             onClick={handleBuyNow}
             disabled={!canAddToCart || isAdding}
             className={cn(
-              "flex h-11 flex-1 items-center justify-center border-2 text-xs font-bold uppercase tracking-wider transition-colors",
+              "flex h-12 flex-1 items-center justify-center border-2 text-sm font-bold uppercase tracking-wider",
               canAddToCart
                 ? "border-[var(--color-primary)] text-[var(--color-primary)]"
                 : "cursor-not-allowed border-[var(--color-sold-out)] text-[var(--color-sold-out)]"
