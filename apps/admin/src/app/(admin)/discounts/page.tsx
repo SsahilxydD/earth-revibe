@@ -61,6 +61,7 @@ interface DiscountFormData {
   minOrderValue: string;
   maxDiscountAmount: string;
   usageLimit: string;
+  perUserLimit: string;
   startsAt: string;
   expiresAt: string;
 }
@@ -73,6 +74,7 @@ const emptyForm: DiscountFormData = {
   minOrderValue: "",
   maxDiscountAmount: "",
   usageLimit: "",
+  perUserLimit: "1",
   startsAt: "",
   expiresAt: "",
 };
@@ -117,6 +119,7 @@ export default function DiscountsPage() {
       minOrderValue: discount.minOrderValue ? String(discount.minOrderValue) : "",
       maxDiscountAmount: discount.maxDiscountAmount ? String(discount.maxDiscountAmount) : "",
       usageLimit: discount.usageLimit ? String(discount.usageLimit) : "",
+      perUserLimit: discount.perUserLimit ? String(discount.perUserLimit) : "1",
       startsAt: formatDateTimeLocal(discount.startsAt),
       expiresAt: formatDateTimeLocal(discount.expiresAt),
     });
@@ -157,6 +160,7 @@ export default function DiscountsPage() {
       minOrderValue: form.minOrderValue ? Number(form.minOrderValue) : undefined,
       maxDiscountAmount: form.maxDiscountAmount ? Number(form.maxDiscountAmount) : undefined,
       usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
+      perUserLimit: form.perUserLimit ? Number(form.perUserLimit) : 1,
       startsAt: form.startsAt,
       expiresAt: form.expiresAt,
     };
@@ -450,9 +454,9 @@ export default function DiscountsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-charcoal">Usage Limit</label>
+              <label className="text-sm font-medium text-charcoal">Total Usage Limit</label>
               <input
                 type="number"
                 value={form.usageLimit}
@@ -463,6 +467,21 @@ export default function DiscountsPage() {
                 className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
               />
             </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-charcoal">Per User Limit</label>
+              <input
+                type="number"
+                value={form.perUserLimit}
+                onChange={(e) => setForm({ ...form, perUserLimit: e.target.value })}
+                placeholder="1"
+                min="1"
+                step="1"
+                className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-charcoal">Starts At *</label>
               <input

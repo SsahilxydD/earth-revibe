@@ -7,6 +7,10 @@ import {
 import { api } from '@/lib/api-client';
 import type { Order, PaginatedResponse, ApiError } from '@/types';
 
+import { normalizePaginated } from '@earth-revibe/shared';
+
+type OrdersPage = PaginatedResponse<Order, 'orders'>;
+
 // ─── Query Keys ─────────────────────────────────────────────────────────────
 
 export const orderKeys = {
@@ -21,17 +25,17 @@ export const orderKeys = {
 
 export function useOrders(
   params: { page?: number; limit?: number } = {},
-  options?: Omit<UseQueryOptions<PaginatedResponse<Order>, ApiError>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<OrdersPage, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const searchParams = new URLSearchParams();
   if (params.page) searchParams.set('page', String(params.page));
   if (params.limit) searchParams.set('limit', String(params.limit));
   const qs = searchParams.toString();
 
-  return useQuery<PaginatedResponse<Order>, ApiError>({
+  return useQuery<OrdersPage, ApiError>({
     queryKey: orderKeys.list(params),
-    queryFn: ({ signal }) =>
-      api.get<PaginatedResponse<Order>>(`/orders${qs ? `?${qs}` : ''}`, signal),
+    queryFn: async ({ signal }) =>
+      normalizePaginated<Order, 'orders'>(await api.get(`/orders${qs ? `?${qs}` : ''}`, signal)),
     ...options,
   });
 }

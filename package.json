@@ -8,9 +8,14 @@
     "clean": "turbo clean",
     "db:generate": "turbo db:generate",
     "db:push": "turbo db:push",
-    "db:seed": "turbo db:seed"
+    "db:seed": "turbo db:seed",
+    "claw": "node scripts/claw.js",
+    "claw:frontend": "node scripts/claw.js frontend",
+    "claw:admin": "node scripts/claw.js admin",
+    "claw:api": "node scripts/claw.js api"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.0",
     "turbo": "^2.8.13",
     "typescript": "^5.9.3"
   },

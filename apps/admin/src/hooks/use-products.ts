@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
+import type { ProductListParams } from "@/types";
 
 // Ensure API_BASE is always an absolute URL - guard against missing https:// protocol
 function resolveApiBase(): string {
@@ -20,16 +21,6 @@ async function getAuthToken(): Promise<string | null> {
   } catch {
     return null;
   }
-}
-
-interface ProductListParams {
-  page?: number;
-  limit?: number;
-  status?: string;
-  category?: string;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: string;
 }
 
 export function useProducts(params: ProductListParams = {}) {

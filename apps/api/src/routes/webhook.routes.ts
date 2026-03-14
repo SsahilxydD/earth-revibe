@@ -4,10 +4,12 @@ import crypto from "crypto";
 import { prisma } from "@earth-revibe/db";
 import { env } from "../config/env";
 import { logger } from "../config/logger";
+import { webhookLimiter } from "../middleware/rate-limit";
+import { asyncHandler } from "../utils/async-handler";
 
 const router: RouterType = Router();
 
-router.post("/razorpay", async (req, res) => {
+router.post("/razorpay", webhookLimiter, asyncHandler(async (req, res) => {
   const signature = req.headers["x-razorpay-signature"] as string;
   const webhookSecret = env.RAZORPAY_WEBHOOK_SECRET;
 
@@ -118,7 +120,7 @@ router.post("/razorpay", async (req, res) => {
 
   // Always return 200 to prevent Razorpay retries
   res.status(200).json({ success: true });
-});
+}));
 
 function mapPaymentMethod(method: string): string | undefined {
   const map: Record<string, string> = {

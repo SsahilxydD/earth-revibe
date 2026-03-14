@@ -1,6 +1,6 @@
 /**
  * Re-export all shared types from @earth-revibe/shared.
- * This is the ONLY place storefront types come from — never duplicate here.
+ * This is the ONLY place admin types come from — never duplicate here.
  */
 export type {
   // Pagination & API
@@ -33,6 +33,11 @@ export type {
   OrderItem,
   OrderPayment,
   OrderListParams,
+
+  // Admin list params
+  CustomerListParams,
+  DiscountListParams,
+  InventoryListParams,
 
   // Blog
   BlogPost,
@@ -70,7 +75,8 @@ export type {
   Notification,
 } from "@earth-revibe/shared";
 
-// Re-export ClientApiError as ApiError for backward compat with existing hook code
+// Re-export ClientApiError as ApiError for consistency with storefront
 export type { ClientApiError as ApiError } from "@earth-revibe/shared";
 
-export type { ProductStatus } from "@earth-revibe/shared";
+// Re-export enums
+export type { ProductStatus, OrderStatus, PaymentStatus } from "@earth-revibe/shared";

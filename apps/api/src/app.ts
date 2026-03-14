@@ -36,6 +36,7 @@ import { adminProductRouter } from "./routes/admin-product.routes";
 import { adminNotificationRouter } from "./routes/admin-notification.routes";
 import { adminSettingsRouter } from "./routes/admin-settings.routes";
 import { uploadRouter } from "./routes/upload.routes";
+import { webhookRouter } from "./routes/webhook.routes";
 import { sanitize } from "./middleware/sanitize";
 
 const app: Express = express();
@@ -172,6 +173,7 @@ app.use("/api/v1/admin/products", adminProductRouter);
 app.use("/api/v1/admin/notifications", adminNotificationRouter);
 app.use("/api/v1/admin/settings", adminSettingsRouter);
 app.use("/api/v1/upload", uploadRouter);
+app.use("/api/v1/webhooks", webhookRouter);
 
 // Error handling (must be after all routes)
 app.use(errorHandler);

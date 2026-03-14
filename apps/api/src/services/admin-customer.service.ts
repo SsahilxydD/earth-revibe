@@ -14,6 +14,11 @@ interface CustomerQuery {
 export const adminCustomerService = {
   async listCustomers(query: CustomerQuery) {
     const { search, isActive, page, limit, sortBy, sortOrder } = query;
+
+    // Whitelist sortBy to prevent arbitrary field sorting
+    const allowedSortFields = ["createdAt", "email", "firstName", "lastName", "loyaltyPoints"];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
+
     const where: Prisma.UserWhereInput = { role: "CUSTOMER" };
 
     if (isActive !== undefined) where.isActive = isActive;
@@ -31,7 +36,7 @@ export const adminCustomerService = {
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: { [safeSortBy]: sortOrder },
         select: {
           id: true,
           email: true,

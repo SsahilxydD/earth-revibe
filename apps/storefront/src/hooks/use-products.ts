@@ -27,22 +27,8 @@ export const productKeys = {
   categories: ['categories'] as const,
 };
 
-// ─── Normalize API Response ──────────────────────────────────────────────────
-// The API returns flat pagination (total, page, limit, totalPages) at the top level,
-// but our types expect a nested `pagination` object. Normalize to always have both.
-
-function normalizePaginated<T>(raw: any): PaginatedResponse<T> {
-  if (raw.pagination) return raw;
-  return {
-    ...raw,
-    pagination: {
-      page: raw.page ?? 1,
-      limit: raw.limit ?? 12,
-      total: raw.total ?? 0,
-      totalPages: raw.totalPages ?? 0,
-    },
-  };
-}
+// Shared normalizer — converts flat pagination from API to nested { pagination } object
+import { normalizePaginated } from '@earth-revibe/shared';
 
 // ─── Build Query String ─────────────────────────────────────────────────────
 
@@ -68,14 +54,16 @@ function buildProductQuery(params: ProductListParams): string {
 
 // ─── useProducts ────────────────────────────────────────────────────────────
 
+type ProductsPage = PaginatedResponse<Product, 'products'>;
+
 export function useProducts(
   params: ProductListParams = {},
-  options?: Omit<UseQueryOptions<PaginatedResponse<Product>, ApiError>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<ProductsPage, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery<PaginatedResponse<Product>, ApiError>({
+  return useQuery<ProductsPage, ApiError>({
     queryKey: productKeys.list(params),
     queryFn: async ({ signal }) =>
-      normalizePaginated<Product>(await api.get(`/products${buildProductQuery(params)}`, signal)),
+      normalizePaginated<Product, 'products'>(await api.get(`/products${buildProductQuery(params)}`, signal)),
     ...options,
   });
 }
@@ -97,7 +85,7 @@ export function useProduct(
 // ─── useInfiniteProducts ────────────────────────────────────────────────────
 
 export function useInfiniteProducts(params: Omit<ProductListParams, 'page'> = {}) {
-  return useInfiniteQuery<PaginatedResponse<Product>, ApiError>({
+  return useInfiniteQuery<ProductsPage, ApiError>({
     queryKey: [...productKeys.lists(), 'infinite', params],
     queryFn: async ({ pageParam, signal }) => {
       const query = buildProductQuery({
@@ -105,7 +93,7 @@ export function useInfiniteProducts(params: Omit<ProductListParams, 'page'> = {}
         page: pageParam as number,
         limit: params.limit || 12,
       });
-      return normalizePaginated<Product>(await api.get(`/products${query}`, signal));
+      return normalizePaginated<Product, 'products'>(await api.get(`/products${query}`, signal));
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
@@ -121,17 +109,17 @@ export function useRelatedProducts(
   categorySlug: string | undefined,
   excludeId: string
 ) {
-  return useQuery<PaginatedResponse<Product>, ApiError>({
+  return useQuery<ProductsPage, ApiError>({
     queryKey: productKeys.related(categorySlug ?? '', excludeId),
     queryFn: async ({ signal }) =>
-      normalizePaginated<Product>(await api.get(
+      normalizePaginated<Product, 'products'>(await api.get(
         `/products?category=${categorySlug}&limit=12&sortBy=createdAt&sortOrder=desc`,
         signal
       )),
     enabled: !!categorySlug,
     select: (data) => ({
       ...data,
-      products: (data.products ?? []).filter((p) => p.id !== excludeId),
+      products: data.products.filter((p) => p.id !== excludeId),
     }),
   });
 }

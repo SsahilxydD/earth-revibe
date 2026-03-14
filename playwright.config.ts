@@ -9,9 +9,11 @@ export default defineConfig({
   reporter: [["html", { open: "never" }], ["list"]],
   timeout: 30000,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "https://storefront-tawny-one.vercel.app",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    actionTimeout: 15000,
+    navigationTimeout: 15000,
   },
   projects: [
     {
@@ -19,10 +21,4 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  webServer: {
-    command: "pnpm --filter @earth-revibe/storefront dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 60000,
-  },
 });

@@ -1,14 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { toast } from "@/components/ui";
-
-interface DiscountListParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  isActive?: string;
-  type?: string;
-}
+import type { DiscountListParams } from "@/types";
 
 export function useDiscounts(params: DiscountListParams = {}) {
   const searchParams = new URLSearchParams();

@@ -1,14 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-
-interface OrderListParams {
-  page?: number;
-  limit?: number;
-  status?: string;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: string;
-}
+import type { OrderListParams } from "@/types";
 
 export function useOrders(params: OrderListParams = {}) {
   const searchParams = new URLSearchParams();

@@ -1,15 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase/client";
+import type { CustomerListParams } from "@/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
+// Ensure API_BASE is always an absolute URL
+function resolveApiBase(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
+  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+  return `https://${raw}`;
+}
+const API_BASE = resolveApiBase();
 
-interface CustomerListParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  isActive?: string;
-  sortBy?: string;
-  sortOrder?: string;
+/** Get auth token from Supabase session for raw fetch calls that bypass the API client */
+async function getAuthToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function useCustomers(params: CustomerListParams = {}) {
@@ -37,7 +48,7 @@ export function useCustomer(id: string) {
 export function useExportCustomersCSV() {
   return useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem("adminAccessToken");
+      const token = await getAuthToken();
       const headers: Record<string, string> = {};
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;

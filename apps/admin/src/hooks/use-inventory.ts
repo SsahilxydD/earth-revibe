@@ -1,14 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-
-interface InventoryListParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  lowStock?: string;
-  sortBy?: string;
-  threshold?: number;
-}
+import type { InventoryListParams } from "@/types";
 
 export function useInventory(params: InventoryListParams = {}) {
   const searchParams = new URLSearchParams();

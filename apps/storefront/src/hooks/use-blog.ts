@@ -7,6 +7,10 @@ import {
 import { api } from '@/lib/api-client';
 import type { BlogPost, BlogListParams, PaginatedResponse, ApiError } from '@/types';
 
+import { normalizePaginated } from '@earth-revibe/shared';
+
+type PostsPage = PaginatedResponse<BlogPost, 'posts'>;
+
 // ─── Query Keys ─────────────────────────────────────────────────────────────
 
 export const blogKeys = {
@@ -20,7 +24,7 @@ export const blogKeys = {
 
 export function useBlogPosts(
   params: BlogListParams = {},
-  options?: Omit<UseQueryOptions<PaginatedResponse<BlogPost>, ApiError>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<PostsPage, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const searchParams = new URLSearchParams();
   if (params.page) searchParams.set('page', String(params.page));
@@ -29,10 +33,10 @@ export function useBlogPosts(
   if (params.status) searchParams.set('status', params.status);
   const qs = searchParams.toString();
 
-  return useQuery<PaginatedResponse<BlogPost>, ApiError>({
+  return useQuery<PostsPage, ApiError>({
     queryKey: blogKeys.list(params),
-    queryFn: ({ signal }) =>
-      api.get<PaginatedResponse<BlogPost>>(`/blog${qs ? `?${qs}` : ''}`, signal),
+    queryFn: async ({ signal }) =>
+      normalizePaginated<BlogPost, 'posts'>(await api.get(`/blog${qs ? `?${qs}` : ''}`, signal)),
     ...options,
   });
 }
