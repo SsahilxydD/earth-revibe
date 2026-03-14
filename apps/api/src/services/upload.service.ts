@@ -173,7 +173,14 @@ export async function uploadImage(
   filename: string,
   mimeType: string
 ): Promise<UploadResult> {
-  return uploadBreaker.fire(buffer, filename, mimeType) as Promise<UploadResult>;
+  try {
+    return await (uploadBreaker.fire(buffer, filename, mimeType) as Promise<UploadResult>);
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error({ provider: imageProvider, error: msg }, "Image upload failed");
+    throw ApiError.internal(`Image upload failed (${imageProvider}): ${msg}`);
+  }
 }
 
 /**
@@ -182,7 +189,14 @@ export async function uploadImage(
  * - Cloudflare IDs are UUIDs without extension
  */
 export async function deleteImage(imageId: string): Promise<void> {
-  return deleteBreaker.fire(imageId) as Promise<void>;
+  try {
+    return await (deleteBreaker.fire(imageId) as Promise<void>);
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error({ provider: imageProvider, error: msg }, "Image delete failed");
+    throw ApiError.internal(`Image delete failed (${imageProvider}): ${msg}`);
+  }
 }
 
 /**

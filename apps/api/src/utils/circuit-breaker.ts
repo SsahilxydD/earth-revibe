@@ -1,6 +1,5 @@
 import CircuitBreaker from "opossum";
 import { logger } from "../config/logger";
-import { ApiError } from "./api-error";
 
 export function createCircuitBreaker<T>(
   fn: (...args: any[]) => Promise<T>,
@@ -24,9 +23,9 @@ export function createCircuitBreaker<T>(
   breaker.on("close", () =>
     logger.info({ circuit: name }, "Circuit breaker closed")
   );
-  breaker.fallback(() => {
-    throw ApiError.serviceUnavailable(`Service ${name} is currently unavailable (circuit open)`);
-  });
+  breaker.on("failure", (err: Error) =>
+    logger.error({ circuit: name, error: err.message }, "Circuit breaker call failed")
+  );
 
   return breaker;
 }
