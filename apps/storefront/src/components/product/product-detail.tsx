@@ -624,9 +624,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
             {colorSelector}
             {sizeSelector}
-            {quantitySelector}
-            {lowStockWarning}
-            {renderActions()}
 
             {/* Description */}
             {product.description && (
