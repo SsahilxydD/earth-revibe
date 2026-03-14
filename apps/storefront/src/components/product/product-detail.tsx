@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Minus, Plus, Loader2, ChevronRight, Heart } from "lucide-react";
@@ -182,9 +182,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [showStickyBar, setShowStickyBar] = useState(false);
 
-  const mobileCartRef = useRef<HTMLButtonElement>(null);
   const addItem = useCartStore((s) => s.addItem);
   const { addToast } = useToast();
 
@@ -201,17 +199,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
     (colors.length === 0 || selectedColor !== null) &&
     (sizes.length === 0 || selectedSize !== null) &&
     (selectedVariant ? selectedVariant.stock > 0 : true);
-
-  /* Sticky mobile bar — observe the mobile Add to Cart button */
-  useEffect(() => {
-    if (!mobileCartRef.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setShowStickyBar(!entry.isIntersecting),
-      { threshold: 0 }
-    );
-    observer.observe(mobileCartRef.current);
-    return () => observer.disconnect();
-  }, []);
 
   const handleAddToCart = async () => {
     if (!canAddToCart) {
@@ -376,10 +363,9 @@ export function ProductDetail({ product }: ProductDetailProps) {
       </p>
     );
 
-  const renderActions = (ref?: React.RefObject<HTMLButtonElement | null>) => (
+  const renderActions = () => (
     <div className="mt-6 flex flex-col gap-3">
       <button
-        ref={ref}
         onClick={handleAddToCart}
         disabled={!canAddToCart || isAdding}
         className={cn(
@@ -585,7 +571,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
         </div>
 
         {/* ===== MOBILE LAYOUT ===== */}
-        <div className="lg:hidden">
+        <div className="pb-36 lg:hidden lg:pb-0">
           {/* First image — full width */}
           {firstImage && (
             <Image
@@ -640,7 +626,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
             {sizeSelector}
             {quantitySelector}
             {lowStockWarning}
-            {renderActions(mobileCartRef)}
+            {renderActions()}
 
             {/* Description */}
             {product.description && (
@@ -679,35 +665,78 @@ export function ProductDetail({ product }: ProductDetailProps) {
         />
       </div>
 
-      {/* Sticky mobile add-to-cart bar */}
-      <div
-        className={cn(
-          "fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-white px-4 py-3 transition-transform duration-300 md:hidden",
-          showStickyBar ? "translate-y-0" : "translate-y-full"
-        )}
-      >
-        <div className="flex items-center gap-3">
+      {/* Fixed mobile bottom dock — always visible */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-white px-4 pb-[env(safe-area-inset-bottom)] lg:hidden">
+        {/* Product name + price row */}
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] py-2.5">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{product.name}</p>
-            <p className="text-sm font-semibold text-[var(--color-sale)]">
-              {formatPrice(displayPrice)}
-            </p>
+            <p className="truncate text-sm font-semibold uppercase">{product.name}</p>
+            <div className="flex items-baseline gap-2">
+              <span
+                className={cn(
+                  "text-sm font-semibold",
+                  isOnSale && "text-[var(--color-sale)]"
+                )}
+              >
+                {formatPrice(displayPrice)}
+              </span>
+              {isOnSale && (
+                <span className="text-xs text-[var(--color-muted)] line-through">
+                  {formatPrice(product.compareAtPrice!)}
+                </span>
+              )}
+            </div>
           </div>
+
+          {/* Quantity counter */}
+          <div className="ml-3 inline-flex shrink-0 items-center border border-[var(--color-border)]">
+            <button
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="flex h-8 w-8 items-center justify-center transition-colors hover:bg-[var(--color-surface)]"
+              aria-label="Decrease quantity"
+            >
+              <Minus size={12} />
+            </button>
+            <span className="flex h-8 w-8 items-center justify-center border-x border-[var(--color-border)] text-xs font-semibold">
+              {quantity}
+            </span>
+            <button
+              onClick={() =>
+                setQuantity((q) => Math.min(selectedVariant?.stock ?? 99, q + 1))
+              }
+              className="flex h-8 w-8 items-center justify-center transition-colors hover:bg-[var(--color-surface)]"
+              aria-label="Increase quantity"
+            >
+              <Plus size={12} />
+            </button>
+          </div>
+        </div>
+
+        {/* Action buttons row */}
+        <div className="flex gap-2 pt-2.5 pb-2">
           <button
             onClick={handleAddToCart}
             disabled={!canAddToCart || isAdding}
             className={cn(
-              "flex h-10 shrink-0 items-center justify-center gap-2 px-6 text-xs font-bold uppercase tracking-wider",
+              "flex h-11 flex-1 items-center justify-center text-xs font-bold uppercase tracking-wider transition-opacity",
               canAddToCart
-                ? "bg-[var(--color-primary)] text-white"
-                : "bg-[var(--color-sold-out)] text-white"
+                ? "bg-[var(--color-primary)] text-white hover:opacity-90"
+                : "cursor-not-allowed bg-[var(--color-sold-out)] text-white"
             )}
           >
-            {isAdding ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              "Add to Cart"
+            {isAdding ? <Loader2 size={14} className="animate-spin" /> : "Add to Cart"}
+          </button>
+          <button
+            onClick={handleBuyNow}
+            disabled={!canAddToCart || isAdding}
+            className={cn(
+              "flex h-11 flex-1 items-center justify-center border-2 text-xs font-bold uppercase tracking-wider transition-colors",
+              canAddToCart
+                ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+                : "cursor-not-allowed border-[var(--color-sold-out)] text-[var(--color-sold-out)]"
             )}
+          >
+            Buy Now
           </button>
         </div>
       </div>
