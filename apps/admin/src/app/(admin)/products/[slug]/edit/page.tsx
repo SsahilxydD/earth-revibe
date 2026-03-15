@@ -1,9 +1,9 @@
 "use client";
 
-import { use } from "react";
-import { useRouter } from "next/navigation";
+import { use, useCallback } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { ProductForm } from "@/components/products/product-form";
 import { useProduct, useUpdateProduct } from "@/hooks/use-products";
 import { toast } from "@/components/ui/toast";
@@ -16,19 +16,20 @@ export default function EditProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: product, isLoading, isError, error } = useProduct(slug);
   const updateProduct = useUpdateProduct();
 
-  const handleSubmit = async (data: CreateProductInput) => {
+  const handleSubmit = useCallback(async (data: CreateProductInput) => {
     try {
       await updateProduct.mutateAsync({ id: product.id, data });
+      // Refetch product data so the form shows the saved values
+      await queryClient.invalidateQueries({ queryKey: ["admin-product", slug] });
       toast.success("Product updated successfully");
-      router.push("/products");
     } catch (err: any) {
       toast.error(err.message || "Failed to update product");
     }
-  };
+  }, [product?.id, slug, updateProduct, queryClient]);
 
   if (isLoading) {
     return (
@@ -81,6 +82,7 @@ export default function EditProductPage({
       </div>
 
       <ProductForm
+        key={product.updatedAt || product.id}
         defaultValues={{
           name: product.name,
           slug: product.slug,

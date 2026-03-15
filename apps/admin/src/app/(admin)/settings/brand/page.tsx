@@ -33,8 +33,30 @@ export default function BrandAndThemePage() {
   const [pinterestUrl, setPinterestUrl] = useState("");
 
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const isValidUrl = (url: string) => {
+    if (!url) return true;
+    try { new URL(url); return true; } catch { return false; }
+  };
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    const urls: Record<string, string> = { instagramUrl, facebookUrl, twitterUrl, youtubeUrl, pinterestUrl };
+    for (const [key, val] of Object.entries(urls)) {
+      if (val && !isValidUrl(val)) {
+        errs[key] = "Enter a valid URL (e.g. https://...)";
+      }
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSave = async () => {
+    if (!validate()) {
+      toast.error("Please fix the validation errors");
+      return;
+    }
     setSaving(true);
     await new Promise((r) => setTimeout(r, 500));
     toast.success("Brand & theme settings saved");
@@ -252,34 +274,39 @@ export default function BrandAndThemePage() {
             <Input
               label="Instagram"
               value={instagramUrl}
-              onChange={(e) => setInstagramUrl(e.target.value)}
+              onChange={(e) => { setInstagramUrl(e.target.value); if (errors.instagramUrl) setErrors((prev) => ({ ...prev, instagramUrl: "" })); }}
               placeholder="https://instagram.com/yourstore"
+              error={errors.instagramUrl}
             />
             <Input
               label="Facebook"
               value={facebookUrl}
-              onChange={(e) => setFacebookUrl(e.target.value)}
+              onChange={(e) => { setFacebookUrl(e.target.value); if (errors.facebookUrl) setErrors((prev) => ({ ...prev, facebookUrl: "" })); }}
               placeholder="https://facebook.com/yourstore"
+              error={errors.facebookUrl}
             />
             <Input
               label="Twitter/X"
               value={twitterUrl}
-              onChange={(e) => setTwitterUrl(e.target.value)}
+              onChange={(e) => { setTwitterUrl(e.target.value); if (errors.twitterUrl) setErrors((prev) => ({ ...prev, twitterUrl: "" })); }}
               placeholder="https://x.com/yourstore"
+              error={errors.twitterUrl}
             />
             <Input
               label="YouTube"
               value={youtubeUrl}
-              onChange={(e) => setYoutubeUrl(e.target.value)}
+              onChange={(e) => { setYoutubeUrl(e.target.value); if (errors.youtubeUrl) setErrors((prev) => ({ ...prev, youtubeUrl: "" })); }}
               placeholder="https://youtube.com/@yourstore"
+              error={errors.youtubeUrl}
             />
           </div>
 
           <Input
             label="Pinterest"
             value={pinterestUrl}
-            onChange={(e) => setPinterestUrl(e.target.value)}
+            onChange={(e) => { setPinterestUrl(e.target.value); if (errors.pinterestUrl) setErrors((prev) => ({ ...prev, pinterestUrl: "" })); }}
             placeholder="https://pinterest.com/yourstore"
+            error={errors.pinterestUrl}
           />
 
           <p className="text-xs text-medium-gray">

@@ -48,6 +48,8 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.title.trim()) return;
+    if (!form.content.trim()) return;
     const payload = {
       ...form,
       excerpt: form.excerpt || undefined,
@@ -57,8 +59,12 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
       categoryIds: form.categoryIds.length ? form.categoryIds : [],
       tagIds: form.tagIds.length ? form.tagIds : [],
     };
-    await updateMutation.mutateAsync({ id, data: payload });
-    router.push("/blog");
+    try {
+      await updateMutation.mutateAsync({ id, data: payload });
+      router.push("/blog");
+    } catch {
+      // Error is handled by mutation onError callback
+    }
   };
 
   const toggleArray = (arr: string[], val: string) =>

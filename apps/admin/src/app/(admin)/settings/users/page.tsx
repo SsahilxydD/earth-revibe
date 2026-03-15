@@ -100,6 +100,10 @@ export default function UsersPermissionsPage() {
       toast.error("Please fill in all required fields");
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
     const newStaff: StaffMember = {
       id: Math.random().toString(36).slice(2),
       firstName: addFirstName,
@@ -130,6 +134,10 @@ export default function UsersPermissionsPage() {
   const handleEditStaff = () => {
     if (!editingStaff || !editFirstName || !editLastName || !editEmail) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail)) {
+      toast.error("Please enter a valid email address");
       return;
     }
     setStaff((prev) =>

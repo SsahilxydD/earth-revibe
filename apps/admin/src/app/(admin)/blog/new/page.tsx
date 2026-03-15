@@ -28,6 +28,8 @@ export default function NewBlogPostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.title.trim()) return;
+    if (!form.content.trim()) return;
     const payload = {
       ...form,
       slug: form.slug || undefined,
@@ -38,8 +40,12 @@ export default function NewBlogPostPage() {
       categoryIds: form.categoryIds.length ? form.categoryIds : undefined,
       tagIds: form.tagIds.length ? form.tagIds : undefined,
     };
-    const result = await createMutation.mutateAsync(payload);
-    if (result?.post) router.push("/blog");
+    try {
+      const result = await createMutation.mutateAsync(payload);
+      if (result?.post) router.push("/blog");
+    } catch {
+      // Error is handled by mutation onError callback
+    }
   };
 
   const toggleArray = (arr: string[], id: string) =>

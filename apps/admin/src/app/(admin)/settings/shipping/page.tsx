@@ -80,8 +80,25 @@ export default function ShippingSettingsPage() {
   const [showTrackingLink, setShowTrackingLink] = useState(true);
 
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    const numFields: Record<string, string> = { defaultWeight, defaultLength, defaultWidth, defaultHeight };
+    for (const [key, val] of Object.entries(numFields)) {
+      if (val && (isNaN(Number(val)) || Number(val) <= 0)) {
+        errs[key] = "Must be a positive number";
+      }
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSave = async () => {
+    if (!validate()) {
+      toast.error("Please fix the validation errors");
+      return;
+    }
     setSaving(true);
     // TODO: connect to API when settings endpoint is built
     await new Promise((r) => setTimeout(r, 500));
@@ -257,9 +274,11 @@ export default function ShippingSettingsPage() {
 
           <Input
             label="Default weight (kg)"
+            type="number"
             value={defaultWeight}
-            onChange={(e) => setDefaultWeight(e.target.value)}
+            onChange={(e) => { setDefaultWeight(e.target.value); if (errors.defaultWeight) setErrors((prev) => ({ ...prev, defaultWeight: "" })); }}
             placeholder="0.5"
+            error={errors.defaultWeight}
           />
 
           <div>
@@ -268,19 +287,25 @@ export default function ShippingSettingsPage() {
             </label>
             <div className="grid grid-cols-3 gap-3">
               <Input
+                type="number"
                 value={defaultLength}
-                onChange={(e) => setDefaultLength(e.target.value)}
+                onChange={(e) => { setDefaultLength(e.target.value); if (errors.defaultLength) setErrors((prev) => ({ ...prev, defaultLength: "" })); }}
                 placeholder="Length"
+                error={errors.defaultLength}
               />
               <Input
+                type="number"
                 value={defaultWidth}
-                onChange={(e) => setDefaultWidth(e.target.value)}
+                onChange={(e) => { setDefaultWidth(e.target.value); if (errors.defaultWidth) setErrors((prev) => ({ ...prev, defaultWidth: "" })); }}
                 placeholder="Width"
+                error={errors.defaultWidth}
               />
               <Input
+                type="number"
                 value={defaultHeight}
-                onChange={(e) => setDefaultHeight(e.target.value)}
+                onChange={(e) => { setDefaultHeight(e.target.value); if (errors.defaultHeight) setErrors((prev) => ({ ...prev, defaultHeight: "" })); }}
                 placeholder="Height"
+                error={errors.defaultHeight}
               />
             </div>
             <div className="grid grid-cols-3 gap-3 mt-1">

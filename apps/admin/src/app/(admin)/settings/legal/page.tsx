@@ -38,8 +38,37 @@ export default function LegalSettingsPage() {
   const [acceptEcomRules, setAcceptEcomRules] = useState(true);
 
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+      errs.pan = "PAN must be in format ABCDE1234F";
+    }
+    if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/.test(gstin)) {
+      errs.gstin = "Invalid GSTIN format (e.g. 22AAAAA0000A1Z5)";
+    }
+    if (pin && !/^[1-9][0-9]{5}$/.test(pin)) {
+      errs.pin = "PIN must be a 6-digit number";
+    }
+    if (legalPhone && !/^\+?[0-9\s-]{7,15}$/.test(legalPhone)) {
+      errs.legalPhone = "Enter a valid phone number";
+    }
+    if (legalEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(legalEmail)) {
+      errs.legalEmail = "Enter a valid email address";
+    }
+    if (grievanceOfficerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(grievanceOfficerEmail)) {
+      errs.grievanceOfficerEmail = "Enter a valid email address";
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSave = async () => {
+    if (!validate()) {
+      toast.error("Please fix the validation errors");
+      return;
+    }
     setSaving(true);
     await new Promise((r) => setTimeout(r, 500));
     toast.success("Legal settings saved");
@@ -95,14 +124,18 @@ export default function LegalSettingsPage() {
             <Input
               label="PAN Number"
               value={pan}
-              onChange={(e) => setPan(e.target.value)}
+              onChange={(e) => { setPan(e.target.value.toUpperCase()); if (errors.pan) setErrors((prev) => ({ ...prev, pan: "" })); }}
               placeholder="ABCDE1234F"
+              error={errors.pan}
+              maxLength={10}
             />
             <Input
               label="GSTIN"
               value={gstin}
-              onChange={(e) => setGstin(e.target.value)}
+              onChange={(e) => { setGstin(e.target.value.toUpperCase()); if (errors.gstin) setErrors((prev) => ({ ...prev, gstin: "" })); }}
               placeholder="22AAAAA0000A1Z5"
+              error={errors.gstin}
+              maxLength={15}
             />
           </div>
         </div>
@@ -147,8 +180,10 @@ export default function LegalSettingsPage() {
             <Input
               label="PIN Code"
               value={pin}
-              onChange={(e) => setPin(e.target.value)}
+              onChange={(e) => { setPin(e.target.value.replace(/\D/g, "")); if (errors.pin) setErrors((prev) => ({ ...prev, pin: "" })); }}
               placeholder="PIN Code"
+              error={errors.pin}
+              maxLength={6}
             />
           </div>
 
@@ -174,15 +209,17 @@ export default function LegalSettingsPage() {
               label="Legal email"
               type="email"
               value={legalEmail}
-              onChange={(e) => setLegalEmail(e.target.value)}
+              onChange={(e) => { setLegalEmail(e.target.value); if (errors.legalEmail) setErrors((prev) => ({ ...prev, legalEmail: "" })); }}
               placeholder="legal@example.com"
               helperText="For legal and compliance notices"
+              error={errors.legalEmail}
             />
             <Input
               label="Legal phone"
               value={legalPhone}
-              onChange={(e) => setLegalPhone(e.target.value)}
+              onChange={(e) => { setLegalPhone(e.target.value); if (errors.legalPhone) setErrors((prev) => ({ ...prev, legalPhone: "" })); }}
               placeholder="+91 XXXXX XXXXX"
+              error={errors.legalPhone}
             />
           </div>
 
@@ -197,8 +234,9 @@ export default function LegalSettingsPage() {
               label="Customer grievance officer email"
               type="email"
               value={grievanceOfficerEmail}
-              onChange={(e) => setGrievanceOfficerEmail(e.target.value)}
+              onChange={(e) => { setGrievanceOfficerEmail(e.target.value); if (errors.grievanceOfficerEmail) setErrors((prev) => ({ ...prev, grievanceOfficerEmail: "" })); }}
               placeholder="grievance@example.com"
+              error={errors.grievanceOfficerEmail}
             />
           </div>
         </div>

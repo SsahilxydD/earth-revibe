@@ -4,7 +4,10 @@ export const createCategorySchema = z.object({
   name: z.string().min(2).max(100),
   slug: z.string().min(2).max(100).optional(),
   description: z.string().max(500).optional(),
-  image: z.string().url().optional(),
+  image: z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : v),
+    z.string().url().optional(),
+  ),
   parentId: z.string().optional(),
   sortOrder: z.coerce.number().int().default(0),
   isActive: z.boolean().default(true),

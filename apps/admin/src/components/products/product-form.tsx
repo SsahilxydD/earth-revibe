@@ -52,6 +52,7 @@ export function ProductForm({
     },
   });
 
+
   const currentPrice = watch("price");
 
   const statusOptions = [

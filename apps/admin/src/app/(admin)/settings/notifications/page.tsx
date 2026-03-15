@@ -39,8 +39,25 @@ export default function NotificationsSettingsPage() {
   const [abandonedCart, setAbandonedCart] = useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (adminEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)) {
+      errs.adminEmail = "Enter a valid email address";
+    }
+    if (lowStockThreshold && (isNaN(Number(lowStockThreshold)) || Number(lowStockThreshold) < 1)) {
+      errs.lowStockThreshold = "Must be a positive number";
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSave = async () => {
+    if (!validate()) {
+      toast.error("Please fix the validation errors");
+      return;
+    }
     setSaving(true);
     await new Promise((r) => setTimeout(r, 500));
     toast.success("Notification settings saved");
@@ -115,8 +132,9 @@ export default function NotificationsSettingsPage() {
                         label="Threshold"
                         type="number"
                         value={lowStockThreshold}
-                        onChange={(e) => setLowStockThreshold(e.target.value)}
+                        onChange={(e) => { setLowStockThreshold(e.target.value); if (errors.lowStockThreshold) setErrors((prev) => ({ ...prev, lowStockThreshold: "" })); }}
                         placeholder="10"
+                        error={errors.lowStockThreshold}
                       />
                     </div>
                   )}
@@ -153,9 +171,10 @@ export default function NotificationsSettingsPage() {
               label="Admin notification email"
               type="email"
               value={adminEmail}
-              onChange={(e) => setAdminEmail(e.target.value)}
+              onChange={(e) => { setAdminEmail(e.target.value); if (errors.adminEmail) setErrors((prev) => ({ ...prev, adminEmail: "" })); }}
               placeholder="admin@example.com"
               helperText="All admin notifications will be sent to this email"
+              error={errors.adminEmail}
             />
           </div>
         </div>

@@ -193,7 +193,7 @@ export default function CategoriesPage() {
             label="Sort Order"
             type="number"
             error={errors.sortOrder?.message}
-            {...register("sortOrder")}
+            {...register("sortOrder", { valueAsNumber: true })}
           />
           <label className="flex items-center gap-2 cursor-pointer">
             <input

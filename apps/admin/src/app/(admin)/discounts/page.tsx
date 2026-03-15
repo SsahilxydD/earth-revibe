@@ -17,7 +17,7 @@ import {
 const typeOptions = [
   { value: "", label: "All Types" },
   { value: "PERCENTAGE", label: "Percentage" },
-  { value: "FIXED", label: "Fixed" },
+  { value: "FLAT", label: "Fixed" },
 ];
 
 const activeOptions = [

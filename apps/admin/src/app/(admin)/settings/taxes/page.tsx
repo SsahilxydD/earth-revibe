@@ -27,8 +27,25 @@ export default function TaxesSettingsPage() {
   const [showGstinOnInvoice, setShowGstinOnInvoice] = useState(true);
 
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/.test(gstin)) {
+      errs.gstin = "Invalid GSTIN format (e.g. 22AAAAA0000A1Z5)";
+    }
+    if (hsnCode && !/^[0-9]{4,8}$/.test(hsnCode)) {
+      errs.hsnCode = "HSN code must be 4-8 digits";
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSave = async () => {
+    if (!validate()) {
+      toast.error("Please fix the validation errors");
+      return;
+    }
     setSaving(true);
     await new Promise((r) => setTimeout(r, 500));
     toast.success("Tax settings saved");
@@ -100,9 +117,11 @@ export default function TaxesSettingsPage() {
             <Input
               label="GSTIN"
               value={gstin}
-              onChange={(e) => setGstin(e.target.value)}
+              onChange={(e) => { setGstin(e.target.value.toUpperCase()); if (errors.gstin) setErrors((prev) => ({ ...prev, gstin: "" })); }}
               placeholder="22AAAAA0000A1Z5"
               helperText="Your GST Identification Number"
+              error={errors.gstin}
+              maxLength={15}
             />
             <Select
               label="Default GST rate"
@@ -121,9 +140,11 @@ export default function TaxesSettingsPage() {
           <Input
             label="HSN Code"
             value={hsnCode}
-            onChange={(e) => setHsnCode(e.target.value)}
+            onChange={(e) => { setHsnCode(e.target.value.replace(/\D/g, "")); if (errors.hsnCode) setErrors((prev) => ({ ...prev, hsnCode: "" })); }}
             placeholder="6109 for T-shirts"
             helperText="Harmonized System of Nomenclature code for your products"
+            error={errors.hsnCode}
+            maxLength={8}
           />
 
           <div className="flex items-start gap-2 p-3 bg-off-white rounded-lg">
