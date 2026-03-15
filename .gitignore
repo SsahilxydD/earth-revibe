@@ -36,6 +36,9 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# Research cache
+.firecrawl/
+
 # Testing
 coverage/
 .env.production
