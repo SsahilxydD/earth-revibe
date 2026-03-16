@@ -567,54 +567,10 @@ export function ProductDetail({ product }: ProductDetailProps) {
             />
           )}
 
-          {/* Product info */}
-          <div className="mt-6">
-            <h1 className="text-2xl font-semibold leading-tight">{product.name}</h1>
-
-            {product.averageRating !== null && product.reviewCount > 0 && (
-              <div className="mt-2">
-                <StarRating rating={product.averageRating} count={product.reviewCount} />
-              </div>
-            )}
-
-            <div className="mt-4 flex items-baseline gap-3">
-              <span
-                className={cn(
-                  "text-xl font-semibold",
-                  isOnSale && "text-[var(--color-sale)]"
-                )}
-              >
-                {formatPrice(displayPrice)}
-              </span>
-              {isOnSale && (
-                <span className="text-sm text-[var(--color-muted)] line-through">
-                  {formatPrice(product.compareAtPrice!)}
-                </span>
-              )}
-            </div>
-
-            <p className="mt-1 text-xs text-[var(--color-muted)]">
-              Tax included. Shipping calculated at checkout.
-            </p>
-
-            {product.shortDescription && (
-              <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
-                {product.shortDescription}
-              </p>
-            )}
-
+          {/* Color & size selectors (not in dock) */}
+          <div className="px-4 pt-4">
             {colorSelector}
             {sizeSelector}
-
-            {/* Description */}
-            {product.description && (
-              <div className="mt-8 border-t border-[var(--color-border)] border-opacity-0 pt-6">
-                <div
-                  className="prose prose-sm max-w-none text-sm leading-relaxed text-[var(--color-text)]"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
-                />
-              </div>
-            )}
           </div>
 
           {/* All remaining images stacked with 2px gap */}
