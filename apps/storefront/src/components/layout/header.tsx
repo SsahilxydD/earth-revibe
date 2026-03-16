@@ -70,7 +70,7 @@ export function Header() {
                 priority
                 className={cn(
                   "h-auto transition-all duration-300",
-                  scrolled ? "w-28" : "w-36"
+                  scrolled ? "w-12" : "w-14"
                 )}
               />
             </Link>
