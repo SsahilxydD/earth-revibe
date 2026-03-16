@@ -36,21 +36,21 @@ export default async function HomePage() {
           key={section.id}
           href={section.href}
           className="relative block w-full overflow-hidden"
-          style={{ aspectRatio: "3 / 2" }}
         >
           {section.imageUrl ? (
             <Image
               src={section.imageUrl}
               alt={section.label}
-              fill
+              width={1920}
+              height={1080}
               sizes="100vw"
               quality={85}
               priority={i === 0}
-              className="object-cover transition-transform duration-700 ease-in-out hover:scale-[1.03]"
+              className="h-auto w-full transition-transform duration-700 ease-in-out hover:scale-[1.03]"
             />
           ) : (
             <div
-              className="absolute inset-0 transition-transform duration-700 ease-in-out hover:scale-[1.03]"
+              className="aspect-[3/2] w-full transition-transform duration-700 ease-in-out hover:scale-[1.03]"
               style={{ backgroundColor: FALLBACK_COLORS[i % FALLBACK_COLORS.length] }}
             />
           )}
