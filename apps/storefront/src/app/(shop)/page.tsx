@@ -30,7 +30,7 @@ export default async function HomePage() {
   const sections = await getSections();
 
   return (
-    <div>
+    <div className="-mt-24">
       {sections.map((section, i) => (
         <Link
           key={section.id}
