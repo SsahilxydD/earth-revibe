@@ -126,7 +126,6 @@ function CategoryContent() {
     [data]
   );
 
-  const totalCount = data?.pages[0]?.pagination.total ?? 0;
   const categoryName = currentCategory?.name || slug.replace(/-/g, " ");
 
   const currentFilters: FilterState = {
