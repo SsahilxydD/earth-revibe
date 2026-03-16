@@ -11,11 +11,19 @@ import { Spinner } from "@/components/ui/spinner";
 const RECENT_SEARCHES_KEY = "earth-revibe-recent-searches";
 const MAX_RECENT = 5;
 
+interface SearchResultRaw {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  images?: { url: string }[];
+}
+
 interface SearchResult {
   id: string;
   name: string;
   slug: string;
-  image?: string;
+  image: string;
   price: number;
 }
 
@@ -70,10 +78,18 @@ export function SearchOverlay() {
     }
     setLoading(true);
     try {
-      const data = await api.get<{ products: SearchResult[] }>(
+      const data = await api.get<{ products: SearchResultRaw[] }>(
         `/search?q=${encodeURIComponent(searchQuery)}&limit=6`
       );
-      setResults(data.products || []);
+      setResults(
+        (data.products || []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          price: p.price,
+          image: p.images?.[0]?.url || "/placeholder.png",
+        }))
+      );
     } catch {
       setResults([]);
     } finally {
