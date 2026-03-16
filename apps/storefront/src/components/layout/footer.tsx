@@ -33,7 +33,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-white">
+      <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-black">
         {title}
       </h3>
       <ul className="space-y-2.5">
@@ -41,7 +41,7 @@ function FooterColumn({
           <li key={link.href}>
             <Link
               href={link.href}
-              className="text-sm text-white/60 transition-colors hover:text-white"
+              className="text-sm text-black/60 transition-colors hover:text-black"
             >
               {link.label}
             </Link>
@@ -54,15 +54,15 @@ function FooterColumn({
 
 export function Footer() {
   return (
-    <footer className="bg-[var(--color-primary)] pb-36 text-white lg:pb-0">
+    <footer className="bg-white pb-36 text-black lg:pb-0">
       {/* Newsletter */}
-      <div className="border-b border-white/10">
+      <div className="border-b border-black/10">
         <div className="flex flex-col items-center gap-4 px-4 py-10 sm:flex-row sm:justify-between md:px-8 lg:px-12 xl:px-20">
           <div>
             <h3 className="text-sm font-bold uppercase tracking-[0.2em]">
               Join the Culture
             </h3>
-            <p className="mt-1 text-sm text-white/60">
+            <p className="mt-1 text-sm text-black/60">
               Subscribe for drops, deals and exclusive access.
             </p>
           </div>
@@ -73,12 +73,12 @@ export function Footer() {
             <input
               type="email"
               placeholder="Your email address"
-              className="flex-1 rounded-[var(--button-radius)] border border-white/20 bg-transparent px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-white/50"
+              className="flex-1 rounded-[var(--button-radius)] border border-black/20 bg-transparent px-4 py-2.5 text-sm text-black placeholder:text-black/40 outline-none focus:border-black/50"
               required
             />
             <button
               type="submit"
-              className="shrink-0 rounded-[var(--button-radius)] bg-white px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] transition-colors hover:bg-white/90"
+              className="shrink-0 rounded-[var(--button-radius)] bg-black px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-black/90"
             >
               Subscribe
             </button>
@@ -93,7 +93,7 @@ export function Footer() {
           <FooterColumn title="Customer Service" links={CUSTOMER_LINKS} />
           <FooterColumn title="About Us" links={ABOUT_LINKS} />
           <div>
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-white">
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-black">
               Connect
             </h3>
             <div className="flex gap-3">
@@ -101,7 +101,7 @@ export function Footer() {
                 href="https://instagram.com/earthrevibe"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white/60 transition-colors hover:border-white hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
                 aria-label="Instagram"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -112,7 +112,7 @@ export function Footer() {
                 href="https://twitter.com/earthrevibe"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white/60 transition-colors hover:border-white hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
                 aria-label="Twitter"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -123,7 +123,7 @@ export function Footer() {
                 href="https://youtube.com/@earthrevibe"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white/60 transition-colors hover:border-white hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
                 aria-label="YouTube"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -132,14 +132,14 @@ export function Footer() {
               </a>
             </div>
             <div className="mt-6">
-              <p className="text-xs text-white/40">
+              <p className="text-xs text-black/40">
                 Accepted Payments
               </p>
-              <div className="mt-2 flex gap-2 text-xs text-white/60">
-                <span className="rounded border border-white/20 px-2 py-1">Visa</span>
-                <span className="rounded border border-white/20 px-2 py-1">MC</span>
-                <span className="rounded border border-white/20 px-2 py-1">UPI</span>
-                <span className="rounded border border-white/20 px-2 py-1">COD</span>
+              <div className="mt-2 flex gap-2 text-xs text-black/60">
+                <span className="rounded border border-black/20 px-2 py-1">Visa</span>
+                <span className="rounded border border-black/20 px-2 py-1">MC</span>
+                <span className="rounded border border-black/20 px-2 py-1">UPI</span>
+                <span className="rounded border border-black/20 px-2 py-1">COD</span>
               </div>
             </div>
           </div>
@@ -147,12 +147,12 @@ export function Footer() {
       </div>
 
       {/* Bottom */}
-      <div className="border-t border-white/10">
+      <div className="border-t border-black/10">
         <div className="flex items-center justify-between px-4 py-5 md:px-8 lg:px-12 xl:px-20">
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-black/40">
             &copy; {new Date().getFullYear()} Earth Revibe. All rights reserved.
           </p>
-          <p className="text-xs text-white/40">Made in India</p>
+          <p className="text-xs text-black/40">Made in India</p>
         </div>
       </div>
     </footer>
