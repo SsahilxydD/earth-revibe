@@ -3,8 +3,9 @@
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingBag } from "lucide-react";
+import { Heart, Plus } from "lucide-react";
 import { cn, formatPrice, getImageUrl } from "@/lib/utils";
+import { useCartStore } from "@/stores/cart-store";
 import type { Product } from "@/types";
 
 interface ProductCardProps {
@@ -13,6 +14,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const addItem = useCartStore((s) => s.addItem);
 
   const images = product.images ?? [];
 
@@ -31,36 +33,14 @@ export function ProductCard({ product }: ProductCardProps) {
     product.compareAtPrice !== null &&
     product.compareAtPrice > product.price;
 
-  const discountPercent = isOnSale
-    ? Math.round(((product.compareAtPrice! - product.price) / product.compareAtPrice!) * 100)
-    : 0;
-
-  const isNew = useMemo(() => {
-    if (!product.createdAt) return false;
-    const created = new Date(product.createdAt);
-    const fourteenDaysAgo = new Date();
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-    return created >= fourteenDaysAgo;
-  }, [product.createdAt]);
-
   const variants = product.variants ?? [];
-
-  const colorVariants = useMemo(() => {
-    const seen = new Set<string>();
-    return variants.filter((v) => {
-      if (!v.color || !v.colorHex || seen.has(v.color)) return false;
-      seen.add(v.color);
-      return true;
-    });
-  }, [variants]);
-
   const isOutOfStock = variants.length > 0 && variants.every((v) => v.stock <= 0);
 
   return (
     <div className="group relative">
       <Link href={`/products/${product.slug}`} className="block">
         {/* Image container */}
-        <div className="relative aspect-[2/3] w-full overflow-hidden bg-white">
+        <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
           {primaryImage && (
             <Image
               src={getImageUrl(primaryImage.url, 600, primaryImage.thumbnailUrl)}
@@ -91,78 +71,29 @@ export function ProductCard({ product }: ProductCardProps) {
               </span>
             </div>
           )}
-
-          {/* Badges */}
-          <div className="absolute left-2 top-2 flex flex-col gap-1">
-            {isOnSale && (
-              <span className="rounded-[var(--badge-radius)] bg-[var(--color-sale)] px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-                {discountPercent > 0 ? `-${discountPercent}%` : "SALE"}
-              </span>
-            )}
-            {isNew && !isOnSale && (
-              <span className="rounded-[var(--badge-radius)] bg-[var(--color-primary)] px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-                NEW
-              </span>
-            )}
-          </div>
-
-          {/* Quick add button (desktop hover only) */}
-          {!isOutOfStock && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                // Navigate to PDP for size/color selection
-                window.location.href = `/products/${product.slug}`;
-              }}
-              className="absolute bottom-0 left-0 right-0 flex translate-y-full items-center justify-center gap-2 bg-[var(--color-primary)] py-2.5 text-xs font-semibold uppercase tracking-wider text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 max-md:hidden"
-            >
-              <ShoppingBag size={14} />
-              Quick Add
-            </button>
-          )}
         </div>
 
         {/* Product info */}
         <div className="mt-2 px-0.5">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-[var(--color-text)]">
+          <h3 className="line-clamp-2 text-xs leading-snug text-black">
             {product.name}
           </h3>
-          <div className="mt-1 flex items-center gap-2">
+          <div className="mt-0.5 flex items-center gap-2">
             {isOnSale ? (
               <>
-                <span className="text-sm font-semibold text-[var(--color-sale)]">
+                <span className="text-xs font-medium text-black">
                   {formatPrice(product.price)}
                 </span>
-                <span className="text-xs text-[var(--color-muted)] line-through">
+                <span className="text-[10px] text-black/40 line-through">
                   {formatPrice(product.compareAtPrice!)}
                 </span>
               </>
             ) : (
-              <span className="text-sm font-semibold">
+              <span className="text-xs font-medium text-black">
                 {formatPrice(product.price)}
               </span>
             )}
           </div>
-
-          {/* Color swatches */}
-          {colorVariants.length > 1 && (
-            <div className="mt-1.5 flex gap-1">
-              {colorVariants.slice(0, 5).map((variant) => (
-                <span
-                  key={variant.id}
-                  className="h-3.5 w-3.5 rounded-full border border-[var(--color-border)]"
-                  style={{ backgroundColor: variant.colorHex || "#ccc" }}
-                  title={variant.color || undefined}
-                />
-              ))}
-              {colorVariants.length > 5 && (
-                <span className="flex h-3.5 items-center text-[10px] text-[var(--color-muted)]">
-                  +{colorVariants.length - 5}
-                </span>
-              )}
-            </div>
-          )}
         </div>
       </Link>
 
@@ -173,19 +104,34 @@ export function ProductCard({ product }: ProductCardProps) {
           e.stopPropagation();
           setIsWishlisted((prev) => !prev);
         }}
-        className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-colors hover:bg-white"
+        className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-colors hover:bg-white"
         aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
       >
         <Heart
-          size={16}
+          size={14}
           className={cn(
             "transition-colors",
             isWishlisted
               ? "fill-[var(--color-sale)] text-[var(--color-sale)]"
-              : "text-[var(--color-text)]"
+              : "text-black/60"
           )}
         />
       </button>
+
+      {/* Add to cart button */}
+      {!isOutOfStock && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = `/products/${product.slug}`;
+          }}
+          className="absolute bottom-[3.2rem] right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-colors hover:bg-white"
+          aria-label="Add to cart"
+        >
+          <Plus size={14} className="text-black/60" />
+        </button>
+      )}
     </div>
   );
 }

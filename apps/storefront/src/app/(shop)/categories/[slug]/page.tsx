@@ -139,32 +139,12 @@ function CategoryContent() {
   };
 
   return (
-    <div className="px-4 py-6 md:px-8 lg:px-12 xl:px-20">
-      {/* Breadcrumb */}
-      <nav className="mb-4 flex items-center gap-1 text-xs text-[var(--color-muted)]">
-        <Link href="/" className="transition-colors hover:text-[var(--color-text)]">
-          Home
-        </Link>
-        <ChevronRight size={12} />
-        <Link href="/products" className="transition-colors hover:text-[var(--color-text)]">
-          Products
-        </Link>
-        <ChevronRight size={12} />
-        <span className="capitalize text-[var(--color-text)]">{categoryName}</span>
-      </nav>
-
+    <div className="px-4 py-4 md:px-8 lg:px-12 xl:px-20">
       {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 md:mb-10 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-xl font-bold uppercase tracking-wider md:text-2xl">
-            {categoryName}
-          </h1>
-          {!isLoading && (
-            <p className="mt-1 text-xs text-[var(--color-muted)]">
-              {totalCount} {totalCount === 1 ? "product" : "products"}
-            </p>
-          )}
-        </div>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-lg font-bold capitalize md:text-xl">
+          {categoryName}
+        </h1>
         <div className="flex items-center gap-3">
           <FilterSidebar filters={currentFilters} onFilterChange={handleFilterChange} />
           <SortDropdown
@@ -200,7 +180,7 @@ function CategoryContent() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
             {allProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
