@@ -553,43 +553,28 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
         {/* ===== MOBILE LAYOUT ===== */}
         <div className="pb-36 lg:hidden lg:pb-0">
-          {/* First image — full width */}
-          {firstImage && (
-            <Image
-              src={getImageUrl(firstImage.url, 800)}
-              alt={firstImage.altText || product.name}
-              width={800}
-              height={1200}
-              quality={75}
-              sizes="100vw"
-              className="h-auto w-full"
-              priority
-            />
-          )}
+          {/* All images — no gap, stacked natively */}
+          <div className="flex flex-col">
+            {sortedImages.map((img, i) => (
+              <Image
+                key={img.id}
+                src={getImageUrl(img.url, 800)}
+                alt={img.altText || product.name}
+                width={800}
+                height={1200}
+                quality={75}
+                sizes="100vw"
+                className="h-auto w-full"
+                priority={i === 0}
+              />
+            ))}
+          </div>
 
           {/* Color & size selectors (not in dock) */}
           <div className="px-4 pt-4">
             {colorSelector}
             {sizeSelector}
           </div>
-
-          {/* All remaining images stacked with 2px gap */}
-          {sortedImages.length > 1 && (
-            <div className="flex flex-col">
-              {sortedImages.slice(1).map((img) => (
-                <Image
-                  key={img.id}
-                  src={getImageUrl(img.url, 800)}
-                  alt={img.altText || product.name}
-                  width={800}
-                  height={1200}
-                  quality={75}
-                  sizes="100vw"
-                  className="h-auto w-full"
-                />
-              ))}
-            </div>
-          )}
 
           {/* Accordions */}
           {hasDetails && <div className="mt-8">{renderAccordions()}</div>}
