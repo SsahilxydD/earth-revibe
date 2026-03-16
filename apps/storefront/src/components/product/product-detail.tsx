@@ -527,30 +527,14 @@ export function ProductDetail({ product }: ProductDetailProps) {
             </div>
           </div>
 
-          {/* Section 2: Second image LEFT + Accordions RIGHT — same gap as image grid */}
-          {(sortedImages[1] || hasDetails) && (
+          {/* All remaining images + accordions in one uniform grid */}
+          {(sortedImages.length > 1 || hasDetails) && (
             <div className="mt-4 grid grid-cols-2 gap-4">
-              <div>{hasDetails && renderAccordions()}</div>
-              <div>
-                {sortedImages[1] && (
-                  <Image
-                    src={getImageUrl(sortedImages[1].url, 1200)}
-                    alt={sortedImages[1].altText || product.name}
-                    width={800}
-                    height={1200}
-                    quality={75}
-                    sizes="50vw"
-                    className="h-auto w-full"
-                  />
-                )}
-              </div>
-            </div>
-          )}
+              {/* Accordions in first left cell */}
+              {hasDetails && <div>{renderAccordions()}</div>}
 
-          {/* Remaining images — uniform 2-column grid with equal spacing */}
-          {sortedImages.length > 2 && (
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              {sortedImages.slice(2).map((img) => (
+              {/* All images after the first */}
+              {sortedImages.slice(1).map((img) => (
                 <div key={img.id}>
                   <Image
                     src={getImageUrl(img.url, 1200)}
