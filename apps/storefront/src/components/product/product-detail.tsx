@@ -635,7 +635,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
           {/* All remaining images stacked natively */}
           {sortedImages.slice(1).map((img) => (
-            <div key={img.id} className="mt-4">
+            <div key={img.id} className="mt-[2px]">
               <Image
                 src={getImageUrl(img.url, 800)}
                 alt={img.altText || product.name}
