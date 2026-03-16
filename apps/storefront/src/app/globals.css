@@ -20,7 +20,7 @@
 }
 
 * { margin: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overscroll-behavior-x: none; }
 body { font-family: var(--font-body); color: var(--color-text); background: var(--color-background); -webkit-font-smoothing: antialiased; }
 ::selection { background: #121212; color: #fff; }
 
