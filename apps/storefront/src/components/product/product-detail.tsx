@@ -79,7 +79,6 @@ function buildDetailsFit(p: Product): MetafieldRow[] {
   const rows: MetafieldRow[] = [];
   if (p.material) rows.push({ label: "Material", value: p.material });
   if (p.fit) rows.push({ label: "Fit", value: p.fit });
-  if (p.composition) rows.push({ label: "Composition", value: p.composition });
   if (p.fabricGsm) rows.push({ label: "Fabric GSM", value: String(p.fabricGsm) });
   if (p.neckline) rows.push({ label: "Neckline", value: p.neckline });
   if (p.sleeveLength) rows.push({ label: "Sleeve Length", value: p.sleeveLength });
