@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 interface HomepageSection {
   id: string;
@@ -34,20 +35,22 @@ export default async function HomePage() {
         <Link
           key={section.id}
           href={section.href}
-          className="relative block overflow-hidden"
+          className="relative block w-screen overflow-hidden"
+          style={{ aspectRatio: "9 / 16" }}
         >
           {section.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={section.imageUrl}
               alt={section.label}
-              loading={i === 0 ? "eager" : "lazy"}
-              fetchPriority={i === 0 ? "high" : "auto"}
-              className="block w-screen transition-transform duration-700 ease-in-out hover:scale-[1.03]"
+              fill
+              sizes="100vw"
+              quality={75}
+              priority={i === 0}
+              className="object-cover transition-transform duration-700 ease-in-out hover:scale-[1.03]"
             />
           ) : (
             <div
-              className="aspect-[3/2] w-screen transition-transform duration-700 ease-in-out hover:scale-[1.03]"
+              className="absolute inset-0 transition-transform duration-700 ease-in-out hover:scale-[1.03]"
               style={{ backgroundColor: FALLBACK_COLORS[i % FALLBACK_COLORS.length] }}
             />
           )}
