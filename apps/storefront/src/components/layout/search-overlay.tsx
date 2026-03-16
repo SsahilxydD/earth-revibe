@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Search, X, Clock, ArrowRight } from "lucide-react";
 import { useUiStore } from "@/stores/ui-store";
@@ -153,15 +154,16 @@ export function SearchOverlay() {
                         }}
                         className="flex items-center gap-4 py-3 transition-colors hover:bg-[var(--color-surface)] px-2 rounded"
                       >
-                        {product.image && (
-                          <div className="h-14 w-10 shrink-0 overflow-hidden rounded bg-[var(--color-surface)]">
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        )}
+                        <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded bg-[var(--color-surface)]">
+                          <Image
+                            src={product.image || "/placeholder.png"}
+                            alt={product.name}
+                            fill
+                            quality={35}
+                            sizes="40px"
+                            className="object-cover"
+                          />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="truncate text-sm font-medium">
                             {product.name}
