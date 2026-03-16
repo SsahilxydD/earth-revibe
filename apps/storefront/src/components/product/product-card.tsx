@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Heart, Plus } from "lucide-react";
 import { cn, formatPrice, getImageUrl } from "@/lib/utils";
-import { useCartStore } from "@/stores/cart-store";
 import type { Product } from "@/types";
 
 interface ProductCardProps {
@@ -14,7 +13,6 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const addItem = useCartStore((s) => s.addItem);
 
   const images = product.images ?? [];
 
