@@ -549,7 +549,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
           {/* Remaining images — uniform 2-column grid with equal spacing */}
           {sortedImages.length > 2 && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="mt-4 grid grid-cols-2 gap-4">
               {sortedImages.slice(2).map((img) => (
                 <div key={img.id}>
                   <Image
