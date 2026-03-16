@@ -40,7 +40,7 @@ async function ensureBucket(): Promise<void> {
   if (!data) {
     const { error } = await supabase.storage.createBucket(BUCKET, {
       public: true,
-      fileSizeLimit: 10 * 1024 * 1024, // 10 MB
+      fileSizeLimit: 100 * 1024 * 1024, // 100 MB
       allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
     });
     if (error && !error.message.includes("already exists")) {
@@ -160,7 +160,7 @@ async function _deleteFromCloudflare(imageId: string): Promise<void> {
 const supabaseUploadBreaker = createCircuitBreaker(
   _uploadToSupabase,
   "supabase-upload",
-  { timeout: 30000 }
+  { timeout: 120000 }
 );
 
 const supabaseDeleteBreaker = createCircuitBreaker(

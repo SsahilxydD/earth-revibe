@@ -251,8 +251,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
     [product.images]
   );
   const firstImage = sortedImages[0] || null;
-  const secondImage = sortedImages[1] || null;
-  const remainingImages = sortedImages.slice(2);
 
   /* ---- shared UI fragments ---- */
 
@@ -529,30 +527,17 @@ export function ProductDetail({ product }: ProductDetailProps) {
             </div>
           </div>
 
-          {/* Section 2: Remaining details LEFT + Second image RIGHT */}
-          {(secondImage || hasDetails) && (
-            <div className="mt-16 grid grid-cols-2 items-start gap-10">
-              <div>{hasDetails && renderAccordions()}</div>
-              <div>
-                {secondImage && (
-                  <Image
-                    src={getImageUrl(secondImage.url, 1200)}
-                    alt={secondImage.altText || product.name}
-                    width={800}
-                    height={1200}
-                    quality={100}
-                    unoptimized
-                    className="h-auto w-full"
-                  />
-                )}
-              </div>
+          {/* Accordions */}
+          {hasDetails && (
+            <div className="mt-16">
+              {renderAccordions()}
             </div>
           )}
 
-          {/* Remaining images — 2-column grid, native images */}
-          {remainingImages.length > 0 && (
+          {/* All remaining images — uniform 2-column grid with equal spacing */}
+          {sortedImages.length > 1 && (
             <div className="mt-8 grid grid-cols-2 gap-4">
-              {remainingImages.map((img) => (
+              {sortedImages.slice(1).map((img) => (
                 <div key={img.id}>
                   <Image
                     src={getImageUrl(img.url, 1200)}
