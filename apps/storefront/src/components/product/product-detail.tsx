@@ -619,7 +619,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
           {/* All remaining images stacked with 2px gap */}
           {sortedImages.length > 1 && (
-            <div className="flex flex-col gap-[2px]">
+            <div className="flex flex-col">
               {sortedImages.slice(1).map((img) => (
                 <Image
                   key={img.id}
