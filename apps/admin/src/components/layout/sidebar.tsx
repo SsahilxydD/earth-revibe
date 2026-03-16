@@ -19,11 +19,13 @@ import {
   Tags,
   Warehouse,
   Bell,
+  LayoutTemplate,
 } from "lucide-react";
 import { useUIStore } from "@/stores/ui-store";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Homepage", href: "/homepage", icon: LayoutTemplate },
   { label: "Products", href: "/products", icon: Package },
   { label: "Categories", href: "/categories", icon: FolderTree },
   { label: "Orders", href: "/orders", icon: ShoppingCart },

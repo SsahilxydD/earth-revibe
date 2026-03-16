@@ -35,6 +35,8 @@ import { adminInventoryRouter } from "./routes/admin-inventory.routes";
 import { adminProductRouter } from "./routes/admin-product.routes";
 import { adminNotificationRouter } from "./routes/admin-notification.routes";
 import { adminSettingsRouter } from "./routes/admin-settings.routes";
+import { adminHomepageRouter } from "./routes/admin-homepage.routes";
+import { homepageRouter } from "./routes/homepage.routes";
 import { uploadRouter } from "./routes/upload.routes";
 import { webhookRouter } from "./routes/webhook.routes";
 import { sanitize } from "./middleware/sanitize";
@@ -172,6 +174,8 @@ app.use("/api/v1/admin/inventory", adminInventoryRouter);
 app.use("/api/v1/admin/products", adminProductRouter);
 app.use("/api/v1/admin/notifications", adminNotificationRouter);
 app.use("/api/v1/admin/settings", adminSettingsRouter);
+app.use("/api/v1/admin/homepage", adminHomepageRouter);
+app.use("/api/v1/homepage", homepageRouter);
 app.use("/api/v1/upload", uploadRouter);
 app.use("/api/v1/webhooks", webhookRouter);
 

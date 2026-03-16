@@ -112,6 +112,19 @@ model Category {
   @@map("categories")
 }
 
+model HomepageSection {
+  id        String   @id @default(cuid())
+  label     String
+  href      String
+  imageUrl  String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("homepage_sections")
+}
+
 model Product {
   id              String        @id @default(cuid())
   name            String

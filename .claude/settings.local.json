@@ -7,7 +7,13 @@
       "Bash(ls -la c:/work/earth_revibe/*.csv)",
       "Bash(find /c/work/earth_revibe -path */node_modules/.pnpm/@prisma/client -name index.d.ts)",
       "Bash(xargs cat:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm db:push)",
+      "Bash(./node_modules/.bin/prisma db:*)",
+      "Bash(find c:/work/earth_revibe -name prisma -path */node_modules/.bin/*)"
     ]
   },
   "disabledMcpjsonServers": [

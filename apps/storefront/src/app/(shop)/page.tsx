@@ -1,72 +1,66 @@
 import Link from "next/link";
 import Image from "next/image";
 
-const categories = [
-  {
-    label: "NEW ARRIVALS",
-    href: "/categories/new-arrivals",
-    image: null,
-    bg: "#1a1a1a",
-  },
-  {
-    label: "SHIRTS",
-    href: "/categories/shirts",
-    image: null,
-    bg: "#2c2416",
-  },
-  {
-    label: "T-SHIRTS",
-    href: "/categories/t-shirts",
-    image: null,
-    bg: "#1c2418",
-  },
-  {
-    label: "OUTERWEAR",
-    href: "/categories/outerwear",
-    image: null,
-    bg: "#18181f",
-  },
-  {
-    label: "BESTSELLERS",
-    href: "/categories/bestsellers",
-    image: null,
-    bg: "#211818",
-  },
-];
+interface HomepageSection {
+  id: string;
+  label: string;
+  href: string;
+  imageUrl: string | null;
+  sortOrder: number;
+}
 
-export default function HomePage() {
+const FALLBACK_COLORS = ["#1a1a1a", "#2c2416", "#1c2418", "#18181f", "#211818"];
+
+async function getSections(): Promise<HomepageSection[]> {
+  try {
+    const apiBase =
+      process.env.NEXT_PUBLIC_API_URL ||
+      "https://earth-revibeapi-production.up.railway.app/api/v1";
+    const base = apiBase.startsWith("http") ? apiBase : `https://${apiBase}`;
+    const res = await fetch(`${base}/homepage`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function HomePage() {
+  const sections = await getSections();
+
   return (
     <main>
-      {categories.map((cat) => (
+      {sections.map((section, i) => (
         <Link
-          key={cat.href}
-          href={cat.href}
+          key={section.id}
+          href={section.href}
           className="relative block w-full overflow-hidden"
           style={{ aspectRatio: "3 / 2" }}
         >
-          {cat.image ? (
+          {section.imageUrl ? (
             <Image
-              src={cat.image}
-              alt={cat.label}
+              src={section.imageUrl}
+              alt={section.label}
               fill
               sizes="100vw"
               quality={85}
+              priority={i === 0}
               className="object-cover transition-transform duration-700 ease-in-out hover:scale-[1.03]"
             />
           ) : (
             <div
               className="absolute inset-0 transition-transform duration-700 ease-in-out hover:scale-[1.03]"
-              style={{ backgroundColor: cat.bg }}
+              style={{ backgroundColor: FALLBACK_COLORS[i % FALLBACK_COLORS.length] }}
             />
           )}
 
-          {/* Label */}
           <div className="absolute inset-0 flex items-center justify-center">
             <span
               className="select-none text-center font-['Archivo_Narrow'] text-3xl font-bold uppercase tracking-[0.25em] text-white md:text-5xl lg:text-6xl"
               style={{ textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}
             >
-              {cat.label}
+              {section.label}
             </span>
           </div>
         </Link>
