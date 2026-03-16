@@ -36,7 +36,7 @@ export default async function HomePage() {
           key={section.id}
           href={section.href}
           className="relative block w-screen overflow-hidden"
-          style={{ aspectRatio: "9 / 16" }}
+          style={{ aspectRatio: "3 / 4" }}
         >
           {section.imageUrl ? (
             <Image
