@@ -525,6 +525,7 @@ describe("adminCustomerService.getCustomer", () => {
 describe("adminCustomerService.exportCustomersCSV", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrismaUser.count.mockResolvedValue(0);
   });
 
   const makeExportCustomer = (overrides: Record<string, unknown> = {}) => ({
@@ -544,9 +545,9 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     mockPrismaUser.findMany.mockResolvedValue([]);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const result = await adminCustomerService.exportCustomersCSV();
 
-    expect(csv.startsWith("Name,Email,Phone,Orders,Total Spent,Loyalty Points,Status,Joined Date")).toBe(true);
+    expect(result.csv.startsWith("Name,Email,Phone,Orders,Total Spent,Loyalty Points,Status,Joined Date")).toBe(true);
   });
 
   it("queries only CUSTOMER role users and caps at MAX_CSV_EXPORT_ROWS", async () => {
@@ -568,7 +569,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     mockPrismaUser.findMany.mockResolvedValue(customers);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     const lines = csv.split("\n");
 
     // 1 header + 2 data rows
@@ -582,7 +583,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
       { userId: "user-1", _sum: { totalAmount: 2500 } },
     ]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     const dataRow = csv.split("\n")[1];
 
     expect(dataRow).toContain("Alice Smith");
@@ -601,7 +602,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     ]);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
 
     expect(csv).toContain("Inactive");
   });
@@ -610,7 +611,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     mockPrismaUser.findMany.mockResolvedValue([makeExportCustomer()]);
     mockPrismaOrder.groupBy.mockResolvedValue([]); // no spend data
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     const dataRow = csv.split("\n")[1];
 
     expect(dataRow).toContain("0.00");
@@ -639,7 +640,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     ]);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     const dataRow = csv.split("\n")[1];
 
     expect(dataRow).toContain('"Alice, Jr"');
@@ -651,7 +652,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     ]);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     const dataRow = csv.split("\n")[1];
 
     // The quote is escaped as "" inside a quoted field
@@ -664,7 +665,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     ]);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     // Cannot split on \n because the field itself contains \n — check full CSV
     expect(csv).toContain('"98765\n43210"');
   });
@@ -675,7 +676,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     ]);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     const dataRow = csv.split("\n")[1];
 
     // plain@test.com should appear without wrapping quotes
@@ -691,7 +692,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     ]);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     const dataRow = csv.split("\n")[1];
 
     // Name should be empty (trimmed), row should still be valid CSV
@@ -706,7 +707,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     ]);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     const dataRow = csv.split("\n")[1];
 
     // Phone column is 3rd; two consecutive commas indicate empty phone
@@ -718,7 +719,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     mockPrismaUser.findMany.mockResolvedValue([]);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
 
     expect(csv).toBe(
       "Name,Email,Phone,Orders,Total Spent,Loyalty Points,Status,Joined Date"
@@ -731,7 +732,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
     ]);
     mockPrismaOrder.groupBy.mockResolvedValue([]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     const dataRow = csv.split("\n")[1];
 
     expect(dataRow).toContain("2023-11-07");
@@ -743,7 +744,7 @@ describe("adminCustomerService.exportCustomersCSV", () => {
       { userId: "user-1", _sum: { totalAmount: 1234.5 } },
     ]);
 
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const { csv } = await adminCustomerService.exportCustomersCSV();
     const dataRow = csv.split("\n")[1];
 
     expect(dataRow).toContain("1234.50");
