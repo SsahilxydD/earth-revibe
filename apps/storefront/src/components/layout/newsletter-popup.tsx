@@ -26,7 +26,7 @@ export function NewsletterPopup() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="relative w-full max-w-sm rounded-xl bg-white px-10 pb-12 pt-14 text-center shadow-2xl">
+      <div className="relative w-full max-w-md rounded-xl bg-white px-8 py-14 text-center shadow-2xl sm:px-12">
         <button
           onClick={dismiss}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-black/30 hover:text-black transition-colors"
@@ -35,6 +35,7 @@ export function NewsletterPopup() {
           <X size={16} />
         </button>
 
+        {/* Logo */}
         <div className="flex justify-center">
           <Image
             src="/Earth Revibe Logo Black.png"
@@ -45,16 +46,19 @@ export function NewsletterPopup() {
           />
         </div>
 
-        <h3 className="mt-8 text-lg font-bold uppercase tracking-[0.15em]">
+        {/* Heading */}
+        <h3 className="mt-6 text-base font-bold uppercase tracking-[0.2em]">
           Join the Culture
         </h3>
 
-        <p className="mx-auto mt-4 max-w-[240px] text-sm leading-relaxed text-black/50">
+        {/* Description — single line */}
+        <p className="mt-3 whitespace-nowrap text-sm text-black/50">
           Get early access to drops, deals and exclusive content.
         </p>
 
+        {/* Form */}
         <form
-          className="mt-10 flex flex-col gap-3"
+          className="mt-8 flex flex-col gap-3"
           onSubmit={(e) => {
             e.preventDefault();
             dismiss();
