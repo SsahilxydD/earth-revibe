@@ -30,7 +30,7 @@ export default async function HomePage() {
   const sections = await getSections();
 
   return (
-    <main>
+    <div>
       {sections.map((section, i) => (
         <Link
           key={section.id}
@@ -46,7 +46,8 @@ export default async function HomePage() {
               sizes="100vw"
               quality={85}
               priority={i === 0}
-              className="h-auto w-full transition-transform duration-700 ease-in-out hover:scale-[1.03]"
+              style={{ width: "100%", height: "auto" }}
+              className="transition-transform duration-700 ease-in-out hover:scale-[1.03]"
             />
           ) : (
             <div
@@ -65,6 +66,6 @@ export default async function HomePage() {
           </div>
         </Link>
       ))}
-    </main>
+    </div>
   );
 }
