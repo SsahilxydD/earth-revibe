@@ -46,7 +46,7 @@ router.post(
 router.delete(
   "/:id",
   asyncHandler(async (req: Request, res: Response) => {
-    await prisma.homepageSection.delete({ where: { id: req.params.id } });
+    await prisma.homepageSection.delete({ where: { id: String(req.params.id) } });
     res.json({ success: true });
   })
 );
@@ -55,7 +55,7 @@ router.delete(
 router.patch(
   "/:id",
   asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { imageUrl, label, href, sortOrder, isActive } = req.body;
 
     const section = await prisma.homepageSection.update({
