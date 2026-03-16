@@ -186,7 +186,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
 
       // Validate
       const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-      const maxSize = 10 * 1024 * 1024; // 10 MB
+      const maxSize = 100 * 1024 * 1024; // 100 MB
 
       const valid: File[] = [];
       for (const f of fileArray) {
@@ -195,7 +195,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
           continue;
         }
         if (f.size > maxSize) {
-          toast.error(`${f.name}: exceeds 10 MB limit`);
+          toast.error(`${f.name}: exceeds 100 MB limit`);
           continue;
         }
         valid.push(f);
@@ -537,7 +537,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
               : "Drag & drop images or click to upload"}
           </p>
           <p className="text-xs text-medium-gray mt-1">
-            JPEG, PNG, WebP, GIF up to 10 MB &middot; Upload multiple at once
+            JPEG, PNG, WebP, GIF up to 100 MB &middot; Upload multiple at once
           </p>
         </div>
       ) : null}
