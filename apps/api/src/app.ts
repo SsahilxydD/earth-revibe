@@ -80,6 +80,7 @@ app.use(cors({
     callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
+  exposedHeaders: ["X-Export-Truncated", "X-Export-Total", "X-Export-Count"],
 }));
 
 // Cookie parsing

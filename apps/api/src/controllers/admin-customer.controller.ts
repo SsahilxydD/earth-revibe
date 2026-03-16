@@ -16,11 +16,16 @@ export const adminCustomerController = {
   },
 
   async exportCSV(_req: Request, res: Response) {
-    const csv = await adminCustomerService.exportCustomersCSV();
+    const result = await adminCustomerService.exportCustomersCSV();
     const date = new Date().toISOString().split("T")[0];
+    if (result.truncated) {
+      res.setHeader("X-Export-Truncated", "true");
+      res.setHeader("X-Export-Total", String(result.totalCount));
+      res.setHeader("X-Export-Count", String(result.exportedCount));
+    }
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="customers-${date}.csv"`);
-    res.send(csv);
+    res.send(result.csv);
   },
 
   async getCustomer(req: Request, res: Response) {

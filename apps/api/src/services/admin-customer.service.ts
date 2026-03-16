@@ -128,6 +128,7 @@ export const adminCustomerService = {
   async exportCustomersCSV() {
     // Single query: fetch customers with order count and total spent using groupBy
     // This avoids N+1 queries (previously one aggregate query per customer)
+    const totalCount = await prisma.user.count({ where: { role: "CUSTOMER" } });
     const customers = await prisma.user.findMany({
       where: { role: "CUSTOMER" },
       select: {
@@ -141,8 +142,9 @@ export const adminCustomerService = {
         createdAt: true,
         _count: { select: { orders: true } },
       },
-      take: APP_CONSTANTS.MAX_CSV_EXPORT_ROWS, // Cap to prevent memory issues
+      take: APP_CONSTANTS.MAX_CSV_EXPORT_ROWS,
     });
+    const truncated = totalCount > APP_CONSTANTS.MAX_CSV_EXPORT_ROWS;
 
     // Batch fetch total spent for all customers in one query
     const spentByUser = await prisma.order.groupBy({
@@ -191,7 +193,8 @@ export const adminCustomerService = {
       );
     }
 
-    return rows.join("\n");
+    const csv = rows.join("\n");
+    return { csv, truncated, totalCount, exportedCount: customers.length };
   },
 
   async toggleActive(id: string) {

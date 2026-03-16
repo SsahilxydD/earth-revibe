@@ -57,11 +57,17 @@ export default function CustomersPage() {
         </div>
         <Button
           variant="secondary"
-          onClick={() => {
-            exportCSV.mutate(undefined, {
-              onSuccess: () => toast.success("Customers exported successfully"),
-              onError: (err: any) => toast.error(err.message || "Failed to export customers"),
-            });
+          onClick={async () => {
+            try {
+              const result = await exportCSV.mutateAsync();
+              if (result?.truncated) {
+                toast.success(`Exported ${result.exported?.toLocaleString()} of ${result.total?.toLocaleString()} customers (limit reached)`);
+              } else {
+                toast.success("Customers exported successfully");
+              }
+            } catch (err: any) {
+              toast.error(err.message || "Failed to export customers");
+            }
           }}
           disabled={exportCSV.isPending}
         >

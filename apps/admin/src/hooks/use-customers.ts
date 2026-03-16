@@ -49,22 +49,29 @@ export function useExportCustomersCSV() {
   return useMutation({
     mutationFn: async () => {
       const token = await getAuthToken();
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-      const res = await fetch(`${API_BASE}/admin/customers/export-csv`, { headers });
+      const res = await fetch(`${API_BASE}/admin/customers/export-csv`, {
+        method: "GET",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
       if (!res.ok) {
-        throw new Error("Failed to export customers");
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error?.message || "Failed to export customers");
       }
-      const text = await res.text();
-      const blob = new Blob([text], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
+      const truncated = res.headers.get("X-Export-Truncated") === "true";
+      const total = res.headers.get("X-Export-Total");
+      const exported = res.headers.get("X-Export-Count");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `customers-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      return { truncated, total: total ? Number(total) : null, exported: exported ? Number(exported) : null };
     },
   });
 }
