@@ -35,7 +35,7 @@ export default async function HomePage() {
         <Link
           key={section.id}
           href={section.href}
-          className="relative block w-full overflow-hidden"
+          className="relative block w-screen overflow-hidden"
         >
           {section.imageUrl ? (
             <Image
