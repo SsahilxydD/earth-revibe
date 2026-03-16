@@ -617,20 +617,23 @@ export function ProductDetail({ product }: ProductDetailProps) {
             )}
           </div>
 
-          {/* All remaining images stacked natively */}
-          {sortedImages.slice(1).map((img) => (
-            <div key={img.id} className="mt-[2px]">
-              <Image
-                src={getImageUrl(img.url, 800)}
-                alt={img.altText || product.name}
-                width={800}
-                height={1200}
-                quality={75}
-                sizes="100vw"
-                className="h-auto w-full"
-              />
+          {/* All remaining images stacked with 2px gap */}
+          {sortedImages.length > 1 && (
+            <div className="flex flex-col gap-[2px]">
+              {sortedImages.slice(1).map((img) => (
+                <Image
+                  key={img.id}
+                  src={getImageUrl(img.url, 800)}
+                  alt={img.altText || product.name}
+                  width={800}
+                  height={1200}
+                  quality={75}
+                  sizes="100vw"
+                  className="h-auto w-full"
+                />
+              ))}
             </div>
-          ))}
+          )}
 
           {/* Accordions */}
           {hasDetails && <div className="mt-8">{renderAccordions()}</div>}
