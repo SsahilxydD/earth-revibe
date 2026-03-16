@@ -41,8 +41,8 @@ export default async function HomePage() {
             <Image
               src={section.imageUrl}
               alt={section.label}
-              width={1080}
-              height={1440}
+              width={0}
+              height={0}
               sizes="100vw"
               quality={75}
               priority={i === 0}
