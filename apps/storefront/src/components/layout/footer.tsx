@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 const SHOP_LINKS = [
   { label: "New Arrivals", href: "/categories/new-arrivals" },
@@ -33,10 +34,10 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-black">
+      <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-black">
         {title}
       </h3>
-      <ul className="space-y-2.5">
+      <ul className="space-y-1.5">
         {links.map((link) => (
           <li key={link.href}>
             <Link
@@ -55,45 +56,27 @@ function FooterColumn({
 export function Footer() {
   return (
     <footer className="bg-white pb-36 text-black lg:pb-0">
-      {/* Newsletter */}
-      <div className="border-b border-black/10">
-        <div className="flex flex-col items-center gap-4 px-4 py-10 sm:flex-row sm:justify-between md:px-8 lg:px-12 xl:px-20">
-          <div>
-            <h3 className="text-sm font-bold uppercase tracking-[0.2em]">
-              Join the Culture
-            </h3>
-            <p className="mt-1 text-sm text-black/60">
-              Subscribe for drops, deals and exclusive access.
-            </p>
-          </div>
-          <form
-            className="flex w-full max-w-md gap-2"
-            onSubmit={(e) => e.preventDefault()}
-          >
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="flex-1 rounded-[var(--button-radius)] border border-black/20 bg-transparent px-4 py-2.5 text-sm text-black placeholder:text-black/40 outline-none focus:border-black/50"
-              required
-            />
-            <button
-              type="submit"
-              className="shrink-0 rounded-[var(--button-radius)] bg-black px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-black/90"
-            >
-              Subscribe
-            </button>
-          </form>
-        </div>
+      {/* Logo */}
+      <div className="flex justify-center px-4 pt-8 pb-4">
+        <Link href="/">
+          <Image
+            src="/Earth Revibe Logo Black.png"
+            alt="Earth Revibe"
+            width={80}
+            height={20}
+            className="h-auto w-14"
+          />
+        </Link>
       </div>
 
       {/* Columns */}
-      <div className="px-4 py-12 md:px-8 lg:px-12 xl:px-20">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+      <div className="px-4 py-6 md:px-8 lg:px-12 xl:px-20">
+        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
           <FooterColumn title="Shop" links={SHOP_LINKS} />
           <FooterColumn title="Customer Service" links={CUSTOMER_LINKS} />
           <FooterColumn title="About Us" links={ABOUT_LINKS} />
           <div>
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-black">
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-black">
               Connect
             </h3>
             <div className="flex gap-3">
@@ -101,10 +84,10 @@ export function Footer() {
                 href="https://instagram.com/earthrevibe"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
                 aria-label="Instagram"
               >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
                 </svg>
               </a>
@@ -112,10 +95,10 @@ export function Footer() {
                 href="https://twitter.com/earthrevibe"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
                 aria-label="Twitter"
               >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
               </a>
@@ -123,24 +106,13 @@ export function Footer() {
                 href="https://youtube.com/@earthrevibe"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
                 aria-label="YouTube"
               >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
                 </svg>
               </a>
-            </div>
-            <div className="mt-6">
-              <p className="text-xs text-black/40">
-                Accepted Payments
-              </p>
-              <div className="mt-2 flex gap-2 text-xs text-black/60">
-                <span className="rounded border border-black/20 px-2 py-1">Visa</span>
-                <span className="rounded border border-black/20 px-2 py-1">MC</span>
-                <span className="rounded border border-black/20 px-2 py-1">UPI</span>
-                <span className="rounded border border-black/20 px-2 py-1">COD</span>
-              </div>
             </div>
           </div>
         </div>
@@ -148,7 +120,7 @@ export function Footer() {
 
       {/* Bottom */}
       <div className="border-t border-black/10">
-        <div className="flex items-center justify-between px-4 py-5 md:px-8 lg:px-12 xl:px-20">
+        <div className="flex items-center justify-between px-4 py-4 md:px-8 lg:px-12 xl:px-20">
           <p className="text-xs text-black/40">
             &copy; {new Date().getFullYear()} Earth Revibe. All rights reserved.
           </p>
