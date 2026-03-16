@@ -36,17 +36,18 @@ export default async function HomePage() {
           key={section.id}
           href={section.href}
           className="relative block w-screen overflow-hidden"
-          style={{ aspectRatio: "3 / 4" }}
         >
           {section.imageUrl ? (
             <Image
               src={section.imageUrl}
               alt={section.label}
-              fill
+              width={1080}
+              height={1440}
               sizes="100vw"
               quality={75}
               priority={i === 0}
-              className="object-cover transition-transform duration-700 ease-in-out hover:scale-[1.03]"
+              style={{ width: "100vw", height: "auto" }}
+              className="block transition-transform duration-700 ease-in-out hover:scale-[1.03]"
             />
           ) : (
             <div
