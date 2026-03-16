@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, Search, Heart, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart-store";
@@ -40,14 +41,15 @@ export function Header() {
           scrolled && "shadow-md"
         )}
       >
+        {/* 3-column grid: left icons | center logo | right icons */}
         <div
           className={cn(
-            "flex items-center justify-between px-4 transition-all duration-300 md:px-8 lg:px-12 xl:px-20",
+            "grid grid-cols-3 items-center px-4 transition-all duration-300 md:px-8 lg:px-12 xl:px-20",
             scrolled ? "py-2" : "py-3"
           )}
         >
-          {/* Left: hamburger (mobile) + logo */}
-          <div className="flex items-center gap-3">
+          {/* Left: hamburger (mobile) */}
+          <div className="flex items-center">
             <button
               onClick={openMobileMenu}
               className="flex h-10 w-10 items-center justify-center lg:hidden"
@@ -55,36 +57,27 @@ export function Header() {
             >
               <Menu className="h-6 w-6" />
             </button>
-            <Link href="/" className="flex items-center">
-              <span
+          </div>
+
+          {/* Center: logo image */}
+          <div className="flex justify-center">
+            <Link href="/">
+              <Image
+                src="/Earth Revibe Logo Black.png"
+                alt="Earth Revibe"
+                width={160}
+                height={40}
+                priority
                 className={cn(
-                  "font-bold uppercase tracking-[0.2em] transition-all duration-300",
-                  scrolled ? "text-lg" : "text-xl"
+                  "h-auto transition-all duration-300",
+                  scrolled ? "w-28" : "w-36"
                 )}
-              >
-                Earth Revibe
-              </span>
+              />
             </Link>
           </div>
 
-          {/* Center: desktop nav */}
-          <nav className="hidden lg:flex lg:items-center lg:gap-8">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-text)] transition-colors hover:text-[var(--color-muted)]",
-                  link.label === "SALE" && "text-[var(--color-sale)]"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
           {/* Right: icons */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-end gap-1">
             <button
               onClick={openSearch}
               className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--color-surface)] transition-colors"
@@ -113,6 +106,22 @@ export function Header() {
             </button>
           </div>
         </div>
+
+        {/* Desktop nav — below logo */}
+        <nav className="hidden border-t border-[var(--color-border)] lg:flex lg:items-center lg:justify-center lg:gap-8 lg:px-4 lg:py-2">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-text)] transition-colors hover:text-[var(--color-muted)]",
+                link.label === "SALE" && "text-[var(--color-sale)]"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
       </header>
       {isSearchOpen && <SearchOverlay />}
     </>
