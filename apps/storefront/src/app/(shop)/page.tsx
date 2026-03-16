@@ -35,7 +35,7 @@ export default async function HomePage() {
         <Link
           key={section.id}
           href={section.href}
-          className="relative block w-screen overflow-hidden"
+          className="relative block w-full overflow-hidden"
         >
           {section.imageUrl ? (
             <Image
@@ -46,7 +46,7 @@ export default async function HomePage() {
               sizes="100vw"
               quality={75}
               priority={i === 0}
-              style={{ width: "100vw", height: "auto" }}
+              style={{ width: "100%", height: "auto" }}
               className="block transition-transform duration-700 ease-in-out hover:scale-[1.03]"
             />
           ) : (
