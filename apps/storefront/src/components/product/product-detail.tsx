@@ -463,8 +463,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
                   alt={firstImage.altText || product.name}
                   width={800}
                   height={1200}
-                  quality={100}
-                  unoptimized
+                  quality={75}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   className="h-auto w-full"
                   priority
                 />
@@ -538,8 +538,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
                     alt={sortedImages[1].altText || product.name}
                     width={800}
                     height={1200}
-                    quality={100}
-                    unoptimized
+                    quality={75}
+                    sizes="50vw"
                     className="h-auto w-full"
                   />
                 )}
@@ -557,8 +557,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
                     alt={img.altText || product.name}
                     width={800}
                     height={1200}
-                    quality={100}
-                    unoptimized
+                    quality={75}
+                    sizes="50vw"
                     className="h-auto w-full"
                   />
                 </div>
@@ -576,8 +576,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
               alt={firstImage.altText || product.name}
               width={800}
               height={1200}
-              quality={100}
-              unoptimized
+              quality={75}
+              sizes="100vw"
               className="h-auto w-full"
               priority
             />
@@ -641,8 +641,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
                 alt={img.altText || product.name}
                 width={800}
                 height={1200}
-                quality={100}
-                unoptimized
+                quality={75}
+                sizes="100vw"
                 className="h-auto w-full"
               />
             </div>
