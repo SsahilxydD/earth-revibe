@@ -21,6 +21,36 @@ router.get(
   })
 );
 
+// POST /api/v1/admin/homepage — create a new section
+router.post(
+  "/",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { label, href, sortOrder } = req.body;
+    if (!label || !href) {
+      res.status(400).json({ success: false, error: { code: "BAD_REQUEST", message: "label and href are required" } });
+      return;
+    }
+    const section = await prisma.homepageSection.create({
+      data: {
+        label,
+        href,
+        sortOrder: sortOrder ?? 0,
+        isActive: true,
+      },
+    });
+    res.status(201).json({ success: true, data: section });
+  })
+);
+
+// DELETE /api/v1/admin/homepage/:id — remove a section
+router.delete(
+  "/:id",
+  asyncHandler(async (req: Request, res: Response) => {
+    await prisma.homepageSection.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  })
+);
+
 // PATCH /api/v1/admin/homepage/:id — update imageUrl (and optionally label/href/sortOrder/isActive)
 router.patch(
   "/:id",

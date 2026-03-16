@@ -29,3 +29,24 @@ export function useUpdateHomepageSection() {
     },
   });
 }
+
+export function useCreateHomepageSection() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { label: string; href: string; sortOrder?: number }) =>
+      api.post<HomepageSection>("/admin/homepage", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["homepage-sections"] });
+    },
+  });
+}
+
+export function useDeleteHomepageSection() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/admin/homepage/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["homepage-sections"] });
+    },
+  });
+}
