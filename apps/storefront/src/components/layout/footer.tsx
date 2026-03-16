@@ -54,7 +54,7 @@ function FooterColumn({
 
 export function Footer() {
   return (
-    <footer className="bg-[var(--color-primary)] text-white">
+    <footer className="bg-[var(--color-primary)] pb-36 text-white lg:pb-0">
       {/* Newsletter */}
       <div className="border-b border-white/10">
         <div className="flex flex-col items-center gap-4 px-4 py-10 sm:flex-row sm:justify-between md:px-8 lg:px-12 xl:px-20">
