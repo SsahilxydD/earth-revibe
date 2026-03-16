@@ -21,7 +21,7 @@ export function Accordion({ title, children, defaultOpen = false }: AccordionPro
   }, [children]);
 
   return (
-    <div className="border-b border-[var(--color-border)]">
+    <div className="border-b border-[var(--color-border)] border-opacity-0">
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="flex w-full items-center justify-between py-4 text-left"

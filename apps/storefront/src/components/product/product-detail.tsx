@@ -404,7 +404,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
   );
 
   const renderAccordions = () => (
-    <div className="border-t border-[var(--color-border)]">
+    <div className="border-t border-[var(--color-border)] border-opacity-0">
       {detailsFitRows.length > 0 && (
         <Accordion title="Details & Fit" defaultOpen>
           <MetafieldSection rows={detailsFitRows} />
@@ -517,7 +517,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
               {/* Description */}
               {product.description && (
-                <div className="mt-8 border-t border-[var(--color-border)] pt-6">
+                <div className="mt-8 border-t border-[var(--color-border)] border-opacity-0 pt-6">
                   <div
                     className="prose prose-sm max-w-none text-sm leading-relaxed text-[var(--color-text)]"
                     dangerouslySetInnerHTML={{ __html: product.description }}
@@ -527,17 +527,30 @@ export function ProductDetail({ product }: ProductDetailProps) {
             </div>
           </div>
 
-          {/* Accordions */}
-          {hasDetails && (
-            <div className="mt-16">
-              {renderAccordions()}
+          {/* Section 2: Second image LEFT + Accordions RIGHT — same gap as image grid */}
+          {(sortedImages[1] || hasDetails) && (
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div>{hasDetails && renderAccordions()}</div>
+              <div>
+                {sortedImages[1] && (
+                  <Image
+                    src={getImageUrl(sortedImages[1].url, 1200)}
+                    alt={sortedImages[1].altText || product.name}
+                    width={800}
+                    height={1200}
+                    quality={100}
+                    unoptimized
+                    className="h-auto w-full"
+                  />
+                )}
+              </div>
             </div>
           )}
 
-          {/* All remaining images — uniform 2-column grid with equal spacing */}
-          {sortedImages.length > 1 && (
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              {sortedImages.slice(1).map((img) => (
+          {/* Remaining images — uniform 2-column grid with equal spacing */}
+          {sortedImages.length > 2 && (
+            <div className="grid grid-cols-2 gap-4">
+              {sortedImages.slice(2).map((img) => (
                 <div key={img.id}>
                   <Image
                     src={getImageUrl(img.url, 1200)}
@@ -611,7 +624,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
             {/* Description */}
             {product.description && (
-              <div className="mt-8 border-t border-[var(--color-border)] pt-6">
+              <div className="mt-8 border-t border-[var(--color-border)] border-opacity-0 pt-6">
                 <div
                   className="prose prose-sm max-w-none text-sm leading-relaxed text-[var(--color-text)]"
                   dangerouslySetInnerHTML={{ __html: product.description }}
