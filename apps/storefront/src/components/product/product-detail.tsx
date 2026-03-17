@@ -170,16 +170,18 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
 /*  Detail Tabs (Mobile — Zara-style)                                  */
 /* ------------------------------------------------------------------ */
 
-type TabKey = "description" | "composition" | "measurements";
+type TabKey = "description" | "composition" | "measurements" | "shipping";
 
 function DetailTabs({
   description,
   compositionRows,
   detailRows,
+  shippingRows,
 }: {
   description: string | null;
   compositionRows: MetafieldRow[];
   detailRows: MetafieldRow[];
+  shippingRows: MetafieldRow[];
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>("description");
 
@@ -187,6 +189,7 @@ function DetailTabs({
     { key: "description", label: "DESCRIPTION" },
     { key: "composition", label: "COMPOSITION" },
     { key: "measurements", label: "MEASUREMENTS" },
+    { key: "shipping", label: "SHIPPING & RETURNS" },
   ];
 
   return (
@@ -228,6 +231,12 @@ function DetailTabs({
         )}
         {activeTab === "measurements" && detailRows.length === 0 && (
           <p className="text-[var(--color-muted)]">No measurement info available.</p>
+        )}
+        {activeTab === "shipping" && shippingRows.length > 0 && (
+          <MetafieldSection rows={shippingRows} />
+        )}
+        {activeTab === "shipping" && shippingRows.length === 0 && (
+          <p className="text-[var(--color-muted)]">No shipping info available.</p>
         )}
       </div>
     </div>
@@ -622,52 +631,52 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
       {/* ===== MOBILE LAYOUT (Zara-style) ===== */}
       <div className="pb-[120px] lg:hidden">
-        {/* Full-bleed images — no padding, stacked edge-to-edge */}
-        <div className="flex flex-col">
-          {sortedImages.map((img, i) => (
-            <Image
-              key={img.id}
-              src={getImageUrl(img.url, 800)}
-              alt={img.altText || product.name}
-              width={800}
-              height={1200}
-              quality={75}
-              sizes="100vw"
-              className="h-auto w-full"
-              priority={i === 0}
-            />
-          ))}
-        </div>
+        {/* First image — full-bleed */}
+        {firstImage && (
+          <Image
+            src={getImageUrl(firstImage.url, 800)}
+            alt={firstImage.altText || product.name}
+            width={800}
+            height={1200}
+            quality={75}
+            sizes="100vw"
+            className="h-auto w-full"
+            priority
+          />
+        )}
 
-        {/* Detail tabs — DESCRIPTION / COMPOSITION / MEASUREMENTS */}
+        {/* Detail tabs — after 1st image */}
         <div className="mt-6">
           <DetailTabs
             description={product.description}
             compositionRows={compositionCareRows}
             detailRows={detailsFitRows}
+            shippingRows={shippingReturnsRows}
           />
         </div>
 
-        {/* Additional images context — color code / SKU reference */}
+        {/* Color code / SKU reference */}
         {selectedColor && (
           <div className="mt-2 px-4 text-xs text-[var(--color-muted)] uppercase tracking-wide">
             {selectedColor} | {product.slug}
           </div>
         )}
 
-        {/* Remaining accordions for mobile (shipping, additional) */}
-        {(shippingReturnsRows.length > 0 || additionalInfoRows.length > 0) && (
-          <div className="mt-4 px-4">
-            {shippingReturnsRows.length > 0 && (
-              <Accordion title="Shipping & Returns">
-                <MetafieldSection rows={shippingReturnsRows} />
-              </Accordion>
-            )}
-            {additionalInfoRows.length > 0 && (
-              <Accordion title="Additional Info">
-                <MetafieldSection rows={additionalInfoRows} />
-              </Accordion>
-            )}
+        {/* Remaining images — after tabs */}
+        {sortedImages.length > 1 && (
+          <div className="mt-4 flex flex-col">
+            {sortedImages.slice(1).map((img) => (
+              <Image
+                key={img.id}
+                src={getImageUrl(img.url, 800)}
+                alt={img.altText || product.name}
+                width={800}
+                height={1200}
+                quality={75}
+                sizes="100vw"
+                className="h-auto w-full"
+              />
+            ))}
           </div>
         )}
 
@@ -676,6 +685,15 @@ export function ProductDetail({ product }: ProductDetailProps) {
           {colorSelector}
           {sizeSelector}
         </div>
+
+        {/* Additional info accordion (if any) */}
+        {additionalInfoRows.length > 0 && (
+          <div className="mt-4 px-4">
+            <Accordion title="Additional Info">
+              <MetafieldSection rows={additionalInfoRows} />
+            </Accordion>
+          </div>
+        )}
 
         {/* Related products */}
         <div className="px-4">
