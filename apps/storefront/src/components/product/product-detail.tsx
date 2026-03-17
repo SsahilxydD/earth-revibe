@@ -126,13 +126,13 @@ function buildAdditionalInfo(p: Product): MetafieldRow[] {
 
 function MetafieldSection({ rows }: { rows: MetafieldRow[] }) {
   return (
-    <div className="space-y-2.5 text-sm leading-relaxed">
+    <div className="space-y-2.5 text-[13px] leading-[1.6]">
       {rows.map((row) => (
         <div key={row.label} className="flex gap-2">
-          <span className="shrink-0 text-[var(--color-muted)]">
+          <span className="shrink-0 text-[#999999]">
             {row.label}:
           </span>
-          <span>{row.value}</span>
+          <span className="text-[#666666]">{row.value}</span>
         </div>
       ))}
     </div>
@@ -213,7 +213,7 @@ function DetailTabs({
       </div>
 
       {/* Tab content */}
-      <div className="px-4 py-5 text-sm leading-relaxed text-[var(--color-text)]">
+      <div className="px-4 py-5 text-[13px] leading-[1.6] tracking-normal text-[#666666]" style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
         {activeTab === "description" && description && (
           <div dangerouslySetInnerHTML={{ __html: description }} />
         )}
