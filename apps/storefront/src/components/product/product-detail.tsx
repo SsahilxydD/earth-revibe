@@ -173,33 +173,80 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
 type TabKey = "description" | "composition" | "sizechart";
 
 function SizeChartTable() {
-  const sizes = [
-    { size: "S", chest: "39", length: "25", shoulder: "21", sleeve: "10.5" },
-    { size: "M", chest: "42", length: "26", shoulder: "22", sleeve: "10.5" },
-    { size: "L", chest: "45", length: "27", shoulder: "23", sleeve: "10.5" },
-    { size: "XL", chest: "48", length: "28", shoulder: "24", sleeve: "10.5" },
+  const [unit, setUnit] = useState<"CM" | "IN">("IN");
+
+  const dataIN = [
+    { area: "Chest", s: "39", m: "42", l: "45", xl: "48" },
+    { area: "Front length", s: "25", m: "26", l: "27", xl: "28" },
+    { area: "Sleeve length", s: "10.5", m: "10.5", l: "10.5", xl: "10.5" },
+    { area: "Shoulder", s: "21", m: "22", l: "23", xl: "24" },
   ];
-  const headers = ["Size", "Chest", "Length", "Shoulder", "Sleeve"];
+
+  const dataCM = dataIN.map((row) => ({
+    area: row.area,
+    s: (parseFloat(row.s) * 2.54).toFixed(1),
+    m: (parseFloat(row.m) * 2.54).toFixed(1),
+    l: (parseFloat(row.l) * 2.54).toFixed(1),
+    xl: (parseFloat(row.xl) * 2.54).toFixed(1),
+  }));
+
+  const data = unit === "IN" ? dataIN : dataCM;
+  const sizes = ["S", "M", "L", "XL"];
 
   return (
     <div>
-      <p className="mb-3 text-[11px] uppercase tracking-wider text-[#999999]">All measurements in inches</p>
-      <table className="w-full text-[13px]">
+      {/* Disclaimer */}
+      <p className="text-[13px] leading-[1.6] text-[#666666]">
+        The measurements may vary slightly due to the production process.
+        <br />
+        The garment is measured on a flat surface
+      </p>
+      <p className="mt-4 text-[13px] text-[#666666]">
+        See <button className="underline underline-offset-2">how we measure the garment</button>
+      </p>
+
+      {/* CM / IN toggle */}
+      <div className="mt-5 flex items-center gap-0">
+        <button
+          onClick={() => setUnit("CM")}
+          className={`flex h-8 w-10 items-center justify-center text-[13px] transition-colors ${
+            unit === "CM"
+              ? "border border-[var(--color-text)] text-[var(--color-text)] font-medium"
+              : "text-[#999999]"
+          }`}
+        >
+          CM
+        </button>
+        <button
+          onClick={() => setUnit("IN")}
+          className={`flex h-8 w-10 items-center justify-center text-[13px] transition-colors ${
+            unit === "IN"
+              ? "border border-[var(--color-text)] text-[var(--color-text)] font-medium"
+              : "text-[#999999]"
+          }`}
+        >
+          IN
+        </button>
+      </div>
+
+      {/* Size chart table */}
+      <table className="mt-6 w-full" style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
         <thead>
-          <tr className="border-b border-[var(--color-border)]">
-            {headers.map((h) => (
-              <th key={h} className="pb-2 pr-4 text-left font-semibold text-[#333333]">{h}</th>
+          <tr>
+            <th className="pb-4 text-left text-[13px] font-bold text-[var(--color-text)]">AREA</th>
+            {sizes.map((s) => (
+              <th key={s} className="pb-4 text-left text-[13px] font-bold text-[var(--color-text)]">{s}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {sizes.map((row) => (
-            <tr key={row.size} className="border-b border-[var(--color-border)] last:border-0">
-              <td className="py-2.5 pr-4 font-medium text-[#333333]">{row.size}</td>
-              <td className="py-2.5 pr-4 text-[#666666]">{row.chest}</td>
-              <td className="py-2.5 pr-4 text-[#666666]">{row.length}</td>
-              <td className="py-2.5 pr-4 text-[#666666]">{row.shoulder}</td>
-              <td className="py-2.5 text-[#666666]">{row.sleeve}</td>
+          {data.map((row) => (
+            <tr key={row.area} className="border-t border-[var(--color-border)]">
+              <td className="py-4 text-[13px] text-[#666666]">{row.area}</td>
+              <td className="py-4 text-[13px] text-[#666666]">{row.s}</td>
+              <td className="py-4 text-[13px] text-[#666666]">{row.m}</td>
+              <td className="py-4 text-[13px] text-[#666666]">{row.l}</td>
+              <td className="py-4 text-[13px] text-[#666666]">{row.xl}</td>
             </tr>
           ))}
         </tbody>
