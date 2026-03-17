@@ -197,7 +197,6 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
           isOpen ? "translate-y-0" : "translate-y-full"
         }`}
         style={{
-          minHeight: "60vh",
           maxHeight: "90vh",
           overflowY: "auto",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
@@ -205,20 +204,20 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
         }}
       >
         {/* Drag handle */}
-        <div className="sticky top-0 z-10 bg-white pt-5 pb-4 flex justify-center">
+        <div className="sticky top-0 z-10 bg-white pt-5 pb-3 flex justify-center">
           <div className="w-10 h-[3px] rounded-full bg-[#d0d0d0]" />
         </div>
 
-        <div className="px-7 pb-14">
-          <h3 className="text-[15px] font-bold tracking-[0.15em] text-[var(--color-text)] mt-8">
+        <div className="px-7 pb-8">
+          <h3 className="text-[15px] font-bold tracking-[0.15em] text-[var(--color-text)] mt-4">
             HOW WE MEASURE THE GARMENT
           </h3>
 
-          <div className="mt-12 space-y-12">
+          <div className="mt-5 space-y-5">
             {measurements.map((m) => (
               <div key={m.name}>
                 <p className="text-[13px] font-bold tracking-wide text-[var(--color-text)]">{m.name}</p>
-                <p className="mt-3 text-[13px] leading-[1.8] text-[#666666]">{m.desc}</p>
+                <p className="mt-1 text-[13px] leading-[1.7] text-[#666666]">{m.desc}</p>
               </div>
             ))}
           </div>
