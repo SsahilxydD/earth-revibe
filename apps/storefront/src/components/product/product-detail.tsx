@@ -195,7 +195,7 @@ function DetailTabs({
   return (
     <div>
       {/* Tab headers */}
-      <div className="flex gap-6 border-b border-[var(--color-border)] px-4">
+      <div className="flex gap-6 px-4">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -203,7 +203,7 @@ function DetailTabs({
             className={cn(
               "pb-3 text-xs font-bold tracking-wider transition-colors",
               activeTab === tab.key
-                ? "border-b-2 border-[var(--color-text)] text-[var(--color-text)]"
+                ? "text-[var(--color-text)]"
                 : "text-[var(--color-muted)]"
             )}
           >
