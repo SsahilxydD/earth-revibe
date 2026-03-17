@@ -172,6 +172,61 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
 
 type TabKey = "description" | "composition" | "sizechart";
 
+function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const measurements = [
+    { name: "CHEST", desc: "Measure from one side to the other at the height of the armhole." },
+    { name: "FRONT LENGTH", desc: "Measure from the shoulder seam to the hem of the garment." },
+    { name: "SLEEVE LENGTH", desc: "Measure from the shoulder seam to the bottom of the sleeve." },
+    { name: "BACK WIDTH", desc: "Measure from one shoulder seam to the other." },
+    { name: "ARM WIDTH", desc: "Tape perpendicular to the sleeve up to the armhole." },
+  ];
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 z-[60] bg-black transition-opacity duration-300 ${
+          isOpen ? "opacity-50 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={onClose}
+      />
+
+      {/* Sheet */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-[61] bg-white transition-transform duration-300 ease-out ${
+          isOpen ? "translate-y-0" : "translate-y-full"
+        }`}
+        style={{
+          maxHeight: "85vh",
+          overflowY: "auto",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+        }}
+      >
+        {/* Drag handle */}
+        <div className="sticky top-0 z-10 bg-white pt-4 pb-3 flex justify-center">
+          <div className="w-10 h-[3px] rounded-full bg-[#d0d0d0]" />
+        </div>
+
+        <div className="px-6 pb-10">
+          <h3 className="text-[14px] font-bold tracking-[0.15em] text-[var(--color-text)] mt-6">
+            HOW WE MEASURE THE GARMENT
+          </h3>
+
+          <div className="mt-10 space-y-10">
+            {measurements.map((m) => (
+              <div key={m.name}>
+                <p className="text-[13px] font-bold text-[var(--color-text)]">{m.name}</p>
+                <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">{m.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function SizeChartTable() {
   const [unit, setUnit] = useState<"CM" | "IN">("IN");
   const [showGuide, setShowGuide] = useState(false);
@@ -257,35 +312,8 @@ function SizeChartTable() {
         </tbody>
       </table>
 
-      {/* Inline measurement guide — toggleable */}
-      {showGuide && <div className="mt-14" style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
-        <h4 className="text-[14px] font-bold tracking-wider text-[var(--color-text)]">
-          HOW WE MEASURE THE GARMENT
-        </h4>
-
-        <div className="mt-10 space-y-10">
-          <div>
-            <p className="text-[13px] font-bold text-[var(--color-text)]">CHEST</p>
-            <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Measure from one side to the other at the height of the armhole.</p>
-          </div>
-          <div>
-            <p className="text-[13px] font-bold text-[var(--color-text)]">FRONT LENGTH</p>
-            <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Measure from the shoulder seam to the hem of the garment.</p>
-          </div>
-          <div>
-            <p className="text-[13px] font-bold text-[var(--color-text)]">SLEEVE LENGTH</p>
-            <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Measure from the shoulder seam to the bottom of the sleeve.</p>
-          </div>
-          <div>
-            <p className="text-[13px] font-bold text-[var(--color-text)]">BACK WIDTH</p>
-            <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Measure from one shoulder seam to the other.</p>
-          </div>
-          <div>
-            <p className="text-[13px] font-bold text-[var(--color-text)]">ARM WIDTH</p>
-            <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Tape perpendicular to the sleeve up to the armhole.</p>
-          </div>
-        </div>
-      </div>}
+      {/* Bottom sheet for measurement guide */}
+      <MeasureGuideSheet isOpen={showGuide} onClose={() => setShowGuide(false)} />
     </div>
   );
 }
