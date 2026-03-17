@@ -1,39 +1,67 @@
 @import "tailwindcss";
 
-/* Earth Revibe Admin Design Tokens */
+/* Earth Revibe Admin — New Design System */
 @theme {
-  /* Primary Colors */
-  --color-forest-green: #2D5016;
-  --color-sage: #87A878;
-  --color-cream: #FAF7F2;
-  --color-warm-white: #FFFFFF;
+  /* Primary */
+  --color-primary: #0D0D0D;
+  --color-primary-light: #FAFAFA;
+  --color-accent: #22C55E;
+  --color-accent-light: #F0FDF4;
 
-  /* Secondary Colors */
-  --color-terracotta: #C67B5C;
-  --color-sand: #D4C5A9;
-  --color-clay: #8B6F47;
-  --color-deep-earth: #3D2B1F;
+  /* Text */
+  --color-text-primary: #0D0D0D;
+  --color-text-secondary: #7A7A7A;
+  --color-text-muted: #999999;
+  --color-text-on-dark: #FAFAFA;
 
-  /* Neutral Colors */
-  --color-charcoal: #2C2C2C;
-  --color-dark-gray: #4A4A4A;
-  --color-medium-gray: #8E8E8E;
-  --color-light-gray: #E5E5E5;
+  /* Surfaces */
+  --color-surface: #FFFFFF;
+  --color-surface-tint: #FAFAFA;
+  --color-surface-hover: #F5F5F5;
+
+  /* Borders */
+  --color-border: #E8E8E8;
+
+  /* Semantic */
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #DC2626;
+  --color-info: #3B82F6;
+
+  /* Semantic Backgrounds */
+  --color-success-bg: #F0FDF4;
+  --color-warning-bg: #FEF3C7;
+  --color-error-bg: #FEE2E2;
+  --color-info-bg: #EFF6FF;
+
+  /* Legacy token aliases (prevents breaking existing pages) */
+  --color-deep-earth: #0D0D0D;
+  --color-forest-green: #22C55E;
+  --color-charcoal: #0D0D0D;
+  --color-dark-gray: #7A7A7A;
+  --color-medium-gray: #999999;
+  --color-light-gray: #E8E8E8;
   --color-off-white: #F5F5F5;
-
-  /* Semantic Colors */
-  --color-success: #4A7C59;
-  --color-warning: #D4A843;
-  --color-error: #C0392B;
-  --color-info: #5B8FA8;
+  --color-cream: #FAFAFA;
+  --color-warm-white: #FFFFFF;
+  --color-terracotta: #DC2626;
+  --color-sand: #F59E0B;
+  --color-clay: #7A7A7A;
+  --color-sage: #22C55E;
 
   /* Font Families */
+  --font-heading: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
 }
 
 /* Admin base styles */
 body {
   font-family: var(--font-body);
-  color: var(--color-charcoal);
-  background-color: var(--color-off-white);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+}
+
+/* Heading font utility */
+.font-heading {
+  font-family: var(--font-heading);
 }

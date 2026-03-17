@@ -14,7 +14,6 @@ import {
   Headset,
   ChevronLeft,
   ChevronRight,
-  Leaf,
   X,
   Tags,
   Warehouse,
@@ -48,47 +47,56 @@ export function Sidebar() {
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
-        <div className="w-8 h-8 bg-forest-green rounded-lg flex items-center justify-center flex-shrink-0">
-          <Leaf size={18} className="text-white" />
-        </div>
+      <div className="flex items-center gap-3 px-4 h-16">
+        <div className="w-7 h-7 bg-accent flex-shrink-0" />
         {!isSidebarCollapsed && (
-          <span className="text-base font-semibold text-white whitespace-nowrap">Earth Revibe</span>
+          <span className="font-heading text-base font-semibold text-text-primary whitespace-nowrap">
+            Earth Revibe
+          </span>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 py-6 px-3 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
-          const Icon = item.icon;
           const active = isActive(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setMobileSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
                 active
-                  ? "bg-forest-green text-white"
-                  : "text-white/70 hover:text-white hover:bg-white/10"
+                  ? "text-text-primary font-medium"
+                  : "text-text-secondary hover:text-text-primary"
               }`}
               title={isSidebarCollapsed ? item.label : undefined}
             >
-              <Icon size={20} className="flex-shrink-0" />
-              {!isSidebarCollapsed && <span>{item.label}</span>}
+              {/* Active dot indicator */}
+              <div
+                className={`w-1.5 h-1.5 flex-shrink-0 ${
+                  active ? "bg-accent" : "bg-transparent"
+                }`}
+              />
+              {!isSidebarCollapsed && (
+                <span className="font-heading">{item.label}</span>
+              )}
+              {isSidebarCollapsed && (
+                <item.icon size={18} className="flex-shrink-0" />
+              )}
             </Link>
           );
         })}
       </nav>
 
       {/* Collapse toggle (desktop only) */}
-      <div className="hidden lg:block border-t border-white/10 p-3">
+      <div className="hidden lg:block border-t border-border p-3">
         <button
           onClick={toggleSidebar}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors text-sm"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm"
         >
           {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          {!isSidebarCollapsed && <span>Collapse</span>}
+          {!isSidebarCollapsed && <span className="font-heading">Collapse</span>}
         </button>
       </div>
     </>
@@ -98,7 +106,7 @@ export function Sidebar() {
     <>
       {/* Desktop sidebar */}
       <aside
-        className={`hidden lg:flex flex-col bg-deep-earth h-screen sticky top-0 transition-all duration-200 ${
+        className={`hidden lg:flex flex-col bg-surface border-r border-border h-screen sticky top-0 transition-all duration-200 ${
           isSidebarCollapsed ? "w-[72px]" : "w-[240px]"
         }`}
       >
@@ -109,10 +117,10 @@ export function Sidebar() {
       {isMobileSidebarOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="fixed inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
-          <aside className="fixed inset-y-0 left-0 w-[260px] bg-deep-earth flex flex-col z-50">
+          <aside className="fixed inset-y-0 left-0 w-[260px] bg-surface border-r border-border flex flex-col z-50">
             <button
               onClick={() => setMobileSidebarOpen(false)}
-              className="absolute top-4 right-4 text-white/60 hover:text-white"
+              className="absolute top-4 right-4 text-text-secondary hover:text-text-primary"
             >
               <X size={20} />
             </button>
