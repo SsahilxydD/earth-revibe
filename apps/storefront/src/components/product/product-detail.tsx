@@ -196,17 +196,17 @@ function SizeChartTable() {
   return (
     <div>
       {/* Disclaimer */}
-      <p className="text-[13px] leading-[1.6] text-[#666666]">
+      <p className="text-[13px] leading-[1.8] text-[#666666]">
         The measurements may vary slightly due to the production process.
         <br />
         The garment is measured on a flat surface
       </p>
-      <p className="mt-4 text-[13px] text-[#666666]">
+      <p className="mt-5 text-[13px] text-[#666666]">
         See <span className="underline underline-offset-2">how we measure the garment</span>
       </p>
 
       {/* CM / IN toggle */}
-      <div className="mt-5 flex items-center gap-0">
+      <div className="mt-8 flex items-center gap-1">
         <button
           onClick={() => setUnit("CM")}
           className={`flex h-8 w-10 items-center justify-center text-[13px] transition-colors ${
@@ -230,54 +230,54 @@ function SizeChartTable() {
       </div>
 
       {/* Size chart table */}
-      <table className="mt-8 w-full" style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
+      <table className="mt-10 w-full" style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
         <thead>
           <tr>
-            <th className="pb-5 text-left text-[13px] font-bold text-[var(--color-text)]">AREA</th>
+            <th className="pb-7 text-left text-[13px] font-bold text-[var(--color-text)]">AREA</th>
             {sizes.map((s) => (
-              <th key={s} className="pb-5 text-left text-[13px] font-bold text-[var(--color-text)]">{s}</th>
+              <th key={s} className="pb-7 text-left text-[13px] font-bold text-[var(--color-text)]">{s}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {data.map((row) => (
             <tr key={row.area} className="border-t border-[var(--color-border)]">
-              <td className="py-5 text-[13px] text-[#666666]">{row.area}</td>
-              <td className="py-5 text-[13px] text-[#666666]">{row.s}</td>
-              <td className="py-5 text-[13px] text-[#666666]">{row.m}</td>
-              <td className="py-5 text-[13px] text-[#666666]">{row.l}</td>
-              <td className="py-5 text-[13px] text-[#666666]">{row.xl}</td>
+              <td className="py-7 text-[13px] text-[#666666]">{row.area}</td>
+              <td className="py-7 text-[13px] text-[#666666]">{row.s}</td>
+              <td className="py-7 text-[13px] text-[#666666]">{row.m}</td>
+              <td className="py-7 text-[13px] text-[#666666]">{row.l}</td>
+              <td className="py-7 text-[13px] text-[#666666]">{row.xl}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
       {/* Inline measurement guide — below table */}
-      <div className="mt-10" style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
+      <div className="mt-14" style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
         <h4 className="text-[14px] font-bold tracking-wider text-[var(--color-text)]">
           HOW WE MEASURE THE GARMENT
         </h4>
 
-        <div className="mt-8 space-y-8">
+        <div className="mt-10 space-y-10">
           <div>
             <p className="text-[13px] font-bold text-[var(--color-text)]">CHEST</p>
-            <p className="mt-1.5 text-[13px] leading-[1.7] text-[#666666]">Measure from one side to the other at the height of the armhole.</p>
+            <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Measure from one side to the other at the height of the armhole.</p>
           </div>
           <div>
             <p className="text-[13px] font-bold text-[var(--color-text)]">FRONT LENGTH</p>
-            <p className="mt-1.5 text-[13px] leading-[1.7] text-[#666666]">Measure from the shoulder seam to the hem of the garment.</p>
+            <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Measure from the shoulder seam to the hem of the garment.</p>
           </div>
           <div>
             <p className="text-[13px] font-bold text-[var(--color-text)]">SLEEVE LENGTH</p>
-            <p className="mt-1.5 text-[13px] leading-[1.7] text-[#666666]">Measure from the shoulder seam to the bottom of the sleeve.</p>
+            <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Measure from the shoulder seam to the bottom of the sleeve.</p>
           </div>
           <div>
             <p className="text-[13px] font-bold text-[var(--color-text)]">BACK WIDTH</p>
-            <p className="mt-1.5 text-[13px] leading-[1.7] text-[#666666]">Measure from one shoulder seam to the other.</p>
+            <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Measure from one shoulder seam to the other.</p>
           </div>
           <div>
             <p className="text-[13px] font-bold text-[var(--color-text)]">ARM WIDTH</p>
-            <p className="mt-1.5 text-[13px] leading-[1.7] text-[#666666]">Tape perpendicular to the sleeve up to the armhole.</p>
+            <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Tape perpendicular to the sleeve up to the armhole.</p>
           </div>
         </div>
       </div>
