@@ -174,6 +174,7 @@ type TabKey = "description" | "composition" | "sizechart";
 
 function SizeChartTable() {
   const [unit, setUnit] = useState<"CM" | "IN">("IN");
+  const [showGuide, setShowGuide] = useState(false);
 
   const dataIN = [
     { area: "Chest", s: "39", m: "42", l: "45", xl: "48" },
@@ -198,12 +199,16 @@ function SizeChartTable() {
       {/* Disclaimer */}
       <p className="text-[13px] leading-[1.8] text-[#666666]">
         The measurements may vary slightly due to the production process.
-        <br />
+      </p>
+      <p className="mt-4 text-[13px] leading-[1.8] text-[#666666]">
         The garment is measured on a flat surface
       </p>
-      <p className="mt-5 text-[13px] text-[#666666]">
+      <button
+        onClick={() => setShowGuide((v) => !v)}
+        className="mt-6 text-[13px] text-[#666666]"
+      >
         See <span className="underline underline-offset-2">how we measure the garment</span>
-      </p>
+      </button>
 
       {/* CM / IN toggle */}
       <div className="mt-8 flex items-center gap-1">
@@ -252,8 +257,8 @@ function SizeChartTable() {
         </tbody>
       </table>
 
-      {/* Inline measurement guide — below table */}
-      <div className="mt-14" style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
+      {/* Inline measurement guide — toggleable */}
+      {showGuide && <div className="mt-14" style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
         <h4 className="text-[14px] font-bold tracking-wider text-[var(--color-text)]">
           HOW WE MEASURE THE GARMENT
         </h4>
@@ -280,7 +285,7 @@ function SizeChartTable() {
             <p className="mt-2 text-[13px] leading-[1.8] text-[#666666]">Tape perpendicular to the sleeve up to the armhole.</p>
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
