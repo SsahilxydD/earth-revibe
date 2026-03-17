@@ -170,26 +170,57 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
 /*  Detail Tabs (Mobile — Zara-style)                                  */
 /* ------------------------------------------------------------------ */
 
-type TabKey = "description" | "composition" | "measurements" | "shipping";
+type TabKey = "description" | "composition" | "sizechart";
+
+function SizeChartTable() {
+  const sizes = [
+    { size: "S", chest: "39", length: "25", shoulder: "21", sleeve: "10.5" },
+    { size: "M", chest: "42", length: "26", shoulder: "22", sleeve: "10.5" },
+    { size: "L", chest: "45", length: "27", shoulder: "23", sleeve: "10.5" },
+    { size: "XL", chest: "48", length: "28", shoulder: "24", sleeve: "10.5" },
+  ];
+  const headers = ["Size", "Chest", "Length", "Shoulder", "Sleeve"];
+
+  return (
+    <div>
+      <p className="mb-3 text-[11px] uppercase tracking-wider text-[#999999]">All measurements in inches</p>
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr className="border-b border-[var(--color-border)]">
+            {headers.map((h) => (
+              <th key={h} className="pb-2 pr-4 text-left font-semibold text-[#333333]">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {sizes.map((row) => (
+            <tr key={row.size} className="border-b border-[var(--color-border)] last:border-0">
+              <td className="py-2.5 pr-4 font-medium text-[#333333]">{row.size}</td>
+              <td className="py-2.5 pr-4 text-[#666666]">{row.chest}</td>
+              <td className="py-2.5 pr-4 text-[#666666]">{row.length}</td>
+              <td className="py-2.5 pr-4 text-[#666666]">{row.shoulder}</td>
+              <td className="py-2.5 text-[#666666]">{row.sleeve}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 function DetailTabs({
   description,
   compositionRows,
-  detailRows,
-  shippingRows,
 }: {
   description: string | null;
   compositionRows: MetafieldRow[];
-  detailRows: MetafieldRow[];
-  shippingRows: MetafieldRow[];
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>("description");
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: "description", label: "DESCRIPTION" },
     { key: "composition", label: "COMPOSITION" },
-    { key: "measurements", label: "MEASUREMENTS" },
-    { key: "shipping", label: "SHIPPING & RETURNS" },
+    { key: "sizechart", label: "SIZE CHART" },
   ];
 
   return (
@@ -226,18 +257,7 @@ function DetailTabs({
         {activeTab === "composition" && compositionRows.length === 0 && (
           <p className="text-[var(--color-muted)]">No composition info available.</p>
         )}
-        {activeTab === "measurements" && detailRows.length > 0 && (
-          <MetafieldSection rows={detailRows} />
-        )}
-        {activeTab === "measurements" && detailRows.length === 0 && (
-          <p className="text-[var(--color-muted)]">No measurement info available.</p>
-        )}
-        {activeTab === "shipping" && shippingRows.length > 0 && (
-          <MetafieldSection rows={shippingRows} />
-        )}
-        {activeTab === "shipping" && shippingRows.length === 0 && (
-          <p className="text-[var(--color-muted)]">No shipping info available.</p>
-        )}
+        {activeTab === "sizechart" && <SizeChartTable />}
       </div>
     </div>
   );
@@ -650,8 +670,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
           <DetailTabs
             description={product.description}
             compositionRows={compositionCareRows}
-            detailRows={detailsFitRows}
-            shippingRows={shippingReturnsRows}
           />
         </div>
 
@@ -686,12 +704,24 @@ export function ProductDetail({ product }: ProductDetailProps) {
           {sizeSelector}
         </div>
 
-        {/* Additional info accordion (if any) */}
-        {additionalInfoRows.length > 0 && (
+        {/* Accordions — measurements, shipping, additional info */}
+        {(detailsFitRows.length > 0 || shippingReturnsRows.length > 0 || additionalInfoRows.length > 0) && (
           <div className="mt-4 px-4">
-            <Accordion title="Additional Info">
-              <MetafieldSection rows={additionalInfoRows} />
-            </Accordion>
+            {detailsFitRows.length > 0 && (
+              <Accordion title="Measurements">
+                <MetafieldSection rows={detailsFitRows} />
+              </Accordion>
+            )}
+            {shippingReturnsRows.length > 0 && (
+              <Accordion title="Shipping & Returns">
+                <MetafieldSection rows={shippingReturnsRows} />
+              </Accordion>
+            )}
+            {additionalInfoRows.length > 0 && (
+              <Accordion title="Additional Info">
+                <MetafieldSection rows={additionalInfoRows} />
+              </Accordion>
+            )}
           </div>
         )}
 
