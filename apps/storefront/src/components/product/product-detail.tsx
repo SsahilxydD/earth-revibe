@@ -126,10 +126,10 @@ function buildAdditionalInfo(p: Product): MetafieldRow[] {
 
 function MetafieldSection({ rows }: { rows: MetafieldRow[] }) {
   return (
-    <div className="space-y-2 text-sm">
+    <div className="space-y-2.5 text-sm leading-relaxed">
       {rows.map((row) => (
         <div key={row.label} className="flex gap-2">
-          <span className="shrink-0 font-medium text-[var(--color-muted)]">
+          <span className="shrink-0 text-[var(--color-muted)]">
             {row.label}:
           </span>
           <span>{row.value}</span>
@@ -162,6 +162,74 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
       <span className="text-xs text-[var(--color-muted)]">
         ({count} {count === 1 ? "review" : "reviews"})
       </span>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Detail Tabs (Mobile — Zara-style)                                  */
+/* ------------------------------------------------------------------ */
+
+type TabKey = "description" | "composition" | "measurements";
+
+function DetailTabs({
+  description,
+  compositionRows,
+  detailRows,
+}: {
+  description: string | null;
+  compositionRows: MetafieldRow[];
+  detailRows: MetafieldRow[];
+}) {
+  const [activeTab, setActiveTab] = useState<TabKey>("description");
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: "description", label: "DESCRIPTION" },
+    { key: "composition", label: "COMPOSITION" },
+    { key: "measurements", label: "MEASUREMENTS" },
+  ];
+
+  return (
+    <div>
+      {/* Tab headers */}
+      <div className="flex gap-6 border-b border-[var(--color-border)] px-4">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={cn(
+              "pb-3 text-xs font-bold tracking-wider transition-colors",
+              activeTab === tab.key
+                ? "border-b-2 border-[var(--color-text)] text-[var(--color-text)]"
+                : "text-[var(--color-muted)]"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div className="px-4 py-5 text-sm leading-relaxed text-[var(--color-text)]">
+        {activeTab === "description" && description && (
+          <div dangerouslySetInnerHTML={{ __html: description }} />
+        )}
+        {activeTab === "description" && !description && (
+          <p className="text-[var(--color-muted)]">No description available.</p>
+        )}
+        {activeTab === "composition" && compositionRows.length > 0 && (
+          <MetafieldSection rows={compositionRows} />
+        )}
+        {activeTab === "composition" && compositionRows.length === 0 && (
+          <p className="text-[var(--color-muted)]">No composition info available.</p>
+        )}
+        {activeTab === "measurements" && detailRows.length > 0 && (
+          <MetafieldSection rows={detailRows} />
+        )}
+        {activeTab === "measurements" && detailRows.length === 0 && (
+          <p className="text-[var(--color-muted)]">No measurement info available.</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -430,7 +498,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
   return (
     <div>
-      <div className="px-4 py-6 md:px-8 lg:px-12 xl:px-20">
+      {/* ===== DESKTOP LAYOUT (lg+) ===== */}
+      <div className="hidden lg:block px-4 py-6 md:px-8 lg:px-12 xl:px-20">
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-1 text-xs text-[var(--color-muted)]">
           <Link href="/" className="transition-colors hover:text-[var(--color-text)]">
@@ -451,134 +520,98 @@ export function ProductDetail({ product }: ProductDetailProps) {
           <span className="text-[var(--color-text)]">{product.name}</span>
         </nav>
 
-        {/* ===== DESKTOP LAYOUT (lg+) ===== */}
-        <div className="hidden lg:block">
-          {/* Section 1: First image LEFT + Product info RIGHT */}
-          <div className="grid grid-cols-2 items-start gap-10">
-            {/* First product image — native, no slider */}
-            <div>
-              {firstImage && (
-                <Image
-                  src={getImageUrl(firstImage.url, 1200)}
-                  alt={firstImage.altText || product.name}
-                  width={800}
-                  height={1200}
-                  quality={75}
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="h-auto w-full"
-                  priority
-                />
-              )}
-            </div>
-
-            {/* Product info panel — sticky so it follows scroll */}
-            <div className="sticky top-24">
-              <h1 className="text-2xl font-semibold uppercase leading-tight tracking-wide">
-                {product.name}
-              </h1>
-
-              {product.averageRating !== null && product.reviewCount > 0 && (
-                <div className="mt-2">
-                  <StarRating rating={product.averageRating} count={product.reviewCount} />
-                </div>
-              )}
-
-              <div className="mt-4 flex items-baseline gap-3">
-                <span
-                  className={cn(
-                    "text-xl font-semibold",
-                    isOnSale && "text-[var(--color-sale)]"
-                  )}
-                >
-                  {formatPrice(displayPrice)}
-                </span>
-                {isOnSale && (
-                  <span className="text-sm text-[var(--color-muted)] line-through">
-                    {formatPrice(product.compareAtPrice!)}
-                  </span>
-                )}
-              </div>
-
-              <p className="mt-1 text-xs text-[var(--color-muted)]">
-                Tax included. Shipping calculated at checkout.
-              </p>
-
-              {product.shortDescription && (
-                <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
-                  {product.shortDescription}
-                </p>
-              )}
-
-              {colorSelector}
-              {sizeSelector}
-              {quantitySelector}
-              {lowStockWarning}
-              {renderActions()}
-
-              {/* Description */}
-              {product.description && (
-                <div className="mt-8 border-t border-[var(--color-border)] border-opacity-0 pt-6">
-                  <div
-                    className="prose prose-sm max-w-none text-sm leading-relaxed text-[var(--color-text)]"
-                    dangerouslySetInnerHTML={{ __html: product.description }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* All remaining images + accordions in one uniform grid */}
-          {(sortedImages.length > 1 || hasDetails) && (
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              {/* Accordions in first left cell */}
-              {hasDetails && <div>{renderAccordions()}</div>}
-
-              {/* All images after the first */}
-              {sortedImages.slice(1).map((img) => (
-                <div key={img.id}>
-                  <Image
-                    src={getImageUrl(img.url, 1200)}
-                    alt={img.altText || product.name}
-                    width={800}
-                    height={1200}
-                    quality={75}
-                    sizes="50vw"
-                    className="h-auto w-full"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ===== MOBILE LAYOUT ===== */}
-        <div className="pb-36 lg:hidden lg:pb-0">
-          {/* All images — no gap, stacked natively */}
-          <div className="flex flex-col">
-            {sortedImages.map((img, i) => (
+        {/* Section 1: First image LEFT + Product info RIGHT */}
+        <div className="grid grid-cols-2 items-start gap-10">
+          <div>
+            {firstImage && (
               <Image
-                key={img.id}
-                src={getImageUrl(img.url, 800)}
-                alt={img.altText || product.name}
+                src={getImageUrl(firstImage.url, 1200)}
+                alt={firstImage.altText || product.name}
                 width={800}
                 height={1200}
                 quality={75}
-                sizes="100vw"
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="h-auto w-full"
-                priority={i === 0}
+                priority
               />
-            ))}
+            )}
           </div>
 
-          {/* Color & size selectors (not in dock) */}
-          <div className="px-4 pt-4">
+          {/* Product info panel — sticky */}
+          <div className="sticky top-24">
+            <h1 className="text-2xl font-semibold uppercase leading-tight tracking-wide">
+              {product.name}
+            </h1>
+
+            {product.averageRating !== null && product.reviewCount > 0 && (
+              <div className="mt-2">
+                <StarRating rating={product.averageRating} count={product.reviewCount} />
+              </div>
+            )}
+
+            <div className="mt-4 flex items-baseline gap-3">
+              <span
+                className={cn(
+                  "text-xl font-semibold",
+                  isOnSale && "text-[var(--color-sale)]"
+                )}
+              >
+                {formatPrice(displayPrice)}
+              </span>
+              {isOnSale && (
+                <span className="text-sm text-[var(--color-muted)] line-through">
+                  {formatPrice(product.compareAtPrice!)}
+                </span>
+              )}
+            </div>
+
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
+              MRP incl. of all taxes
+            </p>
+
+            {product.shortDescription && (
+              <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
+                {product.shortDescription}
+              </p>
+            )}
+
             {colorSelector}
             {sizeSelector}
-          </div>
+            {quantitySelector}
+            {lowStockWarning}
+            {renderActions()}
 
-          {/* Accordions */}
-          {hasDetails && <div className="mt-8">{renderAccordions()}</div>}
+            {/* Description */}
+            {product.description && (
+              <div className="mt-8 border-t border-[var(--color-border)] border-opacity-0 pt-6">
+                <div
+                  className="prose prose-sm max-w-none text-sm leading-relaxed text-[var(--color-text)]"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* All remaining images + accordions */}
+        {(sortedImages.length > 1 || hasDetails) && (
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            {hasDetails && <div>{renderAccordions()}</div>}
+            {sortedImages.slice(1).map((img) => (
+              <div key={img.id}>
+                <Image
+                  src={getImageUrl(img.url, 1200)}
+                  alt={img.altText || product.name}
+                  width={800}
+                  height={1200}
+                  quality={75}
+                  sizes="50vw"
+                  className="h-auto w-full"
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Related products */}
         <RelatedProducts
@@ -587,79 +620,113 @@ export function ProductDetail({ product }: ProductDetailProps) {
         />
       </div>
 
-      {/* Fixed mobile bottom dock — always visible */}
-      <div
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border)] bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.08)] lg:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        {/* Row 1: Product name + price | Quantity */}
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold uppercase">{product.name}</p>
-            <div className="flex items-baseline gap-2">
-              <span
-                className={cn(
-                  "text-sm font-bold",
-                  isOnSale && "text-[var(--color-sale)]"
-                )}
-              >
-                {formatPrice(displayPrice)}
-              </span>
-              {isOnSale && (
-                <span className="text-xs text-[var(--color-muted)] line-through">
-                  {formatPrice(product.compareAtPrice!)}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="ml-3 inline-flex shrink-0 items-center border border-[var(--color-border)]">
-            <button
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="flex h-8 w-8 items-center justify-center"
-              aria-label="Decrease quantity"
-            >
-              <Minus size={12} />
-            </button>
-            <span className="flex h-8 w-8 items-center justify-center border-x border-[var(--color-border)] text-xs font-semibold">
-              {quantity}
-            </span>
-            <button
-              onClick={() =>
-                setQuantity((q) => Math.min(selectedVariant?.stock ?? 99, q + 1))
-              }
-              className="flex h-8 w-8 items-center justify-center"
-              aria-label="Increase quantity"
-            >
-              <Plus size={12} />
-            </button>
-          </div>
+      {/* ===== MOBILE LAYOUT (Zara-style) ===== */}
+      <div className="pb-[120px] lg:hidden">
+        {/* Full-bleed images — no padding, stacked edge-to-edge */}
+        <div className="flex flex-col">
+          {sortedImages.map((img, i) => (
+            <Image
+              key={img.id}
+              src={getImageUrl(img.url, 800)}
+              alt={img.altText || product.name}
+              width={800}
+              height={1200}
+              quality={75}
+              sizes="100vw"
+              className="h-auto w-full"
+              priority={i === 0}
+            />
+          ))}
         </div>
 
-        {/* Row 2: Add to Cart + Buy Now */}
-        <div className="flex gap-2 px-4 pb-3">
+        {/* Detail tabs — DESCRIPTION / COMPOSITION / MEASUREMENTS */}
+        <div className="mt-6">
+          <DetailTabs
+            description={product.description}
+            compositionRows={compositionCareRows}
+            detailRows={detailsFitRows}
+          />
+        </div>
+
+        {/* Additional images context — color code / SKU reference */}
+        {selectedColor && (
+          <div className="mt-2 px-4 text-xs text-[var(--color-muted)] uppercase tracking-wide">
+            {selectedColor} | {product.slug}
+          </div>
+        )}
+
+        {/* Remaining accordions for mobile (shipping, additional) */}
+        {(shippingReturnsRows.length > 0 || additionalInfoRows.length > 0) && (
+          <div className="mt-4 px-4">
+            {shippingReturnsRows.length > 0 && (
+              <Accordion title="Shipping & Returns">
+                <MetafieldSection rows={shippingReturnsRows} />
+              </Accordion>
+            )}
+            {additionalInfoRows.length > 0 && (
+              <Accordion title="Additional Info">
+                <MetafieldSection rows={additionalInfoRows} />
+              </Accordion>
+            )}
+          </div>
+        )}
+
+        {/* Color & size selectors */}
+        <div className="px-4 pt-4">
+          {colorSelector}
+          {sizeSelector}
+        </div>
+
+        {/* Related products */}
+        <div className="px-4">
+          <RelatedProducts
+            categorySlug={product.category?.slug}
+            excludeProductId={product.id}
+          />
+        </div>
+      </div>
+
+      {/* Fixed mobile bottom dock — Zara-style */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        {/* Product name + price */}
+        <div className="px-4 pt-3">
+          <p className="text-sm font-semibold uppercase tracking-wide">{product.name}</p>
+          <div className="flex items-baseline gap-2">
+            <span
+              className={cn(
+                "text-sm",
+                isOnSale && "text-[var(--color-sale)]"
+              )}
+            >
+              {formatPrice(displayPrice)}
+            </span>
+            {isOnSale && (
+              <span className="text-xs text-[var(--color-muted)] line-through">
+                {formatPrice(product.compareAtPrice!)}
+              </span>
+            )}
+          </div>
+          <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+            MRP incl. of all taxes
+          </p>
+        </div>
+
+        {/* ADD button — clean outlined style */}
+        <div className="px-4 py-3">
           <button
             onClick={handleAddToCart}
             disabled={!canAddToCart || isAdding}
             className={cn(
-              "flex h-12 flex-1 items-center justify-center text-sm font-bold uppercase tracking-wider",
+              "flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors",
               canAddToCart
-                ? "bg-[var(--color-primary)] text-white"
-                : "cursor-not-allowed bg-[var(--color-sold-out)] text-white"
-            )}
-          >
-            {isAdding ? <Loader2 size={16} className="animate-spin" /> : "Add to Cart"}
-          </button>
-          <button
-            onClick={handleBuyNow}
-            disabled={!canAddToCart || isAdding}
-            className={cn(
-              "flex h-12 flex-1 items-center justify-center border-2 text-sm font-bold uppercase tracking-wider",
-              canAddToCart
-                ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+                ? "border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
                 : "cursor-not-allowed border-[var(--color-sold-out)] text-[var(--color-sold-out)]"
             )}
           >
-            Buy Now
+            {isAdding ? <Loader2 size={16} className="animate-spin" /> : "ADD"}
           </button>
         </div>
       </div>
