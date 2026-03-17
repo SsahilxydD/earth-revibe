@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Save,
   Truck,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Card, Button, Input, Badge } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
+import { api } from "@/lib/api-client";
 
 function Toggle({
   checked,
@@ -82,6 +83,20 @@ export default function ShippingSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    api.get("/admin/settings").then((data: any) => {
+      const cfg = data?.shippingConfig;
+      if (!cfg) return;
+      if (cfg.defaultWeight) setDefaultWeight(cfg.defaultWeight);
+      if (cfg.defaultLength) setDefaultLength(cfg.defaultLength);
+      if (cfg.defaultWidth) setDefaultWidth(cfg.defaultWidth);
+      if (cfg.defaultHeight) setDefaultHeight(cfg.defaultHeight);
+      if (cfg.estimatedDelivery) setEstimatedDelivery(cfg.estimatedDelivery);
+      if (cfg.showEstimatedDelivery !== undefined) setShowEstimatedDelivery(cfg.showEstimatedDelivery);
+      if (cfg.showTrackingLink !== undefined) setShowTrackingLink(cfg.showTrackingLink);
+    }).catch(() => {});
+  }, []);
+
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
     const numFields: Record<string, string> = { defaultWeight, defaultLength, defaultWidth, defaultHeight };
@@ -100,10 +115,19 @@ export default function ShippingSettingsPage() {
       return;
     }
     setSaving(true);
-    // TODO: connect to API when settings endpoint is built
-    await new Promise((r) => setTimeout(r, 500));
-    toast.success("Shipping settings saved");
-    setSaving(false);
+    try {
+      await api.put("/admin/settings", {
+        shippingConfig: {
+          defaultWeight, defaultLength, defaultWidth, defaultHeight,
+          estimatedDelivery, showEstimatedDelivery, showTrackingLink,
+        },
+      });
+      toast.success("Shipping settings saved");
+    } catch {
+      toast.error("Failed to save shipping settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

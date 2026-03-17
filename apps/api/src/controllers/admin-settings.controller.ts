@@ -12,6 +12,8 @@ export const adminSettingsController = {
       storeName: req.body.storeName,
       contactEmail: req.body.email,
       contactPhone: req.body.phone,
+      checkoutConfig: req.body.checkoutConfig,
+      shippingConfig: req.body.shippingConfig,
     });
     res.json({ success: true, data: settings });
   },

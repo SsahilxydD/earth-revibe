@@ -122,8 +122,8 @@ export const orderService = {
         // Shipping is already free; discount amount stays 0
         discountAmount = 0;
       } else if (discount.type === "BUY_X_GET_Y") {
-        // BUY_X_GET_Y not yet implemented — treat as invalid
-        throw ApiError.badRequest("This discount type is not yet supported");
+        // BUY_X_GET_Y requires product-level configuration — skip silently for v1
+        discountAmount = 0;
       }
 
       discountCodeId = discount.id;

@@ -47,7 +47,8 @@ export const discountService = {
     } else if (discount.type === "FREE_SHIPPING") {
       discountAmount = 0;
     } else if (discount.type === "BUY_X_GET_Y") {
-      throw ApiError.badRequest("This discount type is not yet supported");
+      // BUY_X_GET_Y requires product-level configuration — skip silently for v1
+      discountAmount = 0;
     } else {
       discountAmount = 0;
     }

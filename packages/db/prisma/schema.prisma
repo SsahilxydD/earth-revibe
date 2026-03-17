@@ -762,6 +762,8 @@ model StoreSettings {
   freeShippingThreshold Decimal? @db.Decimal(10, 2)
   gstRate             Decimal @default(18) @db.Decimal(5, 2)
   returnWindowDays    Int     @default(7)
+  checkoutConfig      Json?
+  shippingConfig      Json?
   updatedAt           DateTime @updatedAt
 
   @@map("store_settings")

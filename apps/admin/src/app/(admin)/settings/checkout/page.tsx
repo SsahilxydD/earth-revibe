@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Save,
   UserCheck,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Card, Button, Input, Select } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
+import { api } from "@/lib/api-client";
 
 function Toggle({
   checked,
@@ -91,12 +92,44 @@ export default function CheckoutSettingsPage() {
 
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    api.get("/admin/settings").then((data: any) => {
+      const cfg = data?.checkoutConfig;
+      if (!cfg) return;
+      if (cfg.requireLogin !== undefined) setRequireLogin(cfg.requireLogin);
+      if (cfg.allowGuest !== undefined) setAllowGuest(cfg.allowGuest);
+      if (cfg.collectPhone !== undefined) setCollectPhone(cfg.collectPhone);
+      if (cfg.contactMethod) setContactMethod(cfg.contactMethod);
+      if (cfg.requireFullName !== undefined) setRequireFullName(cfg.requireFullName);
+      if (cfg.requireCompany !== undefined) setRequireCompany(cfg.requireCompany);
+      if (cfg.autoFulfillDigital !== undefined) setAutoFulfillDigital(cfg.autoFulfillDigital);
+      if (cfg.autoArchive !== undefined) setAutoArchive(cfg.autoArchive);
+      if (cfg.sendOrderConfirmation !== undefined) setSendOrderConfirmation(cfg.sendOrderConfirmation);
+      if (cfg.sendShippingConfirmation !== undefined) setSendShippingConfirmation(cfg.sendShippingConfirmation);
+      if (cfg.language) setLanguage(cfg.language);
+      if (cfg.completeButtonText) setCompleteButtonText(cfg.completeButtonText);
+      if (cfg.allowTips !== undefined) setAllowTips(cfg.allowTips);
+      if (cfg.tipPresets) setTipPresets(cfg.tipPresets);
+    }).catch(() => {});
+  }, []);
+
   const handleSave = async () => {
     setSaving(true);
-    // TODO: connect to API when settings endpoint is built
-    await new Promise((r) => setTimeout(r, 500));
-    toast.success("Checkout settings saved");
-    setSaving(false);
+    try {
+      await api.put("/admin/settings", {
+        checkoutConfig: {
+          requireLogin, allowGuest, collectPhone, contactMethod,
+          requireFullName, requireCompany, autoFulfillDigital, autoArchive,
+          sendOrderConfirmation, sendShippingConfirmation,
+          language, completeButtonText, allowTips, tipPresets,
+        },
+      });
+      toast.success("Checkout settings saved");
+    } catch {
+      toast.error("Failed to save checkout settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

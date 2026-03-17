@@ -101,12 +101,25 @@ app.use(rateLimit({
   legacyHeaders: false,
 }));
 
-// Health check
-app.get("/api/v1/health", (_req, res) => {
-  res.json({
-    success: true,
-    message: "Earth Revibe API is running",
+// Health check — verify DB connectivity
+app.get("/api/v1/health", async (_req, res) => {
+  const checks: Record<string, string> = {};
+
+  try {
+    const { prisma } = await import("@earth-revibe/db");
+    await prisma.$queryRaw`SELECT 1`;
+    checks.database = "ok";
+  } catch {
+    checks.database = "unavailable";
+  }
+
+  const healthy = checks.database === "ok";
+
+  res.status(healthy ? 200 : 503).json({
+    success: healthy,
+    message: healthy ? "Earth Revibe API is running" : "Service degraded",
     timestamp: new Date().toISOString(),
+    checks,
   });
 });
 
