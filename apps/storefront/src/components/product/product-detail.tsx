@@ -213,7 +213,7 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             HOW WE MEASURE THE GARMENT
           </h3>
 
-          <div className="mt-5">
+          <div style={{ marginTop: "32px" }}>
             {measurements.map((m, i) => (
               <div key={m.name} style={{ paddingTop: i === 0 ? 0 : "16px" }}>
                 <p className="text-[13px] font-bold tracking-wide text-[var(--color-text)]" style={{ lineHeight: 1 }}>{m.name}</p>
