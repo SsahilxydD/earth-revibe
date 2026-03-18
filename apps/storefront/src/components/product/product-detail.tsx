@@ -246,7 +246,6 @@ function SizeChartTable() {
     xl: (parseFloat(row.xl) * 2.54).toFixed(1),
   }));
 
-  const data = unit === "IN" ? dataIN : dataCM;
   const sizes = ["S", "M", "L", "XL"];
 
   return (
@@ -290,7 +289,7 @@ function SizeChartTable() {
         </button>
       </div>
 
-      {/* Size chart table */}
+      {/* Size chart table — CM values are always rendered (invisible) to reserve wider column widths */}
       <table className="w-full" style={{ marginTop: "8px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
         <thead>
           <tr>
@@ -301,15 +300,30 @@ function SizeChartTable() {
           </tr>
         </thead>
         <tbody>
-          {data.map((row) => (
-            <tr key={row.area}>
-              <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>{row.area}</td>
-              <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>{row.s}</td>
-              <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>{row.m}</td>
-              <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>{row.l}</td>
-              <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>{row.xl}</td>
-            </tr>
-          ))}
+          {dataIN.map((rowIN, i) => {
+            const rowCM = dataCM[i];
+            const active = unit === "IN" ? rowIN : rowCM;
+            const ghost = unit === "IN" ? rowCM : rowIN;
+            return (
+              <tr key={rowIN.area}>
+                <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>
+                  {rowIN.area}
+                </td>
+                {(["s", "m", "l", "xl"] as const).map((col) => (
+                  <td key={col} className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px", position: "relative" }}>
+                    {/* ghost value — invisible but holds column width */}
+                    <span aria-hidden style={{ visibility: "hidden", display: "block", height: 0, overflow: "hidden" }}>
+                      {ghost[col]}
+                    </span>
+                    {/* visible value */}
+                    <span style={{ position: "absolute", top: "8px", left: 0 }}>
+                      {active[col]}
+                    </span>
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
