@@ -67,7 +67,7 @@ export const productVariantSchema = z.object({
   color: z.string().default(""),
   colorHex: z.preprocess(
     (v) => (v === "" || v === undefined || v === null ? undefined : v),
-    z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+    z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a 6-digit hex color, e.g. #FF0000").optional(),
   ),
   price: z.coerce.number().positive().optional(),
   stock: z.coerce.number().int().min(0).default(0),
@@ -78,7 +78,15 @@ export const productVariantSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
+export const addProductImageSchema = z.object({
+  url: z.string().url(),
+  thumbnailUrl: z.string().url().optional(),
+  publicId: z.string().min(1),
+  altText: z.string().max(500).optional(),
+});
+
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type ProductQuery = z.infer<typeof productQuerySchema>;
 export type ProductVariantInput = z.infer<typeof productVariantSchema>;
+export type AddProductImageInput = z.infer<typeof addProductImageSchema>;

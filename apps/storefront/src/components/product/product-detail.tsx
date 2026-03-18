@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Minus, Plus, Loader2, ChevronRight, Heart } from "lucide-react";
+import DOMPurify from "isomorphic-dompurify";
 import { cn, formatPrice, getImageUrl } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart-store";
 import { useToast } from "@/providers";
@@ -258,6 +259,7 @@ function SizeChartTable() {
         The garment is measured on a flat surface
       </p>
       <button
+        type="button"
         onClick={() => setShowGuide((v) => !v)}
         className="text-[13px] text-[#666666]"
         style={{ marginTop: "16px" }}
@@ -268,6 +270,7 @@ function SizeChartTable() {
       {/* CM / IN toggle */}
       <div className="flex items-center gap-4" style={{ marginTop: "16px" }}>
         <button
+          type="button"
           onClick={() => setUnit("CM")}
           className={`text-[13px] transition-colors ${
             unit === "CM"
@@ -278,6 +281,7 @@ function SizeChartTable() {
           CM
         </button>
         <button
+          type="button"
           onClick={() => setUnit("IN")}
           className={`text-[13px] transition-colors ${
             unit === "IN"
@@ -371,7 +375,7 @@ function DetailTabs({
       {/* Tab content */}
       <div className="px-4 pb-5 text-[13px] leading-[1.6] tracking-normal text-[#666666]" style={{ paddingTop: 0, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
         {activeTab === "description" && description && (
-          <div dangerouslySetInnerHTML={{ __html: description }} />
+          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description) }} />
         )}
         {activeTab === "description" && !description && (
           <p className="text-[var(--color-muted)]">No description available.</p>
@@ -740,7 +744,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
               <div className="mt-8 border-t border-[var(--color-border)] border-opacity-0 pt-6">
                 <div
                   className="prose prose-sm max-w-none text-sm leading-relaxed text-[var(--color-text)]"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
                 />
               </div>
             )}

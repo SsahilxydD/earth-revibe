@@ -82,14 +82,29 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
         color: v.color,
         colorHex: v.colorHex || undefined,
         price: v.price ? parseFloat(v.price) : basePrice,
-        stock: parseInt(v.stock) || 0,
-        lowStockThreshold: parseInt(v.lowStockThreshold) || 5,
+        stock: parseInt(v.stock, 10) || 0,
+        lowStockThreshold: parseInt(v.lowStockThreshold, 10) || 5,
         isActive: true,
       }));
 
     if (toCreate.length === 0) {
       toast.error("Fill in SKU and size for at least one variant");
       return;
+    }
+
+    // Check for duplicate SKUs against existing variants and within the batch
+    const existingSkus = new Set(variants.map((v) => v.sku));
+    const batchSkus = new Set<string>();
+    for (const v of toCreate) {
+      if (existingSkus.has(v.sku)) {
+        toast.error(`SKU "${v.sku}" already exists on this product`);
+        return;
+      }
+      if (batchSkus.has(v.sku)) {
+        toast.error(`Duplicate SKU "${v.sku}" in new variants`);
+        return;
+      }
+      batchSkus.add(v.sku);
     }
 
     try {
@@ -204,12 +219,23 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                             onChange={(e) => setEditData((d) => ({ ...d, color: e.target.value }))}
                             className="flex-1 px-2 py-1 h-7 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth"
                           />
-                          <input
-                            type="color"
-                            value={editData.colorHex || "#000000"}
-                            onChange={(e) => setEditData((d) => ({ ...d, colorHex: e.target.value }))}
-                            className="w-7 h-7 rounded border border-light-gray cursor-pointer"
-                          />
+                          {editData.colorHex ? (
+                            <input
+                              type="color"
+                              value={editData.colorHex}
+                              onChange={(e) => setEditData((d) => ({ ...d, colorHex: e.target.value }))}
+                              className="w-7 h-7 rounded border border-light-gray cursor-pointer"
+                            />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setEditData((d) => ({ ...d, colorHex: "#000000" }))}
+                              className="w-7 h-7 rounded border border-dashed border-light-gray bg-off-white text-medium-gray flex items-center justify-center text-[10px]"
+                              title="Set color hex"
+                            >
+                              +
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td className="py-2 px-2">

@@ -8,6 +8,7 @@ import {
   updateProductSchema,
   productQuerySchema,
   productVariantSchema,
+  addProductImageSchema,
   UserRole,
 } from "@earth-revibe/shared";
 import { z } from "zod";
@@ -30,7 +31,7 @@ router.put("/images/:imageId/primary", authenticate, authorize(UserRole.ADMIN, U
 
 // Routes with /:id param — AFTER all static segments
 router.post("/:id/variants", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate({ body: z.object({ variants: z.array(productVariantSchema) }) }), asyncHandler(productController.addProductVariants));
-router.post("/:id/images", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.addProductImage));
+router.post("/:id/images", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate({ body: addProductImageSchema }), asyncHandler(productController.addProductImage));
 router.put("/:id/images/reorder", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.reorderProductImages));
 router.put("/:id", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate({ body: updateProductSchema }), asyncHandler(productController.updateProduct));
 router.delete("/:id", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.deleteProduct));

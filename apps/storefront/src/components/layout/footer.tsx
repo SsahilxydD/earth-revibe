@@ -118,6 +118,10 @@ export function Footer() {
         </div>
       </div>
 
+      {/* Copyright */}
+      <p className="px-4 pb-6 text-xs text-black/30 md:px-8 lg:px-12 xl:px-20">
+        &copy; {new Date().getFullYear()} Earth Revibe. All rights reserved.
+      </p>
     </footer>
   );
 }

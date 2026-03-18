@@ -87,13 +87,15 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
   const deleteImage = useDeleteProductImage();
   const setPrimary = useSetProductImagePrimary();
 
+  // Keep a ref to the latest queue so the unmount cleanup reads current state
+  const uploadQueueRef = useRef(uploadQueue);
+  useEffect(() => { uploadQueueRef.current = uploadQueue; }, [uploadQueue]);
+
   // Clean up object URLs on unmount
   useEffect(() => {
     return () => {
-      uploadQueue.forEach((item) => URL.revokeObjectURL(item.preview));
+      uploadQueueRef.current.forEach((item) => URL.revokeObjectURL(item.preview));
     };
-    // Only on unmount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Upload a single file ────────────────────────────────────────────────
