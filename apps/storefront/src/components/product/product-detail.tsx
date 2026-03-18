@@ -291,7 +291,7 @@ function SizeChartTable() {
       </div>
 
       {/* Size chart table */}
-      <table className="w-full" style={{ marginTop: "8px" }} style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
+      <table className="w-full" style={{ marginTop: "8px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
         <thead>
           <tr>
             <th className="pb-7 text-left text-[13px] font-bold text-[var(--color-text)]">AREA</th>
