@@ -426,6 +426,14 @@ export function ProductDetail({ product }: ProductDetailProps) {
     (sizes.length === 0 || selectedSize !== null) &&
     (selectedVariant ? selectedVariant.stock > 0 : true);
 
+  const handleMobileAddToCart = () => {
+    if (sizes.length > 0) {
+      setShowSizeSheet(true);
+      return;
+    }
+    handleAddToCart();
+  };
+
   const handleAddToCart = async () => {
     if (sizes.length > 0 && !selectedSize) {
       setShowSizeSheet(true);
@@ -920,11 +928,11 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </p>
         </div>
 
-        {/* ADD button — opens size sheet if no size selected */}
+        {/* ADD button — always opens size sheet on mobile when sizes exist */}
         <div className="px-4 py-3">
           <button
             type="button"
-            onClick={handleAddToCart}
+            onClick={handleMobileAddToCart}
             disabled={isAdding}
             className="flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
           >
