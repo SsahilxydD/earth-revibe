@@ -217,7 +217,7 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             {measurements.map((m) => (
               <div key={m.name}>
                 <p className="text-[13px] font-bold tracking-wide text-[var(--color-text)]">{m.name}</p>
-                <p className="text-[13px] leading-[1.7] text-[#666666]" style={{ marginTop: "16px" }}>{m.desc}</p>
+                <p className="text-[13px] leading-[1.7] text-[#666666]" style={{ marginTop: "8px" }}>{m.desc}</p>
               </div>
             ))}
           </div>
