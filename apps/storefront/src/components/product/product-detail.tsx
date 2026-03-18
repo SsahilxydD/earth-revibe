@@ -200,7 +200,7 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
           maxHeight: "90vh",
           overflowY: "auto",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+          fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
         }}
       >
         {/* Drag handle */}
