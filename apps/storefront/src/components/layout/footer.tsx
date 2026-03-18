@@ -118,15 +118,6 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Bottom */}
-      <div className="border-t border-black/10">
-        <div className="flex items-center justify-between px-4 py-4 md:px-8 lg:px-12 xl:px-20">
-          <p className="text-xs text-black/40">
-            &copy; {new Date().getFullYear()} Earth Revibe. All rights reserved.
-          </p>
-          <p className="text-xs text-black/40">Made in India</p>
-        </div>
-      </div>
     </footer>
   );
 }
