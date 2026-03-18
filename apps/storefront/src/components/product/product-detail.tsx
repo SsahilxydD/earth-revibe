@@ -209,15 +209,15 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
         </div>
 
         <div className="px-7 pb-8">
-          <h3 className="text-[15px] font-bold tracking-[0.15em] text-[var(--color-text)] mt-4">
+          <h3 className="text-[15px] tracking-[0.15em] text-[var(--color-text)] mt-4" style={{ fontWeight: 300 }}>
             HOW WE MEASURE THE GARMENT
           </h3>
 
           <div style={{ marginTop: "32px" }}>
             {measurements.map((m, i) => (
               <div key={m.name} style={{ paddingTop: i === 0 ? 0 : "16px" }}>
-                <p className="text-[13px] font-bold tracking-wide text-[var(--color-text)]" style={{ lineHeight: 1 }}>{m.name}</p>
-                <p className="text-[13px] text-[#666666]" style={{ marginTop: "8px", lineHeight: 1.5 }}>{m.desc}</p>
+                <p className="text-[13px] tracking-wide text-[var(--color-text)]" style={{ lineHeight: 1, fontWeight: 400 }}>{m.name}</p>
+                <p className="text-[13px] text-[#666666]" style={{ marginTop: "8px", lineHeight: 1.5, fontWeight: 300 }}>{m.desc}</p>
               </div>
             ))}
           </div>
@@ -260,7 +260,8 @@ function SizeChartTable() {
       </p>
       <button
         onClick={() => setShowGuide((v) => !v)}
-        className="mt-6 text-[13px] text-[#666666]"
+        className="text-[13px] text-[#666666]"
+        style={{ marginTop: "16px" }}
       >
         See <span className="underline underline-offset-2">how we measure the garment</span>
       </button>
