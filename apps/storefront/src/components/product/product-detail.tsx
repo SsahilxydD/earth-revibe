@@ -407,6 +407,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [showSizeSheet, setShowSizeSheet] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
   const { addToast } = useToast();
@@ -426,12 +427,11 @@ export function ProductDetail({ product }: ProductDetailProps) {
     (selectedVariant ? selectedVariant.stock > 0 : true);
 
   const handleAddToCart = async () => {
-    if (!canAddToCart) {
-      if (sizes.length > 0 && !selectedSize) {
-        addToast("Please select a size", "error");
-      }
+    if (sizes.length > 0 && !selectedSize) {
+      setShowSizeSheet(true);
       return;
     }
+    if (!canAddToCart) return;
 
     setIsAdding(true);
     await new Promise((r) => setTimeout(r, 300));
@@ -449,6 +449,35 @@ export function ProductDetail({ product }: ProductDetailProps) {
       size: selectedSize || "",
       color: selectedColor || "",
       maxQuantity: selectedVariant?.stock ?? 99,
+      quantity,
+    });
+
+    addToast("Added to cart", "success");
+    setIsAdding(false);
+  };
+
+  const handleSizeSheetSelect = async (size: string) => {
+    setSelectedSize(size);
+    setShowSizeSheet(false);
+
+    const variant = getSelectedVariant(product.variants, selectedColor, size);
+    if (!variant || variant.stock <= 0) return;
+
+    setIsAdding(true);
+    await new Promise((r) => setTimeout(r, 300));
+
+    const primaryImage = product.images.find((img) => img.isPrimary) || product.images[0];
+    addItem({
+      id: variant.id,
+      productId: product.id,
+      name: product.name,
+      slug: product.slug,
+      image: primaryImage?.url || "",
+      price: variant.price ?? product.price,
+      compareAtPrice: product.compareAtPrice ?? undefined,
+      size,
+      color: selectedColor || "",
+      maxQuantity: variant.stock,
       quantity,
     });
 
@@ -891,22 +920,77 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </p>
         </div>
 
-        {/* ADD button — clean outlined style */}
+        {/* ADD button — opens size sheet if no size selected */}
         <div className="px-4 py-3">
           <button
+            type="button"
             onClick={handleAddToCart}
-            disabled={!canAddToCart || isAdding}
-            className={cn(
-              "flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors",
-              canAddToCart
-                ? "border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
-                : "cursor-not-allowed border-[var(--color-sold-out)] text-[var(--color-sold-out)]"
-            )}
+            disabled={isAdding}
+            className="flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
           >
             {isAdding ? <Loader2 size={16} className="animate-spin" /> : "ADD"}
           </button>
         </div>
       </div>
+
+      {/* ===== SIZE SELECTION SHEET ===== */}
+      <>
+        {/* Backdrop */}
+        <div
+          className={`fixed inset-0 z-[70] bg-black transition-opacity duration-300 ${
+            showSizeSheet ? "opacity-50 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={() => setShowSizeSheet(false)}
+        />
+
+        {/* Sheet */}
+        <div
+          className={`fixed inset-x-0 bottom-0 z-[71] bg-white transition-transform duration-300 ease-out ${
+            showSizeSheet ? "translate-y-0" : "translate-y-full"
+          }`}
+          style={{
+            maxHeight: "70vh",
+            overflowY: "auto",
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          }}
+        >
+          {/* Drag handle */}
+          <div className="sticky top-0 z-10 bg-white pt-5 pb-3 flex justify-center">
+            <div className="w-10 h-[3px] rounded-full bg-[#d0d0d0]" />
+          </div>
+
+          <div className="px-6 pb-8">
+            <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-center text-[var(--color-text)]">
+              Select Size
+            </h3>
+
+            <div className="mt-6 flex flex-col">
+              {sizes.map((size) => {
+                const stock = getVariantStock(product.variants, selectedColor, size);
+                const isOutOfStock = stock <= 0;
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      if (!isOutOfStock) handleSizeSheetSelect(size);
+                    }}
+                    disabled={isOutOfStock}
+                    className={cn(
+                      "py-4 text-center text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors",
+                      isOutOfStock
+                        ? "text-[var(--color-sold-out)] cursor-not-allowed"
+                        : "text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                    )}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </>
     </div>
   );
 }
