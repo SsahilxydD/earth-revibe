@@ -294,7 +294,7 @@ function SizeChartTable() {
       <table className="w-full" style={{ marginTop: "8px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
         <thead>
           <tr>
-            <th className="pb-7 text-left text-[13px] font-bold text-[var(--color-text)]">AREA</th>
+            <th className="pb-4 text-left text-[13px] font-bold text-[var(--color-text)]">AREA</th>
             {sizes.map((s) => (
               <th key={s} className="pb-7 text-left text-[13px] font-bold text-[var(--color-text)]">{s}</th>
             ))}
@@ -302,12 +302,12 @@ function SizeChartTable() {
         </thead>
         <tbody>
           {data.map((row) => (
-            <tr key={row.area} className="border-t border-[var(--color-border)]">
-              <td className="py-7 text-[13px] text-[#666666]">{row.area}</td>
-              <td className="py-7 text-[13px] text-[#666666]">{row.s}</td>
-              <td className="py-7 text-[13px] text-[#666666]">{row.m}</td>
-              <td className="py-7 text-[13px] text-[#666666]">{row.l}</td>
-              <td className="py-7 text-[13px] text-[#666666]">{row.xl}</td>
+            <tr key={row.area}>
+              <td className="py-4 text-[13px] text-[#666666]">{row.area}</td>
+              <td className="py-4 text-[13px] text-[#666666]">{row.s}</td>
+              <td className="py-4 text-[13px] text-[#666666]">{row.m}</td>
+              <td className="py-4 text-[13px] text-[#666666]">{row.l}</td>
+              <td className="py-4 text-[13px] text-[#666666]">{row.xl}</td>
             </tr>
           ))}
         </tbody>
@@ -355,7 +355,7 @@ function DetailTabs({
       </div>
 
       {/* Tab content */}
-      <div className="px-4 pb-5 text-[13px] leading-[1.6] tracking-normal text-[#666666]" style={{ paddingTop: "16px", fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
+      <div className="px-4 pb-5 text-[13px] leading-[1.6] tracking-normal text-[#666666]" style={{ paddingTop: 0, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
         {activeTab === "description" && description && (
           <div dangerouslySetInnerHTML={{ __html: description }} />
         )}
