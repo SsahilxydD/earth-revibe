@@ -27,7 +27,7 @@ export function Accordion({ title, children, defaultOpen = false }: AccordionPro
         className="flex w-full items-center justify-between py-4 text-left"
         aria-expanded={isOpen}
       >
-        <span className="text-sm font-bold uppercase tracking-wider">
+        <span className="text-xs font-bold uppercase tracking-wider">
           {title}
         </span>
         {isOpen ? <Minus size={16} /> : <Plus size={16} />}
