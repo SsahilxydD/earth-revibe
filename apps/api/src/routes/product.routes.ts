@@ -16,22 +16,26 @@ const router: IRouter = Router();
 
 // Public routes
 router.get("/", validate({ query: productQuerySchema }), asyncHandler(productController.listProducts));
-router.get("/:slug", asyncHandler(productController.getProductBySlug));
 
-// Admin routes
+// Admin routes — static segments MUST come before /:slug and /:id to avoid conflicts
 router.post("/", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate({ body: createProductSchema }), asyncHandler(productController.createProduct));
-router.put("/:id", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate({ body: updateProductSchema }), asyncHandler(productController.updateProduct));
-router.delete("/:id", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.deleteProduct));
 
-// Variant routes (admin only)
-router.post("/:id/variants", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate({ body: z.object({ variants: z.array(productVariantSchema) }) }), asyncHandler(productController.addProductVariants));
+// Variant routes (admin only) — "/variants/:variantId" must precede "/:id"
 router.put("/variants/:variantId", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate({ body: productVariantSchema.partial() }), asyncHandler(productController.updateProductVariant));
 router.delete("/variants/:variantId", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.deleteProductVariant));
 
-// Image routes (admin only)
-router.post("/:id/images", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.addProductImage));
+// Image routes (admin only) — "/images/:imageId" must precede "/:id"
 router.delete("/images/:imageId", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.deleteProductImage));
 router.put("/images/:imageId/primary", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.setProductImagePrimary));
+
+// Routes with /:id param — AFTER all static segments
+router.post("/:id/variants", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate({ body: z.object({ variants: z.array(productVariantSchema) }) }), asyncHandler(productController.addProductVariants));
+router.post("/:id/images", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.addProductImage));
 router.put("/:id/images/reorder", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.reorderProductImages));
+router.put("/:id", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate({ body: updateProductSchema }), asyncHandler(productController.updateProduct));
+router.delete("/:id", authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), asyncHandler(productController.deleteProduct));
+
+// Public slug route — LAST, since /:slug matches everything
+router.get("/:slug", asyncHandler(productController.getProductBySlug));
 
 export { router as productRouter };

@@ -65,7 +65,10 @@ export const productVariantSchema = z.object({
   sku: z.string().min(1),
   size: z.string().min(1),
   color: z.string().default(""),
-  colorHex: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  colorHex: z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : v),
+    z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  ),
   price: z.coerce.number().positive().optional(),
   stock: z.coerce.number().int().min(0).default(0),
   lowStockThreshold: z.coerce.number().int().min(0).default(5),

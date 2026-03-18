@@ -75,7 +75,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
 
   const handleSaveNewVariants = async () => {
     const toCreate = newVariants
-      .filter((v) => v.sku && v.size && v.color)
+      .filter((v) => v.sku && v.size)
       .map((v) => ({
         sku: v.sku,
         size: v.size,
@@ -88,7 +88,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
       }));
 
     if (toCreate.length === 0) {
-      toast.error("Fill in SKU, size, and color for at least one variant");
+      toast.error("Fill in SKU and size for at least one variant");
       return;
     }
 
@@ -122,7 +122,10 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
   const handleSaveEdit = async () => {
     if (!editingId) return;
     try {
-      await updateVariant.mutateAsync({ variantId: editingId, data: editData });
+      const cleanData = { ...editData };
+      // Normalise empty colorHex so the regex validator doesn't reject it
+      if (!cleanData.colorHex) cleanData.colorHex = undefined;
+      await updateVariant.mutateAsync({ variantId: editingId, data: cleanData });
       toast.success("Variant updated");
       setEditingId(null);
       setEditData({});
