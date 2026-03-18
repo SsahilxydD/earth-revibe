@@ -213,11 +213,11 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             HOW WE MEASURE THE GARMENT
           </h3>
 
-          <div className="mt-5 flex flex-col" style={{ gap: "8px" }}>
+          <div className="mt-5 flex flex-col" style={{ gap: "16px" }}>
             {measurements.map((m) => (
               <div key={m.name}>
                 <p className="text-[13px] font-bold tracking-wide text-[var(--color-text)]">{m.name}</p>
-                <p className="text-[13px] leading-[1.7] text-[#666666]" style={{ marginTop: "4px" }}>{m.desc}</p>
+                <p className="text-[13px] leading-[1.7] text-[#666666]" style={{ marginTop: "16px" }}>{m.desc}</p>
               </div>
             ))}
           </div>
