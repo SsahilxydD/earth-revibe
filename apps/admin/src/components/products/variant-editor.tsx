@@ -81,7 +81,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
         size: v.size,
         color: v.color,
         colorHex: v.colorHex || undefined,
-        price: v.price ? parseFloat(v.price) : undefined,
+        price: v.price ? parseFloat(v.price) : basePrice,
         stock: parseInt(v.stock) || 0,
         lowStockThreshold: parseInt(v.lowStockThreshold) || 5,
         isActive: true,
