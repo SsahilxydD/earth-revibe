@@ -294,20 +294,20 @@ function SizeChartTable() {
       <table className="w-full" style={{ marginTop: "8px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
         <thead>
           <tr>
-            <th className="pb-4 text-left text-[13px] font-bold text-[var(--color-text)]">AREA</th>
+            <th className="text-left text-[13px] font-bold text-[var(--color-text)]" style={{ paddingBottom: "8px" }}>AREA</th>
             {sizes.map((s) => (
-              <th key={s} className="pb-7 text-left text-[13px] font-bold text-[var(--color-text)]">{s}</th>
+              <th key={s} className="text-left text-[13px] font-bold text-[var(--color-text)]" style={{ paddingBottom: "8px" }}>{s}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {data.map((row) => (
             <tr key={row.area}>
-              <td className="py-4 text-[13px] text-[#666666]">{row.area}</td>
-              <td className="py-4 text-[13px] text-[#666666]">{row.s}</td>
-              <td className="py-4 text-[13px] text-[#666666]">{row.m}</td>
-              <td className="py-4 text-[13px] text-[#666666]">{row.l}</td>
-              <td className="py-4 text-[13px] text-[#666666]">{row.xl}</td>
+              <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>{row.area}</td>
+              <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>{row.s}</td>
+              <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>{row.m}</td>
+              <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>{row.l}</td>
+              <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>{row.xl}</td>
             </tr>
           ))}
         </tbody>
