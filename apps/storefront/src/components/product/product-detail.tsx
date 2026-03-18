@@ -213,11 +213,11 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             HOW WE MEASURE THE GARMENT
           </h3>
 
-          <div className="mt-5 space-y-5">
+          <div className="mt-5 flex flex-col" style={{ gap: "8px" }}>
             {measurements.map((m) => (
               <div key={m.name}>
                 <p className="text-[13px] font-bold tracking-wide text-[var(--color-text)]">{m.name}</p>
-                <p className="mt-1 text-[13px] leading-[1.7] text-[#666666]">{m.desc}</p>
+                <p className="text-[13px] leading-[1.7] text-[#666666]" style={{ marginTop: "4px" }}>{m.desc}</p>
               </div>
             ))}
           </div>
@@ -271,7 +271,7 @@ function SizeChartTable() {
           onClick={() => setUnit("CM")}
           className={`flex h-8 w-10 items-center justify-center text-[13px] transition-colors ${
             unit === "CM"
-              ? "border border-[var(--color-text)] text-[var(--color-text)] font-medium"
+              ? "text-[var(--color-text)] font-medium"
               : "text-[#999999]"
           }`}
         >
@@ -281,7 +281,7 @@ function SizeChartTable() {
           onClick={() => setUnit("IN")}
           className={`flex h-8 w-10 items-center justify-center text-[13px] transition-colors ${
             unit === "IN"
-              ? "border border-[var(--color-text)] text-[var(--color-text)] font-medium"
+              ? "text-[var(--color-text)] font-medium"
               : "text-[#999999]"
           }`}
         >
