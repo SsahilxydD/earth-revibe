@@ -355,7 +355,7 @@ function DetailTabs({
       </div>
 
       {/* Tab content */}
-      <div className="px-4 py-5 text-[13px] leading-[1.6] tracking-normal text-[#666666]" style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
+      <div className="px-4 pb-5 text-[13px] leading-[1.6] tracking-normal text-[#666666]" style={{ paddingTop: "16px", fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
         {activeTab === "description" && description && (
           <div dangerouslySetInnerHTML={{ __html: description }} />
         )}
@@ -777,7 +777,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
         )}
 
         {/* Detail tabs — after 1st image */}
-        <div className="mt-6">
+        <div style={{ marginTop: "16px" }}>
           <DetailTabs
             description={product.description}
             compositionRows={compositionCareRows}
