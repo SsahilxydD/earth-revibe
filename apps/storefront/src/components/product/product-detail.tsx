@@ -793,7 +793,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
         {/* Remaining images — after tabs */}
         {sortedImages.length > 1 && (
-          <div className="mt-4 flex flex-col">
+          <div className="mt-4 flex flex-col" style={{ gap: "16px" }}>
             {sortedImages.slice(1).map((img) => (
               <Image
                 key={img.id}
