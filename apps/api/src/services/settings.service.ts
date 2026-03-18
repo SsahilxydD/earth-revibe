@@ -16,8 +16,8 @@ export const settingsService = {
     freeShippingThreshold?: number;
     gstRate?: number;
     returnWindowDays?: number;
-    checkoutConfig?: Record<string, unknown>;
-    shippingConfig?: Record<string, unknown>;
+    checkoutConfig?: Record<string, any>;
+    shippingConfig?: Record<string, any>;
   }) {
     let settings = await prisma.storeSettings.findFirst();
     if (!settings) {
