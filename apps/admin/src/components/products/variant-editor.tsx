@@ -153,7 +153,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
             {variants.length} variant{variants.length !== 1 ? "s" : ""} &middot; {totalStock} total stock
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleAddRow}>
+        <Button type="button" variant="ghost" size="sm" onClick={handleAddRow}>
           <Plus size={16} />
           Add Variant
         </Button>
@@ -230,6 +230,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                       <td className="py-2 px-2">
                         <div className="flex items-center justify-end gap-1">
                           <button
+                            type="button"
                             onClick={handleSaveEdit}
                             disabled={updateVariant.isPending}
                             className="p-1 rounded hover:bg-forest-green/10 text-forest-green"
@@ -238,6 +239,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                             <Save size={14} />
                           </button>
                           <button
+                            type="button"
                             onClick={handleCancelEdit}
                             className="p-1 rounded hover:bg-off-white text-medium-gray"
                             title="Cancel"
@@ -273,6 +275,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                       <td className="py-2 px-2">
                         <div className="flex items-center justify-end gap-1">
                           <button
+                            type="button"
                             onClick={() => handleStartEdit(variant)}
                             className="p-1 rounded hover:bg-off-white text-dark-gray"
                             title="Edit variant"
@@ -280,6 +283,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                             <Pencil size={14} />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDelete(variant.id)}
                             className="p-1 rounded hover:bg-error/10 text-error"
                             title="Delete"
@@ -364,6 +368,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
               </div>
               <div className="flex items-end">
                 <button
+                  type="button"
                   onClick={() => handleRemoveNewRow(index)}
                   className="p-1.5 rounded hover:bg-error/10 text-error"
                   title="Remove"
@@ -375,6 +380,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
           ))}
           <div className="flex justify-end gap-2 pt-2">
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={() => setNewVariants([])}
@@ -382,6 +388,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
               Cancel
             </Button>
             <Button
+              type="button"
               size="sm"
               onClick={handleSaveNewVariants}
               isLoading={addVariants.isPending}
@@ -395,7 +402,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
       {variants.length === 0 && newVariants.length === 0 && (
         <div className="text-center py-6 border border-dashed border-light-gray rounded-lg">
           <p className="text-sm text-medium-gray mb-2">No variants yet</p>
-          <Button variant="ghost" size="sm" onClick={handleAddRow}>
+          <Button type="button" variant="ghost" size="sm" onClick={handleAddRow}>
             <Plus size={16} />
             Add First Variant
           </Button>

@@ -350,11 +350,12 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
         </div>
         <div className="flex items-center gap-2">
           {hasFinished && (
-            <Button variant="ghost" size="sm" onClick={clearFinished}>
+            <Button type="button" variant="ghost" size="sm" onClick={clearFinished}>
               Clear queue
             </Button>
           )}
           <Button
+            type="button"
             variant="ghost"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
@@ -433,6 +434,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
                     <div className="flex flex-col items-center gap-1">
                       <AlertCircle size={18} className="text-error" />
                       <button
+                        type="button"
                         onClick={() => retryOne(item.id)}
                         className="bg-white/90 text-charcoal text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5 hover:bg-white transition-colors"
                       >
@@ -446,6 +448,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
                 {/* Remove button (visible for queued, done, error) */}
                 {item.status !== "uploading" && (
                   <button
+                    type="button"
                     onClick={() => removeFromQueue(item.id)}
                     className="absolute top-1 right-1 bg-charcoal/60 hover:bg-charcoal/80 text-white rounded-full p-0.5 transition-colors"
                   >
@@ -492,6 +495,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 {!image.isPrimary && (
                   <button
+                    type="button"
                     onClick={() => handleSetPrimary(image.id)}
                     disabled={setPrimary.isPending}
                     className="p-2 bg-white rounded-lg hover:bg-off-white transition-colors"
@@ -501,6 +505,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => handleDelete(image.id)}
                   disabled={deleteImage.isPending}
                   className="p-2 bg-white rounded-lg hover:bg-off-white transition-colors"
