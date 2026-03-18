@@ -125,6 +125,8 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
       const cleanData = { ...editData };
       // Normalise empty colorHex so the regex validator doesn't reject it
       if (!cleanData.colorHex) cleanData.colorHex = undefined;
+      // Strip null price — Zod schema is .optional() not .nullable()
+      if (cleanData.price === null || cleanData.price === undefined) delete (cleanData as any).price;
       await updateVariant.mutateAsync({ variantId: editingId, data: cleanData });
       toast.success("Variant updated");
       setEditingId(null);

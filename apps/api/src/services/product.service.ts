@@ -280,26 +280,24 @@ export const productService = {
       throw ApiError.notFound("Product not found");
     }
 
-    const created = await prisma.productVariant.createMany({
-      data: variants.map((v) => ({
-        productId,
-        sku: v.sku,
-        size: v.size,
-        color: v.color,
-        colorHex: v.colorHex,
-        price: v.price,
-        stock: v.stock,
-        lowStockThreshold: v.lowStockThreshold,
-        isActive: v.isActive,
-      })),
-    });
-
-    // Return the created variants
-    const productVariants = await prisma.productVariant.findMany({
-      where: { productId },
-      orderBy: { createdAt: "desc" },
-      take: created.count,
-    });
+    // Use a transaction with individual creates to get back the exact records
+    const productVariants = await prisma.$transaction(
+      variants.map((v) =>
+        prisma.productVariant.create({
+          data: {
+            productId,
+            sku: v.sku,
+            size: v.size,
+            color: v.color,
+            colorHex: v.colorHex,
+            price: v.price,
+            stock: v.stock,
+            lowStockThreshold: v.lowStockThreshold,
+            isActive: v.isActive,
+          },
+        })
+      )
+    );
 
     return productVariants;
   },
