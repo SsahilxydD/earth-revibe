@@ -147,18 +147,6 @@ model Product {
   fit             String?
   printType       String?
   washInstructions String?
-  vendor          String?
-  productType     String?
-  ageGroup        String?
-  colorPattern    String?
-  fabric          String?
-  neckline        String?
-  outerwearFeatures String?
-  pantsLengthType String?
-  sleeveLengthType String?
-  targetGender    String?
-  topLengthType   String?
-  waistRise       String?
   status          ProductStatus @default(DRAFT)
   isFeatured      Boolean       @default(false)
   categoryId      String

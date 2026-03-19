@@ -112,28 +112,13 @@ export interface Product {
   // Metafields
   material: string | null;
   careInstructions: string | null;
-  dimensions: string | null;
-  weight: number | null;
-  weightUnit: string | null;
   fit: string | null;
   printType: string | null;
   washInstructions: string | null;
   composition: string | null;
-  fabricGsm: string | null;
   measurements: string | null;
-  neckline: string | null;
-  sleeveLength: string | null;
-  colorPattern: string | null;
   fabricWeight: string | null;
   origin: string | null;
-  ageGroup: string | null;
-  targetGender: string | null;
-  waistRise: string | null;
-  pantsLengthType: string | null;
-  topLengthType: string | null;
-  outerwearFeatures: string | null;
-  vendor: string | null;
-  productType: string | null;
   returnsInfo: string | null;
   shippingInfo: string | null;
   seoTitle: string | null;
