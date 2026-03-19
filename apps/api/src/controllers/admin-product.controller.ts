@@ -99,8 +99,8 @@ const SHOPIFY_PRODUCT_FIELD_MAP: Record<string, string> = {
   "handle": "slug",
   "title": "name",
   "body (html)": "description",
-  "vendor": "vendor",
-  "type": "productType",
+  "vendor": "__skip__",
+  "type": "__skip__",
   "tags": "__tags__",
   "published": "__published__",
   "seo title": "seoTitle",
@@ -126,41 +126,39 @@ const SHOPIFY_PRODUCT_FIELD_MAP: Record<string, string> = {
   "product.metafields.custom.returns_info": "returnsInfo",
   "product.metafields.custom.shipping_info": "shippingInfo",
   "product.metafields.custom.wash_instructions": "washInstructions",
-  // Shopify standard metafields
-  "age group (product.metafields.shopify.age-group)": "ageGroup",
-  "color (product.metafields.shopify.color-pattern)": "colorPattern",
-  "fabric (product.metafields.shopify.fabric)": "fabric",
+  // Shopify standard metafields (skipped — removed from schema)
+  "age group (product.metafields.shopify.age-group)": "__skip__",
+  "color (product.metafields.shopify.color-pattern)": "__skip__",
+  "fabric (product.metafields.shopify.fabric)": "__skip__",
   "fit (product.metafields.shopify.fit)": "fit",
-  "neckline (product.metafields.shopify.neckline)": "neckline",
-  "outerwear clothing features (product.metafields.shopify.outerwear-clothing-features)": "outerwearFeatures",
-  "pants length type (product.metafields.shopify.pants-length-type)": "pantsLengthType",
+  "neckline (product.metafields.shopify.neckline)": "__skip__",
+  "outerwear clothing features (product.metafields.shopify.outerwear-clothing-features)": "__skip__",
+  "pants length type (product.metafields.shopify.pants-length-type)": "__skip__",
   "size (product.metafields.shopify.size)": "__shopify_size__",
-  "sleeve length type (product.metafields.shopify.sleeve-length-type)": "sleeveLengthType",
-  "target gender (product.metafields.shopify.target-gender)": "targetGender",
-  "top length type (product.metafields.shopify.top-length-type)": "topLengthType",
-  "waist rise (product.metafields.shopify.waist-rise)": "waistRise",
-  "product.metafields.shopify.age-group": "ageGroup",
-  "product.metafields.shopify.color-pattern": "colorPattern",
-  "product.metafields.shopify.fabric": "fabric",
+  "sleeve length type (product.metafields.shopify.sleeve-length-type)": "__skip__",
+  "target gender (product.metafields.shopify.target-gender)": "__skip__",
+  "top length type (product.metafields.shopify.top-length-type)": "__skip__",
+  "waist rise (product.metafields.shopify.waist-rise)": "__skip__",
+  "product.metafields.shopify.age-group": "__skip__",
+  "product.metafields.shopify.color-pattern": "__skip__",
+  "product.metafields.shopify.fabric": "__skip__",
   "product.metafields.shopify.fit": "fit",
-  "product.metafields.shopify.neckline": "neckline",
-  "product.metafields.shopify.outerwear-clothing-features": "outerwearFeatures",
-  "product.metafields.shopify.pants-length-type": "pantsLengthType",
+  "product.metafields.shopify.neckline": "__skip__",
+  "product.metafields.shopify.outerwear-clothing-features": "__skip__",
+  "product.metafields.shopify.pants-length-type": "__skip__",
   "product.metafields.shopify.size": "__shopify_size__",
-  "product.metafields.shopify.sleeve-length-type": "sleeveLengthType",
-  "product.metafields.shopify.target-gender": "targetGender",
-  "product.metafields.shopify.top-length-type": "topLengthType",
-  "product.metafields.shopify.waist-rise": "waistRise",
+  "product.metafields.shopify.sleeve-length-type": "__skip__",
+  "product.metafields.shopify.target-gender": "__skip__",
+  "product.metafields.shopify.top-length-type": "__skip__",
+  "product.metafields.shopify.waist-rise": "__skip__",
 };
 
 /** Fields that go directly onto the Product model */
 const PRODUCT_DB_FIELDS = new Set([
-  "name", "slug", "description", "vendor", "productType", "seoTitle", "seoDescription",
+  "name", "slug", "description", "seoTitle", "seoDescription",
   "composition", "fabricWeight", "fit", "origin", "printType", "measurements",
   "returnsInfo", "shippingInfo", "washInstructions", "material", "careInstructions",
-  "productDetails", "ageGroup", "colorPattern", "fabric", "neckline",
-  "outerwearFeatures", "pantsLengthType", "sleeveLengthType", "targetGender",
-  "topLengthType", "waistRise",
+  "productDetails",
 ]);
 
 // ─── Grouped product type ──────────────────────────────────────
@@ -368,14 +366,6 @@ export const adminProductController = {
         // Body (HTML) → description
         const body = get(row, "body (html)");
         if (body) productData.description = body;
-
-        // Vendor
-        const vendor = get(row, "vendor");
-        if (vendor) productData.vendor = vendor;
-
-        // Type
-        const type = get(row, "type");
-        if (type) productData.productType = type;
 
         // Tags
         const tagsStr = get(row, "tags");
