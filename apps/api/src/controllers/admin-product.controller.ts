@@ -253,9 +253,9 @@ export const adminProductController = {
           escapeCSV(product.slug),                                   // Handle
           isFirstRow ? escapeCSV(product.name) : "",                 // Title
           isFirstRow ? escapeCSV(product.description) : "",          // Body (HTML)
-          isFirstRow ? escapeCSV(product.vendor) : "",               // Vendor
+          "",                                                        // Vendor
           isFirstRow ? escapeCSV(product.category?.name) : "",       // Product Category
-          isFirstRow ? escapeCSV(product.productType) : "",          // Type
+          "",                                                        // Type
           isFirstRow ? escapeCSV(tags) : "",                         // Tags
           isFirstRow ? published : "",                               // Published
           variant ? "Size" : "",                                     // Option1 Name
@@ -291,17 +291,8 @@ export const adminProductController = {
           isFirstRow ? escapeCSV(product.returnsInfo) : "",
           isFirstRow ? escapeCSV(product.shippingInfo) : "",
           isFirstRow ? escapeCSV(product.washInstructions) : "",
-          // Shopify standard metafields
-          isFirstRow ? escapeCSV(product.ageGroup) : "",
-          isFirstRow ? escapeCSV(product.colorPattern) : "",
-          isFirstRow ? escapeCSV(product.fabric) : "",
-          isFirstRow ? escapeCSV(product.neckline) : "",
-          isFirstRow ? escapeCSV(product.outerwearFeatures) : "",
-          isFirstRow ? escapeCSV(product.pantsLengthType) : "",
-          isFirstRow ? escapeCSV(product.sleeveLengthType) : "",
-          isFirstRow ? escapeCSV(product.targetGender) : "",
-          isFirstRow ? escapeCSV(product.topLengthType) : "",
-          isFirstRow ? escapeCSV(product.waistRise) : "",
+          // Shopify standard metafields (removed — no longer in schema)
+          "", "", "", "", "", "", "", "", "", "",
           "",                                                        // Variant Image
           variant ? escapeCSV(variant.weightUnit || "g") : "",       // Variant Weight Unit
           "",                                                        // Variant Tax Code
