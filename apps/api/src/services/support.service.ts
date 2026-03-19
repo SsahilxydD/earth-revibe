@@ -56,8 +56,8 @@ export const supportService = {
   },
 
   async getMyTicket(userId: string, ticketNumber: string) {
-    const ticket = await prisma.supportTicket.findUnique({
-      where: { ticketNumber },
+    const ticket = await prisma.supportTicket.findFirst({
+      where: { ticketNumber, userId },
       include: {
         messages: {
           include: { user: { select: { id: true, firstName: true, lastName: true, role: true } } },
@@ -66,18 +66,14 @@ export const supportService = {
       },
     });
 
-    if (!ticket || ticket.userId !== userId) {
-      throw ApiError.notFound("Ticket not found");
-    }
+    if (!ticket) throw ApiError.notFound("Ticket not found");
 
     return ticket;
   },
 
   async addMessage(userId: string, ticketNumber: string, data: CreateTicketMessageInput) {
-    const ticket = await prisma.supportTicket.findUnique({ where: { ticketNumber } });
-    if (!ticket || ticket.userId !== userId) {
-      throw ApiError.notFound("Ticket not found");
-    }
+    const ticket = await prisma.supportTicket.findFirst({ where: { ticketNumber, userId } });
+    if (!ticket) throw ApiError.notFound("Ticket not found");
     if (ticket.status === "CLOSED") {
       throw ApiError.badRequest("Cannot reply to a closed ticket");
     }

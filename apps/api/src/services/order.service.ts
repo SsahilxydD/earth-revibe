@@ -255,14 +255,13 @@ export const orderService = {
   },
 
   async verifyPayment(userId: string, data: VerifyPaymentInput) {
-    // Find the payment
-    const payment = await prisma.payment.findUnique({
-      where: { razorpayOrderId: data.razorpayOrderId },
+    // Find the payment (scoped to user's order)
+    const payment = await prisma.payment.findFirst({
+      where: { razorpayOrderId: data.razorpayOrderId, order: { userId } },
       include: { order: true },
     });
 
     if (!payment) throw ApiError.notFound("Payment not found");
-    if (payment.order.userId !== userId) throw ApiError.forbidden("Not your order");
 
     // Verify signature
     if (!env.RAZORPAY_KEY_SECRET) {
@@ -444,8 +443,8 @@ export const orderService = {
   },
 
   async getOrder(userId: string, orderNumber: string) {
-    const order = await prisma.order.findUnique({
-      where: { orderNumber },
+    const order = await prisma.order.findFirst({
+      where: { orderNumber, userId },
       include: {
         items: true,
         payment: true,
@@ -456,19 +455,17 @@ export const orderService = {
     });
 
     if (!order) throw ApiError.notFound("Order not found");
-    if (order.userId !== userId) throw ApiError.forbidden("Not your order");
 
     return order;
   },
 
   async cancelOrder(userId: string, orderNumber: string, data: CancelOrderInput) {
-    const order = await prisma.order.findUnique({
-      where: { orderNumber },
+    const order = await prisma.order.findFirst({
+      where: { orderNumber, userId },
       include: { payment: true },
     });
 
     if (!order) throw ApiError.notFound("Order not found");
-    if (order.userId !== userId) throw ApiError.forbidden("Not your order");
 
     const cancellableStatuses = ["PLACED", "CONFIRMED", "PROCESSING"];
     if (!cancellableStatuses.includes(order.status)) {
