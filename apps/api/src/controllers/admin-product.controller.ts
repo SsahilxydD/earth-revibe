@@ -218,16 +218,6 @@ export const adminProductController = {
       "Returns Info (product.metafields.custom.returns_info)",
       "Shipping Info (product.metafields.custom.shipping_info)",
       "Wash Instructions (product.metafields.custom.wash_instructions)",
-      "Age group (product.metafields.shopify.age-group)",
-      "Color (product.metafields.shopify.color-pattern)",
-      "Fabric (product.metafields.shopify.fabric)",
-      "Neckline (product.metafields.shopify.neckline)",
-      "Outerwear clothing features (product.metafields.shopify.outerwear-clothing-features)",
-      "Pants length type (product.metafields.shopify.pants-length-type)",
-      "Sleeve length type (product.metafields.shopify.sleeve-length-type)",
-      "Target gender (product.metafields.shopify.target-gender)",
-      "Top length type (product.metafields.shopify.top-length-type)",
-      "Waist rise (product.metafields.shopify.waist-rise)",
       "Variant Image", "Variant Weight Unit", "Variant Tax Code", "Cost per item",
       "Status",
     ];
@@ -291,8 +281,6 @@ export const adminProductController = {
           isFirstRow ? escapeCSV(product.returnsInfo) : "",
           isFirstRow ? escapeCSV(product.shippingInfo) : "",
           isFirstRow ? escapeCSV(product.washInstructions) : "",
-          // Shopify standard metafields (removed — no longer in schema)
-          "", "", "", "", "", "", "", "", "", "",
           "",                                                        // Variant Image
           variant ? escapeCSV(variant.weightUnit || "g") : "",       // Variant Weight Unit
           "",                                                        // Variant Tax Code
