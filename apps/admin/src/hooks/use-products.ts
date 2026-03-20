@@ -223,3 +223,27 @@ export function useUploadImage() {
     },
   });
 }
+
+export function useUploadImageFromUrl() {
+  return useMutation({
+    mutationFn: async (imageUrl: string) => {
+      const token = await getAuthToken();
+      const res = await fetch(`${API_BASE}/upload/image-from-url`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ url: imageUrl }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error?.message || "Failed to upload image from URL");
+      }
+
+      const json = await res.json();
+      return json as { success: boolean; url: string; thumbnailUrl: string; id: string };
+    },
+  });
+}

@@ -11,11 +11,13 @@ import {
   CheckCircle,
   AlertCircle,
   Upload,
+  Link,
 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
 import {
   useUploadImage,
+  useUploadImageFromUrl,
   useAddProductImage,
   useDeleteProductImage,
   useSetProductImagePrimary,
@@ -81,8 +83,12 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
   const [uploadQueue, setUploadQueue] = useState<UploadItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlValue, setUrlValue] = useState("");
+  const [urlUploading, setUrlUploading] = useState(false);
 
   const uploadImage = useUploadImage();
+  const uploadFromUrl = useUploadImageFromUrl();
   const addImage = useAddProductImage();
   const deleteImage = useDeleteProductImage();
   const setPrimary = useSetProductImagePrimary();
@@ -263,6 +269,43 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
     });
   }, []);
 
+  // ── URL upload handler ─────────────────────────────────────────────────
+
+  const handleUrlUpload = useCallback(async () => {
+    const trimmed = urlValue.trim();
+    if (!trimmed) return;
+
+    try {
+      new URL(trimmed);
+    } catch {
+      toast.error("Please enter a valid URL");
+      return;
+    }
+
+    setUrlUploading(true);
+    try {
+      const result = await uploadFromUrl.mutateAsync(trimmed);
+
+      await addImage.mutateAsync({
+        productId,
+        data: {
+          url: result.url,
+          thumbnailUrl: result.thumbnailUrl,
+          publicId: result.id,
+          altText: trimmed.split("/").pop()?.replace(/\.[^/.]+$/, "") || "Image",
+        },
+      });
+
+      toast.success("Image uploaded from URL");
+      setUrlValue("");
+      setShowUrlInput(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload from URL");
+    } finally {
+      setUrlUploading(false);
+    }
+  }, [urlValue, uploadFromUrl, addImage, productId]);
+
   // ── File input handler ──────────────────────────────────────────────────
 
   const handleFileInput = useCallback(
@@ -360,6 +403,16 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
             type="button"
             variant="ghost"
             size="sm"
+            onClick={() => setShowUrlInput((v) => !v)}
+            disabled={urlUploading}
+          >
+            <Link size={16} />
+            URL
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={isProcessing}
           >
@@ -385,6 +438,40 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
           className="hidden"
         />
       </div>
+
+      {/* URL input */}
+      {showUrlInput && (
+        <div className="mb-4 flex items-center gap-2">
+          <input
+            type="url"
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleUrlUpload();
+              }
+            }}
+            placeholder="https://example.com/image.jpg"
+            disabled={urlUploading}
+            className="flex-1 rounded-lg border border-light-gray bg-off-white px-3 py-2 text-sm text-charcoal placeholder:text-medium-gray focus:border-deep-earth focus:outline-none disabled:opacity-50"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleUrlUpload}
+            disabled={urlUploading || !urlValue.trim()}
+          >
+            {urlUploading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Upload size={16} />
+            )}
+            {urlUploading ? "Fetching..." : "Fetch"}
+          </Button>
+        </div>
+      )}
 
       {/* Upload queue — per-file progress */}
       {hasQueueItems && (
