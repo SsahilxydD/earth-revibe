@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ProductDetail } from "@/components/product/product-detail";
+import { SwipeableProductWrapper } from "@/components/product/swipeable-product-wrapper";
 import type { Product } from "@/types";
 
 /* ------------------------------------------------------------------ */
@@ -80,5 +80,5 @@ export default async function ProductPage({ params }: PageProps) {
     notFound();
   }
 
-  return <ProductDetail product={product} />;
+  return <SwipeableProductWrapper initialProduct={product} initialSlug={slug} />;
 }

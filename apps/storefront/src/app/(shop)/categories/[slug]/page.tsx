@@ -8,6 +8,7 @@ import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton"
 import { FilterSidebar, type FilterState } from "@/components/product/filter-sidebar";
 import { SortDropdown } from "@/components/product/sort-dropdown";
 import { useInfiniteProducts, useCategories } from "@/hooks/use-products";
+import { useProductNavStore } from "@/stores/product-nav-store";
 
 function parseSort(sort: string | null): { sortBy: string; sortOrder: "asc" | "desc" } {
   switch (sort) {
@@ -127,6 +128,15 @@ function CategoryContent() {
   );
 
   const categoryName = currentCategory?.name || slug.replace(/-/g, " ");
+
+  // Populate navigation store so product detail page can swipe between products
+  const setNavContext = useProductNavStore((s) => s.setNavContext);
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      const productSlugs = allProducts.map((p) => p.slug);
+      setNavContext(productSlugs, categoryName, `/categories/${slug}`);
+    }
+  }, [allProducts, categoryName, slug, setNavContext]);
 
   const currentFilters: FilterState = {
     category: slug,
