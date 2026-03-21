@@ -31,18 +31,30 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   const [nextProduct, setNextProduct] = useState<Product | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [vw, setVw] = useState(390);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragX = useMotionValue(0);
 
-  // Track touch direction to avoid conflict with vertical scroll
   const touchStartRef = useRef<{ x: number; y: number; locked: boolean | null }>({
     x: 0, y: 0, locked: null,
   });
 
-  // Detect mobile
+  // All useTransform calls at top level (never conditional)
+  const prevPanelX = useTransform(dragX, (v) => v - vw);
+  const nextPanelX = useTransform(dragX, (v) => v + vw);
+  const currentOpacity = useTransform(
+    dragX,
+    [-200, -100, 0, 100, 200],
+    [0.7, 0.9, 1, 0.9, 0.7]
+  );
+
+  // Detect mobile + viewport width
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 1024);
+    const check = () => {
+      setIsMobile(window.innerWidth < 1024);
+      setVw(window.innerWidth);
+    };
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -88,21 +100,11 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     }
   }, [prev, next, queryClient, currentSlug]);
 
-  // Scale transform for the panels behind — subtle zoom effect like a gallery
-  const prevScale = useTransform(dragX, [-300, 0, 300], [1, 0.92, 0.92]);
-  const nextScale = useTransform(dragX, [-300, 0, 300], [0.92, 0.92, 1]);
-  const currentOpacity = useTransform(
-    dragX,
-    [-200, -100, 0, 100, 200],
-    [0.6, 0.85, 1, 0.85, 0.6]
-  );
-
   const snapTo = useCallback(
     async (targetSlug: string | null, direction: "prev" | "next") => {
       if (isLocked || !targetSlug) return;
       setIsLocked(true);
 
-      const vw = window.innerWidth;
       const targetX = direction === "next" ? -vw : vw;
 
       // Animate the slide out
@@ -136,7 +138,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       dragX.set(0);
       setIsLocked(false);
     },
-    [isLocked, queryClient, dragX]
+    [isLocked, vw, queryClient, dragX]
   );
 
   const snapBack = useCallback(() => {
@@ -147,7 +149,6 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     });
   }, [dragX]);
 
-  // Touch handlers for direction locking (prevent hijacking vertical scroll)
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     touchStartRef.current = { x: touch.clientX, y: touch.clientY, locked: null };
@@ -162,22 +163,20 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       if (ref.locked === null) {
         const dx = Math.abs(touch.clientX - ref.x);
         const dy = Math.abs(touch.clientY - ref.y);
-        if (dx + dy < 10) return; // not enough movement to determine direction
-        ref.locked = dx > dy; // true = horizontal, false = vertical
+        if (dx + dy < 10) return;
+        ref.locked = dx > dy;
       }
 
       if (ref.locked) {
-        // Horizontal swipe — update drag position
         let delta = touch.clientX - ref.x;
 
-        // Apply resistance at boundaries
+        // Rubber-band resistance at boundaries
         if ((!prev && delta > 0) || (!next && delta < 0)) {
-          delta *= 0.15; // strong rubber-band resistance
+          delta *= 0.15;
         }
 
         dragX.set(delta);
       }
-      // If vertical, do nothing — let browser scroll naturally
     },
     [isLocked, prev, next, dragX]
   );
@@ -187,14 +186,12 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     const ref = touchStartRef.current;
 
     if (!ref.locked) {
-      // Was a tap or vertical scroll — reset
       snapBack();
       return;
     }
 
     const currentX = dragX.get();
-    const vw = window.innerWidth;
-    const threshold = vw * 0.2; // 20% of screen width
+    const threshold = vw * 0.2;
 
     if (currentX < -threshold && next) {
       snapTo(next, "next");
@@ -205,7 +202,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     }
 
     touchStartRef.current.locked = null;
-  }, [isLocked, dragX, next, prev, snapTo, snapBack]);
+  }, [isLocked, dragX, vw, next, prev, snapTo, snapBack]);
 
   // Desktop or no nav context → plain render
   if (!isMobile || !hasNav) {
@@ -226,22 +223,14 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       {prevProduct && (
         <motion.div
           className="pointer-events-none absolute inset-0"
-          style={{
-            x: useTransform(dragX, (v) => v - window.innerWidth),
-            scale: prevScale,
-          }}
+          style={{ x: prevPanelX }}
         >
           <ProductDetail product={prevProduct} />
         </motion.div>
       )}
 
       {/* Current product */}
-      <motion.div
-        style={{
-          x: dragX,
-          opacity: currentOpacity,
-        }}
-      >
+      <motion.div style={{ x: dragX, opacity: currentOpacity }}>
         <ProductDetail key={currentSlug} product={currentProduct} />
       </motion.div>
 
@@ -249,10 +238,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       {nextProduct && (
         <motion.div
           className="pointer-events-none absolute inset-0"
-          style={{
-            x: useTransform(dragX, (v) => v + window.innerWidth),
-            scale: nextScale,
-          }}
+          style={{ x: nextPanelX }}
         >
           <ProductDetail product={nextProduct} />
         </motion.div>
