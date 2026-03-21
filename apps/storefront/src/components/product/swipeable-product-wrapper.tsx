@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { flushSync } from "react-dom";
 import {
   motion,
   useMotionValue,
@@ -128,14 +129,19 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
         }
       }
 
-      // Update state
-      setCurrentSlug(targetSlug);
-      setCurrentProduct(product);
+      // Swap product state synchronously so React re-renders BEFORE
+      // we reset dragX — this eliminates the 1-frame blink where the
+      // old product would flash at position 0.
+      flushSync(() => {
+        setCurrentSlug(targetSlug);
+        setCurrentProduct(product);
+      });
+
+      // Now React has already rendered the new product at dragX position.
+      // Reset position — new content is already in DOM, no visible change.
+      dragX.set(0);
       window.history.replaceState({}, "", `/products/${targetSlug}`);
       window.scrollTo({ top: 0, behavior: "instant" });
-
-      // Reset position instantly (product already swapped)
-      dragX.set(0);
       setIsLocked(false);
     },
     [isLocked, vw, queryClient, dragX]
