@@ -93,12 +93,19 @@ app.use(express.urlencoded({ extended: true }));
 // Input sanitization
 app.use(sanitize);
 
-// Rate limiting — per IP (storefront makes 5-10 requests per page load)
+// Rate limiting — per IP.
+// Public GET endpoints (products, categories, homepage, blog, search) are exempt
+// because Indian mobile carriers use CGNAT — thousands of subscribers share one
+// public IP, so they collectively exhaust a per-IP bucket almost immediately.
+// Mutations (POST/PUT/DELETE) and sensitive flows (auth, checkout) remain limited.
+const PUBLIC_GET_PATHS = /^\/api\/v1\/(products|categories|homepage|blog|search)(\/|$|\?)/;
+
 app.use(rateLimit({
   windowMs: APP_CONSTANTS.RATE_LIMIT_WINDOW_MS,
   limit: APP_CONSTANTS.RATE_LIMIT_MAX,
   standardHeaders: "draft-7",
   legacyHeaders: false,
+  skip: (req) => req.method === "GET" && PUBLIC_GET_PATHS.test(req.path),
 }));
 
 // Health check — verify DB connectivity
