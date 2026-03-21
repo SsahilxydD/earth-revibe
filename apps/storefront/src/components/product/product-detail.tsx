@@ -845,11 +845,12 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </div>
         )}
 
-        {/* Color & size selectors */}
-        <div className="px-4 pt-4">
-          {colorSelector}
-          {sizeSelector}
-        </div>
+        {/* Color selector (size is handled by bottom sheet on add-to-cart) */}
+        {colors.length > 0 && (
+          <div className="px-4 pt-4">
+            {colorSelector}
+          </div>
+        )}
 
         {/* Accordions — measurements, shipping, additional info */}
         {(detailsFitRows.length > 0 || shippingReturnsRows.length > 0 || additionalInfoRows.length > 0) && (
