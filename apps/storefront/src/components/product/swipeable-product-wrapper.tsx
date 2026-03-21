@@ -1,7 +1,12 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useCallback, useEffect, useRef } from "react";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  animate,
+} from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { productKeys } from "@/hooks/use-products";
 import { usePrefetchAdjacentProducts } from "@/hooks/use-prefetch-adjacent-products";
@@ -9,26 +14,6 @@ import { useProductNavStore } from "@/stores/product-nav-store";
 import { ProductDetail } from "./product-detail";
 import { api } from "@/lib/api-client";
 import type { Product } from "@/types";
-
-const slideVariants = {
-  enter: (dir: number) => ({
-    x: dir > 0 ? "100%" : "-100%",
-    opacity: 0.8,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-  },
-  exit: (dir: number) => ({
-    x: dir > 0 ? "-100%" : "100%",
-    opacity: 0.8,
-  }),
-};
-
-const slideTransition = {
-  duration: 0.35,
-  ease: [0.32, 0.72, 0, 1] as const,
-};
 
 interface Props {
   initialProduct: Product;
@@ -42,9 +27,18 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
 
   const [currentSlug, setCurrentSlug] = useState(initialSlug);
   const [currentProduct, setCurrentProduct] = useState<Product>(initialProduct);
-  const [direction, setDirection] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [prevProduct, setPrevProduct] = useState<Product | null>(null);
+  const [nextProduct, setNextProduct] = useState<Product | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragX = useMotionValue(0);
+
+  // Track touch direction to avoid conflict with vertical scroll
+  const touchStartRef = useRef<{ x: number; y: number; locked: boolean | null }>({
+    x: 0, y: 0, locked: null,
+  });
 
   // Detect mobile
   useEffect(() => {
@@ -54,7 +48,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Seed the TanStack Query cache with the server-fetched product
+  // Seed cache with initial product
   useEffect(() => {
     queryClient.setQueryData(productKeys.detail(initialSlug), initialProduct);
   }, [initialSlug, initialProduct, queryClient]);
@@ -65,104 +59,203 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   const { prev, next } = getAdjacentSlugs(currentSlug);
   const hasNav = slugs.length > 1;
 
-  const transitionTo = useCallback(
-    async (newSlug: string, dir: number) => {
-      if (isTransitioning) return;
-      setIsTransitioning(true);
-      setDirection(dir);
+  // Load adjacent products into state for rendering
+  useEffect(() => {
+    if (prev) {
+      const cached = queryClient.getQueryData<Product>(productKeys.detail(prev));
+      setPrevProduct(cached || null);
+      if (!cached) {
+        api.get<Product>(`/products/${prev}`).then((p) => {
+          queryClient.setQueryData(productKeys.detail(prev), p);
+          setPrevProduct(p);
+        }).catch(() => {});
+      }
+    } else {
+      setPrevProduct(null);
+    }
 
-      // Try cache first
-      let product = queryClient.getQueryData<Product>(productKeys.detail(newSlug));
+    if (next) {
+      const cached = queryClient.getQueryData<Product>(productKeys.detail(next));
+      setNextProduct(cached || null);
+      if (!cached) {
+        api.get<Product>(`/products/${next}`).then((p) => {
+          queryClient.setQueryData(productKeys.detail(next), p);
+          setNextProduct(p);
+        }).catch(() => {});
+      }
+    } else {
+      setNextProduct(null);
+    }
+  }, [prev, next, queryClient, currentSlug]);
 
+  // Scale transform for the panels behind — subtle zoom effect like a gallery
+  const prevScale = useTransform(dragX, [-300, 0, 300], [1, 0.92, 0.92]);
+  const nextScale = useTransform(dragX, [-300, 0, 300], [0.92, 0.92, 1]);
+  const currentOpacity = useTransform(
+    dragX,
+    [-200, -100, 0, 100, 200],
+    [0.6, 0.85, 1, 0.85, 0.6]
+  );
+
+  const snapTo = useCallback(
+    async (targetSlug: string | null, direction: "prev" | "next") => {
+      if (isLocked || !targetSlug) return;
+      setIsLocked(true);
+
+      const vw = window.innerWidth;
+      const targetX = direction === "next" ? -vw : vw;
+
+      // Animate the slide out
+      await animate(dragX, targetX, {
+        type: "spring",
+        stiffness: 300,
+        damping: 35,
+        mass: 0.8,
+      });
+
+      // Get the product data
+      let product = queryClient.getQueryData<Product>(productKeys.detail(targetSlug));
       if (!product) {
         try {
-          product = await api.get<Product>(`/products/${newSlug}`);
-          queryClient.setQueryData(productKeys.detail(newSlug), product);
+          product = await api.get<Product>(`/products/${targetSlug}`);
+          queryClient.setQueryData(productKeys.detail(targetSlug), product);
         } catch {
-          setIsTransitioning(false);
+          dragX.set(0);
+          setIsLocked(false);
           return;
         }
       }
 
-      setCurrentSlug(newSlug);
+      // Update state
+      setCurrentSlug(targetSlug);
       setCurrentProduct(product);
-      window.history.replaceState({}, "", `/products/${newSlug}`);
+      window.history.replaceState({}, "", `/products/${targetSlug}`);
       window.scrollTo({ top: 0, behavior: "instant" });
 
-      // Small delay to let animation complete before unlocking
-      setTimeout(() => setIsTransitioning(false), 400);
+      // Reset position instantly (product already swapped)
+      dragX.set(0);
+      setIsLocked(false);
     },
-    [isTransitioning, queryClient]
+    [isLocked, queryClient, dragX]
   );
 
-  const handleDragEnd = useCallback(
-    (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
-      if (isTransitioning) return;
+  const snapBack = useCallback(() => {
+    animate(dragX, 0, {
+      type: "spring",
+      stiffness: 400,
+      damping: 30,
+    });
+  }, [dragX]);
 
-      const threshold = window.innerWidth * 0.25;
-      const velocityThreshold = 500;
-      const { x: offsetX } = info.offset;
-      const { x: velocityX } = info.velocity;
+  // Touch handlers for direction locking (prevent hijacking vertical scroll)
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY, locked: null };
+  }, []);
 
-      // Swipe left → next product
-      if (
-        (offsetX < -threshold || (offsetX < -50 && Math.abs(velocityX) > velocityThreshold)) &&
-        next
-      ) {
-        transitionTo(next, 1);
-        return;
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (isLocked) return;
+      const touch = e.touches[0];
+      const ref = touchStartRef.current;
+
+      if (ref.locked === null) {
+        const dx = Math.abs(touch.clientX - ref.x);
+        const dy = Math.abs(touch.clientY - ref.y);
+        if (dx + dy < 10) return; // not enough movement to determine direction
+        ref.locked = dx > dy; // true = horizontal, false = vertical
       }
 
-      // Swipe right → previous product
-      if (
-        (offsetX > threshold || (offsetX > 50 && Math.abs(velocityX) > velocityThreshold)) &&
-        prev
-      ) {
-        transitionTo(prev, -1);
-        return;
+      if (ref.locked) {
+        // Horizontal swipe — update drag position
+        let delta = touch.clientX - ref.x;
+
+        // Apply resistance at boundaries
+        if ((!prev && delta > 0) || (!next && delta < 0)) {
+          delta *= 0.15; // strong rubber-band resistance
+        }
+
+        dragX.set(delta);
       }
+      // If vertical, do nothing — let browser scroll naturally
     },
-    [isTransitioning, next, prev, transitionTo]
+    [isLocked, prev, next, dragX]
   );
 
-  // Desktop or no nav context → render plain ProductDetail
+  const handleTouchEnd = useCallback(() => {
+    if (isLocked) return;
+    const ref = touchStartRef.current;
+
+    if (!ref.locked) {
+      // Was a tap or vertical scroll — reset
+      snapBack();
+      return;
+    }
+
+    const currentX = dragX.get();
+    const vw = window.innerWidth;
+    const threshold = vw * 0.2; // 20% of screen width
+
+    if (currentX < -threshold && next) {
+      snapTo(next, "next");
+    } else if (currentX > threshold && prev) {
+      snapTo(prev, "prev");
+    } else {
+      snapBack();
+    }
+
+    touchStartRef.current.locked = null;
+  }, [isLocked, dragX, next, prev, snapTo, snapBack]);
+
+  // Desktop or no nav context → plain render
   if (!isMobile || !hasNav) {
     return <ProductDetail key={currentSlug} product={currentProduct} />;
   }
 
-  // Mobile with nav context → swipeable
+  // Mobile with nav context → three-panel swipeable layout
   return (
-    <div className="relative overflow-hidden">
-      <AnimatePresence initial={false} custom={direction} mode="wait">
+    <div
+      ref={containerRef}
+      className="relative overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{ touchAction: "pan-y" }}
+    >
+      {/* Previous product (off-screen left) */}
+      {prevProduct && (
         <motion.div
-          key={currentSlug}
-          custom={direction}
-          variants={slideVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={slideTransition}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragDirectionLock
-          dragElastic={0.2}
-          onDragEnd={handleDragEnd}
-          style={{ touchAction: "pan-y" }}
+          className="pointer-events-none absolute inset-0"
+          style={{
+            x: useTransform(dragX, (v) => v - window.innerWidth),
+            scale: prevScale,
+          }}
         >
-          <ProductDetail key={currentSlug} product={currentProduct} />
+          <ProductDetail product={prevProduct} />
         </motion.div>
-      </AnimatePresence>
-
-      {/* Edge indicators */}
-      {prev && (
-        <div className="pointer-events-none fixed left-0 top-1/2 z-30 -translate-y-1/2">
-          <div className="h-8 w-[2px] rounded-r bg-black/10" />
-        </div>
       )}
-      {next && (
-        <div className="pointer-events-none fixed right-0 top-1/2 z-30 -translate-y-1/2">
-          <div className="h-8 w-[2px] rounded-l bg-black/10" />
-        </div>
+
+      {/* Current product */}
+      <motion.div
+        style={{
+          x: dragX,
+          opacity: currentOpacity,
+        }}
+      >
+        <ProductDetail key={currentSlug} product={currentProduct} />
+      </motion.div>
+
+      {/* Next product (off-screen right) */}
+      {nextProduct && (
+        <motion.div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            x: useTransform(dragX, (v) => v + window.innerWidth),
+            scale: nextScale,
+          }}
+        >
+          <ProductDetail product={nextProduct} />
+        </motion.div>
       )}
     </div>
   );
