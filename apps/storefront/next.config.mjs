@@ -1,3 +1,7 @@
+const API_ORIGIN =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, "") ||
+  "https://earth-revibeapi-production.up.railway.app";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@earth-revibe/shared"],
@@ -20,6 +24,18 @@ const nextConfig = {
         hostname: "cdn.shopify.com",
       },
     ],
+  },
+  // Proxy API requests through Vercel so mobile browsers never call Railway
+  // directly. Indian mobile carriers (Jio, Airtel) have DNS/routing issues
+  // reaching Railway servers, which breaks product loading on cellular data.
+  // With this rewrite, the browser only talks to Vercel (India edge nodes).
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${API_ORIGIN}/api/v1/:path*`,
+      },
+    ];
   },
 };
 

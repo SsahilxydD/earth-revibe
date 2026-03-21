@@ -1,10 +1,11 @@
-// Ensure API_BASE is always an absolute URL
-function resolveApiBase(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
-  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
-  return `https://${raw}`;
-}
-const API_BASE = resolveApiBase();
+// In the browser, use the same-origin proxy (/api/v1) so requests go through
+// Vercel's edge instead of hitting Railway directly. This avoids mobile carrier
+// DNS/routing issues (Jio, Airtel) that block connections to Railway.
+// On the server (SSR), call Railway directly for speed.
+const API_BASE =
+  typeof window !== "undefined"
+    ? "/api/v1"
+    : (process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1");
 
 interface ApiResponse<T = any> {
   success: boolean;
