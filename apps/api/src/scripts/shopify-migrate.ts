@@ -377,7 +377,6 @@ async function migrateProducts(categoryMap: Map<number, string>) {
     let shortDescription: string | undefined;
     let seoTitle: string | undefined;
     let seoDescription: string | undefined;
-    let productDetails: string | undefined;
     let returnsInfo: string | undefined;
     let shippingInfo: string | undefined;
     let origin: string | undefined;
@@ -397,10 +396,6 @@ async function migrateProducts(categoryMap: Map<number, string>) {
         seoTitle = mf.value;
       } else if (fullKey === "global.description_tag" || fullKey === "seo.description" || k === "description_tag") {
         seoDescription = mf.value;
-      }
-      // Product details
-      else if (k === "product_details" || k === "product-details" || k === "details") {
-        productDetails = mf.value;
       }
       // Material
       else if (k === "material" || k === "fabric") {
@@ -474,7 +469,6 @@ async function migrateProducts(categoryMap: Map<number, string>) {
       careInstructions: careInstructions || null,
       seoTitle: seoTitle || null,
       seoDescription: seoDescription || null,
-      productDetails: productDetails || null,
       returnsInfo: returnsInfo || null,
       shippingInfo: shippingInfo || null,
       origin: origin || null,

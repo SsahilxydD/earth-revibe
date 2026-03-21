@@ -137,7 +137,7 @@ model Product {
   careInstructions String?      @db.Text
   seoTitle        String?
   seoDescription  String?       @db.Text
-  productDetails  String?       @db.Text
+  seoKeywords     String?
   returnsInfo     String?
   shippingInfo    String?
   origin          String?

@@ -99,12 +99,9 @@ const SHOPIFY_PRODUCT_FIELD_MAP: Record<string, string> = {
   "handle": "slug",
   "title": "name",
   "body (html)": "description",
-  "vendor": "__skip__",
-  "type": "__skip__",
-  "tags": "__tags__",
-  "published": "__published__",
   "seo title": "seoTitle",
   "seo description": "seoDescription",
+  "seo keywords": "seoKeywords",
   "status": "status",
   // Custom metafields (with display name prefix)
   "composition (product.metafields.custom.composition)": "composition",
@@ -116,6 +113,8 @@ const SHOPIFY_PRODUCT_FIELD_MAP: Record<string, string> = {
   "returns info (product.metafields.custom.returns_info)": "returnsInfo",
   "shipping info (product.metafields.custom.shipping_info)": "shippingInfo",
   "wash instructions (product.metafields.custom.wash_instructions)": "washInstructions",
+  "material (product.metafields.custom.material)": "material",
+  "care instructions (product.metafields.custom.care_instructions)": "careInstructions",
   // Also accept bare metafield keys
   "product.metafields.custom.composition": "composition",
   "product.metafields.custom.fabric_weight": "fabricWeight",
@@ -126,39 +125,18 @@ const SHOPIFY_PRODUCT_FIELD_MAP: Record<string, string> = {
   "product.metafields.custom.returns_info": "returnsInfo",
   "product.metafields.custom.shipping_info": "shippingInfo",
   "product.metafields.custom.wash_instructions": "washInstructions",
-  // Shopify standard metafields (skipped — removed from schema)
-  "age group (product.metafields.shopify.age-group)": "__skip__",
-  "color (product.metafields.shopify.color-pattern)": "__skip__",
-  "fabric (product.metafields.shopify.fabric)": "__skip__",
+  "product.metafields.custom.material": "material",
+  "product.metafields.custom.care_instructions": "careInstructions",
+  // Shopify standard metafields — only map fit (others not stored)
   "fit (product.metafields.shopify.fit)": "fit",
-  "neckline (product.metafields.shopify.neckline)": "__skip__",
-  "outerwear clothing features (product.metafields.shopify.outerwear-clothing-features)": "__skip__",
-  "pants length type (product.metafields.shopify.pants-length-type)": "__skip__",
-  "size (product.metafields.shopify.size)": "__shopify_size__",
-  "sleeve length type (product.metafields.shopify.sleeve-length-type)": "__skip__",
-  "target gender (product.metafields.shopify.target-gender)": "__skip__",
-  "top length type (product.metafields.shopify.top-length-type)": "__skip__",
-  "waist rise (product.metafields.shopify.waist-rise)": "__skip__",
-  "product.metafields.shopify.age-group": "__skip__",
-  "product.metafields.shopify.color-pattern": "__skip__",
-  "product.metafields.shopify.fabric": "__skip__",
   "product.metafields.shopify.fit": "fit",
-  "product.metafields.shopify.neckline": "__skip__",
-  "product.metafields.shopify.outerwear-clothing-features": "__skip__",
-  "product.metafields.shopify.pants-length-type": "__skip__",
-  "product.metafields.shopify.size": "__shopify_size__",
-  "product.metafields.shopify.sleeve-length-type": "__skip__",
-  "product.metafields.shopify.target-gender": "__skip__",
-  "product.metafields.shopify.top-length-type": "__skip__",
-  "product.metafields.shopify.waist-rise": "__skip__",
 };
 
 /** Fields that go directly onto the Product model */
 const PRODUCT_DB_FIELDS = new Set([
-  "name", "slug", "description", "seoTitle", "seoDescription",
+  "name", "slug", "description", "seoTitle", "seoDescription", "seoKeywords",
   "composition", "fabricWeight", "fit", "origin", "printType", "measurements",
   "returnsInfo", "shippingInfo", "washInstructions", "material", "careInstructions",
-  "productDetails",
 ]);
 
 // ─── Grouped product type ──────────────────────────────────────
@@ -175,6 +153,14 @@ interface ShopifyProductGroup {
 // ─── Controller ────────────────────────────────────────────────
 
 export const adminProductController = {
+  async listProducts(req: Request, res: Response) {
+    const result = await productService.listProducts(
+      res.locals.validatedQuery || req.query,
+      true // adminMode — show all statuses by default
+    );
+    res.json({ success: true, data: result });
+  },
+
   async getProduct(req: Request, res: Response) {
     const product = await productService.getProductBySlug(
       req.params.slug as string,
@@ -206,7 +192,7 @@ export const adminProductController = {
       "Variant Fulfillment Service", "Variant Price", "Variant Compare At Price",
       "Variant Requires Shipping", "Variant Taxable", "Variant Barcode",
       "Image Src", "Image Position", "Image Alt Text", "Gift Card",
-      "SEO Title", "SEO Description",
+      "SEO Title", "SEO Description", "SEO Keywords",
       "Composition (product.metafields.custom.composition)",
       "Fabric Weight (product.metafields.custom.fabric_weight)",
       "Fit (product.metafields.custom.fit)",
@@ -216,6 +202,8 @@ export const adminProductController = {
       "Returns Info (product.metafields.custom.returns_info)",
       "Shipping Info (product.metafields.custom.shipping_info)",
       "Wash Instructions (product.metafields.custom.wash_instructions)",
+      "Material (product.metafields.custom.material)",
+      "Care Instructions (product.metafields.custom.care_instructions)",
       "Variant Image", "Variant Weight Unit", "Variant Tax Code", "Cost per item",
       "Status",
     ];
@@ -269,6 +257,7 @@ export const adminProductController = {
           isFirstRow ? "false" : "",                                 // Gift Card
           isFirstRow ? escapeCSV(product.seoTitle) : "",             // SEO Title
           isFirstRow ? escapeCSV(product.seoDescription) : "",       // SEO Description
+          isFirstRow ? escapeCSV(product.seoKeywords) : "",            // SEO Keywords
           // Custom metafields
           isFirstRow ? escapeCSV(product.composition) : "",
           isFirstRow ? escapeCSV(product.fabricWeight) : "",
@@ -279,6 +268,8 @@ export const adminProductController = {
           isFirstRow ? escapeCSV(product.returnsInfo) : "",
           isFirstRow ? escapeCSV(product.shippingInfo) : "",
           isFirstRow ? escapeCSV(product.washInstructions) : "",
+          isFirstRow ? escapeCSV(product.material) : "",
+          isFirstRow ? escapeCSV(product.careInstructions) : "",
           "",                                                        // Variant Image
           variant ? escapeCSV(variant.weightUnit || "g") : "",       // Variant Weight Unit
           "",                                                        // Variant Tax Code

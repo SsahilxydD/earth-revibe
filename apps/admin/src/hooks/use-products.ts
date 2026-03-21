@@ -33,7 +33,7 @@ export function useProducts(params: ProductListParams = {}) {
 
   return useQuery({
     queryKey: ["admin-products", params],
-    queryFn: () => api.get(`/products?${searchParams.toString()}`),
+    queryFn: () => api.get(`/admin/products?${searchParams.toString()}`),
   });
 }
 

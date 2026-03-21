@@ -119,6 +119,18 @@ interface ProductData {
   price: number;
   material: string;
   careInstructions: string;
+  washInstructions: string;
+  composition: string;
+  fabricWeight: string;
+  fit: string;
+  origin: string;
+  printType: string;
+  measurements: string;
+  returnsInfo: string;
+  shippingInfo: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string;
   tags: string;
   variants: { sku: string; size: string; stock: number; price: number }[];
   images: { url: string; position: number; altText: string }[];
@@ -147,8 +159,20 @@ async function main() {
         bodyHtml: row["Body (HTML)"] || "",
         category: row["Product Category"] || "",
         price: parseFloat(row["Variant Price"]) || 0,
-        material: row["Composition (product.metafields.custom.composition)"] || "",
-        careInstructions: row["Wash Instructions (product.metafields.custom.wash_instructions)"] || "",
+        material: row["Material (product.metafields.custom.material)"] || "",
+        careInstructions: row["Care Instructions (product.metafields.custom.care_instructions)"] || "",
+        washInstructions: row["Wash Instructions (product.metafields.custom.wash_instructions)"] || "",
+        composition: row["Composition (product.metafields.custom.composition)"] || "",
+        fabricWeight: row["Fabric Weight (product.metafields.custom.fabric_weight)"] || "",
+        fit: row["Fit (product.metafields.custom.fit)"] || "",
+        origin: row["Origin (product.metafields.custom.origin)"] || "",
+        printType: row["Print Type (product.metafields.custom.print_type)"] || "",
+        measurements: row["Product Measurements (product.metafields.custom.product_measurements)"] || "",
+        returnsInfo: row["Returns Info (product.metafields.custom.returns_info)"] || "",
+        shippingInfo: row["Shipping Info (product.metafields.custom.shipping_info)"] || "",
+        seoTitle: row["SEO Title"] || "",
+        seoDescription: row["SEO Description"] || "",
+        seoKeywords: row["SEO Keywords"] || "",
         tags: row["Tags"] || "",
         variants: [],
         images: [],
@@ -162,8 +186,20 @@ async function main() {
       product.title = row["Title"];
       product.bodyHtml = row["Body (HTML)"] || "";
       product.category = row["Product Category"] || "";
-      product.material = row["Composition (product.metafields.custom.composition)"] || "";
-      product.careInstructions = row["Wash Instructions (product.metafields.custom.wash_instructions)"] || "";
+      product.material = row["Material (product.metafields.custom.material)"] || "";
+      product.careInstructions = row["Care Instructions (product.metafields.custom.care_instructions)"] || "";
+      product.washInstructions = row["Wash Instructions (product.metafields.custom.wash_instructions)"] || "";
+      product.composition = row["Composition (product.metafields.custom.composition)"] || "";
+      product.fabricWeight = row["Fabric Weight (product.metafields.custom.fabric_weight)"] || "";
+      product.fit = row["Fit (product.metafields.custom.fit)"] || "";
+      product.origin = row["Origin (product.metafields.custom.origin)"] || "";
+      product.printType = row["Print Type (product.metafields.custom.print_type)"] || "";
+      product.measurements = row["Product Measurements (product.metafields.custom.product_measurements)"] || "";
+      product.returnsInfo = row["Returns Info (product.metafields.custom.returns_info)"] || "";
+      product.shippingInfo = row["Shipping Info (product.metafields.custom.shipping_info)"] || "";
+      product.seoTitle = row["SEO Title"] || "";
+      product.seoDescription = row["SEO Description"] || "";
+      product.seoKeywords = row["SEO Keywords"] || "";
     }
 
     // Add variant
@@ -260,6 +296,18 @@ async function main() {
         price: data.price,
         material: data.material || undefined,
         careInstructions: data.careInstructions || undefined,
+        washInstructions: data.washInstructions || undefined,
+        composition: data.composition || undefined,
+        fabricWeight: data.fabricWeight || undefined,
+        fit: data.fit || undefined,
+        origin: data.origin || undefined,
+        printType: data.printType || undefined,
+        measurements: data.measurements || undefined,
+        returnsInfo: data.returnsInfo || undefined,
+        shippingInfo: data.shippingInfo || undefined,
+        seoTitle: data.seoTitle || undefined,
+        seoDescription: data.seoDescription || undefined,
+        seoKeywords: data.seoKeywords || undefined,
         status: "ACTIVE",
         isFeatured,
         categoryId,

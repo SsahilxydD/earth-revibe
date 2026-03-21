@@ -80,12 +80,8 @@ function buildDetailsFit(p: Product): MetafieldRow[] {
   const rows: MetafieldRow[] = [];
   if (p.material) rows.push({ label: "Material", value: p.material });
   if (p.fit) rows.push({ label: "Fit", value: p.fit });
-  if (p.fabricGsm) rows.push({ label: "Fabric GSM", value: String(p.fabricGsm) });
-  if (p.neckline) rows.push({ label: "Neckline", value: p.neckline });
-  if (p.sleeveLength) rows.push({ label: "Sleeve Length", value: p.sleeveLength });
   if (p.measurements) rows.push({ label: "Measurements", value: p.measurements });
   if (p.printType) rows.push({ label: "Print Type", value: p.printType });
-  if (p.colorPattern) rows.push({ label: "Color Pattern", value: p.colorPattern });
   return rows;
 }
 
@@ -106,23 +102,8 @@ function buildShippingReturns(p: Product): MetafieldRow[] {
   return rows;
 }
 
-function buildAdditionalInfo(p: Product): MetafieldRow[] {
-  const rows: MetafieldRow[] = [];
-  if (p.productType) rows.push({ label: "Product Type", value: p.productType });
-  if (p.vendor) rows.push({ label: "Vendor", value: p.vendor });
-  if (p.ageGroup) rows.push({ label: "Age Group", value: p.ageGroup });
-  if (p.targetGender) rows.push({ label: "Gender", value: p.targetGender });
-  if (p.waistRise) rows.push({ label: "Waist Rise", value: p.waistRise });
-  if (p.pantsLengthType) rows.push({ label: "Pants Length", value: p.pantsLengthType });
-  if (p.topLengthType) rows.push({ label: "Top Length", value: p.topLengthType });
-  if (p.outerwearFeatures) rows.push({ label: "Outerwear Features", value: p.outerwearFeatures });
-  if (p.dimensions) rows.push({ label: "Dimensions", value: p.dimensions });
-  if (p.weight != null && p.weightUnit) {
-    rows.push({ label: "Weight", value: `${p.weight} ${p.weightUnit}` });
-  } else if (p.weight != null) {
-    rows.push({ label: "Weight", value: String(p.weight) });
-  }
-  return rows;
+function buildAdditionalInfo(_p: Product): MetafieldRow[] {
+  return [];
 }
 
 function MetafieldSection({ rows }: { rows: MetafieldRow[] }) {

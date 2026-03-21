@@ -134,13 +134,6 @@ export function ProductForm({
               Product Metafields
             </h3>
             <div className="space-y-4">
-              <Textarea
-                label="Product Details"
-                placeholder="Key product details..."
-                rows={3}
-                error={errors.productDetails?.message}
-                {...register("productDetails")}
-              />
               <Input
                 label="Material"
                 placeholder="100% Organic Cotton"
@@ -178,11 +171,18 @@ export function ProductForm({
                 {...register("printType")}
               />
               <Textarea
-                label="Care / Wash Instructions"
+                label="Care Instructions"
                 placeholder="Machine Cold Wash, No Bleaching"
                 rows={2}
                 error={errors.careInstructions?.message}
                 {...register("careInstructions")}
+              />
+              <Textarea
+                label="Wash Instructions"
+                placeholder="Machine wash cold, tumble dry low"
+                rows={2}
+                error={errors.washInstructions?.message}
+                {...register("washInstructions")}
               />
               <Input
                 label="Origin"
@@ -222,6 +222,12 @@ export function ProductForm({
                 rows={3}
                 error={errors.seoDescription?.message}
                 {...register("seoDescription")}
+              />
+              <Input
+                label="SEO Keywords"
+                placeholder="Comma-separated keywords (max 200 chars)"
+                error={errors.seoKeywords?.message}
+                {...register("seoKeywords")}
               />
             </div>
           </Card>

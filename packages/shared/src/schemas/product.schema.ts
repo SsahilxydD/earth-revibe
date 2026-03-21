@@ -15,7 +15,7 @@ export const createProductSchema = z.object({
   careInstructions: z.string().optional(),
   seoTitle: z.string().max(70).optional(),
   seoDescription: z.string().max(160).optional(),
-  productDetails: z.string().optional(),
+  seoKeywords: z.string().max(200).optional(),
   returnsInfo: z.string().optional(),
   shippingInfo: z.string().optional(),
   origin: z.string().optional(),

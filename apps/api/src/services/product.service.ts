@@ -13,7 +13,7 @@ function generateSlug(name: string): string {
 }
 
 export const productService = {
-  async listProducts(query: ProductQuery) {
+  async listProducts(query: ProductQuery, adminMode = false) {
     const {
       category,
       status,
@@ -33,10 +33,11 @@ export const productService = {
     // Build where clause dynamically
     const where: Prisma.ProductWhereInput = {};
 
-    // Default to ACTIVE for public queries (when no status filter specified)
+    // In admin mode, show all statuses when no filter is specified
+    // In public mode, default to ACTIVE only
     if (status) {
       where.status = status;
-    } else {
+    } else if (!adminMode) {
       where.status = "ACTIVE";
     }
 
@@ -167,7 +168,7 @@ export const productService = {
         careInstructions: data.careInstructions,
         seoTitle: data.seoTitle,
         seoDescription: data.seoDescription,
-        productDetails: data.productDetails,
+        seoKeywords: data.seoKeywords,
         returnsInfo: data.returnsInfo,
         shippingInfo: data.shippingInfo,
         origin: data.origin,
