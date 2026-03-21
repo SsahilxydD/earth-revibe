@@ -14,6 +14,8 @@ import type { Product, ProductVariant } from "@/types";
 
 interface ProductDetailProps {
   product: Product;
+  /** When true, hides fixed elements (dock, size sheet) — used for swipe preview panels */
+  isPreview?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -377,7 +379,7 @@ function DetailTabs({
 /*  Main Component                                                     */
 /* ------------------------------------------------------------------ */
 
-export function ProductDetail({ product }: ProductDetailProps) {
+export function ProductDetail({ product, isPreview = false }: ProductDetailProps) {
   const colors = useMemo(() => getUniqueColors(product.variants), [product.variants]);
   const sizes = useMemo(() => getUniqueSizes(product.variants), [product.variants]);
 
@@ -882,8 +884,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
         </div>
       </div>
 
-      {/* Fixed mobile bottom dock — Zara-style */}
-      <div
+      {/* Fixed mobile bottom dock — Zara-style (hidden in preview panels) */}
+      {!isPreview && <div
         className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
@@ -921,10 +923,10 @@ export function ProductDetail({ product }: ProductDetailProps) {
             {isAdding ? <Loader2 size={16} className="animate-spin" /> : "ADD"}
           </button>
         </div>
-      </div>
+      </div>}
 
       {/* ===== SIZE SELECTION SHEET ===== */}
-      <>
+      {!isPreview && <>
         {/* Backdrop */}
         <div
           className={`fixed inset-0 z-[70] bg-black transition-opacity duration-300 ${
@@ -980,7 +982,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
             </div>
           </div>
         </div>
-      </>
+      </>}
     </div>
   );
 }

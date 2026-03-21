@@ -204,6 +204,25 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     touchStartRef.current.locked = null;
   }, [isLocked, dragX, vw, next, prev, snapTo, snapBack]);
 
+  // Preload adjacent product images into browser cache
+  useEffect(() => {
+    const preloadImages = (product: Product | null) => {
+      if (!product) return;
+      product.images.forEach((img) => {
+        const link = document.createElement("link");
+        link.rel = "preload";
+        link.as = "image";
+        link.href = img.url;
+        // Avoid duplicates
+        if (!document.querySelector(`link[href="${img.url}"]`)) {
+          document.head.appendChild(link);
+        }
+      });
+    };
+    preloadImages(prevProduct);
+    preloadImages(nextProduct);
+  }, [prevProduct, nextProduct]);
+
   // Desktop or no nav context → plain render
   if (!isMobile || !hasNav) {
     return <ProductDetail key={currentSlug} product={currentProduct} />;
@@ -219,28 +238,28 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       onTouchEnd={handleTouchEnd}
       style={{ touchAction: "pan-y" }}
     >
-      {/* Previous product (off-screen left) */}
+      {/* Previous product (off-screen left, no fixed dock) */}
       {prevProduct && (
         <motion.div
           className="pointer-events-none absolute inset-0"
           style={{ x: prevPanelX }}
         >
-          <ProductDetail product={prevProduct} />
+          <ProductDetail product={prevProduct} isPreview />
         </motion.div>
       )}
 
-      {/* Current product */}
+      {/* Current product (with dock) */}
       <motion.div style={{ x: dragX, opacity: currentOpacity }}>
         <ProductDetail key={currentSlug} product={currentProduct} />
       </motion.div>
 
-      {/* Next product (off-screen right) */}
+      {/* Next product (off-screen right, no fixed dock) */}
       {nextProduct && (
         <motion.div
           className="pointer-events-none absolute inset-0"
           style={{ x: nextPanelX }}
         >
-          <ProductDetail product={nextProduct} />
+          <ProductDetail product={nextProduct} isPreview />
         </motion.div>
       )}
     </div>

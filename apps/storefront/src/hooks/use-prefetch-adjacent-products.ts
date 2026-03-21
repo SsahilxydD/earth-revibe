@@ -17,14 +17,14 @@ export function usePrefetchAdjacentProducts(currentSlug: string) {
       queryClient.prefetchQuery({
         queryKey: productKeys.detail(prev),
         queryFn: ({ signal }) => api.get<Product>(`/products/${prev}`, signal),
-        staleTime: 5 * 60 * 1000,
+        staleTime: 10 * 60 * 1000, // 10 min — keep in cache for rapid swiping
       });
     }
     if (next) {
       queryClient.prefetchQuery({
         queryKey: productKeys.detail(next),
         queryFn: ({ signal }) => api.get<Product>(`/products/${next}`, signal),
-        staleTime: 5 * 60 * 1000,
+        staleTime: 10 * 60 * 1000, // 10 min — keep in cache for rapid swiping
       });
     }
   }, [prev, next, queryClient]);
