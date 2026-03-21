@@ -14,81 +14,51 @@ function escapeCSV(value: string | null | undefined): string {
   return s;
 }
 
-/** RFC-4180 compliant CSV line parser — handles quoted fields with commas, newlines, escaped quotes */
-function parseCSVLine(line: string): string[] {
-  const fields: string[] = [];
-  let current = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (inQuotes) {
-      if (char === '"') {
-        if (i + 1 < line.length && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        current += char;
-      }
-    } else {
-      if (char === '"') {
-        inQuotes = true;
-      } else if (char === ",") {
-        fields.push(current);
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-  }
-  fields.push(current);
-  return fields;
-}
-
 /**
- * Parse full CSV text into rows, correctly handling multi-line quoted fields.
+ * Single-pass RFC-4180 CSV parser.
+ * Handles quoted fields with embedded commas, newlines, and escaped quotes.
  * Returns array of string arrays (one per row, including the header row).
  */
 function parseCSV(text: string): string[][] {
   const rows: string[][] = [];
-  let current = "";
+  let row: string[] = [];
+  let field = "";
   let inQuotes = false;
 
   for (let i = 0; i < text.length; i++) {
-    const char = text[i];
+    const ch = text[i];
     if (inQuotes) {
-      if (char === '"') {
+      if (ch === '"') {
         if (i + 1 < text.length && text[i + 1] === '"') {
-          current += '"';
-          i++;
+          field += '"';
+          i++; // skip escaped quote
         } else {
-          inQuotes = false;
+          inQuotes = false; // closing quote
         }
       } else {
-        current += char;
+        field += ch; // content inside quotes (including commas and newlines)
       }
     } else {
-      if (char === '"') {
-        inQuotes = true;
-        current += '"';
-      } else if (char === "\r") {
-        // skip \r
-      } else if (char === "\n") {
-        if (current.trim().length > 0) {
-          rows.push(parseCSVLine(current));
-        }
-        current = "";
+      if (ch === '"') {
+        inQuotes = true; // opening quote — do NOT add to field
+      } else if (ch === ',') {
+        row.push(field);
+        field = "";
+      } else if (ch === '\r') {
+        // skip carriage return
+      } else if (ch === '\n') {
+        row.push(field);
+        if (row.some(f => f)) rows.push(row);
+        row = [];
+        field = "";
       } else {
-        current += char;
+        field += ch;
       }
     }
   }
-  if (current.trim().length > 0) {
-    rows.push(parseCSVLine(current));
-  }
+  // Last field/row
+  row.push(field);
+  if (row.some(f => f)) rows.push(row);
   return rows;
 }
 

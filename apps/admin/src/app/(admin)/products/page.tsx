@@ -137,7 +137,7 @@ export default function ProductsPage() {
       const info = result as any;
       const msg = `Import complete: ${info.created || 0} created, ${info.updated || 0} updated${info.errors ? `, ${info.errors} errors` : ""}`;
       if (info.errors > 0) {
-        const details = info.errorDetails?.slice(0, 5).map((d: any) => d.error || d).join("\n") || "";
+        const details = info.errorDetails?.slice(0, 5).map((d: any) => `Row ${d.row}: ${d.message}`).join("\n") || "";
         toast.error(`${msg}${details ? `\n${details}` : ""}`);
       } else {
         toast.success(msg);
