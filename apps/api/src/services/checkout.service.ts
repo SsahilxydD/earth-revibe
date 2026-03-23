@@ -24,9 +24,8 @@ export const checkoutService = {
     const guestEmail = data.guestEmail;
     const isGuest = !userId;
 
-    if (isGuest && !guestEmail) {
-      throw ApiError.badRequest("Guest checkout requires an email address");
-    }
+    // With Magic Checkout, Razorpay collects the email during payment.
+    // We no longer require it upfront for guest checkout.
 
     // Fetch variants with product data
     const variantIds = data.items.map((i: { variantId: string }) => i.variantId);
