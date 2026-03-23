@@ -22,10 +22,11 @@ function CategoryProductPicker({
   onClose: () => void;
 }) {
   const [search, setSearch] = useState("");
-  const { data, isLoading } = useProducts({ page: 1, limit: 200 });
+  const { data, isLoading, isError } = useProducts({ page: 1, limit: 200 });
   const bulkUpdate = useBulkUpdateProducts();
 
-  const allProducts: any[] = data?.products || [];
+  // data from useProducts is { products: [...], total, page, ... }
+  const allProducts: any[] = (data as any)?.products || [];
 
   const filtered = useMemo(() => {
     if (!search.trim()) return allProducts;
@@ -84,8 +85,12 @@ function CategoryProductPicker({
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
+        ) : isError ? (
+          <p className="p-6 text-center text-sm text-red-500">Failed to load products. Check your session.</p>
         ) : filtered.length === 0 ? (
-          <p className="p-6 text-center text-sm text-medium-gray">No products found</p>
+          <p className="p-6 text-center text-sm text-medium-gray">
+            {allProducts.length === 0 ? "No products in the catalog yet." : "No products match your search."}
+          </p>
         ) : (
           <>
             {/* Products in this category first */}
