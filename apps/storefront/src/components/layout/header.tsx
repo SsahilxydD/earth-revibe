@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -21,51 +21,63 @@ const NAV_LINKS = [
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [bannerHeight, setBannerHeight] = useState(0);
+  const [logoTop, setLogoTop] = useState(0);
   const { isSearchOpen, openSearch, announcementDismissed } = useUiStore();
   const itemCount = useCartStore((s) => s.getItemCount());
   const openCart = useCartStore((s) => s.openCart);
   const pathname = usePathname();
+  const bannerHeightRef = useRef(0);
 
-  // Product detail pages: /products/[slug] (but NOT /products index)
   const isProductDetail =
     pathname.startsWith("/products/") && pathname !== "/products";
 
-  // Measure the announcement bar so the transparent logo sits right below it
-  useEffect(() => {
+  // Single scroll + resize handler that computes both scrolled state
+  // and the transparent logo's top offset (stays below the banner
+  // while visible, then locks to top: 0 once the banner scrolls away)
+  const updatePositions = useCallback(() => {
+    const scrollY = window.scrollY;
+    setScrolled(scrollY > 10);
+
     if (announcementDismissed) {
-      setBannerHeight(0);
+      setLogoTop(0);
       return;
     }
-    // The announcement bar is the first child of the layout — measure it
-    const measure = () => {
-      const banner = document.querySelector("[data-announcement-bar]");
-      setBannerHeight(banner ? banner.getBoundingClientRect().height : 0);
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+
+    // Re-measure banner each time (cheap DOM read, handles dynamic content)
+    const banner = document.querySelector("[data-announcement-bar]");
+    bannerHeightRef.current = banner
+      ? banner.getBoundingClientRect().height + banner.getBoundingClientRect().top - 0
+      : 0;
+
+    // Banner is in normal flow — as the page scrolls, it moves up.
+    // The logo should sit right below the banner's visible bottom edge,
+    // but never go below 0 (when banner has scrolled fully out).
+    const visibleBannerBottom = Math.max(0, bannerHeightRef.current);
+    setLogoTop(visibleBannerBottom);
   }, [announcementDismissed]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+    updatePositions();
+    window.addEventListener("scroll", updatePositions, { passive: true });
+    window.addEventListener("resize", updatePositions);
+    return () => {
+      window.removeEventListener("scroll", updatePositions);
+      window.removeEventListener("resize", updatePositions);
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [updatePositions]);
 
   return (
     <>
       {/* ------------------------------------------------------------ */}
       {/* Mobile transparent navbar — non-product-detail pages only     */}
-      {/* Fixed overlay that floats over page content, positioned       */}
-      {/* right below the announcement banner                           */}
+      {/* Fixed overlay that floats over page content. Tracks the       */}
+      {/* announcement banner: sits below it when visible, slides up    */}
+      {/* to top:0 as the banner scrolls out of view.                   */}
       {/* ------------------------------------------------------------ */}
       {!isProductDetail && (
         <div
           className="fixed left-0 right-0 z-30 pointer-events-none md:hidden"
-          style={{ top: bannerHeight }}
+          style={{ top: logoTop }}
         >
           <div className="flex items-center justify-center px-4 py-3 pointer-events-auto">
             <Link href="/">
@@ -89,18 +101,15 @@ export function Header() {
         className={cn(
           "sticky top-0 z-40 w-full bg-white transition-all duration-300",
           scrolled && "shadow-md",
-          // On mobile: only solid header on product detail pages
           !isProductDetail && "hidden md:block"
         )}
       >
-        {/* 3-column grid: left back | center logo | right icons */}
         <div
           className={cn(
             "grid grid-cols-3 items-center px-4 transition-all duration-300 md:px-8 lg:px-12 xl:px-20",
             scrolled ? "py-2" : "py-3"
           )}
         >
-          {/* Left: back button (mobile product detail) or empty */}
           <div className="flex items-center">
             {isProductDetail ? (
               <button
@@ -113,7 +122,6 @@ export function Header() {
             ) : null}
           </div>
 
-          {/* Center: logo image */}
           <div className="flex justify-center">
             <Link href="/">
               <Image
@@ -130,7 +138,6 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Right: icons */}
           <div className="flex items-center justify-end gap-1">
             <button
               onClick={openSearch}
@@ -161,7 +168,6 @@ export function Header() {
           </div>
         </div>
 
-        {/* Desktop nav — below logo */}
         <nav className="hidden border-t border-[var(--color-border)] lg:flex lg:items-center lg:justify-center lg:gap-8 lg:px-4 lg:py-2">
           {NAV_LINKS.map((link) => (
             <Link
