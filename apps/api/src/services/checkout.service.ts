@@ -284,10 +284,9 @@ export const checkoutService = {
         promotion: {
           reference_id: data.code,
           code: data.code,
-          type: "coupon",
+          type: "discount",
           value: Math.round(discountAmount * 100), // paise
-          value_type: "fixed_amount",
-          description: `Discount code ${data.code} applied`,
+          description: `Discount code ${data.code} applied — ₹${discountAmount} off`,
         },
       };
     } catch (err: unknown) {

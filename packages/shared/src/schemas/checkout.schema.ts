@@ -13,6 +13,10 @@ export const createMagicCheckoutSchema = z.object({
   guestEmail: z.string().email().optional(),
 });
 
+// Razorpay server-to-server callback schemas use .passthrough() because
+// Razorpay may send additional fields we don't explicitly define.
+// Without passthrough, Zod's strict mode strips/rejects unknown fields.
+
 // Razorpay sends this to our shipping info endpoint
 export const shippingInfoRequestSchema = z.object({
   order_id: z.string(),
@@ -24,15 +28,15 @@ export const shippingInfoRequestSchema = z.object({
     zipcode: z.string(),
     state_code: z.string().optional(),
     country: z.string(),
-  })),
-});
+  }).passthrough()),
+}).passthrough();
 
 // Razorpay sends this to our get-promotions endpoint
 export const getPromotionsRequestSchema = z.object({
   order_id: z.string(),
   contact: z.string().optional(),
   email: z.string().optional(),
-});
+}).passthrough();
 
 // Razorpay sends this to our apply-promotion endpoint
 export const applyPromotionRequestSchema = z.object({
@@ -40,7 +44,7 @@ export const applyPromotionRequestSchema = z.object({
   contact: z.string().optional(),
   email: z.string().optional(),
   code: z.string().min(1),
-});
+}).passthrough();
 
 export type CreateMagicCheckoutInput = z.infer<typeof createMagicCheckoutSchema>;
 export type ShippingInfoRequest = z.infer<typeof shippingInfoRequestSchema>;
