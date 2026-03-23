@@ -30,7 +30,6 @@ function smoothScrollToTop(duration = 300): Promise<void> {
     function step(now: number) {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       window.scrollTo(0, start * (1 - eased));
       if (progress < 1) {
@@ -141,9 +140,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       const targetX = direction === "next" ? -vw : vw;
       const needsScroll = window.scrollY > 0;
 
-      // Run slide-out, scroll-to-top, and blur all in parallel.
-      // The blur masks the scroll movement so it feels like one
-      // fluid aesthetic transition rather than a jarring reset.
+      // Run slide-out, scroll-to-top, and blur all in parallel
       const slideOut = animate(dragX, targetX, {
         type: "spring",
         stiffness: 300,
@@ -152,12 +149,11 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       });
 
       if (needsScroll) {
-        // Blur ramps up while scrolling, then clears after swap
         animate(transitionBlur, 6, {
           duration: 0.25,
           ease: "easeOut",
         });
-        smoothScrollToTop(280); // slightly faster than slide so scroll finishes first
+        smoothScrollToTop(280);
       }
 
       await slideOut;
@@ -179,20 +175,14 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       // Ensure we're at scroll 0 before swapping content
       window.scrollTo(0, 0);
 
-      // Swap product state synchronously so React re-renders BEFORE
-      // we reset dragX — this eliminates the 1-frame blink where the
-      // old product would flash at position 0.
       flushSync(() => {
         setCurrentSlug(targetSlug);
         setCurrentProduct(product);
       });
 
-      // Now React has already rendered the new product at dragX position.
-      // Reset position — new content is already in DOM, no visible change.
       dragX.set(0);
       window.history.replaceState({}, "", `/products/${targetSlug}`);
 
-      // Clear the blur with a quick fade-out for a polished feel
       animate(transitionBlur, 0, {
         duration: 0.15,
         ease: "easeIn",
@@ -275,7 +265,6 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
         link.rel = "preload";
         link.as = "image";
         link.href = img.url;
-        // Avoid duplicates
         if (!document.querySelector(`link[href="${img.url}"]`)) {
           document.head.appendChild(link);
         }
@@ -291,35 +280,38 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   }
 
   // Mobile with nav context → three-panel swipeable layout
+  // Preview panels use fixed positioning + overflow-hidden so they:
+  //  1. Don't scroll when the user scrolls the current product
+  //  2. Always show content from the top (scroll-independent)
   return (
     <div
       ref={containerRef}
-      className="relative overflow-hidden"
+      className="relative"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{ touchAction: "pan-y" }}
     >
-      {/* Previous product (off-screen left, no fixed dock) */}
+      {/* Previous product — fixed to viewport, clipped, scroll-independent */}
       {prevProduct && (
         <motion.div
-          className="pointer-events-none absolute inset-0"
-          style={{ x: prevPanelX }}
+          className="fixed inset-0 overflow-hidden pointer-events-none"
+          style={{ x: prevPanelX, zIndex: 20 }}
         >
           <ProductDetail product={prevProduct} isPreview />
         </motion.div>
       )}
 
-      {/* Current product (with dock) */}
+      {/* Current product — normal flow, scrollable */}
       <motion.div style={{ x: dragX, opacity: currentOpacity, filter: currentFilter }}>
         <ProductDetail key={currentSlug} product={currentProduct} />
       </motion.div>
 
-      {/* Next product (off-screen right, no fixed dock) */}
+      {/* Next product — fixed to viewport, clipped, scroll-independent */}
       {nextProduct && (
         <motion.div
-          className="pointer-events-none absolute inset-0"
-          style={{ x: nextPanelX }}
+          className="fixed inset-0 overflow-hidden pointer-events-none"
+          style={{ x: nextPanelX, zIndex: 20 }}
         >
           <ProductDetail product={nextProduct} isPreview />
         </motion.div>
