@@ -1,17 +1,12 @@
 import type { Request, Response } from "express";
 import { checkoutService } from "../services/checkout.service";
-import { ApiError } from "../utils/api-error";
 
 export const checkoutController = {
   async createMagicOrder(req: Request, res: Response) {
     const userId = req.user?.id ?? null;
-    const guestEmail: string | undefined = req.body.guestEmail;
 
-    // Must be authenticated OR provide a guest email
-    if (!userId && !guestEmail) {
-      throw ApiError.badRequest("Please log in or provide an email to continue");
-    }
-
+    // Magic Checkout: Razorpay collects email during payment,
+    // so guest checkout no longer requires email upfront.
     const result = await checkoutService.createMagicOrder(userId, req.body);
     res.status(201).json({ success: true, data: result });
   },
