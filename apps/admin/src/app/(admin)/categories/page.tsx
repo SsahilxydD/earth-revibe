@@ -22,7 +22,7 @@ function CategoryProductPicker({
   onClose: () => void;
 }) {
   const [search, setSearch] = useState("");
-  const { data, isLoading, isError } = useProducts({ page: 1, limit: 200 });
+  const { data, isLoading, isError } = useProducts({ page: 1, limit: 100 });
   const bulkUpdate = useBulkUpdateProducts();
 
   // data from useProducts is { products: [...], total, page, ... }
