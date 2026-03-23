@@ -16,6 +16,33 @@ import { ProductDetail } from "./product-detail";
 import { api } from "@/lib/api-client";
 import type { Product } from "@/types";
 
+/* ------------------------------------------------------------------ */
+/*  Smooth scroll-to-top with eased animation (for swipe transitions) */
+/* ------------------------------------------------------------------ */
+function smoothScrollToTop(duration = 300): Promise<void> {
+  return new Promise((resolve) => {
+    const start = window.scrollY;
+    if (start === 0) {
+      resolve();
+      return;
+    }
+    const startTime = performance.now();
+    function step(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      window.scrollTo(0, start * (1 - eased));
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
 interface Props {
   initialProduct: Product;
   initialSlug: string;
@@ -36,6 +63,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragX = useMotionValue(0);
+  const transitionBlur = useMotionValue(0);
 
   const touchStartRef = useRef<{ x: number; y: number; locked: boolean | null }>({
     x: 0, y: 0, locked: null,
@@ -48,6 +76,10 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     dragX,
     [-200, -100, 0, 100, 200],
     [0.7, 0.9, 1, 0.9, 0.7]
+  );
+  const currentFilter = useTransform(
+    transitionBlur,
+    (v) => (v > 0 ? `blur(${v}px)` : "none")
   );
 
   // Detect mobile + viewport width
@@ -107,14 +139,28 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       setIsLocked(true);
 
       const targetX = direction === "next" ? -vw : vw;
+      const needsScroll = window.scrollY > 0;
 
-      // Animate the slide out
-      await animate(dragX, targetX, {
+      // Run slide-out, scroll-to-top, and blur all in parallel.
+      // The blur masks the scroll movement so it feels like one
+      // fluid aesthetic transition rather than a jarring reset.
+      const slideOut = animate(dragX, targetX, {
         type: "spring",
         stiffness: 300,
         damping: 35,
         mass: 0.8,
       });
+
+      if (needsScroll) {
+        // Blur ramps up while scrolling, then clears after swap
+        animate(transitionBlur, 6, {
+          duration: 0.25,
+          ease: "easeOut",
+        });
+        smoothScrollToTop(280); // slightly faster than slide so scroll finishes first
+      }
+
+      await slideOut;
 
       // Get the product data
       let product = queryClient.getQueryData<Product>(productKeys.detail(targetSlug));
@@ -124,10 +170,14 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
           queryClient.setQueryData(productKeys.detail(targetSlug), product);
         } catch {
           dragX.set(0);
+          transitionBlur.set(0);
           setIsLocked(false);
           return;
         }
       }
+
+      // Ensure we're at scroll 0 before swapping content
+      window.scrollTo(0, 0);
 
       // Swap product state synchronously so React re-renders BEFORE
       // we reset dragX — this eliminates the 1-frame blink where the
@@ -141,10 +191,16 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       // Reset position — new content is already in DOM, no visible change.
       dragX.set(0);
       window.history.replaceState({}, "", `/products/${targetSlug}`);
-      window.scrollTo({ top: 0, behavior: "instant" });
+
+      // Clear the blur with a quick fade-out for a polished feel
+      animate(transitionBlur, 0, {
+        duration: 0.15,
+        ease: "easeIn",
+      });
+
       setIsLocked(false);
     },
-    [isLocked, vw, queryClient, dragX]
+    [isLocked, vw, queryClient, dragX, transitionBlur]
   );
 
   const snapBack = useCallback(() => {
@@ -255,7 +311,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       )}
 
       {/* Current product (with dock) */}
-      <motion.div style={{ x: dragX, opacity: currentOpacity }}>
+      <motion.div style={{ x: dragX, opacity: currentOpacity, filter: currentFilter }}>
         <ProductDetail key={currentSlug} product={currentProduct} />
       </motion.div>
 
