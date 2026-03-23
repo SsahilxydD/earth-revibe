@@ -40,12 +40,35 @@ export function Header() {
 
   return (
     <>
+      {/* ------------------------------------------------------------ */}
+      {/* Mobile transparent navbar — non-product-detail pages only     */}
+      {/* Floats over content with white logo, no background            */}
+      {/* ------------------------------------------------------------ */}
+      {!isProductDetail && (
+        <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none md:hidden">
+          <div className="flex items-center justify-center px-4 py-3 pointer-events-auto">
+            <Link href="/">
+              <Image
+                src="/Earth Revibe Logo White.png"
+                alt="Earth Revibe"
+                width={160}
+                height={40}
+                priority
+                className="h-auto w-10 drop-shadow-md"
+              />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------ */}
+      {/* Solid header — product detail (mobile) + always (desktop)     */}
+      {/* ------------------------------------------------------------ */}
       <header
         className={cn(
           "sticky top-0 z-40 w-full bg-white transition-all duration-300",
           scrolled && "shadow-md",
-          // On mobile: only show header on product detail pages
-          // On desktop: always show
+          // On mobile: only solid header on product detail pages
           !isProductDetail && "hidden md:block"
         )}
       >
