@@ -34,7 +34,7 @@ export function AnnouncementBar() {
   if (announcementDismissed) return null;
 
   return (
-    <div className="relative w-full bg-[var(--color-primary)] text-white">
+    <div data-announcement-bar className="relative w-full bg-[var(--color-primary)] text-white">
       <div className="flex items-center justify-center px-10 py-2.5">
         <p
           className={`text-center text-xs font-semibold tracking-[0.15em] transition-opacity duration-300 ${

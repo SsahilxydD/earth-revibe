@@ -21,7 +21,8 @@ const NAV_LINKS = [
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const { isSearchOpen, openSearch } = useUiStore();
+  const [bannerHeight, setBannerHeight] = useState(0);
+  const { isSearchOpen, openSearch, announcementDismissed } = useUiStore();
   const itemCount = useCartStore((s) => s.getItemCount());
   const openCart = useCartStore((s) => s.openCart);
   const pathname = usePathname();
@@ -29,6 +30,22 @@ export function Header() {
   // Product detail pages: /products/[slug] (but NOT /products index)
   const isProductDetail =
     pathname.startsWith("/products/") && pathname !== "/products";
+
+  // Measure the announcement bar so the transparent logo sits right below it
+  useEffect(() => {
+    if (announcementDismissed) {
+      setBannerHeight(0);
+      return;
+    }
+    // The announcement bar is the first child of the layout — measure it
+    const measure = () => {
+      const banner = document.querySelector("[data-announcement-bar]");
+      setBannerHeight(banner ? banner.getBoundingClientRect().height : 0);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [announcementDismissed]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,12 +59,15 @@ export function Header() {
     <>
       {/* ------------------------------------------------------------ */}
       {/* Mobile transparent navbar — non-product-detail pages only     */}
-      {/* Overlays page content but sits below the announcement banner  */}
-      {/* Uses negative margin so page content flows under it           */}
+      {/* Fixed overlay that floats over page content, positioned       */}
+      {/* right below the announcement banner                           */}
       {/* ------------------------------------------------------------ */}
       {!isProductDetail && (
-        <div className="relative z-30 -mb-12 md:hidden">
-          <div className="flex items-center justify-center px-4 py-3">
+        <div
+          className="fixed left-0 right-0 z-30 pointer-events-none md:hidden"
+          style={{ top: bannerHeight }}
+        >
+          <div className="flex items-center justify-center px-4 py-3 pointer-events-auto">
             <Link href="/">
               <Image
                 src="/Earth Revibe Logo White.png"
