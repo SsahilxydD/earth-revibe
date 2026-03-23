@@ -30,6 +30,7 @@ export function Header() {
 
   const isProductDetail =
     pathname.startsWith("/products/") && pathname !== "/products";
+  const isHomepage = pathname === "/";
 
   // Single scroll + resize handler that computes both scrolled state
   // and the transparent logo's top offset (stays below the banner
@@ -74,7 +75,7 @@ export function Header() {
       {/* announcement banner: sits below it when visible, slides up    */}
       {/* to top:0 as the banner scrolls out of view.                   */}
       {/* ------------------------------------------------------------ */}
-      {!isProductDetail && (
+      {isHomepage && (
         <div
           className="fixed left-0 right-0 z-30 pointer-events-none md:hidden"
           style={{ top: logoTop }}
