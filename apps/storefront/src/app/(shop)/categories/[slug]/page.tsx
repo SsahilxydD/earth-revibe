@@ -149,7 +149,7 @@ function CategoryContent() {
   return (
     <div className="px-4 py-4 md:px-8 lg:px-12 xl:px-20">
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-lg font-bold capitalize md:text-xl">
           {categoryName}
         </h1>
