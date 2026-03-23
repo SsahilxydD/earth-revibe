@@ -109,7 +109,7 @@ export function useBulkUpdateProducts() {
   return useMutation({
     mutationFn: (data: {
       productIds: string[];
-      updates: { price?: number; compareAtPrice?: number | null; status?: string };
+      updates: { price?: number; compareAtPrice?: number | null; status?: string; categoryId?: string };
     }) => api.put("/admin/products/bulk-update", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });

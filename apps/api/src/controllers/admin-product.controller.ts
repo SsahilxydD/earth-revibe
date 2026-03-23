@@ -831,10 +831,19 @@ export const adminProductController = {
       }
       updateData.status = updates.status;
     }
+    if (updates.categoryId !== undefined) {
+      const category = await prisma.category.findUnique({
+        where: { id: updates.categoryId },
+      });
+      if (!category) {
+        throw ApiError.badRequest("Category not found");
+      }
+      updateData.categoryId = updates.categoryId;
+    }
 
     if (Object.keys(updateData).length === 0) {
       throw ApiError.badRequest(
-        "At least one update field is required (price, compareAtPrice, status)"
+        "At least one update field is required (price, compareAtPrice, status, categoryId)"
       );
     }
 

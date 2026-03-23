@@ -10,6 +10,7 @@ import {
   Download,
   Upload,
   CheckSquare,
+  FolderInput,
 } from "lucide-react";
 import { Button, Badge, Card, Select, Modal } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
@@ -21,6 +22,7 @@ import {
   useBulkUpdateProducts,
   useImportProductsCSV,
 } from "@/hooks/use-products";
+import { useCategories } from "@/hooks/use-categories";
 
 const statusOptions = [
   { value: "", label: "All Statuses" },
@@ -59,8 +61,10 @@ export default function ProductsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [newPrice, setNewPrice] = useState("");
   const [newStatus, setNewStatus] = useState("ACTIVE");
+  const [newCategoryId, setNewCategoryId] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, isError } = useProducts({
@@ -73,6 +77,7 @@ export default function ProductsPage() {
   const exportCSV = useExportProductsCSV();
   const bulkUpdate = useBulkUpdateProducts();
   const importCSV = useImportProductsCSV();
+  const { data: categoriesData } = useCategories();
 
   const products: any[] = data?.products || [];
   const allSelected =
@@ -199,6 +204,26 @@ export default function ProductsPage() {
       clearSelection();
     } catch (err: any) {
       toast.error(err.message || "Failed to archive products");
+    }
+  };
+
+  const handleBulkCategory = async () => {
+    if (!newCategoryId) {
+      toast.error("Please select a category");
+      return;
+    }
+    try {
+      await bulkUpdate.mutateAsync({
+        productIds: Array.from(selectedIds),
+        updates: { categoryId: newCategoryId },
+      });
+      const catName = (categoriesData as any[])?.find((c: any) => c.id === newCategoryId)?.name || "category";
+      toast.success(`${selectedIds.size} product(s) moved to ${catName}`);
+      setCategoryModalOpen(false);
+      setNewCategoryId("");
+      clearSelection();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to move products");
     }
   };
 
@@ -455,6 +480,18 @@ export default function ProductsPage() {
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => {
+              setNewCategoryId("");
+              setCategoryModalOpen(true);
+            }}
+            className="text-white hover:bg-white/10"
+          >
+            <FolderInput size={14} />
+            Move to Category
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleBulkDelete}
             className="text-red-300 hover:bg-white/10"
           >
@@ -542,6 +579,46 @@ export default function ProductsPage() {
               disabled={bulkUpdate.isPending}
             >
               {bulkUpdate.isPending ? "Updating..." : "Change Status"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Move to Category Modal */}
+      <Modal
+        isOpen={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        title="Move to Category"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-medium-gray">
+            Move {selectedIds.size} selected product(s) to a new category.
+          </p>
+          <Select
+            label="Category"
+            options={[
+              { value: "", label: "Select a category" },
+              ...((categoriesData as any[]) || []).map((c: any) => ({
+                value: c.id,
+                label: c.name,
+              })),
+            ]}
+            value={newCategoryId}
+            onChange={(e) => setNewCategoryId(e.target.value)}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => setCategoryModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkCategory}
+              disabled={bulkUpdate.isPending || !newCategoryId}
+            >
+              {bulkUpdate.isPending ? "Moving..." : "Move to Category"}
             </Button>
           </div>
         </div>
