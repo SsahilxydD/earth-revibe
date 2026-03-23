@@ -42,11 +42,12 @@ export function Header() {
     <>
       {/* ------------------------------------------------------------ */}
       {/* Mobile transparent navbar — non-product-detail pages only     */}
-      {/* Floats over content with white logo, no background            */}
+      {/* Overlays page content but sits below the announcement banner  */}
+      {/* Uses negative margin so page content flows under it           */}
       {/* ------------------------------------------------------------ */}
       {!isProductDetail && (
-        <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none md:hidden">
-          <div className="flex items-center justify-center px-4 py-3 pointer-events-auto">
+        <div className="relative z-30 -mb-12 md:hidden">
+          <div className="flex items-center justify-center px-4 py-3">
             <Link href="/">
               <Image
                 src="/Earth Revibe Logo White.png"
