@@ -64,6 +64,16 @@ app.use(cors({
 
     const allowed = [env.FRONTEND_URL, env.ADMIN_URL].filter(Boolean);
 
+    // Also allow www variant of frontend URL
+    if (env.FRONTEND_URL) {
+      const url = new URL(env.FRONTEND_URL);
+      if (!url.hostname.startsWith("www.")) {
+        allowed.push(`${url.protocol}//www.${url.hostname}`);
+      } else {
+        allowed.push(`${url.protocol}//${url.hostname.replace("www.", "")}`);
+      }
+    }
+
     // Exact match or Vercel preview URLs for our apps
     if (
       allowed.includes(origin) ||
