@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, Search, Heart, ShoppingBag } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Search, Heart, ShoppingBag, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart-store";
 import { useUiStore } from "@/stores/ui-store";
@@ -20,10 +21,14 @@ const NAV_LINKS = [
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const { openMobileMenu } = useUiStore();
   const { isSearchOpen, openSearch } = useUiStore();
   const itemCount = useCartStore((s) => s.getItemCount());
   const openCart = useCartStore((s) => s.openCart);
+  const pathname = usePathname();
+
+  // Product detail pages: /products/[slug] (but NOT /products index)
+  const isProductDetail =
+    pathname.startsWith("/products/") && pathname !== "/products";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,25 +43,30 @@ export function Header() {
       <header
         className={cn(
           "sticky top-0 z-40 w-full bg-white transition-all duration-300",
-          scrolled && "shadow-md"
+          scrolled && "shadow-md",
+          // On mobile: only show header on product detail pages
+          // On desktop: always show
+          !isProductDetail && "hidden md:block"
         )}
       >
-        {/* 3-column grid: left icons | center logo | right icons */}
+        {/* 3-column grid: left back | center logo | right icons */}
         <div
           className={cn(
             "grid grid-cols-3 items-center px-4 transition-all duration-300 md:px-8 lg:px-12 xl:px-20",
             scrolled ? "py-2" : "py-3"
           )}
         >
-          {/* Left: hamburger (mobile) */}
+          {/* Left: back button (mobile product detail) or empty */}
           <div className="flex items-center">
-            <button
-              onClick={openMobileMenu}
-              className="flex h-10 w-10 items-center justify-center lg:hidden"
-              aria-label="Open menu"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
+            {isProductDetail ? (
+              <button
+                onClick={() => window.history.back()}
+                className="flex h-10 w-10 items-center justify-center lg:hidden"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+            ) : null}
           </div>
 
           {/* Center: logo image */}

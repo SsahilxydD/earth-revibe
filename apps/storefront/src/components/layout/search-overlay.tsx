@@ -3,7 +3,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, X, Clock, ArrowRight } from "lucide-react";
+import {
+  Search,
+  X,
+  Clock,
+  ArrowRight,
+  Grid3X3,
+  Sparkles,
+  Shirt,
+} from "lucide-react";
 import { useUiStore } from "@/stores/ui-store";
 import { api } from "@/lib/api-client";
 import { Spinner } from "@/components/ui/spinner";
@@ -11,20 +19,37 @@ import { Spinner } from "@/components/ui/spinner";
 const RECENT_SEARCHES_KEY = "earth-revibe-recent-searches";
 const MAX_RECENT = 5;
 
-interface SearchResultRaw {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  images?: { url: string }[];
-}
+/* ------------------------------------------------------------------ */
+/*  Category quick-links (shown when search is empty — replaces        */
+/*  hamburger menu navigation)                                         */
+/* ------------------------------------------------------------------ */
+const BROWSE_CATEGORIES = [
+  { label: "New Arrivals", href: "/categories/new-arrivals", icon: Sparkles },
+  { label: "Shirts", href: "/categories/shirts", icon: Shirt },
+  { label: "T-Shirts", href: "/categories/t-shirts", icon: Shirt },
+  { label: "Outerwear", href: "/categories/outerwear", icon: Shirt },
+  { label: "All Products", href: "/products", icon: Grid3X3 },
+  { label: "Bestsellers", href: "/categories/bestsellers", icon: Sparkles },
+];
 
-interface SearchResult {
-  id: string;
-  name: string;
-  slug: string;
-  image: string;
-  price: number;
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+interface AutocompleteResult {
+  products: {
+    name: string;
+    slug: string;
+    price: number;
+    images?: { url: string }[];
+  }[];
+  categories: {
+    name: string;
+    slug: string;
+  }[];
+  blogPosts?: {
+    title: string;
+    slug: string;
+  }[];
 }
 
 function getRecentSearches(): string[] {
@@ -49,7 +74,7 @@ export function SearchOverlay() {
   const { closeSearch } = useUiStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<AutocompleteResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,25 +98,17 @@ export function SearchOverlay() {
 
   const performSearch = useCallback(async (searchQuery: string) => {
     if (searchQuery.length < 2) {
-      setResults([]);
+      setResults(null);
       return;
     }
     setLoading(true);
     try {
-      const data = await api.get<{ products: SearchResultRaw[] }>(
-        `/search?q=${encodeURIComponent(searchQuery)}&limit=6`
+      const data = await api.get<AutocompleteResult>(
+        `/search/autocomplete?q=${encodeURIComponent(searchQuery)}`
       );
-      setResults(
-        (data.products || []).map((p) => ({
-          id: p.id,
-          name: p.name,
-          slug: p.slug,
-          price: p.price,
-          image: p.images?.[0]?.url || "/placeholder.png",
-        }))
-      );
+      setResults(data);
     } catch {
-      setResults([]);
+      setResults(null);
     } finally {
       setLoading(false);
     }
@@ -117,6 +134,11 @@ export function SearchOverlay() {
     performSearch(term);
   };
 
+  const hasProducts = results && results.products.length > 0;
+  const hasCategories = results && results.categories.length > 0;
+  const hasResults = hasProducts || hasCategories;
+  const showEmpty = !loading && query.length < 2;
+
   return (
     <div className="fixed inset-0 z-50">
       <div
@@ -133,7 +155,7 @@ export function SearchOverlay() {
               type="text"
               value={query}
               onChange={(e) => handleInputChange(e.target.value)}
-              placeholder="Search for products..."
+              placeholder="Search products, categories..."
               className="w-full border-b-2 border-[var(--color-primary)] bg-transparent py-4 pl-12 pr-12 text-lg outline-none placeholder:text-[var(--color-muted)]"
             />
             <button
@@ -146,22 +168,48 @@ export function SearchOverlay() {
             </button>
           </form>
 
-          {/* Results / Recent */}
-          <div className="mt-4 max-h-[60vh] overflow-y-auto hide-scrollbar">
+          {/* Results / Recommendations */}
+          <div className="mt-4 max-h-[70vh] overflow-y-auto hide-scrollbar">
             {loading && (
               <div className="flex items-center justify-center py-8">
                 <Spinner />
               </div>
             )}
 
-            {!loading && results.length > 0 && (
+            {/* ---- Search results: categories ---- */}
+            {!loading && hasCategories && (
+              <div className="mb-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                  Categories
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {results!.categories.map((cat) => (
+                    <Link
+                      key={cat.slug}
+                      href={`/categories/${cat.slug}`}
+                      onClick={() => {
+                        saveRecentSearch(query);
+                        closeSearch();
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-primary)] hover:text-white hover:border-[var(--color-primary)]"
+                    >
+                      <Grid3X3 className="h-3.5 w-3.5" />
+                      {cat.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ---- Search results: products ---- */}
+            {!loading && hasProducts && (
               <div>
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   Products
                 </p>
                 <ul className="divide-y divide-[var(--color-border)]">
-                  {results.map((product) => (
-                    <li key={product.id}>
+                  {results!.products.map((product) => (
+                    <li key={product.slug}>
                       <Link
                         href={`/products/${product.slug}`}
                         onClick={() => {
@@ -172,7 +220,7 @@ export function SearchOverlay() {
                       >
                         <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded bg-[var(--color-surface)]">
                           <Image
-                            src={product.image || "/placeholder.png"}
+                            src={product.images?.[0]?.url || "/placeholder.png"}
                             alt={product.name}
                             fill
                             quality={35}
@@ -197,31 +245,61 @@ export function SearchOverlay() {
               </div>
             )}
 
-            {!loading && query.length >= 2 && results.length === 0 && (
+            {/* ---- No results ---- */}
+            {!loading && query.length >= 2 && !hasResults && (
               <p className="py-8 text-center text-sm text-[var(--color-muted)]">
-                No products found for &ldquo;{query}&rdquo;
+                No results found for &ldquo;{query}&rdquo;
               </p>
             )}
 
-            {!loading && query.length < 2 && recentSearches.length > 0 && (
-              <div>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                  Recent Searches
-                </p>
-                <ul className="space-y-1">
-                  {recentSearches.map((term) => (
-                    <li key={term}>
-                      <button
-                        onClick={() => handleRecentClick(term)}
-                        className="flex w-full items-center gap-3 rounded px-2 py-2 text-sm transition-colors hover:bg-[var(--color-surface)]"
-                      >
-                        <Clock className="h-4 w-4 text-[var(--color-muted)]" />
-                        <span>{term}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {/* ---- Empty state: browse categories + recent searches ---- */}
+            {showEmpty && (
+              <>
+                {/* Browse categories — replaces hamburger menu */}
+                <div className="mb-6">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Browse
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {BROWSE_CATEGORIES.map((cat) => {
+                      const Icon = cat.icon;
+                      return (
+                        <Link
+                          key={cat.href}
+                          href={cat.href}
+                          onClick={closeSearch}
+                          className="flex items-center gap-2.5 rounded-lg border border-[var(--color-border)] px-3 py-3 text-sm font-medium transition-colors hover:bg-[var(--color-surface)] hover:border-[var(--color-primary)]"
+                        >
+                          <Icon className="h-4 w-4 text-[var(--color-muted)]" />
+                          {cat.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Recent searches */}
+                {recentSearches.length > 0 && (
+                  <div>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Recent Searches
+                    </p>
+                    <ul className="space-y-1">
+                      {recentSearches.map((term) => (
+                        <li key={term}>
+                          <button
+                            onClick={() => handleRecentClick(term)}
+                            className="flex w-full items-center gap-3 rounded px-2 py-2 text-sm transition-colors hover:bg-[var(--color-surface)]"
+                          >
+                            <Clock className="h-4 w-4 text-[var(--color-muted)]" />
+                            <span>{term}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

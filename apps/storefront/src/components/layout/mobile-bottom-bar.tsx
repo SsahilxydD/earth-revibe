@@ -20,6 +20,12 @@ export function MobileBottomBar() {
   const openCart = useCartStore((s) => s.openCart);
   const { openSearch } = useUiStore();
 
+  // Hide on product detail pages — the top header handles nav there
+  const isProductDetail =
+    pathname.startsWith("/products/") && pathname !== "/products";
+
+  if (isProductDetail) return null;
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-white md:hidden">
       <nav className="flex items-center justify-around px-2 py-2">
