@@ -145,7 +145,7 @@ function ProductsContent() {
   return (
     <div className="px-4 py-4 md:px-8 lg:px-12 xl:px-20">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold capitalize md:text-xl">
           {search ? `Results for "${search}"` : "All Products"}
         </h1>
@@ -157,6 +157,9 @@ function ProductsContent() {
           />
         </div>
       </div>
+
+      {/* Spacer between filters and products */}
+      <div style={{ height: 16 }} />
 
       {/* Content */}
       {isLoading ? (
