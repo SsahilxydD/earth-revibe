@@ -59,6 +59,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   const [isMobile, setIsMobile] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [vw, setVw] = useState(390);
+  const [scrollY, setScrollY] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragX = useMotionValue(0);
@@ -81,15 +82,21 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     (v) => (v > 0 ? `blur(${v}px)` : "none")
   );
 
-  // Detect mobile + viewport width
+  // Detect mobile + viewport width + track scroll for preview positioning
   useEffect(() => {
     const check = () => {
       setIsMobile(window.innerWidth < 1024);
       setVw(window.innerWidth);
     };
+    const trackScroll = () => setScrollY(window.scrollY);
     check();
+    trackScroll();
     window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    window.addEventListener("scroll", trackScroll, { passive: true });
+    return () => {
+      window.removeEventListener("resize", check);
+      window.removeEventListener("scroll", trackScroll);
+    };
   }, []);
 
   // Seed cache with initial product
@@ -280,9 +287,10 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   }
 
   // Mobile with nav context → three-panel swipeable layout
-  // Preview panels use fixed positioning + overflow-hidden so they:
-  //  1. Don't scroll when the user scrolls the current product
-  //  2. Always show content from the top (scroll-independent)
+  // Preview panels use absolute positioning + scrollY counter so they:
+  //  1. Always appear at the viewport top regardless of page scroll
+  //  2. Are clipped to viewport height — no co-scrolling
+  //  3. Work reliably even with ancestor transforms/filters
   return (
     <div
       ref={containerRef}
@@ -292,11 +300,16 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       onTouchEnd={handleTouchEnd}
       style={{ touchAction: "pan-y" }}
     >
-      {/* Previous product — fixed to viewport, clipped, scroll-independent */}
+      {/* Previous product — pinned to viewport via scrollY offset */}
       {prevProduct && (
         <motion.div
-          className="fixed inset-0 overflow-hidden pointer-events-none"
-          style={{ x: prevPanelX, zIndex: 20 }}
+          className="absolute left-0 w-full overflow-hidden pointer-events-none"
+          style={{
+            x: prevPanelX,
+            top: scrollY,
+            height: "100vh",
+            zIndex: 20,
+          }}
         >
           <ProductDetail product={prevProduct} isPreview />
         </motion.div>
@@ -307,11 +320,16 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
         <ProductDetail key={currentSlug} product={currentProduct} />
       </motion.div>
 
-      {/* Next product — fixed to viewport, clipped, scroll-independent */}
+      {/* Next product — pinned to viewport via scrollY offset */}
       {nextProduct && (
         <motion.div
-          className="fixed inset-0 overflow-hidden pointer-events-none"
-          style={{ x: nextPanelX, zIndex: 20 }}
+          className="absolute left-0 w-full overflow-hidden pointer-events-none"
+          style={{
+            x: nextPanelX,
+            top: scrollY,
+            height: "100vh",
+            zIndex: 20,
+          }}
         >
           <ProductDetail product={nextProduct} isPreview />
         </motion.div>
