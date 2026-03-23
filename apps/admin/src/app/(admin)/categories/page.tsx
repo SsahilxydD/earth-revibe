@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Pencil, Trash2, Package, Search } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createCategorySchema, type CreateCategoryInput } from "@earth-revibe/shared";
@@ -9,7 +9,147 @@ import { Button, Input, Textarea, Card, Badge, Modal } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories";
+import { useProducts, useBulkUpdateProducts } from "@/hooks/use-products";
 
+/* ------------------------------------------------------------------ */
+/*  Product picker modal for a category                                */
+/* ------------------------------------------------------------------ */
+function CategoryProductPicker({
+  category,
+  onClose,
+}: {
+  category: { id: string; name: string };
+  onClose: () => void;
+}) {
+  const [search, setSearch] = useState("");
+  const { data, isLoading } = useProducts({ page: 1, limit: 200 });
+  const bulkUpdate = useBulkUpdateProducts();
+
+  const allProducts: any[] = data?.products || [];
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return allProducts;
+    const q = search.toLowerCase();
+    return allProducts.filter(
+      (p: any) =>
+        p.name.toLowerCase().includes(q) ||
+        p.category?.name?.toLowerCase().includes(q)
+    );
+  }, [allProducts, search]);
+
+  const handleToggle = async (productId: string, currentlyInCategory: boolean) => {
+    if (currentlyInCategory) {
+      // Can't remove from category without assigning to another — just show info
+      toast.error("Products must belong to a category. Move it to another category instead.");
+      return;
+    }
+    try {
+      await bulkUpdate.mutateAsync({
+        productIds: [productId],
+        updates: { categoryId: category.id },
+      });
+      toast.success("Product moved to " + category.name);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update product");
+    }
+  };
+
+  const inCategory = filtered.filter((p: any) => p.categoryId === category.id || p.category?.id === category.id);
+  const otherProducts = filtered.filter((p: any) => p.categoryId !== category.id && p.category?.id !== category.id);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-medium-gray">
+        Tick products to add them to <strong>{category.name}</strong>.
+        {inCategory.length > 0 && ` ${inCategory.length} product(s) currently in this category.`}
+      </p>
+
+      {/* Search */}
+      <div className="relative">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray" />
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+        />
+      </div>
+
+      {/* Product list */}
+      <div className="max-h-[400px] overflow-y-auto border border-light-gray rounded-lg divide-y divide-light-gray">
+        {isLoading ? (
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="p-6 text-center text-sm text-medium-gray">No products found</p>
+        ) : (
+          <>
+            {/* Products in this category first */}
+            {inCategory.map((product: any) => (
+              <label
+                key={product.id}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-off-white/50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked
+                  onChange={() => handleToggle(product.id, true)}
+                  className="w-4 h-4 rounded border-light-gray text-deep-earth focus:ring-deep-earth"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-charcoal truncate">
+                    {product.name}
+                  </p>
+                  <p className="text-xs text-medium-gray">
+                    {category.name} &middot; {product.status}
+                  </p>
+                </div>
+              </label>
+            ))}
+
+            {/* Products in other categories */}
+            {otherProducts.map((product: any) => (
+              <label
+                key={product.id}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-off-white/50 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={() => handleToggle(product.id, false)}
+                  disabled={bulkUpdate.isPending}
+                  className="w-4 h-4 rounded border-light-gray text-deep-earth focus:ring-deep-earth"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-charcoal truncate">
+                    {product.name}
+                  </p>
+                  <p className="text-xs text-medium-gray">
+                    {product.category?.name || "No category"} &middot; {product.status}
+                  </p>
+                </div>
+              </label>
+            ))}
+          </>
+        )}
+      </div>
+
+      <div className="flex justify-end">
+        <Button variant="ghost" onClick={onClose}>
+          Done
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main categories page                                               */
+/* ------------------------------------------------------------------ */
 export default function CategoriesPage() {
   const { data: categories, isLoading } = useCategories();
   const createCategory = useCreateCategory();
@@ -18,6 +158,7 @@ export default function CategoriesPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [pickerCategory, setPickerCategory] = useState<any>(null);
 
   const {
     register,
@@ -134,6 +275,13 @@ export default function CategoriesPage() {
                     <td className="px-6 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <button
+                          onClick={() => setPickerCategory(cat)}
+                          className="p-1.5 rounded-md hover:bg-off-white transition-colors"
+                          title="Manage Products"
+                        >
+                          <Package size={16} className="text-dark-gray" />
+                        </button>
+                        <button
                           onClick={() => openEdit(cat)}
                           className="p-1.5 rounded-md hover:bg-off-white transition-colors"
                           title="Edit"
@@ -213,6 +361,21 @@ export default function CategoriesPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Product Picker Modal */}
+      <Modal
+        isOpen={!!pickerCategory}
+        onClose={() => setPickerCategory(null)}
+        title={`Products in ${pickerCategory?.name || ""}`}
+        size="lg"
+      >
+        {pickerCategory && (
+          <CategoryProductPicker
+            category={pickerCategory}
+            onClose={() => setPickerCategory(null)}
+          />
+        )}
       </Modal>
     </div>
   );
