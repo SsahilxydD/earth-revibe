@@ -17,30 +17,42 @@ import { api } from "@/lib/api-client";
 import type { Product } from "@/types";
 
 /* ------------------------------------------------------------------ */
-/*  Smooth scroll-to-top with eased animation (for swipe transitions) */
+/*  Scroll position persistence via localStorage                       */
 /* ------------------------------------------------------------------ */
-function smoothScrollToTop(duration = 300): Promise<void> {
-  return new Promise((resolve) => {
-    const start = window.scrollY;
-    if (start === 0) {
-      resolve();
-      return;
-    }
-    const startTime = performance.now();
-    function step(now: number) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      window.scrollTo(0, start * (1 - eased));
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      } else {
-        resolve();
-      }
-    }
-    requestAnimationFrame(step);
-  });
+const SCROLL_STORAGE_KEY = "er-product-scroll";
+
+function getScrollPositions(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(SCROLL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
 }
+
+function saveScrollPosition(slug: string, y: number) {
+  try {
+    const positions = getScrollPositions();
+    positions[slug] = y;
+    // Keep only last 50 entries to prevent unbounded growth
+    const keys = Object.keys(positions);
+    if (keys.length > 50) {
+      const oldest = keys.slice(0, keys.length - 50);
+      oldest.forEach((k) => delete positions[k]);
+    }
+    localStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify(positions));
+  } catch {
+    // Storage full or unavailable — silently ignore
+  }
+}
+
+function getSavedScrollPosition(slug: string): number {
+  return getScrollPositions()[slug] || 0;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
 
 interface Props {
   initialProduct: Product;
@@ -63,7 +75,6 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragX = useMotionValue(0);
-  const transitionBlur = useMotionValue(0);
 
   const touchStartRef = useRef<{ x: number; y: number; locked: boolean | null }>({
     x: 0, y: 0, locked: null,
@@ -77,12 +88,8 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     [-200, -100, 0, 100, 200],
     [0.7, 0.9, 1, 0.9, 0.7]
   );
-  const currentFilter = useTransform(
-    transitionBlur,
-    (v) => (v > 0 ? `blur(${v}px)` : "none")
-  );
 
-  // Detect mobile + viewport width + track scroll for preview positioning
+  // Detect mobile + viewport width + track scroll
   useEffect(() => {
     const check = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -98,6 +105,34 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       window.removeEventListener("scroll", trackScroll);
     };
   }, []);
+
+  // Restore scroll position when arriving on a product
+  useEffect(() => {
+    const savedY = getSavedScrollPosition(currentSlug);
+    if (savedY > 0) {
+      // Small delay to let the DOM render the full product content first
+      requestAnimationFrame(() => {
+        window.scrollTo(0, savedY);
+      });
+    }
+  }, [currentSlug]);
+
+  // Continuously save scroll position for the current product
+  useEffect(() => {
+    let ticking = false;
+    const save = () => {
+      saveScrollPosition(currentSlug, window.scrollY);
+      ticking = false;
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(save);
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [currentSlug]);
 
   // Seed cache with initial product
   useEffect(() => {
@@ -144,26 +179,18 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       if (isLocked || !targetSlug) return;
       setIsLocked(true);
 
-      const targetX = direction === "next" ? -vw : vw;
-      const needsScroll = window.scrollY > 0;
+      // Save current scroll position before leaving
+      saveScrollPosition(currentSlug, window.scrollY);
 
-      // Run slide-out, scroll-to-top, and blur all in parallel
-      const slideOut = animate(dragX, targetX, {
+      const targetX = direction === "next" ? -vw : vw;
+
+      // Slide out
+      await animate(dragX, targetX, {
         type: "spring",
         stiffness: 300,
         damping: 35,
         mass: 0.8,
       });
-
-      if (needsScroll) {
-        animate(transitionBlur, 6, {
-          duration: 0.25,
-          ease: "easeOut",
-        });
-        smoothScrollToTop(280);
-      }
-
-      await slideOut;
 
       // Get the product data
       let product = queryClient.getQueryData<Product>(productKeys.detail(targetSlug));
@@ -173,31 +200,33 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
           queryClient.setQueryData(productKeys.detail(targetSlug), product);
         } catch {
           dragX.set(0);
-          transitionBlur.set(0);
           setIsLocked(false);
           return;
         }
       }
 
-      // Ensure we're at scroll 0 before swapping content
-      window.scrollTo(0, 0);
+      // Restore saved scroll position for the target product (or 0)
+      const targetScrollY = getSavedScrollPosition(targetSlug);
+      window.scrollTo(0, targetScrollY);
 
+      // Swap product state synchronously
       flushSync(() => {
         setCurrentSlug(targetSlug);
         setCurrentProduct(product);
       });
 
+      // Reset position — new content is already in DOM
       dragX.set(0);
       window.history.replaceState({}, "", `/products/${targetSlug}`);
 
-      animate(transitionBlur, 0, {
-        duration: 0.15,
-        ease: "easeIn",
+      // Ensure scroll is at the right spot after React re-render
+      requestAnimationFrame(() => {
+        window.scrollTo(0, targetScrollY);
       });
 
       setIsLocked(false);
     },
-    [isLocked, vw, queryClient, dragX, transitionBlur]
+    [isLocked, vw, queryClient, dragX, currentSlug]
   );
 
   const snapBack = useCallback(() => {
@@ -287,10 +316,10 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   }
 
   // Mobile with nav context → three-panel swipeable layout
-  // Preview panels use absolute positioning + scrollY counter so they:
-  //  1. Always appear at the viewport top regardless of page scroll
-  //  2. Are clipped to viewport height — no co-scrolling
-  //  3. Work reliably even with ancestor transforms/filters
+  // Preview panels use saved scroll positions from localStorage
+  const prevSavedScroll = prev ? getSavedScrollPosition(prev) : 0;
+  const nextSavedScroll = next ? getSavedScrollPosition(next) : 0;
+
   return (
     <div
       ref={containerRef}
@@ -300,7 +329,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       onTouchEnd={handleTouchEnd}
       style={{ touchAction: "pan-y" }}
     >
-      {/* Previous product — pinned to viewport via scrollY offset */}
+      {/* Previous product — shows at its saved scroll position */}
       {prevProduct && (
         <motion.div
           className="absolute left-0 w-full overflow-hidden pointer-events-none"
@@ -311,16 +340,18 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
             zIndex: 20,
           }}
         >
-          <ProductDetail product={prevProduct} isPreview />
+          <div style={{ marginTop: -prevSavedScroll }}>
+            <ProductDetail product={prevProduct} isPreview />
+          </div>
         </motion.div>
       )}
 
       {/* Current product — normal flow, scrollable */}
-      <motion.div style={{ x: dragX, opacity: currentOpacity, filter: currentFilter }}>
+      <motion.div style={{ x: dragX, opacity: currentOpacity }}>
         <ProductDetail key={currentSlug} product={currentProduct} />
       </motion.div>
 
-      {/* Next product — pinned to viewport via scrollY offset */}
+      {/* Next product — shows at its saved scroll position */}
       {nextProduct && (
         <motion.div
           className="absolute left-0 w-full overflow-hidden pointer-events-none"
@@ -331,7 +362,9 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
             zIndex: 20,
           }}
         >
-          <ProductDetail product={nextProduct} isPreview />
+          <div style={{ marginTop: -nextSavedScroll }}>
+            <ProductDetail product={nextProduct} isPreview />
+          </div>
         </motion.div>
       )}
     </div>
