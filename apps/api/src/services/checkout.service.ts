@@ -261,9 +261,15 @@ export const checkoutService = {
    * Called by Razorpay when customer applies a promotion code.
    */
   async applyPromotion(data: ApplyPromotionRequest) {
-    const pending = await prisma.pendingCheckout.findUnique({
+    // Razorpay may send the razorpay order ID or our order number as order_id
+    let pending = await prisma.pendingCheckout.findUnique({
       where: { orderNumber: data.order_id },
     });
+    if (!pending) {
+      pending = await prisma.pendingCheckout.findUnique({
+        where: { razorpayOrderId: data.order_id },
+      });
+    }
 
     if (!pending) {
       return { error: { code: "INVALID_PROMOTION", message: "Order not found" } };
