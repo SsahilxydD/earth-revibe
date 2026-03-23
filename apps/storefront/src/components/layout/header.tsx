@@ -96,13 +96,16 @@ export function Header() {
       )}
 
       {/* ------------------------------------------------------------ */}
-      {/* Solid header — product detail (mobile) + always (desktop)     */}
+      {/* Solid header                                                  */}
+      {/* Mobile: product detail (back+icons) / other pages (logo only) */}
+      {/* Desktop: always full nav                                      */}
+      {/* Homepage mobile: hidden (transparent logo above handles it)   */}
       {/* ------------------------------------------------------------ */}
       <header
         className={cn(
           "sticky top-0 z-40 w-full bg-white transition-all duration-300",
           scrolled && "shadow-md",
-          !isProductDetail && "hidden md:block"
+          isHomepage && "hidden md:block"
         )}
       >
         <div
@@ -112,7 +115,7 @@ export function Header() {
           )}
         >
           <div className="flex items-center">
-            {isProductDetail ? (
+            {isProductDetail && (
               <button
                 onClick={() => window.history.back()}
                 className="flex h-10 w-10 items-center justify-center lg:hidden"
@@ -120,7 +123,7 @@ export function Header() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-            ) : null}
+            )}
           </div>
 
           <div className="flex justify-center">
@@ -139,7 +142,12 @@ export function Header() {
             </Link>
           </div>
 
-          <div className="flex items-center justify-end gap-1">
+          {/* Right icons: always on desktop, only on product detail mobile */}
+          {/* Other mobile pages use the bottom dock for search/cart */}
+          <div className={cn(
+            "flex items-center justify-end gap-1",
+            !isProductDetail && "hidden md:flex"
+          )}>
             <button
               onClick={openSearch}
               className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--color-surface)] transition-colors"
