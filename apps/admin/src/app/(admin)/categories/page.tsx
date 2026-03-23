@@ -22,10 +22,10 @@ function CategoryProductPicker({
   onClose: () => void;
 }) {
   const [search, setSearch] = useState("");
+  const [pendingAdds, setPendingAdds] = useState<Set<string>>(new Set());
   const { data, isLoading, isError } = useProducts({ page: 1, limit: 100 });
   const bulkUpdate = useBulkUpdateProducts();
 
-  // data from useProducts is { products: [...], total, page, ... }
   const allProducts: any[] = (data as any)?.products || [];
 
   const filtered = useMemo(() => {
@@ -38,31 +38,58 @@ function CategoryProductPicker({
     );
   }, [allProducts, search]);
 
-  const handleToggle = async (productId: string, currentlyInCategory: boolean) => {
-    if (currentlyInCategory) {
-      // Can't remove from category without assigning to another — just show info
-      toast.error("Products must belong to a category. Move it to another category instead.");
+  const isInCategory = (p: any) =>
+    p.categoryId === category.id || p.category?.id === category.id;
+
+  const isChecked = (p: any) => isInCategory(p) || pendingAdds.has(p.id);
+
+  const toggleProduct = (productId: string, alreadyInCategory: boolean) => {
+    if (alreadyInCategory) return; // can't remove — must move to another category
+    setPendingAdds((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  };
+
+  const handleSave = async () => {
+    if (pendingAdds.size === 0) {
+      onClose();
       return;
     }
     try {
       await bulkUpdate.mutateAsync({
-        productIds: [productId],
+        productIds: Array.from(pendingAdds),
         updates: { categoryId: category.id },
       });
-      toast.success("Product moved to " + category.name);
+      toast.success(`${pendingAdds.size} product(s) moved to ${category.name}`);
+      setPendingAdds(new Set());
+      onClose();
     } catch (err: any) {
-      toast.error(err.message || "Failed to update product");
+      toast.error(err.message || "Failed to update products");
     }
   };
 
-  const inCategory = filtered.filter((p: any) => p.categoryId === category.id || p.category?.id === category.id);
-  const otherProducts = filtered.filter((p: any) => p.categoryId !== category.id && p.category?.id !== category.id);
+  // Sort: checked first, then unchecked
+  const sorted = useMemo(() => {
+    const inCat = filtered.filter((p: any) => isChecked(p));
+    const notInCat = filtered.filter((p: any) => !isChecked(p));
+    return [...inCat, ...notInCat];
+  }, [filtered, pendingAdds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-medium-gray">
         Tick products to add them to <strong>{category.name}</strong>.
-        {inCategory.length > 0 && ` ${inCategory.length} product(s) currently in this category.`}
+        {pendingAdds.size > 0 && (
+          <span className="ml-1 font-medium text-deep-earth">
+            {pendingAdds.size} change(s) pending
+          </span>
+        )}
       </p>
 
       {/* Search */}
@@ -92,60 +119,52 @@ function CategoryProductPicker({
             {allProducts.length === 0 ? "No products in the catalog yet." : "No products match your search."}
           </p>
         ) : (
-          <>
-            {/* Products in this category first */}
-            {inCategory.map((product: any) => (
+          sorted.map((product: any) => {
+            const alreadyIn = isInCategory(product);
+            const isPending = pendingAdds.has(product.id);
+            return (
               <label
                 key={product.id}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-off-white/50 cursor-pointer"
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
+                  isPending ? "bg-deep-earth/5" : "hover:bg-off-white/50"
+                }`}
               >
                 <input
                   type="checkbox"
-                  checked
-                  onChange={() => handleToggle(product.id, true)}
-                  className="w-4 h-4 rounded border-light-gray text-deep-earth focus:ring-deep-earth"
+                  checked={isChecked(product)}
+                  onChange={() => toggleProduct(product.id, alreadyIn)}
+                  disabled={alreadyIn}
+                  className="w-4 h-4 rounded border-light-gray text-deep-earth focus:ring-deep-earth disabled:opacity-50"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-charcoal truncate">
                     {product.name}
                   </p>
                   <p className="text-xs text-medium-gray">
-                    {category.name} &middot; {product.status}
+                    {alreadyIn ? category.name : product.category?.name || "No category"}
+                    {" "}&middot; {product.status}
+                    {isPending && <span className="ml-1 text-deep-earth font-medium">• will be added</span>}
                   </p>
                 </div>
               </label>
-            ))}
-
-            {/* Products in other categories */}
-            {otherProducts.map((product: any) => (
-              <label
-                key={product.id}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-off-white/50 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={false}
-                  onChange={() => handleToggle(product.id, false)}
-                  disabled={bulkUpdate.isPending}
-                  className="w-4 h-4 rounded border-light-gray text-deep-earth focus:ring-deep-earth"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-charcoal truncate">
-                    {product.name}
-                  </p>
-                  <p className="text-xs text-medium-gray">
-                    {product.category?.name || "No category"} &middot; {product.status}
-                  </p>
-                </div>
-              </label>
-            ))}
-          </>
+            );
+          })
         )}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <Button variant="ghost" onClick={onClose}>
-          Done
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSave}
+          disabled={pendingAdds.size === 0 || bulkUpdate.isPending}
+        >
+          {bulkUpdate.isPending
+            ? "Saving..."
+            : pendingAdds.size > 0
+              ? `Save (${pendingAdds.size} change${pendingAdds.size > 1 ? "s" : ""})`
+              : "Done"}
         </Button>
       </div>
     </div>
