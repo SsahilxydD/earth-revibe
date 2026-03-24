@@ -161,9 +161,9 @@ function ProductsContent() {
       {/* Spacer between filters and products */}
       <div style={{ height: 16 }} />
 
-      {/* Content */}
+      {/* Content — no skeleton flash on remount; cached data shows instantly */}
       {isLoading ? (
-        <ProductGridSkeleton />
+        <div className="min-h-[50vh]" />
       ) : isError ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <h3 className="text-lg font-semibold">Something went wrong</h3>
