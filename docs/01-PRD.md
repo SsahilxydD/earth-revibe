@@ -1,241 +1,183 @@
-# Earth Revibe - Product Requirements Document (PRD)
+# Earth Revibe -- Product Requirements Document
 
-## Project Overview
+## 1. Product Overview
 
-**Project Name:** Earth Revibe
-**Type:** Full-Stack E-Commerce Platform
-**Brand Identity:** Sustainable, earthy, mid-range clothing brand
-**Target Market:** India (INR pricing, domestic shipping only)
-**Price Range:** Rs 3,000 - Rs 10,000 per item
-**Product Categories:** Tops & Basics, Bottoms & Pants, Outerwear & Jackets
+**Product Name:** Earth Revibe
+**Type:** Direct-to-consumer e-commerce platform
+**Market:** India only -- all prices in INR, domestic shipping only
+**Brand Identity:** Indian streetwear brand targeting youth culture. Oversized tees, hoodies, joggers, and statement pieces.
+**Tagline:** "Streetwear for the Culture"
+**Price Range:** Mid-range streetwear (typically Rs 999 -- Rs 10,000)
 
----
+Earth Revibe is a full-stack e-commerce platform purpose-built for a single Indian streetwear brand. It is not a marketplace or multi-vendor system. The platform consists of a customer-facing storefront, an admin dashboard, and a REST API, all deployed as a monorepo.
 
-## Vision Statement
+## 2. Target Users
 
-Earth Revibe is a modern, full-stack e-commerce platform for a sustainable clothing brand. It delivers a premium shopping experience with a Shopify-caliber admin dashboard, loyalty/referral programs, integrated blog, and customer support — all built on a performant monorepo architecture with end-to-end type safety.
+### Primary: Indian Gen-Z and Millennials (Ages 16--30)
+- Urban and semi-urban residents
+- Active on Instagram, interested in streetwear and street culture
+- Comfortable with UPI payments and mobile-first shopping
+- Expect fast, app-like mobile experiences (PWA)
+- Price-conscious but willing to spend on statement pieces
 
----
+### Secondary: Admin / Operations Team
+- Brand owners managing product catalog, inventory, and orders
+- Support staff handling customer tickets and returns
+- Content creators publishing blog posts and managing homepage CMS
 
-## In Scope (v1)
+## 3. Core Features (Built)
 
-### Storefront (Customer-Facing)
+### 3.1 Product Catalog
+- Hierarchical categories with parent/child relationships and custom sort order
+- Products with rich metadata: description, short description, material, care instructions, SEO fields, composition, measurements, fabric weight, fit, print type, wash instructions, returns info, shipping info, origin
+- Product variants with size, color (with hex preview), individual pricing override, SKU, stock level, low-stock threshold, barcode, weight
+- Multiple product images with sort order, primary image flag, alt text, and Cloudflare Images CDN URLs
+- Product tags (many-to-many) for cross-cutting categorization
+- Product status lifecycle: DRAFT -> ACTIVE -> ARCHIVED
+- Featured product flag for homepage promotion
 
-#### Product Discovery
-- Homepage with hero banner, featured collections, new arrivals, bestsellers
-- Category pages with grid/list view toggle
-- Advanced filtering: category, size, color, price range, material, sort order
-- Full-text search with autocomplete suggestions
-- Product detail pages with image gallery (zoom, multiple angles), size guide, material info, care instructions
-- Product reviews and ratings (verified purchase badge)
-- Related products / "You may also like" section
+### 3.2 User Accounts
+- Authentication via Supabase (email/password)
+- Auto-creation of user records from Razorpay Magic Checkout data (guest -> registered flow)
+- User roles: CUSTOMER, ADMIN, SUPER_ADMIN, SUPPORT_STAFF
+- Profile management: name, email, phone, avatar
+- Multiple saved addresses with labels (Home, Work, etc.) and default address selection
+- Email and phone verification flags
 
-#### User Accounts
-- Registration (email + password, OTP via phone)
-- Login / Logout with JWT-based sessions
-- Profile management (name, email, phone, avatar)
-- Multiple saved addresses (home, work, custom labels)
-- Order history with detailed order view
-- Wishlist (add/remove, share)
-- Loyalty points dashboard (balance, history, how to earn)
-- Referral dashboard (unique code, track referrals, earned rewards)
+### 3.3 Shopping Cart
+- Server-side cart persisted in database (one cart per user)
+- Cart items reference specific product variants (size + color)
+- Quantity management with stock validation
+- Guest users use local storage; cart merges on login
 
-#### Shopping & Checkout
-- Persistent shopping cart (synced across devices for logged-in users)
-- Cart management (quantity update, remove, move to wishlist)
-- Apply discount codes at cart level
-- Apply loyalty points as discount
-- Razorpay Magic Checkout (UPI, cards, netbanking, wallets — single-click)
-- Order confirmation page with order summary
-- Email confirmation on successful order
+### 3.4 Checkout and Payments
+- Razorpay Magic Checkout: Razorpay handles the entire address + payment UI in a popup overlay
+- Standard Razorpay checkout as fallback
+- PendingCheckout model for stock reservation during payment flow
+- Stock is reserved when checkout begins, released if payment fails or times out
+- Idempotency keys prevent duplicate order creation
+- Payment methods supported via Razorpay: UPI, credit/debit cards, net banking, wallets, EMI
+- All amounts in INR, currency hardcoded to INR
+- Guest checkout supported (order linked by email, no account required)
 
-#### Order Management (Customer Side)
-- Real-time order tracking with status timeline
-- Order statuses: Placed, Confirmed, Processing, Shipped, Out for Delivery, Delivered, Cancelled, Returned
-- Cancel order (before shipping)
-- Request return/exchange (after delivery, within return window)
+### 3.5 Order Management
+- Order lifecycle: PLACED -> CONFIRMED -> PROCESSING -> SHIPPED -> OUT_FOR_DELIVERY -> DELIVERED
+- Additional statuses: CANCELLED, RETURNED, REFUNDED
+- Order status history with timestamps and actor tracking
+- Order notes (internal for staff, or customer-visible)
+- Order items snapshot product name, image, size, color, and price at time of purchase
+- Discount tracking per order (discount code reference, discount amount)
+- Loyalty points earned and redeemed per order
+- Shiprocket integration: order ID, shipment ID, AWB code, courier name, tracking URL
 
-#### Content
-- Blog / Brand Journal (sustainability stories, styling tips, behind-the-scenes)
-- Blog categories and tags
-- About Us, Contact, FAQ, Shipping Policy, Return Policy, Privacy Policy pages
-- Size guide page
+### 3.6 Discount Codes
+- Types: PERCENTAGE, FLAT, BUY_X_GET_Y, FREE_SHIPPING
+- Configurable: minimum order value, maximum discount cap, usage limit (global), per-user limit
+- Scoping: applicable to specific categories or specific products (or all)
+- Date-bound: start date and expiry date
+- Usage tracking (count incremented on successful order)
 
-#### Analytics
-- GA4 integration with full e-commerce event tracking:
-  - view_item, view_item_list, add_to_cart, remove_from_cart
-  - begin_checkout, add_payment_info, purchase
-  - search, view_promotion, select_promotion
-  - sign_up, login
-- Custom events: wishlist_add, referral_share, loyalty_redeem
+### 3.7 Loyalty Points System
+- Configurable points-per-rupee earning rate
+- Configurable point redemption value (points to INR conversion)
+- Bonus points: welcome bonus, review bonus, birthday bonus
+- Minimum redemption threshold
+- Transaction types: EARNED, REDEEMED, BONUS, EXPIRED, ADJUSTED
+- Full transaction history per user
+- Points can be applied at checkout to reduce order total
 
-#### SEO & Performance
-- Server-side rendering (SSR) for product and category pages
-- Static generation (SSG) for blog posts and policy pages
-- Structured data (JSON-LD) for products, breadcrumbs, organization
-- Dynamic meta tags (title, description, OG tags)
-- Sitemap.xml and robots.txt
-- Image optimization with next/image
-- Mobile-first responsive design
+### 3.8 Referral Program
+- Each user gets a unique referral code
+- Referral lifecycle: PENDING -> SIGNED_UP -> CONVERTED
+- Configurable rewards for both referrer and referee (loyalty points)
+- Option to require a purchase before conversion
 
----
+### 3.9 Blog (CMS)
+- TipTap rich text editor for content creation
+- Blog post metadata: title, slug, excerpt, featured image, author, read time
+- Post status: DRAFT, PUBLISHED, SCHEDULED (with scheduled publish date)
+- SEO fields: meta title, meta description
+- Blog categories and tags (many-to-many relationships)
 
-### Admin Dashboard
+### 3.10 Support Tickets
+- Ticket creation with subject, category, and priority (LOW, MEDIUM, HIGH, URGENT)
+- Ticket lifecycle: OPEN -> IN_PROGRESS -> RESOLVED -> CLOSED
+- Threaded messages with file attachment support
+- Staff assignment
+- Auto-generated ticket numbers
 
-#### Dashboard Home
-- KPI cards: Total Revenue, Total Orders, Total Customers, Conversion Rate, Average Order Value
-- Revenue chart (daily/weekly/monthly)
-- Recent orders table
-- Low stock alerts
-- Top selling products
+### 3.11 Customer Reviews
+- Star rating (1--5) with optional title and text content
+- One review per user per product (enforced at database level)
+- Verified purchase flag
+- Approval moderation (approved by default, can be toggled)
 
-#### Product Management
-- CRUD operations for products
-- Product variants (size, color combinations with individual stock)
-- Multiple image upload with drag-and-drop reordering
-- Rich text product descriptions (WYSIWYG editor)
-- Product status: Draft, Active, Archived
-- Bulk actions (activate, archive, delete)
-- Product import/export (CSV)
+### 3.12 Wishlist
+- Add/remove products to wishlist
+- One entry per user per product (enforced at database level)
 
-#### Category Management
-- CRUD for categories and subcategories
-- Category image and description
-- Category ordering (drag-and-drop)
-- Assign products to categories
+### 3.13 Search
+- Product search with autocomplete
+- Search endpoint with text matching
 
-#### Order Management
-- Order list with filters (status, date range, payment status)
-- Order detail view with full timeline
-- Update order status
-- Process refunds (via Razorpay)
-- Print packing slip / invoice
-- Order notes (internal)
+### 3.14 Notifications
+- In-app notification system
+- Types: ORDER_CONFIRMED, ORDER_SHIPPED, ORDER_DELIVERED, ORDER_CANCELLED, RETURN_UPDATE, TICKET_REPLY, LOYALTY_EARNED, REFERRAL_REWARD, LOW_STOCK, PROMOTION
+- Read/unread tracking
+- JSON data payload for deep linking
 
-#### Customer Management
-- Customer list with search and filters
-- Customer detail view (profile, orders, loyalty points, support tickets)
-- Customer segments (new, returning, high-value)
-- Export customer data
+### 3.15 Admin Dashboard
+- **Products:** CRUD with variant manager, multi-image upload (drag-and-drop reordering), rich text descriptions
+- **Categories:** CRUD with hierarchical tree, batch product picker to assign products
+- **Orders:** List with filtering by status, detail view with status updates, refund initiation, Shiprocket shipment creation
+- **Inventory:** Stock level overview with low-stock alerts
+- **Customers:** Customer list with order history
+- **Discounts:** CRUD for all discount code types
+- **Blog:** Post editor with TipTap, category/tag management, publish/schedule
+- **Support:** Ticket queue with assignment and threaded replies
+- **Notifications:** Send notifications to users
+- **Analytics:** Revenue charts, KPI cards (recharts)
+- **Settings:** Store configuration (name, logo, contact info, social links, GST rate, free shipping threshold, return window, checkout config, shipping config)
+- **Homepage CMS:** Reorderable homepage sections (label, href, image) with drag-and-drop
 
-#### Inventory Management
-- Stock levels per product variant
-- Low stock threshold configuration
-- Low stock alerts (dashboard + email)
-- Stock adjustment history
-- Bulk stock update
+### 3.16 Shipping
+- Shiprocket integration for shipment creation and tracking
+- Shipping zones with state-based rate calculation
+- Configurable min/max delivery days per zone
+- Free shipping threshold (configurable in store settings)
 
-#### Discounts & Promotions
-- Discount code creation:
-  - Percentage off
-  - Flat amount off
-  - Buy X Get Y (BOGO)
-  - Free shipping
-- Conditions: minimum order value, specific products/categories, usage limits, expiry date
-- Active/inactive toggle
-- Usage analytics per code
+### 3.17 Returns
+- Return request submission with reason
+- Return lifecycle: REQUESTED -> APPROVED -> REJECTED -> PICKED_UP -> RECEIVED -> REFUND_INITIATED -> COMPLETED
+- Admin notes on return requests
+- Refund amount tracking
 
-#### Blog / CMS
-- Create, edit, delete blog posts
-- Rich text editor with image embedding
-- Categories and tags management
-- Draft / Published / Scheduled status
-- SEO fields (meta title, description, slug)
-- Featured image
+## 4. Integrations
 
-#### Customer Support
-- Ticket system: customers submit tickets from storefront
-- Ticket list with status filters (Open, In Progress, Resolved, Closed)
-- Ticket detail with conversation thread
-- Assign tickets to support staff
-- Canned responses
-- Priority levels (Low, Medium, High, Urgent)
+| Service | Purpose | SDK/Method |
+|---------|---------|------------|
+| **Razorpay** | Payments (Magic Checkout + standard) | `razorpay` npm SDK v2.9 |
+| **Supabase** | Authentication (email/password, token verification) | `@supabase/supabase-js` v2.99 |
+| **Cloudflare Images** | Image CDN (product images, blog images, avatars) | REST API via account ID + API token |
+| **Shiprocket** | Shipping (order creation, AWB, tracking) | REST API via email/password auth |
+| **Nodemailer** | Transactional email (SMTP) | `nodemailer` v8 |
 
-#### Loyalty Program Configuration
-- Set points earned per Rs spent
-- Set point redemption value (e.g., 100 points = Rs 10)
-- Bonus point events (first purchase, birthday, review)
-- View all loyalty transactions
+## 5. Success Criteria
 
-#### Referral Program Configuration
-- Set reward for referrer and referee
-- Referral code format settings
-- View referral analytics (total referrals, converted, points awarded)
+- Sub-3-second initial page load on 4G mobile connections
+- PWA installable with offline product browsing
+- Checkout completion in under 60 seconds (Razorpay Magic Checkout handles address + payment)
+- Zero-downtime deployments
+- Admin can manage full product lifecycle without developer intervention
+- Mobile-first design with native-app-like feel (smooth scrolling, swipe gestures, bottom navigation)
 
-#### Settings & Access Control
-- Role-based access: Super Admin, Admin, Support Staff
-- Permission matrix per role
-- Store settings (name, logo, contact info, social links)
-- Shipping configuration (zones, rates, free shipping threshold)
-- Tax configuration (GST rates)
-- Email template management
+## 6. Out of Scope (Current Phase)
 
----
-
-### Backend API
-
-#### Architecture
-- RESTful API with versioned endpoints (`/api/v1/`)
-- JWT authentication with access + refresh token rotation
-- Zod validation on all request/response payloads
-- Consistent error response format with error codes
-- Request logging and audit trails
-
-#### Integrations
-- Razorpay: payment creation, verification, webhooks, refunds
-- Cloudinary: image upload, transformation, optimization
-- Nodemailer: transactional emails (SMTP or service provider)
-- GA4 Measurement Protocol: server-side event tracking
-
-#### Security
-- Password hashing with bcrypt
-- Rate limiting on auth endpoints
-- CORS configuration
-- Helmet security headers
-- Input sanitization
-- SQL injection prevention (via Prisma ORM)
-- CSRF protection
-- Webhook signature verification (Razorpay)
-
----
-
-## Out of Scope (v1)
-
-- Multi-currency / international shipping
-- Mobile app (React Native / Flutter)
-- Live chat / chatbot support
-- AI-powered product recommendations
-- Multi-vendor / marketplace functionality
-- Subscription boxes / recurring orders
-- PWA offline mode
-- Social login (Google, Facebook) — can be added in v2
-- Multi-language support (i18n)
-- A/B testing framework
-- Advanced analytics dashboards beyond GA4
-
----
-
-## Success Criteria
-
-| Metric | Target |
-|--------|--------|
-| Page load time (4G mobile) | < 3 seconds |
-| Lighthouse Performance Score | 90+ |
-| Lighthouse Accessibility Score | 90+ |
-| Checkout completion clicks | <= 2 (via Magic Checkout) |
-| Admin CRUD operations | No developer assistance needed |
-| GA4 e-commerce events | All standard events tracked |
-| API response time (p95) | < 500ms |
-| Uptime | 99.5% |
-
----
-
-## Assumptions
-
-- Single-tenant system (one brand: Earth Revibe)
-- Shipping handled via third-party courier (integration out of scope for v1; manual status updates)
-- Product images provided by the brand (no AI generation)
-- Email service credentials provided by the client
-- Razorpay API keys provided by the client
-- Cloudinary account provided by the client
-- Domain and hosting infrastructure decided separately
+- **Multi-currency:** All prices are in INR only. No currency conversion.
+- **Multi-language:** English only. No i18n framework.
+- **Marketplace / Multi-vendor:** Single brand, single seller. No vendor onboarding.
+- **International shipping:** India domestic only via Shiprocket.
+- **Social login:** Only email/password via Supabase (phone OTP planned for future).
+- **Native mobile app:** PWA only (React Native wrapper planned for future).
+- **Subscription/recurring billing:** One-time purchases only.
+- **Real-time chat support:** Ticket-based support only.

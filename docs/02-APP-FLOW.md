@@ -1,551 +1,421 @@
-# Earth Revibe - App Flow Document
+# Earth Revibe -- Application Flow
 
-## Storefront User Flows
+## 1. Storefront (Customer-Facing)
 
----
+### 1.1 Homepage
 
-### 1. Homepage Flow
+The homepage is dynamically configured via the admin CMS. It renders `HomepageSection` records from the database, ordered by `sortOrder`. Each section is a clickable card with a label, image, and link (typically to a category page). The homepage layout features a transparent header that transitions to a sticky white header on scroll.
 
-```
-[Landing on Homepage]
-  |
-  +-- Hero Banner (rotating slides with CTA buttons)
-  |     |-- "Shop New Arrivals" -> /collections/new-arrivals
-  |     |-- "Explore Outerwear" -> /categories/outerwear
-  |
-  +-- Featured Collections Section
-  |     |-- Collection Card -> /collections/:slug
-  |
-  +-- New Arrivals Carousel
-  |     |-- Product Card -> /products/:slug
-  |     |-- "View All" -> /collections/new-arrivals
-  |
-  +-- Bestsellers Grid
-  |     |-- Product Card -> /products/:slug
-  |     |-- "View All" -> /collections/bestsellers
-  |
-  +-- Sustainability Story Banner -> /blog/:slug or /about
-  |
-  +-- Newsletter Signup (email input + subscribe)
-  |
-  +-- Footer (links, social, policies)
-```
+**Key elements:**
+- Full-width hero/banner sections (CMS-managed)
+- Featured collections grid
+- New arrivals carousel
+- Category navigation cards
 
----
+### 1.2 Category / Listing Pages
 
-### 2. Navigation Structure
+**Route:** `/category/[slug]`
 
-```
-Header (sticky):
-  [Logo] [Search Bar] [Nav Links] [Wishlist Icon] [Cart Icon] [User Icon]
+- Sticky white header with centered "EARTH REVIBE" logo
+- Filter bar below header: category filters, sort options (price low-high, price high-low, newest, popularity)
+- Product grid (2 columns on mobile, 3--4 on desktop)
+- Infinite scroll pagination (loads more products as user scrolls down)
+- Each product card shows: primary image, product name, price (with compare-at price and sale badge if discounted), sold-out badge if all variants are out of stock
 
-Primary Nav:
-  - Shop
-    - All Products (/products)
-    - Tops & Basics (/categories/tops-basics)
-    - Bottoms & Pants (/categories/bottoms-pants)
-    - Outerwear & Jackets (/categories/outerwear-jackets)
-    - New Arrivals (/collections/new-arrivals)
-    - Bestsellers (/collections/bestsellers)
-  - Our Story (/about)
-  - Blog (/blog)
-  - Contact (/contact)
+### 1.3 Product Detail Page
 
-Mobile Nav:
-  - Hamburger menu -> slide-in drawer with same structure
-  - Bottom sticky bar: Home, Categories, Cart, Account
+**Route:** `/product/[slug]`
 
-User Dropdown (logged in):
-  - My Profile (/account/profile)
-  - My Orders (/account/orders)
-  - Wishlist (/account/wishlist)
-  - Loyalty Points (/account/loyalty)
-  - Referrals (/account/referrals)
-  - Support Tickets (/account/support)
-  - Logout
+**Navigation:** Custom header with back arrow (left), share and wishlist icons (right). No standard site header.
 
-User Dropdown (logged out):
-  - Login (/auth/login)
-  - Register (/auth/register)
-```
+**Layout:**
+- Swipeable product image gallery (horizontal swipe between images, Framer Motion animations)
+- Swipe left/right between products in the same category for discovery
+- Product name, price (with crossed-out compare-at price if on sale)
+- Size selector (visual buttons, disabled for out-of-stock sizes)
+- Color selector (color swatches with hex preview)
+- "Add to Cart" button (full-width, sticky on mobile)
+- Expandable accordion sections: Description, Material and Care, Measurements, Shipping Info, Returns Info
+- Customer reviews section (star ratings, review text)
+- Related products carousel
 
----
+### 1.4 Cart
 
-### 3. Product Discovery Flow
+**Two views:**
 
-```
-[Category Page / All Products] (/products or /categories/:slug)
-  |
-  +-- Breadcrumb: Home > Category Name
-  |
-  +-- Filter Sidebar (desktop) / Filter Drawer (mobile)
-  |     |-- Category checkboxes
-  |     |-- Size checkboxes (XS, S, M, L, XL, XXL)
-  |     |-- Color swatches
-  |     |-- Price range slider (min-max)
-  |     |-- Material checkboxes (Organic Cotton, Linen, Hemp, Recycled)
-  |     |-- "Clear All Filters"
-  |
-  +-- Sort Dropdown: Newest, Price Low-High, Price High-Low, Popularity, Rating
-  |
-  +-- Grid/List View Toggle
-  |
-  +-- Product Grid
-  |     |-- Product Card:
-  |     |     [Image (hover: second image)]
-  |     |     [Brand Badge: "Organic" / "Recycled"]
-  |     |     [Product Name]
-  |     |     [Price (Rs X,XXX)]
-  |     |     [Star Rating]
-  |     |     [Quick Add to Cart (size selector popup)]
-  |     |     [Wishlist Heart Icon]
-  |     |     Click -> /products/:slug
-  |
-  +-- Pagination / Infinite Scroll
-```
+1. **Cart Drawer (Sidebar):** Slides in from the right when an item is added or the cart icon is tapped. Shows cart items with quantity controls, variant info (size/color), line totals, and a subtotal. Discount code input field. "Checkout" button.
 
----
+2. **Full Cart Page:** `/cart` -- same information in a full-page layout for users who navigate directly.
 
-### 4. Product Detail Flow
+**Discount code flow:** User enters a code, the API validates it (checks expiry, usage limits, minimum order value, applicable products/categories), and the discount is applied to the subtotal in real time.
 
-```
-[Product Detail Page] (/products/:slug)
-  |
-  +-- Breadcrumb: Home > Category > Product Name
-  |
-  +-- Left: Image Gallery
-  |     |-- Main image (zoomable on hover)
-  |     |-- Thumbnail strip (click to change main image)
-  |     |-- Mobile: swipeable carousel
-  |
-  +-- Right: Product Info
-  |     |-- Product Name
-  |     |-- Price: Rs X,XXX
-  |     |-- Star Rating (X.X / 5) + "XX Reviews" link
-  |     |-- Short Description
-  |     |-- Color Selector (swatches, changes images)
-  |     |-- Size Selector (buttons: XS S M L XL XXL)
-  |     |     |-- Unavailable sizes greyed out
-  |     |     |-- "Size Guide" link -> modal
-  |     |-- Quantity Selector (+/- buttons)
-  |     |-- [Add to Cart] button
-  |     |     |-- Success: toast notification + cart icon badge updates
-  |     |     |-- Out of stock: "Notify Me" button -> email input
-  |     |-- [Add to Wishlist] button
-  |     |-- Sustainability badges (Organic, Fair Trade, etc.)
-  |     |-- Accordion sections:
-  |           |-- Product Details (material, weight, fit)
-  |           |-- Care Instructions
-  |           |-- Shipping & Returns info
-  |
-  +-- Below: Tabs
-        |-- Reviews Tab
-        |     |-- Average rating summary
-        |     |-- Rating distribution bar chart
-        |     |-- Individual reviews (avatar, name, date, rating, text, verified badge)
-        |     |-- "Write a Review" (logged-in users who purchased)
-        |     |-- Sort: Most Recent, Highest, Lowest
-        |
-        |-- Related Products Carousel
-              |-- Product Cards (4-6 items)
-```
+### 1.5 Checkout
+
+Earth Revibe uses **Razorpay Magic Checkout**, which means the platform does NOT have its own checkout page with address and payment forms. Instead:
+
+1. User clicks "Checkout" in the cart
+2. The API creates a Razorpay order and a `PendingCheckout` record (reserving stock)
+3. The Razorpay Magic Checkout popup opens in an overlay
+4. Razorpay handles: shipping address collection, payment method selection, payment processing
+5. On successful payment, a Razorpay webhook fires
+6. The API verifies the payment signature, creates the `Order` record, decrements stock, awards loyalty points, and clears the cart
+7. User is redirected to the order confirmation page
+
+**Guest checkout:** If the user is not logged in, Razorpay collects their email and phone. The API creates or finds a user record from this data after payment verification.
+
+### 1.6 Order Confirmation
+
+**Route:** `/order/[orderNumber]`
+
+Displays: order number, order items with images, quantities, prices, shipping address, payment method, order total breakdown (subtotal, discount, shipping, tax, total), and expected delivery timeline.
+
+### 1.7 Account Pages
+
+**Route:** `/account/*`
+
+All account pages require authentication. If not logged in, user is redirected to login.
+
+- **Profile** (`/account`): Edit first name, last name, email, phone, avatar
+- **Orders** (`/account/orders`): List of past orders with status badges, click to view order detail
+- **Order Detail** (`/account/orders/[id]`): Full order information, status timeline, tracking link (Shiprocket), return request button (if eligible)
+- **Addresses** (`/account/addresses`): Saved address list, add/edit/delete addresses, set default
+- **Wishlist** (`/account/wishlist`): Grid of wishlisted products with remove and add-to-cart actions
+- **Loyalty Points** (`/account/loyalty`): Current points balance, transaction history (earned, redeemed, bonus, expired)
+- **Referrals** (`/account/referrals`): Unique referral code with share functionality, list of referrals and their status
+
+### 1.8 Authentication
+
+**Routes:** `/login`, `/register`
+
+- Email and password authentication via Supabase
+- Registration creates a Supabase auth user and a corresponding `User` record in the application database
+- Login returns Supabase session tokens; the API validates these tokens via Supabase middleware
+- Password reset flow via Supabase email
+
+### 1.9 Blog
+
+**Routes:** `/blog`, `/blog/[slug]`
+
+- Blog listing page with post cards (featured image, title, excerpt, read time, date)
+- Blog post detail with rendered rich text content (from TipTap JSON)
+- Category and tag filtering
+
+### 1.10 Search
+
+**Route:** `/search`
+
+- Search bar with autocomplete suggestions (product names)
+- Search results page with product grid
+- Full-text product search via the API
+
+### 1.11 Static / Policy Pages
+
+- **FAQ** (`/faq`)
+- **Shipping Policy** (`/policies/shipping`)
+- **Return Policy** (`/policies/returns`)
+- **Privacy Policy** (`/policies/privacy`)
+- **Terms and Conditions** (`/policies/terms`)
+- **Contact** (`/contact`)
+
+### 1.12 Navigation (Storefront)
+
+**Mobile Bottom Dock (persistent on all pages):**
+- Home (house icon)
+- Search (magnifying glass icon)
+- Wishlist (heart icon) -- requires auth, shows count badge
+- Cart (shopping bag icon) -- shows item count badge
+
+**Header variants:**
+1. **Homepage:** Transparent header overlaying hero, transitions to solid white on scroll. Centered logo. Hamburger menu (left), user/cart icons (right).
+2. **Category/Listing pages:** Sticky white header with centered "EARTH REVIBE" text logo.
+3. **Product Detail page:** Minimal header with back arrow (left), share and wishlist heart icons (right). No logo.
+
+**Mobile menu:** Full-screen slide-in from left. Category links, account links, policy links.
 
 ---
 
-### 5. Search Flow
+## 2. Admin Dashboard
 
-```
-[User clicks Search Icon / Search Bar]
-  |
-  +-- Search input expands / opens overlay
-  |
-  +-- As user types (debounced 300ms):
-  |     |-- Autocomplete dropdown appears
-  |     |     |-- Product suggestions (image + name + price) - max 5
-  |     |     |-- Category suggestions - max 3
-  |     |     |-- Blog post suggestions - max 2
-  |     |-- Click suggestion -> navigate to that page
-  |
-  +-- Press Enter / Submit:
-        |-- Navigate to /search?q=query
-        |-- Search results page (same layout as product grid)
-        |-- "X results for 'query'"
-        |-- No results: "No products found" + suggestions
-```
+### 2.1 Authentication
 
----
+**Route:** `/login`
 
-### 6. Cart Flow
+Admin login via Supabase email/password. Only users with role ADMIN or SUPER_ADMIN can access the dashboard. Unauthorized users are redirected to the login page.
 
-```
-[Cart Page] (/cart)
-  |
-  +-- Cart Items List:
-  |     |-- [Product Image] [Name] [Color/Size] [Quantity +/-] [Line Total] [Remove X]
-  |     |-- "Move to Wishlist" link per item
-  |     |-- Empty cart: illustration + "Continue Shopping" CTA
-  |
-  +-- Discount Code Input: [Enter Code] [Apply]
-  |     |-- Success: discount shown, total updated
-  |     |-- Error: "Invalid code" message
-  |
-  +-- Loyalty Points Toggle: "Use X points (Rs Y value)"
-  |
-  +-- Order Summary Sidebar:
-  |     |-- Subtotal
-  |     |-- Discount (if applied)
-  |     |-- Loyalty Points Discount (if applied)
-  |     |-- Shipping (calculated or "Free" if above threshold)
-  |     |-- GST
-  |     |-- Total
-  |
-  +-- [Proceed to Checkout] button
-        |-- Not logged in -> redirect to /auth/login?redirect=/checkout
-        |-- Logged in -> /checkout
-```
+### 2.2 Dashboard Home
 
----
+**Route:** `/`
 
-### 7. Checkout Flow
+- KPI cards: total revenue, total orders, total customers, average order value
+- Revenue chart (recharts line/bar chart)
+- Recent orders list
+- Low stock alerts
 
-```
-[Checkout Page] (/checkout)
-  |
-  +-- Step 1: Shipping Address
-  |     |-- Select from saved addresses (radio buttons)
-  |     |-- OR "Add New Address" form:
-  |           |-- Full Name, Phone, Address Line 1, Line 2, City, State, PIN Code
-  |           |-- "Save this address" checkbox
-  |     |-- [Continue to Payment]
-  |
-  +-- Step 2: Order Review
-  |     |-- Order items summary (compact)
-  |     |-- Shipping address selected
-  |     |-- Order total breakdown
-  |     |-- [Place Order] button
-  |
-  +-- Step 3: Razorpay Magic Checkout
-  |     |-- Razorpay modal opens automatically
-  |     |-- Pre-filled: name, email, phone from user profile
-  |     |-- Payment methods: UPI, Cards, Netbanking, Wallets
-  |     |-- On Success:
-  |     |     |-- Backend verifies payment signature
-  |     |     |-- Order created with status "Confirmed"
-  |     |     |-- Loyalty points awarded
-  |     |     |-- Redirect to /order-confirmation/:orderId
-  |     |-- On Failure:
-  |           |-- Error toast: "Payment failed. Please try again."
-  |           |-- Stay on checkout page
-  |
-  +-- Order Confirmation Page (/order-confirmation/:orderId)
-        |-- "Thank you for your order!"
-        |-- Order ID, items, total, estimated delivery
-        |-- Loyalty points earned this order
-        |-- [Track Order] -> /account/orders/:orderId
-        |-- [Continue Shopping] -> /
-        |-- Confirmation email sent
-```
+### 2.3 Products
 
----
+**Routes:** `/products`, `/products/new`, `/products/[id]/edit`
 
-### 8. User Account Flows
+**Product list:**
+- Table with columns: image thumbnail, name, category, price, status (DRAFT/ACTIVE/ARCHIVED), stock total, actions
+- Search and filter by status/category
+- Bulk actions
 
-```
-[Registration] (/auth/register)
-  |-- Name, Email, Phone, Password, Confirm Password
-  |-- "I agree to Terms & Conditions" checkbox
-  |-- [Register] button
-  |-- "Already have an account? Login"
-  |-- On success: auto-login -> redirect to previous page or /
-  |-- Referral code input (optional): "Have a referral code?"
+**Product form (create/edit):**
+- Basic info: name (auto-generates slug), short description, full description (TipTap rich text editor)
+- Pricing: price, compare-at price
+- Category selector (dropdown)
+- Product details: material, care instructions, composition, measurements, fabric weight, fit, print type, wash instructions, returns info, shipping info, origin
+- SEO fields: SEO title, SEO description, SEO keywords
+- Status selector: DRAFT, ACTIVE, ARCHIVED
+- Featured toggle
+- **Image uploader:** Drag-and-drop zone (react-dropzone), uploads to Cloudflare Images via API. Drag-and-drop reordering of images (@hello-pangea/dnd). Set primary image. Alt text editing.
+- **Variant manager:** Table of variants. Each row: size, color, color hex, SKU (auto-generated or manual), price override, stock, low stock threshold, barcode, weight, active toggle. Add/remove variant rows.
+- Tag management
 
-[Login] (/auth/login)
-  |-- Email, Password
-  |-- "Forgot Password?" -> /auth/forgot-password
-  |-- [Login] button
-  |-- "Don't have an account? Register"
-  |-- On success: redirect to previous page or /
+### 2.4 Categories
 
-[Forgot Password] (/auth/forgot-password)
-  |-- Email input
-  |-- [Send Reset Link]
-  |-- Email with reset link sent
-  |-- /auth/reset-password?token=xxx
-  |     |-- New Password, Confirm Password
-  |     |-- [Reset Password]
-  |     |-- On success: redirect to /auth/login
+**Routes:** `/categories`, `/categories/new`, `/categories/[id]/edit`
 
-[Profile Page] (/account/profile)
-  |-- Edit name, email, phone, avatar
-  |-- Change password section
-  |-- Manage addresses (list, add, edit, delete, set default)
+- Category list with hierarchical tree view
+- Category form: name, slug, description, image, parent category, sort order, active toggle
+- **Batch product picker:** Modal to assign products to a category. Tick multiple products from a searchable list, save all at once. API limited to 100 products per request.
 
-[Orders Page] (/account/orders)
-  |-- Order list (order ID, date, status badge, total)
-  |-- Click order -> /account/orders/:orderId
-  |     |-- Order timeline (status history with timestamps)
-  |     |-- Items list
-  |     |-- Shipping address
-  |     |-- Payment details
-  |     |-- [Cancel Order] (if status allows)
-  |     |-- [Request Return] (if delivered within return window)
+### 2.5 Orders
 
-[Wishlist Page] (/account/wishlist)
-  |-- Product grid (same as category page cards)
-  |-- [Add to Cart] per item
-  |-- [Remove] per item
-  |-- Empty: "Your wishlist is empty" + "Browse Products" CTA
+**Routes:** `/orders`, `/orders/[id]`
 
-[Loyalty Page] (/account/loyalty)
-  |-- Points Balance (large display)
-  |-- How it works (earn/redeem explanation)
-  |-- Points History table (date, description, points +/-)
-  |-- "Earn more" suggestions
+**Order list:**
+- Table: order number, customer name/email, date, status badge, total amount
+- Filter by status, date range
+- Search by order number or customer
 
-[Referral Page] (/account/referrals)
-  |-- Unique referral code + copy button
-  |-- Share buttons (WhatsApp, copy link)
-  |-- "How it works" explanation
-  |-- Referral stats: total shared, signed up, purchased
-  |-- Points earned from referrals
+**Order detail:**
+- Order items with product images, variant info, quantities, prices
+- Order total breakdown: subtotal, discount, shipping, tax, total
+- Customer info and shipping address
+- Payment details: Razorpay payment ID, method, status
+- **Status updates:** Dropdown to advance order status with confirmation
+- **Refund initiation:** Trigger refund via Razorpay API
+- **Shiprocket shipment:** Create shipment, view AWB code, courier name, tracking URL
+- **Order notes:** Add internal or customer-visible notes
+- **Order status history:** Timeline of all status changes with timestamps
 
-[Support Page] (/account/support)
-  |-- [Create New Ticket] button
-  |     |-- Subject, Category dropdown, Description, Attach image
-  |-- Ticket list (ID, subject, status badge, last updated)
-  |-- Click ticket -> conversation thread view
-  |     |-- Messages (customer + support staff)
-  |     |-- Reply input + send
-```
+### 2.6 Inventory
+
+**Route:** `/inventory`
+
+- Table of all product variants with current stock levels
+- Low stock indicators (variants below their threshold)
+- Inline stock editing
+- Bulk stock updates
+
+### 2.7 Customers
+
+**Routes:** `/customers`, `/customers/[id]`
+
+- Customer list: name, email, registration date, order count, total spent
+- Customer detail: profile info, order history, loyalty points, addresses, support tickets
+
+### 2.8 Discounts
+
+**Routes:** `/discounts`, `/discounts/new`, `/discounts/[id]/edit`
+
+- Discount list: code, type, value, usage count/limit, status, dates
+- Discount form: code, description, type (PERCENTAGE/FLAT/BUY_X_GET_Y/FREE_SHIPPING), value, minimum order value, maximum discount amount, usage limit, per-user limit, applicable categories/products, start date, expiry date, active toggle
+
+### 2.9 Blog Management
+
+**Routes:** `/blog`, `/blog/new`, `/blog/[id]/edit`
+
+- Post list: title, status, author, published date, actions
+- Post editor: title, slug, excerpt, featured image upload, TipTap rich text editor for content, category/tag assignment, SEO fields, status (DRAFT/PUBLISHED/SCHEDULED), scheduled publish date, read time
+
+### 2.10 Support Tickets
+
+**Routes:** `/support`, `/support/[id]`
+
+- Ticket queue: ticket number, subject, customer, category, priority, status, assigned to
+- Ticket detail: threaded message view, reply box with attachment upload, status update, priority change, staff assignment
+
+### 2.11 Notifications
+
+**Route:** `/notifications`
+
+- Send notifications to individual users or broadcast
+- Notification type selection
+- View sent notification history
+
+### 2.12 Analytics
+
+**Route:** `/analytics`
+
+- Revenue over time (line chart)
+- Orders over time (bar chart)
+- Top-selling products
+- Customer acquisition metrics
+- All charts use recharts with ResponsiveContainer
+
+### 2.13 Settings
+
+**Route:** `/settings`
+
+- **Store info:** Store name, logo, contact email, contact phone
+- **Social links:** Instagram, Facebook, Twitter URLs
+- **Shipping:** Free shipping threshold, GST rate
+- **Returns:** Return window (days)
+- **Checkout config:** JSON configuration for Razorpay checkout options
+- **Shipping config:** JSON configuration for shipping zones and rules
+
+### 2.14 Homepage CMS
+
+**Route:** `/homepage`
+
+- List of homepage sections ordered by `sortOrder`
+- Drag-and-drop reordering (@hello-pangea/dnd)
+- Each section: label, href (link target), image URL, active toggle
+- Add/edit/delete sections
+
+### 2.15 Admin Navigation
+
+**Sidebar (collapsible):**
+- Dashboard
+- Products
+- Categories
+- Orders
+- Inventory
+- Customers
+- Discounts
+- Blog
+- Support
+- Notifications
+- Analytics
+- Settings
+- Homepage
+
+**Topbar:** Breadcrumbs, admin user menu
 
 ---
 
-### 9. Blog Flow
+## 3. API Routes
 
-```
-[Blog Index] (/blog)
-  |-- Featured post (large card)
-  |-- Category filter bar (All, Sustainability, Style Tips, Behind the Scenes)
-  |-- Blog post grid:
-  |     |-- [Featured Image] [Category Tag] [Title] [Excerpt] [Date] [Read Time]
-  |     |-- Click -> /blog/:slug
-  |-- Pagination
+All routes are prefixed with `/api/v1/`. Public routes do not require authentication. Protected routes require a valid Supabase JWT in the Authorization header.
 
-[Blog Post] (/blog/:slug)
-  |-- Featured image (full width)
-  |-- Category + Date + Read Time
-  |-- Title
-  |-- Rich text content (headings, paragraphs, images, quotes)
-  |-- Author info
-  |-- Share buttons (WhatsApp, Twitter, Facebook, Copy Link)
-  |-- Related posts carousel
-  |-- Newsletter signup CTA
-```
+### Public Routes
+| Route File | Endpoints |
+|---|---|
+| `auth.routes.ts` | Login, register, refresh token, logout, password reset |
+| `product.routes.ts` | List products (paginated, filterable), get product by slug |
+| `category.routes.ts` | List categories, get category by slug with products |
+| `search.routes.ts` | Search products with autocomplete |
+| `blog.routes.ts` | List published posts, get post by slug |
+| `homepage.routes.ts` | Get active homepage sections |
+| `shipping.routes.ts` | Get shipping zones and rates |
+| `webhook.routes.ts` | Razorpay payment webhook (signature-verified) |
 
----
+### Protected Routes (Customer)
+| Route File | Endpoints |
+|---|---|
+| `cart.routes.ts` | Get cart, add item, update quantity, remove item, clear cart |
+| `checkout.routes.ts` | Create checkout (Razorpay order), verify payment |
+| `order.routes.ts` | List user orders, get order detail, request return |
+| `address.routes.ts` | CRUD addresses, set default |
+| `wishlist.routes.ts` | List wishlist, add/remove product |
+| `discount.routes.ts` | Validate discount code |
+| `loyalty.routes.ts` | Get points balance, transaction history |
+| `referral.routes.ts` | Get referral code, list referrals |
+| `support.routes.ts` | Create ticket, list tickets, add message |
+| `upload.routes.ts` | Upload image to Cloudflare Images |
 
-### 10. Static Pages
-
-```
-/about         - Brand story, sustainability mission, team
-/contact       - Contact form (name, email, subject, message) + store info
-/faq           - Accordion FAQ sections
-/shipping      - Shipping zones, rates, delivery times
-/returns       - Return policy, process, conditions
-/privacy       - Privacy policy
-/terms         - Terms and conditions
-/size-guide    - Size charts per category with measurement guide
-```
-
----
-
-## Admin Dashboard Flows
-
----
-
-### 1. Admin Authentication
-
-```
-[Admin Login] (/admin/login)
-  |-- Email + Password
-  |-- [Login]
-  |-- On success: redirect to /admin/dashboard
-  |-- Failed: error message
-  |-- No "register" — admins created by Super Admin only
-```
+### Admin Routes
+| Route File | Endpoints |
+|---|---|
+| `admin-product.routes.ts` | CRUD products, manage variants, manage images |
+| `admin-order.routes.ts` | List all orders, update status, create refund, Shiprocket shipment |
+| `admin-customer.routes.ts` | List customers, view customer detail |
+| `admin-blog.routes.ts` | CRUD blog posts, categories, tags |
+| `admin-discount.routes.ts` | CRUD discount codes |
+| `admin-inventory.routes.ts` | View and update stock levels |
+| `admin-support.routes.ts` | Manage tickets, assign staff, reply |
+| `admin-notification.routes.ts` | Send notifications |
+| `admin-homepage.routes.ts` | CRUD homepage sections, reorder |
+| `admin-settings.routes.ts` | Get/update store settings |
+| `analytics.routes.ts` | Revenue, orders, customers, product analytics |
 
 ---
 
-### 2. Admin Dashboard Home
+## 4. Authentication Flow
 
 ```
-[Dashboard] (/admin/dashboard)
+User clicks "Login"
   |
-  +-- Top Bar: [Search] [Notifications Bell] [Admin Avatar + Dropdown]
+  v
+Storefront sends email + password to Supabase Auth
   |
-  +-- Sidebar Navigation:
-  |     |-- Dashboard
-  |     |-- Products
-  |     |-- Categories
-  |     |-- Orders
-  |     |-- Customers
-  |     |-- Inventory
-  |     |-- Discounts
-  |     |-- Blog
-  |     |-- Support Tickets
-  |     |-- Loyalty Program
-  |     |-- Referral Program
-  |     |-- Settings
+  v
+Supabase returns session (access_token + refresh_token)
   |
-  +-- Main Content:
-        |-- KPI Cards Row: Revenue | Orders | Customers | Conversion Rate | AOV
-        |-- Revenue Chart (line chart, toggle daily/weekly/monthly)
-        |-- Two columns:
-        |     |-- Recent Orders table (5 latest)
-        |     |-- Low Stock Alerts (products below threshold)
-        |-- Top Selling Products (bar chart or list)
+  v
+Storefront stores session via @supabase/ssr (cookies)
+  |
+  v
+API requests include Authorization: Bearer <supabase_access_token>
+  |
+  v
+API middleware validates token with Supabase Admin SDK
+  |
+  v
+API looks up/creates User record in application database
+  |
+  v
+req.user is set with user ID and role for downstream handlers
 ```
+
+**Magic Checkout guest flow:**
+1. Unauthenticated user adds items to cart (local storage)
+2. Clicks checkout -- API creates PendingCheckout without userId
+3. Razorpay collects email and phone during Magic Checkout
+4. On payment success webhook, API receives customer details from Razorpay
+5. API creates or finds User record by email
+6. Order is created and linked to that user
 
 ---
 
-### 3. Product Management Flow
+## 5. Checkout Flow (Detailed)
 
 ```
-[Products List] (/admin/products)
-  |-- Search bar + filters (status, category)
-  |-- [+ Add Product] button
-  |-- Products table: Image | Name | Category | Price | Stock | Status | Actions
-  |-- Bulk select + bulk actions (Activate, Archive, Delete)
-  |-- Pagination
-  |
-  |-- Click product -> /admin/products/:id/edit
-  |-- Click [+ Add Product] -> /admin/products/new
+1. User clicks "Checkout" in cart
+   |
+2. Frontend calls POST /api/v1/checkout/create
+   - Sends: cart items, discount code (optional), loyalty points to use (optional)
+   |
+3. API validates stock, calculates totals, applies discount
+   |
+4. API creates Razorpay order (amount in paise)
+   |
+5. API creates PendingCheckout record with:
+   - Generated order number
+   - Razorpay order ID
+   - Reserved stock (decremented from variants)
+   - Serialized items JSON
+   |
+6. API returns Razorpay order ID + checkout config to frontend
+   |
+7. Frontend opens Razorpay Magic Checkout popup
+   - Razorpay handles: address, payment method, payment
+   |
+8. On payment success:
+   a. Razorpay sends webhook to POST /api/v1/webhook/razorpay
+   b. API verifies X-Razorpay-Signature header
+   c. API uses idempotency key to prevent duplicate processing
+   d. API creates Order + OrderItems + Payment records
+   e. API awards loyalty points
+   f. API increments discount code usage count
+   g. API clears user cart
+   h. API deletes PendingCheckout record
+   |
+9. Frontend redirects to /order/[orderNumber] confirmation page
 
-[Add/Edit Product] (/admin/products/new or /admin/products/:id/edit)
-  |-- Left column (main):
-  |     |-- Product Name
-  |     |-- Slug (auto-generated, editable)
-  |     |-- Description (rich text editor)
-  |     |-- Images (drag-drop upload, reorder, set primary)
-  |
-  |-- Right column (sidebar):
-  |     |-- Status: Draft / Active / Archived
-  |     |-- Category (dropdown)
-  |     |-- Tags (multi-select)
-  |     |-- Price (Rs)
-  |     |-- Compare-at Price (for showing discounts)
-  |     |-- Material
-  |     |-- Sustainability badges (checkboxes)
-  |
-  |-- Variants Section:
-  |     |-- Add variant options: Size, Color
-  |     |-- Variant matrix auto-generated
-  |     |-- Per variant: SKU, price override, stock quantity
-  |
-  |-- SEO Section:
-  |     |-- Meta title, meta description
-  |     |-- Preview snippet
-  |
-  |-- [Save Draft] [Publish] [Delete] buttons
+On payment failure or timeout:
+   a. PendingCheckout stock reservation expires
+   b. Background job restores reserved stock
 ```
-
----
-
-### 4. Order Management Flow
-
-```
-[Orders List] (/admin/orders)
-  |-- Filters: Status, Date range, Payment status
-  |-- Search by order ID or customer
-  |-- Orders table: Order ID | Customer | Date | Items | Total | Payment | Status | Actions
-  |-- Click order -> /admin/orders/:id
-
-[Order Detail] (/admin/orders/:id)
-  |-- Order timeline (status changes with timestamps)
-  |-- Customer info (name, email, phone)
-  |-- Shipping address
-  |-- Items table (product, variant, quantity, price)
-  |-- Payment details (Razorpay payment ID, method, status)
-  |-- Order totals (subtotal, discount, shipping, GST, total)
-  |-- Actions:
-  |     |-- Update Status dropdown + [Update]
-  |     |-- [Process Refund] -> Razorpay refund API
-  |     |-- [Print Invoice] -> PDF generation
-  |-- Internal Notes section (add notes visible only to admin)
-```
-
----
-
-### 5. Other Admin Flows
-
-```
-[Categories] (/admin/categories) - CRUD with drag-drop ordering
-[Customers] (/admin/customers) - List, detail view, order history
-[Inventory] (/admin/inventory) - Stock levels, alerts, bulk update
-[Discounts] (/admin/discounts) - Create/manage discount codes
-[Blog] (/admin/blog) - Post list, create/edit with rich editor
-[Support] (/admin/support) - Ticket queue, respond, assign, resolve
-[Loyalty] (/admin/loyalty) - Configure points rules, view transactions
-[Referrals] (/admin/referrals) - Configure rewards, view analytics
-[Settings] (/admin/settings)
-  |-- General (store name, logo, contact)
-  |-- Shipping (zones, rates)
-  |-- Tax (GST configuration)
-  |-- Team (manage admin users, roles)
-  |-- Email Templates
-  |-- Payments (Razorpay keys)
-```
-
----
-
-## Page Map Summary
-
-### Storefront Pages (23 pages)
-
-| Route | Page | Rendering |
-|-------|------|-----------|
-| `/` | Homepage | SSR |
-| `/products` | All Products | SSR |
-| `/products/:slug` | Product Detail | SSR |
-| `/categories/:slug` | Category Page | SSR |
-| `/collections/:slug` | Collection Page | SSR |
-| `/search` | Search Results | CSR |
-| `/cart` | Shopping Cart | CSR |
-| `/checkout` | Checkout | CSR |
-| `/order-confirmation/:id` | Order Confirmation | CSR |
-| `/auth/login` | Login | CSR |
-| `/auth/register` | Register | CSR |
-| `/auth/forgot-password` | Forgot Password | CSR |
-| `/auth/reset-password` | Reset Password | CSR |
-| `/account/profile` | User Profile | CSR |
-| `/account/orders` | Order History | CSR |
-| `/account/orders/:id` | Order Detail | CSR |
-| `/account/wishlist` | Wishlist | CSR |
-| `/account/loyalty` | Loyalty Dashboard | CSR |
-| `/account/referrals` | Referral Dashboard | CSR |
-| `/account/support` | Support Tickets | CSR |
-| `/blog` | Blog Index | SSG + ISR |
-| `/blog/:slug` | Blog Post | SSG + ISR |
-| `/about`, `/contact`, `/faq`, `/shipping`, `/returns`, `/privacy`, `/terms`, `/size-guide` | Static Pages | SSG |
-
-### Admin Pages (15 pages)
-
-| Route | Page |
-|-------|------|
-| `/admin/login` | Admin Login |
-| `/admin/dashboard` | Dashboard Home |
-| `/admin/products` | Products List |
-| `/admin/products/new` | Add Product |
-| `/admin/products/:id/edit` | Edit Product |
-| `/admin/categories` | Categories |
-| `/admin/orders` | Orders List |
-| `/admin/orders/:id` | Order Detail |
-| `/admin/customers` | Customers List |
-| `/admin/customers/:id` | Customer Detail |
-| `/admin/inventory` | Inventory Management |
-| `/admin/discounts` | Discounts & Promos |
-| `/admin/blog` | Blog Management |
-| `/admin/support` | Support Tickets |
-| `/admin/loyalty` | Loyalty Config |
-| `/admin/referrals` | Referral Config |
-| `/admin/settings` | Settings (tabbed) |

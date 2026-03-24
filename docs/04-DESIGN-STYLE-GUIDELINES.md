@@ -1,358 +1,300 @@
-# Earth Revibe - Design & Style Guidelines
+# Earth Revibe -- Design and Style Guidelines
 
-## Brand Identity
+## 1. Brand Identity
 
-**Brand Personality:** Warm, grounded, conscious, authentic, approachable premium
-**Tone:** Conversational yet refined. Never preachy about sustainability — let the products and materials speak for themselves.
-**Visual Language:** Organic textures, natural photography, generous whitespace, soft curves
-
----
-
-## Color Palette
-
-### Primary Colors
-
-| Name | Hex | Usage |
-|------|-----|-------|
-| **Forest Green** | `#2D5016` | Primary brand color, CTAs, active states |
-| **Sage** | `#87A878` | Secondary actions, highlights, tags |
-| **Cream** | `#FAF7F2` | Primary background |
-| **Warm White** | `#FFFFFF` | Card backgrounds, modals |
-
-### Secondary Colors
-
-| Name | Hex | Usage |
-|------|-----|-------|
-| **Terracotta** | `#C67B5C` | Accent color, sale badges, warm highlights |
-| **Sand** | `#D4C5A9` | Borders, dividers, subtle backgrounds |
-| **Clay** | `#8B6F47` | Secondary text, icon fills |
-| **Deep Earth** | `#3D2B1F` | Primary text, headings |
-
-### Neutral Colors
-
-| Name | Hex | Usage |
-|------|-----|-------|
-| **Charcoal** | `#2C2C2C` | Body text |
-| **Dark Gray** | `#4A4A4A` | Secondary text |
-| **Medium Gray** | `#8E8E8E` | Placeholder text, disabled states |
-| **Light Gray** | `#E5E5E5` | Borders, dividers |
-| **Off White** | `#F5F5F5` | Alternate backgrounds |
-
-### Semantic Colors
-
-| Name | Hex | Usage |
-|------|-----|-------|
-| **Success** | `#4A7C59` | Success messages, in-stock indicator |
-| **Warning** | `#D4A843` | Low stock, warnings |
-| **Error** | `#C0392B` | Error messages, validation errors |
-| **Info** | `#5B8FA8` | Information banners, tooltips |
+**Brand:** Earth Revibe -- Indian streetwear brand
+**Tone:** Bold, youthful, culture-driven, mobile-first
+**Tagline:** "Streetwear for the Culture"
+**Locale:** en_IN (Indian English)
+**Currency:** INR (displayed as Rs or with the rupee symbol)
 
 ---
 
-## Typography
+## 2. Storefront Design System
 
-### Font Stack
+### 2.1 Color Palette
 
-| Role | Font | Fallback | Weight |
-|------|------|----------|--------|
-| **Headings** | `Playfair Display` | `Georgia, serif` | 500, 600, 700 |
-| **Body** | `Inter` | `system-ui, sans-serif` | 400, 500, 600 |
-| **Accent/Labels** | `Inter` | `system-ui, sans-serif` | 500, 600 |
-| **Monospace** | `JetBrains Mono` | `monospace` | 400 (admin code/IDs) |
-
-### Type Scale
-
-| Name | Size (Desktop) | Size (Mobile) | Line Height | Weight | Usage |
-|------|----------------|---------------|-------------|--------|-------|
-| **Display** | 56px / 3.5rem | 36px / 2.25rem | 1.1 | 700 | Hero headings |
-| **H1** | 40px / 2.5rem | 28px / 1.75rem | 1.2 | 600 | Page titles |
-| **H2** | 32px / 2rem | 24px / 1.5rem | 1.25 | 600 | Section headings |
-| **H3** | 24px / 1.5rem | 20px / 1.25rem | 1.3 | 600 | Subsection headings |
-| **H4** | 20px / 1.25rem | 18px / 1.125rem | 1.4 | 500 | Card headings |
-| **Body Large** | 18px / 1.125rem | 16px / 1rem | 1.6 | 400 | Lead paragraphs |
-| **Body** | 16px / 1rem | 15px / 0.9375rem | 1.6 | 400 | Main content |
-| **Body Small** | 14px / 0.875rem | 13px / 0.8125rem | 1.5 | 400 | Captions, meta |
-| **Label** | 12px / 0.75rem | 12px / 0.75rem | 1.4 | 600 | Labels, badges, overlines |
-| **Overline** | 11px / 0.6875rem | 11px / 0.6875rem | 1.5 | 600 | Category tags (uppercase, tracked) |
-
----
-
-## Spacing System
-
-Based on 4px grid with Tailwind's spacing scale:
+All colors are defined as CSS custom properties in `:root` (`apps/storefront/src/app/globals.css`).
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `space-1` | 4px | Tight gaps (icon + text) |
-| `space-2` | 8px | Inline padding, small gaps |
-| `space-3` | 12px | Form field padding |
-| `space-4` | 16px | Card padding, standard gap |
-| `space-5` | 20px | Between related sections |
-| `space-6` | 24px | Card inner padding |
-| `space-8` | 32px | Section padding |
-| `space-10` | 40px | Between major sections |
-| `space-12` | 48px | Page section spacing |
-| `space-16` | 64px | Major section dividers |
-| `space-20` | 80px | Hero/banner vertical padding |
-| `space-24` | 96px | Page top/bottom padding |
+| `--color-primary` | `#121212` | Primary brand color, buttons, links, text emphasis |
+| `--color-background` | `#ffffff` | Page background |
+| `--color-text` | `#121212` | Default body text |
+| `--color-muted` | `#737373` | Secondary text, placeholders, captions |
+| `--color-surface` | `#f5f5f5` | Card backgrounds, input backgrounds |
+| `--color-border` | `#e5e5e5` | Dividers, input borders, card borders |
+| `--color-sale` | `#cf2929` | Sale price, discount badges |
+| `--color-sold-out` | `#939393` | Sold-out variant indicators |
+| `--color-star` | `#FFDC0B` | Star rating fill color |
 
----
+**Selection highlight:** `::selection { background: #121212; color: #fff; }`
 
-## Layout & Grid
+**Theme color (PWA/browser chrome):** `#121212`
 
-### Container Widths
+### 2.2 Typography
 
-| Breakpoint | Container Max-Width | Padding |
-|------------|-------------------|---------|
-| Mobile (`< 640px`) | 100% | 16px |
-| Tablet (`640px - 1023px`) | 100% | 24px |
-| Desktop (`1024px - 1279px`) | 1024px | 32px |
-| Wide (`1280px+`) | 1280px | 32px |
+Fonts are loaded via `next/font/google` in `apps/storefront/src/app/layout.tsx`.
 
-### Product Grid
+| Role | Font Family | CSS Variable | Weights |
+|------|-------------|-------------|---------|
+| **Body (primary)** | Archivo Narrow | `--font-archivo` | 400, 500, 600, 700 |
+| **Fallback** | Poppins | `--font-poppins` | 400, 500, 600, 700 |
+| **System fallback** | sans-serif | -- | -- |
 
-| Breakpoint | Columns | Gap |
-|------------|---------|-----|
-| Mobile | 2 | 12px |
-| Tablet | 3 | 16px |
-| Desktop | 4 | 24px |
+The body font is set via `--font-body: 'Archivo Narrow', sans-serif` in CSS custom properties. Both font variables are applied to the `<html>` element as CSS variable classes.
 
-### Admin Layout
+**Font rendering:** `-webkit-font-smoothing: antialiased` is applied to the body.
 
-| Component | Width |
-|-----------|-------|
-| Sidebar (expanded) | 260px |
-| Sidebar (collapsed) | 72px |
-| Main content | remaining |
-| Max content width | 1440px |
-
----
-
-## Component Design Tokens
-
-### Border Radius
+### 2.3 Spacing
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `rounded-sm` | 4px | Badges, tags |
-| `rounded-md` | 8px | Buttons, inputs |
-| `rounded-lg` | 12px | Cards, modals |
-| `rounded-xl` | 16px | Hero sections, feature cards |
-| `rounded-full` | 9999px | Avatars, round buttons |
+| `--section-spacing-mobile` | `25px` | Vertical gap between page sections on mobile |
+| `--section-spacing-desktop` | `40px` | Vertical gap between page sections on desktop |
 
-### Shadows
+### 2.4 Border Radius
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle elevation (cards at rest) |
-| `shadow-md` | `0 4px 12px rgba(0,0,0,0.08)` | Cards on hover, dropdowns |
-| `shadow-lg` | `0 8px 24px rgba(0,0,0,0.12)` | Modals, popovers |
-| `shadow-xl` | `0 16px 48px rgba(0,0,0,0.16)` | Toast notifications |
+| `--button-radius` | `10px` | Buttons, action elements |
+| `--badge-radius` | `6px` | Badges, tags, status indicators |
 
-### Transitions
+### 2.5 Aspect Ratios
 
-| Property | Duration | Easing |
-|----------|----------|--------|
-| Color, background | 150ms | ease-in-out |
-| Transform, opacity | 200ms | ease-out |
-| Layout, height | 300ms | ease-in-out |
-| Page transitions | 400ms | ease-out |
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--product-image-ratio` | `2 / 3` | Product card and gallery images (portrait) |
 
----
+### 2.6 Shadows
 
-## Button Styles
+Card shadows and elevation levels are applied via Tailwind utility classes. The design is intentionally flat with minimal shadow usage -- the storefront relies on borders and surface color contrast rather than elevation.
 
-### Primary Button
-- Background: Forest Green `#2D5016`
-- Text: White `#FFFFFF`
-- Padding: 12px 24px
-- Border Radius: 8px
-- Font: Inter 500, 16px
-- Hover: darken 10% (`#244012`)
-- Active: darken 15%
-- Disabled: opacity 0.5, no pointer
+### 2.7 Animations
 
-### Secondary Button
-- Background: transparent
-- Border: 1.5px solid Forest Green `#2D5016`
-- Text: Forest Green `#2D5016`
-- Hover: Forest Green bg, white text
+All keyframe animations are defined in `globals.css`:
 
-### Ghost Button
-- Background: transparent
-- Text: Forest Green `#2D5016`
-- Hover: Cream background `#FAF7F2`
+| Animation | Keyframes | Duration | Easing | Usage |
+|-----------|-----------|----------|--------|-------|
+| `fadeIn` | opacity 0 -> 1 | 0.4s | ease-out | General element appearance |
+| `slideUp` | opacity 0, translateY(20px) -> visible | 0.5s | ease-out | Content loading, modal entry |
+| `slideDown` | opacity 0, translateY(-10px) -> visible | 0.3s | ease-out | Dropdown menus, notifications |
+| `slideInLeft` | translateX(-100%) -> translateX(0) | 0.3s | ease-out | Mobile menu entry |
+| `slideInRight` | translateX(100%) -> translateX(0) | 0.3s | cubic-bezier(0.32, 0.72, 0, 1) | Cart drawer entry |
+| `shimmer` | background-position -200% -> 200% | 1.5s | infinite | Skeleton loading placeholders |
 
-### Danger Button
-- Background: Error `#C0392B`
-- Text: White
-- Hover: darken 10%
+**Utility classes:**
+- `.animate-fade-in` -- fadeIn
+- `.animate-slide-up` -- slideUp
+- `.animate-slide-down` -- slideDown
+- `.animate-slide-in-left` -- slideInLeft
+- `.animate-slide-in-right` -- slideInRight
+- `.skeleton` -- shimmer effect with gradient background
 
-### Button Sizes
+**Framer Motion:** Used for page transitions, product image swipe gestures, and micro-interactions. Not defined in CSS -- configured per component.
 
-| Size | Padding | Font Size | Height |
-|------|---------|-----------|--------|
-| Small | 8px 16px | 14px | 36px |
-| Medium | 12px 24px | 16px | 44px |
-| Large | 16px 32px | 18px | 52px |
+**Lenis:** Smooth scroll library wrapping the entire app via `LenisProvider`. Provides momentum-based scrolling on all pages.
 
----
+### 2.8 Scrollbar
 
-## Form Elements
+Hidden scrollbar on elements with the `.hide-scrollbar` class:
+- WebKit: `display: none` on `::-webkit-scrollbar`
+- Firefox: `scrollbar-width: none`
+- IE/Edge: `-ms-overflow-style: none`
 
-### Input Fields
-- Background: White `#FFFFFF`
-- Border: 1.5px solid `#E5E5E5`
-- Border Radius: 8px
-- Padding: 12px 16px
-- Font: Inter 400, 16px
-- Focus: border Forest Green `#2D5016`, subtle green shadow
-- Error: border Error `#C0392B`, error text below
-- Placeholder: Medium Gray `#8E8E8E`
-- Height: 44px
+### 2.9 Global Resets
 
-### Select / Dropdown
-- Same as input styling
-- Custom chevron icon (lucide-react)
-- Dropdown menu: white bg, shadow-md, rounded-lg
-
-### Checkbox / Radio
-- Custom styled with Forest Green accent
-- Size: 20px
-- Border Radius: 4px (checkbox), full (radio)
-- Checked: Forest Green fill with white check
-
-### Toggle Switch
-- Track: Light Gray -> Forest Green (active)
-- Thumb: White with shadow-sm
-- Width: 44px, Height: 24px
+- `* { margin: 0; box-sizing: border-box; }`
+- `html { overscroll-behavior-x: none; background: #ffffff; }`
+- `body { overflow-x: hidden; }` (prevents horizontal scroll)
+- iOS Safari blink fix: `backface-visibility: hidden` on body
 
 ---
 
-## Card Styles
+## 3. Storefront Component Patterns
 
-### Product Card
-```
-- Background: White
-- Border Radius: 12px
-- Shadow: shadow-sm, hover: shadow-md
-- Image: aspect-ratio 3:4, rounded-t-lg
-- Padding (content area): 16px
-- Transition: transform scale(1.02) on hover
-- Wishlist icon: top-right corner, 32px circle
-```
+### 3.1 Product Card
+- Portrait image (2:3 aspect ratio)
+- Product name below image
+- Price line: current price, crossed-out compare-at price (if different)
+- Sale badge (`--color-sale`) when compare-at price exists
+- "Sold Out" badge (`--color-sold-out`) when all variants have zero stock
+- Tapping the card navigates to `/product/[slug]`
 
-### Admin Dashboard Card
-```
-- Background: White
-- Border: 1px solid #E5E5E5
-- Border Radius: 12px
-- Padding: 24px
-- Shadow: none (flat design for admin)
-- Hover: border color Sage #87A878
-```
+### 3.2 Header Variants
 
----
+**Homepage header:**
+- Transparent background, transitions to solid white on scroll
+- Centered logo
+- Hamburger menu icon (left), user account and cart icons (right)
 
-## Iconography
+**Category/listing page header:**
+- Sticky white background
+- Centered "EARTH REVIBE" text logo
+- Standard navigation icons
 
-- **Library:** Lucide React (consistent, clean stroke icons)
-- **Stroke Width:** 1.5px (storefront), 2px (admin)
-- **Default Size:** 20px (inline), 24px (standalone)
-- **Color:** inherits from text color
+**Product detail header:**
+- Minimal: back arrow on the left, share and heart (wishlist) icons on the right
+- No logo, no hamburger menu
+- Positioned over the product image gallery
 
----
+### 3.3 Mobile Bottom Dock
+- Fixed at the bottom of the viewport on all storefront pages
+- Four icons in a row: Home, Search, Wishlist, Cart
+- Active state indicator for current page
+- Badge counts on Wishlist (item count) and Cart (item count)
+- White background with top border
 
-## Image Guidelines
+### 3.4 Cart Drawer
+- Slides in from the right edge (`.animate-slide-in-right`)
+- Overlay backdrop dims the page
+- Cart items list with quantity +/- controls
+- Discount code input
+- Subtotal and "Checkout" button at the bottom
+- Close button or tap overlay to dismiss
 
-### Product Photography
-- Clean, natural lighting (warm daylight feel)
-- Neutral/natural backgrounds (off-white linen, raw wood, earth tones)
-- Model shots + flat lays
-- Minimum resolution: 1200x1600px (3:4 ratio)
-- Format: WebP with JPEG fallback
-
-### Aspect Ratios
-
-| Context | Ratio |
-|---------|-------|
-| Product card thumbnail | 3:4 |
-| Product detail main image | 3:4 |
-| Hero banner (desktop) | 21:9 |
-| Hero banner (mobile) | 16:9 |
-| Blog featured image | 16:9 |
-| Category card | 1:1 |
-| Avatar | 1:1 |
+### 3.5 Filter Sidebar (Category Pages)
+- Mobile: slides in from the left (`.animate-slide-in-left`)
+- Desktop: persistent sidebar or inline filter bar
+- Filter by: category, price range, size, color, sort order
 
 ---
 
-## Animation Guidelines
+## 4. Admin Design System
 
-### Micro-interactions
-- Button hover: subtle scale (1.02) + color shift, 150ms
-- Card hover: lift with shadow-md, 200ms
-- Add to cart: icon bounce + badge pulse
-- Toast notification: slide in from top-right, 300ms
-- Page load: content fade-in staggered, 400ms
+### 4.1 Color Palette
 
-### Page Transitions
-- Route change: fade (opacity 0->1), 300ms
-- Modal open: fade + scale (0.95->1), 200ms
-- Drawer open: slide from right, 300ms
-- Accordion: height auto with ease-in-out, 300ms
+All admin colors are defined in `@theme` in `apps/admin/src/app/globals.css`.
 
-### Loading States
-- Skeleton screens (not spinners) for content loading
-- Shimmer effect on skeletons using CSS animation
-- Button loading: text replaced with spinner, width maintained
+**Primary colors:**
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--color-primary` | `#0D0D0D` | Primary actions, active states |
+| `--color-primary-light` | `#FAFAFA` | Light primary background |
+| `--color-accent` | `#22C55E` | Success actions, positive indicators |
+| `--color-accent-light` | `#F0FDF4` | Light accent background |
+
+**Text colors:**
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--color-text-primary` | `#0D0D0D` | Headings, primary text |
+| `--color-text-secondary` | `#7A7A7A` | Body text, descriptions |
+| `--color-text-muted` | `#999999` | Captions, placeholders, disabled text |
+| `--color-text-on-dark` | `#FAFAFA` | Text on dark backgrounds |
+
+**Surface colors:**
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--color-surface` | `#FFFFFF` | Page and card backgrounds |
+| `--color-surface-tint` | `#FAFAFA` | Alternating table rows, subtle backgrounds |
+| `--color-surface-hover` | `#F5F5F5` | Hover state for interactive surfaces |
+| `--color-border` | `#E8E8E8` | Borders, dividers |
+
+**Semantic colors:**
+| Token | Value | Background | Usage |
+|-------|-------|------------|-------|
+| `--color-success` | `#22C55E` | `--color-success-bg: #F0FDF4` | Completed, active, positive |
+| `--color-warning` | `#F59E0B` | `--color-warning-bg: #FEF3C7` | Pending, needs attention |
+| `--color-error` | `#DC2626` | `--color-error-bg: #FEE2E2` | Failed, cancelled, destructive |
+| `--color-info` | `#3B82F6` | `--color-info-bg: #EFF6FF` | Informational, links |
+
+**Legacy token aliases (backward compatibility):**
+| Legacy Token | Maps To | Value |
+|-------------|---------|-------|
+| `--color-deep-earth` | primary | `#0D0D0D` |
+| `--color-charcoal` | primary | `#0D0D0D` |
+| `--color-forest-green` | accent | `#22C55E` |
+| `--color-dark-gray` | text-secondary | `#7A7A7A` |
+| `--color-medium-gray` | text-muted | `#999999` |
+| `--color-light-gray` | border | `#E8E8E8` |
+| `--color-off-white` | surface-hover | `#F5F5F5` |
+| `--color-cream` | surface-tint | `#FAFAFA` |
+| `--color-warm-white` | surface | `#FFFFFF` |
+| `--color-terracotta` | error | `#DC2626` |
+| `--color-sand` | warning | `#F59E0B` |
+| `--color-clay` | text-secondary | `#7A7A7A` |
+| `--color-sage` | success | `#22C55E` |
+
+### 4.2 Typography (Admin)
+
+| Role | Font Family | CSS Variable | Usage |
+|------|-------------|-------------|-------|
+| **Headings** | Space Grotesk | `--font-heading` | Page titles, section headers |
+| **Body** | Inter | `--font-body` | All body text, form labels, table content |
+| **System fallback** | system-ui, sans-serif | -- | Fallback stack |
+
+Apply heading font with the `.font-heading` utility class.
+
+### 4.3 Admin Component Patterns
+
+**Sidebar navigation:**
+- Collapsible sidebar on the left
+- Dark or primary-colored background
+- Active page indicator
+- Section grouping for related pages
+
+**Data tables:**
+- Native HTML `<table>` with Tailwind styling (no third-party table library)
+- Alternating row backgrounds (`--color-surface-tint`)
+- Hover state on rows (`--color-surface-hover`)
+- Action buttons in the last column
+
+**Forms:**
+- react-hook-form with Zod validation (schemas from `@earth-revibe/shared`)
+- Labels above inputs
+- Inline error messages in `--color-error`
+- Save/Cancel button pair at the bottom
+
+**Charts:**
+- recharts library with `ResponsiveContainer` wrapper
+- Line charts for revenue over time
+- Bar charts for order volume
+- Consistent color scheme using semantic tokens
+
+**Rich text editor:**
+- TipTap (via `@tiptap/react`) for product descriptions and blog posts
+- Toolbar with formatting options (bold, italic, headings, lists, links, images)
+
+**Drag and drop:**
+- `@hello-pangea/dnd` for:
+  - Homepage section reordering
+  - Product image reordering
+  - Category sort order
+
+**File uploads:**
+- react-dropzone for drag-and-drop file selection
+- Upload to Cloudflare Images via the API (never direct)
+- Progress indicator during upload
+- Image preview after upload
 
 ---
 
-## Responsive Breakpoints
+## 5. Shared Design Principles
 
-| Name | Min Width | Tailwind Prefix |
-|------|-----------|-----------------|
-| Mobile (default) | 0px | (none) |
-| Small | 640px | `sm:` |
-| Medium | 768px | `md:` |
-| Large | 1024px | `lg:` |
-| Extra Large | 1280px | `xl:` |
-| 2XL | 1536px | `2xl:` |
+### 5.1 Mobile First
+- All storefront designs start from mobile viewport and scale up
+- Touch targets minimum 44x44px
+- Bottom navigation dock for primary actions (mobile only)
+- Swipe gestures for product browsing and cart dismissal
 
-### Mobile-First Principles
-1. Design for 375px width first (iPhone SE)
-2. Touch targets minimum 44x44px
-3. Bottom navigation bar on mobile storefront
-4. Swipe gestures for carousels and drawers
-5. No hover-dependent interactions on mobile
-6. Simplified navigation (hamburger + drawer)
+### 5.2 Performance
+- Skeleton loading states (shimmer animation) for all data-dependent content
+- next/image for all images (automatic optimization, lazy loading, proper sizing)
+- Minimal JavaScript -- Server Components by default, "use client" only when needed
 
----
+### 5.3 Accessibility
+- Semantic HTML elements
+- Proper heading hierarchy
+- Alt text on all images (configurable per product image in admin)
+- Focus-visible states on interactive elements
+- Color contrast ratios meeting WCAG AA
 
-## Admin Dashboard Aesthetic
+### 5.4 Icons
+- **Storefront and Admin:** lucide-react exclusively. No other icon libraries.
+- Consistent icon sizing (16px, 20px, 24px based on context)
 
-- **Style:** Clean, professional, Shopify-inspired
-- **Background:** Off White `#F5F5F5`
-- **Cards:** White with subtle borders (no shadows — flat)
-- **Sidebar:** Deep Earth `#3D2B1F` background, white text
-- **Active nav item:** Forest Green `#2D5016` left border + Sage `#87A878` text
-- **Data tables:** Alternating row colors (white / off-white)
-- **Status badges:** Rounded pills with semantic colors
-  - Active/Delivered: Success green bg
-  - Pending/Processing: Warning amber bg
-  - Cancelled/Error: Error red bg
-  - Draft: Medium Gray bg
-
----
-
-## Accessibility Standards
-
-- WCAG 2.1 AA compliance minimum
-- Color contrast ratio: 4.5:1 for body text, 3:1 for large text
-- Focus indicators: 2px Forest Green outline with 2px offset
-- Skip to main content link
-- Semantic HTML (proper heading hierarchy, landmarks)
-- Alt text for all images
-- Keyboard navigable (all interactive elements)
-- Screen reader friendly (ARIA labels where needed)
-- Reduced motion support via `prefers-reduced-motion`
+### 5.5 Image Guidelines
+- Product images: 2:3 aspect ratio (portrait orientation)
+- Always use `next/image` component -- never raw `<img>` tags
+- Images hosted on Cloudflare Images CDN
+- Alt text required for all product images

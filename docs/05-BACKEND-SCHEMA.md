@@ -1,1147 +1,873 @@
-# Earth Revibe - Backend Schema Document
+# Earth Revibe -- Database Schema
 
-## Database: PostgreSQL 16 with Prisma ORM
+## Overview
 
----
+**Database:** PostgreSQL 16
+**ORM:** Prisma 5.22.0
+**Schema file:** `packages/db/prisma/schema.prisma`
 
-## Enums (Shared via `packages/shared`)
+The database uses Prisma Client for all data access. IDs use CUID strings (`@default(cuid())`). Timestamps use `DateTime` with `@default(now())` for creation and `@updatedAt` for updates. All monetary values use `Decimal(10, 2)`.
 
-```typescript
-// packages/shared/src/enums.ts
-
-export enum UserRole {
-  CUSTOMER = "CUSTOMER",
-  ADMIN = "ADMIN",
-  SUPER_ADMIN = "SUPER_ADMIN",
-  SUPPORT_STAFF = "SUPPORT_STAFF",
-}
-
-export enum ProductStatus {
-  DRAFT = "DRAFT",
-  ACTIVE = "ACTIVE",
-  ARCHIVED = "ARCHIVED",
-}
-
-export enum OrderStatus {
-  PLACED = "PLACED",
-  CONFIRMED = "CONFIRMED",
-  PROCESSING = "PROCESSING",
-  SHIPPED = "SHIPPED",
-  OUT_FOR_DELIVERY = "OUT_FOR_DELIVERY",
-  DELIVERED = "DELIVERED",
-  CANCELLED = "CANCELLED",
-  RETURNED = "RETURNED",
-  REFUNDED = "REFUNDED",
-}
-
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  AUTHORIZED = "AUTHORIZED",
-  CAPTURED = "CAPTURED",
-  FAILED = "FAILED",
-  REFUNDED = "REFUNDED",
-  PARTIALLY_REFUNDED = "PARTIALLY_REFUNDED",
-}
-
-export enum PaymentMethod {
-  UPI = "UPI",
-  CARD = "CARD",
-  NETBANKING = "NETBANKING",
-  WALLET = "WALLET",
-  EMI = "EMI",
-}
-
-export enum DiscountType {
-  PERCENTAGE = "PERCENTAGE",
-  FLAT = "FLAT",
-  BUY_X_GET_Y = "BUY_X_GET_Y",
-  FREE_SHIPPING = "FREE_SHIPPING",
-}
-
-export enum TicketStatus {
-  OPEN = "OPEN",
-  IN_PROGRESS = "IN_PROGRESS",
-  RESOLVED = "RESOLVED",
-  CLOSED = "CLOSED",
-}
-
-export enum TicketPriority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH",
-  URGENT = "URGENT",
-}
-
-export enum BlogPostStatus {
-  DRAFT = "DRAFT",
-  PUBLISHED = "PUBLISHED",
-  SCHEDULED = "SCHEDULED",
-}
-
-export enum LoyaltyTransactionType {
-  EARNED = "EARNED",
-  REDEEMED = "REDEEMED",
-  BONUS = "BONUS",
-  EXPIRED = "EXPIRED",
-  ADJUSTED = "ADJUSTED",
-}
-
-export enum ReferralStatus {
-  PENDING = "PENDING",
-  SIGNED_UP = "SIGNED_UP",
-  CONVERTED = "CONVERTED",
-}
-
-export enum ReturnStatus {
-  REQUESTED = "REQUESTED",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PICKED_UP = "PICKED_UP",
-  RECEIVED = "RECEIVED",
-  REFUND_INITIATED = "REFUND_INITIATED",
-  COMPLETED = "COMPLETED",
-}
-
-export enum NotificationType {
-  ORDER_CONFIRMED = "ORDER_CONFIRMED",
-  ORDER_SHIPPED = "ORDER_SHIPPED",
-  ORDER_DELIVERED = "ORDER_DELIVERED",
-  ORDER_CANCELLED = "ORDER_CANCELLED",
-  RETURN_UPDATE = "RETURN_UPDATE",
-  TICKET_REPLY = "TICKET_REPLY",
-  LOYALTY_EARNED = "LOYALTY_EARNED",
-  REFERRAL_REWARD = "REFERRAL_REWARD",
-  LOW_STOCK = "LOW_STOCK",
-  PROMOTION = "PROMOTION",
-}
-```
+Authentication is managed by Supabase. The application database stores a `User` record synced from Supabase auth data. The `passwordHash` field defaults to `"supabase-managed"` since Supabase handles password storage.
 
 ---
 
-## Prisma Schema (`packages/db/prisma/schema.prisma`)
-
-```prisma
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-// ==========================================
-// USER & AUTH
-// ==========================================
-
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  phone         String?   @unique
-  passwordHash  String
-  firstName     String
-  lastName      String
-  avatar        String?
-  role          UserRole  @default(CUSTOMER)
-  isActive      Boolean   @default(true)
-  emailVerified Boolean   @default(false)
-  phoneVerified Boolean   @default(false)
-  lastLoginAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  addresses         Address[]
-  orders            Order[]
-  reviews           Review[]
-  wishlistItems     WishlistItem[]
-  cart              Cart?
-  loyaltyPoints     Int              @default(0)
-  loyaltyHistory    LoyaltyTransaction[]
-  referralCode      String?          @unique
-  referralsMade     Referral[]       @relation("Referrer")
-  referredBy        Referral?        @relation("Referee")
-  supportTickets    SupportTicket[]
-  ticketMessages    TicketMessage[]
-  refreshTokens     RefreshToken[]
-  notifications     Notification[]
-  orderNotes        OrderNote[]
-
-  @@map("users")
-}
-
-enum UserRole {
-  CUSTOMER
-  ADMIN
-  SUPER_ADMIN
-  SUPPORT_STAFF
-}
-
-model RefreshToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@map("refresh_tokens")
-}
-
-model Address {
-  id         String  @id @default(cuid())
-  userId     String
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  label      String  @default("Home") // Home, Work, Other
-  fullName   String
-  phone      String
-  line1      String
-  line2      String?
-  city       String
-  state      String
-  pinCode    String
-  isDefault  Boolean @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  orders     Order[]
-
-  @@index([userId])
-  @@map("addresses")
-}
-
-// ==========================================
-// PRODUCTS & CATEGORIES
-// ==========================================
-
-model Category {
-  id          String     @id @default(cuid())
-  name        String
-  slug        String     @unique
-  description String?
-  image       String?
-  parentId    String?
-  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
-  children    Category[] @relation("CategoryTree")
-  sortOrder   Int        @default(0)
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  products    Product[]
-
-  @@index([parentId])
-  @@map("categories")
-}
-
-model Product {
-  id              String        @id @default(cuid())
-  name            String
-  slug            String        @unique
-  description     String        @db.Text
-  shortDescription String?
-  price           Decimal       @db.Decimal(10, 2)
-  compareAtPrice  Decimal?      @db.Decimal(10, 2)
-  material        String?
-  careInstructions String?      @db.Text
-  status          ProductStatus @default(DRAFT)
-  isFeatured      Boolean       @default(false)
-  categoryId      String
-  category        Category      @relation(fields: [categoryId], references: [id])
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  images          ProductImage[]
-  variants        ProductVariant[]
-  reviews         Review[]
-  wishlistItems   WishlistItem[]
-  tags            ProductTag[]
-
-  @@index([categoryId])
-  @@index([status])
-  @@index([slug])
-  @@map("products")
-}
-
-enum ProductStatus {
-  DRAFT
-  ACTIVE
-  ARCHIVED
-}
-
-model ProductImage {
-  id        String  @id @default(cuid())
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  url       String
-  publicId  String  // Cloudinary public ID
-  altText   String?
-  sortOrder Int     @default(0)
-  isPrimary Boolean @default(false)
-
-  @@index([productId])
-  @@map("product_images")
-}
-
-model ProductVariant {
-  id        String  @id @default(cuid())
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  sku       String  @unique
-  size      String  // XS, S, M, L, XL, XXL
-  color     String
-  colorHex  String?
-  price     Decimal? @db.Decimal(10, 2) // Override product price if set
-  stock     Int     @default(0)
-  lowStockThreshold Int @default(5)
-  isActive  Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  cartItems  CartItem[]
-  orderItems OrderItem[]
-
-  @@unique([productId, size, color])
-  @@index([productId])
-  @@index([sku])
-  @@map("product_variants")
-}
-
-model Tag {
-  id       String       @id @default(cuid())
-  name     String       @unique
-  slug     String       @unique
-  products ProductTag[]
-
-  @@map("tags")
-}
-
-model ProductTag {
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  tagId     String
-  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([productId, tagId])
-  @@map("product_tags")
-}
-
-// ==========================================
-// CART
-// ==========================================
-
-model Cart {
-  id        String     @id @default(cuid())
-  userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  @@map("carts")
-}
-
-model CartItem {
-  id        String         @id @default(cuid())
-  cartId    String
-  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  variantId String
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
-  quantity  Int            @default(1)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-
-  @@unique([cartId, variantId])
-  @@index([cartId])
-  @@map("cart_items")
-}
-
-// ==========================================
-// ORDERS & PAYMENTS
-// ==========================================
-
-model Order {
-  id              String        @id @default(cuid())
-  orderNumber     String        @unique // Earth Revibe format: ER-XXXXXX
-  userId          String
-  user            User          @relation(fields: [userId], references: [id])
-  addressId       String
-  address         Address       @relation(fields: [addressId], references: [id])
-  status          OrderStatus   @default(PLACED)
-  subtotal        Decimal       @db.Decimal(10, 2)
-  discountAmount  Decimal       @default(0) @db.Decimal(10, 2)
-  shippingAmount  Decimal       @default(0) @db.Decimal(10, 2)
-  taxAmount       Decimal       @default(0) @db.Decimal(10, 2)
-  totalAmount     Decimal       @db.Decimal(10, 2)
-  loyaltyPointsUsed   Int       @default(0)
-  loyaltyPointsEarned Int       @default(0)
-  discountCodeId  String?
-  discountCode    DiscountCode? @relation(fields: [discountCodeId], references: [id])
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  items           OrderItem[]
-  payment         Payment?
-  statusHistory   OrderStatusHistory[]
-  notes           OrderNote[]
-  returnRequest   ReturnRequest?
-
-  @@index([userId])
-  @@index([orderNumber])
-  @@index([status])
-  @@map("orders")
-}
-
-enum OrderStatus {
-  PLACED
-  CONFIRMED
-  PROCESSING
-  SHIPPED
-  OUT_FOR_DELIVERY
-  DELIVERED
-  CANCELLED
-  RETURNED
-  REFUNDED
-}
-
-model OrderItem {
-  id        String         @id @default(cuid())
-  orderId   String
-  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  variantId String
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
-  quantity  Int
-  unitPrice Decimal        @db.Decimal(10, 2)
-  totalPrice Decimal       @db.Decimal(10, 2)
-
-  // Snapshot of product details at time of order (denormalized)
-  productName    String
-  productImage   String?
-  variantSize    String
-  variantColor   String
-
-  @@index([orderId])
-  @@map("order_items")
-}
-
-model OrderStatusHistory {
-  id        String      @id @default(cuid())
-  orderId   String
-  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  status    OrderStatus
-  note      String?
-  changedBy String?     // Admin user ID who changed it
-  createdAt DateTime    @default(now())
-
-  @@index([orderId])
-  @@map("order_status_history")
-}
-
-model OrderNote {
-  id        String   @id @default(cuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  content   String   @db.Text
-  isInternal Boolean @default(true)
-  createdAt DateTime @default(now())
-
-  @@index([orderId])
-  @@map("order_notes")
-}
-
-model Payment {
-  id                  String        @id @default(cuid())
-  orderId             String        @unique
-  order               Order         @relation(fields: [orderId], references: [id])
-  razorpayOrderId     String        @unique
-  razorpayPaymentId   String?       @unique
-  razorpaySignature   String?
-  amount              Decimal       @db.Decimal(10, 2)
-  currency            String        @default("INR")
-  status              PaymentStatus @default(PENDING)
-  method              PaymentMethod?
-  refundId            String?
-  refundAmount        Decimal?      @db.Decimal(10, 2)
-  failureReason       String?
-  paidAt              DateTime?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-
-  @@index([razorpayOrderId])
-  @@map("payments")
-}
-
-enum PaymentStatus {
-  PENDING
-  AUTHORIZED
-  CAPTURED
-  FAILED
-  REFUNDED
-  PARTIALLY_REFUNDED
-}
-
-enum PaymentMethod {
-  UPI
-  CARD
-  NETBANKING
-  WALLET
-  EMI
-}
-
-// ==========================================
-// RETURNS
-// ==========================================
-
-model ReturnRequest {
-  id           String       @id @default(cuid())
-  orderId      String       @unique
-  order        Order        @relation(fields: [orderId], references: [id])
-  reason       String       @db.Text
-  status       ReturnStatus @default(REQUESTED)
-  adminNote    String?      @db.Text
-  refundAmount Decimal?     @db.Decimal(10, 2)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  @@map("return_requests")
-}
-
-enum ReturnStatus {
-  REQUESTED
-  APPROVED
-  REJECTED
-  PICKED_UP
-  RECEIVED
-  REFUND_INITIATED
-  COMPLETED
-}
-
-// ==========================================
-// REVIEWS
-// ==========================================
-
-model Review {
-  id         String   @id @default(cuid())
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  rating     Int      // 1-5
-  title      String?
-  content    String?  @db.Text
-  isVerified Boolean  @default(false) // Verified purchase
-  isApproved Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@unique([productId, userId])
-  @@index([productId])
-  @@map("reviews")
-}
-
-// ==========================================
-// WISHLIST
-// ==========================================
-
-model WishlistItem {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([userId, productId])
-  @@index([userId])
-  @@map("wishlist_items")
-}
-
-// ==========================================
-// DISCOUNTS
-// ==========================================
-
-model DiscountCode {
-  id               String       @id @default(cuid())
-  code             String       @unique
-  description      String?
-  type             DiscountType
-  value            Decimal      @db.Decimal(10, 2) // Percentage or flat amount
-  minOrderValue    Decimal?     @db.Decimal(10, 2)
-  maxDiscountAmount Decimal?    @db.Decimal(10, 2) // Cap for percentage discounts
-  usageLimit       Int?         // Total uses allowed
-  usageCount       Int          @default(0)
-  perUserLimit     Int          @default(1)
-  applicableCategories String[] // Category IDs, empty = all
-  applicableProducts   String[] // Product IDs, empty = all
-  isActive         Boolean      @default(true)
-  startsAt         DateTime
-  expiresAt        DateTime
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-
-  orders           Order[]
-
-  @@index([code])
-  @@map("discount_codes")
-}
-
-enum DiscountType {
-  PERCENTAGE
-  FLAT
-  BUY_X_GET_Y
-  FREE_SHIPPING
-}
-
-// ==========================================
-// LOYALTY & REFERRALS
-// ==========================================
-
-model LoyaltyTransaction {
-  id          String                 @id @default(cuid())
-  userId      String
-  user        User                   @relation(fields: [userId], references: [id])
-  type        LoyaltyTransactionType
-  points      Int
-  description String
-  orderId     String?
-  createdAt   DateTime               @default(now())
-
-  @@index([userId])
-  @@map("loyalty_transactions")
-}
-
-enum LoyaltyTransactionType {
-  EARNED
-  REDEEMED
-  BONUS
-  EXPIRED
-  ADJUSTED
-}
-
-model LoyaltyConfig {
-  id                  String  @id @default(cuid())
-  pointsPerRupee      Decimal @db.Decimal(10, 4) // e.g., 0.1 = 1 point per Rs 10
-  pointRedemptionValue Decimal @db.Decimal(10, 4) // e.g., 0.1 = 100 points = Rs 10
-  welcomeBonus        Int     @default(0)
-  reviewBonus         Int     @default(0)
-  birthdayBonus       Int     @default(0)
-  minRedeemPoints     Int     @default(100)
-  isActive            Boolean @default(true)
-  updatedAt           DateTime @updatedAt
-
-  @@map("loyalty_config")
-}
-
-model Referral {
-  id           String         @id @default(cuid())
-  referrerId   String
-  referrer     User           @relation("Referrer", fields: [referrerId], references: [id])
-  refereeId    String         @unique
-  referee      User           @relation("Referee", fields: [refereeId], references: [id])
-  status       ReferralStatus @default(PENDING)
-  referrerReward Int          @default(0) // Points awarded to referrer
-  refereeReward  Int          @default(0) // Points awarded to referee
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-
-  @@index([referrerId])
-  @@map("referrals")
-}
-
-enum ReferralStatus {
-  PENDING
-  SIGNED_UP
-  CONVERTED
-}
-
-model ReferralConfig {
-  id              String  @id @default(cuid())
-  referrerReward  Int     @default(100) // Points for referrer
-  refereeReward   Int     @default(50)  // Points for referee
-  requirePurchase Boolean @default(true) // Require purchase to convert
-  isActive        Boolean @default(true)
-  updatedAt       DateTime @updatedAt
-
-  @@map("referral_config")
-}
-
-// ==========================================
-// BLOG / CMS
-// ==========================================
-
-model BlogPost {
-  id            String         @id @default(cuid())
-  title         String
-  slug          String         @unique
-  excerpt       String?
-  content       String         @db.Text
-  featuredImage String?
-  authorId      String
-  status        BlogPostStatus @default(DRAFT)
-  publishedAt   DateTime?
-  scheduledAt   DateTime?
-  metaTitle     String?
-  metaDescription String?
-  readTime      Int?           // Minutes
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  categories    BlogPostCategory[]
-  tags          BlogPostTag[]
-
-  @@index([slug])
-  @@index([status])
-  @@map("blog_posts")
-}
-
-enum BlogPostStatus {
-  DRAFT
-  PUBLISHED
-  SCHEDULED
-}
-
-model BlogCategory {
-  id    String             @id @default(cuid())
-  name  String             @unique
-  slug  String             @unique
-  posts BlogPostCategory[]
-
-  @@map("blog_categories")
-}
-
-model BlogPostCategory {
-  postId     String
-  post       BlogPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  categoryId String
-  category   BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@id([postId, categoryId])
-  @@map("blog_post_categories")
-}
-
-model BlogTag {
-  id    String        @id @default(cuid())
-  name  String        @unique
-  slug  String        @unique
-  posts BlogPostTag[]
-
-  @@map("blog_tags")
-}
-
-model BlogPostTag {
-  postId String
-  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  tagId  String
-  tag    BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([postId, tagId])
-  @@map("blog_post_tags")
-}
-
-// ==========================================
-// SUPPORT TICKETS
-// ==========================================
-
-model SupportTicket {
-  id         String         @id @default(cuid())
-  ticketNumber String       @unique // ER-TKT-XXXXX
-  userId     String
-  user       User           @relation(fields: [userId], references: [id])
-  subject    String
-  category   String
-  status     TicketStatus   @default(OPEN)
-  priority   TicketPriority @default(MEDIUM)
-  assignedTo String?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-
-  messages   TicketMessage[]
-
-  @@index([userId])
-  @@index([status])
-  @@map("support_tickets")
-}
-
-enum TicketStatus {
-  OPEN
-  IN_PROGRESS
-  RESOLVED
-  CLOSED
-}
-
-enum TicketPriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
-
-model TicketMessage {
-  id        String        @id @default(cuid())
-  ticketId  String
-  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User          @relation(fields: [userId], references: [id])
-  content   String        @db.Text
-  attachment String?
-  createdAt DateTime      @default(now())
-
-  @@index([ticketId])
-  @@map("ticket_messages")
-}
-
-// ==========================================
-// NOTIFICATIONS
-// ==========================================
-
-model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      NotificationType
-  title     String
-  message   String
-  data      Json?            // Additional context (order ID, etc.)
-  isRead    Boolean          @default(false)
-  createdAt DateTime         @default(now())
-
-  @@index([userId, isRead])
-  @@map("notifications")
-}
-
-enum NotificationType {
-  ORDER_CONFIRMED
-  ORDER_SHIPPED
-  ORDER_DELIVERED
-  ORDER_CANCELLED
-  RETURN_UPDATE
-  TICKET_REPLY
-  LOYALTY_EARNED
-  REFERRAL_REWARD
-  LOW_STOCK
-  PROMOTION
-}
-
-// ==========================================
-// STORE SETTINGS
-// ==========================================
-
-model StoreSettings {
-  id                  String  @id @default(cuid())
-  storeName           String  @default("Earth Revibe")
-  logo                String?
-  contactEmail        String?
-  contactPhone        String?
-  socialInstagram     String?
-  socialFacebook      String?
-  socialTwitter       String?
-  freeShippingThreshold Decimal? @db.Decimal(10, 2)
-  gstRate             Decimal @default(18) @db.Decimal(5, 2) // GST percentage
-  returnWindowDays    Int     @default(7)
-  updatedAt           DateTime @updatedAt
-
-  @@map("store_settings")
-}
-
-model ShippingZone {
-  id        String  @id @default(cuid())
-  name      String
-  states    String[] // List of Indian states
-  rate      Decimal  @db.Decimal(10, 2)
-  minDays   Int
-  maxDays   Int
-  isActive  Boolean  @default(true)
-
-  @@map("shipping_zones")
-}
-```
+## Enums
+
+### UserRole
+| Value | Description |
+|-------|-------------|
+| `CUSTOMER` | Default role for registered shoppers |
+| `ADMIN` | Full admin dashboard access |
+| `SUPER_ADMIN` | Admin with elevated privileges (settings, user management) |
+| `SUPPORT_STAFF` | Limited admin access for support tickets |
+
+### ProductStatus
+| Value | Description |
+|-------|-------------|
+| `DRAFT` | Not visible on storefront |
+| `ACTIVE` | Published and purchasable |
+| `ARCHIVED` | Removed from catalog, preserved for order history |
+
+### OrderStatus
+| Value | Description |
+|-------|-------------|
+| `PLACED` | Order created after payment verification |
+| `CONFIRMED` | Admin confirmed the order |
+| `PROCESSING` | Order being prepared for shipment |
+| `SHIPPED` | Handed to courier (Shiprocket) |
+| `OUT_FOR_DELIVERY` | Last-mile delivery in progress |
+| `DELIVERED` | Successfully delivered to customer |
+| `CANCELLED` | Order cancelled (before shipment) |
+| `RETURNED` | Customer returned the order |
+| `REFUNDED` | Refund processed via Razorpay |
+
+### PaymentStatus
+| Value | Description |
+|-------|-------------|
+| `PENDING` | Razorpay order created, awaiting payment |
+| `AUTHORIZED` | Payment authorized but not captured |
+| `CAPTURED` | Payment successfully captured |
+| `FAILED` | Payment failed |
+| `REFUNDED` | Full refund processed |
+| `PARTIALLY_REFUNDED` | Partial refund processed |
+
+### PaymentMethod
+| Value | Description |
+|-------|-------------|
+| `UPI` | Unified Payments Interface |
+| `CARD` | Credit or debit card |
+| `NETBANKING` | Internet banking |
+| `WALLET` | Digital wallet (Paytm, PhonePe, etc.) |
+| `EMI` | Equated monthly installments |
+
+### DiscountType
+| Value | Description |
+|-------|-------------|
+| `PERCENTAGE` | Percentage off subtotal |
+| `FLAT` | Fixed amount off subtotal |
+| `BUY_X_GET_Y` | Buy X items, get Y free |
+| `FREE_SHIPPING` | Waive shipping charges |
+
+### LoyaltyTransactionType
+| Value | Description |
+|-------|-------------|
+| `EARNED` | Points earned from a purchase |
+| `REDEEMED` | Points spent at checkout |
+| `BONUS` | Welcome, review, birthday, or promotional bonus |
+| `EXPIRED` | Points expired after inactivity |
+| `ADJUSTED` | Manual admin adjustment |
+
+### ReferralStatus
+| Value | Description |
+|-------|-------------|
+| `PENDING` | Referral link shared, referee not yet signed up |
+| `SIGNED_UP` | Referee created an account |
+| `CONVERTED` | Referee completed a purchase (rewards issued) |
+
+### BlogPostStatus
+| Value | Description |
+|-------|-------------|
+| `DRAFT` | Unpublished draft |
+| `PUBLISHED` | Live on the blog |
+| `SCHEDULED` | Will auto-publish at `scheduledAt` timestamp |
+
+### TicketStatus
+| Value | Description |
+|-------|-------------|
+| `OPEN` | New ticket, awaiting response |
+| `IN_PROGRESS` | Being handled by support staff |
+| `RESOLVED` | Issue resolved, awaiting confirmation |
+| `CLOSED` | Ticket closed |
+
+### TicketPriority
+| Value | Description |
+|-------|-------------|
+| `LOW` | Non-urgent inquiry |
+| `MEDIUM` | Standard priority (default) |
+| `HIGH` | Requires prompt attention |
+| `URGENT` | Critical issue requiring immediate action |
+
+### ReturnStatus
+| Value | Description |
+|-------|-------------|
+| `REQUESTED` | Customer submitted return request |
+| `APPROVED` | Admin approved the return |
+| `REJECTED` | Admin rejected the return |
+| `PICKED_UP` | Return pickup completed |
+| `RECEIVED` | Returned item received at warehouse |
+| `REFUND_INITIATED` | Refund processing started |
+| `COMPLETED` | Return fully processed and refunded |
+
+### NotificationType
+| Value | Description |
+|-------|-------------|
+| `ORDER_CONFIRMED` | Order confirmation |
+| `ORDER_SHIPPED` | Shipment dispatched |
+| `ORDER_DELIVERED` | Delivery completed |
+| `ORDER_CANCELLED` | Order cancelled |
+| `RETURN_UPDATE` | Return request status change |
+| `TICKET_REPLY` | New reply on support ticket |
+| `LOYALTY_EARNED` | Points earned |
+| `REFERRAL_REWARD` | Referral reward issued |
+| `LOW_STOCK` | Admin alert for low inventory |
+| `PROMOTION` | Promotional notification |
 
 ---
 
-## Authentication Flow
+## Models
 
-### Registration
-```
-Client                    API                      Database
-  |                        |                          |
-  |-- POST /auth/register ->|                          |
-  |   {email, password,    |                          |
-  |    firstName, lastName,|                          |
-  |    phone, referralCode}|                          |
-  |                        |-- Validate (Zod) ------->|
-  |                        |-- Hash password -------->|
-  |                        |-- Create user ---------->|
-  |                        |-- Generate referral code->|
-  |                        |-- Process referral ------>|
-  |                        |-- Award welcome bonus --->|
-  |                        |-- Generate JWT tokens --->|
-  |<-- {accessToken,       |                          |
-  |     refreshToken,      |                          |
-  |     user}              |                          |
-```
+### User
+**Table:** `users`
 
-### Login
-```
-Client                    API                      Database
-  |                        |                          |
-  |-- POST /auth/login --->|                          |
-  |   {email, password}    |                          |
-  |                        |-- Find user by email ---->|
-  |                        |-- Verify password ------->|
-  |                        |-- Generate JWT tokens --->|
-  |                        |-- Store refresh token --->|
-  |<-- {accessToken,       |                          |
-  |     refreshToken,      |                          |
-  |     user}              |                          |
-```
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `email` | String | unique | -- | Email address |
+| `phone` | String? | unique | -- | Phone number (optional) |
+| `passwordHash` | String | -- | `"supabase-managed"` | Password hash (managed by Supabase) |
+| `firstName` | String | -- | -- | First name |
+| `lastName` | String | -- | -- | Last name |
+| `avatar` | String? | -- | -- | Avatar image URL |
+| `role` | UserRole | -- | `CUSTOMER` | User role |
+| `isActive` | Boolean | -- | `true` | Account active status |
+| `emailVerified` | Boolean | -- | `false` | Email verification status |
+| `phoneVerified` | Boolean | -- | `false` | Phone verification status |
+| `lastLoginAt` | DateTime? | -- | -- | Last login timestamp |
+| `loyaltyPoints` | Int | -- | `0` | Current loyalty points balance |
+| `referralCode` | String? | unique | -- | Unique referral code |
+| `createdAt` | DateTime | -- | `now()` | Record creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
 
-### Token Refresh
-```
-Client                    API                      Database
-  |                        |                          |
-  |-- POST /auth/refresh ->|                          |
-  |   {refreshToken}       |                          |
-  |                        |-- Verify refresh token -->|
-  |                        |-- Rotate tokens -------->|
-  |                        |-- Delete old token ------>|
-  |                        |-- Store new token ------->|
-  |<-- {accessToken,       |                          |
-  |     refreshToken}      |                          |
-```
-
-### Password Reset
-```
-Client                    API                      Database
-  |                        |                          |
-  |-- POST /auth/          |                          |
-  |   forgot-password      |                          |
-  |   {email}              |                          |
-  |                        |-- Generate reset token -->|
-  |                        |-- Send email ------------>|
-  |<-- {message: "sent"}   |                          |
-  |                        |                          |
-  |-- POST /auth/          |                          |
-  |   reset-password       |                          |
-  |   {token, password}    |                          |
-  |                        |-- Verify token --------->|
-  |                        |-- Hash new password ----->|
-  |                        |-- Update user ----------->|
-  |<-- {message: "reset"}  |                          |
-```
+**Relations:** addresses (1:N), orders (1:N), reviews (1:N), wishlistItems (1:N), cart (1:1), loyaltyHistory (1:N), referralsMade (1:N as Referrer), referredBy (1:1 as Referee), supportTickets (1:N), ticketMessages (1:N), refreshTokens (1:N), notifications (1:N), orderNotes (1:N)
 
 ---
 
-## Payment Flow (Razorpay)
+### RefreshToken
+**Table:** `refresh_tokens`
 
-```
-Client                    API                    Razorpay
-  |                        |                        |
-  |-- POST /orders ------->|                        |
-  |   {items, address,     |                        |
-  |    discountCode,       |                        |
-  |    loyaltyPoints}      |                        |
-  |                        |-- Validate order ------>|
-  |                        |-- Calculate totals ---->|
-  |                        |-- Create Razorpay     ->|
-  |                        |   order (amount, INR)   |
-  |                        |<- razorpayOrderId ------|
-  |                        |-- Create DB order ------>|
-  |<-- {order,             |                        |
-  |     razorpayOrderId,   |                        |
-  |     razorpayKeyId}     |                        |
-  |                        |                        |
-  |-- Open Razorpay       -|----------------------->|
-  |   Magic Checkout       |                        |
-  |                        |                        |
-  |<-- Payment callback ---|------------------------|
-  |   {paymentId,          |                        |
-  |    orderId, signature} |                        |
-  |                        |                        |
-  |-- POST /orders/verify ->|                        |
-  |   {paymentId, orderId, |                        |
-  |    signature}          |                        |
-  |                        |-- Verify signature ---->|
-  |                        |-- Update payment ------>|
-  |                        |-- Update order status -->|
-  |                        |-- Award loyalty pts ---->|
-  |                        |-- Reduce stock -------->|
-  |                        |-- Send confirmation ---->|
-  |<-- {order: confirmed}  |                        |
-  |                        |                        |
-  |                        |<-- Webhook: payment   --|
-  |                        |    captured              |
-  |                        |-- Verify webhook sig -->|
-  |                        |-- Update payment ------>|
-```
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `token` | String | unique | -- | Token value |
+| `userId` | String | FK -> User | -- | Owner user |
+| `expiresAt` | DateTime | -- | -- | Token expiry time |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+
+**Indexes:** `[userId]`
 
 ---
 
-## API Endpoints
+### Address
+**Table:** `addresses`
 
-### Auth (`/api/v1/auth`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/register` | Register new customer | Public |
-| POST | `/login` | Login | Public |
-| POST | `/refresh` | Refresh access token | Public |
-| POST | `/logout` | Logout (invalidate refresh token) | Customer |
-| POST | `/forgot-password` | Send reset email | Public |
-| POST | `/reset-password` | Reset password with token | Public |
-| GET | `/me` | Get current user | Customer |
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `userId` | String? | FK -> User | -- | Owner user (null for guest checkout addresses) |
+| `label` | String | -- | `"Home"` | Address label (Home, Work, etc.) |
+| `fullName` | String | -- | -- | Recipient full name |
+| `phone` | String | -- | -- | Contact phone |
+| `line1` | String | -- | -- | Address line 1 |
+| `line2` | String? | -- | -- | Address line 2 |
+| `city` | String | -- | -- | City |
+| `state` | String | -- | -- | State |
+| `pinCode` | String | -- | -- | PIN code (Indian postal code) |
+| `isDefault` | Boolean | -- | `false` | Default address flag |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
 
-### Products (`/api/v1/products`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/` | List products (filtered, paginated) | Public |
-| GET | `/:slug` | Get product by slug | Public |
-| POST | `/` | Create product | Admin |
-| PUT | `/:id` | Update product | Admin |
-| DELETE | `/:id` | Delete product | Admin |
-| POST | `/:id/images` | Upload product images | Admin |
-| DELETE | `/:id/images/:imageId` | Delete product image | Admin |
+**Relations:** orders (1:N)
+**Indexes:** `[userId]`
 
-### Categories (`/api/v1/categories`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/` | List categories | Public |
-| GET | `/:slug` | Get category by slug | Public |
-| POST | `/` | Create category | Admin |
-| PUT | `/:id` | Update category | Admin |
-| DELETE | `/:id` | Delete category | Admin |
-| PUT | `/reorder` | Reorder categories | Admin |
+---
 
-### Cart (`/api/v1/cart`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/` | Get user cart | Customer |
-| POST | `/items` | Add item to cart | Customer |
-| PUT | `/items/:id` | Update cart item quantity | Customer |
-| DELETE | `/items/:id` | Remove cart item | Customer |
-| DELETE | `/` | Clear cart | Customer |
+### Category
+**Table:** `categories`
 
-### Orders (`/api/v1/orders`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/` | Create order + Razorpay order | Customer |
-| POST | `/verify` | Verify payment & confirm order | Customer |
-| GET | `/` | List orders (customer: own, admin: all) | Customer/Admin |
-| GET | `/:id` | Get order detail | Customer/Admin |
-| PUT | `/:id/status` | Update order status | Admin |
-| POST | `/:id/refund` | Process refund | Admin |
-| POST | `/:id/cancel` | Cancel order | Customer |
-| POST | `/:id/return` | Request return | Customer |
-| PUT | `/:id/return` | Update return status | Admin |
-| POST | `/:id/notes` | Add order note | Admin |
-| POST | `/webhook` | Razorpay webhook handler | Public (verified) |
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `name` | String | -- | -- | Display name |
+| `slug` | String | unique | -- | URL slug |
+| `description` | String? | -- | -- | Category description |
+| `image` | String? | -- | -- | Category image URL |
+| `parentId` | String? | FK -> Category | -- | Parent category (self-referential) |
+| `sortOrder` | Int | -- | `0` | Display order |
+| `isActive` | Boolean | -- | `true` | Active/visible status |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
 
-### Reviews (`/api/v1/reviews`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/product/:productId` | Get product reviews | Public |
-| POST | `/` | Create review | Customer |
-| PUT | `/:id` | Update review | Customer |
-| DELETE | `/:id` | Delete review | Customer/Admin |
+**Relations:** parent (N:1 self), children (1:N self), products (1:N)
+**Indexes:** `[parentId]`
 
-### Wishlist (`/api/v1/wishlist`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/` | Get wishlist | Customer |
-| POST | `/` | Add to wishlist | Customer |
-| DELETE | `/:productId` | Remove from wishlist | Customer |
+---
 
-### Discounts (`/api/v1/discounts`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/validate` | Validate discount code | Customer |
-| GET | `/` | List all discount codes | Admin |
-| POST | `/` | Create discount code | Admin |
-| PUT | `/:id` | Update discount code | Admin |
-| DELETE | `/:id` | Delete discount code | Admin |
+### HomepageSection
+**Table:** `homepage_sections`
 
-### Loyalty (`/api/v1/loyalty`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/balance` | Get loyalty points balance | Customer |
-| GET | `/history` | Get loyalty transactions | Customer |
-| GET | `/config` | Get loyalty config | Admin |
-| PUT | `/config` | Update loyalty config | Admin |
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `label` | String | -- | -- | Section display label |
+| `href` | String | -- | -- | Link target URL |
+| `imageUrl` | String? | -- | -- | Section background/feature image |
+| `sortOrder` | Int | -- | `0` | Display order on homepage |
+| `isActive` | Boolean | -- | `true` | Active/visible status |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
 
-### Referrals (`/api/v1/referrals`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/` | Get referral info & stats | Customer |
-| GET | `/config` | Get referral config | Admin |
-| PUT | `/config` | Update referral config | Admin |
-| GET | `/analytics` | Get referral analytics | Admin |
+---
 
-### Blog (`/api/v1/blog`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/posts` | List published posts | Public |
-| GET | `/posts/:slug` | Get post by slug | Public |
-| GET | `/posts/all` | List all posts (inc. drafts) | Admin |
-| POST | `/posts` | Create post | Admin |
-| PUT | `/posts/:id` | Update post | Admin |
-| DELETE | `/posts/:id` | Delete post | Admin |
-| GET | `/categories` | List blog categories | Public |
-| POST | `/categories` | Create blog category | Admin |
+### Product
+**Table:** `products`
 
-### Support (`/api/v1/support`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/tickets` | List tickets | Customer/Admin |
-| POST | `/tickets` | Create ticket | Customer |
-| GET | `/tickets/:id` | Get ticket detail | Customer/Admin |
-| POST | `/tickets/:id/messages` | Add message | Customer/Admin |
-| PUT | `/tickets/:id/status` | Update ticket status | Admin |
-| PUT | `/tickets/:id/assign` | Assign ticket | Admin |
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `name` | String | -- | -- | Product name |
+| `slug` | String | unique | -- | URL slug |
+| `description` | String | @db.Text | -- | Full description (rich text) |
+| `shortDescription` | String? | -- | -- | Brief description for cards |
+| `price` | Decimal(10,2) | -- | -- | Base price in INR |
+| `compareAtPrice` | Decimal(10,2)? | -- | -- | Original/compare price (for sales) |
+| `material` | String? | -- | -- | Material composition |
+| `careInstructions` | String? | @db.Text | -- | Care instructions |
+| `seoTitle` | String? | -- | -- | SEO meta title |
+| `seoDescription` | String? | @db.Text | -- | SEO meta description |
+| `seoKeywords` | String? | -- | -- | SEO keywords |
+| `returnsInfo` | String? | -- | -- | Return policy for this product |
+| `shippingInfo` | String? | -- | -- | Shipping details |
+| `origin` | String? | -- | -- | Country/place of origin |
+| `composition` | String? | -- | -- | Fabric composition |
+| `measurements` | String? | -- | -- | Size chart / measurements |
+| `fabricWeight` | String? | -- | -- | Fabric weight (e.g., "280 GSM") |
+| `fit` | String? | -- | -- | Fit type (e.g., "Oversized") |
+| `printType` | String? | -- | -- | Print technique (e.g., "Screen print") |
+| `washInstructions` | String? | -- | -- | Washing instructions |
+| `status` | ProductStatus | -- | `DRAFT` | Publication status |
+| `isFeatured` | Boolean | -- | `false` | Featured on homepage |
+| `categoryId` | String | FK -> Category | -- | Category assignment |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
 
-### Customers (`/api/v1/customers`) — Admin only
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/` | List customers | Admin |
-| GET | `/:id` | Get customer detail | Admin |
+**Relations:** category (N:1), images (1:N), variants (1:N), reviews (1:N), wishlistItems (1:N), tags (M:N via ProductTag)
+**Indexes:** `[categoryId]`, `[status]`, `[slug]`
 
-### Inventory (`/api/v1/inventory`) — Admin only
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/` | List inventory (stock levels) | Admin |
-| PUT | `/:variantId` | Update stock level | Admin |
-| PUT | `/bulk` | Bulk stock update | Admin |
-| GET | `/alerts` | Get low stock alerts | Admin |
+---
 
-### Settings (`/api/v1/settings`) — Admin only
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/store` | Get store settings | Admin |
-| PUT | `/store` | Update store settings | Admin |
-| GET | `/shipping` | Get shipping zones | Admin |
-| POST | `/shipping` | Create shipping zone | Admin |
-| PUT | `/shipping/:id` | Update shipping zone | Admin |
-| DELETE | `/shipping/:id` | Delete shipping zone | Admin |
-| GET | `/team` | List admin users | Super Admin |
-| POST | `/team` | Create admin user | Super Admin |
-| PUT | `/team/:id` | Update admin user role | Super Admin |
-| DELETE | `/team/:id` | Deactivate admin user | Super Admin |
+### ProductImage
+**Table:** `product_images`
 
-### Search (`/api/v1/search`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/?q=query` | Search products, categories, blog | Public |
-| GET | `/autocomplete?q=query` | Autocomplete suggestions | Public |
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `productId` | String | FK -> Product (cascade delete) | -- | Parent product |
+| `url` | String | -- | -- | Image URL (Cloudflare Images) |
+| `publicId` | String | -- | `""` | Cloudflare public ID |
+| `altText` | String? | -- | -- | Image alt text |
+| `sortOrder` | Int | -- | `0` | Display order |
+| `isPrimary` | Boolean | -- | `false` | Primary image flag |
 
-### Analytics (`/api/v1/analytics`) — Admin only
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/dashboard` | Dashboard KPIs | Admin |
-| GET | `/revenue` | Revenue chart data | Admin |
-| GET | `/top-products` | Top selling products | Admin |
-| GET | `/customer-stats` | Customer statistics | Admin |
+**Indexes:** `[productId]`
 
-### Upload (`/api/v1/upload`)
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/image` | Upload image to Cloudinary | Admin |
-| DELETE | `/image/:publicId` | Delete image from Cloudinary | Admin |
+---
+
+### ProductVariant
+**Table:** `product_variants`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `productId` | String | FK -> Product (cascade delete) | -- | Parent product |
+| `sku` | String | unique | -- | Stock keeping unit |
+| `size` | String | -- | -- | Size label (S, M, L, XL, etc.) |
+| `color` | String | -- | `""` | Color name |
+| `colorHex` | String? | -- | -- | Color hex code for swatch display |
+| `price` | Decimal(10,2)? | -- | -- | Price override (null = use product price) |
+| `stock` | Int | -- | `0` | Current stock quantity |
+| `lowStockThreshold` | Int | -- | `5` | Low stock alert threshold |
+| `barcode` | String? | -- | -- | Barcode/EAN |
+| `weight` | Decimal(10,2)? | -- | -- | Item weight |
+| `weightUnit` | String? | -- | `"g"` | Weight unit (g, kg) |
+| `isActive` | Boolean | -- | `true` | Active/purchasable status |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+**Relations:** cartItems (1:N), orderItems (1:N)
+**Unique constraint:** `[productId, size, color]`
+**Indexes:** `[productId]`, `[sku]`
+
+---
+
+### Tag
+**Table:** `tags`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `name` | String | unique | -- | Tag display name |
+| `slug` | String | unique | -- | URL slug |
+
+**Relations:** products (M:N via ProductTag)
+
+---
+
+### ProductTag (Join Table)
+**Table:** `product_tags`
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `productId` | String | PK (composite), FK -> Product (cascade delete) | Product reference |
+| `tagId` | String | PK (composite), FK -> Tag (cascade delete) | Tag reference |
+
+---
+
+### Cart
+**Table:** `carts`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `userId` | String | unique, FK -> User (cascade delete) | -- | Owner user (one cart per user) |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+**Relations:** items (1:N)
+
+---
+
+### CartItem
+**Table:** `cart_items`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `cartId` | String | FK -> Cart (cascade delete) | -- | Parent cart |
+| `variantId` | String | FK -> ProductVariant | -- | Selected variant |
+| `quantity` | Int | -- | `1` | Item quantity |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+**Unique constraint:** `[cartId, variantId]`
+**Indexes:** `[cartId]`
+
+---
+
+### Order
+**Table:** `orders`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `orderNumber` | String | unique | -- | Human-readable order number |
+| `userId` | String? | FK -> User | -- | Customer (null for guest orders) |
+| `guestEmail` | String? | -- | -- | Guest checkout email |
+| `addressId` | String | FK -> Address | -- | Shipping address |
+| `status` | OrderStatus | -- | `PLACED` | Current order status |
+| `subtotal` | Decimal(10,2) | -- | -- | Subtotal before discounts |
+| `discountAmount` | Decimal(10,2) | -- | `0` | Discount amount applied |
+| `shippingAmount` | Decimal(10,2) | -- | `0` | Shipping charges |
+| `taxAmount` | Decimal(10,2) | -- | `0` | Tax amount (GST) |
+| `totalAmount` | Decimal(10,2) | -- | -- | Final total charged |
+| `loyaltyPointsUsed` | Int | -- | `0` | Points redeemed on this order |
+| `loyaltyPointsEarned` | Int | -- | `0` | Points earned from this order |
+| `discountCodeId` | String? | FK -> DiscountCode | -- | Applied discount code |
+| `shiprocketOrderId` | Int? | -- | -- | Shiprocket order ID |
+| `shiprocketShipmentId` | Int? | -- | -- | Shiprocket shipment ID |
+| `awbCode` | String? | -- | -- | Air Waybill tracking code |
+| `courierName` | String? | -- | -- | Courier company name |
+| `trackingUrl` | String? | -- | -- | Shipment tracking URL |
+| `createdAt` | DateTime | -- | `now()` | Order placement time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+**Relations:** user (N:1), address (N:1), discountCode (N:1), items (1:N), payment (1:1), statusHistory (1:N), notes (1:N), returnRequest (1:1)
+**Indexes:** `[userId]`, `[orderNumber]`, `[status]`
+
+---
+
+### OrderItem
+**Table:** `order_items`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `orderId` | String | FK -> Order (cascade delete) | -- | Parent order |
+| `variantId` | String | FK -> ProductVariant | -- | Purchased variant |
+| `quantity` | Int | -- | -- | Quantity purchased |
+| `unitPrice` | Decimal(10,2) | -- | -- | Price per unit at time of purchase |
+| `totalPrice` | Decimal(10,2) | -- | -- | Line total (unitPrice * quantity) |
+| `productName` | String | -- | -- | Snapshot: product name at purchase |
+| `productImage` | String? | -- | -- | Snapshot: product image URL at purchase |
+| `variantSize` | String | -- | -- | Snapshot: variant size at purchase |
+| `variantColor` | String | -- | -- | Snapshot: variant color at purchase |
+
+**Indexes:** `[orderId]`
+
+---
+
+### OrderStatusHistory
+**Table:** `order_status_history`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `orderId` | String | FK -> Order (cascade delete) | -- | Parent order |
+| `status` | OrderStatus | -- | -- | Status at this point |
+| `note` | String? | -- | -- | Optional note for the status change |
+| `changedBy` | String? | -- | -- | User ID or system identifier that made the change |
+| `createdAt` | DateTime | -- | `now()` | Timestamp of the status change |
+
+**Indexes:** `[orderId]`
+
+---
+
+### OrderNote
+**Table:** `order_notes`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `orderId` | String | FK -> Order (cascade delete) | -- | Parent order |
+| `userId` | String | FK -> User | -- | Author (admin/support staff) |
+| `content` | String | @db.Text | -- | Note content |
+| `isInternal` | Boolean | -- | `true` | Internal-only or customer-visible |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+
+**Indexes:** `[orderId]`
+
+---
+
+### Payment
+**Table:** `payments`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `orderId` | String | unique, FK -> Order | -- | Associated order (1:1) |
+| `razorpayOrderId` | String | unique | -- | Razorpay order ID |
+| `razorpayPaymentId` | String? | unique | -- | Razorpay payment ID (set after capture) |
+| `razorpaySignature` | String? | -- | -- | Razorpay payment signature |
+| `amount` | Decimal(10,2) | -- | -- | Payment amount in INR |
+| `currency` | String | -- | `"INR"` | Currency code |
+| `status` | PaymentStatus | -- | `PENDING` | Payment status |
+| `method` | PaymentMethod? | -- | -- | Payment method used |
+| `refundId` | String? | -- | -- | Razorpay refund ID |
+| `refundAmount` | Decimal(10,2)? | -- | -- | Refund amount |
+| `failureReason` | String? | -- | -- | Failure reason (if failed) |
+| `paidAt` | DateTime? | -- | -- | Timestamp of successful payment |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+**Indexes:** `[razorpayOrderId]`
+
+---
+
+### ReturnRequest
+**Table:** `return_requests`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `orderId` | String | unique, FK -> Order | -- | Associated order (1:1) |
+| `reason` | String | @db.Text | -- | Customer's return reason |
+| `status` | ReturnStatus | -- | `REQUESTED` | Return status |
+| `adminNote` | String? | @db.Text | -- | Admin notes on the return |
+| `refundAmount` | Decimal(10,2)? | -- | -- | Approved refund amount |
+| `createdAt` | DateTime | -- | `now()` | Request creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+---
+
+### Review
+**Table:** `reviews`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `productId` | String | FK -> Product (cascade delete) | -- | Reviewed product |
+| `userId` | String | FK -> User | -- | Review author |
+| `rating` | Int | -- | -- | Star rating (1-5) |
+| `title` | String? | -- | -- | Review title |
+| `content` | String? | @db.Text | -- | Review body text |
+| `isVerified` | Boolean | -- | `false` | Verified purchase flag |
+| `isApproved` | Boolean | -- | `true` | Moderation approval |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+**Unique constraint:** `[productId, userId]` (one review per user per product)
+**Indexes:** `[productId]`
+
+---
+
+### WishlistItem
+**Table:** `wishlist_items`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `userId` | String | FK -> User (cascade delete) | -- | Owner user |
+| `productId` | String | FK -> Product (cascade delete) | -- | Wishlisted product |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+
+**Unique constraint:** `[userId, productId]`
+**Indexes:** `[userId]`
+
+---
+
+### DiscountCode
+**Table:** `discount_codes`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `code` | String | unique | -- | Discount code string |
+| `description` | String? | -- | -- | Internal description |
+| `type` | DiscountType | -- | -- | Discount type |
+| `value` | Decimal(10,2) | -- | -- | Discount value (percentage or flat amount) |
+| `minOrderValue` | Decimal(10,2)? | -- | -- | Minimum order subtotal to apply |
+| `maxDiscountAmount` | Decimal(10,2)? | -- | -- | Maximum discount cap |
+| `usageLimit` | Int? | -- | -- | Global usage limit (null = unlimited) |
+| `usageCount` | Int | -- | `0` | Current usage count |
+| `perUserLimit` | Int | -- | `1` | Maximum uses per user |
+| `applicableCategories` | String[] | -- | -- | Category IDs this code applies to (empty = all) |
+| `applicableProducts` | String[] | -- | -- | Product IDs this code applies to (empty = all) |
+| `isActive` | Boolean | -- | `true` | Active status |
+| `startsAt` | DateTime | -- | -- | Start date |
+| `expiresAt` | DateTime | -- | -- | Expiry date |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+**Relations:** orders (1:N)
+**Indexes:** `[code]`
+
+---
+
+### LoyaltyTransaction
+**Table:** `loyalty_transactions`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `userId` | String | FK -> User | -- | User who earned/spent points |
+| `type` | LoyaltyTransactionType | -- | -- | Transaction type |
+| `points` | Int | -- | -- | Points amount (positive for earn, negative for redeem) |
+| `description` | String | -- | -- | Human-readable description |
+| `orderId` | String? | -- | -- | Associated order ID (if applicable) |
+| `createdAt` | DateTime | -- | `now()` | Transaction time |
+
+**Indexes:** `[userId]`
+
+---
+
+### LoyaltyConfig
+**Table:** `loyalty_config`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `pointsPerRupee` | Decimal(10,4) | -- | -- | Points earned per rupee spent |
+| `pointRedemptionValue` | Decimal(10,4) | -- | -- | INR value of one point |
+| `welcomeBonus` | Int | -- | `0` | Points awarded on registration |
+| `reviewBonus` | Int | -- | `0` | Points awarded for leaving a review |
+| `birthdayBonus` | Int | -- | `0` | Points awarded on birthday |
+| `minRedeemPoints` | Int | -- | `100` | Minimum points required to redeem |
+| `isActive` | Boolean | -- | `true` | Loyalty program active status |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+---
+
+### Referral
+**Table:** `referrals`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `referrerId` | String | FK -> User (as Referrer) | -- | User who referred |
+| `refereeId` | String | unique, FK -> User (as Referee) | -- | User who was referred |
+| `status` | ReferralStatus | -- | `PENDING` | Referral status |
+| `referrerReward` | Int | -- | `0` | Points awarded to referrer |
+| `refereeReward` | Int | -- | `0` | Points awarded to referee |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+**Indexes:** `[referrerId]`
+
+---
+
+### ReferralConfig
+**Table:** `referral_config`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `referrerReward` | Int | -- | `100` | Default points for referrer |
+| `refereeReward` | Int | -- | `50` | Default points for referee |
+| `requirePurchase` | Boolean | -- | `true` | Require purchase for conversion |
+| `isActive` | Boolean | -- | `true` | Referral program active status |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+---
+
+### BlogPost
+**Table:** `blog_posts`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `title` | String | -- | -- | Post title |
+| `slug` | String | unique | -- | URL slug |
+| `excerpt` | String? | -- | -- | Short excerpt for listings |
+| `content` | String | @db.Text | -- | Full content (TipTap JSON/HTML) |
+| `featuredImage` | String? | -- | -- | Featured image URL |
+| `authorId` | String | -- | -- | Author user ID |
+| `status` | BlogPostStatus | -- | `DRAFT` | Publication status |
+| `publishedAt` | DateTime? | -- | -- | Actual publish timestamp |
+| `scheduledAt` | DateTime? | -- | -- | Scheduled publish timestamp |
+| `metaTitle` | String? | -- | -- | SEO meta title |
+| `metaDescription` | String? | -- | -- | SEO meta description |
+| `readTime` | Int? | -- | -- | Estimated read time in minutes |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+**Relations:** categories (M:N via BlogPostCategory), tags (M:N via BlogPostTag)
+**Indexes:** `[slug]`, `[status]`
+
+---
+
+### BlogCategory
+**Table:** `blog_categories`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `name` | String | unique | -- | Category name |
+| `slug` | String | unique | -- | URL slug |
+
+**Relations:** posts (M:N via BlogPostCategory)
+
+---
+
+### BlogPostCategory (Join Table)
+**Table:** `blog_post_categories`
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `postId` | String | PK (composite), FK -> BlogPost (cascade delete) | Blog post reference |
+| `categoryId` | String | PK (composite), FK -> BlogCategory (cascade delete) | Category reference |
+
+---
+
+### BlogTag
+**Table:** `blog_tags`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `name` | String | unique | -- | Tag name |
+| `slug` | String | unique | -- | URL slug |
+
+**Relations:** posts (M:N via BlogPostTag)
+
+---
+
+### BlogPostTag (Join Table)
+**Table:** `blog_post_tags`
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `postId` | String | PK (composite), FK -> BlogPost (cascade delete) | Blog post reference |
+| `tagId` | String | PK (composite), FK -> BlogTag (cascade delete) | Tag reference |
+
+---
+
+### SupportTicket
+**Table:** `support_tickets`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `ticketNumber` | String | unique | -- | Human-readable ticket number |
+| `userId` | String | FK -> User | -- | Ticket creator |
+| `subject` | String | -- | -- | Ticket subject |
+| `category` | String | -- | -- | Ticket category |
+| `status` | TicketStatus | -- | `OPEN` | Current status |
+| `priority` | TicketPriority | -- | `MEDIUM` | Priority level |
+| `assignedTo` | String? | -- | -- | Assigned staff user ID |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+**Relations:** messages (1:N)
+**Indexes:** `[userId]`, `[status]`
+
+---
+
+### TicketMessage
+**Table:** `ticket_messages`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `ticketId` | String | FK -> SupportTicket (cascade delete) | -- | Parent ticket |
+| `userId` | String | FK -> User | -- | Message author |
+| `content` | String | @db.Text | -- | Message content |
+| `attachment` | String? | -- | -- | Attachment URL |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+
+**Indexes:** `[ticketId]`
+
+---
+
+### Notification
+**Table:** `notifications`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `userId` | String | FK -> User (cascade delete) | -- | Recipient user |
+| `type` | NotificationType | -- | -- | Notification type |
+| `title` | String | -- | -- | Notification title |
+| `message` | String | -- | -- | Notification body |
+| `data` | Json? | -- | -- | Additional data (deep link info) |
+| `isRead` | Boolean | -- | `false` | Read status |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+
+**Indexes:** `[userId, isRead]`
+
+---
+
+### StoreSettings
+**Table:** `store_settings`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `storeName` | String | -- | `"Earth Revibe"` | Store display name |
+| `logo` | String? | -- | -- | Store logo URL |
+| `contactEmail` | String? | -- | -- | Customer support email |
+| `contactPhone` | String? | -- | -- | Customer support phone |
+| `socialInstagram` | String? | -- | -- | Instagram profile URL |
+| `socialFacebook` | String? | -- | -- | Facebook page URL |
+| `socialTwitter` | String? | -- | -- | Twitter/X profile URL |
+| `freeShippingThreshold` | Decimal(10,2)? | -- | -- | Order subtotal for free shipping |
+| `gstRate` | Decimal(5,2) | -- | `18` | GST percentage |
+| `returnWindowDays` | Int | -- | `7` | Days allowed for return requests |
+| `checkoutConfig` | Json? | -- | -- | Razorpay checkout configuration |
+| `shippingConfig` | Json? | -- | -- | Shipping rules configuration |
+| `updatedAt` | DateTime | -- | `@updatedAt` | Last update time |
+
+---
+
+### ShippingZone
+**Table:** `shipping_zones`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `name` | String | -- | -- | Zone name (e.g., "North India") |
+| `states` | String[] | -- | -- | Indian states in this zone |
+| `rate` | Decimal(10,2) | -- | -- | Shipping rate in INR |
+| `minDays` | Int | -- | -- | Minimum delivery days |
+| `maxDays` | Int | -- | -- | Maximum delivery days |
+| `isActive` | Boolean | -- | `true` | Active status |
+
+---
+
+### PendingCheckout
+**Table:** `pending_checkouts`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `orderNumber` | String | unique | -- | Pre-assigned order number |
+| `userId` | String? | -- | -- | User ID (null for guest checkout) |
+| `guestEmail` | String? | -- | -- | Guest email |
+| `razorpayOrderId` | String | unique | -- | Razorpay order ID |
+| `discountCode` | String? | -- | -- | Applied discount code |
+| `loyaltyPointsToUse` | Int | -- | `0` | Points to deduct on completion |
+| `subtotal` | Decimal(10,2) | -- | -- | Order subtotal |
+| `discountAmount` | Decimal(10,2) | -- | `0` | Discount amount |
+| `loyaltyDiscount` | Decimal(10,2) | -- | `0` | Loyalty points discount amount |
+| `itemsJson` | String | -- | -- | Serialized cart items |
+| `stockReserved` | Boolean | -- | `false` | Whether stock has been reserved |
+| `reservedAt` | DateTime? | -- | -- | Stock reservation timestamp |
+| `createdAt` | DateTime | -- | `now()` | Checkout initiation time |
+
+**Indexes:** `[userId]`, `[createdAt]`
+
+---
+
+### IdempotencyKey
+**Table:** `idempotency_keys`
+
+| Field | Type | Constraints | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `id` | String | PK | `cuid()` | Unique identifier |
+| `key` | String | unique | -- | Idempotency key value |
+| `userId` | String | -- | -- | User who made the request |
+| `status` | String | -- | -- | Processing status: PROCESSING, COMPLETED, FAILED |
+| `endpoint` | String | -- | -- | API endpoint that was called |
+| `response` | Json? | -- | -- | Cached response (for completed requests) |
+| `createdAt` | DateTime | -- | `now()` | Creation time |
+| `expiresAt` | DateTime | -- | -- | Key expiry time |
+
+**Indexes:** `[key, userId]`, `[expiresAt]`
+
+---
+
+## Relationship Diagram (Simplified)
+
+```
+User 1--N Address
+User 1--1 Cart
+User 1--N Order
+User 1--N Review
+User 1--N WishlistItem
+User 1--N LoyaltyTransaction
+User 1--N SupportTicket
+User 1--N Notification
+User 1--N Referral (as Referrer)
+User 1--1 Referral (as Referee)
+
+Category 1--N Product (category tree: Category -> Category)
+Product 1--N ProductImage
+Product 1--N ProductVariant
+Product M--N Tag (via ProductTag)
+
+Cart 1--N CartItem
+CartItem N--1 ProductVariant
+
+Order 1--N OrderItem
+Order 1--1 Payment
+Order 1--N OrderStatusHistory
+Order 1--N OrderNote
+Order 1--1 ReturnRequest
+Order N--1 DiscountCode
+Order N--1 Address
+OrderItem N--1 ProductVariant
+
+BlogPost M--N BlogCategory (via BlogPostCategory)
+BlogPost M--N BlogTag (via BlogPostTag)
+
+SupportTicket 1--N TicketMessage
+```
