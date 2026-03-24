@@ -166,11 +166,11 @@ export default function CartPage() {
     setCouponError("");
     setCouponLoading(true);
     try {
-      const result = await api.post<{ code: string; amount: number }>(
+      const result = await api.post<{ code: string; discountAmount: number }>(
         "/discounts/validate",
         { code: couponInput.trim(), orderTotal: subtotal }
       );
-      applyDiscount(result.code, result.amount);
+      applyDiscount(result.code, result.discountAmount);
       setCouponInput("");
       addToast("Discount applied!", "success");
     } catch (error: any) {
