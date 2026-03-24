@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ProductCard } from "@/components/product/product-card";
+import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
 import { FilterSidebar, type FilterState } from "@/components/product/filter-sidebar";
 import { SortDropdown } from "@/components/product/sort-dropdown";
 import { useInfiniteProducts } from "@/hooks/use-products";
@@ -160,9 +161,9 @@ function ProductsContent() {
       {/* Spacer between filters and products */}
       <div style={{ height: 16 }} />
 
-      {/* Content — no skeleton flash on remount; cached data shows instantly */}
+      {/* Skeleton on true first load only — cached data skips this */}
       {isLoading ? (
-        <div className="min-h-[50vh]" />
+        <ProductGridSkeleton />
       ) : isError ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <h3 className="text-lg font-semibold">Something went wrong</h3>

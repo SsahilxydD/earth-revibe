@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
+import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
 import { FilterSidebar, type FilterState } from "@/components/product/filter-sidebar";
 import { SortDropdown } from "@/components/product/sort-dropdown";
 import { useInfiniteProducts, useCategories } from "@/hooks/use-products";
@@ -164,9 +165,11 @@ function CategoryContent() {
       {/* Spacer between filters and products */}
       <div style={{ height: 16 }} />
 
-      {/* Content — no skeleton flash on remount; cached data shows instantly */}
+      {/* Content — skeleton only on true first load (no cache).
+          With placeholderData on the query, isLoading=false when cached
+          data exists, so back navigation never shows the skeleton. */}
       {isLoading ? (
-        <div className="min-h-[50vh]" />
+        <ProductGridSkeleton />
       ) : isError ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <h3 className="text-lg font-semibold">Something went wrong</h3>
