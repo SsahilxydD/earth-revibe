@@ -54,12 +54,9 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
           if (Array.isArray(products)) {
             for (const product of products) {
               if (!product?.slug) continue;
-
-              // Cache product by slug
-              queryClient.setQueryData(productKeys.detail(product.slug), product);
               allProducts.push(product);
 
-              // ─── 3. Preload ALL product images into browser cache ──
+              // Preload images from list response
               const images = product.images || [];
               for (const img of images) {
                 if (img?.url) preloadImage(img.url);
@@ -70,6 +67,28 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
 
           const totalPages = res?.totalPages || 1;
           page < totalPages ? page++ : (hasMore = false);
+        }
+
+        // ─── 3. Fetch FULL product details (with variants) for each product ──
+        // List endpoint doesn't include variants — detail page needs them
+        for (const product of allProducts) {
+          // Only fetch if not already cached with full data
+          const cached = queryClient.getQueryData(productKeys.detail(product.slug));
+          if (cached && (cached as any).variants) continue;
+
+          try {
+            const full = await api.get<Product>(`/products/${product.slug}`);
+            queryClient.setQueryData(productKeys.detail(product.slug), full);
+
+            // Preload full product images
+            const fullImages = (full as any)?.images || [];
+            for (const img of fullImages) {
+              if (img?.url) preloadImage(img.url);
+              if (img?.thumbnailUrl) preloadImage(img.thumbnailUrl);
+            }
+          } catch {
+            // Skip — will be fetched on demand
+          }
         }
 
         // ─── 4. Sort by category for infinite swipe ──────────────
