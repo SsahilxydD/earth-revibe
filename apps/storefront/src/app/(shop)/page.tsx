@@ -39,7 +39,7 @@ export default async function HomePage() {
         >
           {/* Aspect ratio container prevents layout shift while image loads */}
           {section.imageUrl ? (
-            <div className="relative w-full" style={{ aspectRatio: "3 / 4" }}>
+            <div className="relative w-full" style={{ aspectRatio: "9 / 16" }}>
               <Image
                 src={section.imageUrl}
                 alt={section.label}
