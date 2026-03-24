@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, BLUR_DATA_URL } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Slide {
@@ -95,6 +95,8 @@ export function Hero() {
             alt={slide.heading}
             fill
             priority={current === 0}
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
             className="object-cover"
             sizes="100vw"
           />

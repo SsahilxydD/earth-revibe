@@ -188,8 +188,8 @@ function ProductsContent() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-            {allProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {allProducts.map((product, i) => (
+              <ProductCard key={product.id} product={product} index={i} />
             ))}
           </div>
 

@@ -1,11 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Minus, Plus, Loader2, ChevronRight, Heart } from "lucide-react";
-import DOMPurify from "isomorphic-dompurify";
-import { cn, formatPrice, getImageUrl } from "@/lib/utils";
+// Lazy-load DOMPurify to avoid jsdom SSR crash (ENOENT default-stylesheet.css).
+// sanitize() is a no-op during SSR — the HTML re-renders correctly on hydration.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _purify: any = null;
+function sanitizeHTML(dirty: string): string {
+  if (typeof window === "undefined") return dirty;
+  if (!_purify) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    _purify = require("isomorphic-dompurify");
+    if (_purify.default) _purify = _purify.default;
+  }
+  return _purify.sanitize(dirty);
+}
+import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart-store";
 import { useToast } from "@/providers";
 import { Accordion } from "./accordion";
@@ -358,7 +371,7 @@ function DetailTabs({
       {/* Tab content */}
       <div className="px-4 pb-5 text-[13px] leading-[1.6] tracking-normal text-[#666666]" style={{ paddingTop: 0, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
         {activeTab === "description" && description && (
-          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description) }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(description) }} />
         )}
         {activeTab === "description" && !description && (
           <p className="text-[var(--color-muted)]">No description available.</p>
@@ -389,6 +402,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showSizeSheet, setShowSizeSheet] = useState(false);
 
@@ -711,6 +726,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="h-auto w-full"
                 priority
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
               />
             )}
           </div>
@@ -764,7 +781,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
               <div className="mt-8 border-t border-[var(--color-border)] border-opacity-0 pt-6">
                 <div
                   className="prose prose-sm max-w-none text-sm leading-relaxed text-[var(--color-text)]"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(product.description) }}
                 />
               </div>
             )}
@@ -785,6 +802,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                   quality={75}
                   sizes="50vw"
                   className="h-auto w-full"
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
                 />
               </div>
             ))}
@@ -811,6 +830,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
             sizes="100vw"
             className="h-auto w-full"
             priority
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
           />
         )}
 
@@ -842,6 +863,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                 quality={75}
                 sizes="100vw"
                 className="h-auto w-full"
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
               />
             ))}
           </div>
@@ -884,8 +907,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         </div>
       </div>
 
-      {/* Fixed mobile bottom dock — Zara-style (hidden in preview panels) */}
-      {!isPreview && <div
+      {/* Mobile bottom dock — portaled to body so it works inside overflow containers. */}
+      {!isPreview && mounted && createPortal(<div
         className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
@@ -923,10 +946,10 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
             {isAdding ? <Loader2 size={16} className="animate-spin" /> : "ADD"}
           </button>
         </div>
-      </div>}
+      </div>, document.body)}
 
-      {/* ===== SIZE SELECTION SHEET ===== */}
-      {!isPreview && <>
+      {/* ===== SIZE SELECTION SHEET (portaled to body so it works inside overflow containers) ===== */}
+      {!isPreview && mounted && createPortal(<>
         {/* Backdrop */}
         <div
           className={`fixed inset-0 z-[70] bg-black transition-opacity duration-300 ${
@@ -982,7 +1005,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
             </div>
           </div>
         </div>
-      </>}
+      </>, document.body)}
     </div>
   );
 }

@@ -1,21 +1,26 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Heart, Plus } from "lucide-react";
-import { cn, formatPrice, getImageUrl } from "@/lib/utils";
+import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from "@/lib/utils";
 import type { Product } from "@/types";
 
 interface ProductCardProps {
   product: Product;
+  /** Index in the grid — first 8 cards load eagerly (above the fold) */
+  index?: number;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const router = useRouter();
   const prefetched = useRef(false);
+
+  // First 4 cards are above the fold on mobile (2-col grid) — load eagerly
+  const isAboveFold = index < 4;
 
   // Prefetch the product page on first touch/hover so navigation is instant
   const handlePrefetch = useCallback(() => {
@@ -38,6 +43,17 @@ export function ProductCard({ product }: ProductCardProps) {
     return sorted.find((img) => img !== primary) || null;
   }, [images]);
 
+  // Preload secondary image into browser cache so hover swap is instant
+  const secondaryUrl = useMemo(
+    () => secondaryImage ? getImageUrl(secondaryImage.url, 600, secondaryImage.thumbnailUrl) : null,
+    [secondaryImage]
+  );
+  useEffect(() => {
+    if (!secondaryUrl) return;
+    const img = new window.Image();
+    img.src = secondaryUrl;
+  }, [secondaryUrl]);
+
   const isOnSale =
     product.compareAtPrice !== null &&
     product.compareAtPrice > product.price;
@@ -52,7 +68,7 @@ export function ProductCard({ product }: ProductCardProps) {
       onTouchStart={handlePrefetch}
     >
       <Link href={`/products/${product.slug}`} className="block">
-        {/* Image container */}
+        {/* Image container — fixed aspect ratio prevents layout shift */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
           {primaryImage && (
             <Image
@@ -60,6 +76,10 @@ export function ProductCard({ product }: ProductCardProps) {
               alt={primaryImage.altText || product.name}
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              priority={isAboveFold}
+              loading={isAboveFold ? "eager" : "lazy"}
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
               className={cn(
                 "object-cover transition-opacity duration-500",
                 secondaryImage ? "group-hover:opacity-0" : ""
@@ -68,10 +88,13 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
           {secondaryImage && (
             <Image
-              src={getImageUrl(secondaryImage.url, 600, secondaryImage.thumbnailUrl)}
+              src={secondaryUrl!}
               alt={secondaryImage.altText || product.name}
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              loading="lazy"
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
               className="absolute inset-0 object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
             />
           )}

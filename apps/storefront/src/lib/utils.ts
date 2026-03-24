@@ -26,17 +26,23 @@ export function formatDate(date: string): string {
  * - For thumbnails/listings (width <= 600), prefer thumbnailUrl (Cloudflare) when available.
  * - For full-quality detail views (width > 600 or unspecified), use the original url (Supabase).
  * - Legacy Cloudinary URLs still get width transforms applied.
+ * - Cloudflare URLs now request format=auto (WebP/AVIF) for smaller downloads.
  */
 export function getImageUrl(url: string, width?: number, thumbnailUrl?: string | null): string {
   if (!url) return "/placeholder.png";
 
   // For small sizes, use the thumbnail (Cloudflare) if available
   if (width && width <= 600 && thumbnailUrl) {
-    // Cloudflare Image Delivery URLs support /w=N variant suffix
+    // Cloudflare Image Delivery URLs support /w=N,format=auto variant suffix
     if (thumbnailUrl.includes("imagedelivery.net")) {
-      return thumbnailUrl.replace(/\/public$/, `/w=${width}`);
+      return thumbnailUrl.replace(/\/public$/, `/w=${width},format=auto`);
     }
     return thumbnailUrl;
+  }
+
+  // Cloudflare full-size — still request format=auto
+  if (url.includes("imagedelivery.net")) {
+    return url.replace(/\/public$/, width ? `/w=${width},format=auto` : "/format=auto");
   }
 
   // Legacy Cloudinary support
@@ -46,6 +52,15 @@ export function getImageUrl(url: string, width?: number, thumbnailUrl?: string |
 
   return url;
 }
+
+/**
+ * Tiny 1x1 SVG blur placeholder — eliminates the white flash before images load.
+ * Matches next/image's blurDataURL format. The warm neutral color (#f0eeeb) matches
+ * our product image backgrounds so the transition is seamless.
+ * Pre-computed base64 so it works in both server and client components.
+ */
+export const BLUR_DATA_URL =
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmMGVlZWIiLz48L3N2Zz4=";
 
 export function truncate(str: string, len: number): string {
   if (!str) return "";

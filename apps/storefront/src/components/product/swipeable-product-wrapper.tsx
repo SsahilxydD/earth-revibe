@@ -1,13 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { flushSync } from "react-dom";
-import {
-  motion,
-  useMotionValue,
-  useTransform,
-  animate,
-} from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { productKeys } from "@/hooks/use-products";
 import { usePrefetchAdjacentProducts } from "@/hooks/use-prefetch-adjacent-products";
@@ -17,41 +10,54 @@ import { api } from "@/lib/api-client";
 import type { Product } from "@/types";
 
 /* ------------------------------------------------------------------ */
-/*  Scroll position persistence via localStorage                       */
+/*  Zara-style 3-bar loading animation                                 */
 /* ------------------------------------------------------------------ */
-const SCROLL_STORAGE_KEY = "er-product-scroll";
 
-function getScrollPositions(): Record<string, number> {
-  try {
-    const raw = localStorage.getItem(SCROLL_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveScrollPosition(slug: string, y: number) {
-  try {
-    const positions = getScrollPositions();
-    positions[slug] = y;
-    // Keep only last 50 entries to prevent unbounded growth
-    const keys = Object.keys(positions);
-    if (keys.length > 50) {
-      const oldest = keys.slice(0, keys.length - 50);
-      oldest.forEach((k) => delete positions[k]);
-    }
-    localStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify(positions));
-  } catch {
-    // Storage full or unavailable — silently ignore
-  }
-}
-
-function getSavedScrollPosition(slug: string): number {
-  return getScrollPositions()[slug] || 0;
+function ZaraLoader() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100dvh",
+        width: "100%",
+        background: "#fff",
+        gap: "4px",
+      }}
+    >
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          style={{
+            width: "3px",
+            height: "20px",
+            background: "#121212",
+            animation: `zaraBarFill 1.2s ease-in-out ${i * 0.15}s infinite`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes zaraBarFill {
+          0%, 80%, 100% { transform: scaleY(0.4); opacity: 0.3; }
+          40% { transform: scaleY(1); opacity: 1; }
+        }
+      `}</style>
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Component                                                          */
+/*  Zara-style swipe: three fixed-viewport panels side by side.        */
+/*                                                                     */
+/*  Each panel is 100vw × 100dvh with overflow-y: auto (its own       */
+/*  scroll). The container is position:fixed so it owns the entire     */
+/*  screen. Horizontal swiping translates the container; vertical      */
+/*  scrolling is handled per-panel. This guarantees:                    */
+/*   1. Next product ALWAYS starts at scroll 0 (own scroll container)  */
+/*   2. No scroll position leak between products                       */
+/*   3. No flash — panels are pre-rendered off-screen                  */
+/*   4. No page-level scroll involved at all                           */
 /* ------------------------------------------------------------------ */
 
 interface Props {
@@ -61,7 +67,8 @@ interface Props {
 
 export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) {
   const queryClient = useQueryClient();
-  const slugs = useProductNavStore((s) => s.slugs);
+  const allSlugs = useProductNavStore((s) => s.allSlugs);
+  const categorySlugs = useProductNavStore((s) => s.slugs);
   const getAdjacentSlugs = useProductNavStore((s) => s.getAdjacentSlugs);
 
   const [currentSlug, setCurrentSlug] = useState(initialSlug);
@@ -69,71 +76,29 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   const [prevProduct, setPrevProduct] = useState<Product | null>(null);
   const [nextProduct, setNextProduct] = useState<Product | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
-  const [vw, setVw] = useState(390);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const dragX = useMotionValue(0);
-  const scrollYMV = useMotionValue(0);
+  // Animation state — managed via refs to avoid re-renders during drag
+  const isLockedRef = useRef(false);
+  const translateXRef = useRef(0);
+  const containerElRef = useRef<HTMLDivElement>(null);
+  const currentPanelRef = useRef<HTMLDivElement>(null);
 
-  const touchStartRef = useRef<{ x: number; y: number; locked: boolean | null }>({
-    x: 0, y: 0, locked: null,
-  });
+  const touchRef = useRef<{
+    startX: number;
+    startY: number;
+    axis: "x" | "y" | null;
+    startTime: number;
+  }>({ startX: 0, startY: 0, axis: null, startTime: 0 });
 
-  // All useTransform calls at top level (never conditional)
-  const prevPanelX = useTransform(dragX, (v) => v - vw);
-  const nextPanelX = useTransform(dragX, (v) => v + vw);
-  const currentOpacity = useTransform(
-    dragX,
-    [-200, -100, 0, 100, 200],
-    [0.7, 0.9, 1, 0.9, 0.7]
-  );
-
-  // Detect mobile + viewport width + track scroll (motion value — no re-renders)
+  // Detect mobile
   useEffect(() => {
-    const check = () => {
-      setIsMobile(window.innerWidth < 1024);
-      setVw(window.innerWidth);
-    };
-    const trackScroll = () => scrollYMV.set(window.scrollY);
+    const check = () => setIsMobile(window.innerWidth < 1024);
     check();
-    trackScroll();
     window.addEventListener("resize", check);
-    window.addEventListener("scroll", trackScroll, { passive: true });
-    return () => {
-      window.removeEventListener("resize", check);
-      window.removeEventListener("scroll", trackScroll);
-    };
+    return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Restore scroll position when arriving on a product
-  useEffect(() => {
-    const savedY = getSavedScrollPosition(currentSlug);
-    if (savedY > 0) {
-      // Small delay to let the DOM render the full product content first
-      requestAnimationFrame(() => {
-        window.scrollTo(0, savedY);
-      });
-    }
-  }, [currentSlug]);
-
-  // Save scroll position on scroll end (debounced — not every frame)
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const onScroll = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        saveScrollPosition(currentSlug, window.scrollY);
-      }, 150);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, [currentSlug]);
-
-  // Seed cache with initial product
+  // Seed cache
   useEffect(() => {
     queryClient.setQueryData(productKeys.detail(initialSlug), initialProduct);
   }, [initialSlug, initialProduct, queryClient]);
@@ -142,225 +107,342 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   usePrefetchAdjacentProducts(currentSlug);
 
   const { prev, next } = getAdjacentSlugs(currentSlug);
-  const hasNav = slugs.length > 1;
+  const activeList = categorySlugs.length > 1 ? categorySlugs : allSlugs;
+  const hasNav = activeList.length > 1;
 
-  // Load adjacent products into state for rendering.
-  // Check cache first, then fetch. Also re-check cache periodically
-  // in case prefetch completed after initial check.
+  // Lock body scroll when swipe mode is active (Zara pattern).
+  // The body must not scroll — each panel has its own overflow-y: auto.
+  useEffect(() => {
+    if (!isMobile || !hasNav) return;
+
+    const html = document.documentElement;
+    const body = document.body;
+
+    // Save original values
+    const origHtmlOverflow = html.style.overflow;
+    const origBodyOverflow = body.style.overflow;
+    const origBodyHeight = body.style.height;
+    const origBodyPosition = body.style.position;
+
+    // Lock
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    body.style.height = "100dvh";
+    body.style.position = "fixed";
+    body.style.width = "100%";
+
+    return () => {
+      html.style.overflow = origHtmlOverflow;
+      body.style.overflow = origBodyOverflow;
+      body.style.height = origBodyHeight;
+      body.style.position = origBodyPosition;
+      body.style.width = "";
+    };
+  }, [isMobile, hasNav]);
+
+  // Load adjacent products
   useEffect(() => {
     let cancelled = false;
 
     const loadProduct = async (slug: string): Promise<Product | null> => {
-      // Check cache first
       const cached = queryClient.getQueryData<Product>(productKeys.detail(slug));
       if (cached) return cached;
-
-      // Fetch and cache
       try {
         const product = await api.get<Product>(`/products/${slug}`);
-        if (!cancelled) {
-          queryClient.setQueryData(productKeys.detail(slug), product);
-        }
+        if (!cancelled) queryClient.setQueryData(productKeys.detail(slug), product);
         return product;
       } catch {
         return null;
       }
     };
 
-    if (prev) {
-      loadProduct(prev).then((p) => { if (!cancelled) setPrevProduct(p); });
-    } else {
-      setPrevProduct(null);
-    }
+    if (prev) loadProduct(prev).then((p) => { if (!cancelled) setPrevProduct(p); });
+    else setPrevProduct(null);
 
-    if (next) {
-      loadProduct(next).then((p) => { if (!cancelled) setNextProduct(p); });
-    } else {
-      setNextProduct(null);
-    }
+    if (next) loadProduct(next).then((p) => { if (!cancelled) setNextProduct(p); });
+    else setNextProduct(null);
 
     return () => { cancelled = true; };
   }, [prev, next, queryClient, currentSlug]);
 
+  // Preload adjacent images
+  useEffect(() => {
+    const preload = (product: Product | null) => {
+      if (!product) return;
+      product.images.forEach((img) => {
+        const i = new window.Image();
+        i.src = img.url;
+      });
+    };
+    preload(prevProduct);
+    preload(nextProduct);
+  }, [prevProduct, nextProduct]);
+
+  // --- Swipe helpers ---
+  // The track's base position is translateX(-100vw) — centered on the middle panel.
+  // Drag offset is ADDED to this base. So 0 = centered, -vw = show next, +vw = show prev.
+
+  const BASE_OFFSET = "-100vw";
+
+  const setTranslateX = useCallback((x: number) => {
+    translateXRef.current = x;
+    if (containerElRef.current) {
+      containerElRef.current.style.transform = `translateX(calc(${BASE_OFFSET} + ${x}px))`;
+    }
+  }, []);
+
+  const animateTo = useCallback((targetX: number, duration = 280): Promise<void> => {
+    return new Promise((resolve) => {
+      const el = containerElRef.current;
+      if (!el) { resolve(); return; }
+
+      el.style.transition = `transform ${duration}ms cubic-bezier(0.25, 1, 0.5, 1)`;
+      el.style.transform = `translateX(calc(${BASE_OFFSET} + ${targetX}px))`;
+      translateXRef.current = targetX;
+
+      const onEnd = () => {
+        el.removeEventListener("transitionend", onEnd);
+        el.style.transition = "none";
+        resolve();
+      };
+      el.addEventListener("transitionend", onEnd);
+
+      // Safety timeout in case transitionend doesn't fire
+      setTimeout(() => {
+        el.removeEventListener("transitionend", onEnd);
+        el.style.transition = "none";
+        resolve();
+      }, duration + 50);
+    });
+  }, []);
+
+  // Track whether we need to snap back after React re-renders
+  const pendingSnapRef = useRef(false);
+
+  const commitSwipe = useCallback((targetSlug: string, product: Product) => {
+    // Reset scroll on current panel to 0 for when it becomes a neighbor later
+    if (currentPanelRef.current) {
+      currentPanelRef.current.scrollTop = 0;
+    }
+
+    // Mark that we need to snap back AFTER React renders the new content.
+    // Do NOT snap transform here — the center panel still shows old content.
+    // The adjacent panel (which IS the new product) is currently visible at ±100vw.
+    // We keep it there until React swaps the center panel content.
+    pendingSnapRef.current = true;
+
+    // Swap products — triggers re-render
+    setCurrentSlug(targetSlug);
+    setCurrentProduct(product);
+
+    // Update URL silently — no page navigation
+    window.history.replaceState(
+      { ...window.history.state, __N: true },
+      "",
+      `/products/${targetSlug}`
+    );
+  }, []);
+
+  // After React commits the new product to the center panel, snap back to center.
+  // This runs AFTER the DOM has been updated, so no flash of old content.
+  useEffect(() => {
+    if (!pendingSnapRef.current) return;
+    pendingSnapRef.current = false;
+
+    // Use rAF to ensure the browser has painted the new content
+    requestAnimationFrame(() => {
+      if (containerElRef.current) {
+        containerElRef.current.style.transition = "none";
+        containerElRef.current.style.transform = "translateX(-100vw)";
+      }
+      translateXRef.current = 0;
+      isLockedRef.current = false;
+    });
+  }, [currentSlug]);
+
   const snapTo = useCallback(
     async (targetSlug: string | null, direction: "prev" | "next") => {
-      if (isLocked || !targetSlug) return;
-      setIsLocked(true);
+      if (isLockedRef.current || !targetSlug) return;
+      isLockedRef.current = true;
 
       try {
-        saveScrollPosition(currentSlug, window.scrollY);
-
-        // Get product — from cache or fetch
+        // Get product from cache or fetch
         let product = queryClient.getQueryData<Product>(productKeys.detail(targetSlug));
         if (!product) {
-          // Snap back while fetching
-          dragX.set(0);
+          // Snap back while we fetch
+          await animateTo(0, 200);
           product = await api.get<Product>(`/products/${targetSlug}`);
           queryClient.setQueryData(productKeys.detail(targetSlug), product);
         }
 
-        // Slide out
+        // Slide to reveal the adjacent panel
+        const vw = window.innerWidth;
         const targetX = direction === "next" ? -vw : vw;
-        await animate(dragX, targetX, {
-          type: "spring", stiffness: 300, damping: 30,
-        });
+        await animateTo(targetX);
 
-        // Swap content
-        window.scrollTo(0, 0);
-        flushSync(() => {
-          setCurrentSlug(targetSlug);
-          setCurrentProduct(product);
-        });
-
-        dragX.set(0);
-        window.history.replaceState({}, "", `/products/${targetSlug}`);
+        // Commit: swap content. The useEffect on currentSlug will snap back
+        // to center AFTER React renders the new product — no flash.
+        // isLockedRef is unlocked in that useEffect, not here.
+        commitSwipe(targetSlug, product);
       } catch {
-        dragX.set(0);
-      } finally {
-        setIsLocked(false);
+        setTranslateX(0);
+        isLockedRef.current = false;
       }
     },
-    [isLocked, vw, queryClient, dragX, currentSlug]
+    [queryClient, animateTo, commitSwipe, setTranslateX]
   );
 
-  const snapBack = useCallback(() => {
-    animate(dragX, 0, {
-      type: "spring",
-      stiffness: 400,
-      damping: 30,
-    });
-  }, [dragX]);
+  // --- Touch handlers ---
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY, locked: null };
+    if (isLockedRef.current) return;
+    const t = e.touches[0];
+    touchRef.current = { startX: t.clientX, startY: t.clientY, axis: null, startTime: Date.now() };
+    // Kill any lingering transition
+    if (containerElRef.current) containerElRef.current.style.transition = "none";
   }, []);
 
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (isLocked) return;
-      const touch = e.touches[0];
-      const ref = touchStartRef.current;
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (isLockedRef.current) return;
+    const t = e.touches[0];
+    const ref = touchRef.current;
 
-      if (ref.locked === null) {
-        const dx = Math.abs(touch.clientX - ref.x);
-        const dy = Math.abs(touch.clientY - ref.y);
-        if (dx + dy < 10) return;
-        ref.locked = dx > dy;
-      }
+    const dx = t.clientX - ref.startX;
+    const dy = t.clientY - ref.startY;
 
-      if (ref.locked) {
-        let delta = touch.clientX - ref.x;
+    // Determine axis lock on first significant movement
+    if (ref.axis === null) {
+      if (Math.abs(dx) + Math.abs(dy) < 8) return;
+      ref.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+    }
 
-        // Rubber-band resistance at boundaries
-        if ((!prev && delta > 0) || (!next && delta < 0)) {
-          delta *= 0.15;
-        }
+    // If vertical scroll, don't interfere
+    if (ref.axis === "y") return;
 
-        dragX.set(delta);
-      }
-    },
-    [isLocked, prev, next, dragX]
-  );
+    // Horizontal drag — apply rubber-band at edges if no neighbor loaded
+    let delta = dx;
+    if ((!prevProduct && delta > 0) || (!nextProduct && delta < 0)) {
+      delta *= 0.2;
+    }
+
+    setTranslateX(delta);
+  }, [prevProduct, nextProduct, setTranslateX]);
 
   const handleTouchEnd = useCallback(() => {
-    if (isLocked) return;
-    const ref = touchStartRef.current;
+    if (isLockedRef.current) return;
+    const ref = touchRef.current;
 
-    if (!ref.locked) {
-      snapBack();
+    if (ref.axis !== "x") {
+      // Was a vertical scroll, not a swipe
+      setTranslateX(0);
       return;
     }
 
-    const currentX = dragX.get();
-    const threshold = vw * 0.2;
+    const dx = translateXRef.current;
+    const vw = window.innerWidth;
+    const elapsed = Date.now() - ref.startTime;
+    const velocity = Math.abs(dx) / Math.max(elapsed, 1);
 
-    if (currentX < -threshold && next) {
+    // Swipe threshold: either 20% of screen or fast flick (>0.5px/ms)
+    const threshold = vw * 0.2;
+    const isFlick = velocity > 0.5;
+
+    if ((dx < -threshold || (dx < 0 && isFlick)) && next) {
       snapTo(next, "next");
-    } else if (currentX > threshold && prev) {
+    } else if ((dx > threshold || (dx > 0 && isFlick)) && prev) {
       snapTo(prev, "prev");
     } else {
-      snapBack();
+      // Snap back
+      animateTo(0, 200);
     }
 
-    touchStartRef.current.locked = null;
-  }, [isLocked, dragX, vw, next, prev, snapTo, snapBack]);
+    touchRef.current.axis = null;
+  }, [next, prev, snapTo, animateTo, setTranslateX]);
 
-  // Preload adjacent product images into browser cache
-  useEffect(() => {
-    const preloadImages = (product: Product | null) => {
-      if (!product) return;
-      product.images.forEach((img) => {
-        const link = document.createElement("link");
-        link.rel = "preload";
-        link.as = "image";
-        link.href = img.url;
-        if (!document.querySelector(`link[href="${img.url}"]`)) {
-          document.head.appendChild(link);
-        }
-      });
-    };
-    preloadImages(prevProduct);
-    preloadImages(nextProduct);
-  }, [prevProduct, nextProduct]);
+  // --- Render ---
 
-  // Desktop or no nav context → plain render
+  // Desktop or no nav → simple render, no swipe
   if (!isMobile || !hasNav) {
     return <ProductDetail key={currentSlug} product={currentProduct} />;
   }
 
-  // Mobile with nav context → three-panel swipeable layout
-  // Preview panels use saved scroll positions from localStorage
-  const prevSavedScroll = prev ? getSavedScrollPosition(prev) : 0;
-  const nextSavedScroll = next ? getSavedScrollPosition(next) : 0;
-
+  // Mobile: Zara-style three-panel viewport-locked carousel
+  // Outer: overflow:hidden viewport. Inner: flex track that translateX slides.
+  // Each panel has its own overflow-y:auto scroll — no shared scroll context.
   return (
     <div
-      ref={containerRef}
-      className="relative"
+      style={{
+        height: "100dvh",
+        overflow: "hidden",
+        position: "relative",
+      }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{ touchAction: "pan-y" }}
     >
-      {/* Previous product — shows at its saved scroll position */}
-      {prevProduct && (
-        <motion.div
-          className="absolute left-0 w-full overflow-hidden pointer-events-none"
+      {/* Sliding track — three panels side by side */}
+      <div
+        ref={containerElRef}
+        style={{
+          display: "flex",
+          width: "300vw",
+          height: "100dvh",
+          transform: "translateX(-100vw)",
+          transition: "none",
+          willChange: "transform",
+        }}
+      >
+        {/* PREV panel — own scroll container */}
+        <div
           style={{
-            x: prevPanelX,
-            top: scrollYMV,
+            width: "100vw",
             height: "100dvh",
-            zIndex: 20,
+            overflowY: "auto",
+            overflowX: "hidden",
+            WebkitOverflowScrolling: "touch",
+            flexShrink: 0,
           }}
         >
-          <div style={{ marginTop: -prevSavedScroll }}>
+          {prevProduct ? (
             <ProductDetail product={prevProduct} isPreview />
-          </div>
-        </motion.div>
-      )}
+          ) : (
+            <ZaraLoader />
+          )}
+        </div>
 
-      {/* Current product — normal flow, scrollable */}
-      <motion.div style={{ x: dragX, opacity: currentOpacity }}>
-        <ProductDetail key={currentSlug} product={currentProduct} />
-      </motion.div>
-
-      {/* Next product — shows at its saved scroll position */}
-      {nextProduct && (
-        <motion.div
-          className="absolute left-0 w-full overflow-hidden pointer-events-none"
+        {/* CURRENT panel — own scroll container */}
+        <div
+          ref={currentPanelRef}
           style={{
-            x: nextPanelX,
-            top: scrollYMV,
+            width: "100vw",
             height: "100dvh",
-            zIndex: 20,
+            overflowY: "auto",
+            overflowX: "hidden",
+            WebkitOverflowScrolling: "touch",
+            flexShrink: 0,
           }}
         >
-          <div style={{ marginTop: -nextSavedScroll }}>
+          <ProductDetail key={currentSlug} product={currentProduct} />
+        </div>
+
+        {/* NEXT panel — own scroll container */}
+        <div
+          style={{
+            width: "100vw",
+            height: "100dvh",
+            overflowY: "auto",
+            overflowX: "hidden",
+            WebkitOverflowScrolling: "touch",
+            flexShrink: 0,
+          }}
+        >
+          {nextProduct ? (
             <ProductDetail product={nextProduct} isPreview />
-          </div>
-        </motion.div>
-      )}
+          ) : (
+            <ZaraLoader />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

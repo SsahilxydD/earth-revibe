@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn, formatPrice, truncate, getImageUrl } from "@/lib/utils";
+import { cn, formatPrice, truncate, getImageUrl, BLUR_DATA_URL } from "@/lib/utils";
 import { SectionHeader } from "./section-header";
 
 interface Product {
@@ -46,6 +46,8 @@ function ProductCard({ product }: { product: Product }) {
           src={getImageUrl(primaryImage, 400, primaryImg?.thumbnailUrl)}
           alt={product.name}
           fill
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
           className={cn(
             "object-cover transition-all duration-500",
             secondaryImage
@@ -59,6 +61,8 @@ function ProductCard({ product }: { product: Product }) {
             src={getImageUrl(secondaryImage, 400, secondaryImg?.thumbnailUrl)}
             alt={`${product.name} - alternate view`}
             fill
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
             className="object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             sizes="(max-width: 640px) 160px, (max-width: 768px) 200px, 25vw"
           />

@@ -206,9 +206,9 @@ function SearchContent() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 xl:grid-cols-5">
-            {allProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+            {allProducts.map((product, i) => (
+              <ProductCard key={product.id} product={product} index={i} />
             ))}
           </div>
           <div ref={loadMoreRef} className="flex justify-center py-8">

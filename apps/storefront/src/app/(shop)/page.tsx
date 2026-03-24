@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { BLUR_DATA_URL } from "@/lib/utils";
 
 interface HomepageSection {
   id: string;
@@ -46,7 +47,10 @@ export default async function HomePage() {
                 fill
                 sizes="100vw"
                 quality={75}
-                priority={i === 0}
+                priority={i < 2}
+                loading={i < 2 ? "eager" : "lazy"}
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
                 className="object-cover transition-transform duration-700 ease-in-out hover:scale-[1.03]"
               />
             </div>

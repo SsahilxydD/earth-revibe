@@ -9,7 +9,8 @@ import type { Product } from "@/types";
 
 export function usePrefetchAdjacentProducts(currentSlug: string) {
   const queryClient = useQueryClient();
-  const slugs = useProductNavStore((s) => s.slugs);
+  const categorySlugs = useProductNavStore((s) => s.slugs);
+  const allSlugs = useProductNavStore((s) => s.allSlugs);
   const getAdjacentSlugs = useProductNavStore((s) => s.getAdjacentSlugs);
   const { prev, next } = getAdjacentSlugs(currentSlug);
 
@@ -34,5 +35,6 @@ export function usePrefetchAdjacentProducts(currentSlug: string) {
         staleTime: 10 * 60 * 1000,
       });
     });
-  }, [prev, next, queryClient, slugs, getAdjacentSlugs]);
+    // Re-run when either slug list changes (category nav or global prefetch completes)
+  }, [prev, next, queryClient, categorySlugs, allSlugs, getAdjacentSlugs]);
 }

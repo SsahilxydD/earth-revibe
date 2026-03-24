@@ -20,9 +20,23 @@ import type { Product, Category } from "@/types";
  * Total memory: ~2-5MB JSON + ~30-50MB images (browser cache managed).
  */
 
-/** Preload an image into browser memory cache */
-function preloadImage(url: string) {
+/** Preload an image into browser memory cache.
+ *  Uses <link rel="preload"> for high-priority images (fetchpriority=high),
+ *  falls back to Image() for the rest. The link approach tells the browser
+ *  to start fetching before layout/paint, eliminating pop-in. */
+function preloadImage(url: string, highPriority = false) {
   if (!url) return;
+  if (highPriority && typeof document !== "undefined") {
+    // Avoid duplicate preload links
+    if (document.querySelector(`link[href="${CSS.escape(url)}"]`)) return;
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = url;
+    link.fetchPriority = "high";
+    document.head.appendChild(link);
+    return;
+  }
   const img = new Image();
   img.src = url;
 }
@@ -56,12 +70,12 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
               if (!product?.slug) continue;
               allProducts.push(product);
 
-              // Preload images from list response
+              // Preload images into browser cache using background Image() — low priority,
+              // doesn't block initial render. Only preload the primary thumbnail per product.
               const images = product.images || [];
-              for (const img of images) {
-                if (img?.url) preloadImage(img.url);
-                if (img?.thumbnailUrl) preloadImage(img.thumbnailUrl);
-              }
+              const primary = images[0];
+              if (primary?.thumbnailUrl) preloadImage(primary.thumbnailUrl);
+              else if (primary?.url) preloadImage(primary.url);
             }
           }
 
