@@ -76,7 +76,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState("");
 
-  const order = data?.order;
+  const order = (data as any)?.order ?? data;
 
   const handleStatusUpdate = async () => {
     if (!newStatus) return;
