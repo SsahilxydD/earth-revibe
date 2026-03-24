@@ -190,15 +190,18 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       // Save current scroll position before leaving
       saveScrollPosition(currentSlug, window.scrollY);
 
-      // Ensure product data is ready BEFORE animating
+      // Check cache first — if data exists, slide immediately
       let product = queryClient.getQueryData<Product>(productKeys.detail(targetSlug));
+
       if (!product) {
+        // Data not cached — snap back to 0 first so user isn't stuck
+        // at a partial swipe position while we fetch
+        await animate(dragX, 0, { type: "spring", stiffness: 500, damping: 35 });
+
         try {
           product = await api.get<Product>(`/products/${targetSlug}`);
           queryClient.setQueryData(productKeys.detail(targetSlug), product);
         } catch {
-          // Failed to load — snap back smoothly instead of blinking
-          animate(dragX, 0, { type: "spring", stiffness: 400, damping: 30 });
           setIsLocked(false);
           return;
         }
