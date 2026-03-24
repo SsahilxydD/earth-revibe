@@ -72,7 +72,7 @@ export function MobileMenu() {
       />
 
       {/* Panel */}
-      <div className="absolute left-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-white animate-slide-down">
+      <div className="absolute left-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-white shadow-2xl animate-slide-in-left">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
           <span className="text-lg font-bold uppercase tracking-[0.2em]">

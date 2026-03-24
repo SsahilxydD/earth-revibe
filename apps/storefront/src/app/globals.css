@@ -41,3 +41,6 @@ body { font-family: var(--font-body); color: var(--color-text); background: var(
 
 @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 .animate-slide-in-left { animation: slideInLeft 0.3s ease-out; }
+
+@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.animate-slide-in-right { animation: slideInRight 0.3s cubic-bezier(0.32, 0.72, 0, 1); }

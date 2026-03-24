@@ -79,7 +79,7 @@ export function CartDrawer() {
       />
 
       {/* Drawer */}
-      <div className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl animate-slide-down">
+      <div className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl animate-slide-in-right">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
           <h2 className="text-sm font-bold uppercase tracking-[0.2em]">
