@@ -7,6 +7,7 @@ import { useCartStore } from "@/stores/cart-store";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CartItemRow } from "./cart-item";
+import { api } from "@/lib/api-client";
 
 const FREE_SHIPPING_THRESHOLD = 999;
 
@@ -54,14 +55,14 @@ export function CartDrawer() {
     setApplyingDiscount(true);
     setDiscountError("");
     try {
-      // Simulate discount validation
-      await new Promise((r) => setTimeout(r, 500));
-      const code = discountInput.trim().toUpperCase();
-      if (code === "EARTH10") {
-        applyDiscount(code, Math.round(subtotal * 0.1));
-      } else {
-        setDiscountError("Invalid discount code");
-      }
+      const result = await api.post<{ code: string; discountAmount: number }>(
+        "/discounts/validate",
+        { code: discountInput.trim(), orderTotal: subtotal }
+      );
+      applyDiscount(result.code, result.discountAmount);
+      setDiscountInput("");
+    } catch (error: any) {
+      setDiscountError(error?.message || "Invalid discount code");
     } finally {
       setApplyingDiscount(false);
     }
