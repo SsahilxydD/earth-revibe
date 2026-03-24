@@ -12,7 +12,7 @@ function ConfirmationContent() {
   const orderId = searchParams.get("orderId");
 
   return (
-    <div className="flex min-h-[calc(100vh-160px)] items-center justify-center px-4 py-10 lg:px-8">
+    <div className="flex min-h-[calc(100dvh-160px)] items-center justify-center px-4 py-10 lg:px-8">
       <div className="mx-auto w-full max-w-sm text-center">
         {/* Success icon */}
         <div className="flex justify-center">

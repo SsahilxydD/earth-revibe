@@ -78,7 +78,7 @@ export function Hero() {
   };
 
   return (
-    <section className="relative w-full h-[60vh] md:h-[calc(100vh-80px)] overflow-hidden bg-[var(--color-primary)]">
+    <section className="relative w-full h-[60dvh] md:h-[calc(100dvh-80px)] overflow-hidden bg-[var(--color-primary)]">
       <AnimatePresence initial={false} custom={direction} mode="wait">
         <motion.div
           key={current}

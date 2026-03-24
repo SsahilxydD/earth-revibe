@@ -13,7 +13,7 @@ export default function ShopLayout({
     <>
       <AnnouncementBar />
       <Header />
-      <main className="min-h-screen">{children}</main>
+      <main className="min-h-[100dvh]">{children}</main>
       <Footer />
       <MobileBottomBar />
       <NewsletterPopup />

@@ -335,7 +335,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
           style={{
             x: prevPanelX,
             top: scrollYMV,
-            height: "100vh",
+            height: "100dvh",
             zIndex: 20,
           }}
         >
@@ -357,7 +357,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
           style={{
             x: nextPanelX,
             top: scrollYMV,
-            height: "100vh",
+            height: "100dvh",
             zIndex: 20,
           }}
         >
