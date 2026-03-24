@@ -137,7 +137,7 @@ export function ProductCard({ product }: ProductCardProps) {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            window.location.href = `/products/${product.slug}`;
+            router.push(`/products/${product.slug}`);
           }}
           className="absolute bottom-[3.2rem] right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-colors hover:bg-white"
           aria-label="Add to cart"
