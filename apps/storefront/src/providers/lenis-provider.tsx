@@ -1,32 +1,75 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ReactLenis, useLenis } from "lenis/react";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+const SCROLL_MAP_KEY = "er-route-scroll";
+
+function getScrollMap(): Record<string, number> {
+  try {
+    return JSON.parse(sessionStorage.getItem(SCROLL_MAP_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveScrollForRoute(path: string, y: number) {
+  try {
+    const map = getScrollMap();
+    map[path] = y;
+    sessionStorage.setItem(SCROLL_MAP_KEY, JSON.stringify(map));
+  } catch { /* full or unavailable */ }
+}
+
 /**
- * On route change, scroll to top immediately so Lenis and the browser
- * agree on position. Prevents scroll-position glitches on back/forward nav.
+ * Saves scroll position when leaving a route and restores it when
+ * returning. Never jumps — always retains where the user was.
  */
-function ScrollReset() {
+function ScrollRetain() {
   const lenis = useLenis();
   const pathname = usePathname();
+  const prevPath = useRef(pathname);
 
   useEffect(() => {
-    // Reset Lenis scroll position on every route change
-    if (lenis) {
-      lenis.scrollTo(0, { immediate: true });
+    if (prevPath.current !== pathname) {
+      // Save position of the page we're leaving
+      saveScrollForRoute(prevPath.current, window.scrollY);
+      prevPath.current = pathname;
+    }
+
+    // Restore position for the page we're arriving at
+    const saved = getScrollMap()[pathname];
+    if (saved != null && saved > 0) {
+      // Use requestAnimationFrame to let the DOM render first
+      requestAnimationFrame(() => {
+        if (lenis) {
+          lenis.scrollTo(saved, { immediate: true });
+        } else {
+          window.scrollTo(0, saved);
+        }
+      });
     }
   }, [pathname, lenis]);
+
+  // Save on unmount / tab close
+  useEffect(() => {
+    const save = () => saveScrollForRoute(pathname, window.scrollY);
+    window.addEventListener("beforeunload", save);
+    return () => {
+      save();
+      window.removeEventListener("beforeunload", save);
+    };
+  }, [pathname]);
 
   return null;
 }
 
 export function LenisProvider({ children }: { children: ReactNode }) {
-  // Disable browser's built-in scroll restoration — we manage it ourselves
+  // Let us manage scroll restoration, not the browser
   useEffect(() => {
-    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+    if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
   }, []);
@@ -42,7 +85,7 @@ export function LenisProvider({ children }: { children: ReactNode }) {
         autoResize: true,
       }}
     >
-      <ScrollReset />
+      <ScrollRetain />
       {children}
     </ReactLenis>
   );
