@@ -42,6 +42,29 @@ router.post(
   })
 );
 
+// PUT /api/v1/admin/homepage/reorder — MUST be before /:id routes
+router.put(
+  "/reorder",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { orderedIds } = req.body;
+    if (!Array.isArray(orderedIds)) {
+      res.status(400).json({ success: false, error: { code: "BAD_REQUEST", message: "orderedIds array is required" } });
+      return;
+    }
+
+    await prisma.$transaction(
+      orderedIds.map((id: string, index: number) =>
+        prisma.homepageSection.update({
+          where: { id },
+          data: { sortOrder: index },
+        })
+      )
+    );
+
+    res.json({ success: true });
+  })
+);
+
 // DELETE /api/v1/admin/homepage/:id — remove a section
 router.delete(
   "/:id",

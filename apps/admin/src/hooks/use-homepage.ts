@@ -41,6 +41,17 @@ export function useCreateHomepageSection() {
   });
 }
 
+export function useReorderHomepageSections() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderedIds: string[]) =>
+      api.put("/admin/homepage/reorder", { orderedIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["homepage-sections"] });
+    },
+  });
+}
+
 export function useDeleteHomepageSection() {
   const queryClient = useQueryClient();
   return useMutation({

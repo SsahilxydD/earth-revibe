@@ -2,13 +2,14 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { Upload, Loader2, ExternalLink, Plus, Trash2, X } from "lucide-react";
+import { Upload, Loader2, ExternalLink, Plus, Trash2, X, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import {
   useHomepageSections,
   useUpdateHomepageSection,
   useCreateHomepageSection,
   useDeleteHomepageSection,
+  useReorderHomepageSections,
 } from "@/hooks/use-homepage";
 import { useUploadImage } from "@/hooks/use-products";
 
@@ -17,6 +18,7 @@ export default function HomepagePage() {
   const updateSection = useUpdateHomepageSection();
   const createSection = useCreateHomepageSection();
   const deleteSection = useDeleteHomepageSection();
+  const reorderSections = useReorderHomepageSections();
   const uploadImage = useUploadImage();
 
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -52,6 +54,24 @@ export default function HomepagePage() {
       toast.success("Section added");
     } catch {
       toast.error("Failed to add section");
+    }
+  };
+
+  const handleSwap = async (index: number, direction: "up" | "down") => {
+    if (!sections) return;
+    const sorted = [...sections].sort((a, b) => a.sortOrder - b.sortOrder);
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= sorted.length) return;
+
+    // Swap positions in the array
+    const newOrder = sorted.map((s) => s.id);
+    [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
+
+    try {
+      await reorderSections.mutateAsync(newOrder);
+      toast.success("Order updated");
+    } catch {
+      toast.error("Failed to reorder");
     }
   };
 
@@ -132,7 +152,7 @@ export default function HomepagePage() {
         {(sections ?? []).length === 0 && (
           <p className="text-sm text-medium-gray py-8 text-center">No sections yet. Add one above.</p>
         )}
-        {(sections ?? []).map((section) => (
+        {[...(sections ?? [])].sort((a, b) => a.sortOrder - b.sortOrder).map((section, index, arr) => (
           <div
             key={section.id}
             className="flex items-center gap-4 rounded-lg border border-stone-200 bg-white p-4"
@@ -158,6 +178,26 @@ export default function HomepagePage() {
                 {section.href} <ExternalLink size={11} />
               </a>
               {section.imageUrl && <p className="text-xs text-green-600 mt-1">Image set</p>}
+            </div>
+
+            {/* Reorder */}
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => handleSwap(index, "up")}
+                disabled={index === 0 || reorderSections.isPending}
+                className="flex h-7 w-7 items-center justify-center rounded border border-stone-200 text-medium-gray hover:bg-stone-50 disabled:opacity-30 transition-colors"
+                title="Move up"
+              >
+                <ArrowUp size={14} />
+              </button>
+              <button
+                onClick={() => handleSwap(index, "down")}
+                disabled={index === arr.length - 1 || reorderSections.isPending}
+                className="flex h-7 w-7 items-center justify-center rounded border border-stone-200 text-medium-gray hover:bg-stone-50 disabled:opacity-30 transition-colors"
+                title="Move down"
+              >
+                <ArrowDown size={14} />
+              </button>
             </div>
 
             {/* Actions */}
