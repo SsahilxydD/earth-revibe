@@ -29,26 +29,6 @@ async function getProduct(slug: string): Promise<Product | null> {
   }
 }
 
-// Allow new products added after build to be generated on-demand
-export const dynamicParams = true;
-
-/* ------------------------------------------------------------------ */
-/*  Static generation — pre-build all product pages at deploy time     */
-/*  so clicking a product loads instantly from CDN (no server fetch)   */
-/* ------------------------------------------------------------------ */
-
-export async function generateStaticParams() {
-  try {
-    const res = await fetch(`${resolveApiBase()}/products?limit=200&fields=slug`);
-    if (!res.ok) return [];
-    const json = await res.json();
-    const products = json.data?.products || json.data || [];
-    return products.map((p: { slug: string }) => ({ slug: p.slug }));
-  } catch {
-    return [];
-  }
-}
-
 /* ------------------------------------------------------------------ */
 /*  Metadata                                                           */
 /* ------------------------------------------------------------------ */

@@ -31,8 +31,6 @@ body {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
-/* Force iOS to keep the page painted during navigation */
-main { content-visibility: auto; }
 ::selection { background: #121212; color: #fff; }
 
 /* Hide scrollbar but keep scroll */
