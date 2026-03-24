@@ -33,25 +33,25 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
         let hasMore = true;
 
         while (hasMore) {
-          const res = await api.get<{
-            products: Product[];
-            pagination: { page: number; totalPages: number };
-          }>(`/products?page=${page}&limit=50`);
+          const res: any = await api.get(`/products?page=${page}&limit=50`);
 
-          const products = res.products || res;
+          const products = res?.products || [];
 
           // Cache each individual product by slug for instant detail page loads
           if (Array.isArray(products)) {
             products.forEach((product: Product) => {
-              queryClient.setQueryData(
-                productKeys.detail(product.slug),
-                product,
-              );
+              if (product?.slug) {
+                queryClient.setQueryData(
+                  productKeys.detail(product.slug),
+                  product,
+                );
+              }
             });
           }
 
-          const pagination = res.pagination;
-          if (pagination && page < pagination.totalPages) {
+          // API returns { products, total, page, limit, totalPages }
+          const totalPages = res?.totalPages || 1;
+          if (page < totalPages) {
             page++;
           } else {
             hasMore = false;
