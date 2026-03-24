@@ -25,43 +25,60 @@ function saveScrollForRoute(path: string, y: number) {
 
 /**
  * Saves scroll position when leaving a route and restores it when
- * returning. Never jumps — always retains where the user was.
+ * returning. Retries restore until the page is tall enough to scroll to
+ * the saved position (images/dynamic content may not be loaded yet).
  */
 function ScrollRetain() {
   const lenis = useLenis();
   const pathname = usePathname();
   const prevPath = useRef(pathname);
 
+  // Save position continuously (debounced) so we always have the latest
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const onScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => saveScrollForRoute(pathname, window.scrollY), 100);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      // Final save when leaving this route
+      saveScrollForRoute(pathname, window.scrollY);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [pathname]);
+
+  // Restore scroll position when arriving at a route
   useEffect(() => {
     if (prevPath.current !== pathname) {
-      // Save position of the page we're leaving
-      saveScrollForRoute(prevPath.current, window.scrollY);
       prevPath.current = pathname;
     }
 
-    // Restore position for the page we're arriving at
     const saved = getScrollMap()[pathname];
-    if (saved != null && saved > 0) {
-      // Use requestAnimationFrame to let the DOM render first
-      requestAnimationFrame(() => {
-        if (lenis) {
-          lenis.scrollTo(saved, { immediate: true });
-        } else {
-          window.scrollTo(0, saved);
-        }
-      });
-    }
-  }, [pathname, lenis]);
+    if (saved == null || saved <= 0) return;
 
-  // Save on unmount / tab close
-  useEffect(() => {
-    const save = () => saveScrollForRoute(pathname, window.scrollY);
-    window.addEventListener("beforeunload", save);
-    return () => {
-      save();
-      window.removeEventListener("beforeunload", save);
+    // Retry restore until page is tall enough or we give up (1s max)
+    let attempts = 0;
+    const maxAttempts = 20; // 20 * 50ms = 1s
+    const tryRestore = () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (maxScroll >= saved || attempts >= maxAttempts) {
+        const target = Math.min(saved, Math.max(0, maxScroll));
+        if (lenis) {
+          lenis.scrollTo(target, { immediate: true });
+        } else {
+          window.scrollTo(0, target);
+        }
+        return;
+      }
+      attempts++;
+      setTimeout(tryRestore, 50);
     };
-  }, [pathname]);
+
+    // Small initial delay to let React render the new page
+    requestAnimationFrame(() => requestAnimationFrame(tryRestore));
+  }, [pathname, lenis]);
 
   return null;
 }
