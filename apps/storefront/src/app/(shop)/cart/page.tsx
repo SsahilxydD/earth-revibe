@@ -168,7 +168,7 @@ export default function CartPage() {
     try {
       const result = await api.post<{ code: string; amount: number }>(
         "/discounts/validate",
-        { code: couponInput.trim(), subtotal }
+        { code: couponInput.trim(), orderTotal: subtotal }
       );
       applyDiscount(result.code, result.amount);
       setCouponInput("");
