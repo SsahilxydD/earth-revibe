@@ -12,62 +12,67 @@ function ConfirmationContent() {
   const orderId = searchParams.get("orderId");
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-16 text-center lg:px-8">
-      <div className="flex justify-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-50">
-          <CheckCircle className="h-10 w-10 text-green-600" />
+    <div className="flex min-h-[calc(100vh-160px)] items-center justify-center px-4 py-10 lg:px-8">
+      <div className="mx-auto w-full max-w-sm text-center">
+        {/* Success icon */}
+        <div className="flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
+            <CheckCircle className="h-8 w-8 text-green-600" />
+          </div>
         </div>
-      </div>
 
-      <h1 className="mt-6 text-2xl font-bold uppercase tracking-wider">
-        Order Confirmed!
-      </h1>
+        <h1 className="mt-5 text-xl font-bold uppercase tracking-wider">
+          Order Confirmed!
+        </h1>
 
-      <p className="mt-3 text-sm text-[var(--color-muted)]">
-        Thank you for your order. We&apos;ve received your payment and are
-        preparing your items for shipment.
-      </p>
-
-      {orderId && (
-        <div className="mt-6 rounded-[var(--button-radius)] border border-[var(--color-border)] p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Order Number
-          </p>
-          <p className="mt-1 text-lg font-bold tracking-wider">{orderId}</p>
-        </div>
-      )}
-
-      <div className="mt-6 rounded-[var(--button-radius)] bg-[var(--color-surface)] p-5">
-        <div className="flex items-center justify-center gap-2">
-          <Package className="h-5 w-5 text-[var(--color-muted)]" />
-          <p className="text-sm font-semibold">Estimated Delivery</p>
-        </div>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">
-          5-7 business days
+        <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
+          Thank you for your order. We&apos;ve received your payment and are
+          preparing your items for shipment.
         </p>
-      </div>
 
-      <p className="mt-6 text-xs text-[var(--color-muted)]">
-        A confirmation email has been sent to your registered email address.
-        You can track your order status from your account.
-      </p>
+        {/* Order number + delivery in a compact stack */}
+        <div className="mt-6 space-y-3">
+          {orderId && (
+            <div className="rounded-[var(--button-radius)] border border-[var(--color-border)] px-4 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
+                Order Number
+              </p>
+              <p className="mt-1 text-base font-bold tracking-wide">{orderId}</p>
+            </div>
+          )}
 
-      <div className="mt-8 flex flex-col gap-3">
-        <Link href="/categories/new-arrivals">
-          <Button fullWidth size="lg">
-            Continue Shopping
-          </Button>
-        </Link>
+          <div className="flex items-center justify-center gap-2 rounded-[var(--button-radius)] bg-[var(--color-surface)] px-4 py-3">
+            <Package className="h-4 w-4 text-[var(--color-muted)]" />
+            <p className="text-sm">
+              <span className="font-semibold">Estimated Delivery</span>
+              <span className="mx-1.5 text-[var(--color-muted)]">&middot;</span>
+              <span className="text-[var(--color-muted)]">5-7 business days</span>
+            </p>
+          </div>
+        </div>
 
-        {orderId && (
-          <Link
-            href={`/account/orders/${orderId}`}
-            className="inline-flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-          >
-            View Order
-            <ArrowRight className="h-4 w-4" />
+        <p className="mt-5 text-xs leading-relaxed text-[var(--color-muted)]">
+          A confirmation email has been sent to your registered email address.
+        </p>
+
+        {/* Actions */}
+        <div className="mt-6 flex flex-col gap-3">
+          <Link href="/categories/new-arrivals">
+            <Button fullWidth size="lg">
+              Continue Shopping
+            </Button>
           </Link>
-        )}
+
+          {orderId && (
+            <Link
+              href={`/account/orders/${orderId}`}
+              className="inline-flex items-center justify-center gap-1.5 py-2 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+            >
+              View Order
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
