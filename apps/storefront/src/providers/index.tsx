@@ -56,8 +56,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: Infinity,       // data never goes stale — it's ALL in memory
-            gcTime: Infinity,          // NEVER garbage collect — keep everything forever
+            staleTime: 24 * 60 * 60 * 1000,  // 24 hours — effectively never stale
+            gcTime: 24 * 60 * 60 * 1000,    // 24 hours — never GC during session
             retry: 1,
             refetchOnWindowFocus: false,
             refetchOnMount: false,

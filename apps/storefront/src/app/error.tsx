@@ -39,21 +39,20 @@ export default function Error({
         the problem persists.
       </p>
 
-      {process.env.NODE_ENV === "development" && (
-        <div className="mt-4 max-w-lg rounded-[var(--button-radius)] bg-[var(--color-surface)] p-4 text-left">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Error Details (dev only)
+      {/* Show error details in production too — helps debugging */}
+      <div className="mt-4 max-w-lg rounded-[var(--button-radius)] bg-[var(--color-surface)] p-4 text-left">
+        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+          Error Details
+        </p>
+        <p className="mt-1 break-all text-xs text-[var(--color-sale)]">
+          {error.message}
+        </p>
+        {error.digest && (
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
+            Digest: {error.digest}
           </p>
-          <p className="mt-1 break-all text-xs text-[var(--color-sale)]">
-            {error.message}
-          </p>
-          {error.digest && (
-            <p className="mt-1 text-xs text-[var(--color-muted)]">
-              Digest: {error.digest}
-            </p>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       <button
         onClick={reset}
