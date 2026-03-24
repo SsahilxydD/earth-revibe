@@ -30,29 +30,33 @@ export default async function HomePage() {
   const sections = await getSections();
 
   return (
-    <div className="-mt-24">
+    <div>
       {sections.map((section, i) => (
         <Link
           key={section.id}
           href={section.href}
           className="relative block w-full overflow-hidden"
         >
+          {/* Aspect ratio container prevents layout shift while image loads */}
           {section.imageUrl ? (
-            <Image
-              src={section.imageUrl}
-              alt={section.label}
-              width={0}
-              height={0}
-              sizes="100vw"
-              quality={75}
-              priority={i === 0}
-              style={{ width: "100%", height: "auto" }}
-              className="block transition-transform duration-700 ease-in-out hover:scale-[1.03]"
-            />
+            <div className="relative w-full" style={{ aspectRatio: "3 / 4" }}>
+              <Image
+                src={section.imageUrl}
+                alt={section.label}
+                fill
+                sizes="100vw"
+                quality={75}
+                priority={i === 0}
+                className="object-cover transition-transform duration-700 ease-in-out hover:scale-[1.03]"
+              />
+            </div>
           ) : (
             <div
-              className="absolute inset-0 transition-transform duration-700 ease-in-out hover:scale-[1.03]"
-              style={{ backgroundColor: FALLBACK_COLORS[i % FALLBACK_COLORS.length] }}
+              className="w-full transition-transform duration-700 ease-in-out hover:scale-[1.03]"
+              style={{
+                aspectRatio: "3 / 4",
+                backgroundColor: FALLBACK_COLORS[i % FALLBACK_COLORS.length],
+              }}
             />
           )}
 
