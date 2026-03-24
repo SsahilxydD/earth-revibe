@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
@@ -211,9 +211,5 @@ function CategoryContent() {
 }
 
 export default function CategoryPage() {
-  return (
-    <Suspense fallback={<ProductGridSkeleton />}>
-      <CategoryContent />
-    </Suspense>
-  );
+  return <CategoryContent />;
 }
