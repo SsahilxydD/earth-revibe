@@ -144,33 +144,42 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   const { prev, next } = getAdjacentSlugs(currentSlug);
   const hasNav = slugs.length > 1;
 
-  // Load adjacent products into state for rendering
+  // Load adjacent products into state for rendering.
+  // Check cache first, then fetch. Also re-check cache periodically
+  // in case prefetch completed after initial check.
   useEffect(() => {
-    if (prev) {
-      const cached = queryClient.getQueryData<Product>(productKeys.detail(prev));
-      setPrevProduct(cached || null);
-      if (!cached) {
-        api.get<Product>(`/products/${prev}`).then((p) => {
-          queryClient.setQueryData(productKeys.detail(prev), p);
-          setPrevProduct(p);
-        }).catch(() => {});
+    let cancelled = false;
+
+    const loadProduct = async (slug: string): Promise<Product | null> => {
+      // Check cache first
+      const cached = queryClient.getQueryData<Product>(productKeys.detail(slug));
+      if (cached) return cached;
+
+      // Fetch and cache
+      try {
+        const product = await api.get<Product>(`/products/${slug}`);
+        if (!cancelled) {
+          queryClient.setQueryData(productKeys.detail(slug), product);
+        }
+        return product;
+      } catch {
+        return null;
       }
+    };
+
+    if (prev) {
+      loadProduct(prev).then((p) => { if (!cancelled) setPrevProduct(p); });
     } else {
       setPrevProduct(null);
     }
 
     if (next) {
-      const cached = queryClient.getQueryData<Product>(productKeys.detail(next));
-      setNextProduct(cached || null);
-      if (!cached) {
-        api.get<Product>(`/products/${next}`).then((p) => {
-          queryClient.setQueryData(productKeys.detail(next), p);
-          setNextProduct(p);
-        }).catch(() => {});
-      }
+      loadProduct(next).then((p) => { if (!cancelled) setNextProduct(p); });
     } else {
       setNextProduct(null);
     }
+
+    return () => { cancelled = true; };
   }, [prev, next, queryClient, currentSlug]);
 
   const snapTo = useCallback(
@@ -181,28 +190,29 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       // Save current scroll position before leaving
       saveScrollPosition(currentSlug, window.scrollY);
 
-      const targetX = direction === "next" ? -vw : vw;
-
-      // Slide out
-      await animate(dragX, targetX, {
-        type: "spring",
-        stiffness: 300,
-        damping: 35,
-        mass: 0.8,
-      });
-
-      // Get the product data
+      // Ensure product data is ready BEFORE animating
       let product = queryClient.getQueryData<Product>(productKeys.detail(targetSlug));
       if (!product) {
         try {
           product = await api.get<Product>(`/products/${targetSlug}`);
           queryClient.setQueryData(productKeys.detail(targetSlug), product);
         } catch {
-          dragX.set(0);
+          // Failed to load — snap back smoothly instead of blinking
+          animate(dragX, 0, { type: "spring", stiffness: 400, damping: 30 });
           setIsLocked(false);
           return;
         }
       }
+
+      const targetX = direction === "next" ? -vw : vw;
+
+      // Slide out (product data already loaded — no blink possible)
+      await animate(dragX, targetX, {
+        type: "spring",
+        stiffness: 300,
+        damping: 35,
+        mass: 0.8,
+      });
 
       // Restore saved scroll position for the target product (or 0)
       const targetScrollY = getSavedScrollPosition(targetSlug);

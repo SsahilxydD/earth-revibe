@@ -9,23 +9,30 @@ import type { Product } from "@/types";
 
 export function usePrefetchAdjacentProducts(currentSlug: string) {
   const queryClient = useQueryClient();
+  const slugs = useProductNavStore((s) => s.slugs);
   const getAdjacentSlugs = useProductNavStore((s) => s.getAdjacentSlugs);
   const { prev, next } = getAdjacentSlugs(currentSlug);
 
   useEffect(() => {
+    // Prefetch immediate neighbors + one step further for rapid swiping
+    const toPrefetch = new Set<string>();
     if (prev) {
-      queryClient.prefetchQuery({
-        queryKey: productKeys.detail(prev),
-        queryFn: ({ signal }) => api.get<Product>(`/products/${prev}`, signal),
-        staleTime: 10 * 60 * 1000, // 10 min — keep in cache for rapid swiping
-      });
+      toPrefetch.add(prev);
+      const { prev: prevPrev } = getAdjacentSlugs(prev);
+      if (prevPrev) toPrefetch.add(prevPrev);
     }
     if (next) {
-      queryClient.prefetchQuery({
-        queryKey: productKeys.detail(next),
-        queryFn: ({ signal }) => api.get<Product>(`/products/${next}`, signal),
-        staleTime: 10 * 60 * 1000, // 10 min — keep in cache for rapid swiping
-      });
+      toPrefetch.add(next);
+      const { next: nextNext } = getAdjacentSlugs(next);
+      if (nextNext) toPrefetch.add(nextNext);
     }
-  }, [prev, next, queryClient]);
+
+    toPrefetch.forEach((slug) => {
+      queryClient.prefetchQuery({
+        queryKey: productKeys.detail(slug),
+        queryFn: ({ signal }) => api.get<Product>(`/products/${slug}`, signal),
+        staleTime: 10 * 60 * 1000,
+      });
+    });
+  }, [prev, next, queryClient, slugs, getAdjacentSlugs]);
 }
