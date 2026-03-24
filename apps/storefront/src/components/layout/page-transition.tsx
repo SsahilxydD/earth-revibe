@@ -1,32 +1,25 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
 /**
- * Wraps page content with a subtle fade transition.
- * Masks the re-render flash on iOS by fading between pages
- * instead of an instant swap.
+ * Simple fade-in on page change. No exit animation — the new page
+ * renders immediately and fades in over the old content. This avoids
+ * the blank gap that AnimatePresence mode="wait" creates.
  */
 export function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  // Only animate when the top-level path segment changes
-  // (not for search params changes which shouldn't trigger transitions)
-  const segments = pathname.split("/").filter(Boolean);
-  const transitionKey = segments.slice(0, 2).join("/") || "/";
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={transitionKey}
-        initial={{ opacity: 0.92 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0.92 }}
-        transition={{ duration: 0.15, ease: "easeInOut" }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      key={pathname}
+      initial={{ opacity: 0.85 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.12, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
   );
 }

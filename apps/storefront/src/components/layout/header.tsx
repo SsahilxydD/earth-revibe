@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -20,34 +20,29 @@ const NAV_LINKS = [
 ];
 
 export function Header() {
-  const [scrolled, setScrolled] = useState(false);
-  const [logoTop, setLogoTop] = useState(0);
   const { isSearchOpen, openSearch, announcementDismissed } = useUiStore();
   const itemCount = useCartStore((s) => s.getItemCount());
   const openCart = useCartStore((s) => s.openCart);
   const pathname = usePathname();
-  const bannerHeightRef = useRef(0);
+
+  // Fixed banner height — avoids measuring DOM on every mount which causes
+  // the header to jump down/up. Banner is always ~36px when visible.
+  const bannerHeight = announcementDismissed ? 0 : 36;
+
+  // Initialize from current scroll position to avoid wrong state on first frame
+  const [scrolled, setScrolled] = useState(() =>
+    typeof window !== "undefined" ? window.scrollY > 10 : false
+  );
+  const [logoTop, setLogoTop] = useState(() => {
+    if (typeof window === "undefined") return bannerHeight;
+    return Math.max(0, bannerHeight - window.scrollY);
+  });
 
   const isProductDetail =
     pathname.startsWith("/products/") && pathname !== "/products";
   const isHomepage = pathname === "/";
 
-  // Measure banner height once on mount + when dismissed (not every scroll frame)
-  useEffect(() => {
-    if (announcementDismissed) {
-      bannerHeightRef.current = 0;
-      return;
-    }
-    const measure = () => {
-      const banner = document.querySelector("[data-announcement-bar]");
-      bannerHeightRef.current = banner ? banner.getBoundingClientRect().height : 0;
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [announcementDismissed]);
-
-  // Lightweight scroll handler — no DOM reads, just math
+  // Lightweight scroll handler — no DOM reads, just math with fixed banner height
   const updatePositions = useCallback(() => {
     const scrollY = window.scrollY;
     setScrolled(scrollY > 10);
@@ -57,10 +52,9 @@ export function Header() {
       return;
     }
 
-    // Banner scrolls with the page — its visible bottom = height - scrollY
-    const visibleBannerBottom = Math.max(0, bannerHeightRef.current - scrollY);
+    const visibleBannerBottom = Math.max(0, bannerHeight - scrollY);
     setLogoTop(visibleBannerBottom);
-  }, [announcementDismissed]);
+  }, [announcementDismissed, bannerHeight]);
 
   useEffect(() => {
     updatePositions();
