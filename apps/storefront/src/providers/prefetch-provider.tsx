@@ -69,26 +69,30 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
           page < totalPages ? page++ : (hasMore = false);
         }
 
-        // ─── 3. Fetch FULL product details (with variants) for each product ──
-        // List endpoint doesn't include variants — detail page needs them
-        for (const product of allProducts) {
-          // Only fetch if not already cached with full data
-          const cached = queryClient.getQueryData(productKeys.detail(product.slug));
-          if (cached && (cached as any).variants) continue;
+        // ─── 3. Fetch FULL product details in parallel batches ─────────
+        // List endpoint doesn't include variants — detail page needs them.
+        // Fetch 5 at a time to avoid overwhelming the API.
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < allProducts.length; i += BATCH_SIZE) {
+          const batch = allProducts.slice(i, i + BATCH_SIZE);
+          await Promise.allSettled(
+            batch.map(async (product) => {
+              const cached = queryClient.getQueryData(productKeys.detail(product.slug));
+              if (cached && (cached as any).variants) return;
 
-          try {
-            const full = await api.get<Product>(`/products/${product.slug}`);
-            queryClient.setQueryData(productKeys.detail(product.slug), full);
+              try {
+                const full = await api.get<Product>(`/products/${product.slug}`);
+                queryClient.setQueryData(productKeys.detail(product.slug), full);
 
-            // Preload full product images
-            const fullImages = (full as any)?.images || [];
-            for (const img of fullImages) {
-              if (img?.url) preloadImage(img.url);
-              if (img?.thumbnailUrl) preloadImage(img.thumbnailUrl);
-            }
-          } catch {
-            // Skip — will be fetched on demand
-          }
+                // Preload ALL images from full product
+                const fullImages = (full as any)?.images || [];
+                for (const img of fullImages) {
+                  if (img?.url) preloadImage(img.url);
+                  if (img?.thumbnailUrl) preloadImage(img.thumbnailUrl);
+                }
+              } catch { /* skip */ }
+            })
+          );
         }
 
         // ─── 4. Sort by category for infinite swipe ──────────────
