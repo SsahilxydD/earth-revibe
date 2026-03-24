@@ -110,6 +110,19 @@ export const checkoutService = {
     const totalBeforeShipping = Math.max(lineItemsTotal - discountAmount - loyaltyDiscount, 0);
     const orderNumber = generateOrderNumber();
 
+    // Build promotions array so Razorpay shows the discount in Magic Checkout UI
+    const promotions: Array<Record<string, unknown>> = [];
+    if (discountAmount > 0 && data.discountCode) {
+      promotions.push({
+        reference_id: data.discountCode,
+        type: "coupon",
+        code: data.discountCode,
+        value: String(Math.round(discountAmount * 100)),
+        value_type: "fixed_amount",
+        description: `${data.discountCode} — ₹${discountAmount} off`,
+      });
+    }
+
     // Create Razorpay order with line_items for Magic Checkout
     const razorpayOrder = await getRazorpay().orders.create({
       amount: Math.round(totalBeforeShipping * 100), // paise — shipping added by Razorpay via shipping-info API
@@ -117,6 +130,7 @@ export const checkoutService = {
       receipt: orderNumber,
       line_items_total: Math.round(lineItemsTotal * 100),
       line_items: lineItems,
+      ...(promotions.length > 0 ? { promotions } : {}),
       notes: {
         userId: userId || "guest",
         guestEmail: guestEmail || "",
