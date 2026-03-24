@@ -56,8 +56,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000,
-            gcTime: 30 * 60 * 1000, // keep cache for 30 min (prevents refetch on back nav)
+            staleTime: Infinity,       // data never goes stale — it's ALL in memory
+            gcTime: Infinity,          // NEVER garbage collect — keep everything forever
             retry: 1,
             refetchOnWindowFocus: false,
             refetchOnMount: false,

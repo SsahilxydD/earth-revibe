@@ -8,10 +8,25 @@ import { useProductNavStore } from "@/stores/product-nav-store";
 import type { Product, Category } from "@/types";
 
 /**
- * Prefetches ALL products and categories into React Query cache on app load.
- * The site is small (~50MB total) so we load everything upfront into memory.
- * After this runs, every page navigation has data instantly — zero network fetch.
+ * AGGRESSIVE MEMORY PREFETCH
+ *
+ * Loads the ENTIRE catalog into browser memory on first page load:
+ * - All categories (JSON)
+ * - All products with full details (JSON)
+ * - All product images (preloaded into browser image cache)
+ * - Homepage sections
+ *
+ * After ~3-5s, the entire site is in memory. Every navigation is instant.
+ * Total memory: ~2-5MB JSON + ~30-50MB images (browser cache managed).
  */
+
+/** Preload an image into browser memory cache */
+function preloadImage(url: string) {
+  if (!url) return;
+  const img = new Image();
+  img.src = url;
+}
+
 export function PrefetchProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const setAllSlugs = useProductNavStore((s) => s.setAllSlugs);
@@ -21,67 +36,92 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
     if (prefetched.current) return;
     prefetched.current = true;
 
-    // Prefetch all categories
-    queryClient.prefetchQuery({
-      queryKey: productKeys.categories,
-      queryFn: () => api.get<Category[]>("/categories"),
-      staleTime: 30 * 60 * 1000, // 30 min
-    });
-
-    // Prefetch ALL products (paginated — fetch all pages)
-    const prefetchAllProducts = async () => {
+    const loadEverything = async () => {
       try {
+        // ─── 1. Categories ───────────────────────────────────────
+        const categories = await api.get<Category[]>("/categories");
+        queryClient.setQueryData(productKeys.categories, categories);
+
+        // ─── 2. ALL products ─────────────────────────────────────
         const allProducts: Product[] = [];
         let page = 1;
         let hasMore = true;
 
         while (hasMore) {
-          const res: any = await api.get(`/products?page=${page}&limit=50`);
+          const res: any = await api.get(`/products?page=${page}&limit=100`);
           const products = res?.products || [];
 
           if (Array.isArray(products)) {
-            products.forEach((product: Product) => {
-              if (product?.slug) {
-                // Cache each product individually by slug
-                queryClient.setQueryData(
-                  productKeys.detail(product.slug),
-                  product,
-                );
-                allProducts.push(product);
+            for (const product of products) {
+              if (!product?.slug) continue;
+
+              // Cache product by slug
+              queryClient.setQueryData(productKeys.detail(product.slug), product);
+              allProducts.push(product);
+
+              // ─── 3. Preload ALL product images into browser cache ──
+              const images = product.images || [];
+              for (const img of images) {
+                if (img?.url) preloadImage(img.url);
+                if (img?.thumbnailUrl) preloadImage(img.thumbnailUrl);
               }
-            });
+            }
           }
 
           const totalPages = res?.totalPages || 1;
-          if (page < totalPages) {
-            page++;
-          } else {
-            hasMore = false;
-          }
+          page < totalPages ? page++ : (hasMore = false);
         }
 
-        // Sort all products by category name so swipe goes:
-        // T-Shirts → Shirts → Polos → Bottomwear → ... → loops back to T-Shirts
+        // ─── 4. Sort by category for infinite swipe ──────────────
         allProducts.sort((a: any, b: any) => {
           const catA = a.category?.name || a.categoryId || "";
           const catB = b.category?.name || b.categoryId || "";
           if (catA !== catB) return catA.localeCompare(catB);
-          // Within same category, sort by newest first
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
 
-        // Build the global swipe list — infinite loop through all products
-        const slugList = allProducts.map((p) => p.slug);
-        setAllSlugs(slugList);
+        setAllSlugs(allProducts.map((p) => p.slug));
+
+        // ─── 5. Homepage sections ────────────────────────────────
+        try {
+          const sections: any = await api.get("/homepage");
+          queryClient.setQueryData(["homepage-sections"], sections);
+          // Preload homepage section images
+          if (Array.isArray(sections)) {
+            sections.forEach((s: any) => { if (s?.imageUrl) preloadImage(s.imageUrl); });
+          }
+        } catch { /* non-critical */ }
+
+        // ─── 6. Also cache product lists per category ────────────
+        if (Array.isArray(categories)) {
+          for (const cat of categories) {
+            const catProducts = allProducts.filter(
+              (p: any) => p.category?.slug === cat.slug || p.categoryId === cat.id
+            );
+            // Pre-populate the infinite query cache for each category
+            if (catProducts.length > 0) {
+              queryClient.setQueryData(
+                [...productKeys.lists(), "infinite", { category: cat.slug, sortBy: "createdAt", sortOrder: "desc", limit: 12 }],
+                {
+                  pages: [{
+                    products: catProducts.slice(0, 12),
+                    pagination: { page: 1, limit: 12, total: catProducts.length, totalPages: Math.ceil(catProducts.length / 12) },
+                  }],
+                  pageParams: [1],
+                }
+              );
+            }
+          }
+        }
       } catch {
         // Silently fail — prefetch is best-effort
       }
     };
 
-    // Run after a short delay so it doesn't block initial render
-    const timer = setTimeout(prefetchAllProducts, 1000);
+    // Start loading 500ms after first render
+    const timer = setTimeout(loadEverything, 500);
     return () => clearTimeout(timer);
-  }, [queryClient]);
+  }, [queryClient, setAllSlugs]);
 
   return <>{children}</>;
 }
