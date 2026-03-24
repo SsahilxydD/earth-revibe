@@ -4,7 +4,6 @@ import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
-import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
 import { FilterSidebar, type FilterState } from "@/components/product/filter-sidebar";
 import { SortDropdown } from "@/components/product/sort-dropdown";
 import { useInfiniteProducts, useCategories } from "@/hooks/use-products";
