@@ -94,7 +94,7 @@ export const shiprocketService = {
       body: {
         order_id: order.orderNumber,
         order_date: new Date(order.createdAt).toISOString().split("T")[0],
-        pickup_location: "Primary",
+        pickup_location: env.SHIPROCKET_PICKUP_LOCATION || "Earthrevibe",
         billing_customer_name: customerName.split(" ")[0],
         billing_last_name: customerName.split(" ").slice(1).join(" ") || "",
         billing_address: order.address.line1,
