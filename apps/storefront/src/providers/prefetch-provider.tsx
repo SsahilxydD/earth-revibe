@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { productKeys } from "@/hooks/use-products";
+import { useProductNavStore } from "@/stores/product-nav-store";
 import type { Product, Category } from "@/types";
 
 /**
@@ -13,6 +14,7 @@ import type { Product, Category } from "@/types";
  */
 export function PrefetchProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
+  const setAllSlugs = useProductNavStore((s) => s.setAllSlugs);
   const prefetched = useRef(false);
 
   useEffect(() => {
@@ -29,27 +31,27 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
     // Prefetch ALL products (paginated — fetch all pages)
     const prefetchAllProducts = async () => {
       try {
+        const allProducts: Product[] = [];
         let page = 1;
         let hasMore = true;
 
         while (hasMore) {
           const res: any = await api.get(`/products?page=${page}&limit=50`);
-
           const products = res?.products || [];
 
-          // Cache each individual product by slug for instant detail page loads
           if (Array.isArray(products)) {
             products.forEach((product: Product) => {
               if (product?.slug) {
+                // Cache each product individually by slug
                 queryClient.setQueryData(
                   productKeys.detail(product.slug),
                   product,
                 );
+                allProducts.push(product);
               }
             });
           }
 
-          // API returns { products, total, page, limit, totalPages }
           const totalPages = res?.totalPages || 1;
           if (page < totalPages) {
             page++;
@@ -57,6 +59,20 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
             hasMore = false;
           }
         }
+
+        // Sort all products by category name so swipe goes:
+        // T-Shirts → Shirts → Polos → Bottomwear → ... → loops back to T-Shirts
+        allProducts.sort((a: any, b: any) => {
+          const catA = a.category?.name || a.categoryId || "";
+          const catB = b.category?.name || b.categoryId || "";
+          if (catA !== catB) return catA.localeCompare(catB);
+          // Within same category, sort by newest first
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+
+        // Build the global swipe list — infinite loop through all products
+        const slugList = allProducts.map((p) => p.slug);
+        setAllSlugs(slugList);
       } catch {
         // Silently fail — prefetch is best-effort
       }
