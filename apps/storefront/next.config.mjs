@@ -10,7 +10,7 @@ const nextConfig = {
   // navigation re-fetches the RSC payload from the server.
   experimental: {
     staleTimes: {
-      dynamic: 60,   // cache dynamic pages for 60s client-side
+      dynamic: 300,  // cache dynamic pages for 5 min — no background revalidation blink
       static: 300,   // cache static pages for 5 min client-side
     },
   },

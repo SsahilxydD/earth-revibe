@@ -60,7 +60,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             gcTime: 30 * 60 * 1000, // keep cache for 30 min (prevents refetch on back nav)
             retry: 1,
             refetchOnWindowFocus: false,
-            refetchOnMount: false, // don't refetch when component remounts (back nav)
+            refetchOnMount: false,
+            refetchOnReconnect: false,
           },
         },
       })
