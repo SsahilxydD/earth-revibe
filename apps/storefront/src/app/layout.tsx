@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo_Narrow, Poppins } from "next/font/google";
 import { Providers } from "@/providers";
 import { LenisProvider } from "@/providers/lenis-provider";
+import { PrefetchProvider } from "@/providers/prefetch-provider";
 import "./globals.css";
 
 const archivoNarrow = Archivo_Narrow({
@@ -69,7 +70,9 @@ export default function RootLayout({
     >
       <body>
         <Providers>
-          <LenisProvider>{children}</LenisProvider>
+          <PrefetchProvider>
+            <LenisProvider>{children}</LenisProvider>
+          </PrefetchProvider>
         </Providers>
       </body>
     </html>
