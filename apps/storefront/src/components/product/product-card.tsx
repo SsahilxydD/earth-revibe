@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, Plus } from "lucide-react";
 import { cn, formatPrice, getImageUrl } from "@/lib/utils";
 import type { Product } from "@/types";
@@ -13,6 +14,16 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const router = useRouter();
+  const prefetched = useRef(false);
+
+  // Prefetch the product page on first touch/hover so navigation is instant
+  const handlePrefetch = useCallback(() => {
+    if (!prefetched.current) {
+      prefetched.current = true;
+      router.prefetch(`/products/${product.slug}`);
+    }
+  }, [router, product.slug]);
 
   const images = product.images ?? [];
 
@@ -35,7 +46,11 @@ export function ProductCard({ product }: ProductCardProps) {
   const isOutOfStock = variants.length > 0 && variants.every((v) => v.stock <= 0);
 
   return (
-    <div className="group relative">
+    <div
+      className="group relative"
+      onMouseEnter={handlePrefetch}
+      onTouchStart={handlePrefetch}
+    >
       <Link href={`/products/${product.slug}`} className="block">
         {/* Image container */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
