@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { X, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/stores/cart-store";
+import { lockBodyScroll, unlockBodyScroll } from "@/stores/ui-store";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CartItemRow } from "./cart-item";
@@ -35,11 +36,9 @@ export function CartDrawer() {
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      lockBodyScroll();
+      return () => unlockBodyScroll();
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [isOpen]);
 
   useEffect(() => {

@@ -12,7 +12,7 @@ import {
   Sparkles,
   Shirt,
 } from "lucide-react";
-import { useUiStore } from "@/stores/ui-store";
+import { useUiStore, lockBodyScroll, unlockBodyScroll } from "@/stores/ui-store";
 import { api } from "@/lib/api-client";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -82,10 +82,8 @@ export function SearchOverlay() {
   useEffect(() => {
     inputRef.current?.focus();
     setRecentSearches(getRecentSearches());
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    lockBodyScroll();
+    return () => unlockBodyScroll();
   }, []);
 
   useEffect(() => {

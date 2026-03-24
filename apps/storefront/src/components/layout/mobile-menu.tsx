@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { X, ChevronDown, Instagram, Twitter } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUiStore } from "@/stores/ui-store";
+import { useUiStore, lockBodyScroll, unlockBodyScroll } from "@/stores/ui-store";
 
 interface NavSection {
   label: string;
@@ -45,11 +45,9 @@ export function MobileMenu() {
 
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
+      lockBodyScroll();
+      return () => unlockBodyScroll();
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [isMobileMenuOpen]);
 
   const toggleSection = (label: string) => {

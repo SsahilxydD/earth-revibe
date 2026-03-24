@@ -4,39 +4,29 @@ import { useEffect, useState } from "react";
 import { ReactLenis } from "lenis/react";
 import type { ReactNode } from "react";
 
-/**
- * Detect touch-primary devices (phones, tablets).
- * Lenis only improves mouse-wheel/trackpad scrolling.
- * On touch devices it interferes with iOS Safari's bfcache,
- * scroll restoration, and causes page blinks on back navigation.
- */
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(false);
-  useEffect(() => {
-    // Check if the primary input is a fine pointer (mouse/trackpad)
-    // AND the screen is wide enough to be a desktop/laptop
-    const mq = window.matchMedia("(pointer: fine) and (min-width: 1024px)");
-    setIsDesktop(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return isDesktop;
-}
-
 export function LenisProvider({ children }: { children: ReactNode }) {
-  const isDesktop = useIsDesktop();
+  // Start as false — same on server and client (no hydration mismatch)
+  // Only enable Lenis after mount check, but children always render the same
+  const [enableLenis, setEnableLenis] = useState(false);
 
-  // Always let the browser handle scroll restoration natively
   useEffect(() => {
+    // Only enable on desktop with fine pointer (mouse/trackpad)
+    const mq = window.matchMedia("(pointer: fine) and (min-width: 1024px)");
+    setEnableLenis(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setEnableLenis(e.matches);
+    mq.addEventListener("change", handler);
+
+    // Let browser handle scroll restoration
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "auto";
     }
+
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // Desktop: wrap with Lenis for smooth wheel/trackpad
-  // Mobile/tablet: render children directly — 100% native scrolling
-  if (!isDesktop) {
+  // Always render the same tree structure — Lenis wraps or doesn't
+  // but children never change position in the tree (no unmount/remount)
+  if (!enableLenis) {
     return <>{children}</>;
   }
 
