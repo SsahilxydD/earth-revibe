@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   title: "Earth Revibe | Streetwear for the Culture",
   description:
     "Shop the freshest Indian streetwear. Oversized tees, hoodies, joggers and more. Free shipping on orders above Rs.999.",
+  applicationName: "Earth Revibe",
   keywords: [
     "streetwear",
     "Indian streetwear",
@@ -29,6 +30,15 @@ export const metadata: Metadata = {
     "hoodies",
     "earth revibe",
   ],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Earth Revibe",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: "Earth Revibe | Streetwear for the Culture",
     description:

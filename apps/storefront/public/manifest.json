@@ -1,0 +1,29 @@
+{
+  "name": "Earth Revibe",
+  "short_name": "Earth Revibe",
+  "description": "Indian Streetwear for the Culture",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#121212",
+  "icons": [
+    {
+      "src": "/Earth Revibe Logo Black.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Earth Revibe Logo Black.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["shopping", "lifestyle", "fashion"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false
+}

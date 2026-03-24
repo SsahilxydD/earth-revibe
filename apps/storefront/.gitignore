@@ -1,1 +1,6 @@
 .vercel
+# Generated service worker files (built by @serwist/next)
+public/sw.js
+public/sw.js.map
+public/serwist-*.js
+public/serwist-*.js.map

@@ -1,6 +1,18 @@
+import { spawnSync } from "node:child_process";
+import withSerwistInit from "@serwist/next";
+
 const API_ORIGIN =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, "") ||
   "https://earth-revibeapi-production.up.railway.app";
+
+const revision = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf-8" }).stdout?.trim() || crypto.randomUUID();
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  additionalPrecacheEntries: [{ url: "/~offline", revision }],
+  disable: process.env.NODE_ENV === "development",
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -49,4 +61,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);
