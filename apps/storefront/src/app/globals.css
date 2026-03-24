@@ -21,7 +21,18 @@
 
 * { margin: 0; box-sizing: border-box; }
 html { overscroll-behavior-x: none; background: #ffffff; }
-body { font-family: var(--font-body); color: var(--color-text); background: var(--color-background); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  /* iOS Safari: prevent white flash on page transitions */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+/* Force iOS to keep the page painted during navigation */
+main { content-visibility: auto; }
 ::selection { background: #121212; color: #fff; }
 
 /* Hide scrollbar but keep scroll */
