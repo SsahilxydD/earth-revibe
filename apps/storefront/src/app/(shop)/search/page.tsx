@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { Suspense, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, ChevronRight, X } from "lucide-react";
@@ -226,5 +226,9 @@ function SearchContent() {
 }
 
 export default function SearchPage() {
-  return <SearchContent />;
+  return (
+    <Suspense fallback={null}>
+      <SearchContent />
+    </Suspense>
+  );
 }
