@@ -100,6 +100,8 @@ export function useInfiniteProducts(params: Omit<ProductListParams, 'page'> = {}
       const { page, totalPages } = lastPage.pagination;
       return page < totalPages ? page + 1 : undefined;
     },
+    // Keep previous data during param changes so there's never a blank frame
+    placeholderData: (prev) => prev,
   });
 }
 
