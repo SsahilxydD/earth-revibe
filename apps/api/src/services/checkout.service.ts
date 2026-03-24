@@ -245,11 +245,17 @@ export const checkoutService = {
     });
 
     const promotions = discounts.map((d) => ({
+      reference_id: d.code,
+      type: "coupon" as const,
       code: d.code,
-      summary: d.type === "PERCENTAGE"
+      value: d.type === "PERCENTAGE"
+        ? String(Math.round(Number(d.value) * 100))
+        : String(Math.round(Number(d.value) * 100)),
+      value_type: d.type === "PERCENTAGE" ? "percentage" : "fixed_amount",
+      description: d.type === "PERCENTAGE"
         ? `${d.value}% off${d.maxDiscountAmount ? ` (up to ₹${d.maxDiscountAmount})` : ""}`
         : `₹${d.value} off`,
-      description: d.minOrderValue
+      summary: d.minOrderValue
         ? `Min order ₹${d.minOrderValue}`
         : "No minimum order",
     }));
@@ -259,20 +265,25 @@ export const checkoutService = {
 
   /**
    * Called by Razorpay when customer applies a promotion code.
+   * Razorpay sends: { order_id: "order_xxx", code: "SAHIL" }
+   * where order_id is the Razorpay order ID (NOT our orderNumber).
    */
   async applyPromotion(data: ApplyPromotionRequest) {
-    // Razorpay may send the razorpay order ID or our order number as order_id
+    logger.info({ data }, "applyPromotion called by Razorpay");
+
+    // Razorpay sends the razorpay order ID — try that first, then our orderNumber
     let pending = await prisma.pendingCheckout.findUnique({
-      where: { orderNumber: data.order_id },
+      where: { razorpayOrderId: data.order_id },
     });
     if (!pending) {
       pending = await prisma.pendingCheckout.findUnique({
-        where: { razorpayOrderId: data.order_id },
+        where: { orderNumber: data.order_id },
       });
     }
 
     if (!pending) {
-      return { error: { code: "INVALID_PROMOTION", message: "Order not found" } };
+      logger.warn({ order_id: data.order_id }, "applyPromotion: order not found");
+      return { promotion_not_applicable: true };
     }
 
     const subtotal = Number(pending.subtotal);
@@ -283,17 +294,17 @@ export const checkoutService = {
       return {
         promotion: {
           reference_id: data.code,
+          type: "coupon",
           code: data.code,
-          type: "discount",
-          value: Math.round(discountAmount * 100), // paise
-          description: `Discount code ${data.code} applied — ₹${discountAmount} off`,
+          value: String(Math.round(discountAmount * 100)),
+          value_type: "fixed_amount",
+          description: `${data.code} — ₹${discountAmount} off`,
         },
       };
     } catch (err: unknown) {
       const message = err instanceof ApiError ? err.message : "Invalid code";
-      return {
-        error: { code: "INVALID_PROMOTION", message },
-      };
+      logger.warn({ code: data.code, message }, "applyPromotion: code invalid");
+      return { promotion_not_applicable: true };
     }
   },
 
