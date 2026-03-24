@@ -345,8 +345,8 @@ export const checkoutService = {
       throw ApiError.forbidden("Checkout session does not belong to this user");
     }
 
-    const isGuest = !pending.userId;
-    const effectiveUserId = pending.userId;
+    let isGuest = !pending.userId;
+    let effectiveUserId = pending.userId;
 
     // Fetch the full Razorpay order — contains customer phone, email, address, shipping fee, promotions
     const rzpOrder = await getRazorpay().orders.fetch(data.razorpayOrderId) as any;
@@ -354,20 +354,73 @@ export const checkoutService = {
     const rzpAddress = customerDetails.shipping_address;
 
     // ──────────────────────────────────────────────
-    // 1. Sync customer contact info back to user profile (authenticated only)
+    // 1. Auto-create or link user from Razorpay data
+    //    Guest checkout provides phone, email, name — enough to create a user.
+    //    If a user with the same email/phone already exists, link to them.
     // ──────────────────────────────────────────────
-    if (!isGuest && effectiveUserId) {
-      const customerPhone = customerDetails.contact?.replace(/^\+91/, "") || "";
-      const user = await prisma.user.findUnique({
-        where: { id: effectiveUserId },
-        select: { phone: true, email: true },
-      });
+    const customerEmail = customerDetails.email || pending.guestEmail || "";
+    const customerPhone = customerDetails.contact?.replace(/^\+91/, "") || "";
+    const customerName = rzpAddress?.name || `${rzpAddress?.first_name || ""} ${rzpAddress?.last_name || ""}`.trim();
 
-      if (customerPhone && (!user?.phone)) {
-        await prisma.user.update({
+    if (isGuest && customerEmail) {
+      // Try to find existing user by email or phone
+      let existingUser = await prisma.user.findUnique({ where: { email: customerEmail } });
+      if (!existingUser && customerPhone) {
+        existingUser = await prisma.user.findFirst({ where: { phone: customerPhone } });
+      }
+
+      if (existingUser) {
+        // Link to existing user
+        effectiveUserId = existingUser.id;
+        isGuest = false;
+        logger.info({ userId: existingUser.id, email: customerEmail }, "Guest checkout linked to existing user");
+
+        // Update phone if missing
+        if (customerPhone && !existingUser.phone) {
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { phone: customerPhone },
+          });
+        }
+      } else {
+        // Create new user from Razorpay data
+        const nameParts = customerName.split(" ");
+        const firstName = nameParts[0] || "Customer";
+        const lastName = nameParts.slice(1).join(" ") || "";
+
+        try {
+          const newUser = await prisma.user.create({
+            data: {
+              email: customerEmail,
+              phone: customerPhone || undefined,
+              firstName,
+              lastName,
+              role: "CUSTOMER",
+              emailVerified: true, // Razorpay verified the email
+              phoneVerified: !!customerPhone,
+            },
+          });
+          effectiveUserId = newUser.id;
+          isGuest = false;
+          logger.info({ userId: newUser.id, email: customerEmail }, "Auto-created user from Magic Checkout");
+        } catch (err) {
+          // Unique constraint race — another request may have created the user
+          logger.warn({ err, email: customerEmail }, "Failed to auto-create user, continuing as guest");
+        }
+      }
+    } else if (!isGuest && effectiveUserId) {
+      // Authenticated user — sync phone if missing
+      if (customerPhone) {
+        const user = await prisma.user.findUnique({
           where: { id: effectiveUserId },
-          data: { phone: customerPhone },
+          select: { phone: true },
         });
+        if (!user?.phone) {
+          await prisma.user.update({
+            where: { id: effectiveUserId },
+            data: { phone: customerPhone },
+          });
+        }
       }
     }
 
