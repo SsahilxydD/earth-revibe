@@ -187,56 +187,38 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       if (isLocked || !targetSlug) return;
       setIsLocked(true);
 
-      // Save current scroll position before leaving
-      saveScrollPosition(currentSlug, window.scrollY);
+      try {
+        saveScrollPosition(currentSlug, window.scrollY);
 
-      // Check cache first — if data exists, slide immediately
-      let product = queryClient.getQueryData<Product>(productKeys.detail(targetSlug));
-
-      if (!product) {
-        // Data not cached — snap back to 0 first so user isn't stuck
-        // at a partial swipe position while we fetch
-        await animate(dragX, 0, { type: "spring", stiffness: 500, damping: 35 });
-
-        try {
+        // Get product — from cache or fetch
+        let product = queryClient.getQueryData<Product>(productKeys.detail(targetSlug));
+        if (!product) {
+          // Snap back while fetching
+          dragX.set(0);
           product = await api.get<Product>(`/products/${targetSlug}`);
           queryClient.setQueryData(productKeys.detail(targetSlug), product);
-        } catch {
-          setIsLocked(false);
-          return;
         }
+
+        // Slide out
+        const targetX = direction === "next" ? -vw : vw;
+        await animate(dragX, targetX, {
+          type: "spring", stiffness: 300, damping: 30,
+        });
+
+        // Swap content
+        window.scrollTo(0, 0);
+        flushSync(() => {
+          setCurrentSlug(targetSlug);
+          setCurrentProduct(product);
+        });
+
+        dragX.set(0);
+        window.history.replaceState({}, "", `/products/${targetSlug}`);
+      } catch {
+        dragX.set(0);
+      } finally {
+        setIsLocked(false);
       }
-
-      const targetX = direction === "next" ? -vw : vw;
-
-      // Slide out (product data already loaded — no blink possible)
-      await animate(dragX, targetX, {
-        type: "spring",
-        stiffness: 300,
-        damping: 35,
-        mass: 0.8,
-      });
-
-      // Restore saved scroll position for the target product (or 0)
-      const targetScrollY = getSavedScrollPosition(targetSlug);
-      window.scrollTo(0, targetScrollY);
-
-      // Swap product state synchronously
-      flushSync(() => {
-        setCurrentSlug(targetSlug);
-        setCurrentProduct(product);
-      });
-
-      // Reset position — new content is already in DOM
-      dragX.set(0);
-      window.history.replaceState({}, "", `/products/${targetSlug}`);
-
-      // Ensure scroll is at the right spot after React re-render
-      requestAnimationFrame(() => {
-        window.scrollTo(0, targetScrollY);
-      });
-
-      setIsLocked(false);
     },
     [isLocked, vw, queryClient, dragX, currentSlug]
   );
