@@ -32,9 +32,22 @@ export function Header() {
     pathname.startsWith("/products/") && pathname !== "/products";
   const isHomepage = pathname === "/";
 
-  // Single scroll + resize handler that computes both scrolled state
-  // and the transparent logo's top offset (stays below the banner
-  // while visible, then locks to top: 0 once the banner scrolls away)
+  // Measure banner height once on mount + when dismissed (not every scroll frame)
+  useEffect(() => {
+    if (announcementDismissed) {
+      bannerHeightRef.current = 0;
+      return;
+    }
+    const measure = () => {
+      const banner = document.querySelector("[data-announcement-bar]");
+      bannerHeightRef.current = banner ? banner.getBoundingClientRect().height : 0;
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [announcementDismissed]);
+
+  // Lightweight scroll handler — no DOM reads, just math
   const updatePositions = useCallback(() => {
     const scrollY = window.scrollY;
     setScrolled(scrollY > 10);
@@ -44,27 +57,15 @@ export function Header() {
       return;
     }
 
-    // Re-measure banner each time (cheap DOM read, handles dynamic content)
-    const banner = document.querySelector("[data-announcement-bar]");
-    bannerHeightRef.current = banner
-      ? banner.getBoundingClientRect().height + banner.getBoundingClientRect().top - 0
-      : 0;
-
-    // Banner is in normal flow — as the page scrolls, it moves up.
-    // The logo should sit right below the banner's visible bottom edge,
-    // but never go below 0 (when banner has scrolled fully out).
-    const visibleBannerBottom = Math.max(0, bannerHeightRef.current);
+    // Banner scrolls with the page — its visible bottom = height - scrollY
+    const visibleBannerBottom = Math.max(0, bannerHeightRef.current - scrollY);
     setLogoTop(visibleBannerBottom);
   }, [announcementDismissed]);
 
   useEffect(() => {
     updatePositions();
     window.addEventListener("scroll", updatePositions, { passive: true });
-    window.addEventListener("resize", updatePositions);
-    return () => {
-      window.removeEventListener("scroll", updatePositions);
-      window.removeEventListener("resize", updatePositions);
-    };
+    return () => window.removeEventListener("scroll", updatePositions);
   }, [updatePositions]);
 
   return (

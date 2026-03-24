@@ -117,7 +117,7 @@ export function ProductCard({ product }: ProductCardProps) {
           e.stopPropagation();
           setIsWishlisted((prev) => !prev);
         }}
-        className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-colors hover:bg-white"
+        className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-white"
         aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
       >
         <Heart
@@ -139,7 +139,7 @@ export function ProductCard({ product }: ProductCardProps) {
             e.stopPropagation();
             router.push(`/products/${product.slug}`);
           }}
-          className="absolute bottom-[3.2rem] right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-colors hover:bg-white"
+          className="absolute bottom-[3.2rem] right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-white"
           aria-label="Add to cart"
         >
           <Plus size={14} className="text-black/60" />

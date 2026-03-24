@@ -71,10 +71,10 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   const [isMobile, setIsMobile] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [vw, setVw] = useState(390);
-  const [scrollY, setScrollY] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragX = useMotionValue(0);
+  const scrollYMV = useMotionValue(0);
 
   const touchStartRef = useRef<{ x: number; y: number; locked: boolean | null }>({
     x: 0, y: 0, locked: null,
@@ -89,13 +89,13 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     [0.7, 0.9, 1, 0.9, 0.7]
   );
 
-  // Detect mobile + viewport width + track scroll
+  // Detect mobile + viewport width + track scroll (motion value — no re-renders)
   useEffect(() => {
     const check = () => {
       setIsMobile(window.innerWidth < 1024);
       setVw(window.innerWidth);
     };
-    const trackScroll = () => setScrollY(window.scrollY);
+    const trackScroll = () => scrollYMV.set(window.scrollY);
     check();
     trackScroll();
     window.addEventListener("resize", check);
@@ -117,21 +117,20 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     }
   }, [currentSlug]);
 
-  // Continuously save scroll position for the current product
+  // Save scroll position on scroll end (debounced — not every frame)
   useEffect(() => {
-    let ticking = false;
-    const save = () => {
-      saveScrollPosition(currentSlug, window.scrollY);
-      ticking = false;
-    };
+    let timer: ReturnType<typeof setTimeout>;
     const onScroll = () => {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(save);
-      }
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        saveScrollPosition(currentSlug, window.scrollY);
+      }, 150);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, [currentSlug]);
 
   // Seed cache with initial product
@@ -335,7 +334,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
           className="absolute left-0 w-full overflow-hidden pointer-events-none"
           style={{
             x: prevPanelX,
-            top: scrollY,
+            top: scrollYMV,
             height: "100vh",
             zIndex: 20,
           }}
@@ -357,7 +356,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
           className="absolute left-0 w-full overflow-hidden pointer-events-none"
           style={{
             x: nextPanelX,
-            top: scrollY,
+            top: scrollYMV,
             height: "100vh",
             zIndex: 20,
           }}
