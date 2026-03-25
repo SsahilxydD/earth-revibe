@@ -19,34 +19,48 @@ export default function AuthCallbackPage() {
     const handleCallback = async () => {
       try {
         const supabase = createClient();
-        const { data: { session }, error } = await supabase.auth.getSession();
 
-        if (error || !session) {
+        // After Google OAuth, Supabase redirects here with ?code=... (PKCE)
+        // We MUST exchange the code for a session first.
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error("Code exchange failed:", error.message);
+            router.replace("/auth/login");
+            return;
+          }
+        }
+
+        // Now we have a session — get tokens
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
           router.replace("/auth/login");
           return;
         }
 
-        // Exchange Supabase tokens for httpOnly API cookies.
-        // This sets the access_token cookie so all subsequent API calls
-        // are authenticated. The auth middleware auto-provisions the
-        // Prisma user from the Supabase JWT.
+        // Exchange Supabase tokens for httpOnly API cookies
         await api.post("/auth/oauth-session", {
           accessToken: session.access_token,
           refreshToken: session.refresh_token,
         });
 
-        // Now fetch the user profile (auto-provisioned by auth middleware)
+        // Fetch user profile — auth middleware auto-provisions Prisma user
         try {
           const user = await api.get<{
             id: string; email: string; firstName: string; lastName: string; role: string;
           }>("/auth/me");
           setUser(user);
         } catch {
-          // User will be provisioned on next authenticated request
+          // Will be provisioned on next request
         }
 
         router.replace("/");
-      } catch {
+      } catch (err) {
+        console.error("Auth callback error:", err);
         router.replace("/auth/login");
       }
     };
