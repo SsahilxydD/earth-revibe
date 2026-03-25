@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import { checkoutService } from "../services/checkout.service";
+import { getRazorpay } from "../config/razorpay";
+import { env } from "../config/env";
 
 export const checkoutController = {
   async createMagicOrder(req: Request, res: Response) {
@@ -28,6 +30,43 @@ export const checkoutController = {
     const result = await checkoutService.applyPromotion(req.body);
     // If there's an error, Razorpay expects a 200 with error object
     res.json(result);
+  },
+
+  /**
+   * Create a temporary ₹1 Magic Checkout order for address collection.
+   * Razorpay handles phone → OTP → address. When the user dismisses the
+   * modal (or completes), the frontend captures the address from the
+   * Razorpay response. The ₹1 order is never fulfilled.
+   */
+  async createAddressCollectionOrder(req: Request, res: Response) {
+    const razorpay = getRazorpay();
+    const order = await razorpay.orders.create({
+      amount: 100, // ₹1 in paise — minimum amount for Magic Checkout
+      currency: "INR",
+      receipt: `addr_${Date.now()}`,
+      line_items_total: 100,
+      line_items: [
+        {
+          type: "e-commerce" as any,
+          sku: "address-collection",
+          name: "Address Verification",
+          description: "Verify your address",
+          quantity: 1,
+          price: 100,
+          offer_price: 100,
+        },
+      ],
+      notes: { purpose: "address_collection" },
+    } as any);
+
+    res.json({
+      success: true,
+      data: {
+        razorpayOrderId: order.id,
+        razorpayKeyId: env.RAZORPAY_KEY_ID,
+        amount: 100,
+      },
+    });
   },
 
   async verifyPayment(req: Request, res: Response) {

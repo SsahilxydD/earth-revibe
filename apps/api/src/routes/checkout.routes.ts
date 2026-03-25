@@ -32,6 +32,13 @@ router.post(
   asyncHandler(checkoutController.verifyPayment)
 );
 
+// Address collection via Razorpay Magic Checkout (phone → OTP → address)
+router.post(
+  "/address-collection",
+  optionalAuthenticate,
+  asyncHandler(checkoutController.createAddressCollectionOrder)
+);
+
 // Razorpay server-to-server callbacks — verify signature before processing
 router.post(
   "/shipping-info",

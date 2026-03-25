@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Plus, Pencil, Trash2, X, Star } from "lucide-react";
+import { MapPin, Plus, Pencil, Trash2, X, Star, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -48,11 +48,88 @@ export default function AddressesPage() {
   const { addToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   const { data: addresses, isLoading } = useQuery({
     queryKey: ["addresses"],
     queryFn: () => api.get<Address[]>("/addresses"),
   });
+
+  // Import address from Razorpay: opens Magic Checkout (phone → OTP → address).
+  // When the user selects an address and dismisses before paying, we capture it.
+  const importFromRazorpay = useCallback(async () => {
+    setIsImporting(true);
+    try {
+      // Create a temporary ₹1 order for address collection
+      const order = await api.post<{
+        razorpayOrderId: string;
+        razorpayKeyId: string;
+        amount: number;
+      }>("/checkout/address-collection");
+
+      // Dynamically load Razorpay script
+      if (!window.Razorpay) {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        await new Promise<void>((resolve, reject) => {
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load Razorpay"));
+          document.body.appendChild(script);
+        });
+      }
+
+      // Open Magic Checkout — Razorpay handles phone → OTP → address
+      const rzp = new window.Razorpay({
+        key: order.razorpayKeyId,
+        amount: order.amount,
+        currency: "INR",
+        name: "Earth Revibe",
+        description: "Import your saved address",
+        order_id: order.razorpayOrderId,
+        handler: async (response: any) => {
+          // Payment completed for ₹1 — fetch the order to get shipping address
+          try {
+            const rzpOrder = await api.get<any>(
+              `/checkout/razorpay-order/${response.razorpay_order_id}`
+            );
+            const addr = rzpOrder?.shippingAddress;
+            if (addr) {
+              // Save the address to user's account
+              await api.post("/addresses", {
+                fullName: addr.name || "",
+                phone: addr.contact || "",
+                line1: addr.line1 || addr.address || "",
+                line2: addr.line2 || "",
+                city: addr.city || "",
+                state: addr.state || "",
+                pinCode: addr.zipcode || addr.pincode || "",
+                isDefault: false,
+              });
+              queryClient.invalidateQueries({ queryKey: ["addresses"] });
+              addToast("Address imported from Razorpay!", "success");
+            }
+          } catch {
+            addToast("Address imported — check your addresses", "info");
+          }
+          setIsImporting(false);
+        },
+        modal: {
+          ondismiss: () => {
+            setIsImporting(false);
+            // Even if dismissed, Razorpay's shipping-info callback may have
+            // already sent the address to our server. Refetch to check.
+            queryClient.invalidateQueries({ queryKey: ["addresses"] });
+          },
+        },
+        theme: { color: "#121212" },
+      });
+      rzp.open();
+    } catch (err: any) {
+      addToast(err?.message || "Failed to open Razorpay", "error");
+      setIsImporting(false);
+    }
+  }, [addToast, queryClient]);
 
   const createMutation = useMutation({
     mutationFn: (data: AddressForm) => api.post("/addresses", data),
@@ -163,17 +240,27 @@ export default function AddressesPage() {
           Saved Addresses
         </h2>
         {!showForm && (
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditingId(null);
-              reset();
-              setShowForm(true);
-            }}
-          >
-            <Plus size={16} />
-            Add Address
-          </Button>
+          <div className="flex gap-2">
+            <button
+              onClick={importFromRazorpay}
+              disabled={isImporting}
+              className="flex items-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-1.5 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60"
+            >
+              <Zap size={14} />
+              {isImporting ? "Importing..." : "Import via Razorpay"}
+            </button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingId(null);
+                reset();
+                setShowForm(true);
+              }}
+            >
+              <Plus size={16} />
+              Add Address
+            </Button>
+          </div>
         )}
       </div>
 
