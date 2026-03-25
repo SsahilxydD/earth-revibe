@@ -390,26 +390,30 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   }, [prevProduct, nextProduct]);
 
   // Hide dock when user scrolls to the [data-dock-hide] sentinel.
-  // The sentinel is a static div placed right before RelatedProducts
-  // in ProductDetail — it exists immediately, no async dependency.
-  // Uses offsetTop (layout-relative, not affected by CSS transforms)
-  // compared against scrollTop — the most reliable scroll check.
+  // Uses getBoundingClientRect — works regardless of DOM nesting, transforms,
+  // or offsetParent chain. Compares sentinel's viewport Y to the panel's
+  // bottom edge in viewport coords.
   useEffect(() => {
     if (!isMobile || !hasNav) return;
     const panel = currentPanelRef.current;
     if (!panel) return;
 
     setDockVisible(true);
+    let cachedSentinel: Element | null = null;
 
     const handleScroll = () => {
-      const sentinel = panel.querySelector("[data-dock-hide]") as HTMLElement | null;
-      if (!sentinel) return;
+      // Cache the sentinel ref — querySelector is fine once, then reuse
+      if (!cachedSentinel) {
+        cachedSentinel = panel.querySelector("[data-dock-hide]");
+      }
+      if (!cachedSentinel) return;
 
-      // sentinel.offsetTop = distance from top of scroll content to the sentinel
-      // panel.scrollTop + panel.clientHeight = bottom edge of visible area
-      // When the bottom of the visible area reaches the sentinel → hide dock
-      const scrollBottom = panel.scrollTop + panel.clientHeight;
-      setDockVisible(scrollBottom < sentinel.offsetTop);
+      // Both rects are in viewport coordinates — transform-safe
+      const sentinelTop = cachedSentinel.getBoundingClientRect().top;
+      const panelBottom = panel.getBoundingClientRect().bottom;
+
+      // When the sentinel's top edge is at or above the panel's bottom → hide dock
+      setDockVisible(sentinelTop > panelBottom);
     };
 
     panel.addEventListener("scroll", handleScroll, { passive: true });
@@ -593,7 +597,9 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     return <ProductDetail key={currentSlug} product={currentProduct} />;
   }
 
-  // Shared panel style — [FIX 4] overscroll-behavior: contain + [FIX 6] touch-action: pan-y
+  // Shared panel style
+  // position: relative is CRITICAL — makes offsetTop of children relative to the panel,
+  // which is needed for the dock-hide sentinel scroll comparison.
   const panelStyle: React.CSSProperties = {
     width: "100vw",
     height: "100dvh",
@@ -601,7 +607,8 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     overflowX: "hidden",
     WebkitOverflowScrolling: "touch",
     flexShrink: 0,
-    overscrollBehavior: "contain", // [FIX 4] Prevent iOS page-level bounce
+    overscrollBehavior: "contain",
+    position: "relative",
   };
 
   return (
