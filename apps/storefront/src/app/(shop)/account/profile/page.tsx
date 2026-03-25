@@ -109,7 +109,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-8 md:space-y-10">
+    <div>
       {/* Avatar Section */}
       <div className="flex items-center gap-3 md:gap-4">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--color-surface)] md:h-20 md:w-20">
@@ -139,6 +139,8 @@ export default function ProfilePage() {
           <p className="text-sm text-[var(--color-muted)]">{profile?.email}</p>
         </div>
       </div>
+
+      <hr style={{ marginTop: 28, marginBottom: 28, border: "none", borderTop: "1px solid #e5e5e5" }} />
 
       {/* Profile Form */}
       <div>
@@ -191,8 +193,10 @@ export default function ProfilePage() {
         </form>
       </div>
 
+      <hr style={{ marginTop: 28, marginBottom: 28, border: "none", borderTop: "1px solid #e5e5e5" }} />
+
       {/* Change Password */}
-      <div className="border-t border-[var(--color-border)] pt-8">
+      <div>
         <h3 className="text-sm font-bold uppercase tracking-wider">
           Change Password
         </h3>

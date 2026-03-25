@@ -71,7 +71,7 @@ export default function AccountLayout({
       </h1>
 
       {/* Mobile tabs — compact icon + short label, horizontal scroll */}
-      <div className="mb-8 flex gap-0 overflow-x-auto border-b border-[var(--color-border)] pb-px md:hidden hide-scrollbar">
+      <div style={{ marginBottom: 32 }} className="flex gap-0 overflow-x-auto border-b border-[var(--color-border)] pb-px md:hidden hide-scrollbar">
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
@@ -129,8 +129,8 @@ export default function AccountLayout({
           </div>
         </aside>
 
-        {/* Main content — pt-2 on mobile gives breathing room after tabs */}
-        <main className="min-w-0 flex-1 pt-2 md:pt-0">{children}</main>
+        {/* Main content */}
+        <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>
   );
