@@ -235,46 +235,45 @@ export default function AddressesPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Section header */}
-      <div>
+    <div>
+      {/* Header + actions — grouped together */}
+      <div className="pb-6 border-b border-[var(--color-border)]">
         <h2 className="text-sm font-bold uppercase tracking-wider">
           Saved Addresses
         </h2>
         <p className="mt-2 text-xs text-[var(--color-muted)]">
           Manage your delivery addresses for faster checkout.
         </p>
-      </div>
 
-      {/* Action buttons */}
-      {!showForm && (
-        <div className="flex gap-3">
-          <button
-            onClick={importFromRazorpay}
-            disabled={isImporting}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-3 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60 md:flex-none"
-          >
-            <Zap size={14} />
-            {isImporting ? "Importing..." : "Import via Razorpay"}
-          </button>
-          <Button
-            size="sm"
-            className="flex-1 py-3 md:flex-none"
-            onClick={() => {
-              setEditingId(null);
-              reset();
-              setShowForm(true);
-            }}
-          >
-            <Plus size={16} />
-            Add Address
-          </Button>
-        </div>
-      )}
+        {!showForm && (
+          <div className="mt-5 flex gap-3">
+            <button
+              onClick={importFromRazorpay}
+              disabled={isImporting}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-3 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60 md:flex-none"
+            >
+              <Zap size={14} />
+              {isImporting ? "Importing..." : "Import via Razorpay"}
+            </button>
+            <Button
+              size="sm"
+              className="flex-1 py-3 md:flex-none"
+              onClick={() => {
+                setEditingId(null);
+                reset();
+                setShowForm(true);
+              }}
+            >
+              <Plus size={16} />
+              Add Address
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Address Form */}
       {showForm && (
-        <div className="rounded-xl border border-[var(--color-border)] p-5">
+        <div className="mt-6 rounded-xl border border-[var(--color-border)] p-5">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-bold uppercase tracking-wider">
               {editingId ? "Edit Address" : "New Address"}
@@ -386,7 +385,7 @@ export default function AddressesPage() {
 
       {/* Address Cards */}
       {(!addresses || addresses.length === 0) && !showForm ? (
-        <div className="flex min-h-[30vh] flex-col items-center justify-center text-center">
+        <div className="mt-6 flex min-h-[30vh] flex-col items-center justify-center text-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface)]">
             <MapPin size={28} className="text-[var(--color-muted)]" />
           </div>
@@ -396,7 +395,7 @@ export default function AddressesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {addresses?.map((address) => (
             <div
               key={address.id}

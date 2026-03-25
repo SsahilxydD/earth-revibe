@@ -95,8 +95,8 @@ export default function SupportPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="flex items-center justify-between pb-6 border-b border-[var(--color-border)]">
         <h2 className="text-sm font-bold uppercase tracking-wider">
           Support Tickets
         </h2>
@@ -110,7 +110,7 @@ export default function SupportPage() {
 
       {/* New Ticket Form */}
       {showForm && (
-        <div className="mb-5 rounded-xl border border-[var(--color-border)] p-4 md:mb-6 md:p-5">
+        <div className="mt-6 rounded-xl border border-[var(--color-border)] p-4 md:p-5">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-bold uppercase tracking-wider">
               New Ticket

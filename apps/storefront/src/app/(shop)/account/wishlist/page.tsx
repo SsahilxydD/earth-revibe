@@ -100,8 +100,8 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
+    <div>
+      <div className="pb-6 border-b border-[var(--color-border)]">
         <h2 className="text-sm font-bold uppercase tracking-wider">
           Wishlist
         </h2>
@@ -110,7 +110,7 @@ export default function WishlistPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 md:gap-4">
+      <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 md:gap-4">
         {items.map((item) => (
           <div
             key={item.id}
