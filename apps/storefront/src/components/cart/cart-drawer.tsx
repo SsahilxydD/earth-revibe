@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { X, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/stores/cart-store";
 import { lockBodyScroll, unlockBodyScroll } from "@/stores/ui-store";
@@ -9,6 +9,8 @@ import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CartItemRow } from "./cart-item";
 import { api } from "@/lib/api-client";
+import { useRazorpay } from "@/hooks/use-razorpay";
+import { useToast } from "@/providers";
 
 const FREE_SHIPPING_THRESHOLD = 999;
 
@@ -28,6 +30,12 @@ export function CartDrawer() {
   const [discountInput, setDiscountInput] = useState("");
   const [discountError, setDiscountError] = useState("");
   const [applyingDiscount, setApplyingDiscount] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const router = useRouter();
+  const clearCart = useCartStore((s) => s.clearCart);
+  const { initiatePayment, isLoading: isRazorpayLoading } = useRazorpay();
+  const { addToast } = useToast();
 
   const subtotal = getSubtotal();
   const total = getTotal();
@@ -66,6 +74,62 @@ export function CartDrawer() {
       setApplyingDiscount(false);
     }
   };
+
+  // Launch Razorpay Magic Checkout directly from the cart drawer — no page navigation
+  const launchMagicCheckout = useCallback(async () => {
+    if (items.length === 0) return;
+    setIsCheckingOut(true);
+
+    try {
+      const result = await api.post<{
+        razorpayOrderId: string;
+        razorpayKeyId: string;
+        amount: number;
+        orderNumber: string;
+        prefill: { name: string; email: string; contact: string };
+      }>("/checkout/create-order", {
+        items: items.map((item) => ({
+          variantId: item.id,
+          quantity: item.quantity,
+        })),
+        ...(discountCode ? { discountCode } : {}),
+        loyaltyPointsToUse: 0,
+      });
+
+      const paymentResponse = await initiatePayment({
+        orderId: result.orderNumber,
+        razorpayOrderId: result.razorpayOrderId,
+        amount: Math.round(result.amount * 100),
+        currency: "INR",
+        customerName: result.prefill.name,
+        customerEmail: result.prefill.email,
+        customerPhone: result.prefill.contact,
+        description: `Order ${result.orderNumber}`,
+      });
+
+      if (!paymentResponse) {
+        addToast("Payment was cancelled. You can try again.", "info");
+        setIsCheckingOut(false);
+        return;
+      }
+
+      const verification = await api.post<{
+        orderNumber: string;
+        pointsEarned: number;
+      }>("/checkout/verify-payment", {
+        razorpayOrderId: paymentResponse.razorpay_order_id,
+        razorpayPaymentId: paymentResponse.razorpay_payment_id,
+        razorpaySignature: paymentResponse.razorpay_signature,
+      });
+
+      clearCart();
+      closeCart();
+      router.push(`/checkout/confirmation?orderId=${verification.orderNumber}`);
+    } catch (error: any) {
+      addToast(error?.message || "Something went wrong. Please try again.", "error");
+      setIsCheckingOut(false);
+    }
+  }, [items, discountCode, initiatePayment, addToast, clearCart, closeCart, router]);
 
   if (!isOpen) return null;
 
@@ -197,11 +261,15 @@ export function CartDrawer() {
                 </div>
               </div>
 
-              <Link href="/checkout" onClick={closeCart}>
-                <Button variant="primary" fullWidth size="lg">
-                  Checkout
-                </Button>
-              </Link>
+              <Button
+                variant="primary"
+                fullWidth
+                size="lg"
+                onClick={launchMagicCheckout}
+                loading={isCheckingOut || isRazorpayLoading}
+              >
+                {isCheckingOut ? "Preparing..." : isRazorpayLoading ? "Opening payment..." : "Checkout"}
+              </Button>
             </div>
           </>
         )}
