@@ -421,7 +421,19 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
 
       const observer = new IntersectionObserver(
         ([entry]) => {
-          setDockVisible(!entry.isIntersecting);
+          if (entry.isIntersecting) {
+            // Heading is visible → hide dock
+            setDockVisible(false);
+          } else if (entry.rootBounds) {
+            // Heading left viewport — only show dock if heading is BELOW
+            // the viewport (we scrolled back up above it). If heading is
+            // ABOVE the viewport (we scrolled past it), keep dock hidden.
+            const headingIsBelow = entry.boundingClientRect.top > entry.rootBounds.bottom;
+            if (headingIsBelow) {
+              setDockVisible(true);
+            }
+            // heading is above viewport → keep hidden (do nothing)
+          }
         },
         {
           root: panel,
