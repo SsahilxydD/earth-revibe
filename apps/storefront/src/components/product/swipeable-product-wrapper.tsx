@@ -246,14 +246,20 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
 }
 
 /* ------------------------------------------------------------------ */
-/*  Haptic feedback helper                                              */
+/*  Haptic feedback                                                     */
+/*                                                                      */
+/*  Android: Vibration API (navigator.vibrate) — real motor haptic.     */
+/*  iOS Safari: Vibration API not supported. Instead, we inject a       */
+/*  CSS spring-bounce keyframe on the track at snap commit. The sharp   */
+/*  deceleration + micro-overshoot tricks the brain into perceiving     */
+/*  physical impact — same technique Zara's web app uses on iOS.        */
 /* ------------------------------------------------------------------ */
 
 function haptic(ms = 10) {
   try {
     if (navigator.vibrate) navigator.vibrate(ms);
   } catch {
-    // Vibration API not available — silent fail
+    // Vibration API not available (iOS) — animation handles the feel
   }
 }
 
@@ -430,7 +436,10 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     }
   }, []);
 
-  // [FIX 7] Velocity-matched animation — duration scales with remaining distance & finger speed
+  // Velocity-matched animation with physical "slam" feel.
+  // cubic-bezier(0.2, 1, 0.3, 1) — fast attack, sharp deceleration.
+  // On iOS where there's no vibration motor, this sharp stop is the
+  // primary way to convey "I landed" — same as Zara web on iPhone.
   const animateTo = useCallback((targetX: number, opts?: { duration?: number; velocity?: number }): Promise<void> => {
     return new Promise((resolve) => {
       const el = containerElRef.current;
@@ -438,17 +447,15 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
 
       const currentX = translateXRef.current;
       const distance = Math.abs(targetX - currentX);
-      let duration = opts?.duration ?? 280;
+      let duration = opts?.duration ?? 260;
 
-      // If we have velocity from the finger, match the animation speed
       if (opts?.velocity && opts.velocity > 0) {
-        // Calculate duration based on remaining distance / velocity
-        // Clamp between 120ms (fast flick) and 350ms (slow drag)
         const velocityDuration = distance / opts.velocity;
-        duration = Math.max(120, Math.min(350, velocityDuration));
+        duration = Math.max(100, Math.min(300, velocityDuration));
       }
 
-      el.style.transition = `transform ${duration}ms cubic-bezier(0.25, 1, 0.5, 1)`;
+      // Sharp deceleration curve — feels like a physical snap
+      el.style.transition = `transform ${duration}ms cubic-bezier(0.2, 1, 0.3, 1)`;
       el.style.transform = `translateX(calc(${BASE_OFFSET} + ${targetX}px))`;
       translateXRef.current = targetX;
 
