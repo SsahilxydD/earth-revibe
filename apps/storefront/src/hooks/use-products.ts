@@ -108,17 +108,16 @@ export function useInfiniteProducts(params: Omit<ProductListParams, 'page'> = {}
 // ─── useRelatedProducts ─────────────────────────────────────────────────────
 
 export function useRelatedProducts(
-  categorySlug: string | undefined,
+  _categorySlug: string | undefined,
   excludeId: string
 ) {
   return useQuery<ProductsPage, ApiError>({
-    queryKey: productKeys.related(categorySlug ?? '', excludeId),
+    queryKey: productKeys.related('all', excludeId),
     queryFn: async ({ signal }) =>
       normalizePaginated<Product, 'products'>(await api.get(
-        `/products?category=${categorySlug}&limit=12&sortBy=createdAt&sortOrder=desc`,
+        `/products?limit=12&sortBy=createdAt&sortOrder=desc`,
         signal
       )),
-    enabled: !!categorySlug,
     select: (data) => ({
       ...data,
       products: data.products.filter((p) => p.id !== excludeId),
