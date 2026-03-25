@@ -75,11 +75,11 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <div className="mb-6 md:mb-8">
+      <div className="mb-8">
         <h2 className="text-sm font-bold uppercase tracking-wider">
           Order History
         </h2>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">
+        <p className="mt-1.5 text-xs text-[var(--color-muted)]">
           Track and manage your orders.
         </p>
       </div>

@@ -236,38 +236,41 @@ export default function AddressesPage() {
 
   return (
     <div>
-      <div className="mb-6 md:mb-8">
+      {/* Section header */}
+      <div className="mb-4">
         <h2 className="text-sm font-bold uppercase tracking-wider">
           Saved Addresses
         </h2>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">
+        <p className="mt-1.5 text-xs text-[var(--color-muted)]">
           Manage your delivery addresses for faster checkout.
         </p>
-        {!showForm && (
-          <div className="mt-5 flex gap-3">
-            <button
-              onClick={importFromRazorpay}
-              disabled={isImporting}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-3 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60 md:flex-none"
-            >
-              <Zap size={14} />
-              {isImporting ? "Importing..." : "Import via Razorpay"}
-            </button>
-            <Button
-              size="sm"
-              className="flex-1 py-3 md:flex-none"
-              onClick={() => {
-                setEditingId(null);
-                reset();
-                setShowForm(true);
-              }}
-            >
-              <Plus size={16} />
-              Add Address
-            </Button>
-          </div>
-        )}
       </div>
+
+      {/* Action buttons — separated from header */}
+      {!showForm && (
+        <div className="mb-8 flex gap-3">
+          <button
+            onClick={importFromRazorpay}
+            disabled={isImporting}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-3 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60 md:flex-none"
+          >
+            <Zap size={14} />
+            {isImporting ? "Importing..." : "Import via Razorpay"}
+          </button>
+          <Button
+            size="sm"
+            className="flex-1 py-3 md:flex-none"
+            onClick={() => {
+              setEditingId(null);
+              reset();
+              setShowForm(true);
+            }}
+          >
+            <Plus size={16} />
+            Add Address
+          </Button>
+        </div>
+      )}
 
       {/* Address Form */}
       {showForm && (
