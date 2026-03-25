@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { api } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase/client";
 
 export interface AuthUser {
   id: string;
@@ -38,6 +39,13 @@ export const useAuthStore = create<AuthState>()((set) => ({
       await api.post("/auth/logout");
     } catch {
       // Logout even if API call fails
+    }
+    // Also sign out of Supabase (clears Google OAuth session)
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // Best effort
     }
     set({ user: null, isAuthenticated: false, isLoading: false });
   },

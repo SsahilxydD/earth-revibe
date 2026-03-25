@@ -1,53 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api-client";
-import { useAuthStore } from "@/stores/auth-store";
 import { createClient } from "@/lib/supabase/client";
 
-const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
-
 export default function LoginPage() {
-  const router = useRouter();
-  const setUser = useAuthStore((s) => s.setUser);
-  const [showPassword, setShowPassword] = useState(false);
-  const [serverError, setServerError] = useState("");
-  const [googleLoading, setGoogleLoading] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginForm>({
-    defaultValues: { email: "", password: "" },
-  });
-
-  const onSubmit = async (data: LoginForm) => {
-    setServerError("");
-    try {
-      const result = await api.post<{ user: { id: string; email: string; firstName: string; lastName: string; role: string } }>("/auth/login", data);
-      setUser(result.user);
-      router.push("/");
-    } catch (err: any) {
-      setServerError(err?.message || "Invalid email or password");
-    }
-  };
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    setServerError("");
+    setLoading(true);
+    setError("");
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
@@ -57,36 +19,37 @@ export default function LoginPage() {
         },
       });
       if (error) {
-        setServerError(error.message);
-        setGoogleLoading(false);
+        setError(error.message);
+        setLoading(false);
       }
-      // Browser will redirect to Google — no need to setGoogleLoading(false)
     } catch (err: any) {
-      setServerError(err?.message || "Google login failed");
-      setGoogleLoading(false);
+      setError(err?.message || "Something went wrong");
+      setLoading(false);
     }
   };
 
   return (
     <div>
-      <h1 className="mb-6 text-center text-xl font-bold uppercase tracking-wider">
+      <h1 className="mb-2 text-center text-xl font-bold uppercase tracking-wider">
         Log In
       </h1>
+      <p className="mb-6 text-center text-sm text-[var(--color-muted)]">
+        Sign in with your Google account to continue.
+      </p>
 
-      {serverError && (
+      {error && (
         <div className="mb-4 rounded-[var(--button-radius)] bg-red-50 px-4 py-3 text-sm text-[var(--color-sale)]">
-          {serverError}
+          {error}
         </div>
       )}
 
-      {/* Google OAuth */}
       <button
         type="button"
         onClick={handleGoogleLogin}
-        disabled={googleLoading}
+        disabled={loading}
         className="flex h-12 w-full items-center justify-center gap-3 rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white text-sm font-medium transition-colors hover:bg-[var(--color-surface)] disabled:opacity-60"
       >
-        {googleLoading ? (
+        {loading ? (
           <span className="text-[var(--color-muted)]">Redirecting...</span>
         ) : (
           <>
@@ -100,73 +63,6 @@ export default function LoginPage() {
           </>
         )}
       </button>
-
-      <div className="my-5 flex items-center gap-3">
-        <div className="h-px flex-1 bg-[var(--color-border)]" />
-        <span className="text-xs uppercase tracking-wider text-[var(--color-muted)]">or</span>
-        <div className="h-px flex-1 bg-[var(--color-border)]" />
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input
-          label="Email"
-          type="email"
-          placeholder="you@example.com"
-          autoComplete="email"
-          error={errors.email?.message}
-          {...register("email", {
-            required: "Email is required",
-            pattern: {
-              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: "Invalid email address",
-            },
-          })}
-        />
-
-        <div className="relative">
-          <Input
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            placeholder="Enter your password"
-            autoComplete="current-password"
-            error={errors.password?.message}
-            {...register("password", {
-              required: "Password is required",
-            })}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 top-[34px] text-[var(--color-muted)] hover:text-[var(--color-text)]"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
-        </div>
-
-        <div className="flex justify-end">
-          <Link
-            href="/auth/forgot-password"
-            className="text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:underline"
-          >
-            Forgot password?
-          </Link>
-        </div>
-
-        <Button type="submit" fullWidth loading={isSubmitting} size="lg">
-          Log In
-        </Button>
-      </form>
-
-      <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
-        Don&apos;t have an account?{" "}
-        <Link
-          href="/auth/register"
-          className="font-semibold text-[var(--color-primary)] hover:underline"
-        >
-          Register
-        </Link>
-      </p>
     </div>
   );
 }

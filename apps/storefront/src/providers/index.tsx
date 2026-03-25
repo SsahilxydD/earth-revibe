@@ -3,6 +3,7 @@
 import { useState, useCallback, createContext, useContext } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CartDrawer } from "@/components/cart/cart-drawer";
+import { AuthInitializer } from "./auth-initializer";
 
 interface Toast {
   id: string;
@@ -85,7 +86,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastContext.Provider value={{ addToast }}>
-        {children}
+        <AuthInitializer>
+          {children}
+        </AuthInitializer>
         <CartDrawer />
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       </ToastContext.Provider>
