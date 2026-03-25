@@ -123,8 +123,10 @@ export function CartDrawer() {
         razorpaySignature: paymentResponse.razorpay_signature,
       });
 
-      clearCart();
+      // Don't clear cart here — the confirmation page handles it after mount.
+      // This prevents data loss if navigation fails.
       closeCart();
+      setIsCheckingOut(false);
       const params = new URLSearchParams({ orderId: verification.orderNumber });
       if (verification.accountAutoCreated) params.set("newAccount", "1");
       router.push(`/checkout/confirmation?${params.toString()}`);

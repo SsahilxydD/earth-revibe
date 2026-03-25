@@ -88,7 +88,14 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
     return Array.from(seen.entries()).map(([name, hex]) => ({ name, hex: hex || "#ccc" }));
   }, [variants]);
 
-  const selectedColor = colors.length > 0 ? colors[0].name : null;
+  const [selectedColor, setSelectedColor] = useState<string | null>(
+    colors.length > 0 ? colors[0].name : null
+  );
+
+  // Reset selected color when product changes
+  useEffect(() => {
+    setSelectedColor(colors.length > 0 ? colors[0].name : null);
+  }, [product.id, colors]);
 
   const displayPrice = product.price;
   const isOnSale =
@@ -111,9 +118,8 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
     doAddToCart(null);
   };
 
-  const doAddToCart = async (size: string | null) => {
+  const doAddToCart = (size: string | null) => {
     setIsAdding(true);
-    await new Promise((r) => setTimeout(r, 300));
 
     const variant = variants.find(
       (v: ProductVariant) =>
@@ -176,6 +182,27 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
                 MRP incl. of all taxes
               </p>
             </div>
+
+            {/* Color swatches — only when multiple colors exist */}
+            {colors.length > 1 && (
+              <div className="flex items-center gap-2 px-4 pt-1">
+                {colors.map((c) => (
+                  <button
+                    key={c.name}
+                    type="button"
+                    onClick={() => setSelectedColor(c.name)}
+                    className={cn(
+                      "h-6 w-6 rounded-full border-2 transition-all",
+                      selectedColor === c.name
+                        ? "border-[var(--color-primary)] scale-110"
+                        : "border-transparent"
+                    )}
+                    style={{ backgroundColor: c.hex }}
+                    aria-label={c.name}
+                  />
+                ))}
+              </div>
+            )}
 
             <div className="px-4 py-3">
               <button
@@ -278,6 +305,7 @@ interface Props {
 
 export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) {
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   const allSlugs = useProductNavStore((s) => s.allSlugs);
   const categorySlugs = useProductNavStore((s) => s.slugs);
   const getAdjacentSlugs = useProductNavStore((s) => s.getAdjacentSlugs);
@@ -393,32 +421,35 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   // Uses getBoundingClientRect — works regardless of DOM nesting, transforms,
   // or offsetParent chain. Compares sentinel's viewport Y to the panel's
   // bottom edge in viewport coords.
+  // Ref for cached sentinel — invalidated on slug change via the separate effect below
+  const cachedSentinelRef = useRef<Element | null>(null);
+
+  // Reset dock + sentinel cache when product changes (currentSlug drives this)
+  useEffect(() => {
+    setDockVisible(true);
+    cachedSentinelRef.current = null;
+  }, [currentSlug]);
+
+  // Attach scroll listener ONCE when the panel is available (panel never unmounts)
   useEffect(() => {
     if (!isMobile || !hasNav) return;
     const panel = currentPanelRef.current;
     if (!panel) return;
 
-    setDockVisible(true);
-    let cachedSentinel: Element | null = null;
-
     const handleScroll = () => {
-      // Cache the sentinel ref — querySelector is fine once, then reuse
-      if (!cachedSentinel) {
-        cachedSentinel = panel.querySelector("[data-dock-hide]");
+      if (!cachedSentinelRef.current) {
+        cachedSentinelRef.current = panel.querySelector("[data-dock-hide]");
       }
-      if (!cachedSentinel) return;
+      if (!cachedSentinelRef.current) return;
 
-      // Both rects are in viewport coordinates — transform-safe
-      const sentinelTop = cachedSentinel.getBoundingClientRect().top;
+      const sentinelTop = cachedSentinelRef.current.getBoundingClientRect().top;
       const panelBottom = panel.getBoundingClientRect().bottom;
-
-      // When the sentinel's top edge is at or above the panel's bottom → hide dock
       setDockVisible(sentinelTop > panelBottom);
     };
 
     panel.addEventListener("scroll", handleScroll, { passive: true });
     return () => panel.removeEventListener("scroll", handleScroll);
-  }, [currentSlug, isMobile, hasNav]);
+  }, [isMobile, hasNav]);
 
   // --- Swipe helpers ---
   const BASE_OFFSET = "-100vw";
@@ -491,11 +522,9 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     isLockedRef.current = false;
 
     // Update URL silently — no page navigation
-    window.history.replaceState(
-      { ...window.history.state, __N: true },
-      "",
-      `/products/${targetSlug}`
-    );
+    // Use replaceState with null state — don't spread Next.js internals (__N etc.)
+    // which can corrupt the router's history tracking.
+    window.history.replaceState(null, "", `/products/${targetSlug}`);
   }, []);
 
   const snapTo = useCallback(
@@ -524,9 +553,10 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       } catch {
         setTranslateX(0);
         isLockedRef.current = false;
+        addToast("Couldn\u2019t load product. Please try again.", "error");
       }
     },
-    [queryClient, animateTo, commitSwipe, setTranslateX]
+    [queryClient, animateTo, commitSwipe, setTranslateX, addToast]
   );
 
   // --- Touch handlers ---
@@ -605,7 +635,6 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     height: "100dvh",
     overflowY: "auto",
     overflowX: "hidden",
-    WebkitOverflowScrolling: "touch",
     flexShrink: 0,
     overscrollBehavior: "contain",
     position: "relative",

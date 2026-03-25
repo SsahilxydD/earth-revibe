@@ -58,6 +58,14 @@ function loadRazorpayScript(): Promise<boolean> {
       return;
     }
 
+    // Guard against duplicate script injection from concurrent callers
+    const existing = document.querySelector('script[src*="checkout.razorpay.com"]');
+    if (existing) {
+      existing.addEventListener("load", () => resolve(true));
+      existing.addEventListener("error", () => resolve(false));
+      return;
+    }
+
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;

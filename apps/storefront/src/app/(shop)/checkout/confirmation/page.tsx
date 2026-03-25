@@ -1,16 +1,27 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Package, ArrowRight, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { useCartStore } from "@/stores/cart-store";
 
 function ConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const isNewAccount = searchParams.get("newAccount") === "1";
+  const clearCart = useCartStore((s) => s.clearCart);
+  const clearedRef = useRef(false);
+
+  // Clear cart after confirmation page mounts — safe because we know the order succeeded.
+  useEffect(() => {
+    if (orderId && !clearedRef.current) {
+      clearedRef.current = true;
+      clearCart();
+    }
+  }, [orderId, clearCart]);
 
   return (
     <div className="flex min-h-[calc(100dvh-160px)] items-center justify-center px-4 py-10 lg:px-8">

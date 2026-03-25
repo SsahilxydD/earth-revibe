@@ -7,7 +7,6 @@ import { CheckCircle, ArrowLeft, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 
 interface ResetPasswordForm {
@@ -16,7 +15,7 @@ interface ResetPasswordForm {
 }
 
 export default function ResetPasswordPage() {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
   const [verifying, setVerifying] = useState(true);
   const [tokenError, setTokenError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -55,7 +54,7 @@ export default function ResetPasswordPage() {
             setVerifying(false);
             return;
           }
-          setAccessToken(data.session.access_token);
+          setSessionReady(true);
         } else if (hashToken) {
           // Implicit: use the hash tokens directly
           const { error } = await supabase.auth.setSession({
@@ -67,7 +66,7 @@ export default function ResetPasswordPage() {
             setVerifying(false);
             return;
           }
-          setAccessToken(hashToken);
+          setSessionReady(true);
         } else {
           setTokenError("Invalid or missing reset link. Please request a new one.");
           setVerifying(false);
@@ -83,15 +82,20 @@ export default function ResetPasswordPage() {
   }, []);
 
   const onSubmit = async (data: ResetPasswordForm) => {
-    if (!accessToken) return;
+    if (!sessionReady) return;
     setServerError("");
 
     try {
-      await api.post("/auth/reset-password", {
-        token: accessToken,
+      // After PKCE exchange, we have a valid Supabase session.
+      // Use updateUser directly — no need to send tokens to the API.
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({
         password: data.password,
-        confirmPassword: data.confirmPassword,
       });
+      if (error) {
+        setServerError(error.message);
+        return;
+      }
       setSuccess(true);
     } catch (err: any) {
       setServerError(err?.message || "Failed to reset password. Please try again.");
