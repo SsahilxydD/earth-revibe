@@ -213,7 +213,7 @@ export const authService = {
   async forgotPassword(email: string) {
     const supabaseAnon = getSupabaseAnon();
     const { error } = await supabaseAnon.auth.resetPasswordForEmail(email, {
-      redirectTo: `${env.FRONTEND_URL}/reset-password`,
+      redirectTo: `${env.FRONTEND_URL}/auth/reset-password`,
     });
 
     if (error) {
