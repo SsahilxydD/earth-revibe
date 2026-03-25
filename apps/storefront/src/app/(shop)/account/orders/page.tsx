@@ -38,10 +38,12 @@ function OrderStatusBadge({ status }: { status: string }) {
 }
 
 export default function OrdersPage() {
-  const { data: orders, isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["orders"],
-    queryFn: () => api.get<Order[]>("/orders"),
+    queryFn: () => api.get<{ orders: Order[]; total: number }>("/orders"),
   });
+
+  const orders = data?.orders;
 
   if (isLoading) {
     return (
