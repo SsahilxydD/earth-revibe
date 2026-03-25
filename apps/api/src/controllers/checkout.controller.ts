@@ -74,7 +74,7 @@ export const checkoutController = {
    * Fetches the full order from Razorpay API and returns the shipping address.
    */
   async getOrderAddress(req: Request, res: Response) {
-    const { razorpayOrderId } = req.params;
+    const razorpayOrderId = req.params.razorpayOrderId as string;
     if (!razorpayOrderId) {
       res.status(400).json({ success: false, error: { code: "BAD_REQUEST", message: "Missing order ID" } });
       return;
