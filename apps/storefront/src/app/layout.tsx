@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Earth Revibe",
   },
   formatDetection: {
@@ -56,6 +56,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: "#121212",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -67,6 +68,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${archivoNarrow.variable} ${poppins.variable}`}
+      suppressHydrationWarning
     >
       <body>
         <Providers>

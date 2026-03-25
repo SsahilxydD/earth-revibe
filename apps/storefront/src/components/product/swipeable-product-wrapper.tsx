@@ -1,13 +1,19 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { flushSync } from "react-dom";
+import { createPortal } from "react-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { productKeys } from "@/hooks/use-products";
 import { usePrefetchAdjacentProducts } from "@/hooks/use-prefetch-adjacent-products";
 import { useProductNavStore } from "@/stores/product-nav-store";
+import { useCartStore } from "@/stores/cart-store";
+import { useToast } from "@/providers";
 import { ProductDetail } from "./product-detail";
 import { api } from "@/lib/api-client";
-import type { Product } from "@/types";
+import { cn, formatPrice } from "@/lib/utils";
+import type { Product, ProductVariant } from "@/types";
 
 /* ------------------------------------------------------------------ */
 /*  Zara-style 3-bar loading animation                                 */
@@ -48,16 +54,211 @@ function ZaraLoader() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Persistent mobile dock — lives in the swipe wrapper, never         */
+/*  unmounts. Only its CONTENTS update when the product changes.        */
+/* ------------------------------------------------------------------ */
+
+function PersistentDock({ product }: { product: Product }) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [showSizeSheet, setShowSizeSheet] = useState(false);
+  const addItem = useCartStore((s) => s.addItem);
+  const { addToast } = useToast();
+
+  const variants = product.variants;
+  const sizes = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const v of variants) {
+      if (v.size && !seen.has(v.size)) {
+        seen.add(v.size);
+        result.push(v.size);
+      }
+    }
+    return result;
+  }, [variants]);
+
+  const colors = useMemo(() => {
+    const seen = new Map<string, string | null>();
+    for (const v of variants) {
+      if (v.color && !seen.has(v.color)) {
+        seen.set(v.color, v.colorHex);
+      }
+    }
+    return Array.from(seen.entries()).map(([name, hex]) => ({ name, hex: hex || "#ccc" }));
+  }, [variants]);
+
+  const selectedColor = colors.length > 0 ? colors[0].name : null;
+
+  const displayPrice = product.price;
+  const isOnSale =
+    product.compareAtPrice !== null && product.compareAtPrice > displayPrice;
+
+  const getVariantStock = (color: string | null, size: string | null): number => {
+    const match = variants.find(
+      (v: ProductVariant) =>
+        (color === null || v.color === color) &&
+        (size === null || v.size === size)
+    );
+    return match?.stock ?? 0;
+  };
+
+  const handleMobileAddToCart = () => {
+    if (sizes.length > 0) {
+      setShowSizeSheet(true);
+      return;
+    }
+    doAddToCart(null);
+  };
+
+  const doAddToCart = async (size: string | null) => {
+    setIsAdding(true);
+    await new Promise((r) => setTimeout(r, 300));
+
+    const variant = variants.find(
+      (v: ProductVariant) =>
+        (selectedColor === null || v.color === selectedColor) &&
+        (size === null || v.size === size)
+    );
+
+    const primaryImage = product.images.find((img) => img.isPrimary) || product.images[0];
+    addItem({
+      id: variant?.id || product.id,
+      productId: product.id,
+      name: product.name,
+      slug: product.slug,
+      image: primaryImage?.url || "",
+      price: variant?.price ?? product.price,
+      compareAtPrice: product.compareAtPrice ?? undefined,
+      size: size || "",
+      color: selectedColor || "",
+      maxQuantity: variant?.stock ?? 99,
+      quantity: 1,
+    });
+
+    addToast("Added to cart", "success");
+    setIsAdding(false);
+    setShowSizeSheet(false);
+  };
+
+  return (
+    <>
+      {/* Dock — always mounted, content transitions smoothly */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <div className="px-4 pt-3">
+          <p className="text-sm font-semibold uppercase tracking-wide truncate">{product.name}</p>
+          <div className="flex items-baseline gap-2">
+            <span
+              className={cn(
+                "text-sm",
+                isOnSale && "text-[var(--color-sale)]"
+              )}
+            >
+              {formatPrice(displayPrice)}
+            </span>
+            {isOnSale && (
+              <span className="text-xs text-[var(--color-muted)] line-through">
+                {formatPrice(product.compareAtPrice!)}
+              </span>
+            )}
+          </div>
+          <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+            MRP incl. of all taxes
+          </p>
+        </div>
+
+        <div className="px-4 py-3">
+          <button
+            type="button"
+            onClick={handleMobileAddToCart}
+            disabled={isAdding}
+            className="flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
+          >
+            {isAdding ? <Loader2 size={16} className="animate-spin" /> : "ADD"}
+          </button>
+        </div>
+      </div>
+
+      {/* Size selection sheet */}
+      <div
+        className={`fixed inset-0 z-[70] bg-black transition-opacity duration-300 ${
+          showSizeSheet ? "opacity-50 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setShowSizeSheet(false)}
+      />
+      <div
+        className={`fixed inset-x-0 bottom-0 z-[71] bg-white transition-transform duration-300 ease-out ${
+          showSizeSheet ? "translate-y-0" : "translate-y-full"
+        }`}
+        style={{
+          maxHeight: "70vh",
+          overflowY: "auto",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        }}
+      >
+        <div className="sticky top-0 z-10 bg-white pt-5 pb-3 flex justify-center">
+          <div className="w-10 h-[3px] rounded-full bg-[#d0d0d0]" />
+        </div>
+        <div className="px-6 pb-8">
+          <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-center text-[var(--color-text)]">
+            Select Size
+          </h3>
+          <div className="mt-6 flex flex-col">
+            {sizes.map((size) => {
+              const stock = getVariantStock(selectedColor, size);
+              const isOutOfStock = stock <= 0;
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => {
+                    if (!isOutOfStock) doAddToCart(size);
+                  }}
+                  disabled={isOutOfStock}
+                  className={cn(
+                    "py-4 text-center text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors",
+                    isOutOfStock
+                      ? "text-[var(--color-sold-out)] cursor-not-allowed"
+                      : "text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                  )}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Haptic feedback helper                                              */
+/* ------------------------------------------------------------------ */
+
+function haptic(ms = 10) {
+  try {
+    if (navigator.vibrate) navigator.vibrate(ms);
+  } catch {
+    // Vibration API not available — silent fail
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /*  Zara-style swipe: three fixed-viewport panels side by side.        */
 /*                                                                     */
-/*  Each panel is 100vw × 100dvh with overflow-y: auto (its own       */
-/*  scroll). The container is position:fixed so it owns the entire     */
-/*  screen. Horizontal swiping translates the container; vertical      */
-/*  scrolling is handled per-panel. This guarantees:                    */
-/*   1. Next product ALWAYS starts at scroll 0 (own scroll container)  */
-/*   2. No scroll position leak between products                       */
-/*   3. No flash — panels are pre-rendered off-screen                  */
-/*   4. No page-level scroll involved at all                           */
+/*  ARCHITECTURE (native-app parity):                                  */
+/*   1. Three panels: prev | current | next, each 100vw × 100dvh      */
+/*   2. Each panel has its own overflow-y:auto (no scroll leaking)     */
+/*   3. Swipe commit uses flushSync — zero-frame blink                 */
+/*   4. Dock is persistent — rendered ONCE outside the panels          */
+/*   5. Haptic feedback on swipe commit                                */
+/*   6. touch-action: pan-y eliminates browser gesture conflicts       */
+/*   7. overscroll-behavior: contain prevents iOS page bounce          */
+/*   8. Velocity-matched animation — fast flick = fast snap            */
 /* ------------------------------------------------------------------ */
 
 interface Props {
@@ -76,6 +277,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   const [prevProduct, setPrevProduct] = useState<Product | null>(null);
   const [nextProduct, setNextProduct] = useState<Product | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Animation state — managed via refs to avoid re-renders during drag
   const isLockedRef = useRef(false);
@@ -90,8 +292,9 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     startTime: number;
   }>({ startX: 0, startY: 0, axis: null, startTime: 0 });
 
-  // Detect mobile
+  // Detect mobile + mount
   useEffect(() => {
+    setMounted(true);
     const check = () => setIsMobile(window.innerWidth < 1024);
     check();
     window.addEventListener("resize", check);
@@ -111,20 +314,17 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   const hasNav = activeList.length > 1;
 
   // Lock body scroll when swipe mode is active (Zara pattern).
-  // The body must not scroll — each panel has its own overflow-y: auto.
   useEffect(() => {
     if (!isMobile || !hasNav) return;
 
     const html = document.documentElement;
     const body = document.body;
 
-    // Save original values
     const origHtmlOverflow = html.style.overflow;
     const origBodyOverflow = body.style.overflow;
     const origBodyHeight = body.style.height;
     const origBodyPosition = body.style.position;
 
-    // Lock
     html.style.overflow = "hidden";
     body.style.overflow = "hidden";
     body.style.height = "100dvh";
@@ -179,9 +379,6 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   }, [prevProduct, nextProduct]);
 
   // --- Swipe helpers ---
-  // The track's base position is translateX(-100vw) — centered on the middle panel.
-  // Drag offset is ADDED to this base. So 0 = centered, -vw = show next, +vw = show prev.
-
   const BASE_OFFSET = "-100vw";
 
   const setTranslateX = useCallback((x: number) => {
@@ -191,10 +388,23 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     }
   }, []);
 
-  const animateTo = useCallback((targetX: number, duration = 280): Promise<void> => {
+  // [FIX 7] Velocity-matched animation — duration scales with remaining distance & finger speed
+  const animateTo = useCallback((targetX: number, opts?: { duration?: number; velocity?: number }): Promise<void> => {
     return new Promise((resolve) => {
       const el = containerElRef.current;
       if (!el) { resolve(); return; }
+
+      const currentX = translateXRef.current;
+      const distance = Math.abs(targetX - currentX);
+      let duration = opts?.duration ?? 280;
+
+      // If we have velocity from the finger, match the animation speed
+      if (opts?.velocity && opts.velocity > 0) {
+        // Calculate duration based on remaining distance / velocity
+        // Clamp between 120ms (fast flick) and 350ms (slow drag)
+        const velocityDuration = distance / opts.velocity;
+        duration = Math.max(120, Math.min(350, velocityDuration));
+      }
 
       el.style.transition = `transform ${duration}ms cubic-bezier(0.25, 1, 0.5, 1)`;
       el.style.transform = `translateX(calc(${BASE_OFFSET} + ${targetX}px))`;
@@ -207,7 +417,6 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       };
       el.addEventListener("transitionend", onEnd);
 
-      // Safety timeout in case transitionend doesn't fire
       setTimeout(() => {
         el.removeEventListener("transitionend", onEnd);
         el.style.transition = "none";
@@ -216,24 +425,28 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     });
   }, []);
 
-  // Track whether we need to snap back after React re-renders
-  const pendingSnapRef = useRef(false);
-
+  // [FIX 1] Blink-free commit using flushSync — state update + transform reset
+  // happen in the same synchronous batch, so the browser never paints an
+  // intermediate frame where the center panel has new content at the wrong position.
   const commitSwipe = useCallback((targetSlug: string, product: Product) => {
-    // Reset scroll on current panel to 0 for when it becomes a neighbor later
     if (currentPanelRef.current) {
       currentPanelRef.current.scrollTop = 0;
     }
 
-    // Mark that we need to snap back AFTER React renders the new content.
-    // Do NOT snap transform here — the center panel still shows old content.
-    // The adjacent panel (which IS the new product) is currently visible at ±100vw.
-    // We keep it there until React swaps the center panel content.
-    pendingSnapRef.current = true;
+    // flushSync forces React to commit the DOM update synchronously.
+    // We then immediately reset the transform — same JS task, zero paint frames in between.
+    flushSync(() => {
+      setCurrentSlug(targetSlug);
+      setCurrentProduct(product);
+    });
 
-    // Swap products — triggers re-render
-    setCurrentSlug(targetSlug);
-    setCurrentProduct(product);
+    // Now the center panel has the new product content. Reset transform to center.
+    if (containerElRef.current) {
+      containerElRef.current.style.transition = "none";
+      containerElRef.current.style.transform = "translateX(-100vw)";
+    }
+    translateXRef.current = 0;
+    isLockedRef.current = false;
 
     // Update URL silently — no page navigation
     window.history.replaceState(
@@ -243,46 +456,28 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     );
   }, []);
 
-  // After React commits the new product to the center panel, snap back to center.
-  // This runs AFTER the DOM has been updated, so no flash of old content.
-  useEffect(() => {
-    if (!pendingSnapRef.current) return;
-    pendingSnapRef.current = false;
-
-    // Use rAF to ensure the browser has painted the new content
-    requestAnimationFrame(() => {
-      if (containerElRef.current) {
-        containerElRef.current.style.transition = "none";
-        containerElRef.current.style.transform = "translateX(-100vw)";
-      }
-      translateXRef.current = 0;
-      isLockedRef.current = false;
-    });
-  }, [currentSlug]);
-
   const snapTo = useCallback(
-    async (targetSlug: string | null, direction: "prev" | "next") => {
+    async (targetSlug: string | null, direction: "prev" | "next", velocity?: number) => {
       if (isLockedRef.current || !targetSlug) return;
       isLockedRef.current = true;
 
       try {
-        // Get product from cache or fetch
         let product = queryClient.getQueryData<Product>(productKeys.detail(targetSlug));
         if (!product) {
-          // Snap back while we fetch
-          await animateTo(0, 200);
+          await animateTo(0, { duration: 200 });
           product = await api.get<Product>(`/products/${targetSlug}`);
           queryClient.setQueryData(productKeys.detail(targetSlug), product);
         }
 
+        // [FIX 3] Haptic feedback on swipe commit
+        haptic(10);
+
         // Slide to reveal the adjacent panel
         const vw = window.innerWidth;
         const targetX = direction === "next" ? -vw : vw;
-        await animateTo(targetX);
+        await animateTo(targetX, { velocity });
 
-        // Commit: swap content. The useEffect on currentSlug will snap back
-        // to center AFTER React renders the new product — no flash.
-        // isLockedRef is unlocked in that useEffect, not here.
+        // Blink-free commit via flushSync
         commitSwipe(targetSlug, product);
       } catch {
         setTranslateX(0);
@@ -298,7 +493,6 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     if (isLockedRef.current) return;
     const t = e.touches[0];
     touchRef.current = { startX: t.clientX, startY: t.clientY, axis: null, startTime: Date.now() };
-    // Kill any lingering transition
     if (containerElRef.current) containerElRef.current.style.transition = "none";
   }, []);
 
@@ -310,16 +504,13 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     const dx = t.clientX - ref.startX;
     const dy = t.clientY - ref.startY;
 
-    // Determine axis lock on first significant movement
     if (ref.axis === null) {
       if (Math.abs(dx) + Math.abs(dy) < 8) return;
       ref.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
     }
 
-    // If vertical scroll, don't interfere
     if (ref.axis === "y") return;
 
-    // Horizontal drag — apply rubber-band at edges if no neighbor loaded
     let delta = dx;
     if ((!prevProduct && delta > 0) || (!nextProduct && delta < 0)) {
       delta *= 0.2;
@@ -333,7 +524,6 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     const ref = touchRef.current;
 
     if (ref.axis !== "x") {
-      // Was a vertical scroll, not a swipe
       setTranslateX(0);
       return;
     }
@@ -341,19 +531,18 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     const dx = translateXRef.current;
     const vw = window.innerWidth;
     const elapsed = Date.now() - ref.startTime;
-    const velocity = Math.abs(dx) / Math.max(elapsed, 1);
+    // [FIX 7] Capture velocity for animation matching
+    const velocity = Math.abs(dx) / Math.max(elapsed, 1); // px/ms
 
-    // Swipe threshold: either 20% of screen or fast flick (>0.5px/ms)
     const threshold = vw * 0.2;
     const isFlick = velocity > 0.5;
 
     if ((dx < -threshold || (dx < 0 && isFlick)) && next) {
-      snapTo(next, "next");
+      snapTo(next, "next", velocity);
     } else if ((dx > threshold || (dx > 0 && isFlick)) && prev) {
-      snapTo(prev, "prev");
+      snapTo(prev, "prev", velocity);
     } else {
-      // Snap back
-      animateTo(0, 200);
+      animateTo(0, { duration: 200 });
     }
 
     touchRef.current.axis = null;
@@ -366,83 +555,73 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     return <ProductDetail key={currentSlug} product={currentProduct} />;
   }
 
-  // Mobile: Zara-style three-panel viewport-locked carousel
-  // Outer: overflow:hidden viewport. Inner: flex track that translateX slides.
-  // Each panel has its own overflow-y:auto scroll — no shared scroll context.
+  // Shared panel style — [FIX 4] overscroll-behavior: contain + [FIX 6] touch-action: pan-y
+  const panelStyle: React.CSSProperties = {
+    width: "100vw",
+    height: "100dvh",
+    overflowY: "auto",
+    overflowX: "hidden",
+    WebkitOverflowScrolling: "touch",
+    flexShrink: 0,
+    overscrollBehavior: "contain", // [FIX 4] Prevent iOS page-level bounce
+  };
+
   return (
-    <div
-      style={{
-        height: "100dvh",
-        overflow: "hidden",
-        position: "relative",
-      }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Sliding track — three panels side by side */}
+    <>
       <div
-        ref={containerElRef}
         style={{
-          display: "flex",
-          width: "300vw",
           height: "100dvh",
-          transform: "translateX(-100vw)",
-          transition: "none",
-          willChange: "transform",
+          overflow: "hidden",
+          position: "relative",
+          touchAction: "pan-y", // [FIX 6] Tell browser: "I handle horizontal, you handle vertical"
         }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        {/* PREV panel — own scroll container */}
+        {/* Sliding track — three panels side by side */}
         <div
+          ref={containerElRef}
           style={{
-            width: "100vw",
+            display: "flex",
+            width: "300vw",
             height: "100dvh",
-            overflowY: "auto",
-            overflowX: "hidden",
-            WebkitOverflowScrolling: "touch",
-            flexShrink: 0,
+            transform: "translateX(-100vw)",
+            transition: "none",
+            willChange: "transform",
           }}
         >
-          {prevProduct ? (
-            <ProductDetail product={prevProduct} isPreview />
-          ) : (
-            <ZaraLoader />
-          )}
-        </div>
+          {/* PREV panel */}
+          <div style={panelStyle}>
+            {prevProduct ? (
+              <ProductDetail product={prevProduct} isPreview />
+            ) : (
+              <ZaraLoader />
+            )}
+          </div>
 
-        {/* CURRENT panel — own scroll container */}
-        <div
-          ref={currentPanelRef}
-          style={{
-            width: "100vw",
-            height: "100dvh",
-            overflowY: "auto",
-            overflowX: "hidden",
-            WebkitOverflowScrolling: "touch",
-            flexShrink: 0,
-          }}
-        >
-          <ProductDetail key={currentSlug} product={currentProduct} />
-        </div>
+          {/* CURRENT panel */}
+          <div ref={currentPanelRef} style={panelStyle}>
+            <ProductDetail key={currentSlug} product={currentProduct} isPreview />
+          </div>
 
-        {/* NEXT panel — own scroll container */}
-        <div
-          style={{
-            width: "100vw",
-            height: "100dvh",
-            overflowY: "auto",
-            overflowX: "hidden",
-            WebkitOverflowScrolling: "touch",
-            flexShrink: 0,
-          }}
-        >
-          {nextProduct ? (
-            <ProductDetail product={nextProduct} isPreview />
-          ) : (
-            <ZaraLoader />
-          )}
+          {/* NEXT panel */}
+          <div style={panelStyle}>
+            {nextProduct ? (
+              <ProductDetail product={nextProduct} isPreview />
+            ) : (
+              <ZaraLoader />
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* [FIX 2] Persistent dock — portaled to body, never unmounts.
+          Only its content props change when currentProduct updates. */}
+      {mounted && createPortal(
+        <PersistentDock product={currentProduct} />,
+        document.body
+      )}
+    </>
   );
 }
