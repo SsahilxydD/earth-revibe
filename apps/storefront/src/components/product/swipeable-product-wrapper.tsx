@@ -5,6 +5,7 @@ import { flushSync } from "react-dom";
 import { createPortal } from "react-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { productKeys } from "@/hooks/use-products";
 import { usePrefetchAdjacentProducts } from "@/hooks/use-prefetch-adjacent-products";
 import { useProductNavStore } from "@/stores/product-nav-store";
@@ -58,7 +59,7 @@ function ZaraLoader() {
 /*  unmounts. Only its CONTENTS update when the product changes.        */
 /* ------------------------------------------------------------------ */
 
-function PersistentDock({ product }: { product: Product }) {
+function PersistentDock({ product, visible }: { product: Product; visible: boolean }) {
   const [isAdding, setIsAdding] = useState(false);
   const [showSizeSheet, setShowSizeSheet] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
@@ -142,44 +143,53 @@ function PersistentDock({ product }: { product: Product }) {
 
   return (
     <>
-      {/* Dock — always mounted, content transitions smoothly */}
-      <div
-        className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        <div className="px-4 pt-3">
-          <p className="text-sm font-semibold uppercase tracking-wide truncate">{product.name}</p>
-          <div className="flex items-baseline gap-2">
-            <span
-              className={cn(
-                "text-sm",
-                isOnSale && "text-[var(--color-sale)]"
-              )}
-            >
-              {formatPrice(displayPrice)}
-            </span>
-            {isOnSale && (
-              <span className="text-xs text-[var(--color-muted)] line-through">
-                {formatPrice(product.compareAtPrice!)}
-              </span>
-            )}
-          </div>
-          <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
-            MRP incl. of all taxes
-          </p>
-        </div>
-
-        <div className="px-4 py-3">
-          <button
-            type="button"
-            onClick={handleMobileAddToCart}
-            disabled={isAdding}
-            className="flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
+      {/* Dock — always mounted, collapses with fade-down when "You May Also Like" is in view */}
+      <AnimatePresence>
+        {visible && (
+          <motion.div
+            key="dock"
+            initial={{ y: 0, opacity: 1 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 40, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
+            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           >
-            {isAdding ? <Loader2 size={16} className="animate-spin" /> : "ADD"}
-          </button>
-        </div>
-      </div>
+            <div className="px-4 pt-3">
+              <p className="text-sm font-semibold uppercase tracking-wide truncate">{product.name}</p>
+              <div className="flex items-baseline gap-2">
+                <span
+                  className={cn(
+                    "text-sm",
+                    isOnSale && "text-[var(--color-sale)]"
+                  )}
+                >
+                  {formatPrice(displayPrice)}
+                </span>
+                {isOnSale && (
+                  <span className="text-xs text-[var(--color-muted)] line-through">
+                    {formatPrice(product.compareAtPrice!)}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+                MRP incl. of all taxes
+              </p>
+            </div>
+
+            <div className="px-4 py-3">
+              <button
+                type="button"
+                onClick={handleMobileAddToCart}
+                disabled={isAdding}
+                className="flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
+              >
+                {isAdding ? <Loader2 size={16} className="animate-spin" /> : "ADD"}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Size selection sheet */}
       <div
@@ -278,6 +288,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   const [nextProduct, setNextProduct] = useState<Product | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [dockVisible, setDockVisible] = useState(true);
 
   // Animation state — managed via refs to avoid re-renders during drag
   const isLockedRef = useRef(false);
@@ -377,6 +388,59 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     preload(prevProduct);
     preload(nextProduct);
   }, [prevProduct, nextProduct]);
+
+  // Observe "You May Also Like" heading inside the current scroll panel.
+  // When it enters the viewport → hide dock. When it leaves → show dock.
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    if (!isMobile || !hasNav) return;
+    const panel = currentPanelRef.current;
+    if (!panel) return;
+
+    // Reset dock visibility on product change
+    setDockVisible(true);
+
+    // Disconnect previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    // Find the heading inside the panel — slight delay for React to render content
+    const timer = setTimeout(() => {
+      const headings = panel.querySelectorAll("h2");
+      let target: Element | null = null;
+      headings.forEach((h) => {
+        if (h.textContent?.trim().toLowerCase().includes("you may also like")) {
+          target = h;
+        }
+      });
+
+      if (!target) return;
+
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          setDockVisible(!entry.isIntersecting);
+        },
+        {
+          root: panel,
+          threshold: 0,
+        }
+      );
+
+      observer.observe(target);
+      observerRef.current = observer;
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
+  }, [currentSlug, isMobile, hasNav]);
 
   // --- Swipe helpers ---
   const BASE_OFFSET = "-100vw";
@@ -617,9 +681,10 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       </div>
 
       {/* [FIX 2] Persistent dock — portaled to body, never unmounts.
-          Only its content props change when currentProduct updates. */}
+          Only its content props change when currentProduct updates.
+          Collapses with fade-down when "You May Also Like" is in view. */}
       {mounted && createPortal(
-        <PersistentDock product={currentProduct} />,
+        <PersistentDock product={currentProduct} visible={dockVisible} />,
         document.body
       )}
     </>
