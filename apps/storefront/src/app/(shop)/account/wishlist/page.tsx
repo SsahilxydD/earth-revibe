@@ -10,6 +10,19 @@ import { formatPrice, getImageUrl } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart-store";
 import { useToast } from "@/providers";
 
+interface RawWishlistItem {
+  id: string;
+  productId: string;
+  product: {
+    id: string;
+    name: string;
+    slug: string;
+    price: number;
+    compareAtPrice: number | null;
+    images: { url: string; thumbnailUrl?: string }[];
+  };
+}
+
 interface WishlistItem {
   id: string;
   productId: string;
@@ -21,15 +34,30 @@ interface WishlistItem {
   inStock: boolean;
 }
 
+function normalizeWishlistItems(raw: RawWishlistItem[]): WishlistItem[] {
+  return raw.map((item) => ({
+    id: item.id,
+    productId: item.productId,
+    name: item.product.name,
+    slug: item.product.slug,
+    image: item.product.images?.[0]?.url || "",
+    price: item.product.price,
+    compareAtPrice: item.product.compareAtPrice,
+    inStock: true, // If it's in the DB, the product exists
+  }));
+}
+
 export default function WishlistPage() {
   const queryClient = useQueryClient();
   const addItem = useCartStore((s) => s.addItem);
   const { addToast } = useToast();
 
-  const { data: items, isLoading } = useQuery({
+  const { data: rawItems, isLoading } = useQuery({
     queryKey: ["wishlist"],
-    queryFn: () => api.get<WishlistItem[]>("/wishlist"),
+    queryFn: () => api.get<RawWishlistItem[]>("/wishlist"),
   });
+
+  const items = rawItems ? normalizeWishlistItems(rawItems) : undefined;
 
   const removeMutation = useMutation({
     mutationFn: (productId: string) =>

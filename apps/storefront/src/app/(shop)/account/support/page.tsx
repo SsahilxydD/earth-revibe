@@ -57,10 +57,12 @@ export default function SupportPage() {
   const { addToast } = useToast();
   const [showForm, setShowForm] = useState(false);
 
-  const { data: tickets, isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["support-tickets"],
-    queryFn: () => api.get<Ticket[]>("/support/tickets"),
+    queryFn: () => api.get<{ tickets: Ticket[]; total: number }>("/support/tickets"),
   });
+
+  const tickets = data?.tickets;
 
   const createMutation = useMutation({
     mutationFn: (data: NewTicketForm) => api.post("/support/tickets", data),
