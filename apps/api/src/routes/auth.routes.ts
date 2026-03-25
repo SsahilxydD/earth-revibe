@@ -21,6 +21,7 @@ router.post("/refresh", asyncHandler(authController.refresh));
 router.post("/logout", asyncHandler(authController.logout));
 router.post("/forgot-password", passwordResetRateLimit, validate({ body: forgotPasswordSchema }), asyncHandler(authController.forgotPassword));
 router.post("/reset-password", validate({ body: resetPasswordSchema }), asyncHandler(authController.resetPassword));
+router.post("/oauth-session", asyncHandler(authController.oauthSession));
 router.get("/me", authenticate, asyncHandler(authController.getMe));
 router.put("/profile", authenticate, validate({ body: updateProfileSchema }), asyncHandler(authController.updateProfile));
 router.put("/password", authenticate, validate({ body: changePasswordSchema }), asyncHandler(authController.changePassword));

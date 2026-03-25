@@ -60,4 +60,19 @@ export const authController = {
     clearAuthCookies(res);
     res.json({ success: true, message: "Password changed successfully" });
   },
+
+  /**
+   * Exchange Supabase OAuth tokens for httpOnly API cookies.
+   * Called by the frontend after Google OAuth redirect.
+   * Sets cookies so all subsequent API calls are authenticated.
+   * The auth middleware auto-provisions the Prisma user on next request.
+   */
+  async oauthSession(req: Request, res: Response) {
+    const { accessToken, refreshToken } = req.body;
+    if (!accessToken || !refreshToken) {
+      throw ApiError.badRequest("Missing tokens");
+    }
+    setAuthCookies(res, accessToken, refreshToken);
+    res.json({ success: true });
+  },
 };
