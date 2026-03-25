@@ -3,13 +3,14 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, Package, ArrowRight } from "lucide-react";
+import { CheckCircle, Package, ArrowRight, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
 function ConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const isNewAccount = searchParams.get("newAccount") === "1";
 
   return (
     <div className="flex min-h-[calc(100dvh-160px)] items-center justify-center px-4 py-10 lg:px-8">
@@ -50,6 +51,24 @@ function ConfirmationContent() {
             </p>
           </div>
         </div>
+
+        {/* Auto-created account banner */}
+        {isNewAccount && (
+          <div className="mt-5 rounded-[var(--button-radius)] border border-green-200 bg-green-50 px-4 py-4 text-left">
+            <div className="flex items-start gap-3">
+              <UserPlus className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+              <div>
+                <p className="text-sm font-semibold text-green-900">
+                  Account created!
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-green-700">
+                  We&apos;ve created an account for you. Check your email to set
+                  a password — then you can log in to track your orders anytime.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <p className="mt-5 text-xs leading-relaxed text-[var(--color-muted)]">
           A confirmation email has been sent to your registered email address.

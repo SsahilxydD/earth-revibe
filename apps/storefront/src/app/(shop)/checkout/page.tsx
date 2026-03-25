@@ -71,6 +71,7 @@ export default function CheckoutPage() {
       const verification = await api.post<{
         orderNumber: string;
         pointsEarned: number;
+        accountAutoCreated: boolean;
       }>("/checkout/verify-payment", {
         razorpayOrderId: paymentResponse.razorpay_order_id,
         razorpayPaymentId: paymentResponse.razorpay_payment_id,
@@ -78,9 +79,9 @@ export default function CheckoutPage() {
       });
 
       clearCart();
-      router.push(
-        `/checkout/confirmation?orderId=${verification.orderNumber}`
-      );
+      const params = new URLSearchParams({ orderId: verification.orderNumber });
+      if (verification.accountAutoCreated) params.set("newAccount", "1");
+      router.push(`/checkout/confirmation?${params.toString()}`);
     } catch (error: any) {
       addToast(
         error?.message || "Something went wrong. Please try again.",

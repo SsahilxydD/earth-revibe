@@ -7,6 +7,7 @@ import { logger } from "../config/logger";
 import { APP_CONSTANTS } from "../config/constants";
 import { generateOrderNumber } from "@earth-revibe/shared";
 import { shiprocketService } from "./shiprocket.service";
+import { getSupabaseAdmin } from "../config/supabase";
 import type {
   CreateMagicCheckoutInput,
   ShippingInfoRequest,
@@ -347,6 +348,7 @@ export const checkoutService = {
 
     let isGuest = !pending.userId;
     let effectiveUserId = pending.userId;
+    let accountAutoCreated = false;
 
     // Fetch the full Razorpay order — contains customer phone, email, address, shipping fee, promotions
     const rzpOrder = await getRazorpay().orders.fetch(data.razorpayOrderId) as any;
@@ -383,12 +385,42 @@ export const checkoutService = {
           });
         }
       } else {
-        // Create new user from Razorpay data
+        // Auto-create full account from Razorpay data:
+        // 1. Create Supabase Auth user (so they can log in)
+        // 2. Create Prisma User record (so they have order history)
+        // 3. Trigger password reset email (so they can set their own password)
         const nameParts = customerName.split(" ");
         const firstName = nameParts[0] || "Customer";
         const lastName = nameParts.slice(1).join(" ") || "";
 
         try {
+          // Generate a random password — user will reset it via email
+          const tempPassword = crypto.randomBytes(24).toString("base64url");
+          const supabase = getSupabaseAdmin();
+
+          // Create Supabase Auth account
+          const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+            email: customerEmail,
+            password: tempPassword,
+            email_confirm: true,
+            phone: customerPhone ? `+91${customerPhone}` : undefined,
+            phone_confirm: !!customerPhone,
+            user_metadata: {
+              first_name: firstName,
+              last_name: lastName,
+              phone: customerPhone,
+            },
+            app_metadata: {
+              role: "CUSTOMER",
+              auto_created: true,
+            },
+          });
+
+          if (authError) {
+            logger.warn({ err: authError, email: customerEmail }, "Supabase auth creation failed, creating Prisma user only");
+          }
+
+          // Create Prisma User record
           const newUser = await prisma.user.create({
             data: {
               email: customerEmail,
@@ -396,13 +428,30 @@ export const checkoutService = {
               firstName,
               lastName,
               role: "CUSTOMER",
-              emailVerified: true, // Razorpay verified the email
+              emailVerified: true,
               phoneVerified: !!customerPhone,
+              passwordHash: "supabase-managed",
+              isActive: true,
             },
           });
           effectiveUserId = newUser.id;
           isGuest = false;
-          logger.info({ userId: newUser.id, email: customerEmail }, "Auto-created user from Magic Checkout");
+          accountAutoCreated = !authError; // true if both Supabase + Prisma succeeded
+          logger.info({ userId: newUser.id, email: customerEmail, supabaseCreated: !authError }, "Auto-created user from Magic Checkout");
+
+          // Send password reset email so user can set their own password and log in.
+          // This is fire-and-forget — don't block the checkout response.
+          if (authData?.user) {
+            supabase.auth.admin.generateLink({
+              type: "recovery",
+              email: customerEmail,
+              options: {
+                redirectTo: `${env.FRONTEND_URL}/auth/reset-password`,
+              },
+            }).catch((err) => {
+              logger.warn({ err, email: customerEmail }, "Failed to send password reset email for auto-created user");
+            });
+          }
         } catch (err) {
           // Unique constraint race — another request may have created the user
           logger.warn({ err, email: customerEmail }, "Failed to auto-create user, continuing as guest");
@@ -688,7 +737,7 @@ export const checkoutService = {
       logger.error({ err, orderId }, "Failed to create Shiprocket shipment");
     });
 
-    return { orderNumber: finalOrderNumber, pointsEarned };
+    return { orderNumber: finalOrderNumber, pointsEarned, accountAutoCreated };
   },
 };
 
