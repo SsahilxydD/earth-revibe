@@ -65,7 +65,7 @@ export default function ReferralsPage() {
   const rewardsEarned = referral?.rewardsEarned ?? 0;
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-8 md:space-y-10">
       {/* Referral Code */}
       <div className="rounded-xl border border-[var(--color-border)] p-4 md:p-6">
         <h2 className="mb-1 text-sm font-bold uppercase tracking-wider">

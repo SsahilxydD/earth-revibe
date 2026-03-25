@@ -109,7 +109,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-8 md:space-y-10">
       {/* Avatar Section */}
       <div className="flex items-center gap-3 md:gap-4">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--color-surface)] md:h-20 md:w-20">
@@ -142,9 +142,12 @@ export default function ProfilePage() {
 
       {/* Profile Form */}
       <div>
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
+        <h3 className="text-sm font-bold uppercase tracking-wider">
           Personal Information
         </h3>
+        <p className="mt-1 mb-5 text-xs text-[var(--color-muted)]">
+          Update your name and contact details.
+        </p>
         <form
           onSubmit={handleProfileSubmit((data) =>
             profileMutation.mutate(data)
@@ -190,9 +193,12 @@ export default function ProfilePage() {
 
       {/* Change Password */}
       <div className="border-t border-[var(--color-border)] pt-8">
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
+        <h3 className="text-sm font-bold uppercase tracking-wider">
           Change Password
         </h3>
+        <p className="mt-1 mb-5 text-xs text-[var(--color-muted)]">
+          Set a new password for your account.
+        </p>
         <form
           onSubmit={handlePasswordSubmit((data) =>
             passwordMutation.mutate(data)

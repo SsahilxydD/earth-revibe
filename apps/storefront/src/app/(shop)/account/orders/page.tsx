@@ -75,11 +75,16 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <h2 className="mb-4 text-sm font-bold uppercase tracking-wider md:mb-6">
-        Order History
-      </h2>
+      <div className="mb-6 md:mb-8">
+        <h2 className="text-sm font-bold uppercase tracking-wider">
+          Order History
+        </h2>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Track and manage your orders.
+        </p>
+      </div>
 
-      <div className="space-y-2 md:space-y-3">
+      <div className="space-y-3">
         {orders.map((order) => (
           <Link
             key={order.id}

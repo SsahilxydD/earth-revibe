@@ -66,7 +66,7 @@ export default function LoyaltyPage() {
   const transactions = loyalty?.transactions ?? [];
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-8 md:space-y-10">
       {/* Balance Card */}
       <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-primary)] p-4 text-white md:p-6">
         <div className="flex items-start justify-between">

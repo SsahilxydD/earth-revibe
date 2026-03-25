@@ -236,25 +236,26 @@ export default function AddressesPage() {
 
   return (
     <div>
-      <div className="mb-4 md:mb-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider">
-            Saved Addresses
-          </h2>
-        </div>
+      <div className="mb-6 md:mb-8">
+        <h2 className="text-sm font-bold uppercase tracking-wider">
+          Saved Addresses
+        </h2>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">
+          Manage your delivery addresses for faster checkout.
+        </p>
         {!showForm && (
-          <div className="mt-3 flex gap-2">
+          <div className="mt-5 flex gap-3">
             <button
               onClick={importFromRazorpay}
               disabled={isImporting}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-2.5 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60 md:flex-none"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-3 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60 md:flex-none"
             >
               <Zap size={14} />
               {isImporting ? "Importing..." : "Import via Razorpay"}
             </button>
             <Button
               size="sm"
-              className="flex-1 md:flex-none"
+              className="flex-1 py-3 md:flex-none"
               onClick={() => {
                 setEditingId(null);
                 reset();
@@ -392,38 +393,40 @@ export default function AddressesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {addresses?.map((address) => (
             <div
               key={address.id}
-              className="relative rounded-xl border border-[var(--color-border)] p-4 md:p-5"
+              className="relative rounded-xl border border-[var(--color-border)] p-5"
             >
               {address.isDefault && (
-                <div className="mb-2 flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)]">
+                <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-[var(--color-primary)]">
                   <Star size={12} className="fill-current" />
                   Default Address
                 </div>
               )}
               <p className="text-sm font-bold">{address.fullName}</p>
-              <div className="mt-1 space-y-0.5 text-sm text-[var(--color-muted)]">
+              <div className="mt-2 space-y-1 text-sm leading-relaxed text-[var(--color-muted)]">
                 <p>{address.line1}</p>
                 {address.line2 && <p>{address.line2}</p>}
                 <p>
                   {address.city}, {address.state} {address.pinCode}
                 </p>
-                <p>Phone: {address.phone}</p>
               </div>
-              <div className="mt-3 flex gap-2">
+              <p className="mt-3 text-xs text-[var(--color-muted)]">
+                Phone: {address.phone}
+              </p>
+              <div className="mt-4 flex gap-4 border-t border-[var(--color-border)] pt-4">
                 <button
                   onClick={() => openEdit(address.id)}
-                  className="flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline"
+                  className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-primary)] hover:underline"
                 >
                   <Pencil size={12} />
                   Edit
                 </button>
                 <button
                   onClick={() => handleDelete(address.id)}
-                  className="flex items-center gap-1 text-xs font-semibold text-[var(--color-sale)] hover:underline"
+                  className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-sale)] hover:underline"
                   disabled={deleteMutation.isPending}
                 >
                   <Trash2 size={12} />

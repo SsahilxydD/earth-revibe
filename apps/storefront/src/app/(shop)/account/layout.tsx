@@ -65,13 +65,13 @@ export default function AccountLayout({
   }
 
   return (
-    <div className="px-3 py-5 md:px-8 lg:px-12 xl:px-20 md:py-12">
-      <h1 className="mb-4 text-lg font-bold uppercase tracking-wider md:mb-8 md:text-2xl">
+    <div className="px-4 py-6 md:px-8 lg:px-12 xl:px-20 md:py-12">
+      <h1 className="mb-5 text-lg font-bold uppercase tracking-wider md:mb-8 md:text-2xl">
         My Account
       </h1>
 
       {/* Mobile tabs — compact icon + short label, horizontal scroll */}
-      <div className="mb-5 flex gap-0 overflow-x-auto border-b border-[var(--color-border)] pb-px md:hidden hide-scrollbar">
+      <div className="mb-8 flex gap-0 overflow-x-auto border-b border-[var(--color-border)] pb-px md:hidden hide-scrollbar">
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
