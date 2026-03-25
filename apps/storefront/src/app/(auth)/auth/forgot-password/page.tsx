@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { ArrowLeft, Mail } from "lucide-react";
-import { createBrowserClient } from "@supabase/ssr";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api-client";
 
 interface ForgotPasswordForm {
   email: string;
@@ -27,22 +27,7 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (data: ForgotPasswordForm) => {
     setServerError("");
     try {
-      // Use implicit flow (not PKCE) for recovery emails.
-      // PKCE requires the code verifier to be in the same browser that initiated
-      // the flow, but email links often open in a different context (in-app browser,
-      // different tab). Implicit flow puts tokens in the URL hash — works everywhere.
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        { auth: { flowType: "implicit" } }
-      );
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      });
-      if (error) {
-        setServerError(error.message);
-        return;
-      }
+      await api.post("/auth/forgot-password", data);
       setSubmitted(true);
     } catch (err: any) {
       setServerError(err?.message || "Something went wrong");

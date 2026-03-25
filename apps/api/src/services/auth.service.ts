@@ -1,7 +1,8 @@
+import crypto from "node:crypto";
 import { prisma } from "@earth-revibe/db";
-import { env } from "../config/env";
 import { logger } from "../config/logger";
 import { ApiError } from "../utils/api-error";
+import { emailService } from "./email.service";
 import { getSupabaseAdmin, getSupabaseAnon } from "../config/supabase";
 import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput } from "@earth-revibe/shared";
 
@@ -208,43 +209,89 @@ export const authService = {
   },
 
   /**
-   * Send a password reset email via Supabase.
+   * Send a password reset email with a server-generated token.
+   * Works on any device/browser — no Supabase PKCE or implicit flow dependency.
    */
   async forgotPassword(email: string) {
-    const supabaseAnon = getSupabaseAnon();
-    const { error } = await supabaseAnon.auth.resetPasswordForEmail(email, {
-      redirectTo: `${env.FRONTEND_URL}/auth/reset-password`,
+    // Don't reveal if email exists — always return success
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return;
+
+    // Check for Supabase auth user
+    const supabase = getSupabaseAdmin();
+    const { data: supabaseUsers } = await supabase.auth.admin.listUsers();
+    const supabaseUser = supabaseUsers?.users?.find(
+      (u) => u.email?.toLowerCase() === email.toLowerCase()
+    );
+    if (!supabaseUser) return;
+
+    // Generate a secure random token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // Invalidate any existing tokens for this email
+    await prisma.passwordResetToken.updateMany({
+      where: { email, usedAt: null },
+      data: { usedAt: new Date() },
     });
 
-    if (error) {
-      // Don't reveal if email exists — log and swallow
-      logger.error({ err: error, email }, "Supabase resetPasswordForEmail failed");
-    }
+    // Store the token
+    await prisma.passwordResetToken.create({
+      data: { token, email, expiresAt },
+    });
+
+    // Send the email via SMTP
+    await emailService.sendPasswordResetEmail(email, token);
   },
 
   /**
-   * Reset password using a Supabase recovery token.
-   * The frontend exchanges the recovery token via Supabase client,
-   * then calls this endpoint with the new password.
+   * Reset password using a server-generated token.
+   * Validates the DB token, then updates the password in Supabase via admin API.
    */
-  async resetPassword(accessToken: string, newPassword: string) {
-    const supabase = getSupabaseAdmin();
+  async resetPassword(token: string, newPassword: string) {
+    // Find and validate the token
+    const resetToken = await prisma.passwordResetToken.findUnique({
+      where: { token },
+    });
 
-    // Verify the access token to get the user
-    const { data: userData, error: verifyError } = await supabase.auth.getUser(accessToken);
-    if (verifyError || !userData.user) {
-      throw ApiError.badRequest("Invalid or expired reset token");
+    if (!resetToken) {
+      throw ApiError.badRequest("Invalid reset link. Please request a new one.");
+    }
+
+    if (resetToken.usedAt) {
+      throw ApiError.badRequest("This reset link has already been used.");
+    }
+
+    if (resetToken.expiresAt < new Date()) {
+      throw ApiError.badRequest("This reset link has expired. Please request a new one.");
+    }
+
+    // Find the Supabase user by email
+    const supabase = getSupabaseAdmin();
+    const { data: supabaseUsers } = await supabase.auth.admin.listUsers();
+    const supabaseUser = supabaseUsers?.users?.find(
+      (u) => u.email?.toLowerCase() === resetToken.email.toLowerCase()
+    );
+
+    if (!supabaseUser) {
+      throw ApiError.badRequest("Account not found. Please contact support.");
     }
 
     // Update password in Supabase
-    const { error } = await supabase.auth.admin.updateUserById(userData.user.id, {
+    const { error } = await supabase.auth.admin.updateUserById(supabaseUser.id, {
       password: newPassword,
     });
 
     if (error) {
       logger.error({ err: error }, "Supabase password update failed");
-      throw ApiError.internal("Password reset failed");
+      throw ApiError.internal("Password reset failed. Please try again.");
     }
+
+    // Mark token as used
+    await prisma.passwordResetToken.update({
+      where: { token },
+      data: { usedAt: new Date() },
+    });
   },
 
   async getMe(userId: string) {

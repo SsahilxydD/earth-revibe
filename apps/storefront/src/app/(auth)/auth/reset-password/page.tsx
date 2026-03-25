@@ -1,23 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import { CheckCircle, ArrowLeft, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { createClient } from "@/lib/supabase/client";
+import { api } from "@/lib/api-client";
 
 interface ResetPasswordForm {
   password: string;
   confirmPassword: string;
 }
 
-export default function ResetPasswordPage() {
-  const [sessionReady, setSessionReady] = useState(false);
-  const [verifying, setVerifying] = useState(true);
-  const [tokenError, setTokenError] = useState("");
+function ResetPasswordContent() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
   const [success, setSuccess] = useState(false);
   const [serverError, setServerError] = useState("");
 
@@ -30,101 +32,19 @@ export default function ResetPasswordPage() {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  // Extract and verify the recovery token from the URL hash.
-  // Supabase puts the token in the hash fragment: #access_token=...&type=recovery
-  useEffect(() => {
-    const verifyToken = async () => {
-      const supabase = createClient();
-
-      // PKCE flow (default): Supabase puts a `code` in the query string
-      const url = new URL(window.location.href);
-      const code = url.searchParams.get("code");
-
-      // Implicit flow (legacy): tokens in the URL hash
-      const hash = window.location.hash.substring(1);
-      const hashParams = new URLSearchParams(hash);
-      const hashToken = hashParams.get("access_token");
-
-      try {
-        if (code) {
-          // PKCE: exchange the code for a session
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error || !data.session) {
-            setTokenError("This reset link has expired. Please request a new one.");
-            setVerifying(false);
-            return;
-          }
-          setSessionReady(true);
-        } else if (hashToken) {
-          // Implicit: use the hash tokens directly
-          const { error } = await supabase.auth.setSession({
-            access_token: hashToken,
-            refresh_token: hashParams.get("refresh_token") || "",
-          });
-          if (error) {
-            setTokenError("This reset link has expired. Please request a new one.");
-            setVerifying(false);
-            return;
-          }
-          setSessionReady(true);
-        } else {
-          setTokenError("Invalid or missing reset link. Please request a new one.");
-          setVerifying(false);
-          return;
-        }
-      } catch {
-        setTokenError("Failed to verify reset link. Please try again.");
-      }
-      setVerifying(false);
-    };
-
-    verifyToken();
-  }, []);
-
-  const onSubmit = async (data: ResetPasswordForm) => {
-    if (!sessionReady) return;
-    setServerError("");
-
-    try {
-      // After PKCE exchange, we have a valid Supabase session.
-      // Use updateUser directly — no need to send tokens to the API.
-      const supabase = createClient();
-      const { error } = await supabase.auth.updateUser({
-        password: data.password,
-      });
-      if (error) {
-        setServerError(error.message);
-        return;
-      }
-      setSuccess(true);
-    } catch (err: any) {
-      setServerError(err?.message || "Failed to reset password. Please try again.");
-    }
-  };
-
-  // Loading state while verifying token
-  if (verifying) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8">
-        <Spinner className="h-8 w-8" />
-        <p className="mt-4 text-sm text-[var(--color-muted)]">
-          Verifying your reset link...
-        </p>
-      </div>
-    );
-  }
-
-  // Invalid/expired token
-  if (tokenError) {
+  // No token in the URL — invalid link
+  if (!token) {
     return (
       <div className="text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
           <AlertCircle size={24} className="text-[var(--color-sale)]" />
         </div>
         <h1 className="mb-2 text-xl font-bold uppercase tracking-wider">
-          Link Expired
+          Invalid Link
         </h1>
-        <p className="mb-6 text-sm text-[var(--color-muted)]">{tokenError}</p>
+        <p className="mb-6 text-sm text-[var(--color-muted)]">
+          This reset link is invalid. Please request a new one.
+        </p>
         <Link
           href="/auth/forgot-password"
           className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:underline"
@@ -134,6 +54,19 @@ export default function ResetPasswordPage() {
       </div>
     );
   }
+
+  const onSubmit = async (data: ResetPasswordForm) => {
+    setServerError("");
+    try {
+      await api.post("/auth/reset-password", {
+        token,
+        password: data.password,
+      });
+      setSuccess(true);
+    } catch (err: any) {
+      setServerError(err?.message || "Failed to reset password. Please try again.");
+    }
+  };
 
   // Success state
   if (success) {
@@ -219,5 +152,19 @@ export default function ResetPasswordPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center py-8">
+          <Spinner className="h-8 w-8" />
+        </div>
+      }
+    >
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

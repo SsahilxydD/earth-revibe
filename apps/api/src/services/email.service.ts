@@ -71,7 +71,7 @@ export const emailService = {
   },
 
   async sendPasswordResetEmail(email: string, resetToken: string) {
-    const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    const resetUrl = `${env.FRONTEND_URL}/auth/reset-password?token=${resetToken}`;
     const html = wrapHtml(`
       <h2 style="font-size:20px;color:#000;margin:0 0 16px">Reset Your Password</h2>
       <p style="font-size:14px;line-height:1.7;color:#555">We received a request to reset your password. Click the button below to set a new one. This link expires in 1 hour.</p>
