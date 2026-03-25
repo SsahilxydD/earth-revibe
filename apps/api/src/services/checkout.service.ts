@@ -7,7 +7,7 @@ import { logger } from "../config/logger";
 import { APP_CONSTANTS } from "../config/constants";
 import { generateOrderNumber } from "@earth-revibe/shared";
 import { shiprocketService } from "./shiprocket.service";
-import { getSupabaseAdmin } from "../config/supabase";
+import { getSupabaseAdmin, getSupabaseAnon } from "../config/supabase";
 import type {
   CreateMagicCheckoutInput,
   ShippingInfoRequest,
@@ -440,14 +440,15 @@ export const checkoutService = {
           logger.info({ userId: newUser.id, email: customerEmail, supabaseCreated: !authError }, "Auto-created user from Magic Checkout");
 
           // Send password reset email so user can set their own password and log in.
-          // This is fire-and-forget — don't block the checkout response.
+          // Uses the anon client's resetPasswordForEmail which actually sends the email
+          // via Supabase's email service. Fire-and-forget — don't block checkout.
           if (authData?.user) {
-            supabase.auth.admin.generateLink({
-              type: "recovery",
-              email: customerEmail,
-              options: {
-                redirectTo: `${env.FRONTEND_URL}/auth/reset-password`,
-              },
+            const supabaseAnon = getSupabaseAnon();
+            supabaseAnon.auth.resetPasswordForEmail(customerEmail, {
+              redirectTo: `${env.FRONTEND_URL}/auth/reset-password`,
+            }).then(({ error }) => {
+              if (error) logger.warn({ err: error, email: customerEmail }, "Failed to send password reset email for auto-created user");
+              else logger.info({ email: customerEmail }, "Password reset email sent to auto-created user");
             }).catch((err) => {
               logger.warn({ err, email: customerEmail }, "Failed to send password reset email for auto-created user");
             });
