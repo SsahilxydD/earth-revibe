@@ -236,22 +236,25 @@ export default function AddressesPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-sm font-bold uppercase tracking-wider">
-          Saved Addresses
-        </h2>
+      <div className="mb-4 md:mb-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold uppercase tracking-wider">
+            Saved Addresses
+          </h2>
+        </div>
         {!showForm && (
-          <div className="flex gap-2">
+          <div className="mt-3 flex gap-2">
             <button
               onClick={importFromRazorpay}
               disabled={isImporting}
-              className="flex items-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-1.5 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-2.5 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60 md:flex-none"
             >
               <Zap size={14} />
               {isImporting ? "Importing..." : "Import via Razorpay"}
             </button>
             <Button
               size="sm"
+              className="flex-1 md:flex-none"
               onClick={() => {
                 setEditingId(null);
                 reset();
@@ -389,11 +392,11 @@ export default function AddressesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {addresses?.map((address) => (
             <div
               key={address.id}
-              className="relative rounded-xl border border-[var(--color-border)] p-5"
+              className="relative rounded-xl border border-[var(--color-border)] p-4 md:p-5"
             >
               {address.isDefault && (
                 <div className="mb-2 flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)]">

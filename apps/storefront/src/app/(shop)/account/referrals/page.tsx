@@ -65,9 +65,9 @@ export default function ReferralsPage() {
   const rewardsEarned = referral?.rewardsEarned ?? 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Referral Code */}
-      <div className="rounded-xl border border-[var(--color-border)] p-6">
+      <div className="rounded-xl border border-[var(--color-border)] p-4 md:p-6">
         <h2 className="mb-1 text-sm font-bold uppercase tracking-wider">
           Your Referral Code
         </h2>
@@ -127,8 +127,8 @@ export default function ReferralsPage() {
         <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
           Your Stats
         </h3>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="rounded-xl border border-[var(--color-border)] p-4 text-center">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-[var(--color-border)] p-3 text-center md:p-4">
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">
               <Share2 size={18} className="text-[var(--color-primary)]" />
             </div>

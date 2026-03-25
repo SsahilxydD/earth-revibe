@@ -65,13 +65,13 @@ export default function AccountLayout({
   }
 
   return (
-    <div className="px-4 py-8 md:px-8 lg:px-12 xl:px-20 md:py-12">
-      <h1 className="mb-6 text-2xl font-bold uppercase tracking-wider md:mb-8">
+    <div className="px-3 py-5 md:px-8 lg:px-12 xl:px-20 md:py-12">
+      <h1 className="mb-4 text-lg font-bold uppercase tracking-wider md:mb-8 md:text-2xl">
         My Account
       </h1>
 
-      {/* Mobile tabs - horizontal scroll */}
-      <div className="mb-6 flex gap-1 overflow-x-auto border-b border-[var(--color-border)] pb-px md:hidden hide-scrollbar">
+      {/* Mobile tabs — compact icon + short label, horizontal scroll */}
+      <div className="mb-5 flex gap-0 overflow-x-auto border-b border-[var(--color-border)] pb-px md:hidden hide-scrollbar">
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
@@ -80,13 +80,13 @@ export default function AccountLayout({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors",
+                "flex shrink-0 flex-col items-center gap-0.5 border-b-2 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors",
                 isActive
                   ? "border-[var(--color-primary)] text-[var(--color-primary)]"
                   : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)]"
               )}
             >
-              <item.icon size={14} />
+              <item.icon size={16} />
               {item.label}
             </Link>
           );

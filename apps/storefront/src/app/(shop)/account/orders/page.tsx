@@ -75,16 +75,16 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <h2 className="mb-6 text-sm font-bold uppercase tracking-wider">
+      <h2 className="mb-4 text-sm font-bold uppercase tracking-wider md:mb-6">
         Order History
       </h2>
 
-      <div className="space-y-3">
+      <div className="space-y-2 md:space-y-3">
         {orders.map((order) => (
           <Link
             key={order.id}
             href={`/account/orders/${order.orderNumber}`}
-            className="flex items-center justify-between rounded-xl border border-[var(--color-border)] p-4 transition-colors hover:bg-[var(--color-surface)]"
+            className="flex items-center justify-between rounded-xl border border-[var(--color-border)] p-3 transition-colors hover:bg-[var(--color-surface)] md:p-4"
           >
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">

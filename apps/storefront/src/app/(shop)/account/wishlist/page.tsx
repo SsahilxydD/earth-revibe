@@ -101,11 +101,11 @@ export default function WishlistPage() {
 
   return (
     <div>
-      <h2 className="mb-6 text-sm font-bold uppercase tracking-wider">
+      <h2 className="mb-4 text-sm font-bold uppercase tracking-wider md:mb-6">
         Wishlist ({items.length} {items.length === 1 ? "item" : "items"})
       </h2>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 md:gap-4">
         {items.map((item) => (
           <div
             key={item.id}

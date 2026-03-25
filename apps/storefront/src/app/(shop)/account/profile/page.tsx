@@ -109,10 +109,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Avatar Section */}
-      <div className="flex items-center gap-4">
-        <div className="relative h-20 w-20 overflow-hidden rounded-full bg-[var(--color-surface)]">
+      <div className="flex items-center gap-3 md:gap-4">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--color-surface)] md:h-20 md:w-20">
           {profile?.avatar ? (
             <img
               src={profile.avatar}

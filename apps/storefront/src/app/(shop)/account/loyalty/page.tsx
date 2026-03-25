@@ -66,9 +66,9 @@ export default function LoyaltyPage() {
   const transactions = loyalty?.transactions ?? [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Balance Card */}
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-primary)] p-6 text-white">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-primary)] p-4 text-white md:p-6">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider opacity-70">
@@ -113,11 +113,11 @@ export default function LoyaltyPage() {
         <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
           How It Works
         </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {HOW_IT_WORKS.map((item) => (
             <div
               key={item.title}
-              className="rounded-xl border border-[var(--color-border)] p-5"
+              className="rounded-xl border border-[var(--color-border)] p-4 md:p-5"
             >
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">
                 <item.icon size={20} className="text-[var(--color-primary)]" />
