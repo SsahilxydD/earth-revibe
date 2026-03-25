@@ -389,69 +389,38 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     preload(nextProduct);
   }, [prevProduct, nextProduct]);
 
-  // Observe "You May Also Like" heading inside the current scroll panel.
-  // When it enters the viewport → hide dock. When it leaves → show dock.
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
+  // Hide dock when "You May Also Like" heading scrolls into view.
+  // Uses a scroll listener instead of IntersectionObserver because
+  // the heading renders asynchronously (RelatedProducts fetches data).
   useEffect(() => {
     if (!isMobile || !hasNav) return;
     const panel = currentPanelRef.current;
     if (!panel) return;
 
-    // Reset dock visibility on product change
     setDockVisible(true);
 
-    // Disconnect previous observer
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-
-    // Find the heading inside the panel — slight delay for React to render content
-    const timer = setTimeout(() => {
+    const handleScroll = () => {
+      // Find the heading on each scroll — it may not exist yet if data is still loading
       const headings = panel.querySelectorAll("h2");
-      let target: Element | null = null;
+      let target: HTMLElement | null = null;
       headings.forEach((h) => {
         if (h.textContent?.trim().toLowerCase().includes("you may also like")) {
-          target = h;
+          target = h as HTMLElement;
         }
       });
 
-      if (!target) return;
+      if (!target) return; // heading not rendered yet, dock stays visible
 
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            // Heading is visible → hide dock
-            setDockVisible(false);
-          } else if (entry.rootBounds) {
-            // Heading left viewport — only show dock if heading is BELOW
-            // the viewport (we scrolled back up above it). If heading is
-            // ABOVE the viewport (we scrolled past it), keep dock hidden.
-            const headingIsBelow = entry.boundingClientRect.top > entry.rootBounds.bottom;
-            if (headingIsBelow) {
-              setDockVisible(true);
-            }
-            // heading is above viewport → keep hidden (do nothing)
-          }
-        },
-        {
-          root: panel,
-          threshold: 0,
-        }
-      );
+      // Check if the heading's top edge is within or above the panel viewport
+      const panelRect = panel.getBoundingClientRect();
+      const headingRect = target.getBoundingClientRect();
+      const headingReached = headingRect.top <= panelRect.bottom;
 
-      observer.observe(target);
-      observerRef.current = observer;
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
+      setDockVisible(!headingReached);
     };
+
+    panel.addEventListener("scroll", handleScroll, { passive: true });
+    return () => panel.removeEventListener("scroll", handleScroll);
   }, [currentSlug, isMobile, hasNav]);
 
   // --- Swipe helpers ---
