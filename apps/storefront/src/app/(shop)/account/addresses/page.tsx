@@ -235,20 +235,20 @@ export default function AddressesPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-8">
       {/* Section header */}
-      <div className="mb-4">
+      <div>
         <h2 className="text-sm font-bold uppercase tracking-wider">
           Saved Addresses
         </h2>
-        <p className="mt-1.5 text-xs text-[var(--color-muted)]">
+        <p className="mt-2 text-xs text-[var(--color-muted)]">
           Manage your delivery addresses for faster checkout.
         </p>
       </div>
 
-      {/* Action buttons — separated from header */}
+      {/* Action buttons */}
       {!showForm && (
-        <div className="mb-8 flex gap-3">
+        <div className="flex gap-3">
           <button
             onClick={importFromRazorpay}
             disabled={isImporting}
@@ -274,7 +274,7 @@ export default function AddressesPage() {
 
       {/* Address Form */}
       {showForm && (
-        <div className="mb-6 rounded-xl border border-[var(--color-border)] p-5">
+        <div className="rounded-xl border border-[var(--color-border)] p-5">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-bold uppercase tracking-wider">
               {editingId ? "Edit Address" : "New Address"}

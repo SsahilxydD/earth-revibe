@@ -95,8 +95,8 @@ export default function SupportPage() {
   }
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between md:mb-6">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold uppercase tracking-wider">
           Support Tickets
         </h2>

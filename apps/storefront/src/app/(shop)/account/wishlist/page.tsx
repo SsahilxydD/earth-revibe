@@ -100,12 +100,12 @@ export default function WishlistPage() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
+    <div className="space-y-8">
+      <div>
         <h2 className="text-sm font-bold uppercase tracking-wider">
           Wishlist
         </h2>
-        <p className="mt-1.5 text-xs text-[var(--color-muted)]">
+        <p className="mt-2 text-xs text-[var(--color-muted)]">
           {items.length} {items.length === 1 ? "item" : "items"} saved
         </p>
       </div>
