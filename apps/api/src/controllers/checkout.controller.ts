@@ -38,7 +38,7 @@ export const checkoutController = {
    * modal (or completes), the frontend captures the address from the
    * Razorpay response. The ₹1 order is never fulfilled.
    */
-  async createAddressCollectionOrder(req: Request, res: Response) {
+  async createAddressCollectionOrder(_req: Request, res: Response) {
     const razorpay = getRazorpay();
     const order = await razorpay.orders.create({
       amount: 100, // ₹1 in paise — minimum amount for Magic Checkout
