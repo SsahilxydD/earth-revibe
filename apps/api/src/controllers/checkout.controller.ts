@@ -69,6 +69,45 @@ export const checkoutController = {
     });
   },
 
+  /**
+   * Extract shipping address from a Razorpay order (used after address-collection).
+   * Fetches the full order from Razorpay API and returns the shipping address.
+   */
+  async getOrderAddress(req: Request, res: Response) {
+    const { razorpayOrderId } = req.params;
+    if (!razorpayOrderId) {
+      res.status(400).json({ success: false, error: { code: "BAD_REQUEST", message: "Missing order ID" } });
+      return;
+    }
+
+    const razorpay = getRazorpay();
+    const order = await razorpay.orders.fetch(razorpayOrderId) as any;
+
+    // Extract the customer's shipping address from Razorpay's order data
+    const customerDetails = order.customer_details || {};
+    const shippingAddress = customerDetails.shipping_address || {};
+
+    if (!shippingAddress.line1 && !shippingAddress.city) {
+      res.json({ success: true, data: { address: null } });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        address: {
+          fullName: shippingAddress.name || customerDetails.name || "",
+          phone: (customerDetails.contact || "").replace(/^\+91/, ""),
+          line1: shippingAddress.line1 || "",
+          line2: shippingAddress.line2 || "",
+          city: shippingAddress.city || "",
+          state: shippingAddress.state || "",
+          pinCode: shippingAddress.zipcode || "",
+        },
+      },
+    });
+  },
+
   async verifyPayment(req: Request, res: Response) {
     const userId = req.user?.id ?? null;
     const result = await checkoutService.verifyMagicPayment(userId, req.body);

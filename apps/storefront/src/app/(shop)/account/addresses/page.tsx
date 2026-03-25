@@ -88,29 +88,30 @@ export default function AddressesPage() {
         description: "Import your saved address",
         order_id: order.razorpayOrderId,
         handler: async (response: any) => {
-          // Payment completed for ₹1 — fetch the order to get shipping address
+          // Payment completed for ₹1 — fetch the shipping address from Razorpay order
           try {
-            const rzpOrder = await api.get<any>(
-              `/checkout/razorpay-order/${response.razorpay_order_id}`
+            const result = await api.get<{ address: any }>(
+              `/checkout/order-address/${response.razorpay_order_id}`
             );
-            const addr = rzpOrder?.shippingAddress;
-            if (addr) {
-              // Save the address to user's account
+            const addr = result?.address;
+            if (addr && (addr.line1 || addr.city)) {
               await api.post("/addresses", {
-                fullName: addr.name || "",
-                phone: addr.contact || "",
-                line1: addr.line1 || addr.address || "",
+                fullName: addr.fullName || "",
+                phone: addr.phone || "",
+                line1: addr.line1 || "",
                 line2: addr.line2 || "",
                 city: addr.city || "",
                 state: addr.state || "",
-                pinCode: addr.zipcode || addr.pincode || "",
+                pinCode: addr.pinCode || "",
                 isDefault: false,
               });
               queryClient.invalidateQueries({ queryKey: ["addresses"] });
               addToast("Address imported from Razorpay!", "success");
+            } else {
+              addToast("No address found in Razorpay. Try again.", "error");
             }
           } catch {
-            addToast("Address imported — check your addresses", "info");
+            addToast("Failed to import address", "error");
           }
           setIsImporting(false);
         },

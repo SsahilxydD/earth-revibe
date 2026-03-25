@@ -39,6 +39,13 @@ router.post(
   asyncHandler(checkoutController.createAddressCollectionOrder)
 );
 
+// Fetch shipping address from a completed Razorpay order
+router.get(
+  "/order-address/:razorpayOrderId",
+  optionalAuthenticate,
+  asyncHandler(checkoutController.getOrderAddress)
+);
+
 // Razorpay server-to-server callbacks — verify signature before processing
 router.post(
   "/shipping-info",
