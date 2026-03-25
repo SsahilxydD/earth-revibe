@@ -81,17 +81,18 @@ export default function WishlistPage() {
 
   if (!items || items.length === 0) {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface)]">
-          <Heart size={28} className="text-[var(--color-muted)]" />
-        </div>
-        <h2 className="mb-2 text-lg font-bold">Your Wishlist Is Empty</h2>
-        <p className="mb-6 text-sm text-[var(--color-muted)]">
-          Save items you love and come back to them later.
+      <div style={{ paddingTop: 80, paddingBottom: 80 }} className="flex flex-col items-center text-center">
+        <Heart size={40} strokeWidth={1} className="text-[#c0c0c0]" />
+        <h2 style={{ marginTop: 24 }} className="text-xs font-bold uppercase tracking-[0.2em]">
+          Nothing saved yet
+        </h2>
+        <p style={{ marginTop: 10, maxWidth: 240 }} className="text-xs leading-relaxed text-[#999]">
+          Tap the heart on any product to save it for later.
         </p>
         <Link
-          href="/products"
-          className="inline-flex items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#2a2a2a]"
+          href="/categories/new-arrivals"
+          style={{ marginTop: 28 }}
+          className="inline-flex items-center justify-center border border-[var(--color-primary)] px-8 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white"
         >
           Browse Collections
         </Link>

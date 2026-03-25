@@ -204,13 +204,13 @@ export default function SupportPage() {
 
       {/* Tickets List */}
       {(!tickets || tickets.length === 0) && !showForm ? (
-        <div className="flex min-h-[30vh] flex-col items-center justify-center text-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface)]">
-            <HelpCircle size={28} className="text-[var(--color-muted)]" />
-          </div>
-          <h3 className="mb-2 text-lg font-bold">No Support Tickets</h3>
-          <p className="mb-4 text-sm text-[var(--color-muted)]">
-            Need help? Create a new ticket and we&apos;ll get back to you.
+        <div style={{ paddingTop: 60, paddingBottom: 60 }} className="flex flex-col items-center text-center">
+          <HelpCircle size={40} strokeWidth={1} className="text-[#c0c0c0]" />
+          <h3 style={{ marginTop: 24 }} className="text-xs font-bold uppercase tracking-[0.2em]">
+            No support tickets
+          </h3>
+          <p style={{ marginTop: 10, maxWidth: 240 }} className="text-xs leading-relaxed text-[#999]">
+            Need help? Create a ticket and we&apos;ll get back to you.
           </p>
         </div>
       ) : (
