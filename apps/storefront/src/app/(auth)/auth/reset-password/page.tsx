@@ -35,32 +35,44 @@ export default function ResetPasswordPage() {
   // Supabase puts the token in the hash fragment: #access_token=...&type=recovery
   useEffect(() => {
     const verifyToken = async () => {
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      const token = params.get("access_token");
-      const type = params.get("type");
+      const supabase = createClient();
 
-      if (!token || type !== "recovery") {
-        setTokenError("Invalid or missing reset link. Please request a new one.");
-        setVerifying(false);
-        return;
-      }
+      // PKCE flow (default): Supabase puts a `code` in the query string
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+
+      // Implicit flow (legacy): tokens in the URL hash
+      const hash = window.location.hash.substring(1);
+      const hashParams = new URLSearchParams(hash);
+      const hashToken = hashParams.get("access_token");
 
       try {
-        // Exchange the recovery token with Supabase to verify it's valid
-        const supabase = createClient();
-        const { error } = await supabase.auth.setSession({
-          access_token: token,
-          refresh_token: params.get("refresh_token") || "",
-        });
-
-        if (error) {
-          setTokenError("This reset link has expired. Please request a new one.");
+        if (code) {
+          // PKCE: exchange the code for a session
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error || !data.session) {
+            setTokenError("This reset link has expired. Please request a new one.");
+            setVerifying(false);
+            return;
+          }
+          setAccessToken(data.session.access_token);
+        } else if (hashToken) {
+          // Implicit: use the hash tokens directly
+          const { error } = await supabase.auth.setSession({
+            access_token: hashToken,
+            refresh_token: hashParams.get("refresh_token") || "",
+          });
+          if (error) {
+            setTokenError("This reset link has expired. Please request a new one.");
+            setVerifying(false);
+            return;
+          }
+          setAccessToken(hashToken);
+        } else {
+          setTokenError("Invalid or missing reset link. Please request a new one.");
           setVerifying(false);
           return;
         }
-
-        setAccessToken(token);
       } catch {
         setTokenError("Failed to verify reset link. Please try again.");
       }
