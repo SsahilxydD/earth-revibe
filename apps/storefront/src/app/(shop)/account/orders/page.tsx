@@ -75,16 +75,16 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <div className="pb-6 border-b border-[var(--color-border)]">
-        <h2 className="text-sm font-bold uppercase tracking-wider">
-          Order History
-        </h2>
-        <p className="mt-2 text-xs text-[var(--color-muted)]">
-          Track and manage your orders.
-        </p>
-      </div>
+      <h2 className="text-sm font-bold uppercase tracking-wider">
+        Order History
+      </h2>
+      <p className="mt-2 text-xs text-[var(--color-muted)]">
+        Track and manage your orders.
+      </p>
 
-      <div className="mt-6 space-y-3">
+      <hr style={{ marginTop: 28, marginBottom: 28, border: "none", borderTop: "1px solid #e5e5e5" }} />
+
+      <div className="space-y-3">
         {orders.map((order) => (
           <Link
             key={order.id}
