@@ -389,9 +389,11 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     preload(nextProduct);
   }, [prevProduct, nextProduct]);
 
-  // Hide dock when "You May Also Like" heading scrolls into view.
-  // Uses a scroll listener instead of IntersectionObserver because
-  // the heading renders asynchronously (RelatedProducts fetches data).
+  // Hide dock when user scrolls to the [data-dock-hide] sentinel.
+  // The sentinel is a static div placed right before RelatedProducts
+  // in ProductDetail — it exists immediately, no async dependency.
+  // Uses offsetTop (layout-relative, not affected by CSS transforms)
+  // compared against scrollTop — the most reliable scroll check.
   useEffect(() => {
     if (!isMobile || !hasNav) return;
     const panel = currentPanelRef.current;
@@ -400,19 +402,14 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     setDockVisible(true);
 
     const handleScroll = () => {
-      // Find the heading on each scroll — it may not exist yet if data is still loading
-      const heading = Array.from(panel.querySelectorAll("h2")).find(
-        (h) => h.textContent?.trim().toLowerCase().includes("you may also like")
-      );
+      const sentinel = panel.querySelector("[data-dock-hide]") as HTMLElement | null;
+      if (!sentinel) return;
 
-      if (!heading) return; // heading not rendered yet, dock stays visible
-
-      // Check if the heading's top edge is within or above the panel viewport
-      const panelRect = panel.getBoundingClientRect();
-      const headingRect = heading.getBoundingClientRect();
-      const headingReached = headingRect.top <= panelRect.bottom;
-
-      setDockVisible(!headingReached);
+      // sentinel.offsetTop = distance from top of scroll content to the sentinel
+      // panel.scrollTop + panel.clientHeight = bottom edge of visible area
+      // When the bottom of the visible area reaches the sentinel → hide dock
+      const scrollBottom = panel.scrollTop + panel.clientHeight;
+      setDockVisible(scrollBottom < sentinel.offsetTop);
     };
 
     panel.addEventListener("scroll", handleScroll, { passive: true });

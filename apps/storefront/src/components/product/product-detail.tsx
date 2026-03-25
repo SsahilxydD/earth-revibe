@@ -898,6 +898,9 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </div>
         )}
 
+        {/* Sentinel — marks where the dock should collapse. Static div, no async dependency. */}
+        <div data-dock-hide aria-hidden="true" />
+
         {/* Related products */}
         <div className="px-4">
           <RelatedProducts
