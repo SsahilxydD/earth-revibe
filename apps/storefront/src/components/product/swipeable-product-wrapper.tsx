@@ -401,19 +401,15 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
 
     const handleScroll = () => {
       // Find the heading on each scroll — it may not exist yet if data is still loading
-      const headings = panel.querySelectorAll("h2");
-      let target: HTMLElement | null = null;
-      headings.forEach((h) => {
-        if (h.textContent?.trim().toLowerCase().includes("you may also like")) {
-          target = h as HTMLElement;
-        }
-      });
+      const heading = Array.from(panel.querySelectorAll("h2")).find(
+        (h) => h.textContent?.trim().toLowerCase().includes("you may also like")
+      );
 
-      if (!target) return; // heading not rendered yet, dock stays visible
+      if (!heading) return; // heading not rendered yet, dock stays visible
 
       // Check if the heading's top edge is within or above the panel viewport
       const panelRect = panel.getBoundingClientRect();
-      const headingRect = target.getBoundingClientRect();
+      const headingRect = heading.getBoundingClientRect();
       const headingReached = headingRect.top <= panelRect.bottom;
 
       setDockVisible(!headingReached);
