@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase/client";
 
 interface ForgotPasswordForm {
   email: string;
@@ -27,7 +27,17 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (data: ForgotPasswordForm) => {
     setServerError("");
     try {
-      await api.post("/auth/forgot-password", data);
+      // Call resetPasswordForEmail from the BROWSER's Supabase client.
+      // PKCE flow stores the code verifier in the browser, so when the user
+      // clicks the email link, exchangeCodeForSession can find the matching verifier.
+      const supabase = createClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      if (error) {
+        setServerError(error.message);
+        return;
+      }
       setSubmitted(true);
     } catch (err: any) {
       setServerError(err?.message || "Something went wrong");
