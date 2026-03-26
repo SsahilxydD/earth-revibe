@@ -15,6 +15,7 @@
 Create the foundational middleware layer: Zod validation, centralized error handling, async route wrapper.
 
 **Files:**
+
 - Create: `apps/api/src/middleware/validate.ts`
 - Create: `apps/api/src/middleware/error-handler.ts`
 - Create: `apps/api/src/middleware/auth.ts`
@@ -29,6 +30,7 @@ Create the foundational middleware layer: Zod validation, centralized error hand
 Full auth flow: register, login, refresh, logout, forgot/reset password, get current user.
 
 **Files:**
+
 - Create: `apps/api/src/routes/auth.routes.ts`
 - Create: `apps/api/src/controllers/auth.controller.ts`
 - Create: `apps/api/src/services/auth.service.ts`
@@ -41,6 +43,7 @@ Full auth flow: register, login, refresh, logout, forgot/reset password, get cur
 Full products CRUD with filtering, pagination, variants, and image management.
 
 **Files:**
+
 - Create: `apps/api/src/routes/product.routes.ts`
 - Create: `apps/api/src/controllers/product.controller.ts`
 - Create: `apps/api/src/services/product.service.ts`
@@ -53,6 +56,7 @@ Full products CRUD with filtering, pagination, variants, and image management.
 Categories CRUD with nested tree support and reordering.
 
 **Files:**
+
 - Create: `apps/api/src/routes/category.routes.ts`
 - Create: `apps/api/src/controllers/category.controller.ts`
 - Create: `apps/api/src/services/category.service.ts`
@@ -65,6 +69,7 @@ Categories CRUD with nested tree support and reordering.
 Product search with autocomplete suggestions.
 
 **Files:**
+
 - Create: `apps/api/src/routes/search.routes.ts`
 - Create: `apps/api/src/controllers/search.controller.ts`
 - Create: `apps/api/src/services/search.service.ts`

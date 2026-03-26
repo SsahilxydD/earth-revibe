@@ -11,6 +11,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Monorepo setup, database schema, shared type system.
 
 **Completed work:**
+
 - Turborepo monorepo with pnpm workspaces
 - TypeScript configuration across all packages (`@earth-revibe/tsconfig`)
 - `packages/shared`: Zod 4 schemas, enums, and TypeScript types as the single source of truth
@@ -27,6 +28,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Complete REST API with authentication, middleware, and all CRUD endpoints.
 
 **Completed work:**
+
 - Express 5 application setup (`apps/api`)
 - Middleware stack: helmet (security headers), cors, compression, cookie-parser, pino-http (logging), express-rate-limit
 - Supabase authentication middleware (JWT validation via service role key)
@@ -67,6 +69,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Customer-facing shopping experience with all pages and features.
 
 **Completed work:**
+
 - Next.js 15 App Router with React 19
 - Tailwind CSS 4 design system with custom CSS properties
 - Archivo Narrow + Poppins fonts via `next/font/google`
@@ -104,6 +107,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Complete admin dashboard for managing all platform operations.
 
 **Completed work:**
+
 - Next.js 15 App Router on port 3001
 - Admin design system: Space Grotesk headings, Inter body text, semantic color tokens
 - Supabase admin authentication with role-based access control
@@ -133,6 +137,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Complete payment flow with Razorpay Magic Checkout and stock management.
 
 **Completed work:**
+
 - Razorpay Magic Checkout integration (popup handles address + payment)
 - Standard Razorpay checkout as fallback
 - PendingCheckout model for stock reservation during payment
@@ -152,6 +157,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Shiprocket integration for order fulfillment and tracking.
 
 **Completed work:**
+
 - Shiprocket API integration (email/password auth, session token management)
 - Shipment creation from admin order detail
 - AWB code assignment and courier name tracking
@@ -167,6 +173,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Progressive Web App capabilities for app-like mobile experience.
 
 **Completed work:**
+
 - Serwist (service worker library) integration via `@serwist/next`
 - Web app manifest (`manifest.json`) with app name, icons, theme color
 - Service worker with caching strategies for static assets and API responses
@@ -181,6 +188,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Optimize for speed and smooth user experience.
 
 **Completed work:**
+
 - Lenis smooth scroll integration (wraps entire app via LenisProvider)
 - TanStack Query `staleTimes` configuration for intelligent cache management
 - Prefetching: product data prefetched on hover/viewport entry
@@ -197,6 +205,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Fix edge cases, improve reliability, and optimize for production.
 
 **Current work:**
+
 - iOS Safari blink fixes (`backface-visibility: hidden` on body)
 - Scroll restoration improvements between page navigations
 - Image optimization: lazy loading, proper sizing, blur placeholders
@@ -213,6 +222,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Add phone number OTP authentication as an alternative to email/password.
 
 **Planned work:**
+
 - Supabase Phone Auth integration (OTP via SMS)
 - Twilio or Supabase built-in SMS provider configuration
 - Phone number input with Indian country code (+91) pre-filled
@@ -228,6 +238,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Transactional email for key order lifecycle events.
 
 **Planned work:**
+
 - Email templates (HTML) for:
   - Order confirmation (order details, items, total, estimated delivery)
   - Shipping notification (tracking link, courier name, AWB)
@@ -246,6 +257,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Richer analytics and reporting for the admin dashboard.
 
 **Planned work:**
+
 - Revenue breakdown by category, product, time period
 - Customer cohort analysis (new vs returning)
 - Conversion funnel visualization (visit -> cart -> checkout -> order)
@@ -262,6 +274,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Support Hindi and other Indian languages alongside English.
 
 **Planned work:**
+
 - i18n framework integration (next-intl or similar)
 - Translation files for Hindi (primary) and potentially Tamil, Telugu, Marathi
 - Language switcher in storefront header
@@ -276,6 +289,7 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 **Goal:** Native mobile app wrapping the PWA or as a standalone React Native app.
 
 **Planned work:**
+
 - Evaluate: React Native wrapper vs Capacitor vs standalone React Native
 - Push notifications via Firebase Cloud Messaging
 - Native biometric authentication (fingerprint/face)
@@ -287,15 +301,15 @@ Earth Revibe follows a bottom-up build sequence: shared packages first, then the
 
 ## Technical Debt and Ongoing Maintenance
 
-| Item | Priority | Status |
-|------|----------|--------|
-| API integration test coverage (target >80%) | High | In progress |
-| End-to-end tests with Playwright | High | Setup done, tests needed |
-| Database migration workflow (currently using `db push`) | Medium | Pending migration to `prisma migrate` |
-| Legacy JWT secrets cleanup (fully migrated to Supabase) | Low | Optional removal |
-| Admin responsive design (currently desktop-optimized) | Medium | Planned |
-| Rate limiting tuning for production traffic patterns | Medium | Pending |
-| PendingCheckout cleanup cron job (expire stale reservations) | High | Needs implementation |
-| Monitoring and alerting (error tracking, uptime) | High | Planned |
-| CDN caching headers for static assets | Medium | Planned |
-| Database connection pooling optimization | Medium | Using Prisma defaults |
+| Item                                                         | Priority | Status                                |
+| ------------------------------------------------------------ | -------- | ------------------------------------- |
+| API integration test coverage (target >80%)                  | High     | In progress                           |
+| End-to-end tests with Playwright                             | High     | Setup done, tests needed              |
+| Database migration workflow (currently using `db push`)      | Medium   | Pending migration to `prisma migrate` |
+| Legacy JWT secrets cleanup (fully migrated to Supabase)      | Low      | Optional removal                      |
+| Admin responsive design (currently desktop-optimized)        | Medium   | Planned                               |
+| Rate limiting tuning for production traffic patterns         | Medium   | Pending                               |
+| PendingCheckout cleanup cron job (expire stale reservations) | High     | Needs implementation                  |
+| Monitoring and alerting (error tracking, uptime)             | High     | Planned                               |
+| CDN caching headers for static assets                        | Medium   | Planned                               |
+| Database connection pooling optimization                     | Medium   | Using Prisma defaults                 |

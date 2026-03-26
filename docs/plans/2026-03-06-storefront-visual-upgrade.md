@@ -16,6 +16,7 @@
 ## Task 1: Install Dependencies & Copy Assets
 
 **Files:**
+
 - Modify: `apps/storefront/package.json`
 - Copy to: `apps/storefront/public/` (assets from backup)
 
@@ -57,6 +58,7 @@ git commit -m "feat(storefront): add visual upgrade dependencies and brand asset
 ## Task 2: Design Foundation — CSS Tokens, Fonts, Root Layout
 
 **Files:**
+
 - Modify: `apps/storefront/src/app/globals.css`
 - Modify: `apps/storefront/src/app/layout.tsx`
 
@@ -65,30 +67,30 @@ git commit -m "feat(storefront): add visual upgrade dependencies and brand asset
 Replace the entire contents of `apps/storefront/src/app/globals.css` with:
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   /* Brand Colors from Kit */
-  --sage-light: #E7F6F1;
-  --sage: #8DB7AC;
-  --taupe: #97826F;
-  --dusty-teal: #9DBBBB;
-  --forest: #6D7B6E;
+  --sage-light: #e7f6f1;
+  --sage: #8db7ac;
+  --taupe: #97826f;
+  --dusty-teal: #9dbbbb;
+  --forest: #6d7b6e;
   --chocolate: #583220;
 
   /* Semantic colors */
-  --background: #FDFCFA;
+  --background: #fdfcfa;
   --foreground: #583220;
-  --accent: #8DB7AC;
-  --muted: #97826F;
+  --accent: #8db7ac;
+  --muted: #97826f;
 
   /* Design System Colors */
-  --card-bg: #F9F9F9;
-  --border-color: #E5E5E5;
+  --card-bg: #f9f9f9;
+  --border-color: #e5e5e5;
   --muted-text: #999999;
   --secondary-text: #555555;
   --primary-text: #111111;
-  --page-bg: #FAFAFA;
+  --page-bg: #fafafa;
 
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -108,23 +110,23 @@ Replace the entire contents of `apps/storefront/src/app/globals.css` with:
 
 /* Keep @theme for Tailwind class compatibility */
 @theme {
-  --color-sage-light: #E7F6F1;
-  --color-sage: #8DB7AC;
-  --color-taupe: #97826F;
-  --color-dusty-teal: #9DBBBB;
-  --color-forest: #6D7B6E;
+  --color-sage-light: #e7f6f1;
+  --color-sage: #8db7ac;
+  --color-taupe: #97826f;
+  --color-dusty-teal: #9dbbbb;
+  --color-forest: #6d7b6e;
   --color-chocolate: #583220;
-  --color-background: #FDFCFA;
-  --color-card-bg: #F9F9F9;
-  --color-border-color: #E5E5E5;
+  --color-background: #fdfcfa;
+  --color-card-bg: #f9f9f9;
+  --color-border-color: #e5e5e5;
   --color-muted-text: #999999;
   --color-secondary-text: #555555;
   --color-primary-text: #111111;
-  --color-page-bg: #FAFAFA;
-  --color-success: #4A7C59;
-  --color-warning: #D4A843;
-  --color-error: #C0392B;
-  --color-info: #5B8FA8;
+  --color-page-bg: #fafafa;
+  --color-success: #4a7c59;
+  --color-warning: #d4a843;
+  --color-error: #c0392b;
+  --color-info: #5b8fa8;
 }
 
 * {
@@ -142,7 +144,12 @@ body {
   background-color: var(--background);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--chocolate);
 }
 ```
@@ -152,71 +159,76 @@ h1, h2, h3, h4, h5, h6 {
 Replace `apps/storefront/src/app/layout.tsx`:
 
 ```tsx
-import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Poppins, Playfair_Display, Cinzel } from "next/font/google";
-import { QueryProvider } from "@/providers/query-provider";
-import { ToastContainer } from "@/components/ui/toast";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import { Cormorant_Garamond, Poppins, Playfair_Display, Cinzel } from 'next/font/google';
+import { QueryProvider } from '@/providers/query-provider';
+import { ToastContainer } from '@/components/ui/toast';
+import './globals.css';
 
 const cormorant = Cormorant_Garamond({
-  variable: "--font-serif",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
+  variable: '--font-serif',
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
   preload: true,
 });
 
 const poppins = Poppins({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
+  variable: '--font-sans',
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
   preload: true,
 });
 
 const playfair = Playfair_Display({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  display: "swap",
+  variable: '--font-display',
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  display: 'swap',
   preload: true,
 });
 
 const cinzel = Cinzel({
-  variable: "--font-cinzel",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  display: "swap",
+  variable: '--font-cinzel',
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  display: 'swap',
   preload: true,
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Earth Revibe | Sustainable Fashion Essentials",
-    template: "%s | Earth Revibe",
+    default: 'Earth Revibe | Sustainable Fashion Essentials',
+    template: '%s | Earth Revibe',
   },
   description:
-    "Natural landscapes, minimal product shots, and authentic storytelling. Sustainable fashion essentials crafted with care.",
-  keywords: ["sustainable fashion", "earth tones", "natural clothing", "eco-friendly", "minimal fashion"],
+    'Natural landscapes, minimal product shots, and authentic storytelling. Sustainable fashion essentials crafted with care.',
+  keywords: [
+    'sustainable fashion',
+    'earth tones',
+    'natural clothing',
+    'eco-friendly',
+    'minimal fashion',
+  ],
   icons: {
-    icon: [{ url: "/favicon.ico", sizes: "any" }],
-    apple: [{ url: "/Earth%20Revibe%20Logo%20Black.png", type: "image/png" }],
+    icon: [{ url: '/favicon.ico', sizes: 'any' }],
+    apple: [{ url: '/Earth%20Revibe%20Logo%20Black.png', type: 'image/png' }],
   },
 };
 
 export const viewport: Viewport = {
-  width: "device-width",
+  width: 'device-width',
   initialScale: 1,
-  viewportFit: "cover",
+  viewportFit: 'cover',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${poppins.variable} ${playfair.variable} ${cinzel.variable}`}>
+    <html
+      lang="en"
+      className={`${cormorant.variable} ${poppins.variable} ${playfair.variable} ${cinzel.variable}`}
+    >
       <body className="font-[var(--font-sans)] antialiased bg-[var(--background)]">
         <QueryProvider>
           {children}
@@ -248,6 +260,7 @@ git commit -m "feat(storefront): update design tokens, fonts, and color palette"
 ## Task 3: Utility — cn() helper and SmoothScroll wrapper
 
 **Files:**
+
 - Create: `apps/storefront/src/lib/utils.ts`
 - Create: `apps/storefront/src/components/ui/smooth-scroll.tsx`
 - Modify: `apps/storefront/src/app/(shop)/layout.tsx`
@@ -256,8 +269,8 @@ git commit -m "feat(storefront): update design tokens, fonts, and color palette"
 
 ```ts
 // apps/storefront/src/lib/utils.ts
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -275,9 +288,9 @@ Reference: Read `earth-revibe-frontend-backup/src/components/SmoothScroll.tsx` a
 Update `apps/storefront/src/app/(shop)/layout.tsx`:
 
 ```tsx
-import { Header, Footer, MobileBottomBar } from "@/components/layout";
-import { CartDrawer } from "@/components/cart/cart-drawer";
-import SmoothScroll from "@/components/ui/smooth-scroll";
+import { Header, Footer, MobileBottomBar } from '@/components/layout';
+import { CartDrawer } from '@/components/cart/cart-drawer';
+import SmoothScroll from '@/components/ui/smooth-scroll';
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -305,6 +318,7 @@ git commit -m "feat(storefront): add cn() utility and Lenis smooth scrolling"
 ## Task 4: UI Store Updates
 
 **Files:**
+
 - Modify: `apps/storefront/src/stores/ui-store.ts`
 
 **Step 1: Add header transparency and promo popup state**
@@ -334,11 +348,13 @@ setPromoDismissed: (dismissed) => set({ isPromoDismissed: dismissed }),
 ## Task 5: Header — Transparent-to-Opaque with Logo Switching
 
 **Files:**
+
 - Modify: `apps/storefront/src/components/layout/header.tsx`
 
 **Step 1: Update Header with scroll-aware transparency and logo images**
 
 Key changes to port from backup:
+
 - Add scroll listener: track `isScrolled` via `useEffect` + `window.scrollY`
 - Read `isHeaderTransparent` from ui-store (set by Hero component)
 - When transparent + not scrolled: `bg-transparent text-white`, show white logo
@@ -356,6 +372,7 @@ Reference: Read `earth-revibe-frontend-backup/src/components/Header.tsx` for the
 ## Task 6: Footer — Multi-Column with Newsletter
 
 **Files:**
+
 - Modify: `apps/storefront/src/components/layout/footer.tsx`
 - Create: `apps/storefront/src/components/ui/newsletter-form.tsx`
 
@@ -366,6 +383,7 @@ A simple email input + submit button. Since there's no newsletter API endpoint y
 **Step 2: Update Footer**
 
 Update the footer links to point to correct routes under `(shop)`:
+
 - `/policies/privacy`, `/policies/returns`, `/policies/shipping`, `/policies/terms`
 - Add `/size-guide`, `/faq`
 - Add social media icon links (Instagram, Facebook, Twitter) using Lucide icons
@@ -379,12 +397,14 @@ Update the footer links to point to correct routes under `(shop)`:
 ## Task 7: Homepage — Hero Carousel
 
 **Files:**
+
 - Create: `apps/storefront/src/components/home/hero.tsx`
 - Modify: `apps/storefront/src/app/(shop)/page.tsx`
 
 **Step 1: Create Hero component with Embla Carousel**
 
 Port the visual design from `earth-revibe-frontend-backup/src/components/Hero.tsx`:
+
 - Use Embla carousel (not Shopify data fetching)
 - 4 slides using poster images from `public/`
 - Each slide: full-viewport-height background image, gradient overlay, accent text, CTA button
@@ -393,12 +413,18 @@ Port the visual design from `earth-revibe-frontend-backup/src/components/Hero.ts
 - Framer Motion fade transitions between slides
 
 Hardcoded slide data (no API call needed):
+
 ```ts
 const slides = [
-  { title: "Essentials", bgImage: "/poster1.png", bgColor: "#97826F", href: "/products" },
-  { title: "Luxe", bgImage: "/poster2.png", bgColor: "#8DB7AC", href: "/products" },
-  { title: "Polos", bgImage: "/sample_product.png", bgColor: "#97826F", href: "/products" },
-  { title: "Bottomwear", bgImage: "/poster3.png", bgColor: "#6D7B6E", href: "/categories/bottoms-pants" },
+  { title: 'Essentials', bgImage: '/poster1.png', bgColor: '#97826F', href: '/products' },
+  { title: 'Luxe', bgImage: '/poster2.png', bgColor: '#8DB7AC', href: '/products' },
+  { title: 'Polos', bgImage: '/sample_product.png', bgColor: '#97826F', href: '/products' },
+  {
+    title: 'Bottomwear',
+    bgImage: '/poster3.png',
+    bgColor: '#6D7B6E',
+    href: '/categories/bottoms-pants',
+  },
 ];
 ```
 
@@ -430,11 +456,11 @@ export function SectionHeader({ subtitle, title }: { subtitle: string; title: st
 Replace `apps/storefront/src/app/(shop)/page.tsx`:
 
 ```tsx
-import { Suspense } from "react";
-import { Hero } from "@/components/home/hero";
-import { FeaturedSection } from "@/components/home/featured-section";
-import { SocialProofSection } from "@/components/home/social-proof-section";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense } from 'react';
+import { Hero } from '@/components/home/hero';
+import { FeaturedSection } from '@/components/home/featured-section';
+import { SocialProofSection } from '@/components/home/social-proof-section';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function HomePage() {
   return (
@@ -456,11 +482,13 @@ export default function HomePage() {
 ## Task 8: ProductCard — Visual Upgrade
 
 **Files:**
+
 - Modify: `apps/storefront/src/components/product/product-card.tsx`
 
 **Step 1: Update ProductCard styling**
 
 Port from backup's `ProductCard.tsx` visual design:
+
 - Image with hover opacity transition (secondary image swap if available)
 - Wishlist heart icon overlay (top-right)
 - Sale badge (top-left) when `compareAtPrice > price`
@@ -477,11 +505,13 @@ Keep existing: Link to `/products/[slug]`, data props from current component.
 ## Task 9: Product Page — Image Gallery Upgrade
 
 **Files:**
+
 - Modify: `apps/storefront/src/components/product/image-gallery.tsx`
 
 **Step 1: Upgrade ImageGallery**
 
 Use Embla Carousel for the main image display:
+
 - Thumbnail strip below main image (desktop) or dot indicators (mobile)
 - Swipe support on mobile
 - Zoom on hover (CSS `transform: scale(1.5)` with `overflow: hidden`)
@@ -496,6 +526,7 @@ Keep existing: image data props from the product page.
 ## Task 10: CartDrawer — Visual Upgrade
 
 **Files:**
+
 - Modify: `apps/storefront/src/components/cart/cart-drawer.tsx`
 - Modify: `apps/storefront/src/components/cart/cart-item.tsx`
 
@@ -516,6 +547,7 @@ Keep existing: all Zustand cart-store wiring.
 ## Task 11: Static Pages — About, Contact, FAQ
 
 **Files:**
+
 - Create: `apps/storefront/src/app/(shop)/about/page.tsx`
 - Create: `apps/storefront/src/app/(shop)/contact/page.tsx`
 - Create: `apps/storefront/src/app/(shop)/faq/page.tsx`
@@ -523,6 +555,7 @@ Keep existing: all Zustand cart-store wiring.
 **Step 1: Create About page**
 
 Port content structure from `earth-revibe-frontend-backup/src/app/about/page.tsx`. Adapt to use new design tokens. Content:
+
 - Hero banner with brand message
 - Mission statement section
 - Sustainability pillars (3-column grid)
@@ -531,6 +564,7 @@ Port content structure from `earth-revibe-frontend-backup/src/app/about/page.tsx
 **Step 2: Create Contact page**
 
 Port from backup. Features:
+
 - Contact form (name, email, subject, message) with client-side validation
 - Company info sidebar (email, phone, hours)
 - No API endpoint needed yet — show success toast on submit
@@ -538,6 +572,7 @@ Port from backup. Features:
 **Step 3: Create FAQ page**
 
 Port from backup. Features:
+
 - Accordion component with expand/collapse (Framer Motion)
 - Grouped by topic: Shipping, Returns, Products, Orders
 - Search/filter input at top
@@ -549,6 +584,7 @@ Port from backup. Features:
 ## Task 12: Static Pages — Policies & Size Guide
 
 **Files:**
+
 - Create: `apps/storefront/src/app/(shop)/policies/privacy/page.tsx`
 - Create: `apps/storefront/src/app/(shop)/policies/returns/page.tsx`
 - Create: `apps/storefront/src/app/(shop)/policies/shipping/page.tsx`
@@ -558,6 +594,7 @@ Port from backup. Features:
 **Step 1: Create policy pages**
 
 Port content from backup's `policies/` pages. These are simple prose pages with headings and paragraphs. Use consistent layout:
+
 - Page title in Playfair Display
 - Max-width prose container (`max-w-3xl mx-auto`)
 - Proper heading hierarchy
@@ -565,6 +602,7 @@ Port content from backup's `policies/` pages. These are simple prose pages with 
 **Step 2: Create Size Guide page**
 
 Port from backup. Features:
+
 - Responsive table with size measurements
 - Tab switcher for Tops / Bottoms / Outerwear
 - "How to Measure" section with illustrations (can use placeholder text)
@@ -576,11 +614,13 @@ Port from backup. Features:
 ## Task 13: Track Order Page
 
 **Files:**
+
 - Create: `apps/storefront/src/app/(shop)/track-order/page.tsx`
 
 **Step 1: Create Track Order page**
 
 Simple form:
+
 - Order number input + email input
 - Submit calls existing API: `GET /api/v1/orders/{orderNumber}`
 - Displays order status timeline if found
@@ -594,11 +634,13 @@ Simple form:
 ## Task 14: Cart Store — Discount Code Support
 
 **Files:**
+
 - Modify: `apps/storefront/src/stores/cart-store.ts`
 
 **Step 1: Add discount code fields**
 
 Add to CartState interface:
+
 ```ts
 discountCode: string | null;
 discountAmount: number;
@@ -615,6 +657,7 @@ The `applyDiscount` calls `POST /api/v1/discounts/validate` with the code and ca
 ## Task 15: Final Polish & Build Verification
 
 **Files:**
+
 - Various component style tweaks
 
 **Step 1: Run full build**
@@ -632,6 +675,7 @@ pnpm turbo dev
 ```
 
 Check these routes:
+
 - `http://localhost:3000` — Homepage with Hero carousel, Featured products, Social proof
 - `http://localhost:3000/products` — Product grid with filter sidebar
 - `http://localhost:3000/about` — About page

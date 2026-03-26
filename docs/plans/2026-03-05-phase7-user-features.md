@@ -13,6 +13,7 @@
 ### Task 1: API — Profile & Password Endpoints
 
 **Files:**
+
 - Modify: `apps/api/src/services/auth.service.ts` (add updateProfile, changePassword)
 - Modify: `apps/api/src/controllers/auth.controller.ts` (add handlers)
 - Modify: `apps/api/src/routes/auth.routes.ts` (add routes)
@@ -68,8 +69,14 @@ Add before the closing `};` of `authService`:
 ```
 
 Also add the import at the top of auth.service.ts:
+
 ```typescript
-import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput } from "@earth-revibe/shared";
+import type {
+  RegisterInput,
+  LoginInput,
+  UpdateProfileInput,
+  ChangePasswordInput,
+} from '@earth-revibe/shared';
 ```
 
 **Step 2: Add handlers to auth.controller.ts**
@@ -91,9 +98,20 @@ import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput
 Add imports for `updateProfileSchema, changePasswordSchema` from `@earth-revibe/shared`.
 
 Add routes after the existing `router.get("/me", ...)`:
+
 ```typescript
-router.put("/profile", authenticate, validate({ body: updateProfileSchema }), asyncHandler(authController.updateProfile));
-router.put("/password", authenticate, validate({ body: changePasswordSchema }), asyncHandler(authController.changePassword));
+router.put(
+  '/profile',
+  authenticate,
+  validate({ body: updateProfileSchema }),
+  asyncHandler(authController.updateProfile)
+);
+router.put(
+  '/password',
+  authenticate,
+  validate({ body: changePasswordSchema }),
+  asyncHandler(authController.changePassword)
+);
 ```
 
 ---
@@ -101,6 +119,7 @@ router.put("/password", authenticate, validate({ body: changePasswordSchema }), 
 ### Task 2: API — Wishlist Endpoints
 
 **Files:**
+
 - Create: `apps/api/src/services/wishlist.service.ts`
 - Create: `apps/api/src/controllers/wishlist.controller.ts`
 - Create: `apps/api/src/routes/wishlist.routes.ts`
@@ -111,8 +130,8 @@ router.put("/password", authenticate, validate({ body: changePasswordSchema }), 
 **Step 1: Create wishlist.service.ts**
 
 ```typescript
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
 
 export const wishlistService = {
   async getWishlist(userId: string) {
@@ -130,14 +149,14 @@ export const wishlistService = {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return items;
   },
 
   async addToWishlist(userId: string, productId: string) {
     const product = await prisma.product.findUnique({ where: { id: productId } });
-    if (!product) throw ApiError.notFound("Product not found");
+    if (!product) throw ApiError.notFound('Product not found');
 
     const existing = await prisma.wishlistItem.findUnique({
       where: { userId_productId: { userId, productId } },
@@ -168,8 +187,8 @@ export const wishlistService = {
 **Step 2: Create wishlist.controller.ts**
 
 ```typescript
-import type { Request, Response } from "express";
-import { wishlistService } from "../services/wishlist.service";
+import type { Request, Response } from 'express';
+import { wishlistService } from '../services/wishlist.service';
 
 export const wishlistController = {
   async getWishlist(req: Request, res: Response) {
@@ -185,7 +204,7 @@ export const wishlistController = {
   async removeFromWishlist(req: Request, res: Response) {
     const productId = req.params.productId as string;
     await wishlistService.removeFromWishlist(req.user!.id, productId);
-    res.json({ success: true, message: "Removed from wishlist" });
+    res.json({ success: true, message: 'Removed from wishlist' });
   },
 
   async checkWishlist(req: Request, res: Response) {
@@ -199,19 +218,19 @@ export const wishlistController = {
 **Step 3: Create wishlist.routes.ts**
 
 ```typescript
-import { Router, type IRouter } from "express";
-import { wishlistController } from "../controllers/wishlist.controller";
-import { authenticate } from "../middleware/auth";
-import { asyncHandler } from "../utils/async-handler";
+import { Router, type IRouter } from 'express';
+import { wishlistController } from '../controllers/wishlist.controller';
+import { authenticate } from '../middleware/auth';
+import { asyncHandler } from '../utils/async-handler';
 
 const router: IRouter = Router();
 
 router.use(authenticate);
 
-router.get("/", asyncHandler(wishlistController.getWishlist));
-router.post("/", asyncHandler(wishlistController.addToWishlist));
-router.delete("/:productId", asyncHandler(wishlistController.removeFromWishlist));
-router.get("/:productId/check", asyncHandler(wishlistController.checkWishlist));
+router.get('/', asyncHandler(wishlistController.getWishlist));
+router.post('/', asyncHandler(wishlistController.addToWishlist));
+router.delete('/:productId', asyncHandler(wishlistController.removeFromWishlist));
+router.get('/:productId/check', asyncHandler(wishlistController.checkWishlist));
 
 export { router as wishlistRouter };
 ```
@@ -226,6 +245,7 @@ Add route: `app.use("/api/v1/wishlist", wishlistRouter);`
 ### Task 3: Storefront — Account Layout + Auth Guard
 
 **Files:**
+
 - Create: `apps/storefront/src/app/(shop)/account/layout.tsx`
 
 **Context:** The header links point to `/account/profile`, `/account/orders`, `/account/wishlist`. These are under the `(shop)` route group (which provides Header/Footer). The layout needs an auth guard (redirect to /auth/login if not authenticated) and a sidebar navigation. The storefront auth store has `isAuthenticated` and `isLoading` states. The storefront `(shop)/layout.tsx` already wraps with Header/Footer, so the account layout just adds the sidebar + auth check.
@@ -233,22 +253,22 @@ Add route: `app.use("/api/v1/wishlist", wishlistRouter);`
 **Code:**
 
 ```tsx
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
-import { User, Package, Heart, Star, Gift, MapPin } from "lucide-react";
-import { useAuthStore } from "@/stores/auth-store";
-import { Spinner } from "@/components/ui";
+import { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { User, Package, Heart, Star, Gift, MapPin } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth-store';
+import { Spinner } from '@/components/ui';
 
 const accountNav = [
-  { label: "Profile", href: "/account/profile", icon: User },
-  { label: "Orders", href: "/account/orders", icon: Package },
-  { label: "Wishlist", href: "/account/wishlist", icon: Heart },
-  { label: "Addresses", href: "/account/addresses", icon: MapPin },
-  { label: "Loyalty Points", href: "/account/loyalty", icon: Star },
-  { label: "Referrals", href: "/account/referrals", icon: Gift },
+  { label: 'Profile', href: '/account/profile', icon: User },
+  { label: 'Orders', href: '/account/orders', icon: Package },
+  { label: 'Wishlist', href: '/account/wishlist', icon: Heart },
+  { label: 'Addresses', href: '/account/addresses', icon: MapPin },
+  { label: 'Loyalty Points', href: '/account/loyalty', icon: Star },
+  { label: 'Referrals', href: '/account/referrals', icon: Gift },
 ];
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
@@ -280,15 +300,15 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           <h2 className="text-lg font-semibold text-charcoal mb-4">My Account</h2>
           <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
             {accountNav.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
                     isActive
-                      ? "bg-forest-green/10 text-forest-green font-medium"
-                      : "text-dark-gray hover:bg-off-white hover:text-charcoal"
+                      ? 'bg-forest-green/10 text-forest-green font-medium'
+                      : 'text-dark-gray hover:bg-off-white hover:text-charcoal'
                   }`}
                 >
                   <item.icon size={16} />
@@ -312,6 +332,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 ### Task 4: Storefront — Profile Page
 
 **Files:**
+
 - Create: `apps/storefront/src/app/(shop)/account/profile/page.tsx`
 
 **Context:** Uses storefront api-client which returns `json.data`. The `auth/me` endpoint returns user profile, `PUT /auth/profile` updates it, `PUT /auth/password` changes password. Use react-hook-form with zodResolver. The `updateProfileSchema` has `z.coerce.number()` issues — but actually it doesn't, it's only strings. Still, use `as any` on zodResolver if needed as a safety measure.
@@ -319,18 +340,18 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 **Code:**
 
 ```tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import { useAuthStore } from "@/stores/auth-store";
-import { Button, Input, Card } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
-import { Skeleton } from "@/components/ui/skeleton";
-import { updateProfileSchema, changePasswordSchema } from "@earth-revibe/shared";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { useAuthStore } from '@/stores/auth-store';
+import { Button, Input, Card } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
+import { Skeleton } from '@/components/ui/skeleton';
+import { updateProfileSchema, changePasswordSchema } from '@earth-revibe/shared';
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -338,8 +359,8 @@ export default function ProfilePage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ["user-profile"],
-    queryFn: () => api.get("/auth/me"),
+    queryKey: ['user-profile'],
+    queryFn: () => api.get('/auth/me'),
   });
 
   const profileForm = useForm({
@@ -348,7 +369,7 @@ export default function ProfilePage() {
       ? {
           firstName: profile.firstName,
           lastName: profile.lastName,
-          phone: profile.phone || "",
+          phone: profile.phone || '',
         }
       : undefined,
   });
@@ -356,30 +377,30 @@ export default function ProfilePage() {
   const passwordForm = useForm({
     resolver: zodResolver(changePasswordSchema) as any,
     defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmNewPassword: "",
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
     },
   });
 
   const updateProfile = useMutation({
-    mutationFn: (data: any) => api.put("/auth/profile", data),
+    mutationFn: (data: any) => api.put('/auth/profile', data),
     onSuccess: (updatedUser: any) => {
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       setUser({ ...user!, ...updatedUser });
-      toast.success("Profile updated");
+      toast.success('Profile updated');
     },
-    onError: (err: any) => toast.error(err.message || "Failed to update profile"),
+    onError: (err: any) => toast.error(err.message || 'Failed to update profile'),
   });
 
   const changePassword = useMutation({
-    mutationFn: (data: any) => api.put("/auth/password", data),
+    mutationFn: (data: any) => api.put('/auth/password', data),
     onSuccess: () => {
       passwordForm.reset();
       setShowPassword(false);
-      toast.success("Password changed successfully");
+      toast.success('Password changed successfully');
     },
-    onError: (err: any) => toast.error(err.message || "Failed to change password"),
+    onError: (err: any) => toast.error(err.message || 'Failed to change password'),
   });
 
   if (isLoading) {
@@ -405,33 +426,39 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-charcoal mb-1">First Name</label>
-              <Input {...profileForm.register("firstName")} />
+              <Input {...profileForm.register('firstName')} />
               {profileForm.formState.errors.firstName && (
-                <p className="text-xs text-error mt-1">{profileForm.formState.errors.firstName.message as string}</p>
+                <p className="text-xs text-error mt-1">
+                  {profileForm.formState.errors.firstName.message as string}
+                </p>
               )}
             </div>
             <div>
               <label className="block text-sm font-medium text-charcoal mb-1">Last Name</label>
-              <Input {...profileForm.register("lastName")} />
+              <Input {...profileForm.register('lastName')} />
               {profileForm.formState.errors.lastName && (
-                <p className="text-xs text-error mt-1">{profileForm.formState.errors.lastName.message as string}</p>
+                <p className="text-xs text-error mt-1">
+                  {profileForm.formState.errors.lastName.message as string}
+                </p>
               )}
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-charcoal mb-1">Email</label>
-            <Input value={profile?.email || ""} disabled className="bg-off-white" />
+            <Input value={profile?.email || ''} disabled className="bg-off-white" />
             <p className="text-xs text-medium-gray mt-1">Email cannot be changed</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-charcoal mb-1">Phone</label>
-            <Input {...profileForm.register("phone")} placeholder="10-digit Indian mobile number" />
+            <Input {...profileForm.register('phone')} placeholder="10-digit Indian mobile number" />
             {profileForm.formState.errors.phone && (
-              <p className="text-xs text-error mt-1">{profileForm.formState.errors.phone.message as string}</p>
+              <p className="text-xs text-error mt-1">
+                {profileForm.formState.errors.phone.message as string}
+              </p>
             )}
           </div>
           <Button type="submit" disabled={updateProfile.isPending}>
-            {updateProfile.isPending ? "Saving..." : "Save Changes"}
+            {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
           </Button>
         </form>
       </Card>
@@ -453,31 +480,48 @@ export default function ProfilePage() {
             className="space-y-4"
           >
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Current Password</label>
-              <Input type="password" {...passwordForm.register("currentPassword")} />
+              <label className="block text-sm font-medium text-charcoal mb-1">
+                Current Password
+              </label>
+              <Input type="password" {...passwordForm.register('currentPassword')} />
               {passwordForm.formState.errors.currentPassword && (
-                <p className="text-xs text-error mt-1">{passwordForm.formState.errors.currentPassword.message as string}</p>
+                <p className="text-xs text-error mt-1">
+                  {passwordForm.formState.errors.currentPassword.message as string}
+                </p>
               )}
             </div>
             <div>
               <label className="block text-sm font-medium text-charcoal mb-1">New Password</label>
-              <Input type="password" {...passwordForm.register("newPassword")} />
+              <Input type="password" {...passwordForm.register('newPassword')} />
               {passwordForm.formState.errors.newPassword && (
-                <p className="text-xs text-error mt-1">{passwordForm.formState.errors.newPassword.message as string}</p>
+                <p className="text-xs text-error mt-1">
+                  {passwordForm.formState.errors.newPassword.message as string}
+                </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Confirm New Password</label>
-              <Input type="password" {...passwordForm.register("confirmNewPassword")} />
+              <label className="block text-sm font-medium text-charcoal mb-1">
+                Confirm New Password
+              </label>
+              <Input type="password" {...passwordForm.register('confirmNewPassword')} />
               {passwordForm.formState.errors.confirmNewPassword && (
-                <p className="text-xs text-error mt-1">{passwordForm.formState.errors.confirmNewPassword.message as string}</p>
+                <p className="text-xs text-error mt-1">
+                  {passwordForm.formState.errors.confirmNewPassword.message as string}
+                </p>
               )}
             </div>
             <div className="flex gap-3">
               <Button type="submit" disabled={changePassword.isPending}>
-                {changePassword.isPending ? "Changing..." : "Change Password"}
+                {changePassword.isPending ? 'Changing...' : 'Change Password'}
               </Button>
-              <Button type="button" variant="ghost" onClick={() => { setShowPassword(false); passwordForm.reset(); }}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setShowPassword(false);
+                  passwordForm.reset();
+                }}
+              >
                 Cancel
               </Button>
             </div>
@@ -494,6 +538,7 @@ export default function ProfilePage() {
 ### Task 5: Storefront — Order History Pages
 
 **Files:**
+
 - Create: `apps/storefront/src/app/(shop)/account/orders/page.tsx`
 - Create: `apps/storefront/src/app/(shop)/account/orders/[orderNumber]/page.tsx`
 
@@ -502,65 +547,65 @@ export default function ProfilePage() {
 **Orders list page:**
 
 ```tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { Package, ChevronRight } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import { Button, Badge, Card, Select } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Package, ChevronRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { Button, Badge, Card, Select } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const statusOptions = [
-  { value: "", label: "All Orders" },
-  { value: "PLACED", label: "Placed" },
-  { value: "CONFIRMED", label: "Confirmed" },
-  { value: "PROCESSING", label: "Processing" },
-  { value: "SHIPPED", label: "Shipped" },
-  { value: "DELIVERED", label: "Delivered" },
-  { value: "CANCELLED", label: "Cancelled" },
+  { value: '', label: 'All Orders' },
+  { value: 'PLACED', label: 'Placed' },
+  { value: 'CONFIRMED', label: 'Confirmed' },
+  { value: 'PROCESSING', label: 'Processing' },
+  { value: 'SHIPPED', label: 'Shipped' },
+  { value: 'DELIVERED', label: 'Delivered' },
+  { value: 'CANCELLED', label: 'Cancelled' },
 ];
 
-const statusVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
-  PLACED: "info",
-  CONFIRMED: "info",
-  PROCESSING: "warning",
-  SHIPPED: "warning",
-  OUT_FOR_DELIVERY: "warning",
-  DELIVERED: "success",
-  CANCELLED: "error",
-  RETURNED: "error",
-  REFUNDED: "default",
+const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+  PLACED: 'info',
+  CONFIRMED: 'info',
+  PROCESSING: 'warning',
+  SHIPPED: 'warning',
+  OUT_FOR_DELIVERY: 'warning',
+  DELIVERED: 'success',
+  CANCELLED: 'error',
+  RETURNED: 'error',
+  REFUNDED: 'default',
 };
 
 function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(amount));
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 }
 
 export default function OrdersPage() {
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["my-orders", status, page],
+    queryKey: ['my-orders', status, page],
     queryFn: () => {
       const params = new URLSearchParams();
-      params.set("page", String(page));
-      params.set("limit", "10");
-      if (status) params.set("status", status);
+      params.set('page', String(page));
+      params.set('limit', '10');
+      if (status) params.set('status', status);
       return api.get(`/orders?${params.toString()}`);
     },
   });
@@ -572,7 +617,10 @@ export default function OrdersPage() {
         <Select
           options={statusOptions}
           value={status}
-          onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
           className="w-40"
         />
       </div>
@@ -602,18 +650,26 @@ export default function OrdersPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="font-medium text-charcoal">#{order.orderNumber}</span>
-                      <Badge variant={statusVariant[order.status] || "default"}>
-                        {order.status.replace(/_/g, " ")}
+                      <Badge variant={statusVariant[order.status] || 'default'}>
+                        {order.status.replace(/_/g, ' ')}
                       </Badge>
                     </div>
                     <p className="text-sm text-medium-gray">
-                      {formatDate(order.createdAt)} &middot; {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+                      {formatDate(order.createdAt)} &middot; {order.items.length} item
+                      {order.items.length !== 1 ? 's' : ''}
                     </p>
                     <div className="flex gap-2 mt-2">
                       {order.items.slice(0, 3).map((item: any) => (
-                        <div key={item.id} className="w-10 h-10 rounded bg-off-white flex items-center justify-center">
+                        <div
+                          key={item.id}
+                          className="w-10 h-10 rounded bg-off-white flex items-center justify-center"
+                        >
                           {item.productImage ? (
-                            <img src={item.productImage} alt="" className="w-full h-full object-cover rounded" />
+                            <img
+                              src={item.productImage}
+                              alt=""
+                              className="w-full h-full object-cover rounded"
+                            />
                           ) : (
                             <Package size={14} className="text-medium-gray" />
                           )}
@@ -627,7 +683,9 @@ export default function OrdersPage() {
                     </div>
                   </div>
                   <div className="text-right flex items-center gap-3">
-                    <span className="font-semibold text-charcoal">{formatPrice(order.totalAmount)}</span>
+                    <span className="font-semibold text-charcoal">
+                      {formatPrice(order.totalAmount)}
+                    </span>
                     <ChevronRight size={16} className="text-medium-gray" />
                   </div>
                 </div>
@@ -642,10 +700,20 @@ export default function OrdersPage() {
                 Page {data.page} of {data.totalPages}
               </p>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
                   Previous
                 </Button>
-                <Button variant="ghost" size="sm" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={page >= data.totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
                   Next
                 </Button>
               </div>
@@ -661,67 +729,67 @@ export default function OrdersPage() {
 **Order detail page:**
 
 ```tsx
-"use client";
+'use client';
 
-import { use, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Package } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import { Button, Badge, Card, Input } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
-import { Skeleton } from "@/components/ui/skeleton";
+import { use, useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Package } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { Button, Badge, Card, Input } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const statusVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
-  PLACED: "info",
-  CONFIRMED: "info",
-  PROCESSING: "warning",
-  SHIPPED: "warning",
-  OUT_FOR_DELIVERY: "warning",
-  DELIVERED: "success",
-  CANCELLED: "error",
-  RETURNED: "error",
-  REFUNDED: "default",
+const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+  PLACED: 'info',
+  CONFIRMED: 'info',
+  PROCESSING: 'warning',
+  SHIPPED: 'warning',
+  OUT_FOR_DELIVERY: 'warning',
+  DELIVERED: 'success',
+  CANCELLED: 'error',
+  RETURNED: 'error',
+  REFUNDED: 'default',
 };
 
 function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(amount));
 }
 
 function formatDateTime(date: string) {
-  return new Date(date).toLocaleString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+  return new Date(date).toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
 export default function OrderDetailPage({ params }: { params: Promise<{ orderNumber: string }> }) {
   const { orderNumber } = use(params);
   const queryClient = useQueryClient();
-  const [cancelReason, setCancelReason] = useState("");
+  const [cancelReason, setCancelReason] = useState('');
   const [showCancel, setShowCancel] = useState(false);
 
   const { data: order, isLoading } = useQuery({
-    queryKey: ["my-order", orderNumber],
+    queryKey: ['my-order', orderNumber],
     queryFn: () => api.get(`/orders/${orderNumber}`),
   });
 
   const cancelOrder = useMutation({
     mutationFn: (reason: string) => api.post(`/orders/${orderNumber}/cancel`, { reason }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-order", orderNumber] });
-      queryClient.invalidateQueries({ queryKey: ["my-orders"] });
-      toast.success("Order cancelled");
+      queryClient.invalidateQueries({ queryKey: ['my-order', orderNumber] });
+      queryClient.invalidateQueries({ queryKey: ['my-orders'] });
+      toast.success('Order cancelled');
       setShowCancel(false);
     },
-    onError: (err: any) => toast.error(err.message || "Failed to cancel order"),
+    onError: (err: any) => toast.error(err.message || 'Failed to cancel order'),
   });
 
   if (isLoading) {
@@ -737,27 +805,33 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     return (
       <div className="text-center py-12">
         <p className="text-medium-gray">Order not found</p>
-        <Link href="/account/orders" className="text-forest-green hover:underline mt-2 inline-block">
+        <Link
+          href="/account/orders"
+          className="text-forest-green hover:underline mt-2 inline-block"
+        >
           Back to orders
         </Link>
       </div>
     );
   }
 
-  const canCancel = ["PLACED", "CONFIRMED", "PROCESSING"].includes(order.status);
+  const canCancel = ['PLACED', 'CONFIRMED', 'PROCESSING'].includes(order.status);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/account/orders" className="p-2 rounded-lg hover:bg-off-white transition-colors">
+        <Link
+          href="/account/orders"
+          className="p-2 rounded-lg hover:bg-off-white transition-colors"
+        >
           <ArrowLeft size={20} className="text-dark-gray" />
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold text-charcoal">Order #{order.orderNumber}</h1>
-            <Badge variant={statusVariant[order.status] || "default"}>
-              {order.status.replace(/_/g, " ")}
+            <Badge variant={statusVariant[order.status] || 'default'}>
+              {order.status.replace(/_/g, ' ')}
             </Badge>
           </div>
           <p className="text-sm text-medium-gray mt-1">{formatDateTime(order.createdAt)}</p>
@@ -772,10 +846,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <h3 className="text-base font-semibold text-charcoal mb-4">Items</h3>
             <div className="space-y-3">
               {order.items.map((item: any) => (
-                <div key={item.id} className="flex items-center gap-4 py-2 border-b border-light-gray last:border-0">
+                <div
+                  key={item.id}
+                  className="flex items-center gap-4 py-2 border-b border-light-gray last:border-0"
+                >
                   <div className="w-16 h-16 rounded-lg bg-off-white flex items-center justify-center flex-shrink-0">
                     {item.productImage ? (
-                      <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover rounded-lg" />
+                      <img
+                        src={item.productImage}
+                        alt={item.productName}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
                     ) : (
                       <Package size={24} className="text-medium-gray" />
                     )}
@@ -785,7 +866,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                     <p className="text-sm text-medium-gray">
                       {item.variantSize} / {item.variantColor} &middot; Qty: {item.quantity}
                     </p>
-                    <p className="text-sm font-medium text-charcoal mt-1">{formatPrice(item.totalPrice)}</p>
+                    <p className="text-sm font-medium text-charcoal mt-1">
+                      {formatPrice(item.totalPrice)}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -799,7 +882,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               </div>
               {Number(order.discountAmount) > 0 && (
                 <div className="flex justify-between text-forest-green">
-                  <span>Discount {order.discountCode ? `(${order.discountCode.code})` : ""}</span>
+                  <span>Discount {order.discountCode ? `(${order.discountCode.code})` : ''}</span>
                   <span>-{formatPrice(order.discountAmount)}</span>
                 </div>
               )}
@@ -829,15 +912,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               {order.statusHistory?.map((entry: any, i: number) => (
                 <div key={entry.id} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <div className={`w-3 h-3 rounded-full mt-1 ${i === 0 ? "bg-forest-green" : "bg-light-gray"}`} />
-                    {i < order.statusHistory.length - 1 && <div className="w-0.5 flex-1 bg-light-gray mt-1" />}
+                    <div
+                      className={`w-3 h-3 rounded-full mt-1 ${i === 0 ? 'bg-forest-green' : 'bg-light-gray'}`}
+                    />
+                    {i < order.statusHistory.length - 1 && (
+                      <div className="w-0.5 flex-1 bg-light-gray mt-1" />
+                    )}
                   </div>
                   <div className="pb-4">
                     <div className="flex items-center gap-2">
-                      <Badge variant={statusVariant[entry.status] || "default"}>
-                        {entry.status.replace(/_/g, " ")}
+                      <Badge variant={statusVariant[entry.status] || 'default'}>
+                        {entry.status.replace(/_/g, ' ')}
                       </Badge>
-                      <span className="text-xs text-medium-gray">{formatDateTime(entry.createdAt)}</span>
+                      <span className="text-xs text-medium-gray">
+                        {formatDateTime(entry.createdAt)}
+                      </span>
                     </div>
                     {entry.note && <p className="text-sm text-dark-gray mt-1">{entry.note}</p>}
                   </div>
@@ -857,7 +946,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <p className="font-medium text-charcoal">{order.address.fullName}</p>
                 <p>{order.address.line1}</p>
                 {order.address.line2 && <p>{order.address.line2}</p>}
-                <p>{order.address.city}, {order.address.state} {order.address.pinCode}</p>
+                <p>
+                  {order.address.city}, {order.address.state} {order.address.pinCode}
+                </p>
                 <p>{order.address.phone}</p>
               </div>
             </Card>
@@ -869,8 +960,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <div className="text-sm space-y-2">
               <div className="flex justify-between">
                 <span className="text-medium-gray">Status</span>
-                <Badge variant={order.payment?.status === "CAPTURED" ? "success" : "warning"}>
-                  {order.payment?.status || "Pending"}
+                <Badge variant={order.payment?.status === 'CAPTURED' ? 'success' : 'warning'}>
+                  {order.payment?.status || 'Pending'}
                 </Badge>
               </div>
               {order.payment?.paidAt && (
@@ -886,7 +977,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           {canCancel && (
             <Card>
               {!showCancel ? (
-                <Button variant="ghost" className="w-full text-error" onClick={() => setShowCancel(true)}>
+                <Button
+                  variant="ghost"
+                  className="w-full text-error"
+                  onClick={() => setShowCancel(true)}
+                >
                   Cancel Order
                 </Button>
               ) : (
@@ -918,7 +1013,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           {order.loyaltyPointsEarned > 0 && (
             <Card>
               <p className="text-sm text-medium-gray">
-                You earned <span className="font-semibold text-forest-green">{order.loyaltyPointsEarned} loyalty points</span> from this order!
+                You earned{' '}
+                <span className="font-semibold text-forest-green">
+                  {order.loyaltyPointsEarned} loyalty points
+                </span>{' '}
+                from this order!
               </p>
             </Card>
           )}
@@ -934,6 +1033,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 ### Task 6: Storefront — Wishlist Page
 
 **Files:**
+
 - Create: `apps/storefront/src/app/(shop)/account/wishlist/page.tsx`
 
 **Context:** Uses `GET /wishlist` to fetch items. Each item includes product data (name, slug, price, compareAtPrice, images). Has remove button via `DELETE /wishlist/:productId`. Links to product pages via `/products/:slug`.
@@ -941,20 +1041,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 **Code:**
 
 ```tsx
-"use client";
+'use client';
 
-import Link from "next/link";
-import { Heart, Trash2, ShoppingBag } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import { Button, Card } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
-import { Skeleton } from "@/components/ui/skeleton";
+import Link from 'next/link';
+import { Heart, Trash2, ShoppingBag } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { Button, Card } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(amount));
 }
@@ -963,17 +1063,17 @@ export default function WishlistPage() {
   const queryClient = useQueryClient();
 
   const { data: items, isLoading } = useQuery({
-    queryKey: ["wishlist"],
-    queryFn: () => api.get("/wishlist"),
+    queryKey: ['wishlist'],
+    queryFn: () => api.get('/wishlist'),
   });
 
   const removeItem = useMutation({
     mutationFn: (productId: string) => api.delete(`/wishlist/${productId}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
-      toast.success("Removed from wishlist");
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      toast.success('Removed from wishlist');
     },
-    onError: (err: any) => toast.error(err.message || "Failed to remove"),
+    onError: (err: any) => toast.error(err.message || 'Failed to remove'),
   });
 
   return (
@@ -1028,12 +1128,15 @@ export default function WishlistPage() {
                   {item.product.name}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="font-semibold text-charcoal">{formatPrice(item.product.price)}</span>
-                  {item.product.compareAtPrice && Number(item.product.compareAtPrice) > Number(item.product.price) && (
-                    <span className="text-sm text-medium-gray line-through">
-                      {formatPrice(item.product.compareAtPrice)}
-                    </span>
-                  )}
+                  <span className="font-semibold text-charcoal">
+                    {formatPrice(item.product.price)}
+                  </span>
+                  {item.product.compareAtPrice &&
+                    Number(item.product.compareAtPrice) > Number(item.product.price) && (
+                      <span className="text-sm text-medium-gray line-through">
+                        {formatPrice(item.product.compareAtPrice)}
+                      </span>
+                    )}
                 </div>
               </Link>
             </Card>

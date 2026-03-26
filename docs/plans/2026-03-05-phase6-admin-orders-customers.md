@@ -13,6 +13,7 @@
 ### Task 1: API — Admin Order Endpoints
 
 **Files:**
+
 - Create: `apps/api/src/services/admin-order.service.ts`
 - Create: `apps/api/src/controllers/admin-order.controller.ts`
 - Create: `apps/api/src/routes/admin-order.routes.ts`
@@ -34,8 +35,8 @@ export const adminOrderQuerySchema = z.object({
   endDate: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  sortBy: z.enum(["createdAt", "totalAmount", "orderNumber"]).default("createdAt"),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  sortBy: z.enum(['createdAt', 'totalAmount', 'orderNumber']).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 export const addOrderNoteSchema = z.object({
@@ -50,9 +51,13 @@ export type AddOrderNoteInput = z.infer<typeof addOrderNoteSchema>;
 **Step 2: Create admin-order.service.ts**
 
 ```typescript
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { AdminOrderQuery, UpdateOrderStatusInput, AddOrderNoteInput } from "@earth-revibe/shared";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type {
+  AdminOrderQuery,
+  UpdateOrderStatusInput,
+  AddOrderNoteInput,
+} from '@earth-revibe/shared';
 
 export const adminOrderService = {
   async listOrders(query: AdminOrderQuery) {
@@ -62,10 +67,10 @@ export const adminOrderService = {
     if (status) where.status = status;
     if (search) {
       where.OR = [
-        { orderNumber: { contains: search, mode: "insensitive" } },
-        { user: { email: { contains: search, mode: "insensitive" } } },
-        { user: { firstName: { contains: search, mode: "insensitive" } } },
-        { user: { lastName: { contains: search, mode: "insensitive" } } },
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+        { user: { firstName: { contains: search, mode: 'insensitive' } } },
+        { user: { lastName: { contains: search, mode: 'insensitive' } } },
       ];
     }
     if (startDate || endDate) {
@@ -100,22 +105,22 @@ export const adminOrderService = {
         items: true,
         payment: true,
         address: true,
-        statusHistory: { orderBy: { createdAt: "desc" } },
+        statusHistory: { orderBy: { createdAt: 'desc' } },
         notes: {
           include: { user: { select: { firstName: true, lastName: true } } },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
         },
         discountCode: { select: { code: true, type: true, value: true } },
       },
     });
 
-    if (!order) throw ApiError.notFound("Order not found");
+    if (!order) throw ApiError.notFound('Order not found');
     return order;
   },
 
   async updateStatus(orderNumber: string, adminId: string, data: UpdateOrderStatusInput) {
     const order = await prisma.order.findUnique({ where: { orderNumber } });
-    if (!order) throw ApiError.notFound("Order not found");
+    if (!order) throw ApiError.notFound('Order not found');
 
     await prisma.order.update({
       where: { id: order.id },
@@ -136,7 +141,7 @@ export const adminOrderService = {
 
   async addNote(orderNumber: string, adminId: string, data: AddOrderNoteInput) {
     const order = await prisma.order.findUnique({ where: { orderNumber } });
-    if (!order) throw ApiError.notFound("Order not found");
+    if (!order) throw ApiError.notFound('Order not found');
 
     const note = await prisma.orderNote.create({
       data: {
@@ -156,8 +161,8 @@ export const adminOrderService = {
 **Step 3: Create admin-order.controller.ts**
 
 ```typescript
-import type { Request, Response } from "express";
-import { adminOrderService } from "../services/admin-order.service";
+import type { Request, Response } from 'express';
+import { adminOrderService } from '../services/admin-order.service';
 
 export const adminOrderController = {
   async listOrders(req: Request, res: Response) {
@@ -188,27 +193,39 @@ export const adminOrderController = {
 **Step 4: Create admin-order.routes.ts**
 
 ```typescript
-import { Router, type IRouter } from "express";
-import { adminOrderController } from "../controllers/admin-order.controller";
-import { authenticate, authorize } from "../middleware/auth";
-import { validate } from "../middleware/validate";
-import { asyncHandler } from "../utils/async-handler";
+import { Router, type IRouter } from 'express';
+import { adminOrderController } from '../controllers/admin-order.controller';
+import { authenticate, authorize } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { asyncHandler } from '../utils/async-handler';
 import {
   adminOrderQuerySchema,
   updateOrderStatusSchema,
   addOrderNoteSchema,
-} from "@earth-revibe/shared";
-import { UserRole } from "@earth-revibe/shared";
+} from '@earth-revibe/shared';
+import { UserRole } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
 
 router.use(authenticate);
 router.use(authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 
-router.get("/", validate({ query: adminOrderQuerySchema }), asyncHandler(adminOrderController.listOrders));
-router.get("/:orderNumber", asyncHandler(adminOrderController.getOrder));
-router.put("/:orderNumber/status", validate({ body: updateOrderStatusSchema }), asyncHandler(adminOrderController.updateStatus));
-router.post("/:orderNumber/notes", validate({ body: addOrderNoteSchema }), asyncHandler(adminOrderController.addNote));
+router.get(
+  '/',
+  validate({ query: adminOrderQuerySchema }),
+  asyncHandler(adminOrderController.listOrders)
+);
+router.get('/:orderNumber', asyncHandler(adminOrderController.getOrder));
+router.put(
+  '/:orderNumber/status',
+  validate({ body: updateOrderStatusSchema }),
+  asyncHandler(adminOrderController.updateStatus)
+);
+router.post(
+  '/:orderNumber/notes',
+  validate({ body: addOrderNoteSchema }),
+  asyncHandler(adminOrderController.addNote)
+);
 
 export { router as adminOrderRouter };
 ```
@@ -223,6 +240,7 @@ Add route: `app.use("/api/v1/admin/orders", adminOrderRouter);`
 ### Task 2: API — Admin Customer Endpoints
 
 **Files:**
+
 - Create: `apps/api/src/services/admin-customer.service.ts`
 - Create: `apps/api/src/controllers/admin-customer.controller.ts`
 - Create: `apps/api/src/routes/admin-customer.routes.ts`
@@ -233,8 +251,8 @@ Add route: `app.use("/api/v1/admin/orders", adminOrderRouter);`
 **Step 1: Create admin-customer.service.ts**
 
 ```typescript
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
 
 interface CustomerQuery {
   search?: string;
@@ -248,15 +266,15 @@ interface CustomerQuery {
 export const adminCustomerService = {
   async listCustomers(query: CustomerQuery) {
     const { search, isActive, page, limit, sortBy, sortOrder } = query;
-    const where: Record<string, unknown> = { role: "CUSTOMER" };
+    const where: Record<string, unknown> = { role: 'CUSTOMER' };
 
     if (isActive !== undefined) where.isActive = isActive;
     if (search) {
       where.OR = [
-        { email: { contains: search, mode: "insensitive" } },
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { phone: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -303,7 +321,7 @@ export const adminCustomerService = {
         addresses: true,
         orders: {
           take: 10,
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           include: {
             items: true,
             payment: { select: { status: true, paidAt: true } },
@@ -313,11 +331,11 @@ export const adminCustomerService = {
       },
     });
 
-    if (!customer) throw ApiError.notFound("Customer not found");
+    if (!customer) throw ApiError.notFound('Customer not found');
     if (customer as any) {
       // Calculate total spent
       const totalSpent = await prisma.order.aggregate({
-        where: { userId: id, status: { notIn: ["CANCELLED", "REFUNDED"] } },
+        where: { userId: id, status: { notIn: ['CANCELLED', 'REFUNDED'] } },
         _sum: { totalAmount: true },
       });
       return { ...customer, totalSpent: totalSpent._sum.totalAmount || 0 };
@@ -327,7 +345,7 @@ export const adminCustomerService = {
 
   async toggleActive(id: string) {
     const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) throw ApiError.notFound("Customer not found");
+    if (!user) throw ApiError.notFound('Customer not found');
 
     const updated = await prisma.user.update({
       where: { id },
@@ -343,18 +361,19 @@ export const adminCustomerService = {
 **Step 2: Create admin-customer.controller.ts**
 
 ```typescript
-import type { Request, Response } from "express";
-import { adminCustomerService } from "../services/admin-customer.service";
+import type { Request, Response } from 'express';
+import { adminCustomerService } from '../services/admin-customer.service';
 
 export const adminCustomerController = {
   async listCustomers(req: Request, res: Response) {
     const query = {
       search: req.query.search as string | undefined,
-      isActive: req.query.isActive === "true" ? true : req.query.isActive === "false" ? false : undefined,
+      isActive:
+        req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : undefined,
       page: Number(req.query.page) || 1,
       limit: Number(req.query.limit) || 20,
-      sortBy: (req.query.sortBy as string) || "createdAt",
-      sortOrder: (req.query.sortOrder as string) || "desc",
+      sortBy: (req.query.sortBy as string) || 'createdAt',
+      sortOrder: (req.query.sortOrder as string) || 'desc',
     };
     const result = await adminCustomerService.listCustomers(query);
     res.json({ success: true, ...result });
@@ -377,20 +396,20 @@ export const adminCustomerController = {
 **Step 3: Create admin-customer.routes.ts**
 
 ```typescript
-import { Router, type IRouter } from "express";
-import { adminCustomerController } from "../controllers/admin-customer.controller";
-import { authenticate, authorize } from "../middleware/auth";
-import { asyncHandler } from "../utils/async-handler";
-import { UserRole } from "@earth-revibe/shared";
+import { Router, type IRouter } from 'express';
+import { adminCustomerController } from '../controllers/admin-customer.controller';
+import { authenticate, authorize } from '../middleware/auth';
+import { asyncHandler } from '../utils/async-handler';
+import { UserRole } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
 
 router.use(authenticate);
 router.use(authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 
-router.get("/", asyncHandler(adminCustomerController.listCustomers));
-router.get("/:id", asyncHandler(adminCustomerController.getCustomer));
-router.put("/:id/toggle-active", asyncHandler(adminCustomerController.toggleActive));
+router.get('/', asyncHandler(adminCustomerController.listCustomers));
+router.get('/:id', asyncHandler(adminCustomerController.getCustomer));
+router.put('/:id/toggle-active', asyncHandler(adminCustomerController.toggleActive));
 
 export { router as adminCustomerRouter };
 ```
@@ -405,6 +424,7 @@ Add route: `app.use("/api/v1/admin/customers", adminCustomerRouter);`
 ### Task 3: Admin — Order Hooks + Orders List Page
 
 **Files:**
+
 - Create: `apps/admin/src/hooks/use-orders.ts`
 - Create: `apps/admin/src/app/(admin)/orders/page.tsx`
 
@@ -413,8 +433,8 @@ Add route: `app.use("/api/v1/admin/customers", adminCustomerRouter);`
 **Step 1: Create use-orders.ts**
 
 ```typescript
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 interface OrderListParams {
   page?: number;
@@ -428,20 +448,20 @@ interface OrderListParams {
 export function useOrders(params: OrderListParams = {}) {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") {
+    if (value !== undefined && value !== '') {
       searchParams.set(key, String(value));
     }
   });
 
   return useQuery({
-    queryKey: ["admin-orders", params],
+    queryKey: ['admin-orders', params],
     queryFn: () => api.get(`/admin/orders?${searchParams.toString()}`),
   });
 }
 
 export function useOrder(orderNumber: string) {
   return useQuery({
-    queryKey: ["admin-order", orderNumber],
+    queryKey: ['admin-order', orderNumber],
     queryFn: () => api.get(`/admin/orders/${orderNumber}`),
     enabled: !!orderNumber,
   });
@@ -450,11 +470,18 @@ export function useOrder(orderNumber: string) {
 export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ orderNumber, status, note }: { orderNumber: string; status: string; note?: string }) =>
-      api.put(`/admin/orders/${orderNumber}/status`, { status, note }),
+    mutationFn: ({
+      orderNumber,
+      status,
+      note,
+    }: {
+      orderNumber: string;
+      status: string;
+      note?: string;
+    }) => api.put(`/admin/orders/${orderNumber}/status`, { status, note }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-order"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-order'] });
     },
   });
 }
@@ -462,10 +489,17 @@ export function useUpdateOrderStatus() {
 export function useAddOrderNote() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ orderNumber, content, isInternal }: { orderNumber: string; content: string; isInternal?: boolean }) =>
-      api.post(`/admin/orders/${orderNumber}/notes`, { content, isInternal }),
+    mutationFn: ({
+      orderNumber,
+      content,
+      isInternal,
+    }: {
+      orderNumber: string;
+      content: string;
+      isInternal?: boolean;
+    }) => api.post(`/admin/orders/${orderNumber}/notes`, { content, isInternal }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-order"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-order'] });
     },
   });
 }
@@ -474,59 +508,59 @@ export function useAddOrderNote() {
 **Step 2: Create orders list page**
 
 ```tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { Search, Eye } from "lucide-react";
-import { Button, Badge, Card, Select } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useOrders } from "@/hooks/use-orders";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Search, Eye } from 'lucide-react';
+import { Button, Badge, Card, Select } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useOrders } from '@/hooks/use-orders';
 
 const statusOptions = [
-  { value: "", label: "All Statuses" },
-  { value: "PLACED", label: "Placed" },
-  { value: "CONFIRMED", label: "Confirmed" },
-  { value: "PROCESSING", label: "Processing" },
-  { value: "SHIPPED", label: "Shipped" },
-  { value: "OUT_FOR_DELIVERY", label: "Out for Delivery" },
-  { value: "DELIVERED", label: "Delivered" },
-  { value: "CANCELLED", label: "Cancelled" },
-  { value: "RETURNED", label: "Returned" },
-  { value: "REFUNDED", label: "Refunded" },
+  { value: '', label: 'All Statuses' },
+  { value: 'PLACED', label: 'Placed' },
+  { value: 'CONFIRMED', label: 'Confirmed' },
+  { value: 'PROCESSING', label: 'Processing' },
+  { value: 'SHIPPED', label: 'Shipped' },
+  { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
+  { value: 'DELIVERED', label: 'Delivered' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'RETURNED', label: 'Returned' },
+  { value: 'REFUNDED', label: 'Refunded' },
 ];
 
-const statusVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
-  PLACED: "info",
-  CONFIRMED: "info",
-  PROCESSING: "warning",
-  SHIPPED: "warning",
-  OUT_FOR_DELIVERY: "warning",
-  DELIVERED: "success",
-  CANCELLED: "error",
-  RETURNED: "error",
-  REFUNDED: "default",
+const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+  PLACED: 'info',
+  CONFIRMED: 'info',
+  PROCESSING: 'warning',
+  SHIPPED: 'warning',
+  OUT_FOR_DELIVERY: 'warning',
+  DELIVERED: 'success',
+  CANCELLED: 'error',
+  RETURNED: 'error',
+  REFUNDED: 'default',
 };
 
 function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(amount));
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 }
 
 export default function OrdersPage() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useOrders({
@@ -548,19 +582,28 @@ export default function OrdersPage() {
       <Card>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray" />
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray"
+            />
             <input
               type="text"
               placeholder="Search by order #, email, or name..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
             />
           </div>
           <Select
             options={statusOptions}
             value={status}
-            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
             className="w-full sm:w-48"
           />
         </div>
@@ -595,27 +638,43 @@ export default function OrdersPage() {
                 </thead>
                 <tbody>
                   {data.orders.map((order: any) => (
-                    <tr key={order.id} className="border-b border-light-gray last:border-0 hover:bg-off-white/50">
+                    <tr
+                      key={order.id}
+                      className="border-b border-light-gray last:border-0 hover:bg-off-white/50"
+                    >
                       <td className="px-6 py-3">
-                        <Link href={`/orders/${order.orderNumber}`} className="font-medium text-deep-earth hover:underline">
+                        <Link
+                          href={`/orders/${order.orderNumber}`}
+                          className="font-medium text-deep-earth hover:underline"
+                        >
                           #{order.orderNumber}
                         </Link>
                       </td>
                       <td className="px-6 py-3">
                         <div>
-                          <p className="text-charcoal">{order.user?.firstName} {order.user?.lastName}</p>
+                          <p className="text-charcoal">
+                            {order.user?.firstName} {order.user?.lastName}
+                          </p>
                           <p className="text-xs text-medium-gray">{order.user?.email}</p>
                         </div>
                       </td>
                       <td className="px-6 py-3 text-dark-gray">{formatDate(order.createdAt)}</td>
                       <td className="px-6 py-3">
-                        <Badge variant={statusVariant[order.status] || "default"}>
-                          {order.status.replace(/_/g, " ")}
+                        <Badge variant={statusVariant[order.status] || 'default'}>
+                          {order.status.replace(/_/g, ' ')}
                         </Badge>
                       </td>
                       <td className="px-6 py-3">
-                        <Badge variant={order.payment?.status === "CAPTURED" ? "success" : order.payment?.status === "FAILED" ? "error" : "warning"}>
-                          {order.payment?.status || "N/A"}
+                        <Badge
+                          variant={
+                            order.payment?.status === 'CAPTURED'
+                              ? 'success'
+                              : order.payment?.status === 'FAILED'
+                                ? 'error'
+                                : 'warning'
+                          }
+                        >
+                          {order.payment?.status || 'N/A'}
                         </Badge>
                       </td>
                       <td className="px-6 py-3 text-right font-medium text-charcoal">
@@ -645,10 +704,20 @@ export default function OrdersPage() {
                   Page {data.page} of {data.totalPages} ({data.total} orders)
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
                     Previous
                   </Button>
-                  <Button variant="ghost" size="sm" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={page >= data.totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
                     Next
                   </Button>
                 </div>
@@ -667,6 +736,7 @@ export default function OrdersPage() {
 ### Task 4: Admin — Order Detail Page
 
 **Files:**
+
 - Create: `apps/admin/src/app/(admin)/orders/[orderNumber]/page.tsx`
 
 **Context:** Shopify-style order detail with: order info header, items table, status timeline, status update dropdown, internal notes section. Uses `use(params)` for Next.js 16 async params. Uses `useOrder(orderNumber)`, `useUpdateOrderStatus()`, `useAddOrderNote()` from hooks.
@@ -674,52 +744,52 @@ export default function OrdersPage() {
 **Code:**
 
 ```tsx
-"use client";
+'use client';
 
-import { use, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Package, Send } from "lucide-react";
-import { Button, Badge, Card, Select } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
-import { useOrder, useUpdateOrderStatus, useAddOrderNote } from "@/hooks/use-orders";
+import { use, useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Package, Send } from 'lucide-react';
+import { Button, Badge, Card, Select } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/toast';
+import { useOrder, useUpdateOrderStatus, useAddOrderNote } from '@/hooks/use-orders';
 
-const statusVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
-  PLACED: "info",
-  CONFIRMED: "info",
-  PROCESSING: "warning",
-  SHIPPED: "warning",
-  OUT_FOR_DELIVERY: "warning",
-  DELIVERED: "success",
-  CANCELLED: "error",
-  RETURNED: "error",
-  REFUNDED: "default",
+const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+  PLACED: 'info',
+  CONFIRMED: 'info',
+  PROCESSING: 'warning',
+  SHIPPED: 'warning',
+  OUT_FOR_DELIVERY: 'warning',
+  DELIVERED: 'success',
+  CANCELLED: 'error',
+  RETURNED: 'error',
+  REFUNDED: 'default',
 };
 
 const statusFlow = [
-  { value: "PLACED", label: "Placed" },
-  { value: "CONFIRMED", label: "Confirmed" },
-  { value: "PROCESSING", label: "Processing" },
-  { value: "SHIPPED", label: "Shipped" },
-  { value: "OUT_FOR_DELIVERY", label: "Out for Delivery" },
-  { value: "DELIVERED", label: "Delivered" },
+  { value: 'PLACED', label: 'Placed' },
+  { value: 'CONFIRMED', label: 'Confirmed' },
+  { value: 'PROCESSING', label: 'Processing' },
+  { value: 'SHIPPED', label: 'Shipped' },
+  { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
+  { value: 'DELIVERED', label: 'Delivered' },
 ];
 
 function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(amount));
 }
 
 function formatDateTime(date: string) {
-  return new Date(date).toLocaleString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+  return new Date(date).toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -729,9 +799,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const updateStatus = useUpdateOrderStatus();
   const addNote = useAddOrderNote();
 
-  const [newStatus, setNewStatus] = useState("");
-  const [statusNote, setStatusNote] = useState("");
-  const [noteContent, setNoteContent] = useState("");
+  const [newStatus, setNewStatus] = useState('');
+  const [statusNote, setStatusNote] = useState('');
+  const [noteContent, setNoteContent] = useState('');
 
   const order = data?.order;
 
@@ -743,11 +813,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         status: newStatus,
         note: statusNote || undefined,
       });
-      toast.success(`Order status updated to ${newStatus.replace(/_/g, " ")}`);
-      setNewStatus("");
-      setStatusNote("");
+      toast.success(`Order status updated to ${newStatus.replace(/_/g, ' ')}`);
+      setNewStatus('');
+      setStatusNote('');
     } catch (err: any) {
-      toast.error(err.message || "Failed to update status");
+      toast.error(err.message || 'Failed to update status');
     }
   };
 
@@ -755,10 +825,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     if (!noteContent.trim()) return;
     try {
       await addNote.mutateAsync({ orderNumber, content: noteContent, isInternal: true });
-      toast.success("Note added");
-      setNoteContent("");
+      toast.success('Note added');
+      setNoteContent('');
     } catch (err: any) {
-      toast.error(err.message || "Failed to add note");
+      toast.error(err.message || 'Failed to add note');
     }
   };
 
@@ -783,7 +853,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     );
   }
 
-  const cancelledOrFinal = ["CANCELLED", "RETURNED", "REFUNDED", "DELIVERED"].includes(order.status);
+  const cancelledOrFinal = ['CANCELLED', 'RETURNED', 'REFUNDED', 'DELIVERED'].includes(
+    order.status
+  );
 
   return (
     <div className="space-y-6">
@@ -795,12 +867,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold text-charcoal">#{order.orderNumber}</h1>
-            <Badge variant={statusVariant[order.status] || "default"}>
-              {order.status.replace(/_/g, " ")}
+            <Badge variant={statusVariant[order.status] || 'default'}>
+              {order.status.replace(/_/g, ' ')}
             </Badge>
           </div>
           <p className="text-sm text-medium-gray mt-1">
-            {formatDateTime(order.createdAt)} &middot; {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+            {formatDateTime(order.createdAt)} &middot; {order.items.length} item
+            {order.items.length !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
@@ -813,10 +886,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <h3 className="text-base font-semibold text-charcoal mb-4">Items</h3>
             <div className="space-y-3">
               {order.items.map((item: any) => (
-                <div key={item.id} className="flex items-center gap-4 py-2 border-b border-light-gray last:border-0">
+                <div
+                  key={item.id}
+                  className="flex items-center gap-4 py-2 border-b border-light-gray last:border-0"
+                >
                   <div className="w-12 h-12 rounded-lg bg-off-white flex items-center justify-center flex-shrink-0">
                     {item.productImage ? (
-                      <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover rounded-lg" />
+                      <img
+                        src={item.productImage}
+                        alt={item.productName}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
                     ) : (
                       <Package size={20} className="text-medium-gray" />
                     )}
@@ -840,7 +920,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               </div>
               {Number(order.discountAmount) > 0 && (
                 <div className="flex justify-between text-success">
-                  <span>Discount {order.discountCode ? `(${order.discountCode.code})` : ""}</span>
+                  <span>Discount {order.discountCode ? `(${order.discountCode.code})` : ''}</span>
                   <span>-{formatPrice(order.discountAmount)}</span>
                 </div>
               )}
@@ -870,15 +950,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               {order.statusHistory?.map((entry: any, i: number) => (
                 <div key={entry.id} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <div className={`w-3 h-3 rounded-full mt-1 ${i === 0 ? "bg-deep-earth" : "bg-light-gray"}`} />
-                    {i < order.statusHistory.length - 1 && <div className="w-0.5 flex-1 bg-light-gray mt-1" />}
+                    <div
+                      className={`w-3 h-3 rounded-full mt-1 ${i === 0 ? 'bg-deep-earth' : 'bg-light-gray'}`}
+                    />
+                    {i < order.statusHistory.length - 1 && (
+                      <div className="w-0.5 flex-1 bg-light-gray mt-1" />
+                    )}
                   </div>
                   <div className="pb-4">
                     <div className="flex items-center gap-2">
-                      <Badge variant={statusVariant[entry.status] || "default"}>
-                        {entry.status.replace(/_/g, " ")}
+                      <Badge variant={statusVariant[entry.status] || 'default'}>
+                        {entry.status.replace(/_/g, ' ')}
                       </Badge>
-                      <span className="text-xs text-medium-gray">{formatDateTime(entry.createdAt)}</span>
+                      <span className="text-xs text-medium-gray">
+                        {formatDateTime(entry.createdAt)}
+                      </span>
                     </div>
                     {entry.note && <p className="text-sm text-dark-gray mt-1">{entry.note}</p>}
                   </div>
@@ -898,7 +984,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <div key={note.id} className="p-3 bg-off-white rounded-lg">
                   <p className="text-sm text-charcoal">{note.content}</p>
                   <p className="text-xs text-medium-gray mt-1">
-                    {note.user?.firstName} {note.user?.lastName} &middot; {formatDateTime(note.createdAt)}
+                    {note.user?.firstName} {note.user?.lastName} &middot;{' '}
+                    {formatDateTime(note.createdAt)}
                   </p>
                 </div>
               ))}
@@ -910,9 +997,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 onChange={(e) => setNoteContent(e.target.value)}
                 placeholder="Add an internal note..."
                 className="flex-1 px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
-                onKeyDown={(e) => e.key === "Enter" && handleAddNote()}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
               />
-              <Button size="sm" onClick={handleAddNote} disabled={!noteContent.trim() || addNote.isPending}>
+              <Button
+                size="sm"
+                onClick={handleAddNote}
+                disabled={!noteContent.trim() || addNote.isPending}
+              >
                 <Send size={14} />
               </Button>
             </div>
@@ -927,7 +1018,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <h3 className="text-base font-semibold text-charcoal mb-4">Update Status</h3>
               <div className="space-y-3">
                 <Select
-                  options={[{ value: "", label: "Select new status" }, ...statusFlow]}
+                  options={[{ value: '', label: 'Select new status' }, ...statusFlow]}
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
                 />
@@ -953,10 +1044,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           <Card>
             <h3 className="text-base font-semibold text-charcoal mb-4">Customer</h3>
             <div className="space-y-2 text-sm">
-              <p className="font-medium text-charcoal">{order.user?.firstName} {order.user?.lastName}</p>
+              <p className="font-medium text-charcoal">
+                {order.user?.firstName} {order.user?.lastName}
+              </p>
               <p className="text-medium-gray">{order.user?.email}</p>
               {order.user?.phone && <p className="text-medium-gray">{order.user.phone}</p>}
-              <Link href={`/customers/${order.user?.id}`} className="text-deep-earth hover:underline text-xs inline-block mt-1">
+              <Link
+                href={`/customers/${order.user?.id}`}
+                className="text-deep-earth hover:underline text-xs inline-block mt-1"
+              >
                 View customer
               </Link>
             </div>
@@ -970,7 +1066,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <p className="font-medium text-charcoal">{order.address.fullName}</p>
                 <p>{order.address.line1}</p>
                 {order.address.line2 && <p>{order.address.line2}</p>}
-                <p>{order.address.city}, {order.address.state} {order.address.pinCode}</p>
+                <p>
+                  {order.address.city}, {order.address.state} {order.address.pinCode}
+                </p>
                 <p>{order.address.phone}</p>
               </div>
             ) : (
@@ -984,8 +1082,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-medium-gray">Status</span>
-                <Badge variant={order.payment?.status === "CAPTURED" ? "success" : order.payment?.status === "FAILED" ? "error" : "warning"}>
-                  {order.payment?.status || "N/A"}
+                <Badge
+                  variant={
+                    order.payment?.status === 'CAPTURED'
+                      ? 'success'
+                      : order.payment?.status === 'FAILED'
+                        ? 'error'
+                        : 'warning'
+                  }
+                >
+                  {order.payment?.status || 'N/A'}
                 </Badge>
               </div>
               {order.payment?.method && (
@@ -1014,6 +1120,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 ### Task 5: Admin — Customer Hooks + Customers List Page
 
 **Files:**
+
 - Create: `apps/admin/src/hooks/use-customers.ts`
 - Create: `apps/admin/src/app/(admin)/customers/page.tsx`
 
@@ -1022,8 +1129,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 **Step 1: Create use-customers.ts**
 
 ```typescript
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 interface CustomerListParams {
   page?: number;
@@ -1037,20 +1144,20 @@ interface CustomerListParams {
 export function useCustomers(params: CustomerListParams = {}) {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") {
+    if (value !== undefined && value !== '') {
       searchParams.set(key, String(value));
     }
   });
 
   return useQuery({
-    queryKey: ["admin-customers", params],
+    queryKey: ['admin-customers', params],
     queryFn: () => api.get(`/admin/customers?${searchParams.toString()}`),
   });
 }
 
 export function useCustomer(id: string) {
   return useQuery({
-    queryKey: ["admin-customer", id],
+    queryKey: ['admin-customer', id],
     queryFn: () => api.get(`/admin/customers/${id}`),
     enabled: !!id,
   });
@@ -1061,8 +1168,8 @@ export function useToggleCustomerActive() {
   return useMutation({
     mutationFn: (id: string) => api.put(`/admin/customers/${id}/toggle-active`, {}),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-customers"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-customer"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-customers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-customer'] });
     },
   });
 }
@@ -1071,33 +1178,33 @@ export function useToggleCustomerActive() {
 **Step 2: Create customers list page**
 
 ```tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { Search, Eye, UserCheck, UserX } from "lucide-react";
-import { Button, Badge, Card, Select } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
-import { useCustomers, useToggleCustomerActive } from "@/hooks/use-customers";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Search, Eye, UserCheck, UserX } from 'lucide-react';
+import { Button, Badge, Card, Select } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/toast';
+import { useCustomers, useToggleCustomerActive } from '@/hooks/use-customers';
 
 const activeOptions = [
-  { value: "", label: "All Customers" },
-  { value: "true", label: "Active" },
-  { value: "false", label: "Inactive" },
+  { value: '', label: 'All Customers' },
+  { value: 'true', label: 'Active' },
+  { value: 'false', label: 'Inactive' },
 ];
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 }
 
 export default function CustomersPage() {
-  const [search, setSearch] = useState("");
-  const [isActive, setIsActive] = useState("");
+  const [search, setSearch] = useState('');
+  const [isActive, setIsActive] = useState('');
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useCustomers({
@@ -1109,7 +1216,7 @@ export default function CustomersPage() {
   const toggleActive = useToggleCustomerActive();
 
   const handleToggle = async (id: string, name: string, currentActive: boolean) => {
-    const action = currentActive ? "deactivate" : "activate";
+    const action = currentActive ? 'deactivate' : 'activate';
     if (!confirm(`Are you sure you want to ${action} "${name}"?`)) return;
     try {
       await toggleActive.mutateAsync(id);
@@ -1131,19 +1238,28 @@ export default function CustomersPage() {
       <Card>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray" />
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray"
+            />
             <input
               type="text"
               placeholder="Search by name, email, or phone..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
             />
           </div>
           <Select
             options={activeOptions}
             value={isActive}
-            onChange={(e) => { setIsActive(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setIsActive(e.target.value);
+              setPage(1);
+            }}
             className="w-full sm:w-40"
           />
         </div>
@@ -1170,7 +1286,9 @@ export default function CustomersPage() {
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Customer</th>
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Email</th>
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Orders</th>
-                    <th className="text-left px-6 py-3 font-medium text-medium-gray">Loyalty Pts</th>
+                    <th className="text-left px-6 py-3 font-medium text-medium-gray">
+                      Loyalty Pts
+                    </th>
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Joined</th>
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Status</th>
                     <th className="text-right px-6 py-3 font-medium text-medium-gray">Actions</th>
@@ -1178,9 +1296,15 @@ export default function CustomersPage() {
                 </thead>
                 <tbody>
                   {data.customers.map((customer: any) => (
-                    <tr key={customer.id} className="border-b border-light-gray last:border-0 hover:bg-off-white/50">
+                    <tr
+                      key={customer.id}
+                      className="border-b border-light-gray last:border-0 hover:bg-off-white/50"
+                    >
                       <td className="px-6 py-3">
-                        <Link href={`/customers/${customer.id}`} className="font-medium text-charcoal hover:text-deep-earth">
+                        <Link
+                          href={`/customers/${customer.id}`}
+                          className="font-medium text-charcoal hover:text-deep-earth"
+                        >
                           {customer.firstName} {customer.lastName}
                         </Link>
                       </td>
@@ -1189,8 +1313,8 @@ export default function CustomersPage() {
                       <td className="px-6 py-3 text-charcoal">{customer.loyaltyPoints}</td>
                       <td className="px-6 py-3 text-dark-gray">{formatDate(customer.createdAt)}</td>
                       <td className="px-6 py-3">
-                        <Badge variant={customer.isActive ? "success" : "error"}>
-                          {customer.isActive ? "Active" : "Inactive"}
+                        <Badge variant={customer.isActive ? 'success' : 'error'}>
+                          {customer.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </td>
                       <td className="px-6 py-3">
@@ -1203,9 +1327,15 @@ export default function CustomersPage() {
                             <Eye size={16} className="text-dark-gray" />
                           </Link>
                           <button
-                            onClick={() => handleToggle(customer.id, `${customer.firstName} ${customer.lastName}`, customer.isActive)}
-                            className={`p-1.5 rounded-md transition-colors ${customer.isActive ? "hover:bg-error/10" : "hover:bg-success/10"}`}
-                            title={customer.isActive ? "Deactivate" : "Activate"}
+                            onClick={() =>
+                              handleToggle(
+                                customer.id,
+                                `${customer.firstName} ${customer.lastName}`,
+                                customer.isActive
+                              )
+                            }
+                            className={`p-1.5 rounded-md transition-colors ${customer.isActive ? 'hover:bg-error/10' : 'hover:bg-success/10'}`}
+                            title={customer.isActive ? 'Deactivate' : 'Activate'}
                           >
                             {customer.isActive ? (
                               <UserX size={16} className="text-error" />
@@ -1228,10 +1358,20 @@ export default function CustomersPage() {
                   Page {data.page} of {data.totalPages} ({data.total} customers)
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
                     Previous
                   </Button>
-                  <Button variant="ghost" size="sm" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={page >= data.totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
                     Next
                   </Button>
                 </div>
@@ -1250,6 +1390,7 @@ export default function CustomersPage() {
 ### Task 6: Admin — Customer Detail Page
 
 **Files:**
+
 - Create: `apps/admin/src/app/(admin)/customers/[id]/page.tsx`
 
 **Context:** Uses `use(params)` for Next.js 16 async params. Shows customer info, stats, recent orders, addresses. Uses `useCustomer(id)` and `useToggleCustomerActive()`.
@@ -1257,41 +1398,41 @@ export default function CustomersPage() {
 **Code:**
 
 ```tsx
-"use client";
+'use client';
 
-import { use } from "react";
-import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, ShoppingBag, Star, UserCheck, UserX } from "lucide-react";
-import { Button, Badge, Card } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
-import { useCustomer, useToggleCustomerActive } from "@/hooks/use-customers";
+import { use } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Mail, Phone, MapPin, ShoppingBag, Star, UserCheck, UserX } from 'lucide-react';
+import { Button, Badge, Card } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/toast';
+import { useCustomer, useToggleCustomerActive } from '@/hooks/use-customers';
 
-const statusVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
-  PLACED: "info",
-  CONFIRMED: "info",
-  PROCESSING: "warning",
-  SHIPPED: "warning",
-  OUT_FOR_DELIVERY: "warning",
-  DELIVERED: "success",
-  CANCELLED: "error",
-  RETURNED: "error",
-  REFUNDED: "default",
+const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+  PLACED: 'info',
+  CONFIRMED: 'info',
+  PROCESSING: 'warning',
+  SHIPPED: 'warning',
+  OUT_FOR_DELIVERY: 'warning',
+  DELIVERED: 'success',
+  CANCELLED: 'error',
+  RETURNED: 'error',
+  REFUNDED: 'default',
 };
 
 function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(amount));
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 }
 
@@ -1304,7 +1445,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   const handleToggle = async () => {
     if (!customer) return;
-    const action = customer.isActive ? "deactivate" : "activate";
+    const action = customer.isActive ? 'deactivate' : 'activate';
     if (!confirm(`Are you sure you want to ${action} this customer?`)) return;
     try {
       await toggleActive.mutateAsync(id);
@@ -1346,19 +1487,21 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             <h1 className="text-2xl font-semibold text-charcoal">
               {customer.firstName} {customer.lastName}
             </h1>
-            <Badge variant={customer.isActive ? "success" : "error"}>
-              {customer.isActive ? "Active" : "Inactive"}
+            <Badge variant={customer.isActive ? 'success' : 'error'}>
+              {customer.isActive ? 'Active' : 'Inactive'}
             </Badge>
           </div>
-          <p className="text-sm text-medium-gray mt-1">Customer since {formatDate(customer.createdAt)}</p>
+          <p className="text-sm text-medium-gray mt-1">
+            Customer since {formatDate(customer.createdAt)}
+          </p>
         </div>
         <Button
-          variant={customer.isActive ? "danger" : "secondary"}
+          variant={customer.isActive ? 'danger' : 'secondary'}
           onClick={handleToggle}
           disabled={toggleActive.isPending}
         >
           {customer.isActive ? <UserX size={16} /> : <UserCheck size={16} />}
-          {customer.isActive ? "Deactivate" : "Activate"}
+          {customer.isActive ? 'Deactivate' : 'Activate'}
         </Button>
       </div>
 
@@ -1373,7 +1516,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                   <ShoppingBag size={20} className="text-info" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold text-charcoal">{customer._count?.orders || 0}</p>
+                  <p className="text-2xl font-semibold text-charcoal">
+                    {customer._count?.orders || 0}
+                  </p>
                   <p className="text-xs text-medium-gray">Total Orders</p>
                 </div>
               </div>
@@ -1384,7 +1529,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                   <span className="text-success font-semibold text-sm">&#8377;</span>
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold text-charcoal">{formatPrice(customer.totalSpent || 0)}</p>
+                  <p className="text-2xl font-semibold text-charcoal">
+                    {formatPrice(customer.totalSpent || 0)}
+                  </p>
                   <p className="text-xs text-medium-gray">Total Spent</p>
                 </div>
               </div>
@@ -1422,14 +1569,17 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     {customer.orders.map((order: any) => (
                       <tr key={order.id} className="border-b border-light-gray last:border-0">
                         <td className="py-2">
-                          <Link href={`/orders/${order.orderNumber}`} className="text-deep-earth hover:underline">
+                          <Link
+                            href={`/orders/${order.orderNumber}`}
+                            className="text-deep-earth hover:underline"
+                          >
                             #{order.orderNumber}
                           </Link>
                         </td>
                         <td className="py-2 text-dark-gray">{formatDate(order.createdAt)}</td>
                         <td className="py-2">
-                          <Badge variant={statusVariant[order.status] || "default"}>
-                            {order.status.replace(/_/g, " ")}
+                          <Badge variant={statusVariant[order.status] || 'default'}>
+                            {order.status.replace(/_/g, ' ')}
                           </Badge>
                         </td>
                         <td className="py-2 text-right font-medium text-charcoal">
@@ -1462,7 +1612,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               )}
               <div className="pt-2 border-t border-light-gray">
                 <p className="text-xs text-medium-gray">
-                  Email {customer.emailVerified ? "verified" : "not verified"}
+                  Email {customer.emailVerified ? 'verified' : 'not verified'}
                 </p>
                 {customer.lastLoginAt && (
                   <p className="text-xs text-medium-gray mt-1">
@@ -1492,7 +1642,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     <p className="text-dark-gray">{addr.fullName}</p>
                     <p className="text-dark-gray">{addr.line1}</p>
                     {addr.line2 && <p className="text-dark-gray">{addr.line2}</p>}
-                    <p className="text-dark-gray">{addr.city}, {addr.state} {addr.pinCode}</p>
+                    <p className="text-dark-gray">
+                      {addr.city}, {addr.state} {addr.pinCode}
+                    </p>
                   </div>
                 ))}
               </div>

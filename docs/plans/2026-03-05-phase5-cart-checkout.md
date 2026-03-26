@@ -11,6 +11,7 @@
 **API Base:** `http://localhost:5000/api/v1`
 
 **Existing Relevant Code:**
+
 - `packages/shared/src/schemas/cart.schema.ts` — `addToCartSchema`, `updateCartItemSchema`
 - `packages/shared/src/schemas/order.schema.ts` — `createOrderSchema`, `verifyPaymentSchema`, `cancelOrderSchema`
 - `packages/shared/src/schemas/user.schema.ts` — `addressSchema` (AddressInput)
@@ -25,6 +26,7 @@
 - Prisma models: Cart, CartItem, Order, OrderItem, Payment, Address, DiscountCode
 
 **Razorpay Integration Notes:**
+
 - Install `razorpay` package in API app
 - Razorpay creates an "order" with amount, backend stores `razorpayOrderId`
 - Frontend opens Razorpay checkout modal (script tag loaded dynamically)
@@ -39,16 +41,19 @@
 Install the Razorpay Node SDK in the API app and add Razorpay config to environment variables.
 
 **Files to modify:**
+
 - `apps/api/package.json` — Add `razorpay` dependency
 - `apps/api/src/config/env.ts` — Add `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
 
 **Steps:**
+
 1. Run `cd apps/api && pnpm add razorpay`
 2. Read `apps/api/src/config/env.ts` and add Razorpay env vars with dev defaults
 
 **Modify: `apps/api/src/config/env.ts`**
 
 Add to the Zod schema:
+
 ```typescript
 RAZORPAY_KEY_ID: z.string().default("rzp_test_placeholder"),
 RAZORPAY_KEY_SECRET: z.string().default("test_secret_placeholder"),
@@ -61,6 +66,7 @@ RAZORPAY_KEY_SECRET: z.string().default("test_secret_placeholder"),
 Server-side cart for authenticated users. Cart syncs with the DB so it persists across devices.
 
 **Endpoints:**
+
 - `GET /cart` — Get user's cart with items + variant details
 - `POST /cart/items` — Add item to cart (variantId, quantity)
 - `PUT /cart/items/:variantId` — Update item quantity
@@ -68,19 +74,21 @@ Server-side cart for authenticated users. Cart syncs with the DB so it persists 
 - `DELETE /cart` — Clear entire cart
 
 **Files to create:**
+
 - `apps/api/src/services/cart.service.ts`
 - `apps/api/src/controllers/cart.controller.ts`
 - `apps/api/src/routes/cart.routes.ts`
 
 **File to modify:**
+
 - `apps/api/src/app.ts` — Mount cart routes
 
 **File: `apps/api/src/services/cart.service.ts`**
 
 ```typescript
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { AddToCartInput, UpdateCartItemInput } from "@earth-revibe/shared";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type { AddToCartInput, UpdateCartItemInput } from '@earth-revibe/shared';
 
 export const cartService = {
   async getCart(userId: string) {
@@ -103,7 +111,7 @@ export const cartService = {
               },
             },
           },
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
@@ -143,8 +151,8 @@ export const cartService = {
       include: { product: { select: { status: true } } },
     });
 
-    if (!variant || !variant.isActive || variant.product.status !== "ACTIVE") {
-      throw ApiError.badRequest("Product variant not available");
+    if (!variant || !variant.isActive || variant.product.status !== 'ACTIVE') {
+      throw ApiError.badRequest('Product variant not available');
     }
 
     if (variant.stock < data.quantity) {
@@ -186,12 +194,12 @@ export const cartService = {
 
   async updateItem(userId: string, variantId: string, data: UpdateCartItemInput) {
     const cart = await prisma.cart.findUnique({ where: { userId } });
-    if (!cart) throw ApiError.notFound("Cart not found");
+    if (!cart) throw ApiError.notFound('Cart not found');
 
     const item = await prisma.cartItem.findUnique({
       where: { cartId_variantId: { cartId: cart.id, variantId } },
     });
-    if (!item) throw ApiError.notFound("Item not in cart");
+    if (!item) throw ApiError.notFound('Item not in cart');
 
     // Check stock
     const variant = await prisma.productVariant.findUnique({ where: { id: variantId } });
@@ -209,7 +217,7 @@ export const cartService = {
 
   async removeItem(userId: string, variantId: string) {
     const cart = await prisma.cart.findUnique({ where: { userId } });
-    if (!cart) throw ApiError.notFound("Cart not found");
+    if (!cart) throw ApiError.notFound('Cart not found');
 
     await prisma.cartItem.deleteMany({
       where: { cartId: cart.id, variantId },
@@ -230,8 +238,8 @@ export const cartService = {
 **File: `apps/api/src/controllers/cart.controller.ts`**
 
 ```typescript
-import type { Request, Response } from "express";
-import { cartService } from "../services/cart.service";
+import type { Request, Response } from 'express';
+import { cartService } from '../services/cart.service';
 
 export const cartController = {
   async getCart(req: Request, res: Response) {
@@ -254,16 +262,13 @@ export const cartController = {
   },
 
   async removeItem(req: Request, res: Response) {
-    const cart = await cartService.removeItem(
-      req.user!.id,
-      req.params.variantId as string
-    );
+    const cart = await cartService.removeItem(req.user!.id, req.params.variantId as string);
     res.json({ success: true, data: cart });
   },
 
   async clearCart(req: Request, res: Response) {
     await cartService.clearCart(req.user!.id);
-    res.json({ success: true, message: "Cart cleared" });
+    res.json({ success: true, message: 'Cart cleared' });
   },
 };
 ```
@@ -271,22 +276,26 @@ export const cartController = {
 **File: `apps/api/src/routes/cart.routes.ts`**
 
 ```typescript
-import { Router, type IRouter } from "express";
-import { cartController } from "../controllers/cart.controller";
-import { authenticate } from "../middleware/auth";
-import { validate } from "../middleware/validate";
-import { asyncHandler } from "../utils/async-handler";
-import { addToCartSchema, updateCartItemSchema } from "@earth-revibe/shared";
+import { Router, type IRouter } from 'express';
+import { cartController } from '../controllers/cart.controller';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { asyncHandler } from '../utils/async-handler';
+import { addToCartSchema, updateCartItemSchema } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
 
 router.use(authenticate);
 
-router.get("/", asyncHandler(cartController.getCart));
-router.post("/items", validate({ body: addToCartSchema }), asyncHandler(cartController.addItem));
-router.put("/items/:variantId", validate({ body: updateCartItemSchema }), asyncHandler(cartController.updateItem));
-router.delete("/items/:variantId", asyncHandler(cartController.removeItem));
-router.delete("/", asyncHandler(cartController.clearCart));
+router.get('/', asyncHandler(cartController.getCart));
+router.post('/items', validate({ body: addToCartSchema }), asyncHandler(cartController.addItem));
+router.put(
+  '/items/:variantId',
+  validate({ body: updateCartItemSchema }),
+  asyncHandler(cartController.updateItem)
+);
+router.delete('/items/:variantId', asyncHandler(cartController.removeItem));
+router.delete('/', asyncHandler(cartController.clearCart));
 
 export { router as cartRouter };
 ```
@@ -294,10 +303,11 @@ export { router as cartRouter };
 **Modify: `apps/api/src/app.ts`**
 
 Add after the search route:
+
 ```typescript
-import { cartRouter } from "./routes/cart.routes";
+import { cartRouter } from './routes/cart.routes';
 // ...
-app.use("/api/v1/cart", cartRouter);
+app.use('/api/v1/cart', cartRouter);
 ```
 
 ---
@@ -307,31 +317,34 @@ app.use("/api/v1/cart", cartRouter);
 CRUD for user shipping addresses. Required for checkout.
 
 **Endpoints:**
+
 - `GET /addresses` — List user's addresses
 - `POST /addresses` — Create address
 - `PUT /addresses/:id` — Update address
 - `DELETE /addresses/:id` — Delete address
 
 **Files to create:**
+
 - `apps/api/src/services/address.service.ts`
 - `apps/api/src/controllers/address.controller.ts`
 - `apps/api/src/routes/address.routes.ts`
 
 **File to modify:**
+
 - `apps/api/src/app.ts` — Mount address routes
 
 **File: `apps/api/src/services/address.service.ts`**
 
 ```typescript
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { AddressInput } from "@earth-revibe/shared";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type { AddressInput } from '@earth-revibe/shared';
 
 export const addressService = {
   async listAddresses(userId: string) {
     return prisma.address.findMany({
       where: { userId },
-      orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
     });
   },
 
@@ -368,7 +381,7 @@ export const addressService = {
     const address = await prisma.address.findFirst({
       where: { id: addressId, userId },
     });
-    if (!address) throw ApiError.notFound("Address not found");
+    if (!address) throw ApiError.notFound('Address not found');
 
     if (data.isDefault) {
       await prisma.address.updateMany({
@@ -387,7 +400,7 @@ export const addressService = {
     const address = await prisma.address.findFirst({
       where: { id: addressId, userId },
     });
-    if (!address) throw ApiError.notFound("Address not found");
+    if (!address) throw ApiError.notFound('Address not found');
 
     await prisma.address.delete({ where: { id: addressId } });
 
@@ -395,7 +408,7 @@ export const addressService = {
     if (address.isDefault) {
       const first = await prisma.address.findFirst({
         where: { userId },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: 'asc' },
       });
       if (first) {
         await prisma.address.update({
@@ -411,8 +424,8 @@ export const addressService = {
 **File: `apps/api/src/controllers/address.controller.ts`**
 
 ```typescript
-import type { Request, Response } from "express";
-import { addressService } from "../services/address.service";
+import type { Request, Response } from 'express';
+import { addressService } from '../services/address.service';
 
 export const addressController = {
   async listAddresses(req: Request, res: Response) {
@@ -436,7 +449,7 @@ export const addressController = {
 
   async deleteAddress(req: Request, res: Response) {
     await addressService.deleteAddress(req.user!.id, req.params.id as string);
-    res.json({ success: true, message: "Address deleted" });
+    res.json({ success: true, message: 'Address deleted' });
   },
 };
 ```
@@ -444,21 +457,25 @@ export const addressController = {
 **File: `apps/api/src/routes/address.routes.ts`**
 
 ```typescript
-import { Router, type IRouter } from "express";
-import { addressController } from "../controllers/address.controller";
-import { authenticate } from "../middleware/auth";
-import { validate } from "../middleware/validate";
-import { asyncHandler } from "../utils/async-handler";
-import { addressSchema } from "@earth-revibe/shared";
+import { Router, type IRouter } from 'express';
+import { addressController } from '../controllers/address.controller';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { asyncHandler } from '../utils/async-handler';
+import { addressSchema } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
 
 router.use(authenticate);
 
-router.get("/", asyncHandler(addressController.listAddresses));
-router.post("/", validate({ body: addressSchema }), asyncHandler(addressController.createAddress));
-router.put("/:id", validate({ body: addressSchema.partial() }), asyncHandler(addressController.updateAddress));
-router.delete("/:id", asyncHandler(addressController.deleteAddress));
+router.get('/', asyncHandler(addressController.listAddresses));
+router.post('/', validate({ body: addressSchema }), asyncHandler(addressController.createAddress));
+router.put(
+  '/:id',
+  validate({ body: addressSchema.partial() }),
+  asyncHandler(addressController.updateAddress)
+);
+router.delete('/:id', asyncHandler(addressController.deleteAddress));
 
 export { router as addressRouter };
 ```
@@ -466,10 +483,11 @@ export { router as addressRouter };
 **Modify: `apps/api/src/app.ts`**
 
 Add:
+
 ```typescript
-import { addressRouter } from "./routes/address.routes";
+import { addressRouter } from './routes/address.routes';
 // ...
-app.use("/api/v1/addresses", addressRouter);
+app.use('/api/v1/addresses', addressRouter);
 ```
 
 ---
@@ -479,6 +497,7 @@ app.use("/api/v1/addresses", addressRouter);
 Create order from cart, integrate with Razorpay to create payment order, verify payment signature, and list user's orders.
 
 **Endpoints:**
+
 - `POST /orders` — Create order from cart (returns razorpayOrderId for frontend)
 - `POST /orders/verify-payment` — Verify Razorpay signature and capture payment
 - `GET /orders` — List user's orders (paginated)
@@ -486,19 +505,21 @@ Create order from cart, integrate with Razorpay to create payment order, verify 
 - `POST /orders/:orderNumber/cancel` — Cancel order
 
 **Files to create:**
+
 - `apps/api/src/config/razorpay.ts`
 - `apps/api/src/services/order.service.ts`
 - `apps/api/src/controllers/order.controller.ts`
 - `apps/api/src/routes/order.routes.ts`
 
 **File to modify:**
+
 - `apps/api/src/app.ts` — Mount order routes
 
 **File: `apps/api/src/config/razorpay.ts`**
 
 ```typescript
-import Razorpay from "razorpay";
-import { env } from "./env";
+import Razorpay from 'razorpay';
+import { env } from './env';
 
 export const razorpay = new Razorpay({
   key_id: env.RAZORPAY_KEY_ID,
@@ -509,13 +530,18 @@ export const razorpay = new Razorpay({
 **File: `apps/api/src/services/order.service.ts`**
 
 ```typescript
-import crypto from "crypto";
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import { razorpay } from "../config/razorpay";
-import { env } from "../config/env";
-import { generateOrderNumber } from "@earth-revibe/shared";
-import type { CreateOrderInput, VerifyPaymentInput, OrderQuery, CancelOrderInput } from "@earth-revibe/shared";
+import crypto from 'crypto';
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import { razorpay } from '../config/razorpay';
+import { env } from '../config/env';
+import { generateOrderNumber } from '@earth-revibe/shared';
+import type {
+  CreateOrderInput,
+  VerifyPaymentInput,
+  OrderQuery,
+  CancelOrderInput,
+} from '@earth-revibe/shared';
 
 export const orderService = {
   async createOrder(userId: string, data: CreateOrderInput) {
@@ -528,7 +554,12 @@ export const orderService = {
             variant: {
               include: {
                 product: {
-                  select: { id: true, name: true, price: true, images: { where: { isPrimary: true }, take: 1 } },
+                  select: {
+                    id: true,
+                    name: true,
+                    price: true,
+                    images: { where: { isPrimary: true }, take: 1 },
+                  },
                 },
               },
             },
@@ -538,14 +569,14 @@ export const orderService = {
     });
 
     if (!cart || cart.items.length === 0) {
-      throw ApiError.badRequest("Cart is empty");
+      throw ApiError.badRequest('Cart is empty');
     }
 
     // Verify address belongs to user
     const address = await prisma.address.findFirst({
       where: { id: data.addressId, userId },
     });
-    if (!address) throw ApiError.badRequest("Invalid address");
+    if (!address) throw ApiError.badRequest('Invalid address');
 
     // Calculate subtotal
     let subtotal = 0;
@@ -576,15 +607,15 @@ export const orderService = {
       });
 
       if (!discount || !discount.isActive) {
-        throw ApiError.badRequest("Invalid discount code");
+        throw ApiError.badRequest('Invalid discount code');
       }
 
       if (discount.expiresAt < new Date() || discount.startsAt > new Date()) {
-        throw ApiError.badRequest("Discount code has expired");
+        throw ApiError.badRequest('Discount code has expired');
       }
 
       if (discount.usageLimit && discount.usageCount >= discount.usageLimit) {
-        throw ApiError.badRequest("Discount code usage limit reached");
+        throw ApiError.badRequest('Discount code usage limit reached');
       }
 
       if (discount.minOrderValue && subtotal < Number(discount.minOrderValue)) {
@@ -592,7 +623,7 @@ export const orderService = {
       }
 
       // Calculate discount
-      if (discount.type === "PERCENTAGE") {
+      if (discount.type === 'PERCENTAGE') {
         discountAmount = subtotal * (Number(discount.value) / 100);
         if (discount.maxDiscountAmount) {
           discountAmount = Math.min(discountAmount, Number(discount.maxDiscountAmount));
@@ -609,7 +640,7 @@ export const orderService = {
     if (data.loyaltyPointsToUse > 0) {
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user || user.loyaltyPoints < data.loyaltyPointsToUse) {
-        throw ApiError.badRequest("Insufficient loyalty points");
+        throw ApiError.badRequest('Insufficient loyalty points');
       }
       // 1 point = ₹1
       loyaltyDiscount = data.loyaltyPointsToUse;
@@ -626,7 +657,7 @@ export const orderService = {
     // Create Razorpay order
     const razorpayOrder = await razorpay.orders.create({
       amount: Math.round(totalAmount * 100), // Razorpay expects paise
-      currency: "INR",
+      currency: 'INR',
       receipt: orderNumber,
     });
 
@@ -650,13 +681,13 @@ export const orderService = {
           create: {
             razorpayOrderId: razorpayOrder.id,
             amount: totalAmount,
-            status: "PENDING",
+            status: 'PENDING',
           },
         },
         statusHistory: {
           create: {
-            status: "PLACED",
-            note: "Order placed, awaiting payment",
+            status: 'PLACED',
+            note: 'Order placed, awaiting payment',
           },
         },
       },
@@ -689,23 +720,23 @@ export const orderService = {
       include: { order: true },
     });
 
-    if (!payment) throw ApiError.notFound("Payment not found");
-    if (payment.order.userId !== userId) throw ApiError.forbidden("Not your order");
+    if (!payment) throw ApiError.notFound('Payment not found');
+    if (payment.order.userId !== userId) throw ApiError.forbidden('Not your order');
 
     // Verify signature
-    const body = data.razorpayOrderId + "|" + data.razorpayPaymentId;
+    const body = data.razorpayOrderId + '|' + data.razorpayPaymentId;
     const expectedSignature = crypto
-      .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
+      .createHmac('sha256', env.RAZORPAY_KEY_SECRET)
       .update(body)
-      .digest("hex");
+      .digest('hex');
 
     if (expectedSignature !== data.razorpaySignature) {
       // Mark payment as failed
       await prisma.payment.update({
         where: { id: payment.id },
-        data: { status: "FAILED", failureReason: "Signature verification failed" },
+        data: { status: 'FAILED', failureReason: 'Signature verification failed' },
       });
-      throw ApiError.badRequest("Payment verification failed");
+      throw ApiError.badRequest('Payment verification failed');
     }
 
     // Update payment
@@ -714,7 +745,7 @@ export const orderService = {
       data: {
         razorpayPaymentId: data.razorpayPaymentId,
         razorpaySignature: data.razorpaySignature,
-        status: "CAPTURED",
+        status: 'CAPTURED',
         paidAt: new Date(),
       },
     });
@@ -722,14 +753,14 @@ export const orderService = {
     // Update order status
     await prisma.order.update({
       where: { id: payment.order.id },
-      data: { status: "CONFIRMED" },
+      data: { status: 'CONFIRMED' },
     });
 
     await prisma.orderStatusHistory.create({
       data: {
         orderId: payment.order.id,
-        status: "CONFIRMED",
-        note: "Payment received",
+        status: 'CONFIRMED',
+        note: 'Payment received',
       },
     });
 
@@ -784,7 +815,7 @@ export const orderService = {
         where: where as any,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: {
           items: true,
           payment: { select: { status: true, method: true, paidAt: true } },
@@ -803,13 +834,13 @@ export const orderService = {
         items: true,
         payment: true,
         address: true,
-        statusHistory: { orderBy: { createdAt: "desc" } },
+        statusHistory: { orderBy: { createdAt: 'desc' } },
         discountCode: { select: { code: true, type: true, value: true } },
       },
     });
 
-    if (!order) throw ApiError.notFound("Order not found");
-    if (order.userId !== userId) throw ApiError.forbidden("Not your order");
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.userId !== userId) throw ApiError.forbidden('Not your order');
 
     return order;
   },
@@ -820,23 +851,23 @@ export const orderService = {
       include: { payment: true },
     });
 
-    if (!order) throw ApiError.notFound("Order not found");
-    if (order.userId !== userId) throw ApiError.forbidden("Not your order");
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.userId !== userId) throw ApiError.forbidden('Not your order');
 
-    const cancellableStatuses = ["PLACED", "CONFIRMED", "PROCESSING"];
+    const cancellableStatuses = ['PLACED', 'CONFIRMED', 'PROCESSING'];
     if (!cancellableStatuses.includes(order.status)) {
-      throw ApiError.badRequest("Order cannot be cancelled at this stage");
+      throw ApiError.badRequest('Order cannot be cancelled at this stage');
     }
 
     await prisma.order.update({
       where: { id: order.id },
-      data: { status: "CANCELLED" },
+      data: { status: 'CANCELLED' },
     });
 
     await prisma.orderStatusHistory.create({
       data: {
         orderId: order.id,
-        status: "CANCELLED",
+        status: 'CANCELLED',
         note: data.reason,
         changedBy: userId,
       },
@@ -869,8 +900,8 @@ export const orderService = {
 **File: `apps/api/src/controllers/order.controller.ts`**
 
 ```typescript
-import type { Request, Response } from "express";
-import { orderService } from "../services/order.service";
+import type { Request, Response } from 'express';
+import { orderService } from '../services/order.service';
 
 export const orderController = {
   async createOrder(req: Request, res: Response) {
@@ -907,27 +938,35 @@ export const orderController = {
 **File: `apps/api/src/routes/order.routes.ts`**
 
 ```typescript
-import { Router, type IRouter } from "express";
-import { orderController } from "../controllers/order.controller";
-import { authenticate } from "../middleware/auth";
-import { validate } from "../middleware/validate";
-import { asyncHandler } from "../utils/async-handler";
+import { Router, type IRouter } from 'express';
+import { orderController } from '../controllers/order.controller';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { asyncHandler } from '../utils/async-handler';
 import {
   createOrderSchema,
   verifyPaymentSchema,
   orderQuerySchema,
   cancelOrderSchema,
-} from "@earth-revibe/shared";
+} from '@earth-revibe/shared';
 
 const router: IRouter = Router();
 
 router.use(authenticate);
 
-router.post("/", validate({ body: createOrderSchema }), asyncHandler(orderController.createOrder));
-router.post("/verify-payment", validate({ body: verifyPaymentSchema }), asyncHandler(orderController.verifyPayment));
-router.get("/", validate({ query: orderQuerySchema }), asyncHandler(orderController.listOrders));
-router.get("/:orderNumber", asyncHandler(orderController.getOrder));
-router.post("/:orderNumber/cancel", validate({ body: cancelOrderSchema }), asyncHandler(orderController.cancelOrder));
+router.post('/', validate({ body: createOrderSchema }), asyncHandler(orderController.createOrder));
+router.post(
+  '/verify-payment',
+  validate({ body: verifyPaymentSchema }),
+  asyncHandler(orderController.verifyPayment)
+);
+router.get('/', validate({ query: orderQuerySchema }), asyncHandler(orderController.listOrders));
+router.get('/:orderNumber', asyncHandler(orderController.getOrder));
+router.post(
+  '/:orderNumber/cancel',
+  validate({ body: cancelOrderSchema }),
+  asyncHandler(orderController.cancelOrder)
+);
 
 export { router as orderRouter };
 ```
@@ -935,10 +974,11 @@ export { router as orderRouter };
 **Modify: `apps/api/src/app.ts`**
 
 Add:
+
 ```typescript
-import { orderRouter } from "./routes/order.routes";
+import { orderRouter } from './routes/order.routes';
 // ...
-app.use("/api/v1/orders", orderRouter);
+app.use('/api/v1/orders', orderRouter);
 ```
 
 ---
@@ -948,22 +988,25 @@ app.use("/api/v1/orders", orderRouter);
 Validate a discount code and return the discount amount for a given order total.
 
 **Endpoints:**
+
 - `POST /discounts/validate` — Validate discount code
 
 **Files to create:**
+
 - `apps/api/src/services/discount.service.ts`
 - `apps/api/src/controllers/discount.controller.ts`
 - `apps/api/src/routes/discount.routes.ts`
 
 **File to modify:**
+
 - `apps/api/src/app.ts` — Mount discount routes
 
 **File: `apps/api/src/services/discount.service.ts`**
 
 ```typescript
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { ValidateDiscountInput } from "@earth-revibe/shared";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type { ValidateDiscountInput } from '@earth-revibe/shared';
 
 export const discountService = {
   async validateDiscount(data: ValidateDiscountInput) {
@@ -972,16 +1015,16 @@ export const discountService = {
     });
 
     if (!discount || !discount.isActive) {
-      throw ApiError.badRequest("Invalid discount code");
+      throw ApiError.badRequest('Invalid discount code');
     }
 
     const now = new Date();
     if (discount.startsAt > now || discount.expiresAt < now) {
-      throw ApiError.badRequest("Discount code has expired");
+      throw ApiError.badRequest('Discount code has expired');
     }
 
     if (discount.usageLimit && discount.usageCount >= discount.usageLimit) {
-      throw ApiError.badRequest("Discount code usage limit reached");
+      throw ApiError.badRequest('Discount code usage limit reached');
     }
 
     if (discount.minOrderValue && data.orderTotal < Number(discount.minOrderValue)) {
@@ -990,7 +1033,7 @@ export const discountService = {
 
     // Calculate discount amount
     let discountAmount: number;
-    if (discount.type === "PERCENTAGE") {
+    if (discount.type === 'PERCENTAGE') {
       discountAmount = data.orderTotal * (Number(discount.value) / 100);
       if (discount.maxDiscountAmount) {
         discountAmount = Math.min(discountAmount, Number(discount.maxDiscountAmount));
@@ -1014,8 +1057,8 @@ export const discountService = {
 **File: `apps/api/src/controllers/discount.controller.ts`**
 
 ```typescript
-import type { Request, Response } from "express";
-import { discountService } from "../services/discount.service";
+import type { Request, Response } from 'express';
+import { discountService } from '../services/discount.service';
 
 export const discountController = {
   async validateDiscount(req: Request, res: Response) {
@@ -1028,18 +1071,22 @@ export const discountController = {
 **File: `apps/api/src/routes/discount.routes.ts`**
 
 ```typescript
-import { Router, type IRouter } from "express";
-import { discountController } from "../controllers/discount.controller";
-import { authenticate } from "../middleware/auth";
-import { validate } from "../middleware/validate";
-import { asyncHandler } from "../utils/async-handler";
-import { validateDiscountSchema } from "@earth-revibe/shared";
+import { Router, type IRouter } from 'express';
+import { discountController } from '../controllers/discount.controller';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { asyncHandler } from '../utils/async-handler';
+import { validateDiscountSchema } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
 
 router.use(authenticate);
 
-router.post("/validate", validate({ body: validateDiscountSchema }), asyncHandler(discountController.validateDiscount));
+router.post(
+  '/validate',
+  validate({ body: validateDiscountSchema }),
+  asyncHandler(discountController.validateDiscount)
+);
 
 export { router as discountRouter };
 ```
@@ -1047,10 +1094,11 @@ export { router as discountRouter };
 **Modify: `apps/api/src/app.ts`**
 
 Add:
+
 ```typescript
-import { discountRouter } from "./routes/discount.routes";
+import { discountRouter } from './routes/discount.routes';
 // ...
-app.use("/api/v1/discounts", discountRouter);
+app.use('/api/v1/discounts', discountRouter);
 ```
 
 ---
@@ -1060,10 +1108,12 @@ app.use("/api/v1/discounts", discountRouter);
 Slide-out cart drawer that opens when the cart icon is clicked. Shows items, quantity controls, subtotal, and proceed to checkout button. Uses the existing Zustand cart store.
 
 **Files to create:**
+
 - `apps/storefront/src/components/cart/cart-drawer.tsx`
 - `apps/storefront/src/components/cart/cart-item.tsx`
 
 **File to modify:**
+
 - `apps/storefront/src/app/(shop)/layout.tsx` — Add CartDrawer component
 
 **File: `apps/storefront/src/components/cart/cart-item.tsx`**
@@ -1288,6 +1338,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
 Multi-step checkout flow: 1) Select/add address, 2) Order review + discount code, 3) Pay with Razorpay. Requires authentication — redirects to login if not authenticated.
 
 **Files to create:**
+
 - `apps/storefront/src/app/(shop)/checkout/page.tsx`
 - `apps/storefront/src/components/checkout/address-step.tsx`
 - `apps/storefront/src/components/checkout/review-step.tsx`
@@ -1759,6 +1810,7 @@ export default function CheckoutPage() {
 Simple confirmation page shown after successful payment. Shows order number, thank you message, and link to view order details.
 
 **Files to create:**
+
 - `apps/storefront/src/app/(shop)/order-confirmation/[orderNumber]/page.tsx`
 
 **File: `apps/storefront/src/app/(shop)/order-confirmation/[orderNumber]/page.tsx`**
@@ -1819,6 +1871,7 @@ export default function OrderConfirmationPage({ params }: { params: Promise<{ or
 Run `pnpm turbo build --filter=@earth-revibe/api --filter=@earth-revibe/storefront` and fix any TypeScript or build errors.
 
 **Potential issues to watch for:**
+
 1. `razorpay` package types — may need `@types/razorpay` or type assertions
 2. Prisma Decimal fields — need `Number()` casts when doing arithmetic
 3. `generateOrderNumber` import from `@earth-revibe/shared` — verify it's exported from utils

@@ -9,6 +9,7 @@
 **Tech Stack:** Next.js 16.1.6, React 19, Tailwind CSS 4, TanStack Query 5, Zustand 5, react-hook-form 7, Zod 4, Recharts 3, Lucide React, Framer Motion
 
 **Color Palette (already in globals.css @theme):**
+
 - Forest Green `#2D5016` — primary actions, active sidebar
 - Deep Earth `#3D2B1F` — sidebar background, headings
 - Cream `#FAF7F2` — content area cards
@@ -19,14 +20,16 @@
 **API Base:** `http://localhost:5000/api/v1` (same as storefront)
 
 **Existing Admin Files (skeleton):**
+
 - `apps/admin/src/app/globals.css` — Tailwind @theme tokens ✓
 - `apps/admin/src/app/layout.tsx` — Root layout with Inter font ✓
 - `apps/admin/src/app/page.tsx` — Placeholder page (will be replaced)
 - `apps/admin/package.json` — All deps installed ✓
-- `apps/admin/tsconfig.json` — Configured with @/* alias ✓
+- `apps/admin/tsconfig.json` — Configured with @/\* alias ✓
 - `apps/admin/next.config.ts` — transpilePackages configured ✓
 
 **API Endpoints Available:**
+
 - `POST /auth/login` → `{ user, accessToken, refreshToken }`
 - `POST /auth/refresh` → `{ accessToken, refreshToken }`
 - `GET /auth/me` → user object
@@ -50,6 +53,7 @@
 Set up the foundational infrastructure for admin: fetch-based API client (same pattern as storefront), TanStack Query client + provider, Zustand auth store (admin-only role check), and UI store for sidebar state.
 
 **Files to create:**
+
 - `apps/admin/src/lib/api-client.ts`
 - `apps/admin/src/lib/query-client.ts`
 - `apps/admin/src/providers/query-provider.tsx`
@@ -59,7 +63,7 @@ Set up the foundational infrastructure for admin: fetch-based API client (same p
 **File: `apps/admin/src/lib/api-client.ts`**
 
 ```typescript
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -74,23 +78,23 @@ interface ApiResponse<T = any> {
 
 class ApiClient {
   private getToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("adminAccessToken");
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('adminAccessToken');
   }
 
   private getRefreshToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("adminRefreshToken");
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('adminRefreshToken');
   }
 
   private setTokens(accessToken: string, refreshToken: string) {
-    localStorage.setItem("adminAccessToken", accessToken);
-    localStorage.setItem("adminRefreshToken", refreshToken);
+    localStorage.setItem('adminAccessToken', accessToken);
+    localStorage.setItem('adminRefreshToken', refreshToken);
   }
 
   clearTokens() {
-    localStorage.removeItem("adminAccessToken");
-    localStorage.removeItem("adminRefreshToken");
+    localStorage.removeItem('adminAccessToken');
+    localStorage.removeItem('adminRefreshToken');
   }
 
   private async refreshAccessToken(): Promise<boolean> {
@@ -99,8 +103,8 @@ class ApiClient {
 
     try {
       const res = await fetch(`${API_BASE}/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
       });
 
@@ -121,18 +125,15 @@ class ApiClient {
     }
   }
 
-  async request<T = any>(
-    path: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  async request<T = any>(path: string, options: RequestInit = {}): Promise<T> {
     const token = this.getToken();
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
     };
 
     if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     let res = await fetch(`${API_BASE}${path}`, {
@@ -144,7 +145,7 @@ class ApiClient {
     if (res.status === 401 && token) {
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
-        headers["Authorization"] = `Bearer ${this.getToken()}`;
+        headers['Authorization'] = `Bearer ${this.getToken()}`;
         res = await fetch(`${API_BASE}${path}`, { ...options, headers });
       }
     }
@@ -154,8 +155,8 @@ class ApiClient {
     if (!res.ok || !json.success) {
       throw {
         status: res.status,
-        code: json.error?.code || "ERROR",
-        message: json.error?.message || "Something went wrong",
+        code: json.error?.code || 'ERROR',
+        message: json.error?.message || 'Something went wrong',
         details: json.error?.details,
       };
     }
@@ -164,25 +165,25 @@ class ApiClient {
   }
 
   get<T = any>(path: string) {
-    return this.request<T>(path, { method: "GET" });
+    return this.request<T>(path, { method: 'GET' });
   }
 
   post<T = any>(path: string, body?: any) {
     return this.request<T>(path, {
-      method: "POST",
+      method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
     });
   }
 
   put<T = any>(path: string, body?: any) {
     return this.request<T>(path, {
-      method: "PUT",
+      method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
     });
   }
 
   delete<T = any>(path: string) {
-    return this.request<T>(path, { method: "DELETE" });
+    return this.request<T>(path, { method: 'DELETE' });
   }
 }
 
@@ -194,7 +195,7 @@ export const api = new ApiClient();
 **File: `apps/admin/src/lib/query-client.ts`**
 
 ```typescript
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from '@tanstack/react-query';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -227,7 +228,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 **File: `apps/admin/src/stores/auth-store.ts`**
 
 ```typescript
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface AdminUser {
   id: string;
@@ -260,14 +261,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   login: (user, accessToken, refreshToken) => {
-    localStorage.setItem("adminAccessToken", accessToken);
-    localStorage.setItem("adminRefreshToken", refreshToken);
+    localStorage.setItem('adminAccessToken', accessToken);
+    localStorage.setItem('adminRefreshToken', refreshToken);
     set({ user, isAuthenticated: true, isLoading: false });
   },
 
   logout: () => {
-    localStorage.removeItem("adminAccessToken");
-    localStorage.removeItem("adminRefreshToken");
+    localStorage.removeItem('adminAccessToken');
+    localStorage.removeItem('adminRefreshToken');
     set({ user: null, isAuthenticated: false, isLoading: false });
   },
 }));
@@ -278,7 +279,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 **File: `apps/admin/src/stores/ui-store.ts`**
 
 ```typescript
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface UIState {
   isSidebarCollapsed: boolean;
@@ -304,6 +305,7 @@ export const useUIStore = create<UIState>((set) => ({
 Build admin-specific UI primitives: Button, Input, Badge, Card, Modal, Toast, Spinner, Skeleton, Select, Textarea. These are similar to storefront but with admin-specific styling (deep earth accents, more compact sizing for data-heavy interfaces).
 
 **Files to create:**
+
 - `apps/admin/src/components/ui/spinner.tsx`
 - `apps/admin/src/components/ui/skeleton.tsx`
 - `apps/admin/src/components/ui/button.tsx`
@@ -734,16 +736,16 @@ export function ToastContainer() {
 **File: `apps/admin/src/components/ui/index.ts`**
 
 ```typescript
-export { Button } from "./button";
-export { Input } from "./input";
-export { Select } from "./select";
-export { Textarea } from "./textarea";
-export { Badge } from "./badge";
-export { Card } from "./card";
-export { Modal } from "./modal";
-export { Spinner } from "./spinner";
-export { Skeleton } from "./skeleton";
-export { ToastContainer, toast, useToastStore } from "./toast";
+export { Button } from './button';
+export { Input } from './input';
+export { Select } from './select';
+export { Textarea } from './textarea';
+export { Badge } from './badge';
+export { Card } from './card';
+export { Modal } from './modal';
+export { Spinner } from './spinner';
+export { Skeleton } from './skeleton';
+export { ToastContainer, toast, useToastStore } from './toast';
 ```
 
 ---
@@ -753,6 +755,7 @@ export { ToastContainer, toast, useToastStore } from "./toast";
 Build the Shopify-style admin layout: collapsible sidebar on the left with navigation, topbar with user menu and breadcrumb area. AuthGuard component that checks JWT + role on mount and redirects to login if not admin.
 
 **Files to create:**
+
 - `apps/admin/src/components/layout/sidebar.tsx`
 - `apps/admin/src/components/layout/topbar.tsx`
 - `apps/admin/src/components/layout/admin-layout.tsx`
@@ -760,6 +763,7 @@ Build the Shopify-style admin layout: collapsible sidebar on the left with navig
 - `apps/admin/src/app/(admin)/layout.tsx`
 
 **File to modify:**
+
 - `apps/admin/src/app/layout.tsx` — Add QueryProvider + ToastContainer
 
 **Modify: `apps/admin/src/app/layout.tsx`**
@@ -1130,9 +1134,11 @@ export default function AdminGroupLayout({ children }: { children: React.ReactNo
 Build the admin login page at `/login` (outside the `(admin)` layout group — no sidebar). Clean, centered card with Earth Revibe branding. Uses react-hook-form + Zod loginSchema. On success, checks role is ADMIN/SUPER_ADMIN before storing tokens.
 
 **Files to create:**
+
 - `apps/admin/src/app/login/page.tsx`
 
 **File to modify:**
+
 - `apps/admin/src/app/page.tsx` — Redirect to `/dashboard` or `/login`
 
 **File: `apps/admin/src/app/login/page.tsx`**
@@ -1234,10 +1240,10 @@ export default function AdminLoginPage() {
 Replace placeholder with redirect to dashboard:
 
 ```typescript
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
 
 export default function AdminRootPage() {
-  redirect("/dashboard");
+  redirect('/dashboard');
 }
 ```
 
@@ -1246,12 +1252,14 @@ export default function AdminRootPage() {
 ### Task 5: Dashboard Home Page
 
 Build the admin dashboard at `/dashboard` inside the `(admin)` layout group. Shows:
+
 - Page header with title "Dashboard" and date
 - 4 KPI stat cards (Total Revenue, Orders, Customers, Products) — placeholder data for now (no order/customer APIs yet)
 - Revenue chart (placeholder Recharts area chart)
 - Recent orders table (placeholder with mock data — real order API comes in Phase 6)
 
 **Files to create:**
+
 - `apps/admin/src/app/(admin)/dashboard/page.tsx`
 - `apps/admin/src/components/dashboard/stat-card.tsx`
 - `apps/admin/src/components/dashboard/revenue-chart.tsx`
@@ -1410,9 +1418,14 @@ export function RecentOrders() {
 ```
 
 **Note on `formatPrice`:** The shared package has `formatPrice` in `packages/shared/src/utils/format.ts`. If the import path is `@earth-revibe/shared`, verify the export exists. If it's named `formatPrice` in the shared package, use it. Otherwise define locally:
+
 ```typescript
 function formatPrice(amount: number) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 ```
 
@@ -1484,6 +1497,7 @@ export default function DashboardPage() {
 Build the admin products page with a data table (search, filter by status, paginated) and a create/edit product form in a full page. Uses TanStack Query for data fetching and react-hook-form + Zod for the form.
 
 **Files to create:**
+
 - `apps/admin/src/hooks/use-products.ts`
 - `apps/admin/src/app/(admin)/products/page.tsx`
 - `apps/admin/src/app/(admin)/products/new/page.tsx`
@@ -1495,8 +1509,8 @@ Build the admin products page with a data table (search, filter by status, pagin
 TanStack Query hooks for product CRUD.
 
 ```typescript
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 interface ProductListParams {
   page?: number;
@@ -1511,20 +1525,20 @@ interface ProductListParams {
 export function useProducts(params: ProductListParams = {}) {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") {
+    if (value !== undefined && value !== '') {
       searchParams.set(key, String(value));
     }
   });
 
   return useQuery({
-    queryKey: ["admin-products", params],
+    queryKey: ['admin-products', params],
     queryFn: () => api.get(`/products?${searchParams.toString()}`),
   });
 }
 
 export function useProduct(id: string) {
   return useQuery({
-    queryKey: ["admin-product", id],
+    queryKey: ['admin-product', id],
     queryFn: () => api.get(`/products/${id}`),
     enabled: !!id,
   });
@@ -1533,9 +1547,9 @@ export function useProduct(id: string) {
 export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => api.post("/products", data),
+    mutationFn: (data: any) => api.post('/products', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
     },
   });
 }
@@ -1545,8 +1559,8 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => api.put(`/products/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-product'] });
     },
   });
 }
@@ -1556,7 +1570,7 @@ export function useDeleteProduct() {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/products/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
     },
   });
 }
@@ -2060,20 +2074,24 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 **Important note for `[id]/edit/page.tsx`:** In Next.js 16, dynamic route `params` is a Promise. Use `const { id } = use(params)` to unwrap it. This matches the React 19 `use()` API.
 
 **Important note for `useProduct` hook:** The API product endpoints use slug for GET (`/products/:slug`), but for edit we need to fetch by ID. The product list already returns product objects with `id`. We need to verify if the API supports fetching by ID. If not, the hook should be adjusted. Looking at the API routes:
+
 - `GET /products/:slug` — fetches by slug
 - `PUT /products/:id` — updates by id
 
 For editing, we get the product ID from the list, and we need to fetch its data. Two options:
+
 1. Pass the full product data via URL state (avoid extra fetch)
 2. Use the slug to fetch
 
 Since the product list already gives us the product data, but we navigate to `/products/:id/edit`, we should either:
+
 - Change the hook to fetch by slug and adjust the route to use slug
 - OR add a `getProductById` API endpoint
 
 **Simplest approach:** The edit page gets the ID from the URL. The `useProduct` hook should actually fetch by slug since that's what the API supports. But we have the product data from the list. Let's change the edit route to use slug instead:
 
 Actually, looking at the API more carefully:
+
 - `GET /products/:slug` works with slug
 - `PUT /products/:id` works with id
 
@@ -2086,11 +2104,13 @@ Let me adjust the plan:
 The route should be `apps/admin/src/app/(admin)/products/[slug]/edit/page.tsx` and use slug for data fetching. Links from the product table should use `product.slug` instead of `product.id`. The update mutation still uses `product.id`.
 
 Update the products page table link to:
+
 ```typescript
 <Link href={`/products/${product.slug}/edit`} ...>
 ```
 
 Update the edit page:
+
 ```typescript
 export default function EditProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -2100,10 +2120,11 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
 ```
 
 And the `useProduct` hook becomes:
+
 ```typescript
 export function useProduct(slug: string) {
   return useQuery({
-    queryKey: ["admin-product", slug],
+    queryKey: ['admin-product', slug],
     queryFn: () => api.get(`/products/${slug}`),
     enabled: !!slug,
   });
@@ -2117,28 +2138,29 @@ export function useProduct(slug: string) {
 Build the admin categories page with a list view and create/edit modal. Categories are simpler than products (fewer fields), so we use a modal instead of a separate page.
 
 **Files to create:**
+
 - `apps/admin/src/hooks/use-categories.ts`
 - `apps/admin/src/app/(admin)/categories/page.tsx`
 
 **File: `apps/admin/src/hooks/use-categories.ts`**
 
 ```typescript
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 export function useCategories() {
   return useQuery({
-    queryKey: ["admin-categories"],
-    queryFn: () => api.get("/categories"),
+    queryKey: ['admin-categories'],
+    queryFn: () => api.get('/categories'),
   });
 }
 
 export function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => api.post("/categories", data),
+    mutationFn: (data: any) => api.post('/categories', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
     },
   });
 }
@@ -2148,7 +2170,7 @@ export function useUpdateCategory() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => api.put(`/categories/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
     },
   });
 }
@@ -2158,7 +2180,7 @@ export function useDeleteCategory() {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/categories/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
     },
   });
 }
@@ -2398,6 +2420,7 @@ export default function CategoriesPage() {
 Run `pnpm turbo build --filter=@earth-revibe/admin` and fix any TypeScript or build errors.
 
 **Potential issues to watch for:**
+
 1. Import paths — all `@/` imports resolve to `apps/admin/src/`
 2. `@earth-revibe/shared` exports — verify `ProductStatus`, `createProductSchema`, `loginSchema`, `createCategorySchema`, `formatPrice` are all exported
 3. Next.js 16 dynamic params — must use `params: Promise<{...}>` and unwrap with `use()`
@@ -2406,9 +2429,13 @@ Run `pnpm turbo build --filter=@earth-revibe/admin` and fix any TypeScript or bu
 6. Tailwind CSS 4 — verify all color classes (`bg-deep-earth`, `text-forest-green`, etc.) match the @theme tokens in globals.css
 
 **If Recharts causes SSR issues**, wrap the chart import:
+
 ```typescript
-import dynamic from "next/dynamic";
-const RevenueChart = dynamic(() => import("@/components/dashboard/revenue-chart").then(m => ({ default: m.RevenueChart })), { ssr: false });
+import dynamic from 'next/dynamic';
+const RevenueChart = dynamic(
+  () => import('@/components/dashboard/revenue-chart').then((m) => ({ default: m.RevenueChart })),
+  { ssr: false }
+);
 ```
 
 **If `formatPrice` is not exported from shared**, check `packages/shared/src/utils/format.ts` for the exact function name and update the import, or define it locally in the component.

@@ -47,16 +47,16 @@ ruflo embeddings search -q "how does cart state sync across devices"
 
 ## Setup & Status
 
-| Command | What it does |
-|---------|-------------|
-| `ruflo --version` | Shows installed version (currently v3.5.14) |
-| `ruflo status` | Full system status — agents, swarms, memory, MCP, neural |
-| `ruflo doctor` | Health check — diagnoses any setup problems with fix commands |
-| `ruflo --list` | Lists all available commands |
-| `ruflo config get` | Shows current configuration values |
-| `ruflo config set <key> <value>` | Changes a config value |
-| `ruflo providers` | Lists configured AI providers (Anthropic, OpenAI, etc.) |
-| `ruflo completions` | Generates shell tab-completion scripts |
+| Command                          | What it does                                                  |
+| -------------------------------- | ------------------------------------------------------------- |
+| `ruflo --version`                | Shows installed version (currently v3.5.14)                   |
+| `ruflo status`                   | Full system status — agents, swarms, memory, MCP, neural      |
+| `ruflo doctor`                   | Health check — diagnoses any setup problems with fix commands |
+| `ruflo --list`                   | Lists all available commands                                  |
+| `ruflo config get`               | Shows current configuration values                            |
+| `ruflo config set <key> <value>` | Changes a config value                                        |
+| `ruflo providers`                | Lists configured AI providers (Anthropic, OpenAI, etc.)       |
+| `ruflo completions`              | Generates shell tab-completion scripts                        |
 
 ---
 
@@ -88,34 +88,34 @@ ruflo agent spawn -t performance-engineer
 
 ### Managing Running Agents
 
-| Command | What it does |
-|---------|-------------|
-| `ruflo agent list` | Lists all active agents and their status |
-| `ruflo agent status <agent-id>` | Detailed status for a specific agent |
-| `ruflo agent health` | Health check across all agents |
-| `ruflo agent metrics` | Performance metrics for all agents |
-| `ruflo agent logs <agent-id>` | Activity log for a specific agent |
-| `ruflo agent stop <agent-id>` | Stop a running agent |
-| `ruflo agent pool` | Manage the agent pool for scaling |
+| Command                         | What it does                             |
+| ------------------------------- | ---------------------------------------- |
+| `ruflo agent list`              | Lists all active agents and their status |
+| `ruflo agent status <agent-id>` | Detailed status for a specific agent     |
+| `ruflo agent health`            | Health check across all agents           |
+| `ruflo agent metrics`           | Performance metrics for all agents       |
+| `ruflo agent logs <agent-id>`   | Activity log for a specific agent        |
+| `ruflo agent stop <agent-id>`   | Stop a running agent                     |
+| `ruflo agent pool`              | Manage the agent pool for scaling        |
 
 ### Agent Types Available
 
 The most useful agent types for Earth Revibe:
 
-| Agent Type | Best used for |
-|-----------|---------------|
-| `architect` | Designing new features, writing ADRs, API contracts |
-| `coder` | Writing implementation code |
-| `reviewer` | Code review — security, style, correctness |
-| `tester` | Writing unit, integration, and e2e tests |
-| `security-architect` | Security audits, vulnerability analysis |
-| `performance-engineer` | Profiling, bottleneck detection, optimization |
-| `pr-manager` | Reviewing and managing pull requests |
-| `issue-tracker` | Triaging and prioritizing GitHub issues |
-| `release-manager` | Preparing releases and changelogs |
-| `devops-engineer` | CI/CD, deployment, infrastructure |
-| `documentation-writer` | Writing and updating docs |
-| `debugger` | Diagnosing bugs and race conditions |
+| Agent Type             | Best used for                                       |
+| ---------------------- | --------------------------------------------------- |
+| `architect`            | Designing new features, writing ADRs, API contracts |
+| `coder`                | Writing implementation code                         |
+| `reviewer`             | Code review — security, style, correctness          |
+| `tester`               | Writing unit, integration, and e2e tests            |
+| `security-architect`   | Security audits, vulnerability analysis             |
+| `performance-engineer` | Profiling, bottleneck detection, optimization       |
+| `pr-manager`           | Reviewing and managing pull requests                |
+| `issue-tracker`        | Triaging and prioritizing GitHub issues             |
+| `release-manager`      | Preparing releases and changelogs                   |
+| `devops-engineer`      | CI/CD, deployment, infrastructure                   |
+| `documentation-writer` | Writing and updating docs                           |
+| `debugger`             | Diagnosing bugs and race conditions                 |
 
 ---
 
@@ -141,22 +141,22 @@ ruflo swarm scale --count 6
 
 ### Swarm Strategies
 
-| Strategy | What it does |
-|----------|-------------|
-| `development` | Architect → Coder → Reviewer → Tester pipeline |
-| `research` | Deep analysis before implementation |
-| `adaptive` | Ruflo decides the best approach based on the task |
+| Strategy      | What it does                                      |
+| ------------- | ------------------------------------------------- |
+| `development` | Architect → Coder → Reviewer → Tester pipeline    |
+| `research`    | Deep analysis before implementation               |
+| `adaptive`    | Ruflo decides the best approach based on the task |
 
 ### Swarm Commands
 
-| Command | What it does |
-|---------|-------------|
-| `ruflo swarm init --v3-mode` | Initialize a fresh V3 swarm |
-| `ruflo swarm start -o "..."` | Start swarm with an objective |
-| `ruflo swarm status` | Check what all agents in the swarm are doing |
-| `ruflo swarm stop` | Stop the swarm cleanly |
-| `ruflo swarm scale --count N` | Change number of agents in swarm |
-| `ruflo swarm coordinate --agents N` | V3 hierarchical mesh coordination |
+| Command                             | What it does                                 |
+| ----------------------------------- | -------------------------------------------- |
+| `ruflo swarm init --v3-mode`        | Initialize a fresh V3 swarm                  |
+| `ruflo swarm start -o "..."`        | Start swarm with an objective                |
+| `ruflo swarm status`                | Check what all agents in the swarm are doing |
+| `ruflo swarm stop`                  | Stop the swarm cleanly                       |
+| `ruflo swarm scale --count N`       | Change number of agents in swarm             |
+| `ruflo swarm coordinate --agents N` | V3 hierarchical mesh coordination            |
 
 ### Practical Swarm Examples for Earth Revibe
 
@@ -277,6 +277,7 @@ ruflo hooks build-agents
 ```
 
 When to re-run pretrain:
+
 - Monthly
 - After completing a major phase
 - When routing starts suggesting the wrong agents
@@ -680,19 +681,19 @@ ruflo swarm start -o "Implement Phase 4 Admin Core as described in the spec" -s 
 
 ### Phase → Strategy Quick Reference
 
-| Phase | Recommended approach |
-|-------|---------------------|
-| Phase 1 — Foundation | `ruflo swarm start -o "..." -s development` on packages/ |
-| Phase 2 — API Core | `ruflo hive-mind spawn --claude -o "..."` |
-| Phase 3 — Storefront Core | `ruflo swarm start -o "..." -s development` |
-| Phase 4 — Admin Core | `ruflo swarm start -o "..." -s development` |
-| Phase 5 — Cart & Checkout | `ruflo hive-mind init` + spawn (cross-app) |
-| Phase 6 — Admin Orders | `ruflo swarm start -o "..." -s development` |
-| Phase 7 — User Features | `ruflo swarm start -o "..." -s development` |
-| Phase 8 — Loyalty & Referrals | `ruflo hive-mind init` + spawn (cross-app) |
-| Phase 9 — Blog & Support | `ruflo swarm start -o "..." -s development` |
-| Phase 10 — Analytics & SEO | `ruflo swarm start -o "..." -s development` |
-| Phase 11 — Testing & Security | `ruflo security scan` + `ruflo agent spawn -t tester` |
+| Phase                         | Recommended approach                                     |
+| ----------------------------- | -------------------------------------------------------- |
+| Phase 1 — Foundation          | `ruflo swarm start -o "..." -s development` on packages/ |
+| Phase 2 — API Core            | `ruflo hive-mind spawn --claude -o "..."`                |
+| Phase 3 — Storefront Core     | `ruflo swarm start -o "..." -s development`              |
+| Phase 4 — Admin Core          | `ruflo swarm start -o "..." -s development`              |
+| Phase 5 — Cart & Checkout     | `ruflo hive-mind init` + spawn (cross-app)               |
+| Phase 6 — Admin Orders        | `ruflo swarm start -o "..." -s development`              |
+| Phase 7 — User Features       | `ruflo swarm start -o "..." -s development`              |
+| Phase 8 — Loyalty & Referrals | `ruflo hive-mind init` + spawn (cross-app)               |
+| Phase 9 — Blog & Support      | `ruflo swarm start -o "..." -s development`              |
+| Phase 10 — Analytics & SEO    | `ruflo swarm start -o "..." -s development`              |
+| Phase 11 — Testing & Security | `ruflo security scan` + `ruflo agent spawn -t tester`    |
 
 ### Code Review Before Commit
 
@@ -741,17 +742,17 @@ ruflo neural optimize                  # Compress neural patterns
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| `ruflo: command not found` | `npm install -g ruflo@latest` |
-| MCP tools not showing in Claude Code | `ruflo mcp start` then restart Claude Code |
-| Agent ignores your project conventions | `ruflo hooks pretrain --depth deep` then `ruflo hooks build-agents` |
-| Routing suggests the wrong agent | `ruflo hooks route --task "..." --include-explanation` to debug, then re-pretrain |
-| `npx ruflo@v3alpha` gives an error | Use `ruflo` (global install) — the v3alpha npm tag doesn't exist |
-| Swarm agents go off-task | Keep `maxAgents` at 6 in `ruflo.config.json`, confirm `antiDrift: true` |
-| Memory seems wrong or stale | `ruflo memory cleanup && ruflo memory compress` |
-| MCP server crashes or disconnects | `ruflo mcp logs` to diagnose, then `ruflo mcp restart` |
-| `ruflo doctor` shows warnings | Run the fix command it suggests for each warning |
-| High token costs | `ruflo hooks token-optimize --task "..."` before spawning + `ruflo hooks model-route --task "..."` |
-| Wrong Claude model being used | `ruflo hooks model-stats` to review routing accuracy |
-| Agent pool exhausted | `ruflo agent pool` to check, then `ruflo swarm scale --count N` to adjust |
+| Problem                                | Fix                                                                                                |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `ruflo: command not found`             | `npm install -g ruflo@latest`                                                                      |
+| MCP tools not showing in Claude Code   | `ruflo mcp start` then restart Claude Code                                                         |
+| Agent ignores your project conventions | `ruflo hooks pretrain --depth deep` then `ruflo hooks build-agents`                                |
+| Routing suggests the wrong agent       | `ruflo hooks route --task "..." --include-explanation` to debug, then re-pretrain                  |
+| `npx ruflo@v3alpha` gives an error     | Use `ruflo` (global install) — the v3alpha npm tag doesn't exist                                   |
+| Swarm agents go off-task               | Keep `maxAgents` at 6 in `ruflo.config.json`, confirm `antiDrift: true`                            |
+| Memory seems wrong or stale            | `ruflo memory cleanup && ruflo memory compress`                                                    |
+| MCP server crashes or disconnects      | `ruflo mcp logs` to diagnose, then `ruflo mcp restart`                                             |
+| `ruflo doctor` shows warnings          | Run the fix command it suggests for each warning                                                   |
+| High token costs                       | `ruflo hooks token-optimize --task "..."` before spawning + `ruflo hooks model-route --task "..."` |
+| Wrong Claude model being used          | `ruflo hooks model-stats` to review routing accuracy                                               |
+| Agent pool exhausted                   | `ruflo agent pool` to check, then `ruflo swarm scale --count N` to adjust                          |

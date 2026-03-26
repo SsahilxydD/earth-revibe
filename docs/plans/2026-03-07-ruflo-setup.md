@@ -13,6 +13,7 @@
 ## Task 1: Install Ruflo Globally
 
 **Files:**
+
 - No files — shell only
 
 **Step 1: Install globally**
@@ -38,6 +39,7 @@ ruflo --status
 ```
 
 Expected: shows version, concurrency limit, and credits if authenticated. If not authenticated, run:
+
 ```bash
 ruflo login --browser
 ```
@@ -47,6 +49,7 @@ ruflo login --browser
 ## Task 2: Initialize Ruflo in the Monorepo Root
 
 **Files:**
+
 - Created by ruflo init: `c:/work/earth_revibe/CLAUDE.md` (will be replaced in Task 4)
 - Created by ruflo init: `c:/work/earth_revibe/.ruflo/` directory
 
@@ -58,6 +61,7 @@ ruflo init --wizard
 ```
 
 When prompted:
+
 - Project name: `earth-revibe`
 - Project type: `monorepo`
 - Primary language: `TypeScript`
@@ -86,6 +90,7 @@ git commit -m "chore: initialize ruflo v3.5 in monorepo root"
 ## Task 3: Write ruflo.config.json (4-Swarm Configuration)
 
 **Files:**
+
 - Create: `c:/work/earth_revibe/ruflo.config.json`
 
 **Step 1: Create the swarm config**
@@ -172,11 +177,12 @@ git commit -m "chore: add ruflo 4-swarm config for monorepo"
 ## Task 4: Write Root CLAUDE.md
 
 **Files:**
+
 - Overwrite: `c:/work/earth_revibe/CLAUDE.md`
 
 **Step 1: Replace the ruflo-generated CLAUDE.md with our project-specific one**
 
-```markdown
+````markdown
 # Earth Revibe — Monorepo
 
 Turborepo monorepo. pnpm workspaces. TypeScript everywhere.
@@ -199,21 +205,22 @@ pnpm db:generate  # regenerate Prisma client after schema changes
 pnpm db:push      # push schema to database
 pnpm db:seed      # seed database
 ```
+````
 
 ## Ruflo Agent Routing
 
-| Task | Command |
-|------|---------|
-| New feature design | `ruflo --agent architect --task "..."` |
-| Implementation | `ruflo --agent coder --task "..."` |
-| Code review | `ruflo --agent reviewer --task "..."` |
-| Write tests | `ruflo --agent tester --task "..."` |
-| Security audit | `ruflo --agent security-architect --task "..."` |
-| Performance | `ruflo --agent perf-analyzer --task "..."` |
-| Storefront work | add `--swarm storefront-swarm` |
-| Admin work | add `--swarm admin-swarm` |
-| API work | add `--swarm api-swarm` |
-| Shared/DB work | add `--swarm shared-swarm` |
+| Task               | Command                                         |
+| ------------------ | ----------------------------------------------- |
+| New feature design | `ruflo --agent architect --task "..."`          |
+| Implementation     | `ruflo --agent coder --task "..."`              |
+| Code review        | `ruflo --agent reviewer --task "..."`           |
+| Write tests        | `ruflo --agent tester --task "..."`             |
+| Security audit     | `ruflo --agent security-architect --task "..."` |
+| Performance        | `ruflo --agent perf-analyzer --task "..."`      |
+| Storefront work    | add `--swarm storefront-swarm`                  |
+| Admin work         | add `--swarm admin-swarm`                       |
+| API work           | add `--swarm api-swarm`                         |
+| Shared/DB work     | add `--swarm shared-swarm`                      |
 
 ## Key Conventions
 
@@ -223,20 +230,22 @@ pnpm db:seed      # seed database
 - JWT: access token 15m, refresh token 7d, rotation on every refresh
 - Images: always upload via Cloudinary, never serve from local disk
 - Never commit `.env` files — use `.env.example` as reference
-```
+
+````
 
 **Step 2: Commit**
 
 ```bash
 git add CLAUDE.md
 git commit -m "docs: write root CLAUDE.md with ruflo agent routing table"
-```
+````
 
 ---
 
 ## Task 5: Write apps/storefront/CLAUDE.md
 
 **Files:**
+
 - Create: `c:/work/earth_revibe/apps/storefront/CLAUDE.md`
 
 **Step 1: Create the file**
@@ -247,24 +256,25 @@ git commit -m "docs: write root CLAUDE.md with ruflo agent routing table"
 Next.js 16 App Router. React 19. Tailwind CSS 4. TypeScript.
 
 ## Structure
+```
 
-```
 src/
-  app/
-    (auth)/        # login, register pages — public routes
-    (shop)/        # all shopping routes — layout with header/footer
-  components/
-    cart/          # cart drawer, cart item, cart summary
-    checkout/      # checkout form, payment, confirmation
-    home/          # hero, featured collections, new arrivals
-    layout/        # header, footer, nav, mobile menu
-    product/       # product card, product gallery, product filters
-    ui/            # shared primitives: button, input, badge, modal
-  hooks/           # custom React hooks
-  lib/             # api client (fetch wrappers), analytics helpers
-  providers/       # QueryClientProvider, AuthProvider, etc
-  stores/          # zustand stores: cart, ui, auth
-```
+app/
+(auth)/ # login, register pages — public routes
+(shop)/ # all shopping routes — layout with header/footer
+components/
+cart/ # cart drawer, cart item, cart summary
+checkout/ # checkout form, payment, confirmation
+home/ # hero, featured collections, new arrivals
+layout/ # header, footer, nav, mobile menu
+product/ # product card, product gallery, product filters
+ui/ # shared primitives: button, input, badge, modal
+hooks/ # custom React hooks
+lib/ # api client (fetch wrappers), analytics helpers
+providers/ # QueryClientProvider, AuthProvider, etc
+stores/ # zustand stores: cart, ui, auth
+
+````
 
 ## Patterns
 
@@ -284,21 +294,23 @@ Always use `--swarm storefront-swarm` for work in this directory.
 Example:
 ```bash
 ruflo --agent coder --swarm storefront-swarm --task "Add wishlist toggle to ProductCard"
-```
-```
+````
+
+````
 
 **Step 2: Commit**
 
 ```bash
 git add apps/storefront/CLAUDE.md
 git commit -m "docs: add storefront CLAUDE.md with ruflo routing and conventions"
-```
+````
 
 ---
 
 ## Task 6: Write apps/admin/CLAUDE.md
 
 **Files:**
+
 - Create: `c:/work/earth_revibe/apps/admin/CLAUDE.md`
 
 **Step 1: Create the file**
@@ -310,23 +322,24 @@ Next.js 16 App Router. React 19. Tailwind CSS 4. TypeScript.
 Admin dashboard for Earth Revibe — product management, orders, customers, blog, support.
 
 ## Structure
+```
 
-```
 src/
-  app/
-    (admin)/       # all admin routes — protected, requires admin auth
-    login/         # admin login page — public
-  components/
-    analytics/     # revenue charts, KPI cards (recharts)
-    dashboard/     # dashboard home widgets
-    layout/        # sidebar, topbar, breadcrumbs
-    products/      # product form, variant editor, image uploader
-    ui/            # shared primitives: button, input, table, modal, badge
-  hooks/           # custom hooks
-  lib/             # api client, helpers
-  providers/       # QueryClientProvider, AdminAuthProvider
-  stores/          # zustand: ui state, sidebar collapse
-```
+app/
+(admin)/ # all admin routes — protected, requires admin auth
+login/ # admin login page — public
+components/
+analytics/ # revenue charts, KPI cards (recharts)
+dashboard/ # dashboard home widgets
+layout/ # sidebar, topbar, breadcrumbs
+products/ # product form, variant editor, image uploader
+ui/ # shared primitives: button, input, table, modal, badge
+hooks/ # custom hooks
+lib/ # api client, helpers
+providers/ # QueryClientProvider, AdminAuthProvider
+stores/ # zustand: ui state, sidebar collapse
+
+````
 
 ## Patterns
 
@@ -346,21 +359,23 @@ Always use `--swarm admin-swarm` for work in this directory.
 Example:
 ```bash
 ruflo --agent coder --swarm admin-swarm --task "Add low stock alert badge to inventory table"
-```
-```
+````
+
+````
 
 **Step 2: Commit**
 
 ```bash
 git add apps/admin/CLAUDE.md
 git commit -m "docs: add admin CLAUDE.md with ruflo routing and conventions"
-```
+````
 
 ---
 
 ## Task 7: Write apps/api/CLAUDE.md
 
 **Files:**
+
 - Create: `c:/work/earth_revibe/apps/api/CLAUDE.md`
 
 **Step 1: Create the file**
@@ -372,19 +387,20 @@ Express 5. TypeScript. Prisma 7. PostgreSQL 16.
 REST API at `/api/v1/`. All endpoints require JWT auth except `/auth/*` and public product/category reads.
 
 ## Structure
+```
 
-```
 src/
-  config/        # env config, db config, cloudinary config
-  controllers/   # request handlers — thin, delegate to services
-  middleware/    # auth, error handler, rate limiter, validation
-  routes/        # express routers — one file per resource
-  services/      # business logic — all DB access goes here
-  types/         # express Request augmentation, shared types
-  utils/         # helpers: jwt, email, slugify, pagination
-  app.ts         # express app setup (no listen here)
-  index.ts       # server listen entry point
-```
+config/ # env config, db config, cloudinary config
+controllers/ # request handlers — thin, delegate to services
+middleware/ # auth, error handler, rate limiter, validation
+routes/ # express routers — one file per resource
+services/ # business logic — all DB access goes here
+types/ # express Request augmentation, shared types
+utils/ # helpers: jwt, email, slugify, pagination
+app.ts # express app setup (no listen here)
+index.ts # server listen entry point
+
+````
 
 ## Patterns
 
@@ -412,21 +428,23 @@ Example:
 ```bash
 ruflo --agent coder --swarm api-swarm --task "Add endpoint to bulk update inventory stock levels"
 ruflo --agent security-architect --swarm api-swarm --task "Audit auth middleware for token validation gaps"
-```
-```
+````
+
+````
 
 **Step 2: Commit**
 
 ```bash
 git add apps/api/CLAUDE.md
 git commit -m "docs: add api CLAUDE.md with ruflo routing and conventions"
-```
+````
 
 ---
 
 ## Task 8: Pre-Train Ruflo on the Codebase
 
 **Files:**
+
 - No files created — trains Ruflo's internal routing model
 
 **Step 1: Run deep pre-training from monorepo root**
@@ -439,6 +457,7 @@ npx ruflo@v3alpha hooks pretrain --depth deep
 This will scan all TypeScript files, learn patterns, and index the codebase. Takes a few minutes.
 
 Expected output: progress bar, then summary like:
+
 ```
 Indexed 847 files
 Learned 23 patterns
@@ -466,6 +485,7 @@ Expected: routes to `--agent coder --swarm storefront-swarm`
 ## Task 9: Start MCP Server and Register with Claude Code
 
 **Files:**
+
 - Modify: `C:/Users/Administrator/.claude/claude_desktop_config.json` (or equivalent MCP config)
 
 **Step 1: Start the Ruflo MCP server**
@@ -512,6 +532,7 @@ In a new Claude Code session, type `/mcp` or check that Ruflo tools appear in th
 ## Task 10: Wire Pre-Commit Review Hook
 
 **Files:**
+
 - Create: `c:/work/earth_revibe/.git/hooks/pre-commit`
 
 **Step 1: Create the pre-commit hook script**
@@ -555,6 +576,7 @@ Expected: reviewer agent runs and prints feedback (non-blocking)
 ## Task 11: Write the Ruflo Command Reference Guide
 
 **Files:**
+
 - Create: `c:/work/earth_revibe/docs/RUFLO-GUIDE.md`
 
 **Step 1: Create the guide** (see content in the plan — this is the deliverable the user requested)
@@ -606,7 +628,7 @@ git commit -m "chore: complete ruflo setup with guide, swarms, and CLAUDE.md fil
 
 This is the exact content to write to `docs/RUFLO-GUIDE.md` in Task 11:
 
-```markdown
+````markdown
 # Ruflo Command Reference — Earth Revibe
 
 Your daily cheat sheet for getting maximum output from Ruflo on this project.
@@ -616,13 +638,13 @@ All commands run from `c:/work/earth_revibe` unless noted.
 
 ## Setup & Status
 
-| Command | What it does |
-|---------|-------------|
-| `ruflo --status` | Shows auth status, concurrency limit, and remaining API credits |
-| `ruflo --version` | Confirms installed version |
-| `ruflo mcp start` | Starts the MCP server so Ruflo tools appear in Claude Code sessions |
-| `ruflo config validate` | Checks ruflo.config.json is valid and shows swarm summary |
-| `ruflo --list` | Lists all 60+ available agents you can use |
+| Command                 | What it does                                                        |
+| ----------------------- | ------------------------------------------------------------------- |
+| `ruflo --status`        | Shows auth status, concurrency limit, and remaining API credits     |
+| `ruflo --version`       | Confirms installed version                                          |
+| `ruflo mcp start`       | Starts the MCP server so Ruflo tools appear in Claude Code sessions |
+| `ruflo config validate` | Checks ruflo.config.json is valid and shows swarm summary           |
+| `ruflo --list`          | Lists all 60+ available agents you can use                          |
 
 ---
 
@@ -630,14 +652,14 @@ All commands run from `c:/work/earth_revibe` unless noted.
 
 Pattern: `ruflo --agent <agent> --task "<what you want done>"`
 
-| Command | What it does |
-|---------|-------------|
-| `ruflo --agent architect --task "Design the referral program API endpoints"` | Gets an architecture plan with ADR before any code is written |
-| `ruflo --agent coder --task "Implement the referral code generation service"` | Writes the implementation code |
-| `ruflo --agent reviewer --task "Review the checkout flow implementation"` | Full code review: security, performance, style, correctness |
-| `ruflo --agent tester --task "Write tests for the auth middleware"` | Generates unit + integration tests |
-| `ruflo --agent security-architect --task "Audit the payment webhook handling"` | Deep security review, finds vulnerabilities |
-| `ruflo --agent perf-analyzer --task "Profile the product listing API endpoint"` | Finds bottlenecks, suggests optimizations |
+| Command                                                                         | What it does                                                  |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `ruflo --agent architect --task "Design the referral program API endpoints"`    | Gets an architecture plan with ADR before any code is written |
+| `ruflo --agent coder --task "Implement the referral code generation service"`   | Writes the implementation code                                |
+| `ruflo --agent reviewer --task "Review the checkout flow implementation"`       | Full code review: security, performance, style, correctness   |
+| `ruflo --agent tester --task "Write tests for the auth middleware"`             | Generates unit + integration tests                            |
+| `ruflo --agent security-architect --task "Audit the payment webhook handling"`  | Deep security review, finds vulnerabilities                   |
+| `ruflo --agent perf-analyzer --task "Profile the product listing API endpoint"` | Finds bottlenecks, suggests optimizations                     |
 
 ---
 
@@ -645,19 +667,21 @@ Pattern: `ruflo --agent <agent> --task "<what you want done>"`
 
 Add `--swarm <swarm-name>` to target a specific app. This ensures the agent knows your codebase conventions for that app.
 
-| Swarm | Use for |
-|-------|---------|
-| `--swarm storefront-swarm` | `apps/storefront` — Next.js customer-facing site |
-| `--swarm admin-swarm` | `apps/admin` — Next.js admin dashboard |
-| `--swarm api-swarm` | `apps/api` — Express REST API |
-| `--swarm shared-swarm` | `packages/shared` and `packages/db` — Zod schemas, Prisma |
+| Swarm                      | Use for                                                   |
+| -------------------------- | --------------------------------------------------------- |
+| `--swarm storefront-swarm` | `apps/storefront` — Next.js customer-facing site          |
+| `--swarm admin-swarm`      | `apps/admin` — Next.js admin dashboard                    |
+| `--swarm api-swarm`        | `apps/api` — Express REST API                             |
+| `--swarm shared-swarm`     | `packages/shared` and `packages/db` — Zod schemas, Prisma |
 
 Example:
+
 ```bash
 ruflo --agent coder --swarm api-swarm --task "Add bulk stock update endpoint"
 ruflo --agent coder --swarm storefront-swarm --task "Add size guide modal to product page"
 ruflo --agent coder --swarm admin-swarm --task "Add export to CSV button on orders table"
 ```
+````
 
 ---
 
@@ -674,6 +698,7 @@ npx ruflo@v3alpha task orchestrate "Build the wishlist feature end-to-end"
 ```
 
 For cross-app work (e.g. API + storefront together):
+
 ```bash
 npx ruflo@v3alpha task orchestrate \
   "Add product reviews: API endpoints + storefront UI + admin moderation" \
@@ -695,19 +720,19 @@ npx ruflo@v3alpha task orchestrate \
 
 ### Phase → Swarm Quick Reference
 
-| Phase | Command |
-|-------|---------|
-| Phase 1 — Foundation | `--spec docs/plans/2026-03-05-phase1-foundation.md --swarm shared-swarm` |
-| Phase 2 — API Core | `--spec docs/plans/2026-03-05-phase2-api-core.md --swarm api-swarm` |
-| Phase 3 — Storefront Core | `--spec docs/plans/2026-03-05-phase3-storefront-core.md --swarm storefront-swarm` |
-| Phase 4 — Admin Core | `--spec docs/plans/2026-03-05-phase4-admin-core.md --swarm admin-swarm` |
-| Phase 5 — Cart & Checkout | `--spec docs/plans/2026-03-05-phase5-cart-checkout.md --swarm storefront-swarm` |
-| Phase 6 — Admin Orders | `--spec docs/plans/2026-03-05-phase6-admin-orders-customers.md --swarm admin-swarm` |
-| Phase 7 — User Features | `--spec docs/plans/2026-03-05-phase7-user-features.md --swarm storefront-swarm` |
-| Phase 8 — Loyalty & Referrals | `--spec docs/plans/2026-03-05-phase8-loyalty-referrals.md --swarm api-swarm` |
-| Phase 9 — Blog & Support | `--spec docs/plans/2026-03-05-phase9-blog-support.md --swarm admin-swarm` |
-| Phase 10 — Analytics & SEO | `--spec docs/plans/2026-03-05-phase10-analytics-seo.md --swarm storefront-swarm` |
-| Phase 11 — Testing & Security | `--spec docs/plans/2026-03-05-phase11-testing-security.md` (all swarms) |
+| Phase                         | Command                                                                             |
+| ----------------------------- | ----------------------------------------------------------------------------------- |
+| Phase 1 — Foundation          | `--spec docs/plans/2026-03-05-phase1-foundation.md --swarm shared-swarm`            |
+| Phase 2 — API Core            | `--spec docs/plans/2026-03-05-phase2-api-core.md --swarm api-swarm`                 |
+| Phase 3 — Storefront Core     | `--spec docs/plans/2026-03-05-phase3-storefront-core.md --swarm storefront-swarm`   |
+| Phase 4 — Admin Core          | `--spec docs/plans/2026-03-05-phase4-admin-core.md --swarm admin-swarm`             |
+| Phase 5 — Cart & Checkout     | `--spec docs/plans/2026-03-05-phase5-cart-checkout.md --swarm storefront-swarm`     |
+| Phase 6 — Admin Orders        | `--spec docs/plans/2026-03-05-phase6-admin-orders-customers.md --swarm admin-swarm` |
+| Phase 7 — User Features       | `--spec docs/plans/2026-03-05-phase7-user-features.md --swarm storefront-swarm`     |
+| Phase 8 — Loyalty & Referrals | `--spec docs/plans/2026-03-05-phase8-loyalty-referrals.md --swarm api-swarm`        |
+| Phase 9 — Blog & Support      | `--spec docs/plans/2026-03-05-phase9-blog-support.md --swarm admin-swarm`           |
+| Phase 10 — Analytics & SEO    | `--spec docs/plans/2026-03-05-phase10-analytics-seo.md --swarm storefront-swarm`    |
+| Phase 11 — Testing & Security | `--spec docs/plans/2026-03-05-phase11-testing-security.md` (all swarms)             |
 
 ---
 
@@ -784,12 +809,15 @@ npx ruflo@v3alpha --agent release-manager --task "Prepare v1.0 release notes"
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| `ruflo: command not found` | Run `npm install -g ruflo@latest` again |
-| MCP tools not in Claude Code | Run `ruflo mcp start` then restart Claude Code |
-| Agent ignores project conventions | Re-run `npx ruflo@v3alpha hooks pretrain --depth deep` |
-| Swarm agents going off-task | Check `ruflo.config.json` has `"antiDrift": true` and `maxAgents` <= 8 |
-| Routing wrong agent | Run `ruflo hooks route "<task>" --include-explanation` to debug |
-| Out of credits | Run `ruflo --status` to check, then top up at ruflo dashboard |
+| Problem                           | Fix                                                                    |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| `ruflo: command not found`        | Run `npm install -g ruflo@latest` again                                |
+| MCP tools not in Claude Code      | Run `ruflo mcp start` then restart Claude Code                         |
+| Agent ignores project conventions | Re-run `npx ruflo@v3alpha hooks pretrain --depth deep`                 |
+| Swarm agents going off-task       | Check `ruflo.config.json` has `"antiDrift": true` and `maxAgents` <= 8 |
+| Routing wrong agent               | Run `ruflo hooks route "<task>" --include-explanation` to debug        |
+| Out of credits                    | Run `ruflo --status` to check, then top up at ruflo dashboard          |
+
+```
+
 ```
