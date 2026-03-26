@@ -818,7 +818,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
       </div>
 
       {/* ===== MOBILE LAYOUT (Zara-style) ===== */}
-      <div className="pb-[120px] lg:hidden">
+      <div className="pb-[env(safe-area-inset-bottom,0px)] lg:hidden">
         {/* First image — full-bleed */}
         {firstImage && (
           <Image
@@ -898,11 +898,14 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </div>
         )}
 
+        {/* Spacer — reserves room so content above isn't hidden behind the fixed dock */}
+        <div className="h-[120px]" />
+
         {/* Sentinel — marks where the dock should collapse. Static div, no async dependency. */}
         <div data-dock-hide aria-hidden="true" />
 
-        {/* Related products */}
-        <div className="px-4">
+        {/* Related products — shown after dock collapses, no extra bottom padding needed */}
+        <div className="px-4 pb-6">
           <RelatedProducts
             categorySlug={product.category?.slug}
             excludeProductId={product.id}

@@ -638,6 +638,9 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     flexShrink: 0,
     overscrollBehavior: "contain",
     position: "relative",
+    backgroundColor: "#fff",
+    // iOS: extend background past the scroll boundary to cover rubber-band overscroll
+    WebkitOverflowScrolling: "touch",
   };
 
   return (
@@ -648,6 +651,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
           overflow: "hidden",
           position: "relative",
           touchAction: "pan-y", // [FIX 6] Tell browser: "I handle horizontal, you handle vertical"
+          backgroundColor: "#fff", // Prevent iOS overscroll white flash
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
