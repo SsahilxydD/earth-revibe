@@ -7,6 +7,7 @@
 The homepage is dynamically configured via the admin CMS. It renders `HomepageSection` records from the database, ordered by `sortOrder`. Each section is a clickable card with a label, image, and link (typically to a category page). The homepage layout features a transparent header that transitions to a sticky white header on scroll.
 
 **Key elements:**
+
 - Full-width hero/banner sections (CMS-managed)
 - Featured collections grid
 - New arrivals carousel
@@ -29,6 +30,7 @@ The homepage is dynamically configured via the admin CMS. It renders `HomepageSe
 **Navigation:** Custom header with back arrow (left), share and wishlist icons (right). No standard site header.
 
 **Layout:**
+
 - Swipeable product image gallery (horizontal swipe between images, Framer Motion animations)
 - Swipe left/right between products in the same category for discovery
 - Product name, price (with crossed-out compare-at price if on sale)
@@ -120,12 +122,14 @@ All account pages require authentication. If not logged in, user is redirected t
 ### 1.12 Navigation (Storefront)
 
 **Mobile Bottom Dock (persistent on all pages):**
+
 - Home (house icon)
 - Search (magnifying glass icon)
 - Wishlist (heart icon) -- requires auth, shows count badge
 - Cart (shopping bag icon) -- shows item count badge
 
 **Header variants:**
+
 1. **Homepage:** Transparent header overlaying hero, transitions to solid white on scroll. Centered logo. Hamburger menu (left), user/cart icons (right).
 2. **Category/Listing pages:** Sticky white header with centered "EARTH REVIBE" text logo.
 3. **Product Detail page:** Minimal header with back arrow (left), share and wishlist heart icons (right). No logo.
@@ -156,11 +160,13 @@ Admin login via Supabase email/password. Only users with role ADMIN or SUPER_ADM
 **Routes:** `/products`, `/products/new`, `/products/[id]/edit`
 
 **Product list:**
+
 - Table with columns: image thumbnail, name, category, price, status (DRAFT/ACTIVE/ARCHIVED), stock total, actions
 - Search and filter by status/category
 - Bulk actions
 
 **Product form (create/edit):**
+
 - Basic info: name (auto-generates slug), short description, full description (TipTap rich text editor)
 - Pricing: price, compare-at price
 - Category selector (dropdown)
@@ -185,11 +191,13 @@ Admin login via Supabase email/password. Only users with role ADMIN or SUPER_ADM
 **Routes:** `/orders`, `/orders/[id]`
 
 **Order list:**
+
 - Table: order number, customer name/email, date, status badge, total amount
 - Filter by status, date range
 - Search by order number or customer
 
 **Order detail:**
+
 - Order items with product images, variant info, quantities, prices
 - Order total breakdown: subtotal, discount, shipping, tax, total
 - Customer info and shipping address
@@ -278,6 +286,7 @@ Admin login via Supabase email/password. Only users with role ADMIN or SUPER_ADM
 ### 2.15 Admin Navigation
 
 **Sidebar (collapsible):**
+
 - Dashboard
 - Products
 - Categories
@@ -301,45 +310,48 @@ Admin login via Supabase email/password. Only users with role ADMIN or SUPER_ADM
 All routes are prefixed with `/api/v1/`. Public routes do not require authentication. Protected routes require a valid Supabase JWT in the Authorization header.
 
 ### Public Routes
-| Route File | Endpoints |
-|---|---|
-| `auth.routes.ts` | Login, register, refresh token, logout, password reset |
-| `product.routes.ts` | List products (paginated, filterable), get product by slug |
-| `category.routes.ts` | List categories, get category by slug with products |
-| `search.routes.ts` | Search products with autocomplete |
-| `blog.routes.ts` | List published posts, get post by slug |
-| `homepage.routes.ts` | Get active homepage sections |
-| `shipping.routes.ts` | Get shipping zones and rates |
-| `webhook.routes.ts` | Razorpay payment webhook (signature-verified) |
+
+| Route File           | Endpoints                                                  |
+| -------------------- | ---------------------------------------------------------- |
+| `auth.routes.ts`     | Login, register, refresh token, logout, password reset     |
+| `product.routes.ts`  | List products (paginated, filterable), get product by slug |
+| `category.routes.ts` | List categories, get category by slug with products        |
+| `search.routes.ts`   | Search products with autocomplete                          |
+| `blog.routes.ts`     | List published posts, get post by slug                     |
+| `homepage.routes.ts` | Get active homepage sections                               |
+| `shipping.routes.ts` | Get shipping zones and rates                               |
+| `webhook.routes.ts`  | Razorpay payment webhook (signature-verified)              |
 
 ### Protected Routes (Customer)
-| Route File | Endpoints |
-|---|---|
-| `cart.routes.ts` | Get cart, add item, update quantity, remove item, clear cart |
-| `checkout.routes.ts` | Create checkout (Razorpay order), verify payment |
-| `order.routes.ts` | List user orders, get order detail, request return |
-| `address.routes.ts` | CRUD addresses, set default |
-| `wishlist.routes.ts` | List wishlist, add/remove product |
-| `discount.routes.ts` | Validate discount code |
-| `loyalty.routes.ts` | Get points balance, transaction history |
-| `referral.routes.ts` | Get referral code, list referrals |
-| `support.routes.ts` | Create ticket, list tickets, add message |
-| `upload.routes.ts` | Upload image to Cloudflare Images |
+
+| Route File           | Endpoints                                                    |
+| -------------------- | ------------------------------------------------------------ |
+| `cart.routes.ts`     | Get cart, add item, update quantity, remove item, clear cart |
+| `checkout.routes.ts` | Create checkout (Razorpay order), verify payment             |
+| `order.routes.ts`    | List user orders, get order detail, request return           |
+| `address.routes.ts`  | CRUD addresses, set default                                  |
+| `wishlist.routes.ts` | List wishlist, add/remove product                            |
+| `discount.routes.ts` | Validate discount code                                       |
+| `loyalty.routes.ts`  | Get points balance, transaction history                      |
+| `referral.routes.ts` | Get referral code, list referrals                            |
+| `support.routes.ts`  | Create ticket, list tickets, add message                     |
+| `upload.routes.ts`   | Upload image to Cloudflare Images                            |
 
 ### Admin Routes
-| Route File | Endpoints |
-|---|---|
-| `admin-product.routes.ts` | CRUD products, manage variants, manage images |
-| `admin-order.routes.ts` | List all orders, update status, create refund, Shiprocket shipment |
-| `admin-customer.routes.ts` | List customers, view customer detail |
-| `admin-blog.routes.ts` | CRUD blog posts, categories, tags |
-| `admin-discount.routes.ts` | CRUD discount codes |
-| `admin-inventory.routes.ts` | View and update stock levels |
-| `admin-support.routes.ts` | Manage tickets, assign staff, reply |
-| `admin-notification.routes.ts` | Send notifications |
-| `admin-homepage.routes.ts` | CRUD homepage sections, reorder |
-| `admin-settings.routes.ts` | Get/update store settings |
-| `analytics.routes.ts` | Revenue, orders, customers, product analytics |
+
+| Route File                     | Endpoints                                                          |
+| ------------------------------ | ------------------------------------------------------------------ |
+| `admin-product.routes.ts`      | CRUD products, manage variants, manage images                      |
+| `admin-order.routes.ts`        | List all orders, update status, create refund, Shiprocket shipment |
+| `admin-customer.routes.ts`     | List customers, view customer detail                               |
+| `admin-blog.routes.ts`         | CRUD blog posts, categories, tags                                  |
+| `admin-discount.routes.ts`     | CRUD discount codes                                                |
+| `admin-inventory.routes.ts`    | View and update stock levels                                       |
+| `admin-support.routes.ts`      | Manage tickets, assign staff, reply                                |
+| `admin-notification.routes.ts` | Send notifications                                                 |
+| `admin-homepage.routes.ts`     | CRUD homepage sections, reorder                                    |
+| `admin-settings.routes.ts`     | Get/update store settings                                          |
+| `analytics.routes.ts`          | Revenue, orders, customers, product analytics                      |
 
 ---
 
@@ -371,6 +383,7 @@ req.user is set with user ID and role for downstream handlers
 ```
 
 **Magic Checkout guest flow:**
+
 1. Unauthenticated user adds items to cart (local storage)
 2. Clicks checkout -- API creates PendingCheckout without userId
 3. Razorpay collects email and phone during Magic Checkout

@@ -1,4 +1,5 @@
 # Ruflo Setup Design — Earth Revibe
+
 **Date:** 2026-03-07
 **Approach:** Full Ruflo Init + Per-App CLAUDE.md Agent Hooks (Approach B)
 
@@ -15,6 +16,7 @@ Transform Earth Revibe's Turborepo monorepo into a fully orchestrated multi-agen
 **Goal:** Get Ruflo installed globally and initialized in the monorepo root with MCP wired into Claude Code.
 
 **Steps:**
+
 1. Install Ruflo globally: `npm install -g ruflo@latest`
 2. Run the init wizard from `c:/work/earth_revibe`: `ruflo init --wizard`
    - Scaffolds `.claude/` hooks, root `CLAUDE.md`, swarm config, and skill wiring
@@ -28,11 +30,13 @@ Transform Earth Revibe's Turborepo monorepo into a fully orchestrated multi-agen
 **Goal:** Train Ruflo's routing intelligence on the Earth Revibe codebase so it learns file patterns, naming conventions, import structures, and tech-stack conventions before any agents are dispatched.
 
 **Command:**
+
 ```bash
 npx ruflo@v3alpha hooks pretrain --depth deep
 ```
 
 Targets learned:
+
 - Next.js 16 App Router patterns (storefront + admin)
 - Express 5 + Prisma service/controller/route patterns (api)
 - Zod 4 schema conventions (packages/shared)
@@ -56,6 +60,7 @@ Targets learned:
 | `shared-swarm` | `packages/shared`, `packages/db` | mesh | 4 |
 
 **Anti-drift defaults enabled on all swarms:**
+
 - `specialized` topology — each agent has clear domain boundaries, no overlap
 - Checkpoints every N steps
 - Shared memory namespace: `earth-revibe-api-contract` (storefront + admin agents share API knowledge)
@@ -67,6 +72,7 @@ Targets learned:
 **Goal:** Guide Ruflo's agent routing per-context with conventions and agent selection rules.
 
 **Files created/updated:**
+
 - `c:/work/earth_revibe/CLAUDE.md` — root: project overview, monorepo structure, global agent routing table
 - `c:/work/earth_revibe/apps/storefront/CLAUDE.md` — Next.js 16 App Router conventions, Tailwind 4, Zustand, TanStack Query
 - `c:/work/earth_revibe/apps/admin/CLAUDE.md` — admin patterns, Tiptap, drag-and-drop, Recharts
@@ -91,6 +97,7 @@ Targets learned:
 **Goal:** Wire existing `docs/plans/*.md` phase plans to Ruflo's task orchestrator for autonomous multi-agent phase execution.
 
 **Pattern:**
+
 ```bash
 npx ruflo@v3alpha task orchestrate \
   --spec docs/plans/<phase-file>.md \
@@ -121,6 +128,7 @@ npx ruflo@v3alpha task orchestrate \
 
 **Pre-commit hook:** Fast review of changed files via `--agent reviewer`
 **On-demand commands:**
+
 - Security audit: `--agent security-architect` OWASP Top 10 scan across `apps/api`
 - Test generation: `--agent tester` targeting `src/services/__tests__/` and `src/routes/__tests__/`
 - Performance: `--agent perf-analyzer` for Next.js bundle size and API p95 latency

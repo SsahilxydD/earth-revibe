@@ -13,6 +13,7 @@
 ### Task 1: Initialize Git + Monorepo Root
 
 **Files:**
+
 - Create: `package.json`
 - Create: `pnpm-workspace.yaml`
 - Create: `turbo.json`
@@ -53,8 +54,8 @@ Run: `cd c:/work/earth_revibe && git init`
 
 ```yaml
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'packages/*'
 ```
 
 **Step 4: Create turbo.json**
@@ -141,6 +142,7 @@ strict-peer-dependencies=false
 **Step 7: Create directory structure**
 
 Run:
+
 ```bash
 mkdir -p apps/storefront apps/admin apps/api packages/shared/src packages/db/prisma packages/tsconfig
 ```
@@ -156,6 +158,7 @@ git add -A && git commit -m "chore: initialize monorepo with Turborepo and pnpm 
 ### Task 2: Shared TypeScript Configs (`packages/tsconfig`)
 
 **Files:**
+
 - Create: `packages/tsconfig/package.json`
 - Create: `packages/tsconfig/base.json`
 - Create: `packages/tsconfig/nextjs.json`
@@ -247,6 +250,7 @@ git add packages/tsconfig/ && git commit -m "chore: add shared TypeScript config
 ### Task 3: Shared Package - Enums (`packages/shared`)
 
 **Files:**
+
 - Create: `packages/shared/package.json`
 - Create: `packages/shared/tsconfig.json`
 - Create: `packages/shared/src/index.ts`
@@ -301,6 +305,7 @@ git add packages/tsconfig/ && git commit -m "chore: add shared TypeScript config
 **Step 3: Create all enum files**
 
 Create each enum file as defined in `docs/05-BACKEND-SCHEMA.md`:
+
 - `user.enum.ts` — UserRole
 - `product.enum.ts` — ProductStatus
 - `order.enum.ts` — OrderStatus, ReturnStatus
@@ -329,6 +334,7 @@ git add packages/shared/ && git commit -m "feat: add shared package with all enu
 ### Task 4: Shared Package - Zod Schemas
 
 **Files:**
+
 - Create: `packages/shared/src/schemas/index.ts`
 - Create: `packages/shared/src/schemas/auth.schema.ts`
 - Create: `packages/shared/src/schemas/user.schema.ts`
@@ -349,13 +355,13 @@ git add packages/shared/ && git commit -m "feat: add shared package with all enu
 
 ```typescript
 // common.schema.ts
-import { z } from "zod";
+import { z } from 'zod';
 
 export const paginationQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   sortBy: z.string().optional(),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 export const apiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
@@ -370,10 +376,14 @@ export const apiErrorSchema = z.object({
   error: z.object({
     code: z.string(),
     message: z.string(),
-    details: z.array(z.object({
-      field: z.string().optional(),
-      message: z.string(),
-    })).optional(),
+    details: z
+      .array(
+        z.object({
+          field: z.string().optional(),
+          message: z.string(),
+        })
+      )
+      .optional(),
   }),
 });
 
@@ -393,44 +403,57 @@ export type ApiError = z.infer<typeof apiErrorSchema>;
 
 ```typescript
 // auth.schema.ts
-import { z } from "zod";
+import { z } from 'zod';
 
-export const registerSchema = z.object({
-  firstName: z.string().min(2).max(50),
-  lastName: z.string().min(2).max(50),
-  email: z.string().email(),
-  phone: z.string().regex(/^[6-9]\d{9}$/, "Invalid Indian phone number").optional(),
-  password: z.string().min(8).max(100)
-    .regex(/[A-Z]/, "Must contain uppercase letter")
-    .regex(/[a-z]/, "Must contain lowercase letter")
-    .regex(/[0-9]/, "Must contain number"),
-  confirmPassword: z.string(),
-  referralCode: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+export const registerSchema = z
+  .object({
+    firstName: z.string().min(2).max(50),
+    lastName: z.string().min(2).max(50),
+    email: z.string().email(),
+    phone: z
+      .string()
+      .regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number')
+      .optional(),
+    password: z
+      .string()
+      .min(8)
+      .max(100)
+      .regex(/[A-Z]/, 'Must contain uppercase letter')
+      .regex(/[a-z]/, 'Must contain lowercase letter')
+      .regex(/[0-9]/, 'Must contain number'),
+    confirmPassword: z.string(),
+    referralCode: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(1, 'Password is required'),
 });
 
 export const forgotPasswordSchema = z.object({
   email: z.string().email(),
 });
 
-export const resetPasswordSchema = z.object({
-  token: z.string().min(1),
-  password: z.string().min(8).max(100)
-    .regex(/[A-Z]/, "Must contain uppercase letter")
-    .regex(/[a-z]/, "Must contain lowercase letter")
-    .regex(/[0-9]/, "Must contain number"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1),
+    password: z
+      .string()
+      .min(8)
+      .max(100)
+      .regex(/[A-Z]/, 'Must contain uppercase letter')
+      .regex(/[a-z]/, 'Must contain lowercase letter')
+      .regex(/[0-9]/, 'Must contain number'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),
@@ -464,6 +487,7 @@ git add packages/shared/ && git commit -m "feat: add Zod validation schemas for 
 ### Task 5: Shared Package - Constants & Utilities
 
 **Files:**
+
 - Create: `packages/shared/src/constants/index.ts`
 - Create: `packages/shared/src/constants/sizes.ts`
 - Create: `packages/shared/src/constants/colors.ts`
@@ -494,6 +518,7 @@ git add packages/shared/ && git commit -m "feat: add shared constants and utilit
 ### Task 6: Database Package (`packages/db`)
 
 **Files:**
+
 - Create: `packages/db/package.json`
 - Create: `packages/db/tsconfig.json`
 - Create: `packages/db/prisma/schema.prisma`
@@ -553,28 +578,31 @@ Full Prisma schema as defined in `docs/05-BACKEND-SCHEMA.md` — all models, enu
 
 ```typescript
 // src/client.ts
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-});
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 ```
 
 **Step 5: Create index.ts barrel export**
 
 ```typescript
 // src/index.ts
-export { prisma } from "./client";
-export * from "@prisma/client";
+export { prisma } from './client';
+export * from '@prisma/client';
 ```
 
 **Step 6: Create seed script** with:
+
 - Super Admin user (admin@earthrevibe.com)
 - 3 categories (Tops & Basics, Bottoms & Pants, Outerwear & Jackets)
 - 6 sample products (2 per category) with variants and images
@@ -594,6 +622,7 @@ git add packages/db/ && git commit -m "feat: add database package with Prisma sc
 ### Task 7: Storefront App Skeleton (`apps/storefront`)
 
 **Files:**
+
 - Create: `apps/storefront/package.json`
 - Create: `apps/storefront/tsconfig.json`
 - Create: `apps/storefront/next.config.ts`
@@ -623,6 +652,7 @@ git add apps/storefront/ && git commit -m "feat: add storefront Next.js app skel
 ### Task 8: Admin App Skeleton (`apps/admin`)
 
 **Files:**
+
 - Create: `apps/admin/package.json`
 - Create: `apps/admin/tsconfig.json`
 - Create: `apps/admin/next.config.ts`
@@ -652,6 +682,7 @@ git add apps/admin/ && git commit -m "feat: add admin Next.js app skeleton"
 ### Task 9: API App Skeleton (`apps/api`)
 
 **Files:**
+
 - Create: `apps/api/package.json`
 - Create: `apps/api/tsconfig.json`
 - Create: `apps/api/src/index.ts`
@@ -667,23 +698,23 @@ git add apps/admin/ && git commit -m "feat: add admin Next.js app skeleton"
 
 ```typescript
 // src/config/env.ts
-import { z } from "zod";
+import { z } from 'zod';
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(5000),
   DATABASE_URL: z.string().url(),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
-  JWT_ACCESS_EXPIRY: z.string().default("15m"),
-  JWT_REFRESH_EXPIRY: z.string().default("7d"),
+  JWT_ACCESS_EXPIRY: z.string().default('15m'),
+  JWT_REFRESH_EXPIRY: z.string().default('7d'),
   RAZORPAY_KEY_ID: z.string(),
   RAZORPAY_KEY_SECRET: z.string(),
   CLOUDINARY_CLOUD_NAME: z.string(),
   CLOUDINARY_API_KEY: z.string(),
   CLOUDINARY_API_SECRET: z.string(),
-  FRONTEND_URL: z.string().url().default("http://localhost:3000"),
-  ADMIN_URL: z.string().url().default("http://localhost:3001"),
+  FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+  ADMIN_URL: z.string().url().default('http://localhost:3001'),
 });
 
 export const env = envSchema.parse(process.env);
@@ -694,20 +725,20 @@ export type Env = z.infer<typeof envSchema>;
 
 ```typescript
 // src/app.ts
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
-import { rateLimit } from "express-rate-limit";
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 
 const app = express();
 
 app.use(helmet());
 app.use(cors({ origin: [env.FRONTEND_URL, env.ADMIN_URL], credentials: true }));
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: '10mb' }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 100 }));
 
-app.get("/api/v1/health", (req, res) => {
-  res.json({ success: true, message: "Earth Revibe API is running" });
+app.get('/api/v1/health', (req, res) => {
+  res.json({ success: true, message: 'Earth Revibe API is running' });
 });
 
 export { app };
@@ -717,8 +748,8 @@ export { app };
 
 ```typescript
 // src/index.ts
-import { app } from "./app";
-import { env } from "./config/env";
+import { app } from './app';
+import { env } from './config/env';
 
 app.listen(env.PORT, () => {
   console.log(`Earth Revibe API running on port ${env.PORT}`);

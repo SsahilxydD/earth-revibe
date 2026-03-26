@@ -13,6 +13,7 @@
 ### Task 1: Test Infrastructure Setup
 
 **Files:**
+
 - Modify: `apps/api/package.json` (add test dependencies)
 - Create: `apps/api/vitest.config.ts`
 - Create: `apps/api/src/test/setup.ts`
@@ -31,25 +32,25 @@ cd apps/api && pnpm add -D vitest @vitest/coverage-v8 supertest @types/supertest
 **Step 2: Create vitest.config.ts**
 
 ```typescript
-import { defineConfig } from "vitest/config";
-import path from "path";
+import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
     globals: true,
-    environment: "node",
-    setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.test.ts"],
+    environment: 'node',
+    setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.test.ts'],
     coverage: {
-      provider: "v8",
-      include: ["src/services/**", "src/middleware/**", "src/controllers/**"],
+      provider: 'v8',
+      include: ['src/services/**', 'src/middleware/**', 'src/controllers/**'],
     },
     testTimeout: 15000,
     hookTimeout: 15000,
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      '@': path.resolve(__dirname, 'src'),
     },
   },
 });
@@ -58,8 +59,8 @@ export default defineConfig({
 **Step 3: Create test setup file `apps/api/src/test/setup.ts`**
 
 ```typescript
-import { beforeAll, afterAll } from "vitest";
-import { prisma } from "@earth-revibe/db";
+import { beforeAll, afterAll } from 'vitest';
+import { prisma } from '@earth-revibe/db';
 
 beforeAll(async () => {
   // Verify DB connection
@@ -74,13 +75,13 @@ afterAll(async () => {
 **Step 4: Create test helpers `apps/api/src/test/helpers.ts`**
 
 ```typescript
-import supertest from "supertest";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { prisma } from "@earth-revibe/db";
-import { app } from "../app";
-import { env } from "../config/env";
-import { faker } from "@faker-js/faker";
+import supertest from 'supertest';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { prisma } from '@earth-revibe/db';
+import { app } from '../app';
+import { env } from '../config/env';
+import { faker } from '@faker-js/faker';
 
 export const request = supertest(app);
 
@@ -95,12 +96,14 @@ export async function cleanupTestData(userIds: string[]) {
 }
 
 // Create a test user directly in DB
-export async function createTestUser(overrides: {
-  role?: string;
-  isActive?: boolean;
-  email?: string;
-} = {}) {
-  const password = "Test1234";
+export async function createTestUser(
+  overrides: {
+    role?: string;
+    isActive?: boolean;
+    email?: string;
+  } = {}
+) {
+  const password = 'Test1234';
   const passwordHash = await bcrypt.hash(password, 4); // low rounds for speed
 
   const user = await prisma.user.create({
@@ -108,9 +111,9 @@ export async function createTestUser(overrides: {
       email: overrides.email || faker.internet.email().toLowerCase(),
       firstName: faker.person.firstName(),
       lastName: faker.person.lastName(),
-      phone: faker.phone.number({ style: "national" }),
+      phone: faker.phone.number({ style: 'national' }),
       passwordHash,
-      role: (overrides.role as any) || "CUSTOMER",
+      role: (overrides.role as any) || 'CUSTOMER',
       isActive: overrides.isActive ?? true,
       referralCode: `TEST-${faker.string.alphanumeric(6).toUpperCase()}`,
     },
@@ -120,23 +123,23 @@ export async function createTestUser(overrides: {
 }
 
 // Generate a valid access token for a user
-export function generateTestToken(userId: string, role: string = "CUSTOMER") {
-  return jwt.sign({ userId, role }, env.JWT_ACCESS_SECRET, { expiresIn: "15m" });
+export function generateTestToken(userId: string, role: string = 'CUSTOMER') {
+  return jwt.sign({ userId, role }, env.JWT_ACCESS_SECRET, { expiresIn: '15m' });
 }
 
 // Generate an expired token
-export function generateExpiredToken(userId: string, role: string = "CUSTOMER") {
-  return jwt.sign({ userId, role }, env.JWT_ACCESS_SECRET, { expiresIn: "0s" });
+export function generateExpiredToken(userId: string, role: string = 'CUSTOMER') {
+  return jwt.sign({ userId, role }, env.JWT_ACCESS_SECRET, { expiresIn: '0s' });
 }
 
 // Generate registration payload
 export function makeRegisterPayload(overrides: Record<string, any> = {}) {
   return {
     email: faker.internet.email().toLowerCase(),
-    password: "Test1234",
+    password: 'Test1234',
     firstName: faker.person.firstName(),
     lastName: faker.person.lastName(),
-    phone: "9876543210",
+    phone: '9876543210',
     ...overrides,
   };
 }
@@ -145,6 +148,7 @@ export function makeRegisterPayload(overrides: Record<string, any> = {}) {
 **Step 5: Add test script to `apps/api/package.json`**
 
 Add to the `"scripts"` section:
+
 ```json
 "test": "vitest run",
 "test:watch": "vitest",
@@ -154,6 +158,7 @@ Add to the `"scripts"` section:
 **Step 6: Add test task to `turbo.json`**
 
 Add to the `"tasks"` object:
+
 ```json
 "test": {
   "dependsOn": ["^build"],
@@ -166,6 +171,7 @@ Add to the `"tasks"` object:
 ### Task 2: Auth Service — Registration & Login Tests
 
 **Files:**
+
 - Create: `apps/api/src/services/__tests__/auth.service.test.ts`
 
 **Context:** Tests the auth service methods directly (unit-level, but hits real DB). Each test creates its own user and cleans up after. The auth service is at `apps/api/src/services/auth.service.ts`. Registration checks for duplicate emails, hashes passwords, creates referral codes, and returns tokens. Login verifies password, checks isActive, updates lastLoginAt, and returns tokens.
@@ -173,12 +179,12 @@ Add to the `"tasks"` object:
 **Code:**
 
 ```typescript
-import { describe, it, expect, afterEach } from "vitest";
-import { authService } from "../auth.service";
-import { prisma } from "@earth-revibe/db";
-import { createTestUser, cleanupTestData, makeRegisterPayload } from "../../test/helpers";
+import { describe, it, expect, afterEach } from 'vitest';
+import { authService } from '../auth.service';
+import { prisma } from '@earth-revibe/db';
+import { createTestUser, cleanupTestData, makeRegisterPayload } from '../../test/helpers';
 
-describe("authService", () => {
+describe('authService', () => {
   const createdUserIds: string[] = [];
 
   afterEach(async () => {
@@ -186,8 +192,8 @@ describe("authService", () => {
     createdUserIds.length = 0;
   });
 
-  describe("register", () => {
-    it("should create a new user and return tokens", async () => {
+  describe('register', () => {
+    it('should create a new user and return tokens', async () => {
       const payload = makeRegisterPayload();
       const result = await authService.register(payload);
 
@@ -195,21 +201,21 @@ describe("authService", () => {
 
       expect(result.user.email).toBe(payload.email);
       expect(result.user.firstName).toBe(payload.firstName);
-      expect(result.user.role).toBe("CUSTOMER");
+      expect(result.user.role).toBe('CUSTOMER');
       expect(result.user.referralCode).toMatch(/^REVIBE-/);
       expect(result.accessToken).toBeDefined();
       expect(result.refreshToken).toBeDefined();
     });
 
-    it("should reject duplicate email", async () => {
+    it('should reject duplicate email', async () => {
       const payload = makeRegisterPayload();
       const first = await authService.register(payload);
       createdUserIds.push(first.user.id);
 
-      await expect(authService.register(payload)).rejects.toThrow("Email already registered");
+      await expect(authService.register(payload)).rejects.toThrow('Email already registered');
     });
 
-    it("should process referral code if provided", async () => {
+    it('should process referral code if provided', async () => {
       const { user: referrer } = await createTestUser();
       createdUserIds.push(referrer.id);
 
@@ -221,12 +227,12 @@ describe("authService", () => {
         where: { referrerId: referrer.id, refereeId: result.user.id },
       });
       expect(referral).not.toBeNull();
-      expect(referral!.status).toBe("SIGNED_UP");
+      expect(referral!.status).toBe('SIGNED_UP');
     });
   });
 
-  describe("login", () => {
-    it("should return user and tokens for valid credentials", async () => {
+  describe('login', () => {
+    it('should return user and tokens for valid credentials', async () => {
       const { user, password } = await createTestUser();
       createdUserIds.push(user.id);
 
@@ -237,28 +243,31 @@ describe("authService", () => {
       expect(result.refreshToken).toBeDefined();
     });
 
-    it("should reject wrong password", async () => {
+    it('should reject wrong password', async () => {
       const { user } = await createTestUser();
       createdUserIds.push(user.id);
 
-      await expect(authService.login({ email: user.email, password: "WrongPass1" }))
-        .rejects.toThrow("Invalid email or password");
+      await expect(
+        authService.login({ email: user.email, password: 'WrongPass1' })
+      ).rejects.toThrow('Invalid email or password');
     });
 
-    it("should reject non-existent email", async () => {
-      await expect(authService.login({ email: "noone@test.com", password: "Test1234" }))
-        .rejects.toThrow("Invalid email or password");
+    it('should reject non-existent email', async () => {
+      await expect(
+        authService.login({ email: 'noone@test.com', password: 'Test1234' })
+      ).rejects.toThrow('Invalid email or password');
     });
 
-    it("should reject inactive user", async () => {
+    it('should reject inactive user', async () => {
       const { user, password } = await createTestUser({ isActive: false });
       createdUserIds.push(user.id);
 
-      await expect(authService.login({ email: user.email, password }))
-        .rejects.toThrow("Account is deactivated");
+      await expect(authService.login({ email: user.email, password })).rejects.toThrow(
+        'Account is deactivated'
+      );
     });
 
-    it("should update lastLoginAt on successful login", async () => {
+    it('should update lastLoginAt on successful login', async () => {
       const { user, password } = await createTestUser();
       createdUserIds.push(user.id);
 
@@ -269,8 +278,8 @@ describe("authService", () => {
     });
   });
 
-  describe("refreshToken", () => {
-    it("should rotate tokens", async () => {
+  describe('refreshToken', () => {
+    it('should rotate tokens', async () => {
       const payload = makeRegisterPayload();
       const registered = await authService.register(payload);
       createdUserIds.push(registered.user.id);
@@ -288,39 +297,43 @@ describe("authService", () => {
       expect(oldStored).toBeNull();
     });
 
-    it("should reject invalid refresh token", async () => {
-      await expect(authService.refreshToken("invalid-token"))
-        .rejects.toThrow("Invalid refresh token");
+    it('should reject invalid refresh token', async () => {
+      await expect(authService.refreshToken('invalid-token')).rejects.toThrow(
+        'Invalid refresh token'
+      );
     });
   });
 
-  describe("changePassword", () => {
-    it("should change password and invalidate tokens", async () => {
+  describe('changePassword', () => {
+    it('should change password and invalidate tokens', async () => {
       const { user, password } = await createTestUser();
       createdUserIds.push(user.id);
 
       await authService.changePassword(user.id, {
         currentPassword: password,
-        newPassword: "NewPass123",
+        newPassword: 'NewPass123',
       });
 
       // Old password should not work
-      await expect(authService.login({ email: user.email, password }))
-        .rejects.toThrow("Invalid email or password");
+      await expect(authService.login({ email: user.email, password })).rejects.toThrow(
+        'Invalid email or password'
+      );
 
       // New password should work
-      const result = await authService.login({ email: user.email, password: "NewPass123" });
+      const result = await authService.login({ email: user.email, password: 'NewPass123' });
       expect(result.user.id).toBe(user.id);
     });
 
-    it("should reject wrong current password", async () => {
+    it('should reject wrong current password', async () => {
       const { user } = await createTestUser();
       createdUserIds.push(user.id);
 
-      await expect(authService.changePassword(user.id, {
-        currentPassword: "WrongPass1",
-        newPassword: "NewPass123",
-      })).rejects.toThrow("Current password is incorrect");
+      await expect(
+        authService.changePassword(user.id, {
+          currentPassword: 'WrongPass1',
+          newPassword: 'NewPass123',
+        })
+      ).rejects.toThrow('Current password is incorrect');
     });
   });
 });
@@ -333,6 +346,7 @@ describe("authService", () => {
 ### Task 3: Auth API Endpoint Integration Tests
 
 **Files:**
+
 - Create: `apps/api/src/routes/__tests__/auth.routes.test.ts`
 
 **Context:** Tests the full HTTP request/response cycle for auth endpoints via Supertest. Tests validation (Zod rejects bad input), correct status codes, and response shapes. The `request` helper from `test/helpers.ts` is a Supertest instance wrapping the Express `app`.
@@ -340,10 +354,16 @@ describe("authService", () => {
 **Code:**
 
 ```typescript
-import { describe, it, expect, afterEach } from "vitest";
-import { request, createTestUser, cleanupTestData, generateTestToken, makeRegisterPayload } from "../../test/helpers";
+import { describe, it, expect, afterEach } from 'vitest';
+import {
+  request,
+  createTestUser,
+  cleanupTestData,
+  generateTestToken,
+  makeRegisterPayload,
+} from '../../test/helpers';
 
-describe("Auth Routes", () => {
+describe('Auth Routes', () => {
   const createdUserIds: string[] = [];
 
   afterEach(async () => {
@@ -351,14 +371,11 @@ describe("Auth Routes", () => {
     createdUserIds.length = 0;
   });
 
-  describe("POST /api/v1/auth/register", () => {
-    it("should register a new user (201)", async () => {
+  describe('POST /api/v1/auth/register', () => {
+    it('should register a new user (201)', async () => {
       const payload = makeRegisterPayload();
 
-      const res = await request
-        .post("/api/v1/auth/register")
-        .send(payload)
-        .expect(201);
+      const res = await request.post('/api/v1/auth/register').send(payload).expect(201);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.user.email).toBe(payload.email);
@@ -366,50 +383,41 @@ describe("Auth Routes", () => {
       createdUserIds.push(res.body.data.user.id);
     });
 
-    it("should reject invalid email (400)", async () => {
-      const payload = makeRegisterPayload({ email: "not-an-email" });
+    it('should reject invalid email (400)', async () => {
+      const payload = makeRegisterPayload({ email: 'not-an-email' });
 
-      const res = await request
-        .post("/api/v1/auth/register")
-        .send(payload)
-        .expect(400);
+      const res = await request.post('/api/v1/auth/register').send(payload).expect(400);
 
       expect(res.body.success).toBe(false);
     });
 
-    it("should reject weak password (400)", async () => {
-      const payload = makeRegisterPayload({ password: "123" });
+    it('should reject weak password (400)', async () => {
+      const payload = makeRegisterPayload({ password: '123' });
 
-      const res = await request
-        .post("/api/v1/auth/register")
-        .send(payload)
-        .expect(400);
+      const res = await request.post('/api/v1/auth/register').send(payload).expect(400);
 
       expect(res.body.success).toBe(false);
     });
 
-    it("should reject duplicate email (409)", async () => {
+    it('should reject duplicate email (409)', async () => {
       const payload = makeRegisterPayload();
 
-      const first = await request.post("/api/v1/auth/register").send(payload);
+      const first = await request.post('/api/v1/auth/register').send(payload);
       createdUserIds.push(first.body.data.user.id);
 
-      const res = await request
-        .post("/api/v1/auth/register")
-        .send(payload)
-        .expect(409);
+      const res = await request.post('/api/v1/auth/register').send(payload).expect(409);
 
-      expect(res.body.error.code).toBe("CONFLICT");
+      expect(res.body.error.code).toBe('CONFLICT');
     });
   });
 
-  describe("POST /api/v1/auth/login", () => {
-    it("should login with valid credentials (200)", async () => {
+  describe('POST /api/v1/auth/login', () => {
+    it('should login with valid credentials (200)', async () => {
       const { user, password } = await createTestUser();
       createdUserIds.push(user.id);
 
       const res = await request
-        .post("/api/v1/auth/login")
+        .post('/api/v1/auth/login')
         .send({ email: user.email, password })
         .expect(200);
 
@@ -418,54 +426,51 @@ describe("Auth Routes", () => {
       expect(res.body.data.accessToken).toBeDefined();
     });
 
-    it("should reject invalid credentials (401)", async () => {
+    it('should reject invalid credentials (401)', async () => {
       const res = await request
-        .post("/api/v1/auth/login")
-        .send({ email: "fake@test.com", password: "Wrong1234" })
+        .post('/api/v1/auth/login')
+        .send({ email: 'fake@test.com', password: 'Wrong1234' })
         .expect(401);
 
-      expect(res.body.error.code).toBe("UNAUTHORIZED");
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
     });
   });
 
-  describe("GET /api/v1/auth/me", () => {
-    it("should return user profile with valid token (200)", async () => {
+  describe('GET /api/v1/auth/me', () => {
+    it('should return user profile with valid token (200)', async () => {
       const { user } = await createTestUser();
       createdUserIds.push(user.id);
       const token = generateTestToken(user.id);
 
       const res = await request
-        .get("/api/v1/auth/me")
-        .set("Authorization", `Bearer ${token}`)
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
       expect(res.body.data.id).toBe(user.id);
       expect(res.body.data.email).toBe(user.email);
     });
 
-    it("should reject missing token (401)", async () => {
-      await request.get("/api/v1/auth/me").expect(401);
+    it('should reject missing token (401)', async () => {
+      await request.get('/api/v1/auth/me').expect(401);
     });
 
-    it("should reject invalid token (401)", async () => {
-      await request
-        .get("/api/v1/auth/me")
-        .set("Authorization", "Bearer invalid-token")
-        .expect(401);
+    it('should reject invalid token (401)', async () => {
+      await request.get('/api/v1/auth/me').set('Authorization', 'Bearer invalid-token').expect(401);
     });
   });
 
-  describe("POST /api/v1/auth/refresh", () => {
-    it("should return new tokens (200)", async () => {
+  describe('POST /api/v1/auth/refresh', () => {
+    it('should return new tokens (200)', async () => {
       const { user, password } = await createTestUser();
       createdUserIds.push(user.id);
 
       const loginRes = await request
-        .post("/api/v1/auth/login")
+        .post('/api/v1/auth/login')
         .send({ email: user.email, password });
 
       const res = await request
-        .post("/api/v1/auth/refresh")
+        .post('/api/v1/auth/refresh')
         .send({ refreshToken: loginRes.body.data.refreshToken })
         .expect(200);
 
@@ -474,22 +479,22 @@ describe("Auth Routes", () => {
     });
   });
 
-  describe("PUT /api/v1/auth/password", () => {
-    it("should change password with valid current password (200)", async () => {
+  describe('PUT /api/v1/auth/password', () => {
+    it('should change password with valid current password (200)', async () => {
       const { user, password } = await createTestUser();
       createdUserIds.push(user.id);
       const token = generateTestToken(user.id);
 
       await request
-        .put("/api/v1/auth/password")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ currentPassword: password, newPassword: "NewPass123" })
+        .put('/api/v1/auth/password')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ currentPassword: password, newPassword: 'NewPass123' })
         .expect(200);
 
       // Verify new password works
       await request
-        .post("/api/v1/auth/login")
-        .send({ email: user.email, password: "NewPass123" })
+        .post('/api/v1/auth/login')
+        .send({ email: user.email, password: 'NewPass123' })
         .expect(200);
     });
   });
@@ -503,6 +508,7 @@ describe("Auth Routes", () => {
 ### Task 4: Middleware Tests (Auth + Error Handler + Validate)
 
 **Files:**
+
 - Create: `apps/api/src/middleware/__tests__/auth.test.ts`
 - Create: `apps/api/src/middleware/__tests__/error-handler.test.ts`
 
@@ -511,10 +517,16 @@ describe("Auth Routes", () => {
 **Auth middleware test code:**
 
 ```typescript
-import { describe, it, expect, afterEach } from "vitest";
-import { request, createTestUser, cleanupTestData, generateTestToken, generateExpiredToken } from "../../test/helpers";
+import { describe, it, expect, afterEach } from 'vitest';
+import {
+  request,
+  createTestUser,
+  cleanupTestData,
+  generateTestToken,
+  generateExpiredToken,
+} from '../../test/helpers';
 
-describe("authenticate middleware", () => {
+describe('authenticate middleware', () => {
   const createdUserIds: string[] = [];
 
   afterEach(async () => {
@@ -522,33 +534,33 @@ describe("authenticate middleware", () => {
     createdUserIds.length = 0;
   });
 
-  it("should pass with valid token", async () => {
+  it('should pass with valid token', async () => {
     const { user } = await createTestUser();
     createdUserIds.push(user.id);
     const token = generateTestToken(user.id);
 
     const res = await request
-      .get("/api/v1/auth/me")
-      .set("Authorization", `Bearer ${token}`)
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     expect(res.body.data.id).toBe(user.id);
   });
 
-  it("should reject missing Authorization header", async () => {
-    const res = await request.get("/api/v1/auth/me").expect(401);
-    expect(res.body.error.message).toBe("No token provided");
+  it('should reject missing Authorization header', async () => {
+    const res = await request.get('/api/v1/auth/me').expect(401);
+    expect(res.body.error.message).toBe('No token provided');
   });
 
-  it("should reject malformed Authorization header", async () => {
+  it('should reject malformed Authorization header', async () => {
     const res = await request
-      .get("/api/v1/auth/me")
-      .set("Authorization", "NotBearer token")
+      .get('/api/v1/auth/me')
+      .set('Authorization', 'NotBearer token')
       .expect(401);
-    expect(res.body.error.message).toBe("No token provided");
+    expect(res.body.error.message).toBe('No token provided');
   });
 
-  it("should reject expired token", async () => {
+  it('should reject expired token', async () => {
     const { user } = await createTestUser();
     createdUserIds.push(user.id);
     const token = generateExpiredToken(user.id);
@@ -557,26 +569,26 @@ describe("authenticate middleware", () => {
     await new Promise((r) => setTimeout(r, 1100));
 
     const res = await request
-      .get("/api/v1/auth/me")
-      .set("Authorization", `Bearer ${token}`)
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${token}`)
       .expect(401);
-    expect(res.body.error.message).toBe("Invalid or expired token");
+    expect(res.body.error.message).toBe('Invalid or expired token');
   });
 
-  it("should reject token for inactive user", async () => {
+  it('should reject token for inactive user', async () => {
     const { user } = await createTestUser({ isActive: false });
     createdUserIds.push(user.id);
     const token = generateTestToken(user.id);
 
     const res = await request
-      .get("/api/v1/auth/me")
-      .set("Authorization", `Bearer ${token}`)
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${token}`)
       .expect(401);
-    expect(res.body.error.message).toBe("User not found or inactive");
+    expect(res.body.error.message).toBe('User not found or inactive');
   });
 });
 
-describe("authorize middleware", () => {
+describe('authorize middleware', () => {
   const createdUserIds: string[] = [];
 
   afterEach(async () => {
@@ -584,30 +596,30 @@ describe("authorize middleware", () => {
     createdUserIds.length = 0;
   });
 
-  it("should allow admin access to admin routes", async () => {
-    const { user } = await createTestUser({ role: "ADMIN" });
+  it('should allow admin access to admin routes', async () => {
+    const { user } = await createTestUser({ role: 'ADMIN' });
     createdUserIds.push(user.id);
-    const token = generateTestToken(user.id, "ADMIN");
+    const token = generateTestToken(user.id, 'ADMIN');
 
     const res = await request
-      .get("/api/v1/admin/analytics/dashboard")
-      .set("Authorization", `Bearer ${token}`)
+      .get('/api/v1/admin/analytics/dashboard')
+      .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     expect(res.body.success).toBe(true);
   });
 
-  it("should reject customer from admin routes", async () => {
-    const { user } = await createTestUser({ role: "CUSTOMER" });
+  it('should reject customer from admin routes', async () => {
+    const { user } = await createTestUser({ role: 'CUSTOMER' });
     createdUserIds.push(user.id);
-    const token = generateTestToken(user.id, "CUSTOMER");
+    const token = generateTestToken(user.id, 'CUSTOMER');
 
     const res = await request
-      .get("/api/v1/admin/analytics/dashboard")
-      .set("Authorization", `Bearer ${token}`)
+      .get('/api/v1/admin/analytics/dashboard')
+      .set('Authorization', `Bearer ${token}`)
       .expect(403);
 
-    expect(res.body.error.code).toBe("FORBIDDEN");
+    expect(res.body.error.code).toBe('FORBIDDEN');
   });
 });
 ```
@@ -615,39 +627,36 @@ describe("authorize middleware", () => {
 **Error handler test code:**
 
 ```typescript
-import { describe, it, expect } from "vitest";
-import { request } from "../../test/helpers";
+import { describe, it, expect } from 'vitest';
+import { request } from '../../test/helpers';
 
-describe("errorHandler middleware", () => {
-  it("should return structured error for ApiError (401 on bad login)", async () => {
+describe('errorHandler middleware', () => {
+  it('should return structured error for ApiError (401 on bad login)', async () => {
     const res = await request
-      .post("/api/v1/auth/login")
-      .send({ email: "noone@test.com", password: "Fake1234" })
+      .post('/api/v1/auth/login')
+      .send({ email: 'noone@test.com', password: 'Fake1234' })
       .expect(401);
 
     expect(res.body).toEqual({
       success: false,
       error: {
-        code: "UNAUTHORIZED",
-        message: "Invalid email or password",
+        code: 'UNAUTHORIZED',
+        message: 'Invalid email or password',
       },
     });
   });
 
-  it("should return structured error for validation failures (400)", async () => {
-    const res = await request
-      .post("/api/v1/auth/register")
-      .send({ email: "bad" })
-      .expect(400);
+  it('should return structured error for validation failures (400)', async () => {
+    const res = await request.post('/api/v1/auth/register').send({ email: 'bad' }).expect(400);
 
     expect(res.body.success).toBe(false);
-    expect(res.body.error.code).toBe("VALIDATION_ERROR");
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
     expect(res.body.error.details).toBeDefined();
     expect(Array.isArray(res.body.error.details)).toBe(true);
   });
 
-  it("should return 404 for unknown routes", async () => {
-    const res = await request.get("/api/v1/nonexistent").expect(404);
+  it('should return 404 for unknown routes', async () => {
+    const res = await request.get('/api/v1/nonexistent').expect(404);
     // Express 5 returns 404 by default for unmatched routes
     expect(res.status).toBe(404);
   });
@@ -661,6 +670,7 @@ describe("errorHandler middleware", () => {
 ### Task 5: Security — Auth Route Rate Limiting
 
 **Files:**
+
 - Create: `apps/api/src/middleware/auth-rate-limit.ts`
 - Modify: `apps/api/src/routes/auth.routes.ts` (apply rate limiters)
 
@@ -669,54 +679,54 @@ describe("errorHandler middleware", () => {
 **Step 1: Create auth rate limit middleware**
 
 ```typescript
-import { rateLimit } from "express-rate-limit";
+import { rateLimit } from 'express-rate-limit';
 
 // Strict limit for login: 5 attempts per 15 minutes per IP
 export const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
-  standardHeaders: "draft-7",
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: {
     success: false,
     error: {
-      code: "RATE_LIMITED",
-      message: "Too many login attempts. Please try again in 15 minutes.",
+      code: 'RATE_LIMITED',
+      message: 'Too many login attempts. Please try again in 15 minutes.',
     },
   },
-  keyGenerator: (req) => req.ip || req.socket.remoteAddress || "unknown",
+  keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
 });
 
 // Register: 3 per hour per IP
 export const registerRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 3,
-  standardHeaders: "draft-7",
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: {
     success: false,
     error: {
-      code: "RATE_LIMITED",
-      message: "Too many registration attempts. Please try again later.",
+      code: 'RATE_LIMITED',
+      message: 'Too many registration attempts. Please try again later.',
     },
   },
-  keyGenerator: (req) => req.ip || req.socket.remoteAddress || "unknown",
+  keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
 });
 
 // Password reset: 3 per hour per IP
 export const passwordResetRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 3,
-  standardHeaders: "draft-7",
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: {
     success: false,
     error: {
-      code: "RATE_LIMITED",
-      message: "Too many password reset attempts. Please try again later.",
+      code: 'RATE_LIMITED',
+      message: 'Too many password reset attempts. Please try again later.',
     },
   },
-  keyGenerator: (req) => req.ip || req.socket.remoteAddress || "unknown",
+  keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
 });
 ```
 
@@ -725,15 +735,36 @@ export const passwordResetRateLimit = rateLimit({
 Modify `apps/api/src/routes/auth.routes.ts` to add the rate limiters:
 
 Add import at top:
+
 ```typescript
-import { loginRateLimit, registerRateLimit, passwordResetRateLimit } from "../middleware/auth-rate-limit";
+import {
+  loginRateLimit,
+  registerRateLimit,
+  passwordResetRateLimit,
+} from '../middleware/auth-rate-limit';
 ```
 
 Update the three route lines:
+
 ```typescript
-router.post("/register", registerRateLimit, validate({ body: registerSchema }), asyncHandler(authController.register));
-router.post("/login", loginRateLimit, validate({ body: loginSchema }), asyncHandler(authController.login));
-router.post("/forgot-password", passwordResetRateLimit, validate({ body: forgotPasswordSchema }), asyncHandler(authController.forgotPassword));
+router.post(
+  '/register',
+  registerRateLimit,
+  validate({ body: registerSchema }),
+  asyncHandler(authController.register)
+);
+router.post(
+  '/login',
+  loginRateLimit,
+  validate({ body: loginSchema }),
+  asyncHandler(authController.login)
+);
+router.post(
+  '/forgot-password',
+  passwordResetRateLimit,
+  validate({ body: forgotPasswordSchema }),
+  asyncHandler(authController.forgotPassword)
+);
 ```
 
 The other routes (refresh, logout, me, profile, password) keep their current setup — they're already protected by authentication.
@@ -743,6 +774,7 @@ The other routes (refresh, logout, me, profile, password) keep their current set
 ### Task 6: Security — Input Sanitization Middleware
 
 **Files:**
+
 - Create: `apps/api/src/middleware/sanitize.ts`
 - Modify: `apps/api/src/app.ts` (apply globally after body parser)
 
@@ -751,22 +783,22 @@ The other routes (refresh, logout, me, profile, password) keep their current set
 **Step 1: Create sanitize middleware**
 
 ```typescript
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from 'express';
 
 // Strip HTML tags from a string
 function stripTags(str: string): string {
-  return str.replace(/<[^>]*>/g, "");
+  return str.replace(/<[^>]*>/g, '');
 }
 
 // Recursively sanitize all string values in an object
 function sanitizeValue(value: unknown): unknown {
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     return stripTags(value).trim();
   }
   if (Array.isArray(value)) {
     return value.map(sanitizeValue);
   }
-  if (value !== null && typeof value === "object") {
+  if (value !== null && typeof value === 'object') {
     const sanitized: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(value)) {
       sanitized[key] = sanitizeValue(val);
@@ -777,7 +809,7 @@ function sanitizeValue(value: unknown): unknown {
 }
 
 export const sanitize = (req: Request, _res: Response, next: NextFunction) => {
-  if (req.body && typeof req.body === "object") {
+  if (req.body && typeof req.body === 'object') {
     req.body = sanitizeValue(req.body);
   }
   next();
@@ -787,11 +819,13 @@ export const sanitize = (req: Request, _res: Response, next: NextFunction) => {
 **Step 2: Apply in app.ts**
 
 Add import:
+
 ```typescript
-import { sanitize } from "./middleware/sanitize";
+import { sanitize } from './middleware/sanitize';
 ```
 
 Add middleware right after body parsing (after `app.use(express.urlencoded({ extended: true }));`):
+
 ```typescript
 // Input sanitization
 app.use(sanitize);
@@ -802,6 +836,7 @@ app.use(sanitize);
 ### Task 7: Security — Sanitization & Rate Limit Tests
 
 **Files:**
+
 - Create: `apps/api/src/middleware/__tests__/sanitize.test.ts`
 - Create: `apps/api/src/middleware/__tests__/rate-limit.test.ts`
 
@@ -810,38 +845,34 @@ app.use(sanitize);
 **Sanitize test code:**
 
 ```typescript
-import { describe, it, expect } from "vitest";
-import { request } from "../../test/helpers";
+import { describe, it, expect } from 'vitest';
+import { request } from '../../test/helpers';
 
-describe("sanitize middleware", () => {
-  it("should strip HTML tags from request body", async () => {
-    const res = await request
-      .post("/api/v1/auth/login")
-      .send({
-        email: "<script>alert('xss')</script>user@test.com",
-        password: "Test1234",
-      });
+describe('sanitize middleware', () => {
+  it('should strip HTML tags from request body', async () => {
+    const res = await request.post('/api/v1/auth/login').send({
+      email: "<script>alert('xss')</script>user@test.com",
+      password: 'Test1234',
+    });
 
     // The sanitized email will fail validation or login — important thing is no script tags in processing
     // We can't directly inspect req.body, but we verify the request is processed (not 500)
     expect(res.status).toBeLessThan(500);
   });
 
-  it("should handle nested objects", async () => {
+  it('should handle nested objects', async () => {
     // Use a registration endpoint which has more fields
-    const res = await request
-      .post("/api/v1/auth/register")
-      .send({
-        email: "clean@test.com",
-        password: "Test1234",
-        firstName: "<b>Bold</b>Name",
-        lastName: "Normal",
-        phone: "9876543210",
-      });
+    const res = await request.post('/api/v1/auth/register').send({
+      email: 'clean@test.com',
+      password: 'Test1234',
+      firstName: '<b>Bold</b>Name',
+      lastName: 'Normal',
+      phone: '9876543210',
+    });
 
     // If registration succeeds, the name should be sanitized (no tags)
     if (res.body.success) {
-      expect(res.body.data.user.firstName).toBe("BoldName");
+      expect(res.body.data.user.firstName).toBe('BoldName');
     }
     expect(res.status).toBeLessThan(500);
   });
@@ -851,10 +882,10 @@ describe("sanitize middleware", () => {
 **Rate limit test code:**
 
 ```typescript
-import { describe, it, expect, afterEach } from "vitest";
-import { request, createTestUser, cleanupTestData } from "../../test/helpers";
+import { describe, it, expect, afterEach } from 'vitest';
+import { request, createTestUser, cleanupTestData } from '../../test/helpers';
 
-describe("auth rate limiting", () => {
+describe('auth rate limiting', () => {
   const createdUserIds: string[] = [];
 
   afterEach(async () => {
@@ -862,13 +893,13 @@ describe("auth rate limiting", () => {
     createdUserIds.length = 0;
   });
 
-  it("should rate limit login after 5 failed attempts", async () => {
+  it('should rate limit login after 5 failed attempts', async () => {
     const responses: number[] = [];
 
     for (let i = 0; i < 7; i++) {
       const res = await request
-        .post("/api/v1/auth/login")
-        .send({ email: "fake@test.com", password: "Wrong1234" });
+        .post('/api/v1/auth/login')
+        .send({ email: 'fake@test.com', password: 'Wrong1234' });
       responses.push(res.status);
     }
 
@@ -878,19 +909,17 @@ describe("auth rate limiting", () => {
     expect(responses.slice(5).some((s) => s === 429)).toBe(true);
   });
 
-  it("should rate limit register after 3 attempts", async () => {
+  it('should rate limit register after 3 attempts', async () => {
     const responses: number[] = [];
 
     for (let i = 0; i < 5; i++) {
-      const res = await request
-        .post("/api/v1/auth/register")
-        .send({
-          email: `test${i}@ratelimit.com`,
-          password: "Test1234",
-          firstName: "Test",
-          lastName: "User",
-          phone: "9876543210",
-        });
+      const res = await request.post('/api/v1/auth/register').send({
+        email: `test${i}@ratelimit.com`,
+        password: 'Test1234',
+        firstName: 'Test',
+        lastName: 'User',
+        phone: '9876543210',
+      });
       responses.push(res.status);
       if (res.body?.data?.user?.id) {
         createdUserIds.push(res.body.data.user.id);
