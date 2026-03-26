@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import express, { type Express } from "express";
 import compression from "compression";
 import cookieParser from "cookie-parser";
@@ -205,6 +206,9 @@ app.use("/api/v1/admin/homepage", adminHomepageRouter);
 app.use("/api/v1/homepage", homepageRouter);
 app.use("/api/v1/upload", uploadRouter);
 app.use("/api/v1/webhooks", webhookRouter);
+
+// Sentry error handler (must be before custom error handler)
+Sentry.setupExpressErrorHandler(app);
 
 // Error handling (must be after all routes)
 app.use(errorHandler);

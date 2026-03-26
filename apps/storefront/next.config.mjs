@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { withSentryConfig } from "@sentry/nextjs";
 import withSerwistInit from "@serwist/next";
 
 const API_ORIGIN =
@@ -61,4 +62,12 @@ const nextConfig = {
   },
 };
 
-export default withSerwist(nextConfig);
+export default withSentryConfig(withSerwist(nextConfig), {
+  org: "earthrevibe",
+  project: "storefront",
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  tunnelRoute: "/monitoring",
+  disableLogger: true,
+  automaticVercelMonitors: true,
+});

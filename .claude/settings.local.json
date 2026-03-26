@@ -13,7 +13,15 @@
       "Bash(git commit:*)",
       "Bash(pnpm db:push)",
       "Bash(./node_modules/.bin/prisma db:*)",
-      "Bash(find c:/work/earth_revibe -name prisma -path */node_modules/.bin/*)"
+      "Bash(find c:/work/earth_revibe -name prisma -path */node_modules/.bin/*)",
+      "mcp__plugin_sentry_sentry__find_organizations",
+      "mcp__plugin_sentry_sentry__find_projects",
+      "mcp__plugin_sentry_sentry__search_issues",
+      "mcp__plugin_sentry_sentry__find_teams",
+      "mcp__plugin_sentry_sentry__create_project",
+      "Bash(pnpm add:*)",
+      "Bash(c:/work/earth_revibe/apps/api/.env.example:*)",
+      "Bash(pnpm lint:*)"
     ]
   },
   "disabledMcpjsonServers": [
