@@ -1,32 +1,28 @@
-import type { Response, CookieOptions } from "express";
-import { env } from "../config/env";
-import { APP_CONSTANTS } from "../config/constants";
+import type { Response, CookieOptions } from 'express';
+import { env } from '../config/env';
+import { APP_CONSTANTS } from '../config/constants';
 
-const isProduction = env.NODE_ENV === "production";
+const isProduction = env.NODE_ENV === 'production';
 
-const ACCESS_COOKIE = "access_token";
-const REFRESH_COOKIE = "refresh_token";
+const ACCESS_COOKIE = 'access_token';
+const REFRESH_COOKIE = 'refresh_token';
 
 const baseCookieOptions: CookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: isProduction ? "none" : "strict",
+  sameSite: isProduction ? 'none' : 'strict',
 };
 
-export function setAuthCookies(
-  res: Response,
-  accessToken: string,
-  refreshToken: string
-) {
+export function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
   res.cookie(ACCESS_COOKIE, accessToken, {
     ...baseCookieOptions,
-    path: "/",
+    path: '/',
     maxAge: 60 * 60 * 1000, // 1 hour (matches Supabase JWT default)
   });
 
   res.cookie(REFRESH_COOKIE, refreshToken, {
     ...baseCookieOptions,
-    path: "/api/v1/auth",
+    path: '/api/v1/auth',
     maxAge: APP_CONSTANTS.REFRESH_TOKEN_EXPIRY_MS,
   });
 }
@@ -34,12 +30,12 @@ export function setAuthCookies(
 export function clearAuthCookies(res: Response) {
   res.clearCookie(ACCESS_COOKIE, {
     ...baseCookieOptions,
-    path: "/",
+    path: '/',
   });
 
   res.clearCookie(REFRESH_COOKIE, {
     ...baseCookieOptions,
-    path: "/api/v1/auth",
+    path: '/api/v1/auth',
   });
 }
 
@@ -53,8 +49,8 @@ export function getAccessTokenFromRequest(req: {
 
   // 2. Fall back to Authorization header (backward compat)
   const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith("Bearer ")) {
-    return authHeader.split(" ")[1];
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.split(' ')[1];
   }
 
   return null;

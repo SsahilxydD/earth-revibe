@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Plus, Trash2, Save, X, Pencil } from "lucide-react";
-import { Button, Card } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
+import { useState } from 'react';
+import { Plus, Trash2, Save, X, Pencil } from 'lucide-react';
+import { Button, Card } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
 import {
   useAddProductVariants,
   useUpdateProductVariant,
   useDeleteProductVariant,
-} from "@/hooks/use-products";
+} from '@/hooks/use-products';
 
 interface Variant {
   id: string;
@@ -33,13 +33,13 @@ interface NewVariant {
 }
 
 const emptyVariant: NewVariant = {
-  sku: "",
-  size: "",
-  color: "",
-  colorHex: "",
-  price: "",
-  stock: "0",
-  lowStockThreshold: "5",
+  sku: '',
+  size: '',
+  color: '',
+  colorHex: '',
+  price: '',
+  stock: '0',
+  lowStockThreshold: '5',
 };
 
 interface VariantEditorProps {
@@ -68,9 +68,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
   };
 
   const handleNewVariantChange = (index: number, field: keyof NewVariant, value: string) => {
-    setNewVariants((prev) =>
-      prev.map((v, i) => (i === index ? { ...v, [field]: value } : v))
-    );
+    setNewVariants((prev) => prev.map((v, i) => (i === index ? { ...v, [field]: value } : v)));
   };
 
   const handleSaveNewVariants = async () => {
@@ -88,7 +86,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
       }));
 
     if (toCreate.length === 0) {
-      toast.error("Fill in SKU and size for at least one variant");
+      toast.error('Fill in SKU and size for at least one variant');
       return;
     }
 
@@ -112,7 +110,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
       toast.success(`${toCreate.length} variant(s) added`);
       setNewVariants([]);
     } catch (err: any) {
-      toast.error(err.message || "Failed to add variants");
+      toast.error(err.message || 'Failed to add variants');
     }
   };
 
@@ -141,23 +139,24 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
       // Normalise empty colorHex so the regex validator doesn't reject it
       if (!cleanData.colorHex) cleanData.colorHex = undefined;
       // Strip null price — Zod schema is .optional() not .nullable()
-      if (cleanData.price === null || cleanData.price === undefined) delete (cleanData as any).price;
+      if (cleanData.price === null || cleanData.price === undefined)
+        delete (cleanData as any).price;
       await updateVariant.mutateAsync({ variantId: editingId, data: cleanData });
-      toast.success("Variant updated");
+      toast.success('Variant updated');
       setEditingId(null);
       setEditData({});
     } catch (err: any) {
-      toast.error(err.message || "Failed to update variant");
+      toast.error(err.message || 'Failed to update variant');
     }
   };
 
   const handleDelete = async (variantId: string) => {
-    if (!confirm("Delete this variant? This cannot be undone.")) return;
+    if (!confirm('Delete this variant? This cannot be undone.')) return;
     try {
       await deleteVariant.mutateAsync(variantId);
-      toast.success("Variant deleted");
+      toast.success('Variant deleted');
     } catch (err: any) {
-      toast.error(err.message || "Failed to delete variant");
+      toast.error(err.message || 'Failed to delete variant');
     }
   };
 
@@ -167,7 +166,8 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
         <div>
           <h3 className="text-base font-semibold text-charcoal">Variants</h3>
           <p className="text-xs text-medium-gray mt-0.5">
-            {variants.length} variant{variants.length !== 1 ? "s" : ""} &middot; {totalStock} total stock
+            {variants.length} variant{variants.length !== 1 ? 's' : ''} &middot; {totalStock} total
+            stock
           </p>
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={handleAddRow}>
@@ -192,13 +192,16 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
             </thead>
             <tbody>
               {variants.map((variant) => (
-                <tr key={variant.id} className="border-b border-light-gray last:border-0 hover:bg-off-white/50">
+                <tr
+                  key={variant.id}
+                  className="border-b border-light-gray last:border-0 hover:bg-off-white/50"
+                >
                   {editingId === variant.id ? (
                     <>
                       <td className="py-2 px-2">
                         <input
                           type="text"
-                          value={editData.sku || ""}
+                          value={editData.sku || ''}
                           onChange={(e) => setEditData((d) => ({ ...d, sku: e.target.value }))}
                           className="w-full px-2 py-1 h-7 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth"
                         />
@@ -206,7 +209,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                       <td className="py-2 px-2">
                         <input
                           type="text"
-                          value={editData.size || ""}
+                          value={editData.size || ''}
                           onChange={(e) => setEditData((d) => ({ ...d, size: e.target.value }))}
                           className="w-full px-2 py-1 h-7 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth"
                         />
@@ -215,7 +218,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                         <div className="flex items-center gap-1">
                           <input
                             type="text"
-                            value={editData.color || ""}
+                            value={editData.color || ''}
                             onChange={(e) => setEditData((d) => ({ ...d, color: e.target.value }))}
                             className="flex-1 px-2 py-1 h-7 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth"
                           />
@@ -223,13 +226,15 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                             <input
                               type="color"
                               value={editData.colorHex}
-                              onChange={(e) => setEditData((d) => ({ ...d, colorHex: e.target.value }))}
+                              onChange={(e) =>
+                                setEditData((d) => ({ ...d, colorHex: e.target.value }))
+                              }
                               className="w-7 h-7 rounded border border-light-gray cursor-pointer"
                             />
                           ) : (
                             <button
                               type="button"
-                              onClick={() => setEditData((d) => ({ ...d, colorHex: "#000000" }))}
+                              onClick={() => setEditData((d) => ({ ...d, colorHex: '#000000' }))}
                               className="w-7 h-7 rounded border border-dashed border-light-gray bg-off-white text-medium-gray flex items-center justify-center text-[10px]"
                               title="Set color hex"
                             >
@@ -241,8 +246,13 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                       <td className="py-2 px-2">
                         <input
                           type="number"
-                          value={editData.price ?? ""}
-                          onChange={(e) => setEditData((d) => ({ ...d, price: e.target.value ? parseFloat(e.target.value) : null }))}
+                          value={editData.price ?? ''}
+                          onChange={(e) =>
+                            setEditData((d) => ({
+                              ...d,
+                              price: e.target.value ? parseFloat(e.target.value) : null,
+                            }))
+                          }
                           placeholder={String(basePrice)}
                           className="w-20 px-2 py-1 h-7 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth text-right"
                         />
@@ -251,7 +261,9 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                         <input
                           type="number"
                           value={editData.stock ?? 0}
-                          onChange={(e) => setEditData((d) => ({ ...d, stock: parseInt(e.target.value) || 0 }))}
+                          onChange={(e) =>
+                            setEditData((d) => ({ ...d, stock: parseInt(e.target.value) || 0 }))
+                          }
                           className="w-16 px-2 py-1 h-7 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth text-right"
                         />
                       </td>
@@ -293,10 +305,18 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                         </div>
                       </td>
                       <td className="py-2 px-2 text-right text-charcoal">
-                        {variant.price ? `₹${Number(variant.price).toLocaleString('en-IN')}` : "\u2014"}
+                        {variant.price
+                          ? `₹${Number(variant.price).toLocaleString('en-IN')}`
+                          : '\u2014'}
                       </td>
                       <td className="py-2 px-2 text-right">
-                        <span className={variant.stock <= variant.lowStockThreshold ? "text-error font-medium" : "text-charcoal"}>
+                        <span
+                          className={
+                            variant.stock <= variant.lowStockThreshold
+                              ? 'text-error font-medium'
+                              : 'text-charcoal'
+                          }
+                        >
                           {variant.stock}
                         </span>
                       </td>
@@ -342,7 +362,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                 <input
                   type="text"
                   value={nv.sku}
-                  onChange={(e) => handleNewVariantChange(index, "sku", e.target.value)}
+                  onChange={(e) => handleNewVariantChange(index, 'sku', e.target.value)}
                   placeholder="ER-001-S-BLK"
                   className="w-full px-2 py-1 h-8 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth"
                 />
@@ -352,7 +372,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                 <input
                   type="text"
                   value={nv.size}
-                  onChange={(e) => handleNewVariantChange(index, "size", e.target.value)}
+                  onChange={(e) => handleNewVariantChange(index, 'size', e.target.value)}
                   placeholder="S"
                   className="w-full px-2 py-1 h-8 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth"
                 />
@@ -363,14 +383,14 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                   <input
                     type="text"
                     value={nv.color}
-                    onChange={(e) => handleNewVariantChange(index, "color", e.target.value)}
+                    onChange={(e) => handleNewVariantChange(index, 'color', e.target.value)}
                     placeholder="Black"
                     className="flex-1 px-2 py-1 h-8 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth"
                   />
                   <input
                     type="color"
-                    value={nv.colorHex || "#000000"}
-                    onChange={(e) => handleNewVariantChange(index, "colorHex", e.target.value)}
+                    value={nv.colorHex || '#000000'}
+                    onChange={(e) => handleNewVariantChange(index, 'colorHex', e.target.value)}
                     className="w-8 h-8 rounded border border-light-gray cursor-pointer"
                   />
                 </div>
@@ -380,7 +400,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                 <input
                   type="number"
                   value={nv.price}
-                  onChange={(e) => handleNewVariantChange(index, "price", e.target.value)}
+                  onChange={(e) => handleNewVariantChange(index, 'price', e.target.value)}
                   placeholder={String(basePrice)}
                   className="w-full px-2 py-1 h-8 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth"
                 />
@@ -390,7 +410,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
                 <input
                   type="number"
                   value={nv.stock}
-                  onChange={(e) => handleNewVariantChange(index, "stock", e.target.value)}
+                  onChange={(e) => handleNewVariantChange(index, 'stock', e.target.value)}
                   className="w-full px-2 py-1 h-8 text-xs rounded border border-light-gray bg-white outline-none focus:border-deep-earth"
                 />
               </div>
@@ -407,12 +427,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
             </div>
           ))}
           <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setNewVariants([])}
-            >
+            <Button type="button" variant="ghost" size="sm" onClick={() => setNewVariants([])}>
               Cancel
             </Button>
             <Button
@@ -421,7 +436,7 @@ export function VariantEditor({ productId, variants, basePrice }: VariantEditorP
               onClick={handleSaveNewVariants}
               isLoading={addVariants.isPending}
             >
-              Save {newVariants.length} Variant{newVariants.length !== 1 ? "s" : ""}
+              Save {newVariants.length} Variant{newVariants.length !== 1 ? 's' : ''}
             </Button>
           </div>
         </div>

@@ -18,7 +18,7 @@ import type {
   LoyaltyTransactionType,
   ReferralStatus,
   UserRole,
-} from "../enums";
+} from '../enums';
 
 // ─── Pagination ──────────────────────────────────────────────────────────────
 
@@ -39,9 +39,9 @@ export interface Pagination {
  * When K is explicitly provided (e.g. 'products'), the entity array is strongly typed.
  * When K is omitted (defaults to string), falls back to permissive dynamic access.
  */
-export type PaginatedResponse<T = unknown, K extends string = string> =
-  { pagination: Pagination } &
-  (string extends K ? Record<string, any> : Record<K, T[]>);
+export type PaginatedResponse<T = unknown, K extends string = string> = {
+  pagination: Pagination;
+} & (string extends K ? Record<string, any> : Record<K, T[]>);
 
 // ─── API Response / Error ────────────────────────────────────────────────────
 
@@ -391,7 +391,7 @@ export interface ProductListParams {
   sizes?: string[];
   colors?: string[];
   sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortOrder?: 'asc' | 'desc';
   isFeatured?: boolean;
   status?: ProductStatus | string;
 }
@@ -409,7 +409,7 @@ export interface OrderListParams {
   status?: string;
   search?: string;
   sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface CustomerListParams {
@@ -418,7 +418,7 @@ export interface CustomerListParams {
   search?: string;
   isActive?: string;
   sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface DiscountListParams {

@@ -1,15 +1,15 @@
-import nodemailer from "nodemailer";
-import type { Transporter } from "nodemailer";
-import { env } from "../config/env";
-import { logger } from "../config/logger";
-import { createCircuitBreaker } from "../utils/circuit-breaker";
+import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
+import { env } from '../config/env';
+import { logger } from '../config/logger';
+import { createCircuitBreaker } from '../utils/circuit-breaker';
 
 let transporter: Transporter | null = null;
 
 function getTransporter(): Transporter | null {
   if (transporter) return transporter;
   if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
-    logger.warn("SMTP not configured -- emails will be logged");
+    logger.warn('SMTP not configured -- emails will be logged');
     return null;
   }
   transporter = nodemailer.createTransport({
@@ -21,7 +21,7 @@ function getTransporter(): Transporter | null {
   return transporter;
 }
 
-const fromAddress = env.EMAIL_FROM || "earthrevibeofficial@gmail.com";
+const fromAddress = env.EMAIL_FROM || 'earthrevibeofficial@gmail.com';
 
 function wrapHtml(body: string): string {
   return `<!DOCTYPE html>
@@ -41,17 +41,25 @@ ${body}
 async function _sendMailViaSMTP(to: string, subject: string, html: string): Promise<void> {
   const t = getTransporter();
   if (!t) {
-    logger.info({ to, subject }, "Email logged (SMTP not configured)");
+    logger.info({ to, subject }, 'Email logged (SMTP not configured)');
     return;
   }
-  await t.sendMail({ from: `"Earth Revibe" <${fromAddress}>`, to, subject, html, text: html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() });
+  await t.sendMail({
+    from: `"Earth Revibe" <${fromAddress}>`,
+    to,
+    subject,
+    html,
+    text: html
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  });
 }
 
-const emailBreaker = createCircuitBreaker(
-  _sendMailViaSMTP,
-  "email-smtp",
-  { timeout: 15000, resetTimeout: 60000 }
-);
+const emailBreaker = createCircuitBreaker(_sendMailViaSMTP, 'email-smtp', {
+  timeout: 15000,
+  resetTimeout: 60000,
+});
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   return emailBreaker.fire(to, subject, html) as Promise<void>;
@@ -67,7 +75,7 @@ export const emailService = {
         <a href="${env.FRONTEND_URL}/products" style="display:inline-block;padding:12px 32px;background:#000;color:#fff;text-decoration:none;font-size:12px;letter-spacing:1px;text-transform:uppercase">Shop Now</a>
       </div>
     `);
-    await sendEmail(email, "Welcome to Earth Revibe", html);
+    await sendEmail(email, 'Welcome to Earth Revibe', html);
   },
 
   async sendPasswordResetEmail(email: string, resetToken: string) {
@@ -80,15 +88,27 @@ export const emailService = {
       </div>
       <p style="font-size:12px;color:#999">If you didn't request this, please ignore this email.</p>
     `);
-    await sendEmail(email, "Reset Your Password — Earth Revibe", html);
+    await sendEmail(email, 'Reset Your Password — Earth Revibe', html);
   },
 
-  async sendOrderConfirmation(order: { orderNumber: string; guestEmail?: string | null; subtotal: number; discountAmount: number; shippingCost: number; total: number; items: { name: string; quantity: number; price: number; size?: string }[]; email?: string }) {
+  async sendOrderConfirmation(order: {
+    orderNumber: string;
+    guestEmail?: string | null;
+    subtotal: number;
+    discountAmount: number;
+    shippingCost: number;
+    total: number;
+    items: { name: string; quantity: number; price: number; size?: string }[];
+    email?: string;
+  }) {
     const to = order.email || order.guestEmail;
     if (!to) return;
-    const itemRows = order.items.map(i =>
-      `<tr><td style="padding:8px 0;font-size:13px;border-bottom:1px solid #f0f0f0">${i.name}${i.size ? ` (${i.size})` : ""}</td><td style="padding:8px 0;font-size:13px;text-align:center;border-bottom:1px solid #f0f0f0">${i.quantity}</td><td style="padding:8px 0;font-size:13px;text-align:right;border-bottom:1px solid #f0f0f0">Rs. ${i.price}</td></tr>`
-    ).join("");
+    const itemRows = order.items
+      .map(
+        (i) =>
+          `<tr><td style="padding:8px 0;font-size:13px;border-bottom:1px solid #f0f0f0">${i.name}${i.size ? ` (${i.size})` : ''}</td><td style="padding:8px 0;font-size:13px;text-align:center;border-bottom:1px solid #f0f0f0">${i.quantity}</td><td style="padding:8px 0;font-size:13px;text-align:right;border-bottom:1px solid #f0f0f0">Rs. ${i.price}</td></tr>`
+      )
+      .join('');
     const html = wrapHtml(`
       <h2 style="font-size:20px;color:#000;margin:0 0 4px">Order Confirmed</h2>
       <p style="font-size:13px;color:#888;margin:0 0 24px">Order #${order.orderNumber}</p>
@@ -98,8 +118,8 @@ export const emailService = {
       </table>
       <div style="margin-top:16px;font-size:13px;color:#555">
         <p style="margin:4px 0">Subtotal: Rs. ${order.subtotal}</p>
-        ${order.discountAmount > 0 ? `<p style="margin:4px 0;color:#16a34a">Discount: -Rs. ${order.discountAmount}</p>` : ""}
-        <p style="margin:4px 0">Shipping: ${order.shippingCost > 0 ? `Rs. ${order.shippingCost}` : "FREE"}</p>
+        ${order.discountAmount > 0 ? `<p style="margin:4px 0;color:#16a34a">Discount: -Rs. ${order.discountAmount}</p>` : ''}
+        <p style="margin:4px 0">Shipping: ${order.shippingCost > 0 ? `Rs. ${order.shippingCost}` : 'FREE'}</p>
         <p style="margin:8px 0 0;font-size:15px;font-weight:600;color:#000">Total: Rs. ${order.total}</p>
       </div>
       <p style="font-size:13px;color:#555;margin-top:24px">Estimated delivery: 3-10 business days</p>

@@ -1,12 +1,12 @@
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { AddressInput } from "@earth-revibe/shared";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type { AddressInput } from '@earth-revibe/shared';
 
 export const addressService = {
   async listAddresses(userId: string) {
     return prisma.address.findMany({
       where: { userId },
-      orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
     });
   },
 
@@ -43,7 +43,7 @@ export const addressService = {
     const address = await prisma.address.findFirst({
       where: { id: addressId, userId },
     });
-    if (!address) throw ApiError.notFound("Address not found");
+    if (!address) throw ApiError.notFound('Address not found');
 
     if (data.isDefault) {
       await prisma.address.updateMany({
@@ -62,7 +62,7 @@ export const addressService = {
     const address = await prisma.address.findFirst({
       where: { id: addressId, userId },
     });
-    if (!address) throw ApiError.notFound("Address not found");
+    if (!address) throw ApiError.notFound('Address not found');
 
     await prisma.address.delete({ where: { id: addressId } });
 
@@ -70,7 +70,7 @@ export const addressService = {
     if (address.isDefault) {
       const first = await prisma.address.findFirst({
         where: { userId },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: 'asc' },
       });
       if (first) {
         await prisma.address.update({

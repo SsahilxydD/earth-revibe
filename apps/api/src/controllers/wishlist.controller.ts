@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { wishlistService } from "../services/wishlist.service";
+import type { Request, Response } from 'express';
+import { wishlistService } from '../services/wishlist.service';
 
 export const wishlistController = {
   async getWishlist(req: Request, res: Response) {
@@ -15,7 +15,7 @@ export const wishlistController = {
   async removeFromWishlist(req: Request, res: Response) {
     const productId = req.params.productId as string;
     await wishlistService.removeFromWishlist(req.user!.id, productId);
-    res.json({ success: true, message: "Removed from wishlist" });
+    res.json({ success: true, message: 'Removed from wishlist' });
   },
 
   async checkWishlist(req: Request, res: Response) {

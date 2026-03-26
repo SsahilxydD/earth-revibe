@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { SwipeableProductWrapper } from "@/components/product/swipeable-product-wrapper";
-import type { Product } from "@/types";
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { SwipeableProductWrapper } from '@/components/product/swipeable-product-wrapper';
+import type { Product } from '@/types';
 
 /* ------------------------------------------------------------------ */
 /*  Server-side data fetching                                          */
@@ -9,9 +9,8 @@ import type { Product } from "@/types";
 
 function resolveApiBase(): string {
   const raw =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://earth-revibeapi-production.up.railway.app/api/v1";
-  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+    process.env.NEXT_PUBLIC_API_URL || 'https://earth-revibeapi-production.up.railway.app/api/v1';
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
   return `https://${raw}`;
 }
 
@@ -42,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const product = await getProduct(slug);
 
   if (!product) {
-    return { title: "Product Not Found | Earth Revibe" };
+    return { title: 'Product Not Found | Earth Revibe' };
   }
 
   const title = product.seoTitle || `${product.name} | Earth Revibe`;
@@ -60,7 +59,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title,
       description,
-      type: "website",
+      type: 'website',
       images: primaryImage
         ? [{ url: primaryImage.url, alt: primaryImage.altText || product.name }]
         : undefined,

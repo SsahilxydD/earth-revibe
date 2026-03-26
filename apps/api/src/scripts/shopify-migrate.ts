@@ -14,21 +14,21 @@
  * Or set these in apps/api/.env / apps/storefront/.env.local
  */
 
-import { PrismaClient } from "@earth-revibe/db";
-import * as dotenv from "dotenv";
-import * as path from "path";
+import { PrismaClient } from '@earth-revibe/db';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
 // Load .env from the api app
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 // Also try .env.local from storefront (where user may have put Shopify creds)
-dotenv.config({ path: path.resolve(__dirname, "../../../storefront/.env.local") });
+dotenv.config({ path: path.resolve(__dirname, '../../../storefront/.env.local') });
 
 // Fix DATABASE_URL if it has surrounding quotes (dotenv v17 doesn't strip them)
 if (process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = process.env.DATABASE_URL.replace(/^["']|["']$/g, "").trim();
+  process.env.DATABASE_URL = process.env.DATABASE_URL.replace(/^["']|["']$/g, '').trim();
 }
 if (process.env.DIRECT_URL) {
-  process.env.DIRECT_URL = process.env.DIRECT_URL.replace(/^["']|["']$/g, "").trim();
+  process.env.DIRECT_URL = process.env.DIRECT_URL.replace(/^["']|["']$/g, '').trim();
 }
 
 // Use DIRECT_URL for scripts to avoid PgBouncer "prepared statement already exists" errors
@@ -41,20 +41,20 @@ const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
 const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID;
 const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET;
 // Also support a direct access token if provided (legacy or manually obtained)
-let SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN || "";
-const API_VERSION = "2024-10";
+let SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN || '';
+const API_VERSION = '2024-10';
 
 if (!SHOPIFY_DOMAIN) {
-  console.error("Missing SHOPIFY_STORE_DOMAIN environment variable");
+  console.error('Missing SHOPIFY_STORE_DOMAIN environment variable');
   process.exit(1);
 }
 
 if (!SHOPIFY_CLIENT_ID || !SHOPIFY_CLIENT_SECRET) {
   if (!SHOPIFY_TOKEN) {
     console.error(
-      "Missing credentials. Provide either:\n" +
-      "  - SHOPIFY_CLIENT_ID + SHOPIFY_CLIENT_SECRET (recommended)\n" +
-      "  - SHOPIFY_ACCESS_TOKEN (legacy)"
+      'Missing credentials. Provide either:\n' +
+        '  - SHOPIFY_CLIENT_ID + SHOPIFY_CLIENT_SECRET (recommended)\n' +
+        '  - SHOPIFY_ACCESS_TOKEN (legacy)'
     );
     process.exit(1);
   }
@@ -66,18 +66,18 @@ const BASE_URL = `https://${SHOPIFY_DOMAIN}/admin/api/${API_VERSION}`;
 
 async function obtainAccessToken(): Promise<string> {
   if (SHOPIFY_TOKEN) {
-    console.log("🔑 Using provided access token");
+    console.log('🔑 Using provided access token');
     return SHOPIFY_TOKEN;
   }
 
-  console.log("🔑 Exchanging client credentials for access token...");
+  console.log('🔑 Exchanging client credentials for access token...');
 
   const tokenUrl = `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token`;
   const res = await fetch(tokenUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      grant_type: "client_credentials",
+      grant_type: 'client_credentials',
       client_id: SHOPIFY_CLIENT_ID!,
       client_secret: SHOPIFY_CLIENT_SECRET!,
     }).toString(),
@@ -96,7 +96,7 @@ async function obtainAccessToken(): Promise<string> {
   }
 
   console.log(
-    `   ✅ Token obtained (expires in ${(data.expires_in as string) || "unknown"}s, scopes: ${(data.scope as string) || "unknown"})`
+    `   ✅ Token obtained (expires in ${(data.expires_in as string) || 'unknown'}s, scopes: ${(data.scope as string) || 'unknown'})`
   );
   return token;
 }
@@ -107,8 +107,8 @@ async function shopifyFetch<T>(endpoint: string): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
   const res = await fetch(url, {
     headers: {
-      "X-Shopify-Access-Token": SHOPIFY_TOKEN,
-      "Content-Type": "application/json",
+      'X-Shopify-Access-Token': SHOPIFY_TOKEN,
+      'Content-Type': 'application/json',
     },
   });
 
@@ -120,18 +120,15 @@ async function shopifyFetch<T>(endpoint: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function shopifyFetchAll<T>(
-  endpoint: string,
-  key: string
-): Promise<T[]> {
+async function shopifyFetchAll<T>(endpoint: string, key: string): Promise<T[]> {
   const all: T[] = [];
-  let url: string | null = `${BASE_URL}${endpoint}${endpoint.includes("?") ? "&" : "?"}limit=250`;
+  let url: string | null = `${BASE_URL}${endpoint}${endpoint.includes('?') ? '&' : '?'}limit=250`;
 
   while (url) {
     const res = await fetch(url, {
       headers: {
-        "X-Shopify-Access-Token": SHOPIFY_TOKEN,
-        "Content-Type": "application/json",
+        'X-Shopify-Access-Token': SHOPIFY_TOKEN,
+        'Content-Type': 'application/json',
       },
     });
 
@@ -144,7 +141,7 @@ async function shopifyFetchAll<T>(
     all.push(...(data[key] || []));
 
     // Parse Link header for pagination
-    const linkHeader = res.headers.get("link");
+    const linkHeader = res.headers.get('link');
     url = null;
     if (linkHeader) {
       const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
@@ -261,22 +258,22 @@ interface ShopifyBlog {
 function slugify(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 }
 
 // ─── Migration Functions ─────────────────────────────────────
 
 async function migrateCollections() {
-  console.log("\n📦 Fetching Shopify collections...");
+  console.log('\n📦 Fetching Shopify collections...');
 
   const customCollections = await shopifyFetchAll<ShopifyCollection>(
-    "/custom_collections.json",
-    "custom_collections"
+    '/custom_collections.json',
+    'custom_collections'
   );
   const smartCollections = await shopifyFetchAll<ShopifyCollection>(
-    "/smart_collections.json",
-    "smart_collections"
+    '/smart_collections.json',
+    'smart_collections'
   );
   const allCollections = [...customCollections, ...smartCollections];
 
@@ -298,9 +295,7 @@ async function migrateCollections() {
       data: {
         name: col.title,
         slug,
-        description: col.body_html
-          ? col.body_html.replace(/<[^>]+>/g, "").trim()
-          : null,
+        description: col.body_html ? col.body_html.replace(/<[^>]+>/g, '').trim() : null,
         image: col.image?.src || null,
         isActive: true,
       },
@@ -314,18 +309,12 @@ async function migrateCollections() {
 }
 
 async function migrateProducts(categoryMap: Map<number, string>) {
-  console.log("\n🛍️  Fetching Shopify products...");
-  const products = await shopifyFetchAll<ShopifyProduct>(
-    "/products.json",
-    "products"
-  );
+  console.log('\n🛍️  Fetching Shopify products...');
+  const products = await shopifyFetchAll<ShopifyProduct>('/products.json', 'products');
   console.log(`   Found ${products.length} products`);
 
   // Fetch collects to map products → collections
-  const collects = await shopifyFetchAll<ShopifyCollect>(
-    "/collects.json",
-    "collects"
-  );
+  const collects = await shopifyFetchAll<ShopifyCollect>('/collects.json', 'collects');
   const productCollectionMap = new Map<number, number>();
   for (const c of collects) {
     if (!productCollectionMap.has(c.product_id)) {
@@ -343,19 +332,17 @@ async function migrateProducts(categoryMap: Map<number, string>) {
   let updated = 0;
 
   // Map Shopify status → Earth Revibe status
-  const statusMap: Record<string, "DRAFT" | "ACTIVE" | "ARCHIVED"> = {
-    active: "ACTIVE",
-    draft: "DRAFT",
-    archived: "ARCHIVED",
+  const statusMap: Record<string, 'DRAFT' | 'ACTIVE' | 'ARCHIVED'> = {
+    active: 'ACTIVE',
+    draft: 'DRAFT',
+    archived: 'ARCHIVED',
   };
 
   for (const product of products) {
     const slug = product.handle || slugify(product.title);
     const existing = await prisma.product.findUnique({ where: { slug } });
 
-    const basePrice = product.variants[0]
-      ? parseFloat(product.variants[0].price)
-      : 0;
+    const basePrice = product.variants[0] ? parseFloat(product.variants[0].price) : 0;
     const comparePrice = product.variants[0]?.compare_at_price
       ? parseFloat(product.variants[0].compare_at_price)
       : undefined;
@@ -392,75 +379,91 @@ async function migrateProducts(categoryMap: Map<number, string>) {
       const k = mf.key.toLowerCase();
 
       // SEO
-      if (fullKey === "global.title_tag" || fullKey === "seo.title" || k === "title_tag") {
+      if (fullKey === 'global.title_tag' || fullKey === 'seo.title' || k === 'title_tag') {
         seoTitle = mf.value;
-      } else if (fullKey === "global.description_tag" || fullKey === "seo.description" || k === "description_tag") {
+      } else if (
+        fullKey === 'global.description_tag' ||
+        fullKey === 'seo.description' ||
+        k === 'description_tag'
+      ) {
         seoDescription = mf.value;
       }
       // Material
-      else if (k === "material" || k === "fabric") {
+      else if (k === 'material' || k === 'fabric') {
         material = mf.value;
       }
       // Composition
-      else if (k === "composition" || k === "fabric_composition") {
+      else if (k === 'composition' || k === 'fabric_composition') {
         composition = mf.value;
       }
       // Care instructions
-      else if (k === "care_instructions" || k === "care") {
+      else if (k === 'care_instructions' || k === 'care') {
         careInstructions = mf.value;
       }
       // Wash instructions
-      else if (k === "wash_instructions" || k === "wash" || k === "washing_instructions") {
+      else if (k === 'wash_instructions' || k === 'wash' || k === 'washing_instructions') {
         washInstructions = mf.value;
       }
       // Fabric weight
-      else if (k === "fabric_weight" || k === "weight" || k === "gsm" || k === "fabric-weight") {
+      else if (k === 'fabric_weight' || k === 'weight' || k === 'gsm' || k === 'fabric-weight') {
         fabricWeight = mf.value;
       }
       // Fit
-      else if (k === "fit" || k === "fit_type") {
+      else if (k === 'fit' || k === 'fit_type') {
         fit = mf.value;
       }
       // Measurements
-      else if (k === "measurements" || k === "product_measurements" || k === "product-measurements") {
+      else if (
+        k === 'measurements' ||
+        k === 'product_measurements' ||
+        k === 'product-measurements'
+      ) {
         measurements = mf.value;
       }
       // Print type
-      else if (k === "print_type" || k === "print-type" || k === "print") {
+      else if (k === 'print_type' || k === 'print-type' || k === 'print') {
         printType = mf.value;
       }
       // Origin
-      else if (k === "origin" || k === "country_of_origin" || k === "made_in") {
+      else if (k === 'origin' || k === 'country_of_origin' || k === 'made_in') {
         origin = mf.value;
       }
       // Returns info
-      else if (k === "returns_info" || k === "returns" || k === "return_policy" || k === "returns-info") {
+      else if (
+        k === 'returns_info' ||
+        k === 'returns' ||
+        k === 'return_policy' ||
+        k === 'returns-info'
+      ) {
         returnsInfo = mf.value;
       }
       // Shipping info
-      else if (k === "shipping_info" || k === "shipping" || k === "shipping-info" || k === "delivery") {
+      else if (
+        k === 'shipping_info' ||
+        k === 'shipping' ||
+        k === 'shipping-info' ||
+        k === 'delivery'
+      ) {
         shippingInfo = mf.value;
       }
       // Short description
-      else if (k === "short_description" || k === "subtitle") {
+      else if (k === 'short_description' || k === 'subtitle') {
         shortDescription = mf.value;
       }
     }
 
     // Log all metafields for visibility
     if (metafields.length > 0) {
-      console.log(
-        `   📋 Product "${product.title}" has ${metafields.length} metafields:`
-      );
+      console.log(`   📋 Product "${product.title}" has ${metafields.length} metafields:`);
       for (const mf of metafields) {
         console.log(
-          `      - ${mf.namespace}.${mf.key} (${mf.type}) = ${mf.value.substring(0, 80)}${mf.value.length > 80 ? "..." : ""}`
+          `      - ${mf.namespace}.${mf.key} (${mf.type}) = ${mf.value.substring(0, 80)}${mf.value.length > 80 ? '...' : ''}`
         );
       }
     }
 
     const description = product.body_html
-      ? product.body_html.replace(/<[^>]+>/g, "").trim()
+      ? product.body_html.replace(/<[^>]+>/g, '').trim()
       : product.title;
 
     // Metafield data to write (used for both create and update)
@@ -488,13 +491,14 @@ async function migrateProducts(categoryMap: Map<number, string>) {
       });
       productIdMap.set(product.id, existing.id);
       updated++;
-      console.log(
-        `   🔄 Updated metafields: ${product.title} (${metafields.length} metafields)`
-      );
+      console.log(`   🔄 Updated metafields: ${product.title} (${metafields.length} metafields)`);
 
       // Also sync tags for existing products
       if (product.tags) {
-        const tagNames = product.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
+        const tagNames = product.tags
+          .split(',')
+          .map((t: string) => t.trim())
+          .filter(Boolean);
         for (const tagName of tagNames) {
           const tagSlug = slugify(tagName);
           if (!tagSlug) continue;
@@ -502,9 +506,13 @@ async function migrateProducts(categoryMap: Map<number, string>) {
           if (!tag) {
             tag = await prisma.tag.create({ data: { name: tagName, slug: tagSlug } });
           }
-          await prisma.productTag.create({
-            data: { productId: existing.id, tagId: tag.id },
-          }).catch(() => { /* duplicate */ });
+          await prisma.productTag
+            .create({
+              data: { productId: existing.id, tagId: tag.id },
+            })
+            .catch(() => {
+              /* duplicate */
+            });
         }
       }
 
@@ -515,12 +523,11 @@ async function migrateProducts(categoryMap: Map<number, string>) {
     // Resolve category
     const collectionId = productCollectionMap.get(product.id);
     let categoryId =
-      (collectionId ? categoryMap.get(collectionId) : undefined) ||
-      fallbackCategoryId;
+      (collectionId ? categoryMap.get(collectionId) : undefined) || fallbackCategoryId;
 
     if (!categoryId) {
       const defaultCat = await prisma.category.create({
-        data: { name: "Uncategorized", slug: "uncategorized", isActive: true },
+        data: { name: 'Uncategorized', slug: 'uncategorized', isActive: true },
       });
       fallbackCategoryId = defaultCat.id;
       categoryId = defaultCat.id;
@@ -535,7 +542,7 @@ async function migrateProducts(categoryMap: Map<number, string>) {
         price: basePrice,
         compareAtPrice: comparePrice,
         ...metafieldData,
-        status: statusMap[product.status] || "DRAFT",
+        status: statusMap[product.status] || 'DRAFT',
         categoryId,
       },
     });
@@ -559,31 +566,27 @@ async function migrateProducts(categoryMap: Map<number, string>) {
 
     // ── Import variants ──────────────────────────────────
     const sizeOptionIdx = product.options.findIndex(
-      (o) =>
-        o.name.toLowerCase() === "size" || o.name.toLowerCase() === "taille"
+      (o) => o.name.toLowerCase() === 'size' || o.name.toLowerCase() === 'taille'
     );
     const colorOptionIdx = product.options.findIndex(
       (o) =>
-        o.name.toLowerCase() === "color" ||
-        o.name.toLowerCase() === "colour" ||
-        o.name.toLowerCase() === "couleur"
+        o.name.toLowerCase() === 'color' ||
+        o.name.toLowerCase() === 'colour' ||
+        o.name.toLowerCase() === 'couleur'
     );
 
     for (const variant of product.variants) {
       const size =
         sizeOptionIdx >= 0
-          ? [variant.option1, variant.option2, variant.option3][sizeOptionIdx] ||
-            "One Size"
-          : variant.option1 || "One Size";
+          ? [variant.option1, variant.option2, variant.option3][sizeOptionIdx] || 'One Size'
+          : variant.option1 || 'One Size';
 
       const color =
         colorOptionIdx >= 0
-          ? [variant.option1, variant.option2, variant.option3][
-              colorOptionIdx
-            ] || "Default"
-          : variant.option2 || "Default";
+          ? [variant.option1, variant.option2, variant.option3][colorOptionIdx] || 'Default'
+          : variant.option2 || 'Default';
 
-      const sku = variant.sku || `${slug}-${size}-${color}`.toLowerCase().replace(/\s+/g, "-");
+      const sku = variant.sku || `${slug}-${size}-${color}`.toLowerCase().replace(/\s+/g, '-');
 
       const existingSku = await prisma.productVariant.findUnique({
         where: { sku },
@@ -591,8 +594,7 @@ async function migrateProducts(categoryMap: Map<number, string>) {
       if (existingSku) continue;
 
       const variantPrice = parseFloat(variant.price);
-      const priceOverride =
-        variantPrice !== basePrice ? variantPrice : undefined;
+      const priceOverride = variantPrice !== basePrice ? variantPrice : undefined;
 
       await prisma.productVariant.create({
         data: {
@@ -610,7 +612,7 @@ async function migrateProducts(categoryMap: Map<number, string>) {
     // ── Import tags ──────────────────────────────────────
     if (product.tags) {
       const tagNames = product.tags
-        .split(",")
+        .split(',')
         .map((t: string) => t.trim())
         .filter(Boolean);
 
@@ -646,18 +648,18 @@ async function migrateProducts(categoryMap: Map<number, string>) {
 }
 
 async function migrateBlog() {
-  console.log("\n📝 Fetching Shopify blog posts...");
+  console.log('\n📝 Fetching Shopify blog posts...');
 
   let blogs: ShopifyBlog[] = [];
   try {
-    blogs = await shopifyFetchAll<ShopifyBlog>("/blogs.json", "blogs");
+    blogs = await shopifyFetchAll<ShopifyBlog>('/blogs.json', 'blogs');
   } catch {
-    console.log("   No blog access or no blogs found");
+    console.log('   No blog access or no blogs found');
     return;
   }
 
   if (blogs.length === 0) {
-    console.log("   No blogs found");
+    console.log('   No blogs found');
     return;
   }
 
@@ -668,7 +670,7 @@ async function migrateBlog() {
 
     const articles = await shopifyFetchAll<ShopifyArticle>(
       `/blogs/${blog.id}/articles.json`,
-      "articles"
+      'articles'
     );
 
     for (const article of articles) {
@@ -680,10 +682,10 @@ async function migrateBlog() {
         continue;
       }
 
-      const content = article.body_html || "";
+      const content = article.body_html || '';
       const excerpt =
-        article.summary_html?.replace(/<[^>]+>/g, "").trim() ||
-        content.replace(/<[^>]+>/g, "").substring(0, 200);
+        article.summary_html?.replace(/<[^>]+>/g, '').trim() ||
+        content.replace(/<[^>]+>/g, '').substring(0, 200);
 
       // Fetch article metafields for SEO
       let metaTitle: string | null = null;
@@ -694,10 +696,10 @@ async function migrateBlog() {
           `/blogs/${blog.id}/articles/${article.id}/metafields.json`
         );
         for (const mf of mfData.metafields || []) {
-          if (mf.key === "title_tag" || mf.key === "seo_title") {
+          if (mf.key === 'title_tag' || mf.key === 'seo_title') {
             metaTitle = mf.value;
           }
-          if (mf.key === "description_tag" || mf.key === "seo_description") {
+          if (mf.key === 'description_tag' || mf.key === 'seo_description') {
             metaDescription = mf.value;
           }
         }
@@ -707,7 +709,7 @@ async function migrateBlog() {
         metaDescription = article.metafields_global_description_tag || null;
       }
 
-      const wordCount = content.replace(/<[^>]+>/g, "").split(/\s+/).length;
+      const wordCount = content.replace(/<[^>]+>/g, '').split(/\s+/).length;
       const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
       await prisma.blogPost.create({
@@ -717,11 +719,9 @@ async function migrateBlog() {
           excerpt,
           content,
           featuredImage: article.image?.src || null,
-          authorId: "system", // Will need manual mapping
-          status: article.published_at ? "PUBLISHED" : "DRAFT",
-          publishedAt: article.published_at
-            ? new Date(article.published_at)
-            : null,
+          authorId: 'system', // Will need manual mapping
+          status: article.published_at ? 'PUBLISHED' : 'DRAFT',
+          publishedAt: article.published_at ? new Date(article.published_at) : null,
           metaTitle,
           metaDescription,
           readTime,
@@ -731,7 +731,7 @@ async function migrateBlog() {
       // Import article tags
       if (article.tags) {
         const tagNames = article.tags
-          .split(",")
+          .split(',')
           .map((t: string) => t.trim())
           .filter(Boolean);
 
@@ -759,23 +759,17 @@ async function migrateBlog() {
 }
 
 async function fetchAndLogAllMetafields() {
-  console.log("\n🔍 Fetching store-level metafields...");
+  console.log('\n🔍 Fetching store-level metafields...');
 
   try {
-    const data = await shopifyFetch<{ metafields: ShopifyMetafield[] }>(
-      "/metafields.json"
-    );
+    const data = await shopifyFetch<{ metafields: ShopifyMetafield[] }>('/metafields.json');
 
     if (data.metafields.length === 0) {
-      console.log("   No store-level metafields found");
+      console.log('   No store-level metafields found');
     } else {
-      console.log(
-        `   Found ${data.metafields.length} store-level metafields:`
-      );
+      console.log(`   Found ${data.metafields.length} store-level metafields:`);
       for (const mf of data.metafields) {
-        console.log(
-          `   - ${mf.namespace}.${mf.key} (${mf.type}) = ${mf.value.substring(0, 100)}`
-        );
+        console.log(`   - ${mf.namespace}.${mf.key} (${mf.type}) = ${mf.value.substring(0, 100)}`);
       }
     }
   } catch (err) {
@@ -784,19 +778,17 @@ async function fetchAndLogAllMetafields() {
 }
 
 async function fetchPages() {
-  console.log("\n📄 Fetching Shopify pages...");
+  console.log('\n📄 Fetching Shopify pages...');
 
   try {
-    const pages = await shopifyFetchAll<ShopifyPage>("/pages.json", "pages");
+    const pages = await shopifyFetchAll<ShopifyPage>('/pages.json', 'pages');
     console.log(`   Found ${pages.length} pages:`);
 
     for (const page of pages) {
       console.log(`   - "${page.title}" (/${page.handle})`);
       if (page.meta_title) console.log(`     Meta title: ${page.meta_title}`);
       if (page.meta_description)
-        console.log(
-          `     Meta desc: ${page.meta_description.substring(0, 100)}`
-        );
+        console.log(`     Meta desc: ${page.meta_description.substring(0, 100)}`);
 
       // Fetch page metafields
       try {
@@ -806,9 +798,7 @@ async function fetchPages() {
         if (mfData.metafields.length > 0) {
           console.log(`     Metafields:`);
           for (const mf of mfData.metafields) {
-            console.log(
-              `       ${mf.namespace}.${mf.key} = ${mf.value.substring(0, 80)}`
-            );
+            console.log(`       ${mf.namespace}.${mf.key} = ${mf.value.substring(0, 80)}`);
           }
         }
       } catch {
@@ -823,10 +813,10 @@ async function fetchPages() {
 // ─── Main ────────────────────────────────────────────────────
 
 async function main() {
-  console.log("═══════════════════════════════════════════════════════");
-  console.log("  Shopify → Earth Revibe Migration");
+  console.log('═══════════════════════════════════════════════════════');
+  console.log('  Shopify → Earth Revibe Migration');
   console.log(`  Store: ${SHOPIFY_DOMAIN}`);
-  console.log("═══════════════════════════════════════════════════════");
+  console.log('═══════════════════════════════════════════════════════');
 
   try {
     // Step 0: Obtain access token via Client Credentials Grant
@@ -847,11 +837,11 @@ async function main() {
     // Step 5: Fetch and log pages (for manual review)
     await fetchPages();
 
-    console.log("\n═══════════════════════════════════════════════════════");
-    console.log("  Migration complete!");
-    console.log("═══════════════════════════════════════════════════════");
+    console.log('\n═══════════════════════════════════════════════════════');
+    console.log('  Migration complete!');
+    console.log('═══════════════════════════════════════════════════════');
   } catch (err) {
-    console.error("\n❌ Migration failed:", err);
+    console.error('\n❌ Migration failed:', err);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

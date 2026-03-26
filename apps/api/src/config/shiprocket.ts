@@ -1,8 +1,8 @@
-import { env } from "./env";
-import { APP_CONSTANTS } from "./constants";
-import { createCircuitBreaker } from "../utils/circuit-breaker";
+import { env } from './env';
+import { APP_CONSTANTS } from './constants';
+import { createCircuitBreaker } from '../utils/circuit-breaker';
 
-const SHIPROCKET_BASE = "https://apiv2.shiprocket.in/v1/external";
+const SHIPROCKET_BASE = 'https://apiv2.shiprocket.in/v1/external';
 
 let cachedToken: string | null = null;
 let tokenExpiry: number = 0;
@@ -16,12 +16,12 @@ export async function getShiprocketToken(): Promise<string> {
   }
 
   if (!env.SHIPROCKET_EMAIL || !env.SHIPROCKET_PASSWORD) {
-    throw new Error("Shiprocket credentials not configured");
+    throw new Error('Shiprocket credentials not configured');
   }
 
   const res = await fetch(`${SHIPROCKET_BASE}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: env.SHIPROCKET_EMAIL,
       password: env.SHIPROCKET_PASSWORD,
@@ -48,10 +48,10 @@ async function _shiprocketRequest<T = any>(
   const token = await getShiprocketToken();
 
   const res = await fetch(`${SHIPROCKET_BASE}${path}`, {
-    method: options.method || "GET",
+    method: options.method || 'GET',
     headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
@@ -65,11 +65,10 @@ async function _shiprocketRequest<T = any>(
   return data as T;
 }
 
-const shiprocketBreaker = createCircuitBreaker(
-  _shiprocketRequest,
-  "shiprocket",
-  { timeout: 15000, resetTimeout: 60000 }
-);
+const shiprocketBreaker = createCircuitBreaker(_shiprocketRequest, 'shiprocket', {
+  timeout: 15000,
+  resetTimeout: 60000,
+});
 
 /**
  * Make an authenticated request to the Shiprocket API, protected by circuit breaker.

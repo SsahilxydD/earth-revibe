@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown } from 'lucide-react';
 
 interface FilterBarProps {
   period: string;

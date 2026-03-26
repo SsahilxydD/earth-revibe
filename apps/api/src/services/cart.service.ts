@@ -1,6 +1,6 @@
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { AddToCartInput, UpdateCartItemInput } from "@earth-revibe/shared";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type { AddToCartInput, UpdateCartItemInput } from '@earth-revibe/shared';
 
 export const cartService = {
   async getCart(userId: string) {
@@ -23,7 +23,7 @@ export const cartService = {
               },
             },
           },
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
@@ -63,8 +63,8 @@ export const cartService = {
       include: { product: { select: { status: true } } },
     });
 
-    if (!variant || !variant.isActive || variant.product.status !== "ACTIVE") {
-      throw ApiError.badRequest("Product variant not available");
+    if (!variant || !variant.isActive || variant.product.status !== 'ACTIVE') {
+      throw ApiError.badRequest('Product variant not available');
     }
 
     if (variant.stock < data.quantity) {
@@ -106,12 +106,12 @@ export const cartService = {
 
   async updateItem(userId: string, variantId: string, data: UpdateCartItemInput) {
     const cart = await prisma.cart.findUnique({ where: { userId } });
-    if (!cart) throw ApiError.notFound("Cart not found");
+    if (!cart) throw ApiError.notFound('Cart not found');
 
     const item = await prisma.cartItem.findUnique({
       where: { cartId_variantId: { cartId: cart.id, variantId } },
     });
-    if (!item) throw ApiError.notFound("Item not in cart");
+    if (!item) throw ApiError.notFound('Item not in cart');
 
     // Check stock
     const variant = await prisma.productVariant.findUnique({ where: { id: variantId } });
@@ -129,7 +129,7 @@ export const cartService = {
 
   async removeItem(userId: string, variantId: string) {
     const cart = await prisma.cart.findUnique({ where: { userId } });
-    if (!cart) throw ApiError.notFound("Cart not found");
+    if (!cart) throw ApiError.notFound('Cart not found');
 
     await prisma.cartItem.deleteMany({
       where: { cartId: cart.id, variantId },

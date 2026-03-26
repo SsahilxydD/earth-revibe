@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { use } from "react";
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Package, Truck, CheckCircle } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api-client";
-import { formatPrice, formatDate, getImageUrl } from "@/lib/utils";
+import { use } from 'react';
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, Package, Truck, CheckCircle } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { api } from '@/lib/api-client';
+import { formatPrice, formatDate, getImageUrl } from '@/lib/utils';
 
 interface OrderItem {
   id: string;
@@ -48,10 +48,10 @@ interface OrderDetail {
 }
 
 const TIMELINE_STEPS = [
-  { key: "confirmed", label: "Confirmed", icon: CheckCircle },
-  { key: "processing", label: "Processing", icon: Package },
-  { key: "shipped", label: "Shipped", icon: Truck },
-  { key: "delivered", label: "Delivered", icon: CheckCircle },
+  { key: 'confirmed', label: 'Confirmed', icon: CheckCircle },
+  { key: 'processing', label: 'Processing', icon: Package },
+  { key: 'shipped', label: 'Shipped', icon: Truck },
+  { key: 'delivered', label: 'Delivered', icon: CheckCircle },
 ] as const;
 
 const STATUS_ORDER: Record<string, number> = {
@@ -62,15 +62,11 @@ const STATUS_ORDER: Record<string, number> = {
   delivered: 4,
 };
 
-export default function OrderDetailPage({
-  params,
-}: {
-  params: Promise<{ orderNumber: string }>;
-}) {
+export default function OrderDetailPage({ params }: { params: Promise<{ orderNumber: string }> }) {
   const { orderNumber } = use(params);
 
   const { data: order, isLoading } = useQuery({
-    queryKey: ["order", orderNumber],
+    queryKey: ['order', orderNumber],
     queryFn: () => api.get<OrderDetail>(`/orders/${orderNumber}`),
     enabled: !!orderNumber,
   });
@@ -87,10 +83,7 @@ export default function OrderDetailPage({
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
         <h2 className="mb-2 text-lg font-bold">Order Not Found</h2>
-        <Link
-          href="/account/orders"
-          className="text-sm text-[var(--color-muted)] hover:underline"
-        >
+        <Link href="/account/orders" className="text-sm text-[var(--color-muted)] hover:underline">
           Back to Orders
         </Link>
       </div>
@@ -98,7 +91,7 @@ export default function OrderDetailPage({
   }
 
   const currentStep = STATUS_ORDER[order.status] ?? 0;
-  const isCancelled = order.status === "cancelled";
+  const isCancelled = order.status === 'cancelled';
 
   return (
     <div>
@@ -133,26 +126,21 @@ export default function OrderDetailPage({
               const isCompleted = currentStep >= i + 1;
               const isCurrent = currentStep === i + 1;
               return (
-                <div
-                  key={step.key}
-                  className="flex flex-1 flex-col items-center"
-                >
+                <div key={step.key} className="flex flex-1 flex-col items-center">
                   <div className="relative flex items-center justify-center">
                     {i > 0 && (
                       <div
                         className={`absolute right-1/2 h-0.5 w-[calc(100%+2rem)] sm:w-[calc(100%+4rem)] ${
-                          isCompleted
-                            ? "bg-[var(--color-primary)]"
-                            : "bg-[var(--color-border)]"
+                          isCompleted ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'
                         }`}
-                        style={{ transform: "translateX(-50%)" }}
+                        style={{ transform: 'translateX(-50%)' }}
                       />
                     )}
                     <div
                       className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full ${
                         isCompleted || isCurrent
-                          ? "bg-[var(--color-primary)] text-white"
-                          : "bg-[var(--color-surface)] text-[var(--color-muted)]"
+                          ? 'bg-[var(--color-primary)] text-white'
+                          : 'bg-[var(--color-surface)] text-[var(--color-muted)]'
                       }`}
                     >
                       <step.icon size={16} />
@@ -161,8 +149,8 @@ export default function OrderDetailPage({
                   <span
                     className={`mt-2 text-[10px] font-semibold uppercase tracking-wider ${
                       isCompleted || isCurrent
-                        ? "text-[var(--color-primary)]"
-                        : "text-[var(--color-muted)]"
+                        ? 'text-[var(--color-primary)]'
+                        : 'text-[var(--color-muted)]'
                     }`}
                   >
                     {step.label}
@@ -176,9 +164,7 @@ export default function OrderDetailPage({
 
       {/* Items */}
       <div className="mb-8">
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
-          Items
-        </h3>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">Items</h3>
         <div className="space-y-3">
           {order.items.map((item) => (
             <div
@@ -197,11 +183,9 @@ export default function OrderDetailPage({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold">{item.name}</p>
                 <p className="text-xs text-[var(--color-muted)]">
-                  {[item.size, item.color].filter(Boolean).join(" / ")}
+                  {[item.size, item.color].filter(Boolean).join(' / ')}
                 </p>
-                <p className="text-xs text-[var(--color-muted)]">
-                  Qty: {item.quantity}
-                </p>
+                <p className="text-xs text-[var(--color-muted)]">Qty: {item.quantity}</p>
               </div>
               <p className="shrink-0 text-sm font-bold">
                 {formatPrice(item.price * item.quantity)}
@@ -214,19 +198,13 @@ export default function OrderDetailPage({
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Shipping Address */}
         <div className="rounded-xl border border-[var(--color-border)] p-5">
-          <h3 className="mb-3 text-sm font-bold uppercase tracking-wider">
-            Shipping Address
-          </h3>
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wider">Shipping Address</h3>
           <div className="space-y-1 text-sm text-[var(--color-muted)]">
-            <p className="font-medium text-[var(--color-text)]">
-              {order.shippingAddress.fullName}
-            </p>
+            <p className="font-medium text-[var(--color-text)]">{order.shippingAddress.fullName}</p>
             <p>{order.shippingAddress.line1}</p>
-            {order.shippingAddress.line2 && (
-              <p>{order.shippingAddress.line2}</p>
-            )}
+            {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
             <p>
-              {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
+              {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
               {order.shippingAddress.pinCode}
             </p>
             <p>Phone: {order.shippingAddress.phone}</p>
@@ -235,9 +213,7 @@ export default function OrderDetailPage({
 
         {/* Payment & Totals */}
         <div className="rounded-xl border border-[var(--color-border)] p-5">
-          <h3 className="mb-3 text-sm font-bold uppercase tracking-wider">
-            Payment Summary
-          </h3>
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wider">Payment Summary</h3>
           {order.payment && (
             <p className="mb-3 text-sm text-[var(--color-muted)]">
               {order.payment.method}
@@ -252,16 +228,12 @@ export default function OrderDetailPage({
             {order.discount > 0 && (
               <div className="flex justify-between">
                 <span className="text-[var(--color-muted)]">Discount</span>
-                <span className="text-green-600">
-                  -{formatPrice(order.discount)}
-                </span>
+                <span className="text-green-600">-{formatPrice(order.discount)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span className="text-[var(--color-muted)]">Shipping</span>
-              <span>
-                {order.shipping === 0 ? "Free" : formatPrice(order.shipping)}
-              </span>
+              <span>{order.shipping === 0 ? 'Free' : formatPrice(order.shipping)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-[var(--color-muted)]">Tax</span>

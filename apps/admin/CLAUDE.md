@@ -6,19 +6,19 @@ Admin dashboard for Earth Revibe — product management, orders, customers, blog
 ## Structure
 
 src/
-  app/
-    (admin)/       # all admin routes — protected, requires admin auth
-    login/         # admin login page — public
-  components/
-    analytics/     # revenue charts, KPI cards (recharts)
-    dashboard/     # dashboard home widgets
-    layout/        # sidebar, topbar, breadcrumbs
-    products/      # product form, variant editor, image uploader
-    ui/            # shared primitives: button, input, table, modal, badge
-  hooks/           # custom hooks
-  lib/             # api client, helpers
-  providers/       # QueryClientProvider, AdminAuthProvider
-  stores/          # zustand: ui state, sidebar collapse
+app/
+(admin)/ # all admin routes — protected, requires admin auth
+login/ # admin login page — public
+components/
+analytics/ # revenue charts, KPI cards (recharts)
+dashboard/ # dashboard home widgets
+layout/ # sidebar, topbar, breadcrumbs
+products/ # product form, variant editor, image uploader
+ui/ # shared primitives: button, input, table, modal, badge
+hooks/ # custom hooks
+lib/ # api client, helpers
+providers/ # QueryClientProvider, AdminAuthProvider
+stores/ # zustand: ui state, sidebar collapse
 
 ## Patterns
 
@@ -36,4 +36,4 @@ src/
 Always use --swarm admin-swarm for work in this directory.
 
 Example:
-  ruflo --agent coder --swarm admin-swarm --task "Add low stock alert badge to inventory table"
+ruflo --agent coder --swarm admin-swarm --task "Add low stock alert badge to inventory table"

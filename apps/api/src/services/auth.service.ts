@@ -1,14 +1,19 @@
-import crypto from "node:crypto";
-import { prisma } from "@earth-revibe/db";
-import { logger } from "../config/logger";
-import { ApiError } from "../utils/api-error";
-import { emailService } from "./email.service";
-import { getSupabaseAdmin, getSupabaseAnon } from "../config/supabase";
-import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput } from "@earth-revibe/shared";
+import crypto from 'node:crypto';
+import { prisma } from '@earth-revibe/db';
+import { logger } from '../config/logger';
+import { ApiError } from '../utils/api-error';
+import { emailService } from './email.service';
+import { getSupabaseAdmin, getSupabaseAnon } from '../config/supabase';
+import type {
+  RegisterInput,
+  LoginInput,
+  UpdateProfileInput,
+  ChangePasswordInput,
+} from '@earth-revibe/shared';
 
 // Helper: generate referral code from user ID
 function generateReferralCode(userId: string): string {
-  const prefix = "REVIBE";
+  const prefix = 'REVIBE';
   const suffix = userId.slice(-6).toUpperCase();
   return `${prefix}-${suffix}`;
 }
@@ -32,16 +37,16 @@ export const authService = {
         phone: data.phone,
       },
       app_metadata: {
-        role: "CUSTOMER",
+        role: 'CUSTOMER',
       },
     });
 
     if (authError) {
-      if (authError.message?.includes("already been registered") || authError.status === 422) {
-        throw ApiError.conflict("Email already registered");
+      if (authError.message?.includes('already been registered') || authError.status === 422) {
+        throw ApiError.conflict('Email already registered');
       }
-      logger.error({ err: authError }, "Supabase createUser failed");
-      throw ApiError.internal("Registration failed");
+      logger.error({ err: authError }, 'Supabase createUser failed');
+      throw ApiError.internal('Registration failed');
     }
 
     // 2. Create Prisma User record
@@ -53,7 +58,7 @@ export const authService = {
           firstName: data.firstName,
           lastName: data.lastName,
           phone: data.phone,
-          passwordHash: "supabase-managed",
+          passwordHash: 'supabase-managed',
           emailVerified: true,
           isActive: true,
         },
@@ -61,12 +66,12 @@ export const authService = {
     } catch (err: any) {
       // Rollback: delete the Supabase user if Prisma creation fails
       await supabase.auth.admin.deleteUser(authData.user.id);
-      if (err.code === "P2002") {
+      if (err.code === 'P2002') {
         const target = err.meta?.target;
-        if (Array.isArray(target) && target.includes("phone")) {
-          throw ApiError.conflict("Phone number already registered");
+        if (Array.isArray(target) && target.includes('phone')) {
+          throw ApiError.conflict('Phone number already registered');
         }
-        throw ApiError.conflict("Email already registered");
+        throw ApiError.conflict('Email already registered');
       }
       throw err;
     }
@@ -88,7 +93,7 @@ export const authService = {
           data: {
             referrerId: referrer.id,
             refereeId: user.id,
-            status: "SIGNED_UP",
+            status: 'SIGNED_UP',
           },
         });
       }
@@ -102,8 +107,8 @@ export const authService = {
     });
 
     if (signInError || !signInData.session) {
-      logger.error({ err: signInError }, "Supabase signIn after register failed");
-      throw ApiError.internal("Registration succeeded but sign-in failed");
+      logger.error({ err: signInError }, 'Supabase signIn after register failed');
+      throw ApiError.internal('Registration succeeded but sign-in failed');
     }
 
     return {
@@ -131,11 +136,11 @@ export const authService = {
     });
 
     if (error) {
-      throw ApiError.unauthorized("Invalid email or password");
+      throw ApiError.unauthorized('Invalid email or password');
     }
 
     if (!signInData.session) {
-      throw ApiError.unauthorized("Invalid email or password");
+      throw ApiError.unauthorized('Invalid email or password');
     }
 
     // Auto-provision / sync Prisma user (same logic as middleware)
@@ -144,9 +149,9 @@ export const authService = {
       update: { lastLoginAt: new Date() },
       create: {
         email: data.email,
-        passwordHash: "supabase-managed",
-        firstName: signInData.user.user_metadata?.first_name || data.email.split("@")[0],
-        lastName: signInData.user.user_metadata?.last_name || "",
+        passwordHash: 'supabase-managed',
+        firstName: signInData.user.user_metadata?.first_name || data.email.split('@')[0],
+        lastName: signInData.user.user_metadata?.last_name || '',
         emailVerified: true,
         isActive: true,
         lastLoginAt: new Date(),
@@ -163,7 +168,7 @@ export const authService = {
     });
 
     if (!user.isActive) {
-      throw ApiError.forbidden("Account is deactivated");
+      throw ApiError.forbidden('Account is deactivated');
     }
 
     return {
@@ -188,7 +193,7 @@ export const authService = {
     const { data, error } = await supabaseAnon.auth.refreshSession({ refresh_token: token });
 
     if (error || !data.session) {
-      throw ApiError.unauthorized("Invalid or expired refresh token");
+      throw ApiError.unauthorized('Invalid or expired refresh token');
     }
 
     return {
@@ -226,7 +231,7 @@ export const authService = {
     if (!supabaseUser) return;
 
     // Generate a secure random token
-    const token = crypto.randomBytes(32).toString("hex");
+    const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     // Invalidate any existing tokens for this email
@@ -255,15 +260,15 @@ export const authService = {
     });
 
     if (!resetToken) {
-      throw ApiError.badRequest("Invalid reset link. Please request a new one.");
+      throw ApiError.badRequest('Invalid reset link. Please request a new one.');
     }
 
     if (resetToken.usedAt) {
-      throw ApiError.badRequest("This reset link has already been used.");
+      throw ApiError.badRequest('This reset link has already been used.');
     }
 
     if (resetToken.expiresAt < new Date()) {
-      throw ApiError.badRequest("This reset link has expired. Please request a new one.");
+      throw ApiError.badRequest('This reset link has expired. Please request a new one.');
     }
 
     // Find the Supabase user by email
@@ -274,7 +279,7 @@ export const authService = {
     );
 
     if (!supabaseUser) {
-      throw ApiError.badRequest("Account not found. Please contact support.");
+      throw ApiError.badRequest('Account not found. Please contact support.');
     }
 
     // Update password in Supabase
@@ -283,8 +288,8 @@ export const authService = {
     });
 
     if (error) {
-      logger.error({ err: error }, "Supabase password update failed");
-      throw ApiError.internal("Password reset failed. Please try again.");
+      logger.error({ err: error }, 'Supabase password update failed');
+      throw ApiError.internal('Password reset failed. Please try again.');
     }
 
     // Mark token as used
@@ -311,7 +316,7 @@ export const authService = {
       },
     });
 
-    if (!user) throw ApiError.notFound("User not found");
+    if (!user) throw ApiError.notFound('User not found');
     return user;
   },
 
@@ -346,7 +351,7 @@ export const authService = {
   async changePassword(userId: string, data: ChangePasswordInput) {
     // Find the user's email to look up their Supabase ID
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw ApiError.notFound("User not found");
+    if (!user) throw ApiError.notFound('User not found');
 
     // Verify current password by attempting sign-in
     const supabaseAnon = getSupabaseAnon();
@@ -356,7 +361,7 @@ export const authService = {
     });
 
     if (verifyError) {
-      throw ApiError.badRequest("Current password is incorrect");
+      throw ApiError.badRequest('Current password is incorrect');
     }
 
     // Find Supabase user by email and update password
@@ -364,13 +369,13 @@ export const authService = {
     const { data: supabaseUsers, error: listError } = await supabase.auth.admin.listUsers();
 
     if (listError) {
-      logger.error({ err: listError }, "Failed to list Supabase users");
-      throw ApiError.internal("Password change failed");
+      logger.error({ err: listError }, 'Failed to list Supabase users');
+      throw ApiError.internal('Password change failed');
     }
 
     const supabaseUser = supabaseUsers.users.find((u) => u.email === user.email);
     if (!supabaseUser) {
-      throw ApiError.internal("User not found in auth provider");
+      throw ApiError.internal('User not found in auth provider');
     }
 
     const { error: updateError } = await supabase.auth.admin.updateUserById(supabaseUser.id, {
@@ -378,8 +383,8 @@ export const authService = {
     });
 
     if (updateError) {
-      logger.error({ err: updateError }, "Supabase password update failed");
-      throw ApiError.internal("Password change failed");
+      logger.error({ err: updateError }, 'Supabase password update failed');
+      throw ApiError.internal('Password change failed');
     }
   },
 };

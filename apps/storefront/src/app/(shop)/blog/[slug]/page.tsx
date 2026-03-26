@@ -1,21 +1,14 @@
-"use client";
+'use client';
 
-import { use } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import {
-  Calendar,
-  User,
-  ChevronLeft,
-  Facebook,
-  Twitter,
-  Link2,
-} from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api-client";
-import { formatDate, getImageUrl, truncate } from "@/lib/utils";
-import { useToast } from "@/providers";
+import { use } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { Calendar, User, ChevronLeft, Facebook, Twitter, Link2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { api } from '@/lib/api-client';
+import { formatDate, getImageUrl, truncate } from '@/lib/utils';
+import { useToast } from '@/providers';
 
 interface BlogPost {
   id: string;
@@ -43,17 +36,14 @@ interface RelatedPost {
 function ShareButtons({ title, slug }: { title: string; slug: string }) {
   const { addToast } = useToast();
 
-  const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/blog/${slug}`
-      : "";
+  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/blog/${slug}` : '';
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      addToast("Link copied to clipboard!", "success");
+      addToast('Link copied to clipboard!', 'success');
     } catch {
-      addToast("Failed to copy link", "error");
+      addToast('Failed to copy link', 'error');
     }
   };
 
@@ -107,9 +97,7 @@ function RelatedPostCard({ post }: { post: RelatedPost }) {
         />
       </div>
       <div className="p-3">
-        <p className="text-xs text-[var(--color-muted)]">
-          {formatDate(post.publishedAt)}
-        </p>
+        <p className="text-xs text-[var(--color-muted)]">{formatDate(post.publishedAt)}</p>
         <h3 className="mt-1 text-sm font-bold uppercase tracking-wider transition-colors group-hover:text-[var(--color-muted)]">
           {truncate(post.title, 60)}
         </h3>
@@ -140,20 +128,16 @@ function BlogDetailSkeleton() {
   );
 }
 
-export default function BlogDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
 
   const { data: post, isLoading } = useQuery<BlogPost>({
-    queryKey: ["blog-post", slug],
+    queryKey: ['blog-post', slug],
     queryFn: () => api.get(`/blog/posts/${slug}`),
   });
 
   const { data: relatedPosts } = useQuery<RelatedPost[]>({
-    queryKey: ["blog-related", slug],
+    queryKey: ['blog-related', slug],
     queryFn: () => api.get(`/blog/posts/${slug}/related`),
     enabled: !!post,
   });
@@ -165,9 +149,7 @@ export default function BlogDetailPage({
   if (!post) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-20 text-center lg:px-8">
-        <h2 className="text-xl font-bold uppercase tracking-wider">
-          Post not found
-        </h2>
+        <h2 className="text-xl font-bold uppercase tracking-wider">Post not found</h2>
         <p className="mt-2 text-sm text-[var(--color-muted)]">
           The blog post you&apos;re looking for doesn&apos;t exist.
         </p>
@@ -198,9 +180,7 @@ export default function BlogDetailPage({
         </span>
       )}
 
-      <h1 className="mt-3 text-2xl font-bold uppercase tracking-wider sm:text-3xl">
-        {post.title}
-      </h1>
+      <h1 className="mt-3 text-2xl font-bold uppercase tracking-wider sm:text-3xl">{post.title}</h1>
 
       <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--color-muted)]">
         <div className="flex items-center gap-1.5">
@@ -237,9 +217,7 @@ export default function BlogDetailPage({
 
       {relatedPosts && relatedPosts.length > 0 && (
         <div className="mt-12 border-t border-[var(--color-border)] pt-8">
-          <h2 className="text-lg font-bold uppercase tracking-wider">
-            Related Posts
-          </h2>
+          <h2 className="text-lg font-bold uppercase tracking-wider">Related Posts</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             {relatedPosts.slice(0, 3).map((rp) => (
               <RelatedPostCard key={rp.id} post={rp} />

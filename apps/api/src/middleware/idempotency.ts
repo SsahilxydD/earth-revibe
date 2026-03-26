@@ -1,6 +1,6 @@
-import type { Request, Response, NextFunction } from "express";
-import { prisma, Prisma } from "@earth-revibe/db";
-import { logger } from "../config/logger";
+import type { Request, Response, NextFunction } from 'express';
+import { prisma, Prisma } from '@earth-revibe/db';
+import { logger } from '../config/logger';
 
 const IDEMPOTENCY_KEY_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -14,14 +14,14 @@ const IDEMPOTENCY_KEY_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
  */
 export function idempotency(endpoint: string) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const idempotencyKey = req.headers["x-idempotency-key"];
+    const idempotencyKey = req.headers['x-idempotency-key'];
 
     // If no key provided, proceed without idempotency protection
-    if (!idempotencyKey || typeof idempotencyKey !== "string") {
+    if (!idempotencyKey || typeof idempotencyKey !== 'string') {
       return next();
     }
 
-    const userId = (req as any).user?.id || "anonymous";
+    const userId = (req as any).user?.id || 'anonymous';
 
     try {
       // Check for existing key
@@ -34,16 +34,16 @@ export function idempotency(endpoint: string) {
         if (existing.expiresAt < new Date()) {
           // Expired key — delete and allow retry
           await prisma.idempotencyKey.delete({ where: { id: existing.id } });
-        } else if (existing.status === "COMPLETED" && existing.response) {
+        } else if (existing.status === 'COMPLETED' && existing.response) {
           // Return cached response
           const cached = existing.response as { statusCode: number; body: unknown };
           return res.status(cached.statusCode).json(cached.body);
-        } else if (existing.status === "PROCESSING") {
+        } else if (existing.status === 'PROCESSING') {
           return res.status(409).json({
             success: false,
             error: {
-              code: "CONFLICT",
-              message: "A request with this idempotency key is currently being processed",
+              code: 'CONFLICT',
+              message: 'A request with this idempotency key is currently being processed',
             },
           });
         }
@@ -56,12 +56,12 @@ export function idempotency(endpoint: string) {
         create: {
           key: idempotencyKey,
           userId,
-          status: "PROCESSING",
+          status: 'PROCESSING',
           endpoint,
           expiresAt: new Date(Date.now() + IDEMPOTENCY_KEY_TTL_MS),
         },
         update: {
-          status: "PROCESSING",
+          status: 'PROCESSING',
           userId,
           endpoint,
           response: Prisma.JsonNull,
@@ -79,12 +79,12 @@ export function idempotency(endpoint: string) {
           .update({
             where: { id: record.id },
             data: {
-              status: statusCode >= 200 && statusCode < 300 ? "COMPLETED" : "FAILED",
+              status: statusCode >= 200 && statusCode < 300 ? 'COMPLETED' : 'FAILED',
               response: { statusCode, body } as any,
             },
           })
           .catch((err) => {
-            logger.error({ err, idempotencyKey, endpoint }, "Failed to store idempotency response");
+            logger.error({ err, idempotencyKey, endpoint }, 'Failed to store idempotency response');
           });
 
         return originalJson(body);
@@ -92,7 +92,10 @@ export function idempotency(endpoint: string) {
 
       return next();
     } catch (err) {
-      logger.error({ err, endpoint }, "Idempotency middleware failed, proceeding without protection");
+      logger.error(
+        { err, endpoint },
+        'Idempotency middleware failed, proceeding without protection'
+      );
       return next();
     }
   };

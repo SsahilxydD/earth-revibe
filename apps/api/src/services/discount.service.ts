@@ -1,6 +1,6 @@
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { ValidateDiscountInput } from "@earth-revibe/shared";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type { ValidateDiscountInput } from '@earth-revibe/shared';
 
 export const discountService = {
   async validateDiscount(data: ValidateDiscountInput, userId?: string) {
@@ -9,25 +9,27 @@ export const discountService = {
     });
 
     if (!discount || !discount.isActive) {
-      throw ApiError.badRequest("Invalid discount code");
+      throw ApiError.badRequest('Invalid discount code');
     }
 
     const now = new Date();
     if (discount.startsAt > now || discount.expiresAt < now) {
-      throw ApiError.badRequest("Discount code has expired");
+      throw ApiError.badRequest('Discount code has expired');
     }
 
     if (discount.usageLimit && discount.usageCount >= discount.usageLimit) {
-      throw ApiError.badRequest("Discount code usage limit reached");
+      throw ApiError.badRequest('Discount code usage limit reached');
     }
 
     // Per-user limit check
     if (userId) {
       const userUsageCount = await prisma.order.count({
-        where: { userId, discountCodeId: discount.id, status: { not: "CANCELLED" } },
+        where: { userId, discountCodeId: discount.id, status: { not: 'CANCELLED' } },
       });
       if (userUsageCount >= discount.perUserLimit) {
-        throw ApiError.badRequest("You have already used this discount code the maximum number of times");
+        throw ApiError.badRequest(
+          'You have already used this discount code the maximum number of times'
+        );
       }
     }
 
@@ -37,16 +39,16 @@ export const discountService = {
 
     // Calculate discount amount — handle all types
     let discountAmount: number;
-    if (discount.type === "PERCENTAGE") {
+    if (discount.type === 'PERCENTAGE') {
       discountAmount = data.orderTotal * (Number(discount.value) / 100);
       if (discount.maxDiscountAmount) {
         discountAmount = Math.min(discountAmount, Number(discount.maxDiscountAmount));
       }
-    } else if (discount.type === "FLAT") {
+    } else if (discount.type === 'FLAT') {
       discountAmount = Math.min(Number(discount.value), data.orderTotal);
-    } else if (discount.type === "FREE_SHIPPING") {
+    } else if (discount.type === 'FREE_SHIPPING') {
       discountAmount = 0;
-    } else if (discount.type === "BUY_X_GET_Y") {
+    } else if (discount.type === 'BUY_X_GET_Y') {
       // BUY_X_GET_Y requires product-level configuration — skip silently for v1
       discountAmount = 0;
     } else {

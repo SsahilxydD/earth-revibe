@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import Image from "next/image";
+import Link from 'next/link';
+import Image from 'next/image';
 
 const SHOP_LINKS = [
-  { label: "New Arrivals", href: "/categories/new-arrivals" },
-  { label: "Shirts", href: "/categories/shirts" },
-  { label: "T-Shirts", href: "/categories/t-shirts" },
-  { label: "Outerwear", href: "/categories/outerwear" },
-  { label: "Bestsellers", href: "/categories/bestsellers" },
+  { label: 'New Arrivals', href: '/categories/new-arrivals' },
+  { label: 'Shirts', href: '/categories/shirts' },
+  { label: 'T-Shirts', href: '/categories/t-shirts' },
+  { label: 'Outerwear', href: '/categories/outerwear' },
+  { label: 'Bestsellers', href: '/categories/bestsellers' },
 ];
 
 const CUSTOMER_LINKS = [
-  { label: "Track Order", href: "/track-order" },
-  { label: "Returns & Exchanges", href: "/policies/returns" },
-  { label: "Shipping Policy", href: "/policies/shipping" },
-  { label: "FAQs", href: "/faq" },
-  { label: "Contact Us", href: "/contact" },
+  { label: 'Track Order', href: '/track-order' },
+  { label: 'Returns & Exchanges', href: '/policies/returns' },
+  { label: 'Shipping Policy', href: '/policies/shipping' },
+  { label: 'FAQs', href: '/faq' },
+  { label: 'Contact Us', href: '/contact' },
 ];
 
 const ABOUT_LINKS = [
-  { label: "Our Story", href: "/about" },
-  { label: "Privacy Policy", href: "/policies/privacy" },
-  { label: "Terms of Service", href: "/policies/terms" },
+  { label: 'Our Story', href: '/about' },
+  { label: 'Privacy Policy', href: '/policies/privacy' },
+  { label: 'Terms of Service', href: '/policies/terms' },
 ];
 
 function FooterColumn({
@@ -34,9 +34,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-black">
-        {title}
-      </h3>
+      <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-black">{title}</h3>
       <ul className="space-y-1.5">
         {links.map((link) => (
           <li key={link.href}>

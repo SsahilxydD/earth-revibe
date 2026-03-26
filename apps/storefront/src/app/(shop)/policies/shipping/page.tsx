@@ -1,20 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Shipping Policy | Earth Revibe",
+  title: 'Shipping Policy | Earth Revibe',
   description:
-    "Earth Revibe shipping information. Free shipping on orders above Rs.999. Delivery timelines and shipping partners.",
+    'Earth Revibe shipping information. Free shipping on orders above Rs.999. Delivery timelines and shipping partners.',
 };
 
 export default function ShippingPolicyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
-      <h1 className="text-3xl font-bold uppercase tracking-wider">
-        Shipping Policy
-      </h1>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">
-        Last updated: 1 January 2026
-      </p>
+      <h1 className="text-3xl font-bold uppercase tracking-wider">Shipping Policy</h1>
+      <p className="mt-2 text-xs text-[var(--color-muted)]">Last updated: 1 January 2026</p>
 
       <div className="mt-8 space-y-8 text-sm leading-relaxed text-[var(--color-muted)]">
         <section>
@@ -36,9 +32,7 @@ export default function ShippingPolicyPage() {
               <tbody>
                 <tr className="border-t border-[var(--color-border)]">
                   <td className="px-4 py-3">Above Rs.999</td>
-                  <td className="px-4 py-3 font-semibold text-green-600">
-                    FREE
-                  </td>
+                  <td className="px-4 py-3 font-semibold text-green-600">FREE</td>
                 </tr>
                 <tr className="border-t border-[var(--color-border)]">
                   <td className="px-4 py-3">Below Rs.999</td>
@@ -46,9 +40,7 @@ export default function ShippingPolicyPage() {
                 </tr>
                 <tr className="border-t border-[var(--color-border)]">
                   <td className="px-4 py-3">COD Orders</td>
-                  <td className="px-4 py-3">
-                    Rs.49 additional COD handling fee
-                  </td>
+                  <td className="px-4 py-3">Rs.49 additional COD handling fee</td>
                 </tr>
               </tbody>
             </table>
@@ -89,8 +81,8 @@ export default function ShippingPolicyPage() {
             </table>
           </div>
           <p className="mt-2 text-xs">
-            *Express delivery is available at select pin codes for an additional
-            charge. Availability will be shown at checkout.
+            *Express delivery is available at select pin codes for an additional charge.
+            Availability will be shown at checkout.
           </p>
         </section>
 
@@ -99,8 +91,8 @@ export default function ShippingPolicyPage() {
             Shipping Partners
           </h2>
           <p>
-            We partner with India&apos;s most trusted logistics providers to ensure
-            safe and timely delivery:
+            We partner with India&apos;s most trusted logistics providers to ensure safe and timely
+            delivery:
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>Delhivery</li>
@@ -115,13 +107,12 @@ export default function ShippingPolicyPage() {
             Order Processing
           </h2>
           <p>
-            Orders are processed within 1-2 business days after payment
-            confirmation. Orders placed after 5 PM IST or on weekends/holidays
-            will be processed on the next business day.
+            Orders are processed within 1-2 business days after payment confirmation. Orders placed
+            after 5 PM IST or on weekends/holidays will be processed on the next business day.
           </p>
           <p className="mt-2">
-            During sale periods and festive seasons, processing may take an
-            additional 1-2 days due to high order volumes.
+            During sale periods and festive seasons, processing may take an additional 1-2 days due
+            to high order volumes.
           </p>
         </section>
 
@@ -130,19 +121,16 @@ export default function ShippingPolicyPage() {
             Order Tracking
           </h2>
           <p>
-            Once your order is shipped, you will receive a tracking link via
-            email and SMS. You can track your order at any time from:
+            Once your order is shipped, you will receive a tracking link via email and SMS. You can
+            track your order at any time from:
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>Your account dashboard under &quot;My Orders&quot;</li>
             <li>
-              Our{" "}
-              <a
-                href="/track-order"
-                className="font-semibold text-[var(--color-text)] underline"
-              >
+              Our{' '}
+              <a href="/track-order" className="font-semibold text-[var(--color-text)] underline">
                 Track Order
-              </a>{" "}
+              </a>{' '}
               page using your order number
             </li>
             <li>Directly on the courier partner&apos;s website using the AWB number</li>
@@ -155,13 +143,10 @@ export default function ShippingPolicyPage() {
           </h2>
           <ul className="list-disc space-y-1 pl-5">
             <li>We currently ship only within India.</li>
+            <li>Delivery to P.O. Boxes is not available.</li>
             <li>
-              Delivery to P.O. Boxes is not available.
-            </li>
-            <li>
-              Some remote areas may have limited courier access. If we are
-              unable to deliver to your pin code, we will notify you within 24
-              hours and process a full refund.
+              Some remote areas may have limited courier access. If we are unable to deliver to your
+              pin code, we will notify you within 24 hours and process a full refund.
             </li>
           </ul>
         </section>
@@ -171,10 +156,9 @@ export default function ShippingPolicyPage() {
             Delivery Issues
           </h2>
           <p>
-            If your package is lost, damaged during transit, or significantly
-            delayed (more than 15 business days), please contact us immediately.
-            We will investigate with our courier partner and arrange a
-            replacement or full refund.
+            If your package is lost, damaged during transit, or significantly delayed (more than 15
+            business days), please contact us immediately. We will investigate with our courier
+            partner and arrange a replacement or full refund.
           </p>
         </section>
 
@@ -182,12 +166,10 @@ export default function ShippingPolicyPage() {
           <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
             Contact Us
           </h2>
-          <p>
-            For shipping-related queries, contact us at:
-          </p>
+          <p>For shipping-related queries, contact us at:</p>
           <div className="mt-2">
             <p>
-              Email:{" "}
+              Email:{' '}
               <a
                 href="mailto:shipping@earthrevibe.com"
                 className="font-semibold text-[var(--color-text)] underline"

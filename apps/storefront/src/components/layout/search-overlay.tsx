@@ -1,22 +1,14 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import {
-  Search,
-  X,
-  Clock,
-  ArrowRight,
-  Grid3X3,
-  Sparkles,
-  Shirt,
-} from "lucide-react";
-import { useUiStore, lockBodyScroll, unlockBodyScroll } from "@/stores/ui-store";
-import { api } from "@/lib/api-client";
-import { Spinner } from "@/components/ui/spinner";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Search, X, Clock, ArrowRight, Grid3X3, Sparkles, Shirt } from 'lucide-react';
+import { useUiStore, lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
+import { api } from '@/lib/api-client';
+import { Spinner } from '@/components/ui/spinner';
 
-const RECENT_SEARCHES_KEY = "earth-revibe-recent-searches";
+const RECENT_SEARCHES_KEY = 'earth-revibe-recent-searches';
 const MAX_RECENT = 5;
 
 /* ------------------------------------------------------------------ */
@@ -24,12 +16,12 @@ const MAX_RECENT = 5;
 /*  hamburger menu navigation)                                         */
 /* ------------------------------------------------------------------ */
 const BROWSE_CATEGORIES = [
-  { label: "New Arrivals", href: "/categories/new-arrivals", icon: Sparkles },
-  { label: "Shirts", href: "/categories/shirts", icon: Shirt },
-  { label: "T-Shirts", href: "/categories/t-shirts", icon: Shirt },
-  { label: "Outerwear", href: "/categories/outerwear", icon: Shirt },
-  { label: "All Products", href: "/products", icon: Grid3X3 },
-  { label: "Bestsellers", href: "/categories/bestsellers", icon: Sparkles },
+  { label: 'New Arrivals', href: '/categories/new-arrivals', icon: Sparkles },
+  { label: 'Shirts', href: '/categories/shirts', icon: Shirt },
+  { label: 'T-Shirts', href: '/categories/t-shirts', icon: Shirt },
+  { label: 'Outerwear', href: '/categories/outerwear', icon: Shirt },
+  { label: 'All Products', href: '/products', icon: Grid3X3 },
+  { label: 'Bestsellers', href: '/categories/bestsellers', icon: Sparkles },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -53,7 +45,7 @@ interface AutocompleteResult {
 }
 
 function getRecentSearches(): string[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -63,9 +55,7 @@ function getRecentSearches(): string[] {
 }
 
 function saveRecentSearch(query: string) {
-  const recent = getRecentSearches().filter(
-    (s) => s.toLowerCase() !== query.toLowerCase()
-  );
+  const recent = getRecentSearches().filter((s) => s.toLowerCase() !== query.toLowerCase());
   const updated = [query, ...recent].slice(0, MAX_RECENT);
   localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
 }
@@ -73,7 +63,7 @@ function saveRecentSearch(query: string) {
 export function SearchOverlay() {
   const { closeSearch } = useUiStore();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [results, setResults] = useState<AutocompleteResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -88,10 +78,10 @@ export function SearchOverlay() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeSearch();
+      if (e.key === 'Escape') closeSearch();
     };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [closeSearch]);
 
   const performSearch = useCallback(async (searchQuery: string) => {
@@ -139,10 +129,7 @@ export function SearchOverlay() {
 
   return (
     <div className="fixed inset-0 z-50">
-      <div
-        className="absolute inset-0 bg-black/50 animate-fade-in"
-        onClick={closeSearch}
-      />
+      <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={closeSearch} />
       <div className="absolute left-0 right-0 top-0 bg-white animate-slide-down shadow-xl">
         <div className="px-4 py-6 md:px-8 lg:px-12 xl:px-20">
           {/* Search input */}
@@ -218,7 +205,7 @@ export function SearchOverlay() {
                       >
                         <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded bg-[var(--color-surface)]">
                           <Image
-                            src={product.images?.[0]?.url || "/placeholder.png"}
+                            src={product.images?.[0]?.url || '/placeholder.png'}
                             alt={product.name}
                             fill
                             quality={35}
@@ -227,12 +214,10 @@ export function SearchOverlay() {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="truncate text-sm font-medium">
-                            {product.name}
-                          </p>
+                          <p className="truncate text-sm font-medium">{product.name}</p>
                           <p className="text-sm text-[var(--color-muted)]">
-                            {"\u20B9"}
-                            {product.price.toLocaleString("en-IN")}
+                            {'\u20B9'}
+                            {product.price.toLocaleString('en-IN')}
                           </p>
                         </div>
                         <ArrowRight className="h-4 w-4 shrink-0 text-[var(--color-muted)]" />

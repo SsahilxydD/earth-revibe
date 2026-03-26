@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { Spinner } from "@/components/ui/spinner";
-import { createClient } from "@/lib/supabase/client";
-import { useAuthStore } from "@/stores/auth-store";
+import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { Spinner } from '@/components/ui/spinner';
+import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -21,13 +21,13 @@ export default function AuthCallbackPage() {
 
         // After Google OAuth, Supabase redirects here with ?code=... (PKCE)
         const url = new URL(window.location.href);
-        const code = url.searchParams.get("code");
+        const code = url.searchParams.get('code');
 
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
-            console.error("Code exchange failed:", error.message);
-            router.replace("/auth/login");
+            console.error('Code exchange failed:', error.message);
+            router.replace('/auth/login');
             return;
           }
         }
@@ -37,10 +37,10 @@ export default function AuthCallbackPage() {
         // checkAuth() calls GET /auth/me which auto-provisions the Prisma user.
         await checkAuth();
 
-        router.replace("/");
+        router.replace('/');
       } catch (err) {
-        console.error("Auth callback error:", err);
-        router.replace("/auth/login");
+        console.error('Auth callback error:', err);
+        router.replace('/auth/login');
       }
     };
 
@@ -50,9 +50,7 @@ export default function AuthCallbackPage() {
   return (
     <div className="flex flex-col items-center justify-center py-16">
       <Spinner className="h-8 w-8" />
-      <p className="mt-4 text-sm text-[var(--color-muted)]">
-        Signing you in...
-      </p>
+      <p className="mt-4 text-sm text-[var(--color-muted)]">Signing you in...</p>
     </div>
   );
 }

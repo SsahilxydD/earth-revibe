@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { motion } from "framer-motion";
-import { Send, CheckCircle, AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-type Status = "idle" | "loading" | "success" | "error";
+type Status = 'idle' | 'loading' | 'success' | 'error';
 
 export function NewsletterSection() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<Status>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -21,50 +21,46 @@ export function NewsletterSection() {
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(trimmed)) {
-        setStatus("error");
-        setErrorMessage("Please enter a valid email address");
+        setStatus('error');
+        setErrorMessage('Please enter a valid email address');
         return;
       }
 
-      setStatus("loading");
-      setErrorMessage("");
+      setStatus('loading');
+      setErrorMessage('');
 
       try {
         const apiBase =
           process.env.NEXT_PUBLIC_API_URL ||
-          "https://earth-revibeapi-production.up.railway.app/api/v1";
+          'https://earth-revibeapi-production.up.railway.app/api/v1';
         const res = await fetch(`${apiBase}/newsletter/subscribe`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: trimmed }),
         });
 
         if (!res.ok) {
           const data = await res.json().catch(() => null);
-          throw new Error(
-            data?.error?.message || "Something went wrong. Please try again.",
-          );
+          throw new Error(data?.error?.message || 'Something went wrong. Please try again.');
         }
 
-        setStatus("success");
-        setEmail("");
+        setStatus('success');
+        setEmail('');
       } catch (err) {
-        setStatus("error");
+        setStatus('error');
         setErrorMessage(
-          err instanceof Error
-            ? err.message
-            : "Something went wrong. Please try again.",
+          err instanceof Error ? err.message : 'Something went wrong. Please try again.'
         );
       }
     },
-    [email],
+    [email]
   );
 
   return (
     <motion.section
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
+      viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 0.6 }}
       className="bg-[var(--color-surface)] py-12 md:py-20 px-4 md:px-8"
     >
@@ -76,7 +72,7 @@ export function NewsletterSection() {
           Get 10% off your first order + early access to new drops
         </p>
 
-        {status === "success" ? (
+        {status === 'success' ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -97,33 +93,33 @@ export function NewsletterSection() {
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                if (status === "error") {
-                  setStatus("idle");
-                  setErrorMessage("");
+                if (status === 'error') {
+                  setStatus('idle');
+                  setErrorMessage('');
                 }
               }}
               placeholder="Enter your email"
               required
               className={cn(
-                "flex-1 px-4 py-3 md:py-3.5 text-sm bg-white border border-[var(--color-border)]",
-                "sm:rounded-l-[var(--button-radius)] sm:rounded-r-none rounded-[var(--button-radius)]",
-                "outline-none focus:border-[var(--color-primary)] transition-colors",
-                "placeholder:text-[var(--color-muted)]",
+                'flex-1 px-4 py-3 md:py-3.5 text-sm bg-white border border-[var(--color-border)]',
+                'sm:rounded-l-[var(--button-radius)] sm:rounded-r-none rounded-[var(--button-radius)]',
+                'outline-none focus:border-[var(--color-primary)] transition-colors',
+                'placeholder:text-[var(--color-muted)]'
               )}
             />
             <button
               type="submit"
-              disabled={status === "loading"}
+              disabled={status === 'loading'}
               className={cn(
-                "px-6 py-3 md:py-3.5 bg-[var(--color-primary)] text-white text-xs md:text-sm",
-                "font-semibold uppercase tracking-[0.15em]",
-                "sm:rounded-r-[var(--button-radius)] sm:rounded-l-none rounded-[var(--button-radius)]",
-                "hover:bg-[var(--color-primary)]/90 transition-colors",
-                "disabled:opacity-60 disabled:cursor-not-allowed",
-                "flex items-center justify-center gap-2",
+                'px-6 py-3 md:py-3.5 bg-[var(--color-primary)] text-white text-xs md:text-sm',
+                'font-semibold uppercase tracking-[0.15em]',
+                'sm:rounded-r-[var(--button-radius)] sm:rounded-l-none rounded-[var(--button-radius)]',
+                'hover:bg-[var(--color-primary)]/90 transition-colors',
+                'disabled:opacity-60 disabled:cursor-not-allowed',
+                'flex items-center justify-center gap-2'
               )}
             >
-              {status === "loading" ? (
+              {status === 'loading' ? (
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
@@ -135,7 +131,7 @@ export function NewsletterSection() {
           </form>
         )}
 
-        {status === "error" && errorMessage && (
+        {status === 'error' && errorMessage && (
           <motion.p
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}

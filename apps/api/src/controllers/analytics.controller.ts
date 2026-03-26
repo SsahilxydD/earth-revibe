@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { analyticsService } from "../services/analytics.service";
+import type { Request, Response } from 'express';
+import { analyticsService } from '../services/analytics.service';
 
 export const analyticsController = {
   async getDashboardStats(_req: Request, res: Response) {
@@ -18,13 +18,13 @@ export const analyticsController = {
   },
 
   async getHomeDashboard(req: Request, res: Response) {
-    const period = (req.query.period as string) || "today";
+    const period = (req.query.period as string) || 'today';
     const data = await analyticsService.getHomeDashboard(period);
     res.json({ success: true, data });
   },
 
   async getAnalytics(req: Request, res: Response) {
-    const period = (req.query.period as string) || "30d";
+    const period = (req.query.period as string) || '30d';
     const data = await analyticsService.getAnalytics(period);
     res.json({ success: true, data });
   },

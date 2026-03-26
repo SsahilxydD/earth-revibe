@@ -1,33 +1,35 @@
-import { defineConfig } from "vitest/config";
-import path from "path";
-import dotenv from "dotenv";
+import { defineConfig } from 'vitest/config';
+import path from 'path';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
 export default defineConfig({
   test: {
     globals: true,
-    environment: "node",
+    environment: 'node',
     env: {
-      DATABASE_URL: process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/earth_revibe",
-      SUPABASE_URL: process.env.SUPABASE_URL || "https://test.supabase.co",
-      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || "test-anon-key-placeholder-for-tests",
-      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "test-service-role-key-placeholder",
+      DATABASE_URL:
+        process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/earth_revibe',
+      SUPABASE_URL: process.env.SUPABASE_URL || 'https://test.supabase.co',
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || 'test-anon-key-placeholder-for-tests',
+      SUPABASE_SERVICE_ROLE_KEY:
+        process.env.SUPABASE_SERVICE_ROLE_KEY || 'test-service-role-key-placeholder',
     },
-    setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.test.ts"],
+    setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.test.ts'],
     coverage: {
-      provider: "v8",
-      include: ["src/services/**", "src/middleware/**", "src/controllers/**"],
+      provider: 'v8',
+      include: ['src/services/**', 'src/middleware/**', 'src/controllers/**'],
     },
     testTimeout: 15000,
     hookTimeout: 15000,
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@earth-revibe/shared": path.resolve(__dirname, "../../packages/shared/dist/index.js"),
-      "@earth-revibe/db": path.resolve(__dirname, "../../packages/db/dist/index.js"),
+      '@': path.resolve(__dirname, 'src'),
+      '@earth-revibe/shared': path.resolve(__dirname, '../../packages/shared/dist/index.js'),
+      '@earth-revibe/db': path.resolve(__dirname, '../../packages/db/dist/index.js'),
     },
   },
 });

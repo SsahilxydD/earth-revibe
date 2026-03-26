@@ -1,7 +1,11 @@
-import slugify from "slugify";
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { CreateCategoryInput, UpdateCategoryInput, ReorderCategoriesInput } from "@earth-revibe/shared";
+import slugify from 'slugify';
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type {
+  CreateCategoryInput,
+  UpdateCategoryInput,
+  ReorderCategoriesInput,
+} from '@earth-revibe/shared';
 
 function generateSlug(name: string): string {
   return slugify(name, { lower: true, strict: true });
@@ -11,7 +15,7 @@ export const categoryService = {
   async listCategories() {
     const categories = await prisma.category.findMany({
       where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
+      orderBy: { sortOrder: 'asc' },
       include: {
         _count: { select: { products: true } },
       },
@@ -38,13 +42,13 @@ export const categoryService = {
       include: {
         children: {
           where: { isActive: true },
-          orderBy: { sortOrder: "asc" },
+          orderBy: { sortOrder: 'asc' },
         },
         _count: { select: { products: true } },
       },
     });
 
-    if (!category) throw ApiError.notFound("Category not found");
+    if (!category) throw ApiError.notFound('Category not found');
 
     return {
       ...category,
@@ -57,12 +61,12 @@ export const categoryService = {
 
     // Check slug uniqueness
     const existing = await prisma.category.findUnique({ where: { slug } });
-    if (existing) throw ApiError.conflict("Category with this slug already exists");
+    if (existing) throw ApiError.conflict('Category with this slug already exists');
 
     // Validate parentId if provided
     if (data.parentId) {
       const parent = await prisma.category.findUnique({ where: { id: data.parentId } });
-      if (!parent) throw ApiError.badRequest("Parent category not found");
+      if (!parent) throw ApiError.badRequest('Parent category not found');
     }
 
     const category = await prisma.category.create({
@@ -82,7 +86,7 @@ export const categoryService = {
 
   async updateCategory(id: string, data: UpdateCategoryInput) {
     const existing = await prisma.category.findUnique({ where: { id } });
-    if (!existing) throw ApiError.notFound("Category not found");
+    if (!existing) throw ApiError.notFound('Category not found');
 
     // Regenerate slug if name changes and no slug provided
     let slug = data.slug;
@@ -93,14 +97,14 @@ export const categoryService = {
     // Check slug uniqueness if slug is changing
     if (slug && slug !== existing.slug) {
       const slugExists = await prisma.category.findUnique({ where: { slug } });
-      if (slugExists) throw ApiError.conflict("Category with this slug already exists");
+      if (slugExists) throw ApiError.conflict('Category with this slug already exists');
     }
 
     // Validate parentId if provided
     if (data.parentId) {
-      if (data.parentId === id) throw ApiError.badRequest("Category cannot be its own parent");
+      if (data.parentId === id) throw ApiError.badRequest('Category cannot be its own parent');
       const parent = await prisma.category.findUnique({ where: { id: data.parentId } });
-      if (!parent) throw ApiError.badRequest("Parent category not found");
+      if (!parent) throw ApiError.badRequest('Parent category not found');
     }
 
     const category = await prisma.category.update({
@@ -128,11 +132,13 @@ export const categoryService = {
       },
     });
 
-    if (!category) throw ApiError.notFound("Category not found");
+    if (!category) throw ApiError.notFound('Category not found');
 
     // Prevent deletion if category has products
     if (category._count.products > 0) {
-      throw ApiError.badRequest("Cannot delete category with existing products. Reassign products first.");
+      throw ApiError.badRequest(
+        'Cannot delete category with existing products. Reassign products first.'
+      );
     }
 
     // Reassign children to parent or root

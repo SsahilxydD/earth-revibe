@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface AdminUser {
   id: string;
@@ -31,14 +31,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   login: (user, accessToken, refreshToken) => {
-    localStorage.setItem("adminAccessToken", accessToken);
-    localStorage.setItem("adminRefreshToken", refreshToken);
+    localStorage.setItem('adminAccessToken', accessToken);
+    localStorage.setItem('adminRefreshToken', refreshToken);
     set({ user, isAuthenticated: true, isLoading: false });
   },
 
   logout: () => {
-    localStorage.removeItem("adminAccessToken");
-    localStorage.removeItem("adminRefreshToken");
+    localStorage.removeItem('adminAccessToken');
+    localStorage.removeItem('adminRefreshToken');
     set({ user: null, isAuthenticated: false, isLoading: false });
   },
 }));

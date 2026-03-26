@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api-client";
-import { formatDate, getImageUrl, truncate } from "@/lib/utils";
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { api } from '@/lib/api-client';
+import { formatDate, getImageUrl, truncate } from '@/lib/utils';
 
 interface BlogPost {
   id: string;
@@ -95,17 +95,14 @@ export default function BlogPage() {
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery<BlogResponse>({
-    queryKey: ["blog-posts", page],
-    queryFn: () =>
-      api.get(`/blog/posts?page=${page}&limit=${POSTS_PER_PAGE}`),
+    queryKey: ['blog-posts', page],
+    queryFn: () => api.get(`/blog/posts?page=${page}&limit=${POSTS_PER_PAGE}`),
   });
 
   return (
     <div className="px-4 py-8 md:px-8 lg:px-12 xl:px-20">
       <div className="text-center">
-        <h1 className="text-3xl font-bold uppercase tracking-wider">
-          The Journal
-        </h1>
+        <h1 className="text-3xl font-bold uppercase tracking-wider">The Journal</h1>
         <p className="mt-2 text-sm text-[var(--color-muted)]">
           Stories, style tips, and culture from the Earth Revibe universe.
         </p>
@@ -140,9 +137,7 @@ export default function BlogPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    setPage((p) => Math.min(data.totalPages, p + 1))
-                  }
+                  onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
                   disabled={page >= data.totalPages}
                   className="gap-1"
                 >

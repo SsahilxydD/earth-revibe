@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Card } from "@/components/ui";
+import { Card } from '@/components/ui';
 
 interface StatusData {
   status: string;
@@ -8,19 +8,19 @@ interface StatusData {
 }
 
 const statusColors: Record<string, string> = {
-  PENDING: "#F59E0B",
-  PROCESSING: "#3B82F6",
-  SHIPPED: "#8B5CF6",
-  DELIVERED: "#22C55E",
-  CANCELLED: "#EF4444",
+  PENDING: '#F59E0B',
+  PROCESSING: '#3B82F6',
+  SHIPPED: '#8B5CF6',
+  DELIVERED: '#22C55E',
+  CANCELLED: '#EF4444',
 };
 
 const statusLabels: Record<string, string> = {
-  PENDING: "Pending",
-  PROCESSING: "Processing",
-  SHIPPED: "Shipped",
-  DELIVERED: "Delivered",
-  CANCELLED: "Cancelled",
+  PENDING: 'Pending',
+  PROCESSING: 'Processing',
+  SHIPPED: 'Shipped',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Cancelled',
 };
 
 export function OrdersByStatus({ data }: { data: StatusData[] }) {
@@ -45,7 +45,7 @@ export function OrdersByStatus({ data }: { data: StatusData[] }) {
                 className="h-full transition-all"
                 style={{
                   width: `${(d.count / total) * 100}%`,
-                  backgroundColor: statusColors[d.status] || "#9CA3AF",
+                  backgroundColor: statusColors[d.status] || '#9CA3AF',
                 }}
               />
             ))}
@@ -57,7 +57,7 @@ export function OrdersByStatus({ data }: { data: StatusData[] }) {
                 <div className="flex items-center gap-2">
                   <div
                     className="w-2.5 h-2.5 rounded-full"
-                    style={{ backgroundColor: statusColors[d.status] || "#9CA3AF" }}
+                    style={{ backgroundColor: statusColors[d.status] || '#9CA3AF' }}
                   />
                   <span className="text-sm text-dark-gray">
                     {statusLabels[d.status] || d.status}

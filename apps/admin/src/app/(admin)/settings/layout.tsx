@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Store,
   ShoppingCart,
@@ -15,20 +15,20 @@ import {
   Globe,
   Palette,
   ChevronLeft,
-} from "lucide-react";
+} from 'lucide-react';
 
 const settingsNav = [
-  { label: "General", href: "/settings", icon: Store, exact: true },
-  { label: "Checkout", href: "/settings/checkout", icon: ShoppingCart },
-  { label: "Shipping & delivery", href: "/settings/shipping", icon: Truck },
-  { label: "Payments", href: "/settings/payments", icon: CreditCard },
-  { label: "Users & permissions", href: "/settings/users", icon: Users },
-  { label: "Notifications", href: "/settings/notifications", icon: Bell },
-  { label: "Taxes", href: "/settings/taxes", icon: Receipt },
-  { label: "Policies", href: "/settings/policies", icon: FileText },
-  { label: "Legal", href: "/settings/legal", icon: Shield },
-  { label: "Domains & SEO", href: "/settings/domains", icon: Globe },
-  { label: "Brand & Theme", href: "/settings/brand", icon: Palette },
+  { label: 'General', href: '/settings', icon: Store, exact: true },
+  { label: 'Checkout', href: '/settings/checkout', icon: ShoppingCart },
+  { label: 'Shipping & delivery', href: '/settings/shipping', icon: Truck },
+  { label: 'Payments', href: '/settings/payments', icon: CreditCard },
+  { label: 'Users & permissions', href: '/settings/users', icon: Users },
+  { label: 'Notifications', href: '/settings/notifications', icon: Bell },
+  { label: 'Taxes', href: '/settings/taxes', icon: Receipt },
+  { label: 'Policies', href: '/settings/policies', icon: FileText },
+  { label: 'Legal', href: '/settings/legal', icon: Shield },
+  { label: 'Domains & SEO', href: '/settings/domains', icon: Globe },
+  { label: 'Brand & Theme', href: '/settings/brand', icon: Palette },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
@@ -43,10 +43,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     <div className="space-y-4">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard"
-          className="p-1.5 rounded-lg hover:bg-off-white transition-colors"
-        >
+        <Link href="/dashboard" className="p-1.5 rounded-lg hover:bg-off-white transition-colors">
           <ChevronLeft size={20} className="text-dark-gray" />
         </Link>
         <h1 className="text-2xl font-semibold text-charcoal">Settings</h1>
@@ -63,8 +60,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                 href={item.href}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                   active
-                    ? "bg-deep-earth text-white"
-                    : "bg-off-white text-dark-gray hover:bg-light-gray"
+                    ? 'bg-deep-earth text-white'
+                    : 'bg-off-white text-dark-gray hover:bg-light-gray'
                 }`}
               >
                 {item.label}
@@ -87,11 +84,11 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                   href={item.href}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
                     active
-                      ? "bg-deep-earth/5 text-deep-earth font-medium"
-                      : "text-dark-gray hover:bg-off-white hover:text-charcoal"
+                      ? 'bg-deep-earth/5 text-deep-earth font-medium'
+                      : 'text-dark-gray hover:bg-off-white hover:text-charcoal'
                   }`}
                 >
-                  <Icon size={16} className={active ? "text-deep-earth" : "text-medium-gray"} />
+                  <Icon size={16} className={active ? 'text-deep-earth' : 'text-medium-gray'} />
                   {item.label}
                 </Link>
               );

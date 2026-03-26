@@ -1,55 +1,55 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Plus, Search, Edit2, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
-import { Button, Badge, Card, Select } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
-import { Modal } from "@/components/ui/modal";
+import { useState } from 'react';
+import { Plus, Search, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Button, Badge, Card, Select } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/toast';
+import { Modal } from '@/components/ui/modal';
 import {
   useDiscounts,
   useCreateDiscount,
   useUpdateDiscount,
   useDeleteDiscount,
   useToggleDiscount,
-} from "@/hooks/use-discounts";
+} from '@/hooks/use-discounts';
 
 const typeOptions = [
-  { value: "", label: "All Types" },
-  { value: "PERCENTAGE", label: "Percentage" },
-  { value: "FLAT", label: "Fixed" },
+  { value: '', label: 'All Types' },
+  { value: 'PERCENTAGE', label: 'Percentage' },
+  { value: 'FLAT', label: 'Fixed' },
 ];
 
 const activeOptions = [
-  { value: "", label: "All Status" },
-  { value: "true", label: "Active" },
-  { value: "false", label: "Inactive" },
+  { value: '', label: 'All Status' },
+  { value: 'true', label: 'Active' },
+  { value: 'false', label: 'Inactive' },
 ];
 
 const discountTypeOptions = [
-  { value: "PERCENTAGE", label: "Percentage (%)" },
-  { value: "FLAT", label: "Fixed Amount" },
+  { value: 'PERCENTAGE', label: 'Percentage (%)' },
+  { value: 'FLAT', label: 'Fixed Amount' },
 ];
 
 function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(amount));
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 }
 
 function formatDateTimeLocal(date: string) {
   const d = new Date(date);
-  const pad = (n: number) => String(n).padStart(2, "0");
+  const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
@@ -67,22 +67,22 @@ interface DiscountFormData {
 }
 
 const emptyForm: DiscountFormData = {
-  code: "",
-  description: "",
-  type: "PERCENTAGE",
-  value: "",
-  minOrderValue: "",
-  maxDiscountAmount: "",
-  usageLimit: "",
-  perUserLimit: "1",
-  startsAt: "",
-  expiresAt: "",
+  code: '',
+  description: '',
+  type: 'PERCENTAGE',
+  value: '',
+  minOrderValue: '',
+  maxDiscountAmount: '',
+  usageLimit: '',
+  perUserLimit: '1',
+  startsAt: '',
+  expiresAt: '',
 };
 
 export default function DiscountsPage() {
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [activeFilter, setActiveFilter] = useState("");
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [activeFilter, setActiveFilter] = useState('');
   const [page, setPage] = useState(1);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,13 +113,13 @@ export default function DiscountsPage() {
     setEditingId(discount.id);
     setForm({
       code: discount.code,
-      description: discount.description || "",
+      description: discount.description || '',
       type: discount.type,
       value: String(discount.value),
-      minOrderValue: discount.minOrderValue ? String(discount.minOrderValue) : "",
-      maxDiscountAmount: discount.maxDiscountAmount ? String(discount.maxDiscountAmount) : "",
-      usageLimit: discount.usageLimit ? String(discount.usageLimit) : "",
-      perUserLimit: discount.perUserLimit ? String(discount.perUserLimit) : "1",
+      minOrderValue: discount.minOrderValue ? String(discount.minOrderValue) : '',
+      maxDiscountAmount: discount.maxDiscountAmount ? String(discount.maxDiscountAmount) : '',
+      usageLimit: discount.usageLimit ? String(discount.usageLimit) : '',
+      perUserLimit: discount.perUserLimit ? String(discount.perUserLimit) : '1',
       startsAt: formatDateTimeLocal(discount.startsAt),
       expiresAt: formatDateTimeLocal(discount.expiresAt),
     });
@@ -136,19 +136,19 @@ export default function DiscountsPage() {
     e.preventDefault();
 
     if (!form.code.trim()) {
-      toast.error("Discount code is required");
+      toast.error('Discount code is required');
       return;
     }
     if (!form.value || Number(form.value) <= 0) {
-      toast.error("Value must be greater than 0");
+      toast.error('Value must be greater than 0');
       return;
     }
     if (!form.startsAt || !form.expiresAt) {
-      toast.error("Start and expiry dates are required");
+      toast.error('Start and expiry dates are required');
       return;
     }
     if (new Date(form.expiresAt) <= new Date(form.startsAt)) {
-      toast.error("Expiry date must be after start date");
+      toast.error('Expiry date must be after start date');
       return;
     }
 
@@ -207,7 +207,9 @@ export default function DiscountsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-charcoal">Discount Codes</h1>
-          <p className="text-sm text-medium-gray mt-1">Create and manage promotional discount codes</p>
+          <p className="text-sm text-medium-gray mt-1">
+            Create and manage promotional discount codes
+          </p>
         </div>
         <Button onClick={openCreateModal}>
           <Plus size={16} /> Create Discount
@@ -218,25 +220,37 @@ export default function DiscountsPage() {
       <Card>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray" />
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray"
+            />
             <input
               type="text"
               placeholder="Search by discount code..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
             />
           </div>
           <Select
             options={activeOptions}
             value={activeFilter}
-            onChange={(e) => { setActiveFilter(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setActiveFilter(e.target.value);
+              setPage(1);
+            }}
             className="w-full sm:w-40"
           />
           <Select
             options={typeOptions}
             value={typeFilter}
-            onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setTypeFilter(e.target.value);
+              setPage(1);
+            }}
             className="w-full sm:w-40"
           />
         </div>
@@ -254,7 +268,9 @@ export default function DiscountsPage() {
           <div className="p-12 text-center">
             <p className="text-charcoal font-medium mb-1">Failed to load discounts</p>
             <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
-            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
           </div>
         ) : !data?.discounts?.length ? (
           <div className="p-12 text-center">
@@ -272,47 +288,65 @@ export default function DiscountsPage() {
                     <th className="text-right px-6 py-3 font-medium text-medium-gray">Min Order</th>
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Usage</th>
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Status</th>
-                    <th className="text-left px-6 py-3 font-medium text-medium-gray">Valid Period</th>
+                    <th className="text-left px-6 py-3 font-medium text-medium-gray">
+                      Valid Period
+                    </th>
                     <th className="text-right px-6 py-3 font-medium text-medium-gray">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.discounts.map((discount: any) => (
-                    <tr key={discount.id} className="border-b border-light-gray last:border-0 hover:bg-off-white/50">
+                    <tr
+                      key={discount.id}
+                      className="border-b border-light-gray last:border-0 hover:bg-off-white/50"
+                    >
                       <td className="px-6 py-3">
-                        <span className="font-mono font-semibold text-charcoal">{discount.code}</span>
+                        <span className="font-mono font-semibold text-charcoal">
+                          {discount.code}
+                        </span>
                         {discount.description && (
                           <p className="text-xs text-medium-gray mt-0.5">{discount.description}</p>
                         )}
                       </td>
                       <td className="px-6 py-3">
-                        <Badge variant={discount.type === "PERCENTAGE" ? "info" : "default"}>
-                          {discount.type === "PERCENTAGE" ? "Percentage" : "Fixed"}
+                        <Badge variant={discount.type === 'PERCENTAGE' ? 'info' : 'default'}>
+                          {discount.type === 'PERCENTAGE' ? 'Percentage' : 'Fixed'}
                         </Badge>
                       </td>
                       <td className="px-6 py-3 text-right font-medium text-charcoal">
-                        {discount.type === "PERCENTAGE"
+                        {discount.type === 'PERCENTAGE'
                           ? `${Number(discount.value)}%`
                           : formatPrice(discount.value)}
-                        {discount.maxDiscountAmount && discount.type === "PERCENTAGE" && (
-                          <p className="text-xs text-medium-gray">max {formatPrice(discount.maxDiscountAmount)}</p>
+                        {discount.maxDiscountAmount && discount.type === 'PERCENTAGE' && (
+                          <p className="text-xs text-medium-gray">
+                            max {formatPrice(discount.maxDiscountAmount)}
+                          </p>
                         )}
                       </td>
                       <td className="px-6 py-3 text-right text-dark-gray">
-                        {discount.minOrderValue ? formatPrice(discount.minOrderValue) : "-"}
+                        {discount.minOrderValue ? formatPrice(discount.minOrderValue) : '-'}
                       </td>
                       <td className="px-6 py-3 text-dark-gray">
-                        {discount.usageCount}{discount.usageLimit ? `/${discount.usageLimit}` : ""}
+                        {discount.usageCount}
+                        {discount.usageLimit ? `/${discount.usageLimit}` : ''}
                       </td>
                       <td className="px-6 py-3">
-                        <Badge variant={isNowActive(discount) ? "success" : discount.isActive ? "warning" : "error"}>
+                        <Badge
+                          variant={
+                            isNowActive(discount)
+                              ? 'success'
+                              : discount.isActive
+                                ? 'warning'
+                                : 'error'
+                          }
+                        >
                           {!discount.isActive
-                            ? "Inactive"
+                            ? 'Inactive'
                             : isNowActive(discount)
-                              ? "Active"
+                              ? 'Active'
                               : new Date(discount.startsAt) > new Date()
-                                ? "Scheduled"
-                                : "Expired"}
+                                ? 'Scheduled'
+                                : 'Expired'}
                         </Badge>
                       </td>
                       <td className="px-6 py-3 text-dark-gray text-xs">
@@ -324,7 +358,7 @@ export default function DiscountsPage() {
                           <button
                             onClick={() => handleToggle(discount.id)}
                             className="p-1.5 rounded-md hover:bg-off-white transition-colors"
-                            title={discount.isActive ? "Deactivate" : "Activate"}
+                            title={discount.isActive ? 'Deactivate' : 'Activate'}
                           >
                             {discount.isActive ? (
                               <ToggleRight size={16} className="text-forest-green" />
@@ -361,10 +395,20 @@ export default function DiscountsPage() {
                   Page {data.page} of {data.totalPages} ({data.total} discounts)
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
                     Previous
                   </Button>
-                  <Button variant="ghost" size="sm" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={page >= data.totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
                     Next
                   </Button>
                 </div>
@@ -375,7 +419,12 @@ export default function DiscountsPage() {
       </Card>
 
       {/* Create/Edit Modal */}
-      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingId ? "Edit Discount Code" : "Create Discount Code"} size="lg">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingId ? 'Edit Discount Code' : 'Create Discount Code'}
+        size="lg"
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
@@ -396,7 +445,9 @@ export default function DiscountsPage() {
                 className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20 appearance-none"
               >
                 {discountTypeOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -416,15 +467,15 @@ export default function DiscountsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-charcoal">
-                Value * {form.type === "PERCENTAGE" ? "(%)" : "(INR)"}
+                Value * {form.type === 'PERCENTAGE' ? '(%)' : '(INR)'}
               </label>
               <input
                 type="number"
                 value={form.value}
                 onChange={(e) => setForm({ ...form, value: e.target.value })}
-                placeholder={form.type === "PERCENTAGE" ? "e.g. 20" : "e.g. 500"}
+                placeholder={form.type === 'PERCENTAGE' ? 'e.g. 20' : 'e.g. 500'}
                 min="0"
-                step={form.type === "PERCENTAGE" ? "1" : "0.01"}
+                step={form.type === 'PERCENTAGE' ? '1' : '0.01'}
                 className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
               />
             </div>
@@ -506,18 +557,20 @@ export default function DiscountsPage() {
             <Button variant="ghost" type="button" onClick={closeModal}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              isLoading={createMutation.isPending || updateMutation.isPending}
-            >
-              {editingId ? "Update Discount" : "Create Discount"}
+            <Button type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>
+              {editingId ? 'Update Discount' : 'Create Discount'}
             </Button>
           </div>
         </form>
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={!!deleteId} onClose={() => setDeleteId(null)} title="Delete Discount Code" size="sm">
+      <Modal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        title="Delete Discount Code"
+        size="sm"
+      >
         <p className="text-sm text-dark-gray mb-6">
           Are you sure you want to delete this discount code? This action cannot be undone.
         </p>
@@ -525,11 +578,7 @@ export default function DiscountsPage() {
           <Button variant="ghost" onClick={() => setDeleteId(null)}>
             Cancel
           </Button>
-          <Button
-            variant="danger"
-            onClick={handleDelete}
-            isLoading={deleteMutation.isPending}
-          >
+          <Button variant="danger" onClick={handleDelete} isLoading={deleteMutation.isPending}>
             Delete
           </Button>
         </div>

@@ -1,5 +1,5 @@
-import { beforeAll, afterAll } from "vitest";
-import { prisma } from "@earth-revibe/db";
+import { beforeAll, afterAll } from 'vitest';
+import { prisma } from '@earth-revibe/db';
 
 beforeAll(async () => {
   try {

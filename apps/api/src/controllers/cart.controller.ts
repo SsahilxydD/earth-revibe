@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { cartService } from "../services/cart.service";
+import type { Request, Response } from 'express';
+import { cartService } from '../services/cart.service';
 
 export const cartController = {
   async getCart(req: Request, res: Response) {
@@ -22,15 +22,12 @@ export const cartController = {
   },
 
   async removeItem(req: Request, res: Response) {
-    const cart = await cartService.removeItem(
-      req.user!.id,
-      req.params.variantId as string
-    );
+    const cart = await cartService.removeItem(req.user!.id, req.params.variantId as string);
     res.json({ success: true, data: cart });
   },
 
   async clearCart(req: Request, res: Response) {
     await cartService.clearCart(req.user!.id);
-    res.json({ success: true, message: "Cart cleared" });
+    res.json({ success: true, message: 'Cart cleared' });
   },
 };

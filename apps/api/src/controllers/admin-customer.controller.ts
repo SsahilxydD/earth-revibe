@@ -1,15 +1,16 @@
-import type { Request, Response } from "express";
-import { adminCustomerService } from "../services/admin-customer.service";
+import type { Request, Response } from 'express';
+import { adminCustomerService } from '../services/admin-customer.service';
 
 export const adminCustomerController = {
   async listCustomers(req: Request, res: Response) {
     const query = {
       search: req.query.search as string | undefined,
-      isActive: req.query.isActive === "true" ? true : req.query.isActive === "false" ? false : undefined,
+      isActive:
+        req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : undefined,
       page: Number(req.query.page) || 1,
       limit: Number(req.query.limit) || 20,
-      sortBy: (req.query.sortBy as string) || "createdAt",
-      sortOrder: (req.query.sortOrder as string) || "desc",
+      sortBy: (req.query.sortBy as string) || 'createdAt',
+      sortOrder: (req.query.sortOrder as string) || 'desc',
     };
     const result = await adminCustomerService.listCustomers(query);
     res.json({ success: true, data: result });
@@ -17,14 +18,14 @@ export const adminCustomerController = {
 
   async exportCSV(_req: Request, res: Response) {
     const result = await adminCustomerService.exportCustomersCSV();
-    const date = new Date().toISOString().split("T")[0];
+    const date = new Date().toISOString().split('T')[0];
     if (result.truncated) {
-      res.setHeader("X-Export-Truncated", "true");
-      res.setHeader("X-Export-Total", String(result.totalCount));
-      res.setHeader("X-Export-Count", String(result.exportedCount));
+      res.setHeader('X-Export-Truncated', 'true');
+      res.setHeader('X-Export-Total', String(result.totalCount));
+      res.setHeader('X-Export-Count', String(result.exportedCount));
     }
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", `attachment; filename="customers-${date}.csv"`);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="customers-${date}.csv"`);
     res.send(result.csv);
   },
 

@@ -6,7 +6,7 @@ export class ApiError extends Error {
   constructor(
     statusCode: number,
     message: string,
-    code: string = "ERROR",
+    code: string = 'ERROR',
     details?: { field?: string; message: string }[]
   ) {
     super(message);
@@ -17,30 +17,30 @@ export class ApiError extends Error {
   }
 
   static badRequest(message: string, details?: { field?: string; message: string }[]) {
-    return new ApiError(400, message, "BAD_REQUEST", details);
+    return new ApiError(400, message, 'BAD_REQUEST', details);
   }
 
-  static unauthorized(message: string = "Unauthorized") {
-    return new ApiError(401, message, "UNAUTHORIZED");
+  static unauthorized(message: string = 'Unauthorized') {
+    return new ApiError(401, message, 'UNAUTHORIZED');
   }
 
-  static forbidden(message: string = "Forbidden") {
-    return new ApiError(403, message, "FORBIDDEN");
+  static forbidden(message: string = 'Forbidden') {
+    return new ApiError(403, message, 'FORBIDDEN');
   }
 
-  static notFound(message: string = "Resource not found") {
-    return new ApiError(404, message, "NOT_FOUND");
+  static notFound(message: string = 'Resource not found') {
+    return new ApiError(404, message, 'NOT_FOUND');
   }
 
   static conflict(message: string) {
-    return new ApiError(409, message, "CONFLICT");
+    return new ApiError(409, message, 'CONFLICT');
   }
 
-  static internal(message: string = "Internal server error") {
-    return new ApiError(500, message, "INTERNAL_ERROR");
+  static internal(message: string = 'Internal server error') {
+    return new ApiError(500, message, 'INTERNAL_ERROR');
   }
 
-  static serviceUnavailable(message: string = "Service unavailable") {
-    return new ApiError(503, message, "SERVICE_UNAVAILABLE");
+  static serviceUnavailable(message: string = 'Service unavailable') {
+    return new ApiError(503, message, 'SERVICE_UNAVAILABLE');
   }
 }

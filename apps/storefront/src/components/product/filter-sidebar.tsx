@@ -1,33 +1,33 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { X, SlidersHorizontal } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useCategories } from "@/hooks/use-products";
+import { useState, useEffect } from 'react';
+import { X, SlidersHorizontal } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useCategories } from '@/hooks/use-products';
 
-const SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
 
 const COLOR_OPTIONS = [
-  { name: "Black", hex: "#000000" },
-  { name: "White", hex: "#FFFFFF" },
-  { name: "Red", hex: "#cf2929" },
-  { name: "Blue", hex: "#2563eb" },
-  { name: "Green", hex: "#16a34a" },
-  { name: "Yellow", hex: "#eab308" },
-  { name: "Pink", hex: "#ec4899" },
-  { name: "Orange", hex: "#f97316" },
-  { name: "Purple", hex: "#9333ea" },
-  { name: "Brown", hex: "#92400e" },
-  { name: "Gray", hex: "#6b7280" },
-  { name: "Navy", hex: "#1e3a5f" },
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Red', hex: '#cf2929' },
+  { name: 'Blue', hex: '#2563eb' },
+  { name: 'Green', hex: '#16a34a' },
+  { name: 'Yellow', hex: '#eab308' },
+  { name: 'Pink', hex: '#ec4899' },
+  { name: 'Orange', hex: '#f97316' },
+  { name: 'Purple', hex: '#9333ea' },
+  { name: 'Brown', hex: '#92400e' },
+  { name: 'Gray', hex: '#6b7280' },
+  { name: 'Navy', hex: '#1e3a5f' },
 ] as const;
 
 const PRICE_RANGES = [
-  { label: "Under Rs.500", min: 0, max: 500 },
-  { label: "Rs.500 - Rs.1,000", min: 500, max: 1000 },
-  { label: "Rs.1,000 - Rs.2,000", min: 1000, max: 2000 },
-  { label: "Rs.2,000 - Rs.5,000", min: 2000, max: 5000 },
-  { label: "Above Rs.5,000", min: 5000, max: undefined },
+  { label: 'Under Rs.500', min: 0, max: 500 },
+  { label: 'Rs.500 - Rs.1,000', min: 500, max: 1000 },
+  { label: 'Rs.1,000 - Rs.2,000', min: 1000, max: 2000 },
+  { label: 'Rs.2,000 - Rs.5,000', min: 2000, max: 5000 },
+  { label: 'Above Rs.5,000', min: 5000, max: undefined },
 ] as const;
 
 export interface FilterState {
@@ -55,11 +55,11 @@ function FilterContent({ filters, onFilterChange }: FilterSidebarProps) {
 
   const clearAll = () => {
     onFilterChange({
-      category: "",
+      category: '',
       minPrice: undefined,
       maxPrice: undefined,
-      size: "",
-      color: "",
+      size: '',
+      color: '',
     });
   };
 
@@ -86,17 +86,14 @@ function FilterContent({ filters, onFilterChange }: FilterSidebarProps) {
           </h4>
           <div className="space-y-2">
             {categories.map((cat) => (
-              <label
-                key={cat.id}
-                className="flex cursor-pointer items-center gap-2 text-sm"
-              >
+              <label key={cat.id} className="flex cursor-pointer items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={filters.category === cat.slug}
                   onChange={() =>
                     onFilterChange({
                       ...filters,
-                      category: filters.category === cat.slug ? "" : cat.slug,
+                      category: filters.category === cat.slug ? '' : cat.slug,
                     })
                   }
                   className="h-4 w-4 rounded border-[var(--color-border)] accent-[var(--color-primary)]"
@@ -115,13 +112,9 @@ function FilterContent({ filters, onFilterChange }: FilterSidebarProps) {
         </h4>
         <div className="space-y-2">
           {PRICE_RANGES.map((range) => {
-            const isSelected =
-              filters.minPrice === range.min && filters.maxPrice === range.max;
+            const isSelected = filters.minPrice === range.min && filters.maxPrice === range.max;
             return (
-              <label
-                key={range.label}
-                className="flex cursor-pointer items-center gap-2 text-sm"
-              >
+              <label key={range.label} className="flex cursor-pointer items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={isSelected}
@@ -155,14 +148,14 @@ function FilterContent({ filters, onFilterChange }: FilterSidebarProps) {
                 onClick={() =>
                   onFilterChange({
                     ...filters,
-                    size: isSelected ? "" : size,
+                    size: isSelected ? '' : size,
                   })
                 }
                 className={cn(
-                  "flex h-9 min-w-[3rem] items-center justify-center border px-3 text-xs font-semibold transition-colors",
+                  'flex h-9 min-w-[3rem] items-center justify-center border px-3 text-xs font-semibold transition-colors',
                   isSelected
-                    ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-                    : "border-[var(--color-border)] hover:border-[var(--color-primary)]"
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
+                    : 'border-[var(--color-border)] hover:border-[var(--color-primary)]'
                 )}
               >
                 {size}
@@ -186,16 +179,16 @@ function FilterContent({ filters, onFilterChange }: FilterSidebarProps) {
                 onClick={() =>
                   onFilterChange({
                     ...filters,
-                    color: isSelected ? "" : color.name,
+                    color: isSelected ? '' : color.name,
                   })
                 }
                 title={color.name}
                 className={cn(
-                  "h-7 w-7 rounded-full border-2 transition-all",
+                  'h-7 w-7 rounded-full border-2 transition-all',
                   isSelected
-                    ? "ring-2 ring-[var(--color-primary)] ring-offset-2"
-                    : "border-[var(--color-border)] hover:scale-110",
-                  color.name === "White" && "border-gray-300"
+                    ? 'ring-2 ring-[var(--color-primary)] ring-offset-2'
+                    : 'border-[var(--color-border)] hover:scale-110',
+                  color.name === 'White' && 'border-gray-300'
                 )}
                 style={{ backgroundColor: color.hex }}
               />
@@ -212,12 +205,12 @@ export function FilterSidebar({ filters, onFilterChange }: FilterSidebarProps) {
 
   useEffect(() => {
     if (isMobileOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, [isMobileOpen]);
 
@@ -236,16 +229,11 @@ export function FilterSidebar({ filters, onFilterChange }: FilterSidebarProps) {
       {isMobileOpen && (
         <div className="fixed inset-0 z-50">
           {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setIsMobileOpen(false)}
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={() => setIsMobileOpen(false)} />
           {/* Drawer */}
           <div className="absolute bottom-0 left-0 top-0 w-[300px] max-w-[85vw] animate-slide-in-left overflow-y-auto bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-base font-bold uppercase tracking-wider">
-                Filters
-              </h2>
+              <h2 className="text-base font-bold uppercase tracking-wider">Filters</h2>
               <button
                 onClick={() => setIsMobileOpen(false)}
                 className="flex h-8 w-8 items-center justify-center"

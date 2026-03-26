@@ -1,7 +1,7 @@
-import type { Request, Response } from "express";
-import { authService } from "../services/auth.service";
-import { setAuthCookies, clearAuthCookies, getRefreshTokenFromRequest } from "../utils/cookies";
-import { ApiError } from "../utils/api-error";
+import type { Request, Response } from 'express';
+import { authService } from '../services/auth.service';
+import { setAuthCookies, clearAuthCookies, getRefreshTokenFromRequest } from '../utils/cookies';
+import { ApiError } from '../utils/api-error';
 
 export const authController = {
   async register(req: Request, res: Response) {
@@ -19,7 +19,7 @@ export const authController = {
   async refresh(req: Request, res: Response) {
     const refreshToken = getRefreshTokenFromRequest(req);
     if (!refreshToken) {
-      throw ApiError.unauthorized("No refresh token provided");
+      throw ApiError.unauthorized('No refresh token provided');
     }
     const tokens = await authService.refreshToken(refreshToken);
     setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
@@ -32,17 +32,17 @@ export const authController = {
       await authService.logout(refreshToken);
     }
     clearAuthCookies(res);
-    res.json({ success: true, message: "Logged out successfully" });
+    res.json({ success: true, message: 'Logged out successfully' });
   },
 
   async forgotPassword(req: Request, res: Response) {
     await authService.forgotPassword(req.body.email);
-    res.json({ success: true, message: "If the email exists, a reset link has been sent" });
+    res.json({ success: true, message: 'If the email exists, a reset link has been sent' });
   },
 
   async resetPassword(req: Request, res: Response) {
     await authService.resetPassword(req.body.token, req.body.password);
-    res.json({ success: true, message: "Password reset successfully" });
+    res.json({ success: true, message: 'Password reset successfully' });
   },
 
   async getMe(req: Request, res: Response) {
@@ -58,7 +58,7 @@ export const authController = {
   async changePassword(req: Request, res: Response) {
     await authService.changePassword(req.user!.id, req.body);
     clearAuthCookies(res);
-    res.json({ success: true, message: "Password changed successfully" });
+    res.json({ success: true, message: 'Password changed successfully' });
   },
 
   /**
@@ -70,7 +70,7 @@ export const authController = {
   async oauthSession(req: Request, res: Response) {
     const { accessToken, refreshToken } = req.body;
     if (!accessToken || !refreshToken) {
-      throw ApiError.badRequest("Missing tokens");
+      throw ApiError.badRequest('Missing tokens');
     }
     setAuthCookies(res, accessToken, refreshToken);
     res.json({ success: true });

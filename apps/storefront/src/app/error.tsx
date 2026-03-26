@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 export default function Error({
   error,
@@ -10,7 +10,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Application error:", error);
+    console.error('Application error:', error);
   }, [error]);
 
   return (
@@ -31,12 +31,9 @@ export default function Error({
         </svg>
       </div>
 
-      <h1 className="mt-6 text-2xl font-bold uppercase tracking-wider">
-        Something Went Wrong
-      </h1>
+      <h1 className="mt-6 text-2xl font-bold uppercase tracking-wider">Something Went Wrong</h1>
       <p className="mt-3 max-w-md text-sm text-[var(--color-muted)]">
-        An unexpected error occurred. Please try again or contact support if
-        the problem persists.
+        An unexpected error occurred. Please try again or contact support if the problem persists.
       </p>
 
       {/* Show error details in production too — helps debugging */}
@@ -44,13 +41,9 @@ export default function Error({
         <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           Error Details
         </p>
-        <p className="mt-1 break-all text-xs text-[var(--color-sale)]">
-          {error.message}
-        </p>
+        <p className="mt-1 break-all text-xs text-[var(--color-sale)]">{error.message}</p>
         {error.digest && (
-          <p className="mt-1 text-xs text-[var(--color-muted)]">
-            Digest: {error.digest}
-          </p>
+          <p className="mt-1 text-xs text-[var(--color-muted)]">Digest: {error.digest}</p>
         )}
       </div>
 

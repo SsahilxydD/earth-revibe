@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useRef } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn, formatPrice, truncate, getImageUrl, BLUR_DATA_URL } from "@/lib/utils";
-import { SectionHeader } from "./section-header";
+import { useRef } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn, formatPrice, truncate, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
+import { SectionHeader } from './section-header';
 
 interface Product {
   id: string;
@@ -25,15 +25,11 @@ interface FeaturedProductsProps {
 function ProductCard({ product }: { product: Product }) {
   const primaryImg = product.images?.[0];
   const secondaryImg = product.images?.[1];
-  const primaryImage = primaryImg?.url || "/placeholder.png";
+  const primaryImage = primaryImg?.url || '/placeholder.png';
   const secondaryImage = secondaryImg?.url;
-  const hasDiscount =
-    product.compareAtPrice && product.compareAtPrice > product.price;
+  const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price;
   const discountPercent = hasDiscount
-    ? Math.round(
-        ((product.compareAtPrice! - product.price) / product.compareAtPrice!) *
-          100,
-      )
+    ? Math.round(((product.compareAtPrice! - product.price) / product.compareAtPrice!) * 100)
     : 0;
 
   return (
@@ -49,10 +45,8 @@ function ProductCard({ product }: { product: Product }) {
           placeholder="blur"
           blurDataURL={BLUR_DATA_URL}
           className={cn(
-            "object-cover transition-all duration-500",
-            secondaryImage
-              ? "group-hover:opacity-0 group-hover:scale-105"
-              : "group-hover:scale-105",
+            'object-cover transition-all duration-500',
+            secondaryImage ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'
           )}
           sizes="(max-width: 640px) 160px, (max-width: 768px) 200px, 25vw"
         />
@@ -84,12 +78,7 @@ function ProductCard({ product }: { product: Product }) {
           {truncate(product.name, 40)}
         </h3>
         <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "text-sm font-semibold",
-              hasDiscount && "text-[var(--color-sale)]",
-            )}
-          >
+          <span className={cn('text-sm font-semibold', hasDiscount && 'text-[var(--color-sale)]')}>
             {formatPrice(product.price)}
           </span>
           {hasDiscount && (
@@ -106,10 +95,10 @@ function ProductCard({ product }: { product: Product }) {
 export function FeaturedProducts({ products }: FeaturedProductsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const scroll = (direction: "left" | "right") => {
+  const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    const scrollAmount = direction === "left" ? -300 : 300;
-    scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    const scrollAmount = direction === 'left' ? -300 : 300;
+    scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
   if (!products || products.length === 0) return null;
@@ -118,7 +107,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
     <motion.section
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
+      viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 0.6 }}
       className="px-4 md:px-8 lg:px-12 xl:px-20 py-[var(--section-spacing-mobile)] md:py-[var(--section-spacing-desktop)]"
     >
@@ -126,23 +115,20 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
 
       {/* Mobile: horizontal scroll */}
       <div className="relative md:hidden">
-        <div
-          ref={scrollRef}
-          className="flex gap-3 overflow-x-auto hide-scrollbar pb-2"
-        >
+        <div ref={scrollRef} className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
         <button
-          onClick={() => scroll("left")}
+          onClick={() => scroll('left')}
           aria-label="Scroll left"
           className="absolute left-0 top-1/3 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white/90 rounded-full shadow-md"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
         <button
-          onClick={() => scroll("right")}
+          onClick={() => scroll('right')}
           aria-label="Scroll right"
           className="absolute right-0 top-1/3 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white/90 rounded-full shadow-md"
         >

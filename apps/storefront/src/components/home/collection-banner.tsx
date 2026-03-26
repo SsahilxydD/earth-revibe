@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from 'next/link';
 
 interface CollectionCard {
   title: string;
@@ -8,24 +8,24 @@ interface CollectionCard {
 
 const COLLECTIONS: CollectionCard[] = [
   {
-    title: "New Arrivals",
-    href: "/categories/new-arrivals",
-    gradient: "from-zinc-900 to-zinc-700",
+    title: 'New Arrivals',
+    href: '/categories/new-arrivals',
+    gradient: 'from-zinc-900 to-zinc-700',
   },
   {
-    title: "Shirts",
-    href: "/categories/shirts",
-    gradient: "from-neutral-800 to-stone-600",
+    title: 'Shirts',
+    href: '/categories/shirts',
+    gradient: 'from-neutral-800 to-stone-600',
   },
   {
-    title: "Outerwear",
-    href: "/categories/outerwear",
-    gradient: "from-gray-900 to-gray-600",
+    title: 'Outerwear',
+    href: '/categories/outerwear',
+    gradient: 'from-gray-900 to-gray-600',
   },
   {
-    title: "Bestsellers",
-    href: "/categories/bestsellers",
-    gradient: "from-red-900 to-red-700",
+    title: 'Bestsellers',
+    href: '/categories/bestsellers',
+    gradient: 'from-red-900 to-red-700',
   },
 ];
 

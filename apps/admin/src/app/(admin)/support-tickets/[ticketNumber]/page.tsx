@@ -1,38 +1,50 @@
-"use client";
+'use client';
 
-import { use, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Send, User } from "lucide-react";
-import { Button, Badge, Card, Select, Textarea, Spinner } from "@/components/ui";
-import { useAdminTicket, useUpdateTicketStatus, useAdminTicketReply } from "@/hooks/use-support-tickets";
+import { use, useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Send, User } from 'lucide-react';
+import { Button, Badge, Card, Select, Textarea, Spinner } from '@/components/ui';
+import {
+  useAdminTicket,
+  useUpdateTicketStatus,
+  useAdminTicketReply,
+} from '@/hooks/use-support-tickets';
 
-const statusVariant: Record<string, "success" | "warning" | "info" | "default"> = {
-  OPEN: "info",
-  IN_PROGRESS: "warning",
-  RESOLVED: "success",
-  CLOSED: "default",
+const statusVariant: Record<string, 'success' | 'warning' | 'info' | 'default'> = {
+  OPEN: 'info',
+  IN_PROGRESS: 'warning',
+  RESOLVED: 'success',
+  CLOSED: 'default',
 };
 
-const priorityVariant: Record<string, "success" | "warning" | "error" | "default"> = {
-  LOW: "default",
-  MEDIUM: "warning",
-  HIGH: "error",
-  URGENT: "error",
+const priorityVariant: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
+  LOW: 'default',
+  MEDIUM: 'warning',
+  HIGH: 'error',
+  URGENT: 'error',
 };
 
 function formatDateTime(date: string) {
-  return new Date(date).toLocaleString("en-IN", {
-    day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+  return new Date(date).toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
-export default function AdminTicketDetailPage({ params }: { params: Promise<{ ticketNumber: string }> }) {
+export default function AdminTicketDetailPage({
+  params,
+}: {
+  params: Promise<{ ticketNumber: string }>;
+}) {
   const { ticketNumber } = use(params);
   const { data, isLoading } = useAdminTicket(ticketNumber);
   const statusMutation = useUpdateTicketStatus();
   const replyMutation = useAdminTicketReply();
-  const [reply, setReply] = useState("");
-  const [newStatus, setNewStatus] = useState("");
+  const [reply, setReply] = useState('');
+  const [newStatus, setNewStatus] = useState('');
 
   const ticket = data?.ticket;
 
@@ -40,7 +52,7 @@ export default function AdminTicketDetailPage({ params }: { params: Promise<{ ti
     e.preventDefault();
     if (!reply.trim()) return;
     await replyMutation.mutateAsync({ ticketNumber, content: reply });
-    setReply("");
+    setReply('');
   };
 
   const handleStatusChange = () => {
@@ -49,16 +61,27 @@ export default function AdminTicketDetailPage({ params }: { params: Promise<{ ti
     }
   };
 
-  if (isLoading) return <div className="flex justify-center py-20"><Spinner /></div>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-20">
+        <Spinner />
+      </div>
+    );
   if (!ticket) return <p className="text-center py-20 text-medium-gray">Ticket not found.</p>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/support-tickets"><Button variant="ghost" size="sm"><ArrowLeft size={16} /></Button></Link>
+        <Link href="/support-tickets">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft size={16} />
+          </Button>
+        </Link>
         <h1 className="text-2xl font-semibold text-charcoal">{ticket.ticketNumber}</h1>
-        <Badge variant={statusVariant[ticket.status] || "default"}>{ticket.status.replace("_", " ")}</Badge>
-        <Badge variant={priorityVariant[ticket.priority] || "default"}>{ticket.priority}</Badge>
+        <Badge variant={statusVariant[ticket.status] || 'default'}>
+          {ticket.status.replace('_', ' ')}
+        </Badge>
+        <Badge variant={priorityVariant[ticket.priority] || 'default'}>{ticket.priority}</Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -70,18 +93,26 @@ export default function AdminTicketDetailPage({ params }: { params: Promise<{ ti
 
             <div className="space-y-4 max-h-[500px] overflow-y-auto">
               {ticket.messages?.map((msg: any) => {
-                const isStaff = msg.user?.role === "ADMIN" || msg.user?.role === "SUPER_ADMIN" || msg.user?.role === "SUPPORT_STAFF";
+                const isStaff =
+                  msg.user?.role === 'ADMIN' ||
+                  msg.user?.role === 'SUPER_ADMIN' ||
+                  msg.user?.role === 'SUPPORT_STAFF';
                 return (
-                  <div key={msg.id} className={`flex gap-3 ${isStaff ? "flex-row-reverse" : ""}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isStaff ? "bg-deep-earth" : "bg-forest-green/10"}`}>
-                      <User size={14} className={isStaff ? "text-white" : "text-forest-green"} />
+                  <div key={msg.id} className={`flex gap-3 ${isStaff ? 'flex-row-reverse' : ''}`}>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isStaff ? 'bg-deep-earth' : 'bg-forest-green/10'}`}
+                    >
+                      <User size={14} className={isStaff ? 'text-white' : 'text-forest-green'} />
                     </div>
-                    <div className={`max-w-[75%] ${isStaff ? "text-right" : ""}`}>
-                      <div className={`rounded-lg px-4 py-3 ${isStaff ? "bg-deep-earth/5" : "bg-off-white"}`}>
+                    <div className={`max-w-[75%] ${isStaff ? 'text-right' : ''}`}>
+                      <div
+                        className={`rounded-lg px-4 py-3 ${isStaff ? 'bg-deep-earth/5' : 'bg-off-white'}`}
+                      >
                         <p className="text-sm text-charcoal whitespace-pre-wrap">{msg.content}</p>
                       </div>
                       <p className="text-[10px] text-medium-gray mt-1">
-                        {msg.user?.firstName} {msg.user?.lastName} &middot; {formatDateTime(msg.createdAt)}
+                        {msg.user?.firstName} {msg.user?.lastName} &middot;{' '}
+                        {formatDateTime(msg.createdAt)}
                       </p>
                     </div>
                   </div>
@@ -90,7 +121,7 @@ export default function AdminTicketDetailPage({ params }: { params: Promise<{ ti
             </div>
           </Card>
 
-          {ticket.status !== "CLOSED" && (
+          {ticket.status !== 'CLOSED' && (
             <Card>
               <form onSubmit={handleReply} className="space-y-3">
                 <Textarea
@@ -102,7 +133,7 @@ export default function AdminTicketDetailPage({ params }: { params: Promise<{ ti
                 />
                 <div className="flex justify-end">
                   <Button type="submit" disabled={replyMutation.isPending || !reply.trim()}>
-                    <Send size={14} /> {replyMutation.isPending ? "Sending..." : "Send Reply"}
+                    <Send size={14} /> {replyMutation.isPending ? 'Sending...' : 'Send Reply'}
                   </Button>
                 </div>
               </form>
@@ -114,19 +145,25 @@ export default function AdminTicketDetailPage({ params }: { params: Promise<{ ti
         <div className="space-y-4">
           <Card>
             <h4 className="text-sm font-semibold text-charcoal mb-3">Customer</h4>
-            <p className="text-sm text-charcoal">{ticket.user?.firstName} {ticket.user?.lastName}</p>
+            <p className="text-sm text-charcoal">
+              {ticket.user?.firstName} {ticket.user?.lastName}
+            </p>
             <p className="text-xs text-medium-gray">{ticket.user?.email}</p>
           </Card>
 
           <Card>
             <h4 className="text-sm font-semibold text-charcoal mb-3">Update Status</h4>
             <div className="space-y-2">
-              <Select value={newStatus || ticket.status} onChange={(e) => setNewStatus(e.target.value)} options={[
-                { value: "OPEN", label: "Open" },
-                { value: "IN_PROGRESS", label: "In Progress" },
-                { value: "RESOLVED", label: "Resolved" },
-                { value: "CLOSED", label: "Closed" },
-              ]} />
+              <Select
+                value={newStatus || ticket.status}
+                onChange={(e) => setNewStatus(e.target.value)}
+                options={[
+                  { value: 'OPEN', label: 'Open' },
+                  { value: 'IN_PROGRESS', label: 'In Progress' },
+                  { value: 'RESOLVED', label: 'Resolved' },
+                  { value: 'CLOSED', label: 'Closed' },
+                ]}
+              />
               <Button
                 variant="secondary"
                 size="sm"

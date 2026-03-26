@@ -1,17 +1,21 @@
-import { prisma, Prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { AdminOrderQuery, UpdateOrderStatusInput, AddOrderNoteInput } from "@earth-revibe/shared";
+import { prisma, Prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type {
+  AdminOrderQuery,
+  UpdateOrderStatusInput,
+  AddOrderNoteInput,
+} from '@earth-revibe/shared';
 
 /** Valid order status transitions — enforces a state machine */
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  PLACED: ["CONFIRMED", "CANCELLED"],
-  CONFIRMED: ["PROCESSING", "CANCELLED"],
-  PROCESSING: ["SHIPPED", "CANCELLED"],
-  SHIPPED: ["OUT_FOR_DELIVERY", "DELIVERED"],
-  OUT_FOR_DELIVERY: ["DELIVERED"],
-  DELIVERED: ["RETURNED", "REFUNDED"],
+  PLACED: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['PROCESSING', 'CANCELLED'],
+  PROCESSING: ['SHIPPED', 'CANCELLED'],
+  SHIPPED: ['OUT_FOR_DELIVERY', 'DELIVERED'],
+  OUT_FOR_DELIVERY: ['DELIVERED'],
+  DELIVERED: ['RETURNED', 'REFUNDED'],
   CANCELLED: [],
-  RETURNED: ["REFUNDED"],
+  RETURNED: ['REFUNDED'],
   REFUNDED: [],
 };
 
@@ -23,11 +27,11 @@ export const adminOrderService = {
     if (status) where.status = status;
     if (search) {
       where.OR = [
-        { orderNumber: { contains: search, mode: "insensitive" } },
-        { guestEmail: { contains: search, mode: "insensitive" } },
-        { user: { email: { contains: search, mode: "insensitive" } } },
-        { user: { firstName: { contains: search, mode: "insensitive" } } },
-        { user: { lastName: { contains: search, mode: "insensitive" } } },
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { guestEmail: { contains: search, mode: 'insensitive' } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+        { user: { firstName: { contains: search, mode: 'insensitive' } } },
+        { user: { lastName: { contains: search, mode: 'insensitive' } } },
       ];
     }
     if (startDate || endDate) {
@@ -63,28 +67,28 @@ export const adminOrderService = {
         items: true,
         payment: true,
         address: true,
-        statusHistory: { orderBy: { createdAt: "desc" } },
+        statusHistory: { orderBy: { createdAt: 'desc' } },
         notes: {
           include: { user: { select: { firstName: true, lastName: true } } },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
         },
         discountCode: { select: { code: true, type: true, value: true } },
       },
     });
 
-    if (!order) throw ApiError.notFound("Order not found");
+    if (!order) throw ApiError.notFound('Order not found');
     return order;
   },
 
   async updateStatus(orderNumber: string, adminId: string, data: UpdateOrderStatusInput) {
     const order = await prisma.order.findUnique({ where: { orderNumber } });
-    if (!order) throw ApiError.notFound("Order not found");
+    if (!order) throw ApiError.notFound('Order not found');
 
     // Enforce valid status transitions
     const allowedTransitions = VALID_TRANSITIONS[order.status] || [];
     if (!allowedTransitions.includes(data.status)) {
       throw ApiError.badRequest(
-        `Cannot transition from ${order.status} to ${data.status}. Allowed: ${allowedTransitions.join(", ") || "none"}`
+        `Cannot transition from ${order.status} to ${data.status}. Allowed: ${allowedTransitions.join(', ') || 'none'}`
       );
     }
 
@@ -107,7 +111,7 @@ export const adminOrderService = {
 
   async addNote(orderNumber: string, adminId: string, data: AddOrderNoteInput) {
     const order = await prisma.order.findUnique({ where: { orderNumber } });
-    if (!order) throw ApiError.notFound("Order not found");
+    if (!order) throw ApiError.notFound('Order not found');
 
     const note = await prisma.orderNote.create({
       data: {

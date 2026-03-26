@@ -1,7 +1,7 @@
-import type { Request, Response } from "express";
-import { shiprocketService } from "../services/shiprocket.service";
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
+import type { Request, Response } from 'express';
+import { shiprocketService } from '../services/shiprocket.service';
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
 
 export const shippingController = {
   /** Customer: get tracking info for their order */
@@ -12,8 +12,8 @@ export const shippingController = {
       select: { id: true, userId: true },
     });
 
-    if (!order) throw ApiError.notFound("Order not found");
-    if (order.userId !== req.user!.id) throw ApiError.forbidden("Not your order");
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.userId !== req.user!.id) throw ApiError.forbidden('Not your order');
 
     const tracking = await shiprocketService.getTracking(order.id);
     res.json({ success: true, data: tracking });
@@ -27,12 +27,12 @@ export const shippingController = {
       select: { id: true, shiprocketOrderId: true, status: true },
     });
 
-    if (!order) throw ApiError.notFound("Order not found");
+    if (!order) throw ApiError.notFound('Order not found');
     if (order.shiprocketOrderId) {
-      throw ApiError.badRequest("Shiprocket order already created");
+      throw ApiError.badRequest('Shiprocket order already created');
     }
-    if (order.status !== "CONFIRMED") {
-      throw ApiError.badRequest("Order must be confirmed before creating shipment");
+    if (order.status !== 'CONFIRMED') {
+      throw ApiError.badRequest('Order must be confirmed before creating shipment');
     }
 
     const result = await shiprocketService.createShiprocketOrder(order.id);
@@ -47,9 +47,9 @@ export const shippingController = {
       select: { id: true, awbCode: true },
     });
 
-    if (!order) throw ApiError.notFound("Order not found");
+    if (!order) throw ApiError.notFound('Order not found');
     if (order.awbCode) {
-      throw ApiError.badRequest("AWB already assigned");
+      throw ApiError.badRequest('AWB already assigned');
     }
 
     const result = await shiprocketService.assignAWB(order.id, req.body.courierCompanyId);
@@ -64,7 +64,7 @@ export const shippingController = {
       select: { shiprocketShipmentId: true },
     });
 
-    if (!order?.shiprocketShipmentId) throw ApiError.badRequest("No shipment found");
+    if (!order?.shiprocketShipmentId) throw ApiError.badRequest('No shipment found');
 
     const labelUrl = await shiprocketService.generateLabel(order.shiprocketShipmentId);
     res.json({ success: true, data: { labelUrl } });
@@ -78,7 +78,7 @@ export const shippingController = {
       select: { shiprocketShipmentId: true },
     });
 
-    if (!order?.shiprocketShipmentId) throw ApiError.badRequest("No shipment found");
+    if (!order?.shiprocketShipmentId) throw ApiError.badRequest('No shipment found');
 
     const manifestUrl = await shiprocketService.generateManifest(order.shiprocketShipmentId);
     res.json({ success: true, data: { manifestUrl } });

@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { loyaltyService } from "../services/loyalty.service";
+import type { Request, Response } from 'express';
+import { loyaltyService } from '../services/loyalty.service';
 
 export const loyaltyController = {
   async getBalance(req: Request, res: Response) {

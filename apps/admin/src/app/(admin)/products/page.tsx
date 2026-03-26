@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useRef, useCallback } from "react";
-import Link from "next/link";
+import { useState, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import {
   Plus,
   Search,
@@ -11,60 +11,57 @@ import {
   Upload,
   CheckSquare,
   FolderInput,
-} from "lucide-react";
-import { Button, Badge, Card, Select, Modal } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
-import { Skeleton } from "@/components/ui/skeleton";
+} from 'lucide-react';
+import { Button, Badge, Card, Select, Modal } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   useProducts,
   useDeleteProduct,
   useExportProductsCSV,
   useBulkUpdateProducts,
   useImportProductsCSV,
-} from "@/hooks/use-products";
-import { useCategories } from "@/hooks/use-categories";
+} from '@/hooks/use-products';
+import { useCategories } from '@/hooks/use-categories';
 
 const statusOptions = [
-  { value: "", label: "All Statuses" },
-  { value: "ACTIVE", label: "Active" },
-  { value: "DRAFT", label: "Draft" },
-  { value: "ARCHIVED", label: "Archived" },
+  { value: '', label: 'All Statuses' },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'ARCHIVED', label: 'Archived' },
 ];
 
 const bulkStatusOptions = [
-  { value: "ACTIVE", label: "Active" },
-  { value: "DRAFT", label: "Draft" },
-  { value: "ARCHIVED", label: "Archived" },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'ARCHIVED', label: 'Archived' },
 ];
 
-const statusVariant: Record<
-  string,
-  "success" | "warning" | "default" | "error"
-> = {
-  ACTIVE: "success",
-  DRAFT: "warning",
-  ARCHIVED: "default",
+const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error'> = {
+  ACTIVE: 'success',
+  DRAFT: 'warning',
+  ARCHIVED: 'default',
 };
 
 function formatPrice(amount: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(amount);
 }
 
 export default function ProductsPage() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [newPrice, setNewPrice] = useState("");
-  const [newStatus, setNewStatus] = useState("ACTIVE");
-  const [newCategoryId, setNewCategoryId] = useState("");
+  const [newPrice, setNewPrice] = useState('');
+  const [newStatus, setNewStatus] = useState('ACTIVE');
+  const [newCategoryId, setNewCategoryId] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, isError } = useProducts({
@@ -80,8 +77,7 @@ export default function ProductsPage() {
   const { data: categoriesData } = useCategories();
 
   const products: any[] = data?.products || [];
-  const allSelected =
-    products.length > 0 && products.every((p: any) => selectedIds.has(p.id));
+  const allSelected = products.length > 0 && products.every((p: any) => selectedIds.has(p.id));
   const someSelected = selectedIds.size > 0;
 
   const toggleSelect = useCallback((id: string) => {
@@ -112,23 +108,23 @@ export default function ProductsPage() {
     if (!confirm(`Are you sure you want to archive "${name}"?`)) return;
     try {
       await deleteProduct.mutateAsync(id);
-      toast.success("Product archived");
+      toast.success('Product archived');
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
     } catch (err: any) {
-      toast.error(err.message || "Failed to archive product");
+      toast.error(err.message || 'Failed to archive product');
     }
   };
 
   const handleExportCSV = async () => {
     try {
       await exportCSV.mutateAsync();
-      toast.success("CSV exported successfully");
+      toast.success('CSV exported successfully');
     } catch (err: any) {
-      toast.error(err.message || "Failed to export CSV");
+      toast.error(err.message || 'Failed to export CSV');
     }
   };
 
@@ -140,27 +136,31 @@ export default function ProductsPage() {
       const text = await file.text();
       const result = await importCSV.mutateAsync(text);
       const info = result as any;
-      const msg = `Import complete: ${info.created || 0} created, ${info.updated || 0} updated${info.errors ? `, ${info.errors} errors` : ""}`;
+      const msg = `Import complete: ${info.created || 0} created, ${info.updated || 0} updated${info.errors ? `, ${info.errors} errors` : ''}`;
       if (info.errors > 0) {
-        const details = info.errorDetails?.slice(0, 5).map((d: any) => `Row ${d.row}: ${d.message}`).join("\n") || "";
-        toast.error(`${msg}${details ? `\n${details}` : ""}`);
+        const details =
+          info.errorDetails
+            ?.slice(0, 5)
+            .map((d: any) => `Row ${d.row}: ${d.message}`)
+            .join('\n') || '';
+        toast.error(`${msg}${details ? `\n${details}` : ''}`);
       } else {
         toast.success(msg);
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to import CSV");
+      toast.error(err.message || 'Failed to import CSV');
     }
 
     // Reset file input
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
   const handleBulkPrice = async () => {
     const price = parseFloat(newPrice);
     if (isNaN(price) || price < 0) {
-      toast.error("Please enter a valid price");
+      toast.error('Please enter a valid price');
       return;
     }
     try {
@@ -170,10 +170,10 @@ export default function ProductsPage() {
       });
       toast.success(`Price updated for ${selectedIds.size} products`);
       setPriceModalOpen(false);
-      setNewPrice("");
+      setNewPrice('');
       clearSelection();
     } catch (err: any) {
-      toast.error(err.message || "Failed to update prices");
+      toast.error(err.message || 'Failed to update prices');
     }
   };
 
@@ -187,29 +187,28 @@ export default function ProductsPage() {
       setStatusModalOpen(false);
       clearSelection();
     } catch (err: any) {
-      toast.error(err.message || "Failed to update status");
+      toast.error(err.message || 'Failed to update status');
     }
   };
 
   const handleBulkDelete = async () => {
     const count = selectedIds.size;
-    if (!confirm(`Are you sure you want to archive ${count} product(s)?`))
-      return;
+    if (!confirm(`Are you sure you want to archive ${count} product(s)?`)) return;
     try {
       await bulkUpdate.mutateAsync({
         productIds: Array.from(selectedIds),
-        updates: { status: "ARCHIVED" },
+        updates: { status: 'ARCHIVED' },
       });
       toast.success(`${count} product(s) archived`);
       clearSelection();
     } catch (err: any) {
-      toast.error(err.message || "Failed to archive products");
+      toast.error(err.message || 'Failed to archive products');
     }
   };
 
   const handleBulkCategory = async () => {
     if (!newCategoryId) {
-      toast.error("Please select a category");
+      toast.error('Please select a category');
       return;
     }
     try {
@@ -217,13 +216,14 @@ export default function ProductsPage() {
         productIds: Array.from(selectedIds),
         updates: { categoryId: newCategoryId },
       });
-      const catName = (categoriesData as any[])?.find((c: any) => c.id === newCategoryId)?.name || "category";
+      const catName =
+        (categoriesData as any[])?.find((c: any) => c.id === newCategoryId)?.name || 'category';
       toast.success(`${selectedIds.size} product(s) moved to ${catName}`);
       setCategoryModalOpen(false);
-      setNewCategoryId("");
+      setNewCategoryId('');
       clearSelection();
     } catch (err: any) {
-      toast.error(err.message || "Failed to move products");
+      toast.error(err.message || 'Failed to move products');
     }
   };
 
@@ -233,18 +233,12 @@ export default function ProductsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-charcoal">Products</h1>
-          <p className="text-sm text-medium-gray mt-1">
-            Manage your product catalog
-          </p>
+          <p className="text-sm text-medium-gray mt-1">Manage your product catalog</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            onClick={handleExportCSV}
-            disabled={exportCSV.isPending}
-          >
+          <Button variant="ghost" onClick={handleExportCSV} disabled={exportCSV.isPending}>
             <Download size={18} />
-            {exportCSV.isPending ? "Exporting..." : "Export CSV"}
+            {exportCSV.isPending ? 'Exporting...' : 'Export CSV'}
           </Button>
           <Button
             variant="ghost"
@@ -252,7 +246,7 @@ export default function ProductsPage() {
             disabled={importCSV.isPending}
           >
             <Upload size={18} />
-            {importCSV.isPending ? "Importing..." : "Import CSV"}
+            {importCSV.isPending ? 'Importing...' : 'Import CSV'}
           </Button>
           <input
             ref={fileInputRef}
@@ -313,7 +307,9 @@ export default function ProductsPage() {
           <div className="p-12 text-center">
             <p className="text-charcoal font-medium mb-1">Failed to load products</p>
             <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
-            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
           </div>
         ) : !products.length ? (
           <div className="p-12 text-center">
@@ -333,21 +329,11 @@ export default function ProductsPage() {
                         className="h-4 w-4 rounded border-light-gray text-forest-green focus:ring-deep-earth/20 cursor-pointer"
                       />
                     </th>
-                    <th className="text-left px-6 py-3 font-medium text-medium-gray">
-                      Product
-                    </th>
-                    <th className="text-left px-6 py-3 font-medium text-medium-gray">
-                      Category
-                    </th>
-                    <th className="text-left px-6 py-3 font-medium text-medium-gray">
-                      Price
-                    </th>
-                    <th className="text-left px-6 py-3 font-medium text-medium-gray">
-                      Status
-                    </th>
-                    <th className="text-right px-6 py-3 font-medium text-medium-gray">
-                      Actions
-                    </th>
+                    <th className="text-left px-6 py-3 font-medium text-medium-gray">Product</th>
+                    <th className="text-left px-6 py-3 font-medium text-medium-gray">Category</th>
+                    <th className="text-left px-6 py-3 font-medium text-medium-gray">Price</th>
+                    <th className="text-left px-6 py-3 font-medium text-medium-gray">Status</th>
+                    <th className="text-right px-6 py-3 font-medium text-medium-gray">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -355,7 +341,7 @@ export default function ProductsPage() {
                     <tr
                       key={product.id}
                       className={`border-b border-light-gray last:border-0 hover:bg-off-white/50 ${
-                        selectedIds.has(product.id) ? "bg-off-white/70" : ""
+                        selectedIds.has(product.id) ? 'bg-off-white/70' : ''
                       }`}
                     >
                       <td className="w-10 px-4 py-3">
@@ -368,24 +354,16 @@ export default function ProductsPage() {
                       </td>
                       <td className="px-6 py-3">
                         <div>
-                          <p className="font-medium text-charcoal">
-                            {product.name}
-                          </p>
-                          <p className="text-xs text-medium-gray">
-                            {product.slug}
-                          </p>
+                          <p className="font-medium text-charcoal">{product.name}</p>
+                          <p className="text-xs text-medium-gray">{product.slug}</p>
                         </div>
                       </td>
                       <td className="px-6 py-3 text-dark-gray">
-                        {product.category?.name || "\u2014"}
+                        {product.category?.name || '\u2014'}
                       </td>
-                      <td className="px-6 py-3 text-charcoal">
-                        {formatPrice(product.price)}
-                      </td>
+                      <td className="px-6 py-3 text-charcoal">{formatPrice(product.price)}</td>
                       <td className="px-6 py-3">
-                        <Badge
-                          variant={statusVariant[product.status] || "default"}
-                        >
+                        <Badge variant={statusVariant[product.status] || 'default'}>
                           {product.status}
                         </Badge>
                       </td>
@@ -399,9 +377,7 @@ export default function ProductsPage() {
                             <Pencil size={16} className="text-dark-gray" />
                           </Link>
                           <button
-                            onClick={() =>
-                              handleDelete(product.id, product.name)
-                            }
+                            onClick={() => handleDelete(product.id, product.name)}
                             className="p-1.5 rounded-md hover:bg-error/10 transition-colors"
                             title="Archive"
                           >
@@ -450,16 +426,14 @@ export default function ProductsPage() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-charcoal text-white rounded-xl shadow-lg px-6 py-3 flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm">
             <CheckSquare size={16} />
-            <span className="font-medium">
-              {selectedIds.size} selected
-            </span>
+            <span className="font-medium">{selectedIds.size} selected</span>
           </div>
           <div className="w-px h-5 bg-white/20" />
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              setNewPrice("");
+              setNewPrice('');
               setPriceModalOpen(true);
             }}
             className="text-white hover:bg-white/10"
@@ -470,7 +444,7 @@ export default function ProductsPage() {
             variant="ghost"
             size="sm"
             onClick={() => {
-              setNewStatus("ACTIVE");
+              setNewStatus('ACTIVE');
               setStatusModalOpen(true);
             }}
             className="text-white hover:bg-white/10"
@@ -481,7 +455,7 @@ export default function ProductsPage() {
             variant="ghost"
             size="sm"
             onClick={() => {
-              setNewCategoryId("");
+              setNewCategoryId('');
               setCategoryModalOpen(true);
             }}
             className="text-white hover:bg-white/10"
@@ -520,9 +494,7 @@ export default function ProductsPage() {
             Set a new price for {selectedIds.size} selected product(s).
           </p>
           <div>
-            <label className="block text-sm font-medium text-charcoal mb-1">
-              New Price (INR)
-            </label>
+            <label className="block text-sm font-medium text-charcoal mb-1">New Price (INR)</label>
             <input
               type="number"
               min="0"
@@ -534,17 +506,11 @@ export default function ProductsPage() {
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => setPriceModalOpen(false)}
-            >
+            <Button variant="ghost" onClick={() => setPriceModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleBulkPrice}
-              disabled={bulkUpdate.isPending}
-            >
-              {bulkUpdate.isPending ? "Updating..." : "Update Price"}
+            <Button onClick={handleBulkPrice} disabled={bulkUpdate.isPending}>
+              {bulkUpdate.isPending ? 'Updating...' : 'Update Price'}
             </Button>
           </div>
         </div>
@@ -568,17 +534,11 @@ export default function ProductsPage() {
             onChange={(e) => setNewStatus(e.target.value)}
           />
           <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => setStatusModalOpen(false)}
-            >
+            <Button variant="ghost" onClick={() => setStatusModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleBulkStatus}
-              disabled={bulkUpdate.isPending}
-            >
-              {bulkUpdate.isPending ? "Updating..." : "Change Status"}
+            <Button onClick={handleBulkStatus} disabled={bulkUpdate.isPending}>
+              {bulkUpdate.isPending ? 'Updating...' : 'Change Status'}
             </Button>
           </div>
         </div>
@@ -598,7 +558,7 @@ export default function ProductsPage() {
           <Select
             label="Category"
             options={[
-              { value: "", label: "Select a category" },
+              { value: '', label: 'Select a category' },
               ...((categoriesData as any[]) || []).map((c: any) => ({
                 value: c.id,
                 label: c.name,
@@ -608,17 +568,11 @@ export default function ProductsPage() {
             onChange={(e) => setNewCategoryId(e.target.value)}
           />
           <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => setCategoryModalOpen(false)}
-            >
+            <Button variant="ghost" onClick={() => setCategoryModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleBulkCategory}
-              disabled={bulkUpdate.isPending || !newCategoryId}
-            >
-              {bulkUpdate.isPending ? "Moving..." : "Move to Category"}
+            <Button onClick={handleBulkCategory} disabled={bulkUpdate.isPending || !newCategoryId}>
+              {bulkUpdate.isPending ? 'Moving...' : 'Move to Category'}
             </Button>
           </div>
         </div>

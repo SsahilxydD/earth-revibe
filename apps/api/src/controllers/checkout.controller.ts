@@ -1,7 +1,7 @@
-import type { Request, Response } from "express";
-import { checkoutService } from "../services/checkout.service";
-import { getRazorpay } from "../config/razorpay";
-import { env } from "../config/env";
+import type { Request, Response } from 'express';
+import { checkoutService } from '../services/checkout.service';
+import { getRazorpay } from '../config/razorpay';
+import { env } from '../config/env';
 
 export const checkoutController = {
   async createMagicOrder(req: Request, res: Response) {
@@ -42,21 +42,21 @@ export const checkoutController = {
     const razorpay = getRazorpay();
     const order = await razorpay.orders.create({
       amount: 100, // ₹1 in paise — minimum amount for Magic Checkout
-      currency: "INR",
+      currency: 'INR',
       receipt: `addr_${Date.now()}`,
       line_items_total: 100,
       line_items: [
         {
-          type: "e-commerce" as any,
-          sku: "address-collection",
-          name: "Address Verification",
-          description: "Verify your address",
+          type: 'e-commerce' as any,
+          sku: 'address-collection',
+          name: 'Address Verification',
+          description: 'Verify your address',
           quantity: 1,
           price: 100,
           offer_price: 100,
         },
       ],
-      notes: { purpose: "address_collection" },
+      notes: { purpose: 'address_collection' },
     } as any);
 
     res.json({
@@ -76,12 +76,14 @@ export const checkoutController = {
   async getOrderAddress(req: Request, res: Response) {
     const razorpayOrderId = req.params.razorpayOrderId as string;
     if (!razorpayOrderId) {
-      res.status(400).json({ success: false, error: { code: "BAD_REQUEST", message: "Missing order ID" } });
+      res
+        .status(400)
+        .json({ success: false, error: { code: 'BAD_REQUEST', message: 'Missing order ID' } });
       return;
     }
 
     const razorpay = getRazorpay();
-    const order = await razorpay.orders.fetch(razorpayOrderId) as any;
+    const order = (await razorpay.orders.fetch(razorpayOrderId)) as any;
 
     // Extract the customer's shipping address from Razorpay's order data
     const customerDetails = order.customer_details || {};
@@ -96,13 +98,13 @@ export const checkoutController = {
       success: true,
       data: {
         address: {
-          fullName: shippingAddress.name || customerDetails.name || "",
-          phone: (customerDetails.contact || "").replace(/^\+91/, ""),
-          line1: shippingAddress.line1 || "",
-          line2: shippingAddress.line2 || "",
-          city: shippingAddress.city || "",
-          state: shippingAddress.state || "",
-          pinCode: shippingAddress.zipcode || "",
+          fullName: shippingAddress.name || customerDetails.name || '',
+          phone: (customerDetails.contact || '').replace(/^\+91/, ''),
+          line1: shippingAddress.line1 || '',
+          line2: shippingAddress.line2 || '',
+          city: shippingAddress.city || '',
+          state: shippingAddress.state || '',
+          pinCode: shippingAddress.zipcode || '',
         },
       },
     });

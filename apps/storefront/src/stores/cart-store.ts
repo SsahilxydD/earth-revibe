@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface CartItem {
   id: string;
@@ -27,7 +27,7 @@ interface CartState {
   closeCart: () => void;
   toggleCart: () => void;
 
-  addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
+  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -45,7 +45,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
-      discountCode: "",
+      discountCode: '',
       discountAmount: 0,
 
       openCart: () => set({ isOpen: true }),
@@ -55,10 +55,7 @@ export const useCartStore = create<CartState>()(
       addItem: (item) => {
         const { items } = get();
         const existingIndex = items.findIndex(
-          (i) =>
-            i.productId === item.productId &&
-            i.size === item.size &&
-            i.color === item.color
+          (i) => i.productId === item.productId && i.size === item.size && i.color === item.color
         );
 
         if (existingIndex > -1) {
@@ -90,29 +87,23 @@ export const useCartStore = create<CartState>()(
         if (quantity < 1) return;
         set((state) => ({
           items: state.items.map((i) =>
-            i.id === id
-              ? { ...i, quantity: Math.min(quantity, i.maxQuantity) }
-              : i
+            i.id === id ? { ...i, quantity: Math.min(quantity, i.maxQuantity) } : i
           ),
         }));
       },
 
-      clearCart: () => set({ items: [], discountCode: "", discountAmount: 0 }),
+      clearCart: () => set({ items: [], discountCode: '', discountAmount: 0 }),
 
-      applyDiscount: (code, amount) =>
-        set({ discountCode: code, discountAmount: amount }),
+      applyDiscount: (code, amount) => set({ discountCode: code, discountAmount: amount }),
 
-      removeDiscount: () => set({ discountCode: "", discountAmount: 0 }),
+      removeDiscount: () => set({ discountCode: '', discountAmount: 0 }),
 
       getItemCount: () => {
         return get().items.reduce((sum, i) => sum + i.quantity, 0);
       },
 
       getSubtotal: () => {
-        return get().items.reduce(
-          (sum, i) => sum + i.price * i.quantity,
-          0
-        );
+        return get().items.reduce((sum, i) => sum + i.price * i.quantity, 0);
       },
 
       getTotal: () => {
@@ -121,7 +112,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: "earth-revibe-cart",
+      name: 'earth-revibe-cart',
       partialize: (state) => ({
         items: state.items,
         discountCode: state.discountCode,

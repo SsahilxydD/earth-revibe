@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Suspense } from "react";
-import { CheckCircle, ArrowLeft, AlertCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api-client";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Suspense } from 'react';
+import { CheckCircle, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { api } from '@/lib/api-client';
 
 interface ResetPasswordForm {
   password: string;
@@ -18,10 +18,10 @@ interface ResetPasswordForm {
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams.get('token');
 
   const [success, setSuccess] = useState(false);
-  const [serverError, setServerError] = useState("");
+  const [serverError, setServerError] = useState('');
 
   const {
     register,
@@ -29,7 +29,7 @@ function ResetPasswordContent() {
     watch,
     formState: { errors, isSubmitting },
   } = useForm<ResetPasswordForm>({
-    defaultValues: { password: "", confirmPassword: "" },
+    defaultValues: { password: '', confirmPassword: '' },
   });
 
   // No token in the URL — invalid link
@@ -39,9 +39,7 @@ function ResetPasswordContent() {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
           <AlertCircle size={24} className="text-[var(--color-sale)]" />
         </div>
-        <h1 className="mb-2 text-xl font-bold uppercase tracking-wider">
-          Invalid Link
-        </h1>
+        <h1 className="mb-2 text-xl font-bold uppercase tracking-wider">Invalid Link</h1>
         <p className="mb-6 text-sm text-[var(--color-muted)]">
           This reset link is invalid. Please request a new one.
         </p>
@@ -56,15 +54,15 @@ function ResetPasswordContent() {
   }
 
   const onSubmit = async (data: ResetPasswordForm) => {
-    setServerError("");
+    setServerError('');
     try {
-      await api.post("/auth/reset-password", {
+      await api.post('/auth/reset-password', {
         token,
         password: data.password,
       });
       setSuccess(true);
     } catch (err: any) {
-      setServerError(err?.message || "Failed to reset password. Please try again.");
+      setServerError(err?.message || 'Failed to reset password. Please try again.');
     }
   };
 
@@ -75,12 +73,9 @@ function ResetPasswordContent() {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
           <CheckCircle size={24} className="text-green-600" />
         </div>
-        <h1 className="mb-2 text-xl font-bold uppercase tracking-wider">
-          Password Set!
-        </h1>
+        <h1 className="mb-2 text-xl font-bold uppercase tracking-wider">Password Set!</h1>
         <p className="mb-6 text-sm text-[var(--color-muted)]">
-          Your password has been set successfully. You can now log in to track
-          your orders.
+          Your password has been set successfully. You can now log in to track your orders.
         </p>
         <Link href="/auth/login">
           <Button fullWidth size="lg">
@@ -114,13 +109,13 @@ function ResetPasswordContent() {
           placeholder="Min 8 characters"
           autoComplete="new-password"
           error={errors.password?.message}
-          {...register("password", {
-            required: "Password is required",
-            minLength: { value: 8, message: "At least 8 characters" },
+          {...register('password', {
+            required: 'Password is required',
+            minLength: { value: 8, message: 'At least 8 characters' },
             validate: {
-              uppercase: (v) => /[A-Z]/.test(v) || "Must contain uppercase letter",
-              lowercase: (v) => /[a-z]/.test(v) || "Must contain lowercase letter",
-              number: (v) => /[0-9]/.test(v) || "Must contain a number",
+              uppercase: (v) => /[A-Z]/.test(v) || 'Must contain uppercase letter',
+              lowercase: (v) => /[a-z]/.test(v) || 'Must contain lowercase letter',
+              number: (v) => /[0-9]/.test(v) || 'Must contain a number',
             },
           })}
         />
@@ -131,9 +126,9 @@ function ResetPasswordContent() {
           placeholder="Re-enter password"
           autoComplete="new-password"
           error={errors.confirmPassword?.message}
-          {...register("confirmPassword", {
-            required: "Please confirm your password",
-            validate: (v) => v === watch("password") || "Passwords don't match",
+          {...register('confirmPassword', {
+            required: 'Please confirm your password',
+            validate: (v) => v === watch('password') || "Passwords don't match",
           })}
         />
 

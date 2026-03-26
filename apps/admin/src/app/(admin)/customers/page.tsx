@@ -1,30 +1,34 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { Search, Eye, UserCheck, UserX, Download } from "lucide-react";
-import { Button, Badge, Card, Select } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
-import { useCustomers, useToggleCustomerActive, useExportCustomersCSV } from "@/hooks/use-customers";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Search, Eye, UserCheck, UserX, Download } from 'lucide-react';
+import { Button, Badge, Card, Select } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/toast';
+import {
+  useCustomers,
+  useToggleCustomerActive,
+  useExportCustomersCSV,
+} from '@/hooks/use-customers';
 
 const activeOptions = [
-  { value: "", label: "All Customers" },
-  { value: "true", label: "Active" },
-  { value: "false", label: "Inactive" },
+  { value: '', label: 'All Customers' },
+  { value: 'true', label: 'Active' },
+  { value: 'false', label: 'Inactive' },
 ];
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 }
 
 export default function CustomersPage() {
-  const [search, setSearch] = useState("");
-  const [isActive, setIsActive] = useState("");
+  const [search, setSearch] = useState('');
+  const [isActive, setIsActive] = useState('');
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isError } = useCustomers({
@@ -37,7 +41,7 @@ export default function CustomersPage() {
   const exportCSV = useExportCustomersCSV();
 
   const handleToggle = async (id: string, name: string, currentActive: boolean) => {
-    const action = currentActive ? "deactivate" : "activate";
+    const action = currentActive ? 'deactivate' : 'activate';
     if (!confirm(`Are you sure you want to ${action} "${name}"?`)) return;
     try {
       await toggleActive.mutateAsync(id);
@@ -61,18 +65,20 @@ export default function CustomersPage() {
             try {
               const result = await exportCSV.mutateAsync();
               if (result?.truncated) {
-                toast.success(`Exported ${result.exported?.toLocaleString()} of ${result.total?.toLocaleString()} customers (limit reached)`);
+                toast.success(
+                  `Exported ${result.exported?.toLocaleString()} of ${result.total?.toLocaleString()} customers (limit reached)`
+                );
               } else {
-                toast.success("Customers exported successfully");
+                toast.success('Customers exported successfully');
               }
             } catch (err: any) {
-              toast.error(err.message || "Failed to export customers");
+              toast.error(err.message || 'Failed to export customers');
             }
           }}
           disabled={exportCSV.isPending}
         >
           <Download size={16} />
-          {exportCSV.isPending ? "Exporting..." : "Export CSV"}
+          {exportCSV.isPending ? 'Exporting...' : 'Export CSV'}
         </Button>
       </div>
 
@@ -80,19 +86,28 @@ export default function CustomersPage() {
       <Card>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray" />
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray"
+            />
             <input
               type="text"
               placeholder="Search by name, email, or phone..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
             />
           </div>
           <Select
             options={activeOptions}
             value={isActive}
-            onChange={(e) => { setIsActive(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setIsActive(e.target.value);
+              setPage(1);
+            }}
             className="w-full sm:w-40"
           />
         </div>
@@ -110,7 +125,9 @@ export default function CustomersPage() {
           <div className="p-12 text-center">
             <p className="text-charcoal font-medium mb-1">Failed to load customers</p>
             <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
-            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
           </div>
         ) : !data?.customers?.length ? (
           <div className="p-12 text-center">
@@ -125,7 +142,9 @@ export default function CustomersPage() {
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Customer</th>
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Email</th>
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Orders</th>
-                    <th className="text-left px-6 py-3 font-medium text-medium-gray">Loyalty Pts</th>
+                    <th className="text-left px-6 py-3 font-medium text-medium-gray">
+                      Loyalty Pts
+                    </th>
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Joined</th>
                     <th className="text-left px-6 py-3 font-medium text-medium-gray">Status</th>
                     <th className="text-right px-6 py-3 font-medium text-medium-gray">Actions</th>
@@ -133,9 +152,15 @@ export default function CustomersPage() {
                 </thead>
                 <tbody>
                   {data.customers.map((customer: any) => (
-                    <tr key={customer.id} className="border-b border-light-gray last:border-0 hover:bg-off-white/50">
+                    <tr
+                      key={customer.id}
+                      className="border-b border-light-gray last:border-0 hover:bg-off-white/50"
+                    >
                       <td className="px-6 py-3">
-                        <Link href={`/customers/${customer.id}`} className="font-medium text-charcoal hover:text-deep-earth">
+                        <Link
+                          href={`/customers/${customer.id}`}
+                          className="font-medium text-charcoal hover:text-deep-earth"
+                        >
                           {customer.firstName} {customer.lastName}
                         </Link>
                       </td>
@@ -144,8 +169,8 @@ export default function CustomersPage() {
                       <td className="px-6 py-3 text-charcoal">{customer.loyaltyPoints}</td>
                       <td className="px-6 py-3 text-dark-gray">{formatDate(customer.createdAt)}</td>
                       <td className="px-6 py-3">
-                        <Badge variant={customer.isActive ? "success" : "error"}>
-                          {customer.isActive ? "Active" : "Inactive"}
+                        <Badge variant={customer.isActive ? 'success' : 'error'}>
+                          {customer.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </td>
                       <td className="px-6 py-3">
@@ -158,9 +183,15 @@ export default function CustomersPage() {
                             <Eye size={16} className="text-dark-gray" />
                           </Link>
                           <button
-                            onClick={() => handleToggle(customer.id, `${customer.firstName} ${customer.lastName}`, customer.isActive)}
-                            className={`p-1.5 rounded-md transition-colors ${customer.isActive ? "hover:bg-error/10" : "hover:bg-success/10"}`}
-                            title={customer.isActive ? "Deactivate" : "Activate"}
+                            onClick={() =>
+                              handleToggle(
+                                customer.id,
+                                `${customer.firstName} ${customer.lastName}`,
+                                customer.isActive
+                              )
+                            }
+                            className={`p-1.5 rounded-md transition-colors ${customer.isActive ? 'hover:bg-error/10' : 'hover:bg-success/10'}`}
+                            title={customer.isActive ? 'Deactivate' : 'Activate'}
                           >
                             {customer.isActive ? (
                               <UserX size={16} className="text-error" />
@@ -183,10 +214,20 @@ export default function CustomersPage() {
                   Page {data.page} of {data.totalPages} ({data.total} customers)
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
                     Previous
                   </Button>
-                  <Button variant="ghost" size="sm" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={page >= data.totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
                     Next
                   </Button>
                 </div>

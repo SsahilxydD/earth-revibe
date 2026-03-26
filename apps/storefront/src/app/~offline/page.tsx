@@ -1,12 +1,10 @@
-"use client";
+'use client';
 
 export default function OfflinePage() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
       <div className="text-6xl">📡</div>
-      <h1 className="mt-4 text-xl font-bold uppercase tracking-wider">
-        You&apos;re Offline
-      </h1>
+      <h1 className="mt-4 text-xl font-bold uppercase tracking-wider">You&apos;re Offline</h1>
       <p className="mt-2 text-sm text-[var(--color-muted)]">
         Check your internet connection and try again.
       </p>

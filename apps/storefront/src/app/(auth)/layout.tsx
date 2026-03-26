@@ -1,18 +1,13 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4 py-12">
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.02]"
         style={{
-          backgroundImage:
-            "radial-gradient(circle, #121212 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
+          backgroundImage: 'radial-gradient(circle, #121212 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
         }}
       />
       <div className="relative z-10 w-full max-w-md">

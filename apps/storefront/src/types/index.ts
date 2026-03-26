@@ -68,9 +68,9 @@ export type {
 
   // Notification
   Notification,
-} from "@earth-revibe/shared";
+} from '@earth-revibe/shared';
 
 // Re-export ClientApiError as ApiError for backward compat with existing hook code
-export type { ClientApiError as ApiError } from "@earth-revibe/shared";
+export type { ClientApiError as ApiError } from '@earth-revibe/shared';
 
-export type { ProductStatus } from "@earth-revibe/shared";
+export type { ProductStatus } from '@earth-revibe/shared';

@@ -1,18 +1,20 @@
-import { spawnSync } from "node:child_process";
-import { withSentryConfig } from "@sentry/nextjs";
-import withSerwistInit from "@serwist/next";
+import { spawnSync } from 'node:child_process';
+import { withSentryConfig } from '@sentry/nextjs';
+import withSerwistInit from '@serwist/next';
 
 const API_ORIGIN =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, "") ||
-  "https://earth-revibeapi-production.up.railway.app";
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, '') ||
+  'https://earth-revibeapi-production.up.railway.app';
 
-const revision = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf-8" }).stdout?.trim() || crypto.randomUUID();
+const revision =
+  spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' }).stdout?.trim() ||
+  crypto.randomUUID();
 
 const withSerwist = withSerwistInit({
-  swSrc: "src/app/sw.ts",
-  swDest: "public/sw.js",
-  additionalPrecacheEntries: [{ url: "/~offline", revision }],
-  disable: process.env.NODE_ENV === "development",
+  swSrc: 'src/app/sw.ts',
+  swDest: 'public/sw.js',
+  additionalPrecacheEntries: [{ url: '/~offline', revision }],
+  disable: process.env.NODE_ENV === 'development',
 });
 
 /** @type {import('next').NextConfig} */
@@ -23,28 +25,28 @@ const nextConfig = {
   // navigation re-fetches the RSC payload from the server.
   experimental: {
     staleTimes: {
-      dynamic: 300,  // cache dynamic pages for 5 min — no background revalidation blink
-      static: 300,   // cache static pages for 5 min client-side
+      dynamic: 300, // cache dynamic pages for 5 min — no background revalidation blink
+      static: 300, // cache static pages for 5 min client-side
     },
   },
-  transpilePackages: ["@earth-revibe/shared"],
+  transpilePackages: ['@earth-revibe/shared'],
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "imagedelivery.net",
+        protocol: 'https',
+        hostname: 'imagedelivery.net',
       },
       {
-        protocol: "https",
-        hostname: "*.imagedelivery.net",
+        protocol: 'https',
+        hostname: '*.imagedelivery.net',
       },
       {
-        protocol: "https",
-        hostname: "*.supabase.co",
+        protocol: 'https',
+        hostname: '*.supabase.co',
       },
       {
-        protocol: "https",
-        hostname: "cdn.shopify.com",
+        protocol: 'https',
+        hostname: 'cdn.shopify.com',
       },
     ],
   },
@@ -55,7 +57,7 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/v1/:path*",
+        source: '/api/v1/:path*',
         destination: `${API_ORIGIN}/api/v1/:path*`,
       },
     ];
@@ -63,11 +65,11 @@ const nextConfig = {
 };
 
 export default withSentryConfig(withSerwist(nextConfig), {
-  org: "earthrevibe",
-  project: "storefront",
+  org: 'earthrevibe',
+  project: 'storefront',
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  tunnelRoute: "/monitoring",
+  tunnelRoute: '/monitoring',
   disableLogger: true,
   automaticVercelMonitors: true,
 });

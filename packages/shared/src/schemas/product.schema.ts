@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { ProductStatus } from "../enums";
+import { z } from 'zod';
+import { ProductStatus } from '../enums';
 
 export const createProductSchema = z.object({
   name: z.string().min(2).max(200),
@@ -8,8 +8,8 @@ export const createProductSchema = z.object({
   shortDescription: z.string().max(500).optional(),
   price: z.coerce.number().positive(),
   compareAtPrice: z.preprocess(
-    (v) => (v === "" || v === undefined || v === null ? undefined : v),
-    z.coerce.number().positive().optional(),
+    (v) => (v === '' || v === undefined || v === null ? undefined : v),
+    z.coerce.number().positive().optional()
   ),
   material: z.string().optional(),
   careInstructions: z.string().optional(),
@@ -45,24 +45,27 @@ export const productQuerySchema = z.object({
   isFeatured: z.coerce.boolean().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  sortBy: z.enum(["price", "createdAt", "name"]).default("createdAt"),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  sortBy: z.enum(['price', 'createdAt', 'name']).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 export const productVariantSchema = z.object({
   sku: z.string().min(1),
   size: z.string().min(1),
-  color: z.string().default(""),
+  color: z.string().default(''),
   colorHex: z.preprocess(
-    (v) => (v === "" || v === undefined || v === null ? undefined : v),
-    z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a 6-digit hex color, e.g. #FF0000").optional(),
+    (v) => (v === '' || v === undefined || v === null ? undefined : v),
+    z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a 6-digit hex color, e.g. #FF0000')
+      .optional()
   ),
   price: z.coerce.number().positive().optional(),
   stock: z.coerce.number().int().min(0).default(0),
   lowStockThreshold: z.coerce.number().int().min(0).default(5),
   barcode: z.string().optional(),
   weight: z.coerce.number().min(0).optional(),
-  weightUnit: z.enum(["g", "kg", "lb", "oz"]).default("g"),
+  weightUnit: z.enum(['g', 'kg', 'lb', 'oz']).default('g'),
   isActive: z.boolean().default(true),
 });
 

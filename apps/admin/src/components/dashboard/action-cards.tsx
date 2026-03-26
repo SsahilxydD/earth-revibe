@@ -1,16 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import {
-  Package,
-  Truck,
-  CreditCard,
-  Globe,
-  Palette,
-  X,
-  BarChart3,
-} from "lucide-react";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Package, Truck, CreditCard, Globe, Palette, X, BarChart3 } from 'lucide-react';
 
 interface ActionCard {
   id: string;
@@ -25,58 +17,58 @@ interface ActionCard {
 
 const defaultCards: ActionCard[] = [
   {
-    id: "products",
-    title: "Add your first product",
+    id: 'products',
+    title: 'Add your first product',
     description:
-      "Write a description, add photos, and set pricing for the products you plan to sell.",
+      'Write a description, add photos, and set pricing for the products you plan to sell.',
     icon: <Package size={32} className="text-deep-earth" />,
-    primaryAction: { label: "Add product", href: "/products/new" },
-    bgColor: "bg-[#F1F8E9]",
+    primaryAction: { label: 'Add product', href: '/products/new' },
+    bgColor: 'bg-[#F1F8E9]',
   },
   {
-    id: "payments",
-    title: "Set up Razorpay payments",
+    id: 'payments',
+    title: 'Set up Razorpay payments',
     description:
-      "Start accepting payments by connecting your Razorpay account. Accept UPI, cards, netbanking and more.",
+      'Start accepting payments by connecting your Razorpay account. Accept UPI, cards, netbanking and more.',
     icon: <CreditCard size={32} className="text-orange-600" />,
-    primaryAction: { label: "Set up payments", href: "/settings/payments" },
-    bgColor: "bg-orange-50",
+    primaryAction: { label: 'Set up payments', href: '/settings/payments' },
+    bgColor: 'bg-orange-50',
   },
   {
-    id: "shipping",
-    title: "Set up shipping with Shiprocket",
+    id: 'shipping',
+    title: 'Set up shipping with Shiprocket',
     description:
-      "Connect Shiprocket for automated shipping labels, tracking, and delivery management across India.",
+      'Connect Shiprocket for automated shipping labels, tracking, and delivery management across India.',
     icon: <Truck size={32} className="text-blue-600" />,
-    primaryAction: { label: "Set up shipping", href: "/settings/shipping" },
-    bgColor: "bg-blue-50",
+    primaryAction: { label: 'Set up shipping', href: '/settings/shipping' },
+    bgColor: 'bg-blue-50',
   },
   {
-    id: "customize",
-    title: "Customize your online store",
+    id: 'customize',
+    title: 'Customize your online store',
     description:
-      "Choose a theme and add your brand colors, logo, and images to reflect your brand identity.",
+      'Choose a theme and add your brand colors, logo, and images to reflect your brand identity.',
     icon: <Palette size={32} className="text-purple-600" />,
-    primaryAction: { label: "Customize theme", href: "/settings/brand" },
-    bgColor: "bg-purple-50",
+    primaryAction: { label: 'Customize theme', href: '/settings/brand' },
+    bgColor: 'bg-purple-50',
   },
   {
-    id: "domain",
-    title: "Add a custom domain",
+    id: 'domain',
+    title: 'Add a custom domain',
     description:
-      "Your current domain is earthrevibe.com. Add or connect a custom domain to help customers find your store.",
+      'Your current domain is earthrevibe.com. Add or connect a custom domain to help customers find your store.',
     icon: <Globe size={32} className="text-emerald-600" />,
-    primaryAction: { label: "Add domain", href: "/settings/domains" },
-    bgColor: "bg-emerald-50",
+    primaryAction: { label: 'Add domain', href: '/settings/domains' },
+    bgColor: 'bg-emerald-50',
   },
   {
-    id: "marketing",
-    title: "Share your store on social media",
+    id: 'marketing',
+    title: 'Share your store on social media',
     description:
-      "Drive traffic by sharing your products on Instagram, Facebook, and WhatsApp. Get your first customers today.",
+      'Drive traffic by sharing your products on Instagram, Facebook, and WhatsApp. Get your first customers today.',
     icon: <BarChart3 size={32} className="text-pink-600" />,
-    primaryAction: { label: "Create campaign", href: "/settings/domains" },
-    bgColor: "bg-pink-50",
+    primaryAction: { label: 'Create campaign', href: '/settings/domains' },
+    bgColor: 'bg-pink-50',
   },
 ];
 
@@ -113,9 +105,7 @@ export function ActionCards() {
                   <X size={14} />
                 </button>
               </div>
-              <p className="text-sm text-medium-gray mt-1 leading-relaxed">
-                {card.description}
-              </p>
+              <p className="text-sm text-medium-gray mt-1 leading-relaxed">{card.description}</p>
               {card.primaryAction && (
                 <div className="mt-3 flex items-center gap-3">
                   <Link

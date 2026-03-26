@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { productKeys } from './use-products';
 import type { Review, CreateReviewPayload, ApiError } from '@/types';
@@ -25,8 +20,7 @@ export function useProductReviews(
 ) {
   return useQuery<Review[], ApiError>({
     queryKey: reviewKeys.byProduct(productId),
-    queryFn: ({ signal }) =>
-      api.get<Review[]>(`/products/${productId}/reviews`, signal),
+    queryFn: ({ signal }) => api.get<Review[]>(`/products/${productId}/reviews`, signal),
     enabled: !!productId,
     ...options,
   });

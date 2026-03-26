@@ -1,6 +1,6 @@
-import type { Request, Response } from "express";
-import { prisma, Prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
+import type { Request, Response } from 'express';
+import { prisma, Prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
 
 export const adminInventoryController = {
   async listInventory(req: Request, res: Response) {
@@ -8,39 +8,39 @@ export const adminInventoryController = {
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
     const search = req.query.search as string | undefined;
     const lowStock = req.query.lowStock as string | undefined;
-    const sortBy = (req.query.sortBy as string) || "stock_asc";
+    const sortBy = (req.query.sortBy as string) || 'stock_asc';
     const threshold = Number(req.query.threshold) || 10;
 
     const where: Prisma.ProductVariantWhereInput = {};
 
     if (search) {
       where.product = {
-        name: { contains: search, mode: "insensitive" },
+        name: { contains: search, mode: 'insensitive' },
       };
     }
 
-    if (lowStock === "low") {
+    if (lowStock === 'low') {
       where.stock = { gt: 0, lt: threshold };
-    } else if (lowStock === "out") {
+    } else if (lowStock === 'out') {
       where.stock = 0;
     }
 
     let orderBy: Prisma.ProductVariantOrderByWithRelationInput;
     switch (sortBy) {
-      case "stock_desc":
-        orderBy = { stock: "desc" };
+      case 'stock_desc':
+        orderBy = { stock: 'desc' };
         break;
-      case "stock_asc":
-        orderBy = { stock: "asc" };
+      case 'stock_asc':
+        orderBy = { stock: 'asc' };
         break;
-      case "product_name":
-        orderBy = { product: { name: "asc" } };
+      case 'product_name':
+        orderBy = { product: { name: 'asc' } };
         break;
-      case "updated_at":
-        orderBy = { updatedAt: "desc" };
+      case 'updated_at':
+        orderBy = { updatedAt: 'desc' };
         break;
       default:
-        orderBy = { stock: "asc" };
+        orderBy = { stock: 'asc' };
     }
 
     const [variants, total] = await Promise.all([
@@ -86,8 +86,8 @@ export const adminInventoryController = {
     const variantId = req.params.variantId as string;
     const { stock } = req.body;
 
-    if (stock === undefined || typeof stock !== "number" || stock < 0) {
-      throw ApiError.badRequest("Stock must be a non-negative number");
+    if (stock === undefined || typeof stock !== 'number' || stock < 0) {
+      throw ApiError.badRequest('Stock must be a non-negative number');
     }
 
     const variant = await prisma.productVariant.findUnique({
@@ -95,7 +95,7 @@ export const adminInventoryController = {
     });
 
     if (!variant) {
-      throw ApiError.notFound("Product variant not found");
+      throw ApiError.notFound('Product variant not found');
     }
 
     const updated = await prisma.productVariant.update({
@@ -115,12 +115,12 @@ export const adminInventoryController = {
     const variantId = req.params.variantId as string;
     const { adjustment, reason } = req.body;
 
-    if (adjustment === undefined || typeof adjustment !== "number" || adjustment === 0) {
-      throw ApiError.badRequest("Adjustment must be a non-zero number");
+    if (adjustment === undefined || typeof adjustment !== 'number' || adjustment === 0) {
+      throw ApiError.badRequest('Adjustment must be a non-zero number');
     }
 
-    if (!reason || typeof reason !== "string" || reason.trim().length === 0) {
-      throw ApiError.badRequest("Reason is required for stock adjustment");
+    if (!reason || typeof reason !== 'string' || reason.trim().length === 0) {
+      throw ApiError.badRequest('Reason is required for stock adjustment');
     }
 
     const variant = await prisma.productVariant.findUnique({
@@ -128,7 +128,7 @@ export const adminInventoryController = {
     });
 
     if (!variant) {
-      throw ApiError.notFound("Product variant not found");
+      throw ApiError.notFound('Product variant not found');
     }
 
     const newStock = variant.stock + adjustment;
@@ -164,13 +164,13 @@ export const adminInventoryController = {
     const { updates } = req.body;
 
     if (!Array.isArray(updates) || updates.length === 0) {
-      throw ApiError.badRequest("Updates array is required and must not be empty");
+      throw ApiError.badRequest('Updates array is required and must not be empty');
     }
 
     for (const update of updates) {
-      if (!update.variantId || typeof update.stock !== "number" || update.stock < 0) {
+      if (!update.variantId || typeof update.stock !== 'number' || update.stock < 0) {
         throw ApiError.badRequest(
-          "Each update must have a valid variantId and a non-negative stock number"
+          'Each update must have a valid variantId and a non-negative stock number'
         );
       }
     }

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import { X } from "lucide-react";
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { X } from 'lucide-react';
 
-const STORAGE_KEY = "er-newsletter-dismissed";
+const STORAGE_KEY = 'er-newsletter-dismissed';
 
 export function NewsletterPopup() {
   const [show, setShow] = useState(false);
@@ -19,7 +19,7 @@ export function NewsletterPopup() {
 
   const dismiss = () => {
     setShow(false);
-    localStorage.setItem(STORAGE_KEY, "1");
+    localStorage.setItem(STORAGE_KEY, '1');
   };
 
   if (!show) return null;
@@ -47,9 +47,7 @@ export function NewsletterPopup() {
         </div>
 
         {/* Heading */}
-        <h3 className="mt-6 text-base font-bold uppercase tracking-[0.2em]">
-          Join the Culture
-        </h3>
+        <h3 className="mt-6 text-base font-bold uppercase tracking-[0.2em]">Join the Culture</h3>
 
         {/* Description — single line */}
         <p className="mt-3 whitespace-nowrap text-sm text-black/50">

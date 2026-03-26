@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { supportService } from "../services/support.service";
+import type { Request, Response } from 'express';
+import { supportService } from '../services/support.service';
 
 export const supportController = {
   async createTicket(req: Request, res: Response) {

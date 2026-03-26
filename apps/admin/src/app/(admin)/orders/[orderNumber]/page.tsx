@@ -1,12 +1,24 @@
-"use client";
+'use client';
 
-import { use, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Package, Send, Truck, Tag, MapPin, CreditCard, Undo2, Printer, FileText, ExternalLink } from "lucide-react";
-import { Button, Badge, Card, Select } from "@/components/ui";
-import { Modal } from "@/components/ui/modal";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
+import { use, useState } from 'react';
+import Link from 'next/link';
+import {
+  ArrowLeft,
+  Package,
+  Send,
+  Truck,
+  Tag,
+  MapPin,
+  CreditCard,
+  Undo2,
+  Printer,
+  FileText,
+  ExternalLink,
+} from 'lucide-react';
+import { Button, Badge, Card, Select } from '@/components/ui';
+import { Modal } from '@/components/ui/modal';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/toast';
 import {
   useOrder,
   useUpdateOrderStatus,
@@ -17,44 +29,44 @@ import {
   useGenerateManifest,
   useOrderTracking,
   useRefundOrder,
-} from "@/hooks/use-orders";
+} from '@/hooks/use-orders';
 
-const statusVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
-  PLACED: "info",
-  CONFIRMED: "info",
-  PROCESSING: "warning",
-  SHIPPED: "warning",
-  OUT_FOR_DELIVERY: "warning",
-  DELIVERED: "success",
-  CANCELLED: "error",
-  RETURNED: "error",
-  REFUNDED: "default",
+const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+  PLACED: 'info',
+  CONFIRMED: 'info',
+  PROCESSING: 'warning',
+  SHIPPED: 'warning',
+  OUT_FOR_DELIVERY: 'warning',
+  DELIVERED: 'success',
+  CANCELLED: 'error',
+  RETURNED: 'error',
+  REFUNDED: 'default',
 };
 
 const statusFlow = [
-  { value: "PLACED", label: "Placed" },
-  { value: "CONFIRMED", label: "Confirmed" },
-  { value: "PROCESSING", label: "Processing" },
-  { value: "SHIPPED", label: "Shipped" },
-  { value: "OUT_FOR_DELIVERY", label: "Out for Delivery" },
-  { value: "DELIVERED", label: "Delivered" },
+  { value: 'PLACED', label: 'Placed' },
+  { value: 'CONFIRMED', label: 'Confirmed' },
+  { value: 'PROCESSING', label: 'Processing' },
+  { value: 'SHIPPED', label: 'Shipped' },
+  { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
+  { value: 'DELIVERED', label: 'Delivered' },
 ];
 
 function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(amount));
 }
 
 function formatDateTime(date: string) {
-  return new Date(date).toLocaleString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+  return new Date(date).toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -70,23 +82,27 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const generateManifest = useGenerateManifest();
   const refundOrder = useRefundOrder();
 
-  const [newStatus, setNewStatus] = useState("");
-  const [statusNote, setStatusNote] = useState("");
-  const [noteContent, setNoteContent] = useState("");
+  const [newStatus, setNewStatus] = useState('');
+  const [statusNote, setStatusNote] = useState('');
+  const [noteContent, setNoteContent] = useState('');
   const [showRefundModal, setShowRefundModal] = useState(false);
-  const [refundReason, setRefundReason] = useState("");
+  const [refundReason, setRefundReason] = useState('');
 
   const order = (data as any)?.order ?? data;
 
   const handleStatusUpdate = async () => {
     if (!newStatus) return;
     try {
-      await updateStatus.mutateAsync({ orderNumber, status: newStatus, note: statusNote || undefined });
-      toast.success(`Order status updated to ${newStatus.replace(/_/g, " ")}`);
-      setNewStatus("");
-      setStatusNote("");
+      await updateStatus.mutateAsync({
+        orderNumber,
+        status: newStatus,
+        note: statusNote || undefined,
+      });
+      toast.success(`Order status updated to ${newStatus.replace(/_/g, ' ')}`);
+      setNewStatus('');
+      setStatusNote('');
     } catch (err: any) {
-      toast.error(err.message || "Failed to update status");
+      toast.error(err.message || 'Failed to update status');
     }
   };
 
@@ -94,19 +110,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     if (!noteContent.trim()) return;
     try {
       await addNote.mutateAsync({ orderNumber, content: noteContent, isInternal: true });
-      toast.success("Note added");
-      setNoteContent("");
+      toast.success('Note added');
+      setNoteContent('');
     } catch (err: any) {
-      toast.error(err.message || "Failed to add note");
+      toast.error(err.message || 'Failed to add note');
     }
   };
 
   const handleCreateShipment = async () => {
     try {
       await createShipment.mutateAsync(orderNumber);
-      toast.success("Shiprocket shipment created");
+      toast.success('Shiprocket shipment created');
     } catch (err: any) {
-      toast.error(err.message || "Failed to create shipment");
+      toast.error(err.message || 'Failed to create shipment');
     }
   };
 
@@ -115,27 +131,27 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
       const result = await assignAWB.mutateAsync({ orderNumber });
       toast.success(`AWB assigned: ${result.awbCode}`);
     } catch (err: any) {
-      toast.error(err.message || "Failed to assign AWB");
+      toast.error(err.message || 'Failed to assign AWB');
     }
   };
 
   const handleGenerateLabel = async () => {
     try {
       const result = await generateLabel.mutateAsync(orderNumber);
-      if (result.labelUrl) window.open(result.labelUrl, "_blank");
-      toast.success("Shipping label generated");
+      if (result.labelUrl) window.open(result.labelUrl, '_blank');
+      toast.success('Shipping label generated');
     } catch (err: any) {
-      toast.error(err.message || "Failed to generate label");
+      toast.error(err.message || 'Failed to generate label');
     }
   };
 
   const handleGenerateManifest = async () => {
     try {
       const result = await generateManifest.mutateAsync(orderNumber);
-      if (result.manifestUrl) window.open(result.manifestUrl, "_blank");
-      toast.success("Manifest generated");
+      if (result.manifestUrl) window.open(result.manifestUrl, '_blank');
+      toast.success('Manifest generated');
     } catch (err: any) {
-      toast.error(err.message || "Failed to generate manifest");
+      toast.error(err.message || 'Failed to generate manifest');
     }
   };
 
@@ -143,11 +159,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     if (!refundReason.trim()) return;
     try {
       await refundOrder.mutateAsync({ orderNumber, reason: refundReason });
-      toast.success("Refund initiated successfully");
+      toast.success('Refund initiated successfully');
       setShowRefundModal(false);
-      setRefundReason("");
+      setRefundReason('');
     } catch (err: any) {
-      toast.error(err.message || "Failed to initiate refund");
+      toast.error(err.message || 'Failed to initiate refund');
     }
   };
 
@@ -172,9 +188,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     );
   }
 
-  const cancelledOrFinal = ["CANCELLED", "RETURNED", "REFUNDED", "DELIVERED"].includes(order.status);
-  const canFulfill = ["CONFIRMED", "PROCESSING"].includes(order.status);
-  const canRefund = order.payment?.status === "CAPTURED" && !["CANCELLED", "REFUNDED"].includes(order.status);
+  const cancelledOrFinal = ['CANCELLED', 'RETURNED', 'REFUNDED', 'DELIVERED'].includes(
+    order.status
+  );
+  const canFulfill = ['CONFIRMED', 'PROCESSING'].includes(order.status);
+  const canRefund =
+    order.payment?.status === 'CAPTURED' && !['CANCELLED', 'REFUNDED'].includes(order.status);
 
   return (
     <div className="space-y-6">
@@ -186,16 +205,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold text-charcoal">#{order.orderNumber}</h1>
-            <Badge variant={statusVariant[order.status] || "default"}>
-              {order.status.replace(/_/g, " ")}
+            <Badge variant={statusVariant[order.status] || 'default'}>
+              {order.status.replace(/_/g, ' ')}
             </Badge>
           </div>
           <p className="text-sm text-medium-gray mt-1">
-            {formatDateTime(order.createdAt)} &middot; {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+            {formatDateTime(order.createdAt)} &middot; {order.items.length} item
+            {order.items.length !== 1 ? 's' : ''}
           </p>
         </div>
         {canRefund && (
-          <Button variant="ghost" size="sm" onClick={() => setShowRefundModal(true)} className="text-red-600 hover:bg-red-50">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowRefundModal(true)}
+            className="text-red-600 hover:bg-red-50"
+          >
             <Undo2 size={16} className="mr-1" /> Refund
           </Button>
         )}
@@ -209,10 +234,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <h3 className="text-base font-semibold text-charcoal mb-4">Items</h3>
             <div className="space-y-3">
               {order.items.map((item: any) => (
-                <div key={item.id} className="flex items-center gap-4 py-2 border-b border-light-gray last:border-0">
+                <div
+                  key={item.id}
+                  className="flex items-center gap-4 py-2 border-b border-light-gray last:border-0"
+                >
                   <div className="w-12 h-12 rounded-lg bg-off-white flex items-center justify-center flex-shrink-0">
                     {item.productImage ? (
-                      <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover rounded-lg" />
+                      <img
+                        src={item.productImage}
+                        alt={item.productName}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
                     ) : (
                       <Package size={20} className="text-medium-gray" />
                     )}
@@ -236,7 +268,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               </div>
               {Number(order.discountAmount) > 0 && (
                 <div className="flex justify-between text-success">
-                  <span>Discount {order.discountCode ? `(${order.discountCode.code})` : ""}</span>
+                  <span>Discount {order.discountCode ? `(${order.discountCode.code})` : ''}</span>
                   <span>-{formatPrice(order.discountAmount)}</span>
                 </div>
               )}
@@ -288,7 +320,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                   )}
                   {order.trackingUrl && (
                     <div>
-                      <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-deep-earth hover:underline text-sm inline-flex items-center gap-1">
+                      <a
+                        href={order.trackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-deep-earth hover:underline text-sm inline-flex items-center gap-1"
+                      >
                         Track Shipment <ExternalLink size={12} />
                       </a>
                     </div>
@@ -298,17 +335,35 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 {/* Action buttons */}
                 <div className="flex flex-wrap gap-2 pt-3 border-t border-light-gray">
                   {!order.awbCode && (
-                    <Button size="sm" variant="secondary" onClick={handleAssignAWB} disabled={assignAWB.isPending}>
-                      <Tag size={14} className="mr-1" /> {assignAWB.isPending ? "Assigning..." : "Assign AWB"}
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleAssignAWB}
+                      disabled={assignAWB.isPending}
+                    >
+                      <Tag size={14} className="mr-1" />{' '}
+                      {assignAWB.isPending ? 'Assigning...' : 'Assign AWB'}
                     </Button>
                   )}
                   {order.shiprocketShipmentId && (
                     <>
-                      <Button size="sm" variant="secondary" onClick={handleGenerateLabel} disabled={generateLabel.isPending}>
-                        <Printer size={14} className="mr-1" /> {generateLabel.isPending ? "Generating..." : "Print Label"}
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={handleGenerateLabel}
+                        disabled={generateLabel.isPending}
+                      >
+                        <Printer size={14} className="mr-1" />{' '}
+                        {generateLabel.isPending ? 'Generating...' : 'Print Label'}
                       </Button>
-                      <Button size="sm" variant="secondary" onClick={handleGenerateManifest} disabled={generateManifest.isPending}>
-                        <FileText size={14} className="mr-1" /> {generateManifest.isPending ? "Generating..." : "Print Manifest"}
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={handleGenerateManifest}
+                        disabled={generateManifest.isPending}
+                      >
+                        <FileText size={14} className="mr-1" />{' '}
+                        {generateManifest.isPending ? 'Generating...' : 'Print Manifest'}
                       </Button>
                     </>
                   )}
@@ -322,12 +377,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                       {trackingData.activities.map((activity: any, i: number) => (
                         <div key={i} className="flex gap-3 text-sm">
                           <div className="flex flex-col items-center">
-                            <div className={`w-2 h-2 rounded-full mt-1.5 ${i === 0 ? "bg-deep-earth" : "bg-light-gray"}`} />
-                            {i < trackingData.activities.length - 1 && <div className="w-0.5 flex-1 bg-light-gray mt-1" />}
+                            <div
+                              className={`w-2 h-2 rounded-full mt-1.5 ${i === 0 ? 'bg-deep-earth' : 'bg-light-gray'}`}
+                            />
+                            {i < trackingData.activities.length - 1 && (
+                              <div className="w-0.5 flex-1 bg-light-gray mt-1" />
+                            )}
                           </div>
                           <div className="pb-3">
                             <p className="text-charcoal">{activity.activity || activity.status}</p>
-                            <p className="text-xs text-medium-gray">{activity.location} &middot; {activity.date}</p>
+                            <p className="text-xs text-medium-gray">
+                              {activity.location} &middot; {activity.date}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -341,12 +402,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <p className="text-sm text-medium-gray mb-4">No shipment created yet</p>
                 <Button onClick={handleCreateShipment} disabled={createShipment.isPending}>
                   <Truck size={16} className="mr-2" />
-                  {createShipment.isPending ? "Creating Shipment..." : "Create Shiprocket Shipment"}
+                  {createShipment.isPending ? 'Creating Shipment...' : 'Create Shiprocket Shipment'}
                 </Button>
               </div>
             ) : (
               <p className="text-sm text-medium-gray py-4">
-                {order.status === "PLACED" ? "Confirm the order before creating a shipment." : "No shipment for this order."}
+                {order.status === 'PLACED'
+                  ? 'Confirm the order before creating a shipment.'
+                  : 'No shipment for this order.'}
               </p>
             )}
           </Card>
@@ -358,15 +421,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               {order.statusHistory?.map((entry: any, i: number) => (
                 <div key={entry.id} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <div className={`w-3 h-3 rounded-full mt-1 ${i === 0 ? "bg-deep-earth" : "bg-light-gray"}`} />
-                    {i < order.statusHistory.length - 1 && <div className="w-0.5 flex-1 bg-light-gray mt-1" />}
+                    <div
+                      className={`w-3 h-3 rounded-full mt-1 ${i === 0 ? 'bg-deep-earth' : 'bg-light-gray'}`}
+                    />
+                    {i < order.statusHistory.length - 1 && (
+                      <div className="w-0.5 flex-1 bg-light-gray mt-1" />
+                    )}
                   </div>
                   <div className="pb-4">
                     <div className="flex items-center gap-2">
-                      <Badge variant={statusVariant[entry.status] || "default"}>
-                        {entry.status.replace(/_/g, " ")}
+                      <Badge variant={statusVariant[entry.status] || 'default'}>
+                        {entry.status.replace(/_/g, ' ')}
                       </Badge>
-                      <span className="text-xs text-medium-gray">{formatDateTime(entry.createdAt)}</span>
+                      <span className="text-xs text-medium-gray">
+                        {formatDateTime(entry.createdAt)}
+                      </span>
                     </div>
                     {entry.note && <p className="text-sm text-dark-gray mt-1">{entry.note}</p>}
                   </div>
@@ -386,7 +455,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <div key={note.id} className="p-3 bg-off-white rounded-lg">
                   <p className="text-sm text-charcoal">{note.content}</p>
                   <p className="text-xs text-medium-gray mt-1">
-                    {note.user?.firstName} {note.user?.lastName} &middot; {formatDateTime(note.createdAt)}
+                    {note.user?.firstName} {note.user?.lastName} &middot;{' '}
+                    {formatDateTime(note.createdAt)}
                   </p>
                 </div>
               ))}
@@ -398,9 +468,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 onChange={(e) => setNoteContent(e.target.value)}
                 placeholder="Add an internal note..."
                 className="flex-1 px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
-                onKeyDown={(e) => e.key === "Enter" && handleAddNote()}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
               />
-              <Button size="sm" onClick={handleAddNote} disabled={!noteContent.trim() || addNote.isPending}>
+              <Button
+                size="sm"
+                onClick={handleAddNote}
+                disabled={!noteContent.trim() || addNote.isPending}
+              >
                 <Send size={14} />
               </Button>
             </div>
@@ -415,7 +489,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <h3 className="text-base font-semibold text-charcoal mb-4">Update Status</h3>
               <div className="space-y-3">
                 <Select
-                  options={[{ value: "", label: "Select new status" }, ...statusFlow]}
+                  options={[{ value: '', label: 'Select new status' }, ...statusFlow]}
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
                 />
@@ -443,10 +517,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <h3 className="text-base font-semibold text-charcoal">Customer</h3>
             </div>
             <div className="space-y-2 text-sm">
-              <p className="font-medium text-charcoal">{order.user?.firstName} {order.user?.lastName}</p>
+              <p className="font-medium text-charcoal">
+                {order.user?.firstName} {order.user?.lastName}
+              </p>
               <p className="text-medium-gray">{order.user?.email}</p>
               {order.user?.phone && <p className="text-medium-gray">{order.user.phone}</p>}
-              <Link href={`/customers/${order.user?.id}`} className="text-deep-earth hover:underline text-xs inline-block mt-1">
+              <Link
+                href={`/customers/${order.user?.id}`}
+                className="text-deep-earth hover:underline text-xs inline-block mt-1"
+              >
                 View customer
               </Link>
             </div>
@@ -463,7 +542,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <p className="font-medium text-charcoal">{order.address.fullName}</p>
                 <p>{order.address.line1}</p>
                 {order.address.line2 && <p>{order.address.line2}</p>}
-                <p>{order.address.city}, {order.address.state} {order.address.pinCode}</p>
+                <p>
+                  {order.address.city}, {order.address.state} {order.address.pinCode}
+                </p>
                 <p>{order.address.phone}</p>
               </div>
             ) : (
@@ -480,8 +561,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-medium-gray">Status</span>
-                <Badge variant={order.payment?.status === "CAPTURED" ? "success" : order.payment?.status === "FAILED" ? "error" : order.payment?.status === "REFUNDED" ? "default" : "warning"}>
-                  {order.payment?.status || "N/A"}
+                <Badge
+                  variant={
+                    order.payment?.status === 'CAPTURED'
+                      ? 'success'
+                      : order.payment?.status === 'FAILED'
+                        ? 'error'
+                        : order.payment?.status === 'REFUNDED'
+                          ? 'default'
+                          : 'warning'
+                  }
+                >
+                  {order.payment?.status || 'N/A'}
                 </Badge>
               </div>
               {order.payment?.method && (
@@ -508,7 +599,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
       </div>
 
       {/* Refund Modal */}
-      <Modal isOpen={showRefundModal} onClose={() => setShowRefundModal(false)} title="Initiate Refund" size="sm">
+      <Modal
+        isOpen={showRefundModal}
+        onClose={() => setShowRefundModal(false)}
+        title="Initiate Refund"
+        size="sm"
+      >
         <p className="text-sm text-medium-gray mb-4">
           This will issue a full refund of {formatPrice(order.totalAmount)} via Razorpay.
         </p>
@@ -523,9 +619,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             />
           </div>
           <div className="flex gap-2 justify-end">
-            <Button variant="ghost" onClick={() => setShowRefundModal(false)}>Cancel</Button>
-            <Button onClick={handleRefund} disabled={!refundReason.trim() || refundOrder.isPending} className="bg-red-600 hover:bg-red-700">
-              {refundOrder.isPending ? "Processing..." : "Confirm Refund"}
+            <Button variant="ghost" onClick={() => setShowRefundModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRefund}
+              disabled={!refundReason.trim() || refundOrder.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {refundOrder.isPending ? 'Processing...' : 'Confirm Refund'}
             </Button>
           </div>
         </div>

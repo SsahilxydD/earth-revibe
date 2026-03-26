@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginInput } from "@earth-revibe/shared";
-import { Leaf } from "lucide-react";
-import { Button, Input } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, type LoginInput } from '@earth-revibe/shared';
+import { Leaf } from 'lucide-react';
+import { Button, Input } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
+import { createClient } from '@/lib/supabase/client';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -32,15 +32,15 @@ export default function AdminLoginPage() {
       });
 
       if (error) {
-        toast.error(error.message || "Invalid credentials");
+        toast.error(error.message || 'Invalid credentials');
         return;
       }
 
-      toast.success("Welcome back!");
-      router.push("/dashboard");
+      toast.success('Welcome back!');
+      router.push('/dashboard');
       router.refresh();
     } catch (err: any) {
-      toast.error(err.message || "Invalid credentials");
+      toast.error(err.message || 'Invalid credentials');
     } finally {
       setIsLoading(false);
     }
@@ -69,14 +69,14 @@ export default function AdminLoginPage() {
               type="email"
               placeholder="admin@earthrevibe.com"
               error={errors.email?.message}
-              {...register("email")}
+              {...register('email')}
             />
             <Input
               label="Password"
               type="password"
               placeholder="Enter your password"
               error={errors.password?.message}
-              {...register("password")}
+              {...register('password')}
             />
 
             <Button type="submit" isLoading={isLoading} className="w-full">

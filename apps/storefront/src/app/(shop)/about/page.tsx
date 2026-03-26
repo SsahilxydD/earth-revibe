@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
-import { Leaf, Heart, Recycle, Globe } from "lucide-react";
+import type { Metadata } from 'next';
+import { Leaf, Heart, Recycle, Globe } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: "About Us | Earth Revibe",
+  title: 'About Us | Earth Revibe',
   description:
     "Learn about Earth Revibe's mission to deliver fresh, conscious Indian streetwear. Our story, values, and commitment to sustainability.",
 };
@@ -10,25 +10,25 @@ export const metadata: Metadata = {
 const VALUES = [
   {
     icon: Leaf,
-    title: "Sustainability First",
+    title: 'Sustainability First',
     description:
-      "Every piece we create considers its environmental footprint. We use organic cotton, recycled materials, and eco-friendly dyes wherever possible.",
+      'Every piece we create considers its environmental footprint. We use organic cotton, recycled materials, and eco-friendly dyes wherever possible.',
   },
   {
     icon: Heart,
-    title: "Made with Love",
+    title: 'Made with Love',
     description:
-      "Our garments are crafted by skilled artisans across India. We ensure fair wages and safe working conditions throughout our supply chain.",
+      'Our garments are crafted by skilled artisans across India. We ensure fair wages and safe working conditions throughout our supply chain.',
   },
   {
     icon: Recycle,
-    title: "Circular Fashion",
+    title: 'Circular Fashion',
     description:
-      "We believe in clothes that last. Our pieces are designed for durability and timelessness, reducing the cycle of fast fashion waste.",
+      'We believe in clothes that last. Our pieces are designed for durability and timelessness, reducing the cycle of fast fashion waste.',
   },
   {
     icon: Globe,
-    title: "Community Driven",
+    title: 'Community Driven',
     description:
       "Earth Revibe is more than a brand. We're a community of conscious individuals who believe fashion can be a force for good.",
   },
@@ -40,14 +40,11 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="bg-[var(--color-primary)] py-20 text-white">
         <div className="px-4 text-center md:px-8 lg:px-12 xl:px-20">
-          <h1 className="text-3xl font-bold uppercase tracking-[0.2em] sm:text-4xl">
-            Our Story
-          </h1>
+          <h1 className="text-3xl font-bold uppercase tracking-[0.2em] sm:text-4xl">Our Story</h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/70">
-            Born from the streets of India, Earth Revibe is a celebration of
-            culture, creativity, and conscious living. We blend the raw energy
-            of Indian street culture with sustainable fashion practices to
-            create clothing that feels as good as it looks.
+            Born from the streets of India, Earth Revibe is a celebration of culture, creativity,
+            and conscious living. We blend the raw energy of Indian street culture with sustainable
+            fashion practices to create clothing that feels as good as it looks.
           </p>
         </div>
       </section>
@@ -63,17 +60,15 @@ export default function AboutPage() {
               Redefining Indian Streetwear
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
-              We started Earth Revibe with a simple belief: Indian streetwear
-              deserves to be world-class. Every design we create is rooted in
-              Indian culture while pushing the boundaries of contemporary
-              fashion. From the colours of Holi to the geometry of Mughal
+              We started Earth Revibe with a simple belief: Indian streetwear deserves to be
+              world-class. Every design we create is rooted in Indian culture while pushing the
+              boundaries of contemporary fashion. From the colours of Holi to the geometry of Mughal
               architecture, India is our endless source of inspiration.
             </p>
             <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
-              But great style should never come at the expense of the planet.
-              That is why we are committed to using sustainable materials,
-              ethical manufacturing processes, and packaging that does not
-              add to the waste problem.
+              But great style should never come at the expense of the planet. That is why we are
+              committed to using sustainable materials, ethical manufacturing processes, and
+              packaging that does not add to the waste problem.
             </p>
           </div>
           <div>
@@ -84,16 +79,14 @@ export default function AboutPage() {
               Fashion for the Future
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
-              We envision a world where fashion is a force for good. Where
-              every purchase supports fair labour practices, where every
-              garment is designed to last, and where style and sustainability
-              are not mutually exclusive.
+              We envision a world where fashion is a force for good. Where every purchase supports
+              fair labour practices, where every garment is designed to last, and where style and
+              sustainability are not mutually exclusive.
             </p>
             <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
-              By 2030, we aim to make our entire supply chain carbon neutral.
-              We are already on the path with organic cotton, water-saving
-              dyeing techniques, and recyclable packaging. Join us in making
-              fashion that respects both people and planet.
+              By 2030, we aim to make our entire supply chain carbon neutral. We are already on the
+              path with organic cotton, water-saving dyeing techniques, and recyclable packaging.
+              Join us in making fashion that respects both people and planet.
             </p>
           </div>
         </div>
@@ -114,9 +107,7 @@ export default function AboutPage() {
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-surface)]">
                   <value.icon className="h-6 w-6" />
                 </div>
-                <h3 className="mt-4 text-sm font-bold uppercase tracking-wider">
-                  {value.title}
-                </h3>
+                <h3 className="mt-4 text-sm font-bold uppercase tracking-wider">{value.title}</h3>
                 <p className="mt-2 text-xs leading-relaxed text-[var(--color-muted)]">
                   {value.description}
                 </p>
@@ -133,10 +124,9 @@ export default function AboutPage() {
             Our Sustainability Commitment
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
-            We understand that the fashion industry is one of the largest
-            polluters on the planet. That is why every decision we make, from
-            sourcing materials to shipping your order, is guided by our
-            commitment to reducing our environmental impact.
+            We understand that the fashion industry is one of the largest polluters on the planet.
+            That is why every decision we make, from sourcing materials to shipping your order, is
+            guided by our commitment to reducing our environmental impact.
           </p>
 
           <div className="mt-10 grid gap-6 sm:grid-cols-3">

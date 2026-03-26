@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { DiscountType } from "../enums";
+import { z } from 'zod';
+import { DiscountType } from '../enums';
 
 export const createDiscountSchema = z.object({
   code: z.string().min(3).max(50).toUpperCase(),

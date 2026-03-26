@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { cn, BLUR_DATA_URL } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { cn, BLUR_DATA_URL } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Slide {
   heading: string;
@@ -16,25 +16,25 @@ interface Slide {
 
 const SLIDES: Slide[] = [
   {
-    heading: "DEFINE YOUR STYLE",
-    subtitle: "New collection just dropped",
-    cta: "SHOP NOW",
-    href: "/categories/new-arrivals",
-    image: "/poster1.png",
+    heading: 'DEFINE YOUR STYLE',
+    subtitle: 'New collection just dropped',
+    cta: 'SHOP NOW',
+    href: '/categories/new-arrivals',
+    image: '/poster1.png',
   },
   {
-    heading: "OVERSIZED IS THE NEW COOL",
-    subtitle: "Comfort meets crazy",
-    cta: "EXPLORE",
-    href: "/categories/outerwear",
-    image: "/poster2.png",
+    heading: 'OVERSIZED IS THE NEW COOL',
+    subtitle: 'Comfort meets crazy',
+    cta: 'EXPLORE',
+    href: '/categories/outerwear',
+    image: '/poster2.png',
   },
   {
-    heading: "UPTO 50% OFF",
-    subtitle: "End of season sale",
-    cta: "SHOP SALE",
-    href: "/products",
-    image: "/poster3.png",
+    heading: 'UPTO 50% OFF',
+    subtitle: 'End of season sale',
+    cta: 'SHOP SALE',
+    href: '/products',
+    image: '/poster3.png',
   },
 ];
 
@@ -49,7 +49,7 @@ export function Hero() {
       setDirection(index > current ? 1 : -1);
       setCurrent(index);
     },
-    [current],
+    [current]
   );
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export function Hero() {
 
   const slideVariants = {
     enter: (dir: number) => ({
-      x: dir > 0 ? "100%" : "-100%",
+      x: dir > 0 ? '100%' : '-100%',
       opacity: 0,
     }),
     center: {
@@ -72,7 +72,7 @@ export function Hero() {
       opacity: 1,
     },
     exit: (dir: number) => ({
-      x: dir > 0 ? "-100%" : "100%",
+      x: dir > 0 ? '-100%' : '100%',
       opacity: 0,
     }),
   };
@@ -129,11 +129,11 @@ export function Hero() {
               <Link
                 href={slide.href}
                 className={cn(
-                  "mt-6 md:mt-8 inline-block px-8 py-3 md:px-10 md:py-4",
-                  "bg-white text-[var(--color-primary)] text-xs md:text-sm font-semibold",
-                  "uppercase tracking-[0.15em]",
-                  "rounded-[var(--button-radius)]",
-                  "hover:bg-white/90 transition-colors",
+                  'mt-6 md:mt-8 inline-block px-8 py-3 md:px-10 md:py-4',
+                  'bg-white text-[var(--color-primary)] text-xs md:text-sm font-semibold',
+                  'uppercase tracking-[0.15em]',
+                  'rounded-[var(--button-radius)]',
+                  'hover:bg-white/90 transition-colors'
                 )}
               >
                 {slide.cta}
@@ -151,10 +151,8 @@ export function Hero() {
             onClick={() => goTo(index)}
             aria-label={`Go to slide ${index + 1}`}
             className={cn(
-              "h-2 rounded-full transition-all duration-300",
-              index === current
-                ? "w-8 bg-white"
-                : "w-2 bg-white/50 hover:bg-white/70",
+              'h-2 rounded-full transition-all duration-300',
+              index === current ? 'w-8 bg-white' : 'w-2 bg-white/50 hover:bg-white/70'
             )}
           />
         ))}

@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag, X } from "lucide-react";
-import { useCartStore, type CartItem } from "@/stores/cart-store";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { formatPrice, getImageUrl } from "@/lib/utils";
-import { api } from "@/lib/api-client";
-import { useToast } from "@/providers";
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag, X } from 'lucide-react';
+import { useCartStore, type CartItem } from '@/stores/cart-store';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { formatPrice, getImageUrl } from '@/lib/utils';
+import { api } from '@/lib/api-client';
+import { useToast } from '@/providers';
 
 const FREE_SHIPPING_THRESHOLD = 999;
 
@@ -79,9 +79,7 @@ function CartItemRow({ item }: { item: CartItem }) {
           </div>
 
           <div className="text-right">
-            <p className="text-sm font-bold">
-              {formatPrice(item.price * item.quantity)}
-            </p>
+            <p className="text-sm font-bold">{formatPrice(item.price * item.quantity)}</p>
             {item.compareAtPrice && item.compareAtPrice > item.price && (
               <p className="text-xs text-[var(--color-muted)] line-through">
                 {formatPrice(item.compareAtPrice * item.quantity)}
@@ -127,9 +125,7 @@ function EmptyCart() {
       <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[var(--color-surface)]">
         <ShoppingBag className="h-10 w-10 text-[var(--color-muted)]" />
       </div>
-      <h2 className="mt-6 text-xl font-bold uppercase tracking-wider">
-        Your cart is empty
-      </h2>
+      <h2 className="mt-6 text-xl font-bold uppercase tracking-wider">Your cart is empty</h2>
       <p className="mt-2 text-sm text-[var(--color-muted)]">
         Looks like you haven&apos;t added anything to your cart yet.
       </p>
@@ -151,9 +147,9 @@ export default function CartPage() {
   const applyDiscount = useCartStore((s) => s.applyDiscount);
   const removeDiscount = useCartStore((s) => s.removeDiscount);
 
-  const [couponInput, setCouponInput] = useState("");
+  const [couponInput, setCouponInput] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
-  const [couponError, setCouponError] = useState("");
+  const [couponError, setCouponError] = useState('');
   const { addToast } = useToast();
 
   const subtotal = getSubtotal();
@@ -163,18 +159,18 @@ export default function CartPage() {
   const handleApplyDiscount = async () => {
     if (!couponInput.trim()) return;
 
-    setCouponError("");
+    setCouponError('');
     setCouponLoading(true);
     try {
       const result = await api.post<{ code: string; discountAmount: number }>(
-        "/discounts/validate",
+        '/discounts/validate',
         { code: couponInput.trim(), orderTotal: subtotal }
       );
       applyDiscount(result.code, result.discountAmount);
-      setCouponInput("");
-      addToast("Discount applied!", "success");
+      setCouponInput('');
+      addToast('Discount applied!', 'success');
     } catch (error: any) {
-      setCouponError(error?.message || "Invalid discount code");
+      setCouponError(error?.message || 'Invalid discount code');
     } finally {
       setCouponLoading(false);
     }
@@ -183,9 +179,7 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="px-4 py-8 md:px-8 lg:px-12 xl:px-20">
-        <h1 className="text-2xl font-bold uppercase tracking-wider">
-          Shopping Cart
-        </h1>
+        <h1 className="text-2xl font-bold uppercase tracking-wider">Shopping Cart</h1>
         <EmptyCart />
       </div>
     );
@@ -193,11 +187,9 @@ export default function CartPage() {
 
   return (
     <div className="px-4 py-8 md:px-8 lg:px-12 xl:px-20">
-      <h1 className="text-2xl font-bold uppercase tracking-wider">
-        Shopping Cart
-      </h1>
+      <h1 className="text-2xl font-bold uppercase tracking-wider">Shopping Cart</h1>
       <p className="mt-1 text-sm text-[var(--color-muted)]">
-        {items.length} {items.length === 1 ? "item" : "items"} in your cart
+        {items.length} {items.length === 1 ? 'item' : 'items'} in your cart
       </p>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_400px]">
@@ -221,9 +213,7 @@ export default function CartPage() {
         {/* Right: Order Summary */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-[var(--button-radius)] border border-[var(--color-border)] p-6">
-            <h2 className="text-sm font-bold uppercase tracking-wider">
-              Order Summary
-            </h2>
+            <h2 className="text-sm font-bold uppercase tracking-wider">Order Summary</h2>
 
             <div className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between">
@@ -244,29 +234,21 @@ export default function CartPage() {
                       <X className="h-3 w-3" />
                     </button>
                   </div>
-                  <span className="font-semibold">
-                    -{formatPrice(discountAmount)}
-                  </span>
+                  <span className="font-semibold">-{formatPrice(discountAmount)}</span>
                 </div>
               )}
 
               <div className="flex justify-between">
-                <span className="text-[var(--color-muted)]">
-                  Shipping estimate
-                </span>
+                <span className="text-[var(--color-muted)]">Shipping estimate</span>
                 <span className="font-semibold">
-                  {shippingEstimate === 0
-                    ? "FREE"
-                    : formatPrice(shippingEstimate)}
+                  {shippingEstimate === 0 ? 'FREE' : formatPrice(shippingEstimate)}
                 </span>
               </div>
 
               <div className="border-t border-[var(--color-border)] pt-3">
                 <div className="flex justify-between text-base">
                   <span className="font-bold">Total</span>
-                  <span className="font-bold">
-                    {formatPrice(total + shippingEstimate)}
-                  </span>
+                  <span className="font-bold">{formatPrice(total + shippingEstimate)}</span>
                 </div>
                 <p className="mt-1 text-xs text-[var(--color-muted)]">
                   Tax included. Shipping calculated at checkout.
@@ -283,10 +265,10 @@ export default function CartPage() {
                     value={couponInput}
                     onChange={(e) => {
                       setCouponInput(e.target.value);
-                      setCouponError("");
+                      setCouponError('');
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") handleApplyDiscount();
+                      if (e.key === 'Enter') handleApplyDiscount();
                     }}
                     className="flex-1"
                   />
@@ -301,9 +283,7 @@ export default function CartPage() {
                   </Button>
                 </div>
                 {couponError && (
-                  <p className="mt-1.5 text-xs text-[var(--color-sale)]">
-                    {couponError}
-                  </p>
+                  <p className="mt-1.5 text-xs text-[var(--color-sale)]">{couponError}</p>
                 )}
               </div>
             )}
@@ -316,7 +296,12 @@ export default function CartPage() {
 
             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[var(--color-muted)]">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
               <span>Secure checkout</span>
             </div>

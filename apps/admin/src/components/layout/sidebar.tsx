@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
@@ -19,28 +19,29 @@ import {
   Warehouse,
   Bell,
   LayoutTemplate,
-} from "lucide-react";
-import { useUIStore } from "@/stores/ui-store";
+} from 'lucide-react';
+import { useUIStore } from '@/stores/ui-store';
 
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Homepage", href: "/homepage", icon: LayoutTemplate },
-  { label: "Products", href: "/products", icon: Package },
-  { label: "Categories", href: "/categories", icon: FolderTree },
-  { label: "Orders", href: "/orders", icon: ShoppingCart },
-  { label: "Inventory", href: "/inventory", icon: Warehouse },
-  { label: "Discounts", href: "/discounts", icon: Tags },
-  { label: "Customers", href: "/customers", icon: Users },
-  { label: "Blog", href: "/blog", icon: FileText },
-  { label: "Support", href: "/support-tickets", icon: Headset },
-  { label: "Notifications", href: "/notifications", icon: Bell },
-  { label: "Analytics", href: "/analytics", icon: BarChart3 },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Homepage', href: '/homepage', icon: LayoutTemplate },
+  { label: 'Products', href: '/products', icon: Package },
+  { label: 'Categories', href: '/categories', icon: FolderTree },
+  { label: 'Orders', href: '/orders', icon: ShoppingCart },
+  { label: 'Inventory', href: '/inventory', icon: Warehouse },
+  { label: 'Discounts', href: '/discounts', icon: Tags },
+  { label: 'Customers', href: '/customers', icon: Users },
+  { label: 'Blog', href: '/blog', icon: FileText },
+  { label: 'Support', href: '/support-tickets', icon: Headset },
+  { label: 'Notifications', href: '/notifications', icon: Bell },
+  { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { isSidebarCollapsed, toggleSidebar, isMobileSidebarOpen, setMobileSidebarOpen } = useUIStore();
+  const { isSidebarCollapsed, toggleSidebar, isMobileSidebarOpen, setMobileSidebarOpen } =
+    useUIStore();
 
   const isActive = (href: string) => pathname.startsWith(href);
 
@@ -67,23 +68,17 @@ export function Sidebar() {
               onClick={() => setMobileSidebarOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
                 active
-                  ? "text-text-primary font-medium"
-                  : "text-text-secondary hover:text-text-primary"
+                  ? 'text-text-primary font-medium'
+                  : 'text-text-secondary hover:text-text-primary'
               }`}
               title={isSidebarCollapsed ? item.label : undefined}
             >
               {/* Active dot indicator */}
               <div
-                className={`w-1.5 h-1.5 flex-shrink-0 ${
-                  active ? "bg-accent" : "bg-transparent"
-                }`}
+                className={`w-1.5 h-1.5 flex-shrink-0 ${active ? 'bg-accent' : 'bg-transparent'}`}
               />
-              {!isSidebarCollapsed && (
-                <span className="font-heading">{item.label}</span>
-              )}
-              {isSidebarCollapsed && (
-                <item.icon size={18} className="flex-shrink-0" />
-              )}
+              {!isSidebarCollapsed && <span className="font-heading">{item.label}</span>}
+              {isSidebarCollapsed && <item.icon size={18} className="flex-shrink-0" />}
             </Link>
           );
         })}
@@ -107,7 +102,7 @@ export function Sidebar() {
       {/* Desktop sidebar */}
       <aside
         className={`hidden lg:flex flex-col bg-surface border-r border-border h-screen sticky top-0 transition-all duration-200 ${
-          isSidebarCollapsed ? "w-[72px]" : "w-[240px]"
+          isSidebarCollapsed ? 'w-[72px]' : 'w-[240px]'
         }`}
       >
         {sidebarContent}

@@ -1,41 +1,27 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import {
-  User,
-  Package,
-  MapPin,
-  Heart,
-  Star,
-  Gift,
-  HelpCircle,
-  LogOut,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/auth-store";
-import { Spinner } from "@/components/ui/spinner";
+import { useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { User, Package, MapPin, Heart, Star, Gift, HelpCircle, LogOut } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
+import { Spinner } from '@/components/ui/spinner';
 
 const NAV_ITEMS = [
-  { href: "/account/profile", label: "Profile", icon: User },
-  { href: "/account/orders", label: "Orders", icon: Package },
-  { href: "/account/addresses", label: "Addresses", icon: MapPin },
-  { href: "/account/wishlist", label: "Wishlist", icon: Heart },
-  { href: "/account/loyalty", label: "Loyalty Points", icon: Star },
-  { href: "/account/referrals", label: "Referrals", icon: Gift },
-  { href: "/account/support", label: "Support", icon: HelpCircle },
+  { href: '/account/profile', label: 'Profile', icon: User },
+  { href: '/account/orders', label: 'Orders', icon: Package },
+  { href: '/account/addresses', label: 'Addresses', icon: MapPin },
+  { href: '/account/wishlist', label: 'Wishlist', icon: Heart },
+  { href: '/account/loyalty', label: 'Loyalty Points', icon: Star },
+  { href: '/account/referrals', label: 'Referrals', icon: Gift },
+  { href: '/account/support', label: 'Support', icon: HelpCircle },
 ] as const;
 
-export default function AccountLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isLoading, isAuthenticated, checkAuth, logout } =
-    useAuthStore();
+  const { isLoading, isAuthenticated, checkAuth, logout } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
@@ -43,13 +29,13 @@ export default function AccountLayout({
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push("/auth/login");
+      router.push('/auth/login');
     }
   }, [isLoading, isAuthenticated, router]);
 
   const handleLogout = async () => {
     await logout();
-    router.push("/auth/login");
+    router.push('/auth/login');
   };
 
   if (isLoading) {
@@ -71,19 +57,21 @@ export default function AccountLayout({
       </h1>
 
       {/* Mobile tabs — compact icon + short label, horizontal scroll */}
-      <div style={{ marginBottom: 32 }} className="flex gap-0 overflow-x-auto border-b border-[var(--color-border)] pb-px md:hidden hide-scrollbar">
+      <div
+        style={{ marginBottom: 32 }}
+        className="flex gap-0 overflow-x-auto border-b border-[var(--color-border)] pb-px md:hidden hide-scrollbar"
+      >
         {NAV_ITEMS.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex shrink-0 flex-col items-center gap-0.5 border-b-2 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors",
+                'flex shrink-0 flex-col items-center gap-0.5 border-b-2 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors',
                 isActive
-                  ? "border-[var(--color-primary)] text-[var(--color-primary)]"
-                  : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)]"
+                  ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
+                  : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-text)]'
               )}
             >
               <item.icon size={16} />
@@ -98,18 +86,16 @@ export default function AccountLayout({
         <aside className="hidden w-56 shrink-0 md:block">
           <nav className="space-y-1">
             {NAV_ITEMS.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                pathname.startsWith(item.href + "/");
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-[var(--button-radius)] px-4 py-2.5 text-sm font-medium transition-colors",
+                    'flex items-center gap-3 rounded-[var(--button-radius)] px-4 py-2.5 text-sm font-medium transition-colors',
                     isActive
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                      ? 'bg-[var(--color-primary)] text-white'
+                      : 'text-[var(--color-text)] hover:bg-[var(--color-surface)]'
                   )}
                 >
                   <item.icon size={18} />

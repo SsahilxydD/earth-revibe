@@ -1,5 +1,5 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { env } from "./env";
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { env } from './env';
 
 let _supabaseAdmin: SupabaseClient | null = null;
 
@@ -10,7 +10,7 @@ let _supabaseAdmin: SupabaseClient | null = null;
 export function getSupabaseAdmin(): SupabaseClient {
   if (!_supabaseAdmin) {
     if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set");
+      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set');
     }
     _supabaseAdmin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
@@ -31,7 +31,7 @@ let _supabaseAnon: SupabaseClient | null = null;
 export function getSupabaseAnon(): SupabaseClient {
   if (!_supabaseAnon) {
     if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
-      throw new Error("SUPABASE_URL and SUPABASE_ANON_KEY must be set");
+      throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be set');
     }
     _supabaseAnon = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
       auth: {

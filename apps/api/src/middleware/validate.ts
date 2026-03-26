@@ -1,6 +1,6 @@
-import type { Request, Response, NextFunction } from "express";
-import { z } from "zod";
-import { ApiError } from "../utils/api-error";
+import type { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
+import { ApiError } from '../utils/api-error';
 
 interface ValidationSchemas {
   body?: z.ZodType;
@@ -17,7 +17,7 @@ export const validate = (schemas: ValidationSchemas) => {
       if (!result.success) {
         for (const issue of result.error.issues) {
           errors.push({
-            field: issue.path.join("."),
+            field: issue.path.join('.'),
             message: issue.message,
           });
         }
@@ -31,7 +31,7 @@ export const validate = (schemas: ValidationSchemas) => {
       if (!result.success) {
         for (const issue of result.error.issues) {
           errors.push({
-            field: issue.path.join("."),
+            field: issue.path.join('.'),
             message: issue.message,
           });
         }
@@ -46,7 +46,7 @@ export const validate = (schemas: ValidationSchemas) => {
       if (!result.success) {
         for (const issue of result.error.issues) {
           errors.push({
-            field: issue.path.join("."),
+            field: issue.path.join('.'),
             message: issue.message,
           });
         }
@@ -57,7 +57,7 @@ export const validate = (schemas: ValidationSchemas) => {
     }
 
     if (errors.length > 0) {
-      throw ApiError.badRequest("Validation failed", errors);
+      throw ApiError.badRequest('Validation failed', errors);
     }
 
     next();

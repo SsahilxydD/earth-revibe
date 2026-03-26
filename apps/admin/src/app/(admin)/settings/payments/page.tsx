@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   CreditCard,
   Wallet,
@@ -12,9 +12,9 @@ import {
   Undo2,
   AlertCircle,
   Save,
-} from "lucide-react";
-import { Card, Button, Input, Badge } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
+} from 'lucide-react';
+import { Card, Button, Input, Badge } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
 
 interface PaymentMethod {
   id: string;
@@ -28,66 +28,64 @@ interface PaymentMethod {
 export default function PaymentsSettingsPage() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
     {
-      id: "upi",
-      name: "UPI",
-      description: "Google Pay, PhonePe, Paytm",
+      id: 'upi',
+      name: 'UPI',
+      description: 'Google Pay, PhonePe, Paytm',
       icon: <IndianRupee size={20} className="text-deep-earth" />,
       enabled: true,
     },
     {
-      id: "cards",
-      name: "Credit & Debit Cards",
-      description: "Visa, Mastercard, RuPay",
+      id: 'cards',
+      name: 'Credit & Debit Cards',
+      description: 'Visa, Mastercard, RuPay',
       icon: <CreditCard size={20} className="text-deep-earth" />,
       enabled: true,
     },
     {
-      id: "netbanking",
-      name: "Net Banking",
-      description: "All major banks",
+      id: 'netbanking',
+      name: 'Net Banking',
+      description: 'All major banks',
       icon: <Banknote size={20} className="text-deep-earth" />,
       enabled: true,
     },
     {
-      id: "wallets",
-      name: "Wallets",
-      description: "Paytm, PhonePe, Amazon Pay",
+      id: 'wallets',
+      name: 'Wallets',
+      description: 'Paytm, PhonePe, Amazon Pay',
       icon: <Wallet size={20} className="text-deep-earth" />,
       enabled: true,
     },
     {
-      id: "emi",
-      name: "EMI",
-      description: "Credit card EMI",
+      id: 'emi',
+      name: 'EMI',
+      description: 'Credit card EMI',
       icon: <CreditCard size={20} className="text-deep-earth" />,
       enabled: true,
     },
     {
-      id: "cod",
-      name: "Cash on Delivery",
-      description: "Collect payment on delivery",
+      id: 'cod',
+      name: 'Cash on Delivery',
+      description: 'Collect payment on delivery',
       icon: <Banknote size={20} className="text-deep-earth" />,
       enabled: true,
-      note: "\u20B90 extra charge for COD orders",
+      note: '\u20B90 extra charge for COD orders',
     },
   ]);
 
-  const [captureMode, setCaptureMode] = useState<"automatic" | "manual">("automatic");
+  const [captureMode, setCaptureMode] = useState<'automatic' | 'manual'>('automatic');
   const [allowPartialRefunds, setAllowPartialRefunds] = useState(true);
   const [autoRestockOnRefund, setAutoRestockOnRefund] = useState(true);
-  const [refundProcessingTime, setRefundProcessingTime] = useState("5-7 business days");
+  const [refundProcessingTime, setRefundProcessingTime] = useState('5-7 business days');
   const [saving, setSaving] = useState(false);
 
   const toggleMethod = (id: string) => {
-    setPaymentMethods((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m))
-    );
+    setPaymentMethods((prev) => prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m)));
   };
 
   const handleSave = async () => {
     setSaving(true);
     await new Promise((r) => setTimeout(r, 500));
-    toast.success("Payment settings saved");
+    toast.success('Payment settings saved');
     setSaving(false);
   };
 
@@ -96,13 +94,11 @@ export default function PaymentsSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-charcoal">Payments</h2>
-          <p className="text-sm text-medium-gray mt-0.5">
-            Manage payment providers and methods
-          </p>
+          <p className="text-sm text-medium-gray mt-0.5">Manage payment providers and methods</p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
           <Save size={16} />
-          {saving ? "Saving..." : "Save"}
+          {saving ? 'Saving...' : 'Save'}
         </Button>
       </div>
 
@@ -168,15 +164,12 @@ export default function PaymentsSettingsPage() {
                 key={method.id}
                 className={`relative flex items-start gap-3 p-4 rounded-lg border transition-colors ${
                   method.enabled
-                    ? "border-deep-earth/30 bg-deep-earth/5"
-                    : "border-light-gray bg-white"
+                    ? 'border-deep-earth/30 bg-deep-earth/5'
+                    : 'border-light-gray bg-white'
                 }`}
               >
                 {method.enabled && (
-                  <CheckCircle
-                    size={16}
-                    className="absolute top-3 right-3 text-success"
-                  />
+                  <CheckCircle size={16} className="absolute top-3 right-3 text-success" />
                 )}
                 <div className="w-10 h-10 rounded-lg bg-white border border-light-gray flex items-center justify-center flex-shrink-0">
                   {method.icon}
@@ -198,12 +191,12 @@ export default function PaymentsSettingsPage() {
                   >
                     <div
                       className={`relative w-9 h-5 rounded-full transition-colors ${
-                        method.enabled ? "bg-forest-green" : "bg-light-gray"
+                        method.enabled ? 'bg-forest-green' : 'bg-light-gray'
                       }`}
                     >
                       <div
                         className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                          method.enabled ? "translate-x-4" : "translate-x-0.5"
+                          method.enabled ? 'translate-x-4' : 'translate-x-0.5'
                         }`}
                       />
                     </div>
@@ -226,17 +219,17 @@ export default function PaymentsSettingsPage() {
           <div className="space-y-3">
             <label
               className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                captureMode === "automatic"
-                  ? "border-deep-earth/30 bg-deep-earth/5"
-                  : "border-light-gray bg-white hover:bg-off-white"
+                captureMode === 'automatic'
+                  ? 'border-deep-earth/30 bg-deep-earth/5'
+                  : 'border-light-gray bg-white hover:bg-off-white'
               }`}
             >
               <input
                 type="radio"
                 name="captureMode"
                 value="automatic"
-                checked={captureMode === "automatic"}
-                onChange={() => setCaptureMode("automatic")}
+                checked={captureMode === 'automatic'}
+                onChange={() => setCaptureMode('automatic')}
                 className="mt-0.5 accent-deep-earth"
               />
               <div>
@@ -245,32 +238,32 @@ export default function PaymentsSettingsPage() {
                   <Badge variant="success">Recommended</Badge>
                 </div>
                 <p className="text-xs text-medium-gray mt-1">
-                  Payments are automatically captured when a customer completes checkout.
-                  This is the default and recommended option for most stores.
+                  Payments are automatically captured when a customer completes checkout. This is
+                  the default and recommended option for most stores.
                 </p>
               </div>
             </label>
 
             <label
               className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                captureMode === "manual"
-                  ? "border-deep-earth/30 bg-deep-earth/5"
-                  : "border-light-gray bg-white hover:bg-off-white"
+                captureMode === 'manual'
+                  ? 'border-deep-earth/30 bg-deep-earth/5'
+                  : 'border-light-gray bg-white hover:bg-off-white'
               }`}
             >
               <input
                 type="radio"
                 name="captureMode"
                 value="manual"
-                checked={captureMode === "manual"}
-                onChange={() => setCaptureMode("manual")}
+                checked={captureMode === 'manual'}
+                onChange={() => setCaptureMode('manual')}
                 className="mt-0.5 accent-deep-earth"
               />
               <div>
                 <p className="text-sm font-medium text-charcoal">Manual capture</p>
                 <p className="text-xs text-medium-gray mt-1">
-                  Payments are authorized at checkout but not captured until you manually
-                  capture them. Use this if you need to review orders before charging.
+                  Payments are authorized at checkout but not captured until you manually capture
+                  them. Use this if you need to review orders before charging.
                 </p>
               </div>
             </label>
@@ -302,12 +295,12 @@ export default function PaymentsSettingsPage() {
               >
                 <div
                   className={`relative w-9 h-5 rounded-full transition-colors ${
-                    allowPartialRefunds ? "bg-forest-green" : "bg-light-gray"
+                    allowPartialRefunds ? 'bg-forest-green' : 'bg-light-gray'
                   }`}
                 >
                   <div
                     className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                      allowPartialRefunds ? "translate-x-4" : "translate-x-0.5"
+                      allowPartialRefunds ? 'translate-x-4' : 'translate-x-0.5'
                     }`}
                   />
                 </div>
@@ -331,12 +324,12 @@ export default function PaymentsSettingsPage() {
               >
                 <div
                   className={`relative w-9 h-5 rounded-full transition-colors ${
-                    autoRestockOnRefund ? "bg-forest-green" : "bg-light-gray"
+                    autoRestockOnRefund ? 'bg-forest-green' : 'bg-light-gray'
                   }`}
                 >
                   <div
                     className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                      autoRestockOnRefund ? "translate-x-4" : "translate-x-0.5"
+                      autoRestockOnRefund ? 'translate-x-4' : 'translate-x-0.5'
                     }`}
                   />
                 </div>
@@ -357,9 +350,9 @@ export default function PaymentsSettingsPage() {
             <div className="flex items-start gap-2 p-3 bg-off-white rounded-lg">
               <AlertCircle size={14} className="text-medium-gray mt-0.5 flex-shrink-0" />
               <p className="text-xs text-medium-gray">
-                Refunds are processed via Razorpay. The actual processing time depends on
-                the payment method used and Razorpay&apos;s processing schedule. Bank refunds
-                may take 5-10 business days.
+                Refunds are processed via Razorpay. The actual processing time depends on the
+                payment method used and Razorpay&apos;s processing schedule. Bank refunds may take
+                5-10 business days.
               </p>
             </div>
           </div>
@@ -381,16 +374,14 @@ export default function PaymentsSettingsPage() {
                 All prices are displayed in this currency
               </p>
             </div>
-            <span className="text-sm font-medium text-charcoal">
-              Indian Rupee (INR &#8377;)
-            </span>
+            <span className="text-sm font-medium text-charcoal">Indian Rupee (INR &#8377;)</span>
           </div>
 
           <div className="flex items-start gap-2 p-3 bg-off-white rounded-lg">
             <AlertCircle size={14} className="text-medium-gray mt-0.5 flex-shrink-0" />
             <p className="text-xs text-medium-gray">
-              Currency is set at the account level and cannot be changed. Contact support
-              if you need to update your store currency.
+              Currency is set at the account level and cannot be changed. Contact support if you
+              need to update your store currency.
             </p>
           </div>
         </div>

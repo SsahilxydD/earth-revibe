@@ -2,9 +2,7 @@
   "extends": "@earth-revibe/tsconfig/nextjs.json",
   "compilerOptions": {
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
     "allowJs": true
   },
@@ -15,7 +13,5 @@
     ".next/types/**/*.ts",
     "sentry.client.config.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

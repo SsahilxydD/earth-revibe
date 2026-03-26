@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { flushSync } from "react-dom";
-import { createPortal } from "react-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { productKeys } from "@/hooks/use-products";
-import { usePrefetchAdjacentProducts } from "@/hooks/use-prefetch-adjacent-products";
-import { useProductNavStore } from "@/stores/product-nav-store";
-import { useCartStore } from "@/stores/cart-store";
-import { useToast } from "@/providers";
-import { ProductDetail } from "./product-detail";
-import { api } from "@/lib/api-client";
-import { cn, formatPrice } from "@/lib/utils";
-import type { Product, ProductVariant } from "@/types";
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { flushSync } from 'react-dom';
+import { createPortal } from 'react-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { productKeys } from '@/hooks/use-products';
+import { usePrefetchAdjacentProducts } from '@/hooks/use-prefetch-adjacent-products';
+import { useProductNavStore } from '@/stores/product-nav-store';
+import { useCartStore } from '@/stores/cart-store';
+import { useToast } from '@/providers';
+import { ProductDetail } from './product-detail';
+import { api } from '@/lib/api-client';
+import { cn, formatPrice } from '@/lib/utils';
+import type { Product, ProductVariant } from '@/types';
 
 /* ------------------------------------------------------------------ */
 /*  Zara-style 3-bar loading animation                                 */
@@ -24,22 +24,22 @@ function ZaraLoader() {
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100dvh",
-        width: "100%",
-        background: "#fff",
-        gap: "4px",
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100dvh',
+        width: '100%',
+        background: '#fff',
+        gap: '4px',
       }}
     >
       {[0, 1, 2].map((i) => (
         <div
           key={i}
           style={{
-            width: "3px",
-            height: "20px",
-            background: "#121212",
+            width: '3px',
+            height: '20px',
+            background: '#121212',
             animation: `zaraBarFill 1.2s ease-in-out ${i * 0.15}s infinite`,
           }}
         />
@@ -85,7 +85,7 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
         seen.set(v.color, v.colorHex);
       }
     }
-    return Array.from(seen.entries()).map(([name, hex]) => ({ name, hex: hex || "#ccc" }));
+    return Array.from(seen.entries()).map(([name, hex]) => ({ name, hex: hex || '#ccc' }));
   }, [variants]);
 
   const [selectedColor, setSelectedColor] = useState<string | null>(
@@ -98,14 +98,12 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
   }, [product.id, colors]);
 
   const displayPrice = product.price;
-  const isOnSale =
-    product.compareAtPrice !== null && product.compareAtPrice > displayPrice;
+  const isOnSale = product.compareAtPrice !== null && product.compareAtPrice > displayPrice;
 
   const getVariantStock = (color: string | null, size: string | null): number => {
     const match = variants.find(
       (v: ProductVariant) =>
-        (color === null || v.color === color) &&
-        (size === null || v.size === size)
+        (color === null || v.color === color) && (size === null || v.size === size)
     );
     return match?.stock ?? 0;
   };
@@ -123,8 +121,7 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
 
     const variant = variants.find(
       (v: ProductVariant) =>
-        (selectedColor === null || v.color === selectedColor) &&
-        (size === null || v.size === size)
+        (selectedColor === null || v.color === selectedColor) && (size === null || v.size === size)
     );
 
     const primaryImage = product.images.find((img) => img.isPrimary) || product.images[0];
@@ -133,16 +130,16 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
       productId: product.id,
       name: product.name,
       slug: product.slug,
-      image: primaryImage?.url || "",
+      image: primaryImage?.url || '',
       price: variant?.price ?? product.price,
       compareAtPrice: product.compareAtPrice ?? undefined,
-      size: size || "",
-      color: selectedColor || "",
+      size: size || '',
+      color: selectedColor || '',
       maxQuantity: variant?.stock ?? 99,
       quantity: 1,
     });
 
-    addToast("Added to cart", "success");
+    addToast('Added to cart', 'success');
     setIsAdding(false);
     setShowSizeSheet(false);
   };
@@ -159,17 +156,14 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
             exit={{ y: 40, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
             className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
-            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           >
             <div className="px-4 pt-3">
-              <p className="text-sm font-semibold uppercase tracking-wide truncate">{product.name}</p>
+              <p className="text-sm font-semibold uppercase tracking-wide truncate">
+                {product.name}
+              </p>
               <div className="flex items-baseline gap-2">
-                <span
-                  className={cn(
-                    "text-sm",
-                    isOnSale && "text-[var(--color-sale)]"
-                  )}
-                >
+                <span className={cn('text-sm', isOnSale && 'text-[var(--color-sale)]')}>
                   {formatPrice(displayPrice)}
                 </span>
                 {isOnSale && (
@@ -192,10 +186,10 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
                     type="button"
                     onClick={() => setSelectedColor(c.name)}
                     className={cn(
-                      "h-6 w-6 rounded-full border-2 transition-all",
+                      'h-6 w-6 rounded-full border-2 transition-all',
                       selectedColor === c.name
-                        ? "border-[var(--color-primary)] scale-110"
-                        : "border-transparent"
+                        ? 'border-[var(--color-primary)] scale-110'
+                        : 'border-transparent'
                     )}
                     style={{ backgroundColor: c.hex }}
                     aria-label={c.name}
@@ -211,7 +205,7 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
                 disabled={isAdding}
                 className="flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
               >
-                {isAdding ? <Loader2 size={16} className="animate-spin" /> : "ADD"}
+                {isAdding ? <Loader2 size={16} className="animate-spin" /> : 'ADD'}
               </button>
             </div>
           </motion.div>
@@ -221,18 +215,18 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
       {/* Size selection sheet */}
       <div
         className={`fixed inset-0 z-[70] bg-black transition-opacity duration-300 ${
-          showSizeSheet ? "opacity-50 pointer-events-auto" : "opacity-0 pointer-events-none"
+          showSizeSheet ? 'opacity-50 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setShowSizeSheet(false)}
       />
       <div
         className={`fixed inset-x-0 bottom-0 z-[71] bg-white transition-transform duration-300 ease-out ${
-          showSizeSheet ? "translate-y-0" : "translate-y-full"
+          showSizeSheet ? 'translate-y-0' : 'translate-y-full'
         }`}
         style={{
-          maxHeight: "70vh",
-          overflowY: "auto",
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          maxHeight: '70vh',
+          overflowY: 'auto',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
         <div className="sticky top-0 z-10 bg-white pt-5 pb-3 flex justify-center">
@@ -255,10 +249,10 @@ function PersistentDock({ product, visible }: { product: Product; visible: boole
                   }}
                   disabled={isOutOfStock}
                   className={cn(
-                    "py-4 text-center text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors",
+                    'py-4 text-center text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors',
                     isOutOfStock
-                      ? "text-[var(--color-sold-out)] cursor-not-allowed"
-                      : "text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                      ? 'text-[var(--color-sold-out)] cursor-not-allowed'
+                      : 'text-[var(--color-text)] hover:bg-[var(--color-surface)]'
                   )}
                 >
                   {size}
@@ -327,7 +321,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   const touchRef = useRef<{
     startX: number;
     startY: number;
-    axis: "x" | "y" | null;
+    axis: 'x' | 'y' | null;
     startTime: number;
   }>({ startX: 0, startY: 0, axis: null, startTime: 0 });
 
@@ -336,8 +330,8 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     setMounted(true);
     const check = () => setIsMobile(window.innerWidth < 1024);
     check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
   }, []);
 
   // Seed cache
@@ -364,18 +358,18 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     const origBodyHeight = body.style.height;
     const origBodyPosition = body.style.position;
 
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
-    body.style.height = "100dvh";
-    body.style.position = "fixed";
-    body.style.width = "100%";
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.height = '100dvh';
+    body.style.position = 'fixed';
+    body.style.width = '100%';
 
     return () => {
       html.style.overflow = origHtmlOverflow;
       body.style.overflow = origBodyOverflow;
       body.style.height = origBodyHeight;
       body.style.position = origBodyPosition;
-      body.style.width = "";
+      body.style.width = '';
     };
   }, [isMobile, hasNav]);
 
@@ -395,13 +389,21 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       }
     };
 
-    if (prev) loadProduct(prev).then((p) => { if (!cancelled) setPrevProduct(p); });
+    if (prev)
+      loadProduct(prev).then((p) => {
+        if (!cancelled) setPrevProduct(p);
+      });
     else setPrevProduct(null);
 
-    if (next) loadProduct(next).then((p) => { if (!cancelled) setNextProduct(p); });
+    if (next)
+      loadProduct(next).then((p) => {
+        if (!cancelled) setNextProduct(p);
+      });
     else setNextProduct(null);
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [prev, next, queryClient, currentSlug]);
 
   // Preload adjacent images
@@ -438,7 +440,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
 
     const handleScroll = () => {
       if (!cachedSentinelRef.current) {
-        cachedSentinelRef.current = panel.querySelector("[data-dock-hide]");
+        cachedSentinelRef.current = panel.querySelector('[data-dock-hide]');
       }
       if (!cachedSentinelRef.current) return;
 
@@ -447,12 +449,12 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       setDockVisible(sentinelTop > panelBottom);
     };
 
-    panel.addEventListener("scroll", handleScroll, { passive: true });
-    return () => panel.removeEventListener("scroll", handleScroll);
+    panel.addEventListener('scroll', handleScroll, { passive: true });
+    return () => panel.removeEventListener('scroll', handleScroll);
   }, [isMobile, hasNav]);
 
   // --- Swipe helpers ---
-  const BASE_OFFSET = "-100vw";
+  const BASE_OFFSET = '-100vw';
 
   const setTranslateX = useCallback((x: number) => {
     translateXRef.current = x;
@@ -462,41 +464,47 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   }, []);
 
   // [FIX 7] Velocity-matched animation — duration scales with remaining distance & finger speed
-  const animateTo = useCallback((targetX: number, opts?: { duration?: number; velocity?: number }): Promise<void> => {
-    return new Promise((resolve) => {
-      const el = containerElRef.current;
-      if (!el) { resolve(); return; }
+  const animateTo = useCallback(
+    (targetX: number, opts?: { duration?: number; velocity?: number }): Promise<void> => {
+      return new Promise((resolve) => {
+        const el = containerElRef.current;
+        if (!el) {
+          resolve();
+          return;
+        }
 
-      const currentX = translateXRef.current;
-      const distance = Math.abs(targetX - currentX);
-      let duration = opts?.duration ?? 280;
+        const currentX = translateXRef.current;
+        const distance = Math.abs(targetX - currentX);
+        let duration = opts?.duration ?? 280;
 
-      // If we have velocity from the finger, match the animation speed
-      if (opts?.velocity && opts.velocity > 0) {
-        // Calculate duration based on remaining distance / velocity
-        // Clamp between 120ms (fast flick) and 350ms (slow drag)
-        const velocityDuration = distance / opts.velocity;
-        duration = Math.max(120, Math.min(350, velocityDuration));
-      }
+        // If we have velocity from the finger, match the animation speed
+        if (opts?.velocity && opts.velocity > 0) {
+          // Calculate duration based on remaining distance / velocity
+          // Clamp between 120ms (fast flick) and 350ms (slow drag)
+          const velocityDuration = distance / opts.velocity;
+          duration = Math.max(120, Math.min(350, velocityDuration));
+        }
 
-      el.style.transition = `transform ${duration}ms cubic-bezier(0.25, 1, 0.5, 1)`;
-      el.style.transform = `translateX(calc(${BASE_OFFSET} + ${targetX}px))`;
-      translateXRef.current = targetX;
+        el.style.transition = `transform ${duration}ms cubic-bezier(0.25, 1, 0.5, 1)`;
+        el.style.transform = `translateX(calc(${BASE_OFFSET} + ${targetX}px))`;
+        translateXRef.current = targetX;
 
-      const onEnd = () => {
-        el.removeEventListener("transitionend", onEnd);
-        el.style.transition = "none";
-        resolve();
-      };
-      el.addEventListener("transitionend", onEnd);
+        const onEnd = () => {
+          el.removeEventListener('transitionend', onEnd);
+          el.style.transition = 'none';
+          resolve();
+        };
+        el.addEventListener('transitionend', onEnd);
 
-      setTimeout(() => {
-        el.removeEventListener("transitionend", onEnd);
-        el.style.transition = "none";
-        resolve();
-      }, duration + 50);
-    });
-  }, []);
+        setTimeout(() => {
+          el.removeEventListener('transitionend', onEnd);
+          el.style.transition = 'none';
+          resolve();
+        }, duration + 50);
+      });
+    },
+    []
+  );
 
   // [FIX 1] Blink-free commit using flushSync — state update + transform reset
   // happen in the same synchronous batch, so the browser never paints an
@@ -515,8 +523,8 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
 
     // Now the center panel has the new product content. Reset transform to center.
     if (containerElRef.current) {
-      containerElRef.current.style.transition = "none";
-      containerElRef.current.style.transform = "translateX(-100vw)";
+      containerElRef.current.style.transition = 'none';
+      containerElRef.current.style.transform = 'translateX(-100vw)';
     }
     translateXRef.current = 0;
     isLockedRef.current = false;
@@ -524,11 +532,11 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     // Update URL silently — no page navigation
     // Use replaceState with null state — don't spread Next.js internals (__N etc.)
     // which can corrupt the router's history tracking.
-    window.history.replaceState(null, "", `/products/${targetSlug}`);
+    window.history.replaceState(null, '', `/products/${targetSlug}`);
   }, []);
 
   const snapTo = useCallback(
-    async (targetSlug: string | null, direction: "prev" | "next", velocity?: number) => {
+    async (targetSlug: string | null, direction: 'prev' | 'next', velocity?: number) => {
       if (isLockedRef.current || !targetSlug) return;
       isLockedRef.current = true;
 
@@ -545,7 +553,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
 
         // Slide to reveal the adjacent panel
         const vw = window.innerWidth;
-        const targetX = direction === "next" ? -vw : vw;
+        const targetX = direction === 'next' ? -vw : vw;
         await animateTo(targetX, { velocity });
 
         // Blink-free commit via flushSync
@@ -553,7 +561,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       } catch {
         setTranslateX(0);
         isLockedRef.current = false;
-        addToast("Couldn\u2019t load product. Please try again.", "error");
+        addToast('Couldn\u2019t load product. Please try again.', 'error');
       }
     },
     [queryClient, animateTo, commitSwipe, setTranslateX, addToast]
@@ -565,37 +573,40 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     if (isLockedRef.current) return;
     const t = e.touches[0];
     touchRef.current = { startX: t.clientX, startY: t.clientY, axis: null, startTime: Date.now() };
-    if (containerElRef.current) containerElRef.current.style.transition = "none";
+    if (containerElRef.current) containerElRef.current.style.transition = 'none';
   }, []);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (isLockedRef.current) return;
-    const t = e.touches[0];
-    const ref = touchRef.current;
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (isLockedRef.current) return;
+      const t = e.touches[0];
+      const ref = touchRef.current;
 
-    const dx = t.clientX - ref.startX;
-    const dy = t.clientY - ref.startY;
+      const dx = t.clientX - ref.startX;
+      const dy = t.clientY - ref.startY;
 
-    if (ref.axis === null) {
-      if (Math.abs(dx) + Math.abs(dy) < 8) return;
-      ref.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-    }
+      if (ref.axis === null) {
+        if (Math.abs(dx) + Math.abs(dy) < 8) return;
+        ref.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      }
 
-    if (ref.axis === "y") return;
+      if (ref.axis === 'y') return;
 
-    let delta = dx;
-    if ((!prevProduct && delta > 0) || (!nextProduct && delta < 0)) {
-      delta *= 0.2;
-    }
+      let delta = dx;
+      if ((!prevProduct && delta > 0) || (!nextProduct && delta < 0)) {
+        delta *= 0.2;
+      }
 
-    setTranslateX(delta);
-  }, [prevProduct, nextProduct, setTranslateX]);
+      setTranslateX(delta);
+    },
+    [prevProduct, nextProduct, setTranslateX]
+  );
 
   const handleTouchEnd = useCallback(() => {
     if (isLockedRef.current) return;
     const ref = touchRef.current;
 
-    if (ref.axis !== "x") {
+    if (ref.axis !== 'x') {
       setTranslateX(0);
       return;
     }
@@ -610,9 +621,9 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     const isFlick = velocity > 0.5;
 
     if ((dx < -threshold || (dx < 0 && isFlick)) && next) {
-      snapTo(next, "next", velocity);
+      snapTo(next, 'next', velocity);
     } else if ((dx > threshold || (dx > 0 && isFlick)) && prev) {
-      snapTo(prev, "prev", velocity);
+      snapTo(prev, 'prev', velocity);
     } else {
       animateTo(0, { duration: 200 });
     }
@@ -631,27 +642,27 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
   // position: relative is CRITICAL — makes offsetTop of children relative to the panel,
   // which is needed for the dock-hide sentinel scroll comparison.
   const panelStyle: React.CSSProperties = {
-    width: "100vw",
-    height: "100dvh",
-    overflowY: "auto",
-    overflowX: "hidden",
+    width: '100vw',
+    height: '100dvh',
+    overflowY: 'auto',
+    overflowX: 'hidden',
     flexShrink: 0,
-    overscrollBehavior: "contain",
-    position: "relative",
-    backgroundColor: "#fff",
+    overscrollBehavior: 'contain',
+    position: 'relative',
+    backgroundColor: '#fff',
     // iOS: extend background past the scroll boundary to cover rubber-band overscroll
-    WebkitOverflowScrolling: "touch",
+    WebkitOverflowScrolling: 'touch',
   };
 
   return (
     <>
       <div
         style={{
-          height: "100dvh",
-          overflow: "hidden",
-          position: "relative",
-          touchAction: "pan-y", // [FIX 6] Tell browser: "I handle horizontal, you handle vertical"
-          backgroundColor: "#fff", // Prevent iOS overscroll white flash
+          height: '100dvh',
+          overflow: 'hidden',
+          position: 'relative',
+          touchAction: 'pan-y', // [FIX 6] Tell browser: "I handle horizontal, you handle vertical"
+          backgroundColor: '#fff', // Prevent iOS overscroll white flash
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -661,21 +672,17 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
         <div
           ref={containerElRef}
           style={{
-            display: "flex",
-            width: "300vw",
-            height: "100dvh",
-            transform: "translateX(-100vw)",
-            transition: "none",
-            willChange: "transform",
+            display: 'flex',
+            width: '300vw',
+            height: '100dvh',
+            transform: 'translateX(-100vw)',
+            transition: 'none',
+            willChange: 'transform',
           }}
         >
           {/* PREV panel */}
           <div style={panelStyle}>
-            {prevProduct ? (
-              <ProductDetail product={prevProduct} isPreview />
-            ) : (
-              <ZaraLoader />
-            )}
+            {prevProduct ? <ProductDetail product={prevProduct} isPreview /> : <ZaraLoader />}
           </div>
 
           {/* CURRENT panel */}
@@ -685,11 +692,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
 
           {/* NEXT panel */}
           <div style={panelStyle}>
-            {nextProduct ? (
-              <ProductDetail product={nextProduct} isPreview />
-            ) : (
-              <ZaraLoader />
-            )}
+            {nextProduct ? <ProductDetail product={nextProduct} isPreview /> : <ZaraLoader />}
           </div>
         </div>
       </div>
@@ -697,10 +700,11 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
       {/* [FIX 2] Persistent dock — portaled to body, never unmounts.
           Only its content props change when currentProduct updates.
           Collapses with fade-down when "You May Also Like" is in view. */}
-      {mounted && createPortal(
-        <PersistentDock product={currentProduct} visible={dockVisible} />,
-        document.body
-      )}
+      {mounted &&
+        createPortal(
+          <PersistentDock product={currentProduct} visible={dockVisible} />,
+          document.body
+        )}
     </>
   );
 }

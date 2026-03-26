@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Heart, Plus } from "lucide-react";
-import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from "@/lib/utils";
-import type { Product } from "@/types";
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Heart, Plus } from 'lucide-react';
+import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
+import type { Product } from '@/types';
 
 interface ProductCardProps {
   product: Product;
@@ -45,7 +45,8 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
 
   // Preload secondary image into browser cache so hover swap is instant
   const secondaryUrl = useMemo(
-    () => secondaryImage ? getImageUrl(secondaryImage.url, 600, secondaryImage.thumbnailUrl) : null,
+    () =>
+      secondaryImage ? getImageUrl(secondaryImage.url, 600, secondaryImage.thumbnailUrl) : null,
     [secondaryImage]
   );
   useEffect(() => {
@@ -54,19 +55,13 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
     img.src = secondaryUrl;
   }, [secondaryUrl]);
 
-  const isOnSale =
-    product.compareAtPrice !== null &&
-    product.compareAtPrice > product.price;
+  const isOnSale = product.compareAtPrice !== null && product.compareAtPrice > product.price;
 
   const variants = product.variants ?? [];
   const isOutOfStock = variants.length > 0 && variants.every((v) => v.stock <= 0);
 
   return (
-    <div
-      className="group relative"
-      onMouseEnter={handlePrefetch}
-      onTouchStart={handlePrefetch}
-    >
+    <div className="group relative" onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
       <Link href={`/products/${product.slug}`} className="block">
         {/* Image container — fixed aspect ratio prevents layout shift */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
@@ -77,12 +72,12 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               priority={isAboveFold}
-              loading={isAboveFold ? "eager" : "lazy"}
+              loading={isAboveFold ? 'eager' : 'lazy'}
               placeholder="blur"
               blurDataURL={BLUR_DATA_URL}
               className={cn(
-                "object-cover transition-opacity duration-500",
-                secondaryImage ? "group-hover:opacity-0" : ""
+                'object-cover transition-opacity duration-500',
+                secondaryImage ? 'group-hover:opacity-0' : ''
               )}
             />
           )}
@@ -111,23 +106,17 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
 
         {/* Product info */}
         <div className="mt-2 px-0.5">
-          <h3 className="line-clamp-2 text-xs leading-snug text-black">
-            {product.name}
-          </h3>
+          <h3 className="line-clamp-2 text-xs leading-snug text-black">{product.name}</h3>
           <div className="mt-0.5 flex items-center gap-2">
             {isOnSale ? (
               <>
-                <span className="text-xs font-medium text-black">
-                  {formatPrice(product.price)}
-                </span>
+                <span className="text-xs font-medium text-black">{formatPrice(product.price)}</span>
                 <span className="text-[10px] text-black/40 line-through">
                   {formatPrice(product.compareAtPrice!)}
                 </span>
               </>
             ) : (
-              <span className="text-xs font-medium text-black">
-                {formatPrice(product.price)}
-              </span>
+              <span className="text-xs font-medium text-black">{formatPrice(product.price)}</span>
             )}
           </div>
         </div>
@@ -141,15 +130,13 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
           setIsWishlisted((prev) => !prev);
         }}
         className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-white"
-        aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
       >
         <Heart
           size={14}
           className={cn(
-            "transition-colors",
-            isWishlisted
-              ? "fill-[var(--color-sale)] text-[var(--color-sale)]"
-              : "text-black/60"
+            'transition-colors',
+            isWishlisted ? 'fill-[var(--color-sale)] text-[var(--color-sale)]' : 'text-black/60'
           )}
         />
       </button>

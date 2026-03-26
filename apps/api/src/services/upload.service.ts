@@ -1,15 +1,15 @@
-import { createClient } from "@supabase/supabase-js";
-import { randomUUID } from "crypto";
-import { env } from "../config/env";
-import { createCircuitBreaker } from "../utils/circuit-breaker";
-import { ApiError } from "../utils/api-error";
-import { logger } from "../config/logger";
+import { createClient } from '@supabase/supabase-js';
+import { randomUUID } from 'crypto';
+import { env } from '../config/env';
+import { createCircuitBreaker } from '../utils/circuit-breaker';
+import { ApiError } from '../utils/api-error';
+import { logger } from '../config/logger';
 
 // ─── Provider detection ──────────────────────────────────────────────────────
 
 const useCloudflare = !!(env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_IMAGES_API_TOKEN);
 
-export const imageProvider = useCloudflare ? "cloudflare" : "supabase";
+export const imageProvider = useCloudflare ? 'cloudflare' : 'supabase';
 
 export interface UploadResult {
   id: string;
@@ -17,13 +17,13 @@ export interface UploadResult {
   url: string;
   /** Optimized thumbnail URL (Cloudflare Images when configured, otherwise same as url) */
   thumbnailUrl: string;
-  provider: "supabase" | "dual";
+  provider: 'supabase' | 'dual';
   variants: string[];
 }
 
 // ─── Supabase Storage ────────────────────────────────────────────────────────
 
-const BUCKET = "product-images";
+const BUCKET = 'product-images';
 
 function getSupabaseAdmin() {
   return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
@@ -41,9 +41,9 @@ async function ensureBucket(): Promise<void> {
     const { error } = await supabase.storage.createBucket(BUCKET, {
       public: true,
       fileSizeLimit: 100 * 1024 * 1024, // 100 MB
-      allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
     });
-    if (error && !error.message.includes("already exists")) {
+    if (error && !error.message.includes('already exists')) {
       throw ApiError.internal(`Failed to create storage bucket: ${error.message}`);
     }
   }
@@ -64,16 +64,14 @@ async function _uploadToSupabase(
   await ensureBucket();
 
   const supabase = getSupabaseAdmin();
-  const ext = filename.split(".").pop() || "jpg";
+  const ext = filename.split('.').pop() || 'jpg';
   const storagePath = `${randomUUID()}.${ext}`;
 
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(storagePath, buffer, {
-      contentType: mimeType,
-      cacheControl: "31536000", // 1 year
-      upsert: false,
-    });
+  const { error } = await supabase.storage.from(BUCKET).upload(storagePath, buffer, {
+    contentType: mimeType,
+    cacheControl: '31536000', // 1 year
+    upsert: false,
+  });
 
   if (error) {
     throw ApiError.internal(`Supabase Storage upload failed: ${error.message}`);
@@ -92,7 +90,7 @@ async function _deleteFromSupabase(imageId: string): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase.storage.from(BUCKET).remove([imageId]);
   if (error) {
-    logger.warn({ imageId, error: error.message }, "Failed to delete image from Supabase Storage");
+    logger.warn({ imageId, error: error.message }, 'Failed to delete image from Supabase Storage');
   }
 }
 
@@ -105,13 +103,13 @@ async function _uploadToCloudflare(
 ): Promise<InternalUploadResult> {
   const formData = new FormData();
   const blob = new Blob([buffer], { type: mimeType });
-  formData.append("file", blob, filename);
-  formData.append("requireSignedURLs", "false");
+  formData.append('file', blob, filename);
+  formData.append('requireSignedURLs', 'false');
 
   const res = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/images/v1`,
     {
-      method: "POST",
+      method: 'POST',
       headers: { Authorization: `Bearer ${env.CLOUDFLARE_IMAGES_API_TOKEN}` },
       body: formData,
     }
@@ -128,7 +126,7 @@ async function _uploadToCloudflare(
   };
 
   if (!data.success) {
-    throw ApiError.serviceUnavailable("Cloudflare Images upload unsuccessful");
+    throw ApiError.serviceUnavailable('Cloudflare Images upload unsuccessful');
   }
 
   return {
@@ -144,37 +142,33 @@ async function _deleteFromCloudflare(imageId: string): Promise<void> {
   const res = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/images/v1/${imageId}`,
     {
-      method: "DELETE",
+      method: 'DELETE',
       headers: { Authorization: `Bearer ${env.CLOUDFLARE_IMAGES_API_TOKEN}` },
     }
   );
 
   if (!res.ok) {
     const err = await res.text();
-    logger.warn({ imageId, err }, "Cloudflare Images delete failed");
+    logger.warn({ imageId, err }, 'Cloudflare Images delete failed');
   }
 }
 
 // ─── Circuit breakers ────────────────────────────────────────────────────────
 
-const supabaseUploadBreaker = createCircuitBreaker(
-  _uploadToSupabase,
-  "supabase-upload",
-  { timeout: 120000 }
-);
+const supabaseUploadBreaker = createCircuitBreaker(_uploadToSupabase, 'supabase-upload', {
+  timeout: 120000,
+});
 
-const supabaseDeleteBreaker = createCircuitBreaker(
-  _deleteFromSupabase,
-  "supabase-delete",
-  { timeout: 15000 }
-);
+const supabaseDeleteBreaker = createCircuitBreaker(_deleteFromSupabase, 'supabase-delete', {
+  timeout: 15000,
+});
 
 const cloudflareUploadBreaker = useCloudflare
-  ? createCircuitBreaker(_uploadToCloudflare, "cloudflare-upload", { timeout: 30000 })
+  ? createCircuitBreaker(_uploadToCloudflare, 'cloudflare-upload', { timeout: 30000 })
   : null;
 
 const cloudflareDeleteBreaker = useCloudflare
-  ? createCircuitBreaker(_deleteFromCloudflare, "cloudflare-delete", { timeout: 15000 })
+  ? createCircuitBreaker(_deleteFromCloudflare, 'cloudflare-delete', { timeout: 15000 })
   : null;
 
 // ─── Public API ──────────────────────────────────────────────────────────────
@@ -193,12 +187,15 @@ export async function uploadImage(
   // 1. Always upload full-quality to Supabase Storage
   let supabaseResult: { id: string; url: string };
   try {
-    const res = await (supabaseUploadBreaker.fire(buffer, filename, mimeType) as Promise<{ id: string; url: string }>);
+    const res = await (supabaseUploadBreaker.fire(buffer, filename, mimeType) as Promise<{
+      id: string;
+      url: string;
+    }>);
     supabaseResult = res;
   } catch (err) {
     if (err instanceof ApiError) throw err;
     const msg = err instanceof Error ? err.message : String(err);
-    logger.error({ error: msg }, "Supabase image upload failed");
+    logger.error({ error: msg }, 'Supabase image upload failed');
     throw ApiError.internal(`Image upload failed (supabase): ${msg}`);
   }
 
@@ -207,14 +204,21 @@ export async function uploadImage(
   let cfVariants: string[] = [];
   if (cloudflareUploadBreaker) {
     try {
-      const cfResult = await (cloudflareUploadBreaker.fire(buffer, filename, mimeType) as Promise<{ id: string; url: string; variants: string[] }>);
+      const cfResult = await (cloudflareUploadBreaker.fire(buffer, filename, mimeType) as Promise<{
+        id: string;
+        url: string;
+        variants: string[];
+      }>);
       thumbnailUrl = cfResult.url;
       cfVariants = cfResult.variants;
-      logger.info({ cfId: cfResult.id }, "Cloudflare thumbnail uploaded");
+      logger.info({ cfId: cfResult.id }, 'Cloudflare thumbnail uploaded');
     } catch (err) {
       // Cloudflare thumbnail is non-critical — log and continue with Supabase URL
       const msg = err instanceof Error ? err.message : String(err);
-      logger.warn({ error: msg }, "Cloudflare thumbnail upload failed, using Supabase URL for thumbnails");
+      logger.warn(
+        { error: msg },
+        'Cloudflare thumbnail upload failed, using Supabase URL for thumbnails'
+      );
     }
   }
 
@@ -222,7 +226,7 @@ export async function uploadImage(
     id: supabaseResult.id,
     url: supabaseResult.url,
     thumbnailUrl,
-    provider: cloudflareUploadBreaker ? "dual" : "supabase",
+    provider: cloudflareUploadBreaker ? 'dual' : 'supabase',
     variants: cfVariants.length > 0 ? cfVariants : [supabaseResult.url],
   };
 }
@@ -238,7 +242,7 @@ export async function deleteImage(imageId: string, thumbnailId?: string): Promis
   } catch (err) {
     if (err instanceof ApiError) throw err;
     const msg = err instanceof Error ? err.message : String(err);
-    logger.error({ error: msg }, "Supabase image delete failed");
+    logger.error({ error: msg }, 'Supabase image delete failed');
     throw ApiError.internal(`Image delete failed (supabase): ${msg}`);
   }
 
@@ -248,7 +252,7 @@ export async function deleteImage(imageId: string, thumbnailId?: string): Promis
       await (cloudflareDeleteBreaker.fire(thumbnailId) as Promise<void>);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      logger.warn({ thumbnailId, error: msg }, "Cloudflare thumbnail delete failed");
+      logger.warn({ thumbnailId, error: msg }, 'Cloudflare thumbnail delete failed');
     }
   }
 }

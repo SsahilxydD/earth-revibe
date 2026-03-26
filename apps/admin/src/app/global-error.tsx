@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import * as Sentry from "@sentry/nextjs";
-import { useEffect } from "react";
+import * as Sentry from '@sentry/nextjs';
+import { useEffect } from 'react';
 
 export default function GlobalError({
   error,
@@ -17,9 +17,9 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <div style={{ padding: "2rem", textAlign: "center" }}>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
           <h2>Something went wrong</h2>
-          <button onClick={() => reset()} style={{ marginTop: "1rem" }}>
+          <button onClick={() => reset()} style={{ marginTop: '1rem' }}>
             Try again
           </button>
         </div>

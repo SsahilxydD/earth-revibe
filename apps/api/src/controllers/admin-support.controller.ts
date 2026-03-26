@@ -1,6 +1,6 @@
-import type { Request, Response } from "express";
-import type { TicketStatus, TicketPriority } from "@earth-revibe/shared";
-import { supportService } from "../services/support.service";
+import type { Request, Response } from 'express';
+import type { TicketStatus, TicketPriority } from '@earth-revibe/shared';
+import { supportService } from '../services/support.service';
 
 export const adminSupportController = {
   async listAll(req: Request, res: Response) {

@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type {
   User,
@@ -24,9 +19,7 @@ export const authKeys = {
 
 // ─── useUser ────────────────────────────────────────────────────────────────
 
-export function useUser(
-  options?: Omit<UseQueryOptions<User, ApiError>, 'queryKey' | 'queryFn'>
-) {
+export function useUser(options?: Omit<UseQueryOptions<User, ApiError>, 'queryKey' | 'queryFn'>) {
   return useQuery<User, ApiError>({
     queryKey: authKeys.user,
     queryFn: ({ signal }) => api.get<User>('/auth/me', signal),

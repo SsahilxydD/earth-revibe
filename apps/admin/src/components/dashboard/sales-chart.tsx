@@ -1,12 +1,20 @@
-"use client";
+'use client';
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Card, Skeleton } from "@/components/ui";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import { Card, Skeleton } from '@/components/ui';
 
 function formatINR(value: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(value);
 }
@@ -19,7 +27,7 @@ interface SalesChartProps {
 export function SalesChart({ data, isLoading }: SalesChartProps) {
   const formatted = data.map((d) => ({
     ...d,
-    label: new Date(d.date).toLocaleDateString("en-IN", { month: "short", day: "numeric" }),
+    label: new Date(d.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
   }));
 
   return (
@@ -47,24 +55,24 @@ export function SalesChart({ data, isLoading }: SalesChartProps) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 11, fill: "#8E8E8E" }}
+                  tick={{ fontSize: 11, fill: '#8E8E8E' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "#8E8E8E" }}
+                  tick={{ fontSize: 11, fill: '#8E8E8E' }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)}
+                  tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v))}
                   width={45}
                 />
                 <Tooltip
-                  formatter={(value) => [formatINR(Number(value)), "Sales"]}
+                  formatter={(value) => [formatINR(Number(value)), 'Sales']}
                   contentStyle={{
-                    borderRadius: "8px",
-                    border: "1px solid #E5E5E5",
+                    borderRadius: '8px',
+                    border: '1px solid #E5E5E5',
                     fontSize: 13,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                   }}
                 />
                 <Area

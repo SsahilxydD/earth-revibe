@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { TicketStatus, TicketPriority } from "../enums";
+import { z } from 'zod';
+import { TicketStatus, TicketPriority } from '../enums';
 
 export const createTicketSchema = z.object({
   subject: z.string().min(5).max(200),

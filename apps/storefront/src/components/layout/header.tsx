@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { Search, Heart, ShoppingBag, ArrowLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useCartStore } from "@/stores/cart-store";
-import { useUiStore } from "@/stores/ui-store";
-import { SearchOverlay } from "./search-overlay";
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { Search, Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useCartStore } from '@/stores/cart-store';
+import { useUiStore } from '@/stores/ui-store';
+import { SearchOverlay } from './search-overlay';
 
 const NAV_LINKS = [
-  { label: "NEW ARRIVALS", href: "/categories/new-arrivals" },
-  { label: "SHIRTS", href: "/categories/shirts" },
-  { label: "T-SHIRTS", href: "/categories/t-shirts" },
-  { label: "OUTERWEAR", href: "/categories/outerwear" },
-  { label: "ALL PRODUCTS", href: "/products" },
-  { label: "BESTSELLERS", href: "/categories/bestsellers" },
+  { label: 'NEW ARRIVALS', href: '/categories/new-arrivals' },
+  { label: 'SHIRTS', href: '/categories/shirts' },
+  { label: 'T-SHIRTS', href: '/categories/t-shirts' },
+  { label: 'OUTERWEAR', href: '/categories/outerwear' },
+  { label: 'ALL PRODUCTS', href: '/products' },
+  { label: 'BESTSELLERS', href: '/categories/bestsellers' },
 ];
 
 export function Header() {
@@ -31,16 +31,15 @@ export function Header() {
 
   // Initialize from current scroll position to avoid wrong state on first frame
   const [scrolled, setScrolled] = useState(() =>
-    typeof window !== "undefined" ? window.scrollY > 10 : false
+    typeof window !== 'undefined' ? window.scrollY > 10 : false
   );
   const [logoTop, setLogoTop] = useState(() => {
-    if (typeof window === "undefined") return bannerHeight;
+    if (typeof window === 'undefined') return bannerHeight;
     return Math.max(0, bannerHeight - window.scrollY);
   });
 
-  const isProductDetail =
-    pathname.startsWith("/products/") && pathname !== "/products";
-  const isHomepage = pathname === "/";
+  const isProductDetail = pathname.startsWith('/products/') && pathname !== '/products';
+  const isHomepage = pathname === '/';
 
   // Lightweight scroll handler — no DOM reads, just math with fixed banner height
   const updatePositions = useCallback(() => {
@@ -58,8 +57,8 @@ export function Header() {
 
   useEffect(() => {
     updatePositions();
-    window.addEventListener("scroll", updatePositions, { passive: true });
-    return () => window.removeEventListener("scroll", updatePositions);
+    window.addEventListener('scroll', updatePositions, { passive: true });
+    return () => window.removeEventListener('scroll', updatePositions);
   }, [updatePositions]);
 
   return (
@@ -98,15 +97,15 @@ export function Header() {
       {/* ------------------------------------------------------------ */}
       <header
         className={cn(
-          "sticky top-0 z-40 w-full bg-white transition-all duration-300",
-          scrolled && "shadow-md",
-          isHomepage && "hidden md:block"
+          'sticky top-0 z-40 w-full bg-white transition-all duration-300',
+          scrolled && 'shadow-md',
+          isHomepage && 'hidden md:block'
         )}
       >
         <div
           className={cn(
-            "grid grid-cols-3 items-center px-4 transition-all duration-300 md:px-8 lg:px-12 xl:px-20",
-            scrolled ? "py-2" : "py-3"
+            'grid grid-cols-3 items-center px-4 transition-all duration-300 md:px-8 lg:px-12 xl:px-20',
+            scrolled ? 'py-2' : 'py-3'
           )}
         >
           <div className="flex items-center">
@@ -129,20 +128,19 @@ export function Header() {
                 width={160}
                 height={40}
                 priority
-                className={cn(
-                  "h-auto transition-all duration-300",
-                  scrolled ? "w-9" : "w-11"
-                )}
+                className={cn('h-auto transition-all duration-300', scrolled ? 'w-9' : 'w-11')}
               />
             </Link>
           </div>
 
           {/* Right icons: always on desktop, only on product detail mobile */}
           {/* Other mobile pages use the bottom dock for search/cart */}
-          <div className={cn(
-            "flex items-center justify-end gap-1",
-            !isProductDetail && "hidden md:flex"
-          )}>
+          <div
+            className={cn(
+              'flex items-center justify-end gap-1',
+              !isProductDetail && 'hidden md:flex'
+            )}
+          >
             <button
               onClick={openSearch}
               className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--color-surface)] transition-colors"
@@ -165,7 +163,7 @@ export function Header() {
               <ShoppingBag className="h-5 w-5" />
               {itemCount > 0 && (
                 <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-primary)] text-[10px] font-bold text-white">
-                  {itemCount > 99 ? "99+" : itemCount}
+                  {itemCount > 99 ? '99+' : itemCount}
                 </span>
               )}
             </button>
@@ -178,8 +176,8 @@ export function Header() {
               key={link.href}
               href={link.href}
               className={cn(
-                "text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-text)] transition-colors hover:text-[var(--color-muted)]",
-                link.label === "SALE" && "text-[var(--color-sale)]"
+                'text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-text)] transition-colors hover:text-[var(--color-muted)]',
+                link.label === 'SALE' && 'text-[var(--color-sale)]'
               )}
             >
               {link.label}

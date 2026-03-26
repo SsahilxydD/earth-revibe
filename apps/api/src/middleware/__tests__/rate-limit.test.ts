@@ -1,12 +1,12 @@
-import { describe, it, expect, afterEach } from "vitest";
-import { request, cleanupTestData, makeRegisterPayload } from "../../test/helpers";
+import { describe, it, expect, afterEach } from 'vitest';
+import { request, cleanupTestData, makeRegisterPayload } from '../../test/helpers';
 
 // Rate-limit integration tests are skipped in suite runs — they require real
 // rate limits (3/hour register) which conflict with other auth tests.
 // Run in isolation: NODE_ENV=development npx vitest run src/middleware/__tests__/rate-limit.test.ts
 const describeIf = describe.skip;
 
-describeIf("auth rate limiting", () => {
+describeIf('auth rate limiting', () => {
   const createdUserIds: string[] = [];
 
   afterEach(async () => {
@@ -14,13 +14,13 @@ describeIf("auth rate limiting", () => {
     createdUserIds.length = 0;
   });
 
-  it("should rate limit login after 5 failed attempts", async () => {
+  it('should rate limit login after 5 failed attempts', async () => {
     const responses: number[] = [];
 
     for (let i = 0; i < 7; i++) {
       const res = await request
-        .post("/api/v1/auth/login")
-        .send({ email: "fake@test.com", password: "Wrong1234" });
+        .post('/api/v1/auth/login')
+        .send({ email: 'fake@test.com', password: 'Wrong1234' });
       responses.push(res.status);
     }
 
@@ -30,14 +30,12 @@ describeIf("auth rate limiting", () => {
     expect(responses.slice(5).some((s) => s === 429)).toBe(true);
   });
 
-  it("should rate limit register after 3 attempts", async () => {
+  it('should rate limit register after 3 attempts', async () => {
     const responses: number[] = [];
 
     for (let i = 0; i < 5; i++) {
       const payload = makeRegisterPayload();
-      const res = await request
-        .post("/api/v1/auth/register")
-        .send(payload);
+      const res = await request.post('/api/v1/auth/register').send(payload);
       responses.push(res.status);
       if (res.body?.data?.user?.id) {
         createdUserIds.push(res.body.data.user.id);

@@ -1,20 +1,30 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
 export function formatPrice(amount: number): string {
-  return `\u20B9${amount.toLocaleString("en-IN")}`;
+  return `\u20B9${amount.toLocaleString('en-IN')}`;
 }
 
 export function formatDate(date: string): string {
   const d = new Date(date);
   const day = d.getDate();
   const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   const month = months[d.getMonth()];
   const year = d.getFullYear();
@@ -29,25 +39,25 @@ export function formatDate(date: string): string {
  * - Cloudflare URLs now request format=auto (WebP/AVIF) for smaller downloads.
  */
 export function getImageUrl(url: string, width?: number, thumbnailUrl?: string | null): string {
-  if (!url) return "/placeholder.png";
+  if (!url) return '/placeholder.png';
 
   // For small sizes, use the thumbnail (Cloudflare) if available
   if (width && width <= 600 && thumbnailUrl) {
     // Cloudflare Image Delivery URLs support /w=N,format=auto variant suffix
-    if (thumbnailUrl.includes("imagedelivery.net")) {
+    if (thumbnailUrl.includes('imagedelivery.net')) {
       return thumbnailUrl.replace(/\/public$/, `/w=${width},format=auto`);
     }
     return thumbnailUrl;
   }
 
   // Cloudflare full-size — still request format=auto
-  if (url.includes("imagedelivery.net")) {
-    return url.replace(/\/public$/, width ? `/w=${width},format=auto` : "/format=auto");
+  if (url.includes('imagedelivery.net')) {
+    return url.replace(/\/public$/, width ? `/w=${width},format=auto` : '/format=auto');
   }
 
   // Legacy Cloudinary support
-  if (width && url.includes("cloudinary.com")) {
-    return url.replace("/upload/", `/upload/w_${width},f_auto,q_auto/`);
+  if (width && url.includes('cloudinary.com')) {
+    return url.replace('/upload/', `/upload/w_${width},f_auto,q_auto/`);
   }
 
   return url;
@@ -60,10 +70,10 @@ export function getImageUrl(url: string, width?: number, thumbnailUrl?: string |
  * Pre-computed base64 so it works in both server and client components.
  */
 export const BLUR_DATA_URL =
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmMGVlZWIiLz48L3N2Zz4=";
+  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmMGVlZWIiLz48L3N2Zz4=';
 
 export function truncate(str: string, len: number): string {
-  if (!str) return "";
+  if (!str) return '';
   if (str.length <= len) return str;
   return `${str.slice(0, len).trimEnd()}...`;
 }

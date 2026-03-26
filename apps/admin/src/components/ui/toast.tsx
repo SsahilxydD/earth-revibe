@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { create } from "zustand";
-import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { create } from 'zustand';
+import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 
 interface Toast {
   id: string;
-  type: "success" | "error" | "warning" | "info";
+  type: 'success' | 'error' | 'warning' | 'info';
   message: string;
 }
 
 interface ToastState {
   toasts: Toast[];
-  addToast: (type: Toast["type"], message: string) => void;
+  addToast: (type: Toast['type'], message: string) => void;
   removeToast: (id: string) => void;
 }
 
@@ -24,15 +24,14 @@ export const useToastStore = create<ToastState>((set) => ({
       set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
     }, 5000);
   },
-  removeToast: (id) =>
-    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
+  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 }));
 
 export const toast = {
-  success: (message: string) => useToastStore.getState().addToast("success", message),
-  error: (message: string) => useToastStore.getState().addToast("error", message),
-  warning: (message: string) => useToastStore.getState().addToast("warning", message),
-  info: (message: string) => useToastStore.getState().addToast("info", message),
+  success: (message: string) => useToastStore.getState().addToast('success', message),
+  error: (message: string) => useToastStore.getState().addToast('error', message),
+  warning: (message: string) => useToastStore.getState().addToast('warning', message),
+  info: (message: string) => useToastStore.getState().addToast('info', message),
 };
 
 const icons = {
@@ -43,10 +42,10 @@ const icons = {
 };
 
 const styles = {
-  success: "bg-success text-white",
-  error: "bg-error text-white",
-  warning: "bg-warning text-white",
-  info: "bg-info text-white",
+  success: 'bg-success text-white',
+  error: 'bg-error text-white',
+  warning: 'bg-warning text-white',
+  info: 'bg-info text-white',
 };
 
 export function ToastContainer() {

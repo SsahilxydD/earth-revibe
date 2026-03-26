@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import Link from "next/link";
-import { ArrowLeft, Mail } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api-client";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import Link from 'next/link';
+import { ArrowLeft, Mail } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api-client';
 
 interface ForgotPasswordForm {
   email: string;
@@ -14,23 +14,23 @@ interface ForgotPasswordForm {
 
 export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
-  const [serverError, setServerError] = useState("");
+  const [serverError, setServerError] = useState('');
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<ForgotPasswordForm>({
-    defaultValues: { email: "" },
+    defaultValues: { email: '' },
   });
 
   const onSubmit = async (data: ForgotPasswordForm) => {
-    setServerError("");
+    setServerError('');
     try {
-      await api.post("/auth/forgot-password", data);
+      await api.post('/auth/forgot-password', data);
       setSubmitted(true);
     } catch (err: any) {
-      setServerError(err?.message || "Something went wrong");
+      setServerError(err?.message || 'Something went wrong');
     }
   };
 
@@ -40,12 +40,10 @@ export default function ForgotPasswordPage() {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-surface)]">
           <Mail size={24} className="text-[var(--color-primary)]" />
         </div>
-        <h1 className="mb-2 text-xl font-bold uppercase tracking-wider">
-          Check Your Email
-        </h1>
+        <h1 className="mb-2 text-xl font-bold uppercase tracking-wider">Check Your Email</h1>
         <p className="mb-6 text-sm text-[var(--color-muted)]">
-          If an account exists with that email, we&apos;ve sent password reset
-          instructions to your inbox.
+          If an account exists with that email, we&apos;ve sent password reset instructions to your
+          inbox.
         </p>
         <Link
           href="/auth/login"
@@ -80,11 +78,11 @@ export default function ForgotPasswordPage() {
           placeholder="you@example.com"
           autoComplete="email"
           error={errors.email?.message}
-          {...register("email", {
-            required: "Email is required",
+          {...register('email', {
+            required: 'Email is required',
             pattern: {
               value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: "Invalid email address",
+              message: 'Invalid email address',
             },
           })}
         />

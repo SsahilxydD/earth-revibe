@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import Image from "next/image";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, ShoppingBag, Trash2 } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api-client";
-import { formatPrice, getImageUrl } from "@/lib/utils";
-import { useCartStore } from "@/stores/cart-store";
-import { useToast } from "@/providers";
+import Link from 'next/link';
+import Image from 'next/image';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { api } from '@/lib/api-client';
+import { formatPrice, getImageUrl } from '@/lib/utils';
+import { useCartStore } from '@/stores/cart-store';
+import { useToast } from '@/providers';
 
 interface RawWishlistItem {
   id: string;
@@ -40,7 +40,7 @@ function normalizeWishlistItems(raw: RawWishlistItem[]): WishlistItem[] {
     productId: item.productId,
     name: item.product.name,
     slug: item.product.slug,
-    image: item.product.images?.[0]?.url || "",
+    image: item.product.images?.[0]?.url || '',
     price: item.product.price,
     compareAtPrice: item.product.compareAtPrice,
     inStock: true, // If it's in the DB, the product exists
@@ -53,21 +53,20 @@ export default function WishlistPage() {
   const { addToast } = useToast();
 
   const { data: rawItems, isLoading } = useQuery({
-    queryKey: ["wishlist"],
-    queryFn: () => api.get<RawWishlistItem[]>("/wishlist"),
+    queryKey: ['wishlist'],
+    queryFn: () => api.get<RawWishlistItem[]>('/wishlist'),
   });
 
   const items = rawItems ? normalizeWishlistItems(rawItems) : undefined;
 
   const removeMutation = useMutation({
-    mutationFn: (productId: string) =>
-      api.delete(`/wishlist/${productId}`),
+    mutationFn: (productId: string) => api.delete(`/wishlist/${productId}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
-      addToast("Removed from wishlist", "success");
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      addToast('Removed from wishlist', 'success');
     },
     onError: (err: any) => {
-      addToast(err?.message || "Failed to remove item", "error");
+      addToast(err?.message || 'Failed to remove item', 'error');
     },
   });
 
@@ -81,7 +80,10 @@ export default function WishlistPage() {
 
   if (!items || items.length === 0) {
     return (
-      <div style={{ paddingTop: 80, paddingBottom: 80 }} className="flex flex-col items-center text-center">
+      <div
+        style={{ paddingTop: 80, paddingBottom: 80 }}
+        className="flex flex-col items-center text-center"
+      >
         <Heart size={40} strokeWidth={1} className="text-[#c0c0c0]" />
         <h2 style={{ marginTop: 24 }} className="text-xs font-bold uppercase tracking-[0.2em]">
           Nothing saved yet
@@ -102,14 +104,14 @@ export default function WishlistPage() {
 
   return (
     <div>
-      <h2 className="text-sm font-bold uppercase tracking-wider">
-        Wishlist
-      </h2>
+      <h2 className="text-sm font-bold uppercase tracking-wider">Wishlist</h2>
       <p className="mt-2 text-xs text-[var(--color-muted)]">
-        {items.length} {items.length === 1 ? "item" : "items"} saved
+        {items.length} {items.length === 1 ? 'item' : 'items'} saved
       </p>
 
-      <hr style={{ marginTop: 28, marginBottom: 28, border: "none", borderTop: "1px solid #e5e5e5" }} />
+      <hr
+        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
+      />
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 md:gap-4">
         {items.map((item) => (
@@ -129,10 +131,7 @@ export default function WishlistPage() {
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
-                    <ShoppingBag
-                      size={32}
-                      className="text-[var(--color-muted)]"
-                    />
+                    <ShoppingBag size={32} className="text-[var(--color-muted)]" />
                   </div>
                 )}
                 {!item.inStock && (
@@ -147,14 +146,10 @@ export default function WishlistPage() {
 
             <div className="p-3">
               <Link href={`/products/${item.slug}`}>
-                <h3 className="text-xs font-semibold leading-tight line-clamp-2">
-                  {item.name}
-                </h3>
+                <h3 className="text-xs font-semibold leading-tight line-clamp-2">{item.name}</h3>
               </Link>
               <div className="mt-1.5 flex items-center gap-2">
-                <span className="text-sm font-bold">
-                  {formatPrice(item.price)}
-                </span>
+                <span className="text-sm font-bold">{formatPrice(item.price)}</span>
                 {item.compareAtPrice && item.compareAtPrice > item.price && (
                   <span className="text-xs text-[var(--color-muted)] line-through">
                     {formatPrice(item.compareAtPrice)}
@@ -182,11 +177,11 @@ export default function WishlistPage() {
                         image: item.image,
                         price: item.price,
                         compareAtPrice: item.compareAtPrice || undefined,
-                        size: "M",
-                        color: "Default",
+                        size: 'M',
+                        color: 'Default',
                         maxQuantity: 10,
                       });
-                      addToast("Added to cart", "success");
+                      addToast('Added to cart', 'success');
                     }}
                     className="flex h-8 flex-1 items-center justify-center gap-1 rounded-[var(--button-radius)] bg-[var(--color-primary)] text-[10px] font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#2a2a2a]"
                   >

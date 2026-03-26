@@ -1,13 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Request, Response } from "express";
-import { ApiError } from "../../utils/api-error";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Request, Response } from 'express';
+import { ApiError } from '../../utils/api-error';
 
 // ---------------------------------------------------------------------------
 // Mock @earth-revibe/db before importing the controller so all Prisma calls
 // are intercepted.  The factory must be a function that returns the mock
 // shape; Vitest hoists vi.mock calls to the top of the module.
 // ---------------------------------------------------------------------------
-vi.mock("@earth-revibe/db", () => ({
+vi.mock('@earth-revibe/db', () => ({
   prisma: {
     productVariant: {
       findMany: vi.fn(),
@@ -26,8 +26,8 @@ vi.mock("@earth-revibe/db", () => ({
 }));
 
 // Import after mock so the module picks up the stubbed prisma
-import { adminInventoryController } from "../admin-inventory.controller";
-import { prisma } from "@earth-revibe/db";
+import { adminInventoryController } from '../admin-inventory.controller';
+import { prisma } from '@earth-revibe/db';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -57,11 +57,11 @@ function makeRes(): { res: Response; jsonSpy: ReturnType<typeof vi.fn> } {
 
 /** A reusable fixture representing a single ProductVariant row */
 const VARIANT_FIXTURE = {
-  id: "variant-1",
+  id: 'variant-1',
   stock: 15,
-  sku: "SKU-001",
-  product: { id: "product-1", name: "Eco Bag" },
-  updatedAt: new Date("2026-01-01"),
+  sku: 'SKU-001',
+  product: { id: 'product-1', name: 'Eco Bag' },
+  updatedAt: new Date('2026-01-01'),
 };
 
 // Typed shortcuts to the mocked functions
@@ -83,7 +83,7 @@ beforeEach(() => {
 // ===========================================================================
 // 1. listInventory
 // ===========================================================================
-describe("adminInventoryController.listInventory", () => {
+describe('adminInventoryController.listInventory', () => {
   const VARIANTS = [VARIANT_FIXTURE];
   const TOTAL = 1;
 
@@ -97,7 +97,7 @@ describe("adminInventoryController.listInventory", () => {
 
   // --- happy path / default behaviour ---
 
-  it("returns paginated variants with defaults when no query params given", async () => {
+  it('returns paginated variants with defaults when no query params given', async () => {
     const { req, res, jsonSpy } = setup();
     await adminInventoryController.listInventory(req, res);
 
@@ -113,8 +113,8 @@ describe("adminInventoryController.listInventory", () => {
     expect(response.data.totalPages).toBe(1);
   });
 
-  it("applies correct skip/take for page 2, limit 5", async () => {
-    const { req, res } = setup({ page: "2", limit: "5" });
+  it('applies correct skip/take for page 2, limit 5', async () => {
+    const { req, res } = setup({ page: '2', limit: '5' });
     await adminInventoryController.listInventory(req, res);
 
     const findManyArgs = mockFindMany.mock.calls[0][0];
@@ -122,8 +122,8 @@ describe("adminInventoryController.listInventory", () => {
     expect(findManyArgs.take).toBe(5);
   });
 
-  it("falls back to default 20 when limit=0 is passed (0 is falsy)", async () => {
-    const { req, res } = setup({ limit: "0" });
+  it('falls back to default 20 when limit=0 is passed (0 is falsy)', async () => {
+    const { req, res } = setup({ limit: '0' });
     await adminInventoryController.listInventory(req, res);
 
     const findManyArgs = mockFindMany.mock.calls[0][0];
@@ -131,16 +131,16 @@ describe("adminInventoryController.listInventory", () => {
     expect(findManyArgs.take).toBe(20);
   });
 
-  it("clamps limit to maximum 100 when limit=200 is passed", async () => {
-    const { req, res } = setup({ limit: "200" });
+  it('clamps limit to maximum 100 when limit=200 is passed', async () => {
+    const { req, res } = setup({ limit: '200' });
     await adminInventoryController.listInventory(req, res);
 
     const findManyArgs = mockFindMany.mock.calls[0][0];
     expect(findManyArgs.take).toBe(100);
   });
 
-  it("clamps page to minimum 1 when page=0 is passed", async () => {
-    const { req, res, jsonSpy } = setup({ page: "0" });
+  it('clamps page to minimum 1 when page=0 is passed', async () => {
+    const { req, res, jsonSpy } = setup({ page: '0' });
     await adminInventoryController.listInventory(req, res);
 
     expect(jsonSpy.mock.calls[0][0].data.page).toBe(1);
@@ -148,8 +148,8 @@ describe("adminInventoryController.listInventory", () => {
 
   // --- totalPages edge case ---
 
-  it("calculates totalPages correctly for non-exact division", async () => {
-    const req = makeReq({ query: { limit: "10" } });
+  it('calculates totalPages correctly for non-exact division', async () => {
+    const req = makeReq({ query: { limit: '10' } });
     const { res, jsonSpy } = makeRes();
     mockFindMany.mockResolvedValue([]);
     mockCount.mockResolvedValue(21);
@@ -160,17 +160,17 @@ describe("adminInventoryController.listInventory", () => {
 
   // --- search filter ---
 
-  it("applies case-insensitive product name search filter", async () => {
-    const { req, res } = setup({ search: "eco" });
+  it('applies case-insensitive product name search filter', async () => {
+    const { req, res } = setup({ search: 'eco' });
     await adminInventoryController.listInventory(req, res);
 
     const where = mockFindMany.mock.calls[0][0].where;
     expect(where.product).toEqual({
-      name: { contains: "eco", mode: "insensitive" },
+      name: { contains: 'eco', mode: 'insensitive' },
     });
   });
 
-  it("does NOT add product filter when search is absent", async () => {
+  it('does NOT add product filter when search is absent', async () => {
     const { req, res } = setup();
     await adminInventoryController.listInventory(req, res);
 
@@ -180,32 +180,32 @@ describe("adminInventoryController.listInventory", () => {
 
   // --- lowStock filter ---
 
-  it("applies lowStock=low filter: stock gt 0, lt threshold (default 10)", async () => {
-    const { req, res } = setup({ lowStock: "low" });
+  it('applies lowStock=low filter: stock gt 0, lt threshold (default 10)', async () => {
+    const { req, res } = setup({ lowStock: 'low' });
     await adminInventoryController.listInventory(req, res);
 
     const where = mockFindMany.mock.calls[0][0].where;
     expect(where.stock).toEqual({ gt: 0, lt: 10 });
   });
 
-  it("applies lowStock=low with custom threshold", async () => {
-    const { req, res } = setup({ lowStock: "low", threshold: "25" });
+  it('applies lowStock=low with custom threshold', async () => {
+    const { req, res } = setup({ lowStock: 'low', threshold: '25' });
     await adminInventoryController.listInventory(req, res);
 
     const where = mockFindMany.mock.calls[0][0].where;
     expect(where.stock).toEqual({ gt: 0, lt: 25 });
   });
 
-  it("applies lowStock=out filter: stock === 0", async () => {
-    const { req, res } = setup({ lowStock: "out" });
+  it('applies lowStock=out filter: stock === 0', async () => {
+    const { req, res } = setup({ lowStock: 'out' });
     await adminInventoryController.listInventory(req, res);
 
     const where = mockFindMany.mock.calls[0][0].where;
     expect(where.stock).toBe(0);
   });
 
-  it("does not add stock filter for unknown lowStock value", async () => {
-    const { req, res } = setup({ lowStock: "all" });
+  it('does not add stock filter for unknown lowStock value', async () => {
+    const { req, res } = setup({ lowStock: 'all' });
     await adminInventoryController.listInventory(req, res);
 
     const where = mockFindMany.mock.calls[0][0].where;
@@ -214,54 +214,54 @@ describe("adminInventoryController.listInventory", () => {
 
   // --- sortBy options ---
 
-  it("sorts by stock ascending (default)", async () => {
+  it('sorts by stock ascending (default)', async () => {
     const { req, res } = setup();
     await adminInventoryController.listInventory(req, res);
 
     const { orderBy } = mockFindMany.mock.calls[0][0];
-    expect(orderBy).toEqual({ stock: "asc" });
+    expect(orderBy).toEqual({ stock: 'asc' });
   });
 
-  it("sorts by stock_asc explicitly", async () => {
-    const { req, res } = setup({ sortBy: "stock_asc" });
+  it('sorts by stock_asc explicitly', async () => {
+    const { req, res } = setup({ sortBy: 'stock_asc' });
     await adminInventoryController.listInventory(req, res);
 
-    expect(mockFindMany.mock.calls[0][0].orderBy).toEqual({ stock: "asc" });
+    expect(mockFindMany.mock.calls[0][0].orderBy).toEqual({ stock: 'asc' });
   });
 
-  it("sorts by stock_desc", async () => {
-    const { req, res } = setup({ sortBy: "stock_desc" });
+  it('sorts by stock_desc', async () => {
+    const { req, res } = setup({ sortBy: 'stock_desc' });
     await adminInventoryController.listInventory(req, res);
 
-    expect(mockFindMany.mock.calls[0][0].orderBy).toEqual({ stock: "desc" });
+    expect(mockFindMany.mock.calls[0][0].orderBy).toEqual({ stock: 'desc' });
   });
 
-  it("sorts by product_name ascending", async () => {
-    const { req, res } = setup({ sortBy: "product_name" });
+  it('sorts by product_name ascending', async () => {
+    const { req, res } = setup({ sortBy: 'product_name' });
     await adminInventoryController.listInventory(req, res);
 
     expect(mockFindMany.mock.calls[0][0].orderBy).toEqual({
-      product: { name: "asc" },
+      product: { name: 'asc' },
     });
   });
 
-  it("sorts by updated_at descending", async () => {
-    const { req, res } = setup({ sortBy: "updated_at" });
+  it('sorts by updated_at descending', async () => {
+    const { req, res } = setup({ sortBy: 'updated_at' });
     await adminInventoryController.listInventory(req, res);
 
-    expect(mockFindMany.mock.calls[0][0].orderBy).toEqual({ updatedAt: "desc" });
+    expect(mockFindMany.mock.calls[0][0].orderBy).toEqual({ updatedAt: 'desc' });
   });
 
-  it("falls back to stock asc for an unknown sortBy value", async () => {
-    const { req, res } = setup({ sortBy: "invalid_sort" });
+  it('falls back to stock asc for an unknown sortBy value', async () => {
+    const { req, res } = setup({ sortBy: 'invalid_sort' });
     await adminInventoryController.listInventory(req, res);
 
-    expect(mockFindMany.mock.calls[0][0].orderBy).toEqual({ stock: "asc" });
+    expect(mockFindMany.mock.calls[0][0].orderBy).toEqual({ stock: 'asc' });
   });
 
   // --- prisma include shape ---
 
-  it("includes product with primary image select in findMany", async () => {
+  it('includes product with primary image select in findMany', async () => {
     const { req, res } = setup();
     await adminInventoryController.listInventory(req, res);
 
@@ -277,13 +277,13 @@ describe("adminInventoryController.listInventory", () => {
 
   // --- combined filters ---
 
-  it("combines search AND lowStock=out filters simultaneously", async () => {
-    const { req, res } = setup({ search: "bamboo", lowStock: "out" });
+  it('combines search AND lowStock=out filters simultaneously', async () => {
+    const { req, res } = setup({ search: 'bamboo', lowStock: 'out' });
     await adminInventoryController.listInventory(req, res);
 
     const where = mockFindMany.mock.calls[0][0].where;
     expect(where.product).toEqual({
-      name: { contains: "bamboo", mode: "insensitive" },
+      name: { contains: 'bamboo', mode: 'insensitive' },
     });
     expect(where.stock).toBe(0);
 
@@ -293,7 +293,7 @@ describe("adminInventoryController.listInventory", () => {
 
   // --- empty result ---
 
-  it("returns empty variants array and totalPages=0 when no rows exist", async () => {
+  it('returns empty variants array and totalPages=0 when no rows exist', async () => {
     const req = makeReq();
     const { res, jsonSpy } = makeRes();
     mockFindMany.mockResolvedValue([]);
@@ -309,8 +309,8 @@ describe("adminInventoryController.listInventory", () => {
 // ===========================================================================
 // 2. updateStock
 // ===========================================================================
-describe("adminInventoryController.updateStock", () => {
-  const VARIANT_ID = "variant-abc";
+describe('adminInventoryController.updateStock', () => {
+  const VARIANT_ID = 'variant-abc';
 
   function setup(body: unknown, variantId = VARIANT_ID) {
     const req = makeReq({ params: { variantId }, body });
@@ -320,7 +320,7 @@ describe("adminInventoryController.updateStock", () => {
 
   // --- happy path ---
 
-  it("updates stock and returns the updated variant", async () => {
+  it('updates stock and returns the updated variant', async () => {
     const updatedVariant = { ...VARIANT_FIXTURE, stock: 50 };
     mockFindUnique.mockResolvedValue(VARIANT_FIXTURE);
     mockUpdate.mockResolvedValue(updatedVariant);
@@ -337,54 +337,50 @@ describe("adminInventoryController.updateStock", () => {
     expect(jsonSpy.mock.calls[0][0]).toEqual({ success: true, data: updatedVariant });
   });
 
-  it("accepts stock=0 (zero is a valid non-negative value)", async () => {
+  it('accepts stock=0 (zero is a valid non-negative value)', async () => {
     mockFindUnique.mockResolvedValue(VARIANT_FIXTURE);
     mockUpdate.mockResolvedValue({ ...VARIANT_FIXTURE, stock: 0 });
 
     const { req, res } = setup({ stock: 0 });
     await adminInventoryController.updateStock(req, res);
 
-    expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { stock: 0 } })
-    );
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: { stock: 0 } }));
   });
 
   // --- validation failures ---
 
-  it("throws ApiError.badRequest when stock is undefined", async () => {
+  it('throws ApiError.badRequest when stock is undefined', async () => {
     const { req, res } = setup({});
-    await expect(adminInventoryController.updateStock(req, res)).rejects.toThrow(
-      ApiError
-    );
+    await expect(adminInventoryController.updateStock(req, res)).rejects.toThrow(ApiError);
     await expect(adminInventoryController.updateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
-      message: "Stock must be a non-negative number",
+      message: 'Stock must be a non-negative number',
     });
   });
 
-  it("throws ApiError.badRequest when stock is a string", async () => {
-    const { req, res } = setup({ stock: "10" });
+  it('throws ApiError.badRequest when stock is a string', async () => {
+    const { req, res } = setup({ stock: '10' });
     await expect(adminInventoryController.updateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
     });
   });
 
-  it("throws ApiError.badRequest when stock is negative", async () => {
+  it('throws ApiError.badRequest when stock is negative', async () => {
     const { req, res } = setup({ stock: -1 });
     await expect(adminInventoryController.updateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
-      message: "Stock must be a non-negative number",
+      message: 'Stock must be a non-negative number',
     });
   });
 
-  it("throws ApiError.badRequest when stock is null", async () => {
+  it('throws ApiError.badRequest when stock is null', async () => {
     const { req, res } = setup({ stock: null });
     await expect(adminInventoryController.updateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
     });
   });
 
-  it("throws ApiError.badRequest when stock is NaN (passed as number type edge case)", async () => {
+  it('throws ApiError.badRequest when stock is NaN (passed as number type edge case)', async () => {
     // NaN satisfies typeof === 'number' but is not a valid stock value;
     // the controller checks stock < 0 — NaN < 0 is false, but
     // passing undefined covers the undefined branch; we test a real NaN too.
@@ -395,19 +391,22 @@ describe("adminInventoryController.updateStock", () => {
     // the guard at least does not crash.
     // If this assertion fails, the controller guard was tightened (good).
     await expect(async () =>
-      adminInventoryController.updateStock(makeReq({ params: { variantId: VARIANT_ID }, body: { stock: NaN } }), makeRes().res)
+      adminInventoryController.updateStock(
+        makeReq({ params: { variantId: VARIANT_ID }, body: { stock: NaN } }),
+        makeRes().res
+      )
     ).not.toThrow(); // NaN slips through current guard — document, not fix
   });
 
   // --- not found ---
 
-  it("throws ApiError.notFound when the variant does not exist", async () => {
+  it('throws ApiError.notFound when the variant does not exist', async () => {
     mockFindUnique.mockResolvedValue(null);
 
     const { req, res } = setup({ stock: 5 });
     await expect(adminInventoryController.updateStock(req, res)).rejects.toMatchObject({
       statusCode: 404,
-      message: "Product variant not found",
+      message: 'Product variant not found',
     });
 
     expect(mockUpdate).not.toHaveBeenCalled();
@@ -417,8 +416,8 @@ describe("adminInventoryController.updateStock", () => {
 // ===========================================================================
 // 3. adjustStock
 // ===========================================================================
-describe("adminInventoryController.adjustStock", () => {
-  const VARIANT_ID = "variant-xyz";
+describe('adminInventoryController.adjustStock', () => {
+  const VARIANT_ID = 'variant-xyz';
 
   function setup(body: unknown, variantId = VARIANT_ID) {
     const req = makeReq({ params: { variantId }, body });
@@ -428,13 +427,13 @@ describe("adminInventoryController.adjustStock", () => {
 
   // --- happy path ---
 
-  it("returns previous/new stock and the adjustment details on success", async () => {
+  it('returns previous/new stock and the adjustment details on success', async () => {
     const existingVariant = { ...VARIANT_FIXTURE, id: VARIANT_ID, stock: 20 };
     const updatedVariant = { ...existingVariant, stock: 25 };
     mockFindUnique.mockResolvedValue(existingVariant);
     mockUpdate.mockResolvedValue(updatedVariant);
 
-    const { req, res, jsonSpy } = setup({ adjustment: 5, reason: "Restock from supplier" });
+    const { req, res, jsonSpy } = setup({ adjustment: 5, reason: 'Restock from supplier' });
     await adminInventoryController.adjustStock(req, res);
 
     const response = jsonSpy.mock.calls[0][0];
@@ -442,64 +441,60 @@ describe("adminInventoryController.adjustStock", () => {
     expect(response.data.previousStock).toBe(20);
     expect(response.data.newStock).toBe(25);
     expect(response.data.adjustment).toBe(5);
-    expect(response.data.reason).toBe("Restock from supplier");
+    expect(response.data.reason).toBe('Restock from supplier');
     expect(response.data.variant).toBe(updatedVariant);
   });
 
-  it("applies a negative adjustment (stock reduction)", async () => {
+  it('applies a negative adjustment (stock reduction)', async () => {
     const existingVariant = { ...VARIANT_FIXTURE, id: VARIANT_ID, stock: 10 };
     mockFindUnique.mockResolvedValue(existingVariant);
     mockUpdate.mockResolvedValue({ ...existingVariant, stock: 7 });
 
-    const { req, res, jsonSpy } = setup({ adjustment: -3, reason: "Damaged goods" });
+    const { req, res, jsonSpy } = setup({ adjustment: -3, reason: 'Damaged goods' });
     await adminInventoryController.adjustStock(req, res);
 
-    expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { stock: 7 } })
-    );
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: { stock: 7 } }));
     expect(jsonSpy.mock.calls[0][0].data.newStock).toBe(7);
   });
 
-  it("passes exact newStock to the update call", async () => {
+  it('passes exact newStock to the update call', async () => {
     const existingVariant = { ...VARIANT_FIXTURE, id: VARIANT_ID, stock: 100 };
     mockFindUnique.mockResolvedValue(existingVariant);
     mockUpdate.mockResolvedValue({ ...existingVariant, stock: 150 });
 
-    const { req, res } = setup({ adjustment: 50, reason: "Annual top-up" });
+    const { req, res } = setup({ adjustment: 50, reason: 'Annual top-up' });
     await adminInventoryController.adjustStock(req, res);
 
-    expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { stock: 150 } })
-    );
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: { stock: 150 } }));
   });
 
   // --- adjustment validation ---
 
-  it("throws ApiError.badRequest when adjustment is undefined", async () => {
-    const { req, res } = setup({ reason: "some reason" });
+  it('throws ApiError.badRequest when adjustment is undefined', async () => {
+    const { req, res } = setup({ reason: 'some reason' });
     await expect(adminInventoryController.adjustStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
-      message: "Adjustment must be a non-zero number",
+      message: 'Adjustment must be a non-zero number',
     });
   });
 
-  it("throws ApiError.badRequest when adjustment is 0", async () => {
-    const { req, res } = setup({ adjustment: 0, reason: "test" });
+  it('throws ApiError.badRequest when adjustment is 0', async () => {
+    const { req, res } = setup({ adjustment: 0, reason: 'test' });
     await expect(adminInventoryController.adjustStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
-      message: "Adjustment must be a non-zero number",
+      message: 'Adjustment must be a non-zero number',
     });
   });
 
-  it("throws ApiError.badRequest when adjustment is a string", async () => {
-    const { req, res } = setup({ adjustment: "5", reason: "test" });
+  it('throws ApiError.badRequest when adjustment is a string', async () => {
+    const { req, res } = setup({ adjustment: '5', reason: 'test' });
     await expect(adminInventoryController.adjustStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
     });
   });
 
-  it("throws ApiError.badRequest when adjustment is null", async () => {
-    const { req, res } = setup({ adjustment: null, reason: "test" });
+  it('throws ApiError.badRequest when adjustment is null', async () => {
+    const { req, res } = setup({ adjustment: null, reason: 'test' });
     await expect(adminInventoryController.adjustStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
     });
@@ -507,31 +502,31 @@ describe("adminInventoryController.adjustStock", () => {
 
   // --- reason validation ---
 
-  it("throws ApiError.badRequest when reason is absent", async () => {
+  it('throws ApiError.badRequest when reason is absent', async () => {
     const { req, res } = setup({ adjustment: 5 });
     await expect(adminInventoryController.adjustStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
-      message: "Reason is required for stock adjustment",
+      message: 'Reason is required for stock adjustment',
     });
   });
 
-  it("throws ApiError.badRequest when reason is empty string", async () => {
-    const { req, res } = setup({ adjustment: 5, reason: "" });
+  it('throws ApiError.badRequest when reason is empty string', async () => {
+    const { req, res } = setup({ adjustment: 5, reason: '' });
     await expect(adminInventoryController.adjustStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
-      message: "Reason is required for stock adjustment",
+      message: 'Reason is required for stock adjustment',
     });
   });
 
-  it("throws ApiError.badRequest when reason is whitespace only", async () => {
-    const { req, res } = setup({ adjustment: 5, reason: "   " });
+  it('throws ApiError.badRequest when reason is whitespace only', async () => {
+    const { req, res } = setup({ adjustment: 5, reason: '   ' });
     await expect(adminInventoryController.adjustStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
-      message: "Reason is required for stock adjustment",
+      message: 'Reason is required for stock adjustment',
     });
   });
 
-  it("throws ApiError.badRequest when reason is a non-string type", async () => {
+  it('throws ApiError.badRequest when reason is a non-string type', async () => {
     const { req, res } = setup({ adjustment: 5, reason: 123 });
     await expect(adminInventoryController.adjustStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
@@ -540,22 +535,22 @@ describe("adminInventoryController.adjustStock", () => {
 
   // --- not found ---
 
-  it("throws ApiError.notFound when variant does not exist", async () => {
+  it('throws ApiError.notFound when variant does not exist', async () => {
     mockFindUnique.mockResolvedValue(null);
-    const { req, res } = setup({ adjustment: 5, reason: "Restock" });
+    const { req, res } = setup({ adjustment: 5, reason: 'Restock' });
     await expect(adminInventoryController.adjustStock(req, res)).rejects.toMatchObject({
       statusCode: 404,
-      message: "Product variant not found",
+      message: 'Product variant not found',
     });
   });
 
   // --- below-zero guard ---
 
-  it("throws ApiError.badRequest when adjustment would drive stock below 0", async () => {
+  it('throws ApiError.badRequest when adjustment would drive stock below 0', async () => {
     const existingVariant = { ...VARIANT_FIXTURE, id: VARIANT_ID, stock: 3 };
     mockFindUnique.mockResolvedValue(existingVariant);
 
-    const { req, res } = setup({ adjustment: -10, reason: "Write-off" });
+    const { req, res } = setup({ adjustment: -10, reason: 'Write-off' });
     await expect(adminInventoryController.adjustStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
     });
@@ -563,7 +558,10 @@ describe("adminInventoryController.adjustStock", () => {
     // The error message should reference both the adjustment and current stock
     await expect(
       adminInventoryController.adjustStock(
-        makeReq({ params: { variantId: VARIANT_ID }, body: { adjustment: -10, reason: "Write-off" } }),
+        makeReq({
+          params: { variantId: VARIANT_ID },
+          body: { adjustment: -10, reason: 'Write-off' },
+        }),
         makeRes().res
       )
     ).rejects.toThrow(`Cannot adjust stock by -10. Current stock is 3`);
@@ -571,12 +569,12 @@ describe("adminInventoryController.adjustStock", () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  it("does NOT throw when adjustment exactly zeros out the stock", async () => {
+  it('does NOT throw when adjustment exactly zeros out the stock', async () => {
     const existingVariant = { ...VARIANT_FIXTURE, id: VARIANT_ID, stock: 5 };
     mockFindUnique.mockResolvedValue(existingVariant);
     mockUpdate.mockResolvedValue({ ...existingVariant, stock: 0 });
 
-    const { req, res, jsonSpy } = setup({ adjustment: -5, reason: "Full clearance" });
+    const { req, res, jsonSpy } = setup({ adjustment: -5, reason: 'Full clearance' });
     await adminInventoryController.adjustStock(req, res);
 
     expect(jsonSpy.mock.calls[0][0].data.newStock).toBe(0);
@@ -586,7 +584,7 @@ describe("adminInventoryController.adjustStock", () => {
 // ===========================================================================
 // 4. bulkUpdateStock
 // ===========================================================================
-describe("adminInventoryController.bulkUpdateStock", () => {
+describe('adminInventoryController.bulkUpdateStock', () => {
   function setup(body: unknown) {
     const req = makeReq({ body });
     const { res, jsonSpy } = makeRes();
@@ -595,16 +593,16 @@ describe("adminInventoryController.bulkUpdateStock", () => {
 
   // --- happy path ---
 
-  it("runs all updates in a transaction and returns results with count", async () => {
+  it('runs all updates in a transaction and returns results with count', async () => {
     const updatedVariants = [
-      { ...VARIANT_FIXTURE, id: "v1", stock: 10 },
-      { ...VARIANT_FIXTURE, id: "v2", stock: 20 },
+      { ...VARIANT_FIXTURE, id: 'v1', stock: 10 },
+      { ...VARIANT_FIXTURE, id: 'v2', stock: 20 },
     ];
     mockTransaction.mockResolvedValue(updatedVariants);
 
     const updates = [
-      { variantId: "v1", stock: 10 },
-      { variantId: "v2", stock: 20 },
+      { variantId: 'v1', stock: 10 },
+      { variantId: 'v2', stock: 20 },
     ];
 
     const { req, res, jsonSpy } = setup({ updates });
@@ -617,10 +615,10 @@ describe("adminInventoryController.bulkUpdateStock", () => {
     expect(response.data.updatedCount).toBe(2);
   });
 
-  it("passes the correct prisma update args for each item in the transaction", async () => {
+  it('passes the correct prisma update args for each item in the transaction', async () => {
     mockTransaction.mockImplementation(async (ops: unknown[]) => ops);
 
-    const updates = [{ variantId: "v1", stock: 5 }];
+    const updates = [{ variantId: 'v1', stock: 5 }];
     const { req, res } = setup({ updates });
     await adminInventoryController.bulkUpdateStock(req, res);
 
@@ -629,16 +627,16 @@ describe("adminInventoryController.bulkUpdateStock", () => {
     expect(transactionOps).toHaveLength(1);
   });
 
-  it("accepts stock=0 in a bulk update entry", async () => {
+  it('accepts stock=0 in a bulk update entry', async () => {
     mockTransaction.mockResolvedValue([{ ...VARIANT_FIXTURE, stock: 0 }]);
 
-    const { req, res } = setup({ updates: [{ variantId: "v1", stock: 0 }] });
+    const { req, res } = setup({ updates: [{ variantId: 'v1', stock: 0 }] });
     await adminInventoryController.bulkUpdateStock(req, res);
 
     expect(mockTransaction).toHaveBeenCalledOnce();
   });
 
-  it("returns updatedCount equal to the number of variants processed", async () => {
+  it('returns updatedCount equal to the number of variants processed', async () => {
     const three = Array.from({ length: 3 }, (_, i) => ({
       ...VARIANT_FIXTURE,
       id: `v${i}`,
@@ -654,63 +652,63 @@ describe("adminInventoryController.bulkUpdateStock", () => {
 
   // --- validation failures ---
 
-  it("throws ApiError.badRequest when updates is missing", async () => {
+  it('throws ApiError.badRequest when updates is missing', async () => {
     const { req, res } = setup({});
     await expect(adminInventoryController.bulkUpdateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
-      message: "Updates array is required and must not be empty",
+      message: 'Updates array is required and must not be empty',
     });
   });
 
-  it("throws ApiError.badRequest when updates is an empty array", async () => {
+  it('throws ApiError.badRequest when updates is an empty array', async () => {
     const { req, res } = setup({ updates: [] });
     await expect(adminInventoryController.bulkUpdateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
-      message: "Updates array is required and must not be empty",
+      message: 'Updates array is required and must not be empty',
     });
   });
 
-  it("throws ApiError.badRequest when updates is not an array (string)", async () => {
-    const { req, res } = setup({ updates: "v1:10" });
+  it('throws ApiError.badRequest when updates is not an array (string)', async () => {
+    const { req, res } = setup({ updates: 'v1:10' });
     await expect(adminInventoryController.bulkUpdateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
     });
   });
 
-  it("throws ApiError.badRequest when updates is not an array (object)", async () => {
-    const { req, res } = setup({ updates: { variantId: "v1", stock: 5 } });
+  it('throws ApiError.badRequest when updates is not an array (object)', async () => {
+    const { req, res } = setup({ updates: { variantId: 'v1', stock: 5 } });
     await expect(adminInventoryController.bulkUpdateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
     });
   });
 
-  it("throws ApiError.badRequest when an entry is missing variantId", async () => {
+  it('throws ApiError.badRequest when an entry is missing variantId', async () => {
     const { req, res } = setup({ updates: [{ stock: 5 }] });
     await expect(adminInventoryController.bulkUpdateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
-      message: "Each update must have a valid variantId and a non-negative stock number",
+      message: 'Each update must have a valid variantId and a non-negative stock number',
     });
   });
 
-  it("throws ApiError.badRequest when an entry has a non-number stock", async () => {
-    const { req, res } = setup({ updates: [{ variantId: "v1", stock: "five" }] });
+  it('throws ApiError.badRequest when an entry has a non-number stock', async () => {
+    const { req, res } = setup({ updates: [{ variantId: 'v1', stock: 'five' }] });
     await expect(adminInventoryController.bulkUpdateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
     });
   });
 
-  it("throws ApiError.badRequest when an entry has negative stock", async () => {
-    const { req, res } = setup({ updates: [{ variantId: "v1", stock: -1 }] });
+  it('throws ApiError.badRequest when an entry has negative stock', async () => {
+    const { req, res } = setup({ updates: [{ variantId: 'v1', stock: -1 }] });
     await expect(adminInventoryController.bulkUpdateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
     });
   });
 
-  it("throws when only the second entry in a multi-item array is invalid", async () => {
+  it('throws when only the second entry in a multi-item array is invalid', async () => {
     const { req, res } = setup({
       updates: [
-        { variantId: "v1", stock: 10 }, // valid
-        { variantId: "v2", stock: -5 }, // invalid
+        { variantId: 'v1', stock: 10 }, // valid
+        { variantId: 'v2', stock: -5 }, // invalid
       ],
     });
     await expect(adminInventoryController.bulkUpdateStock(req, res)).rejects.toMatchObject({
@@ -720,8 +718,8 @@ describe("adminInventoryController.bulkUpdateStock", () => {
     expect(mockTransaction).not.toHaveBeenCalled();
   });
 
-  it("throws when an entry has stock=undefined", async () => {
-    const { req, res } = setup({ updates: [{ variantId: "v1" }] });
+  it('throws when an entry has stock=undefined', async () => {
+    const { req, res } = setup({ updates: [{ variantId: 'v1' }] });
     await expect(adminInventoryController.bulkUpdateStock(req, res)).rejects.toMatchObject({
       statusCode: 400,
     });
@@ -731,7 +729,7 @@ describe("adminInventoryController.bulkUpdateStock", () => {
 // ===========================================================================
 // 5. getInventorySummary
 // ===========================================================================
-describe("adminInventoryController.getInventorySummary", () => {
+describe('adminInventoryController.getInventorySummary', () => {
   function setup() {
     const req = makeReq();
     const { res, jsonSpy } = makeRes();
@@ -740,12 +738,12 @@ describe("adminInventoryController.getInventorySummary", () => {
 
   // --- happy path ---
 
-  it("returns all five summary metrics correctly aggregated", async () => {
+  it('returns all five summary metrics correctly aggregated', async () => {
     mockProductCount.mockResolvedValue(12);
     mockCount
-      .mockResolvedValueOnce(45)    // totalVariants
-      .mockResolvedValueOnce(8)     // lowStockCount (stock gt 0, lt 10)
-      .mockResolvedValueOnce(3);    // outOfStockCount (stock = 0)
+      .mockResolvedValueOnce(45) // totalVariants
+      .mockResolvedValueOnce(8) // lowStockCount (stock gt 0, lt 10)
+      .mockResolvedValueOnce(3); // outOfStockCount (stock = 0)
     mockAggregate.mockResolvedValue({ _sum: { stock: 1200 } });
 
     const { req, res, jsonSpy } = setup();
@@ -759,7 +757,7 @@ describe("adminInventoryController.getInventorySummary", () => {
     expect(data.outOfStockCount).toBe(3);
   });
 
-  it("returns success: true in the response envelope", async () => {
+  it('returns success: true in the response envelope', async () => {
     mockProductCount.mockResolvedValue(0);
     mockCount.mockResolvedValue(0);
     mockAggregate.mockResolvedValue({ _sum: { stock: null } });
@@ -770,7 +768,7 @@ describe("adminInventoryController.getInventorySummary", () => {
     expect(jsonSpy.mock.calls[0][0].success).toBe(true);
   });
 
-  it("defaults totalStock to 0 when aggregate _sum.stock is null", async () => {
+  it('defaults totalStock to 0 when aggregate _sum.stock is null', async () => {
     mockProductCount.mockResolvedValue(0);
     mockCount.mockResolvedValue(0);
     mockAggregate.mockResolvedValue({ _sum: { stock: null } });
@@ -781,7 +779,7 @@ describe("adminInventoryController.getInventorySummary", () => {
     expect(jsonSpy.mock.calls[0][0].data.totalStock).toBe(0);
   });
 
-  it("queries lowStockCount with stock gt 0, lt 10", async () => {
+  it('queries lowStockCount with stock gt 0, lt 10', async () => {
     mockProductCount.mockResolvedValue(1);
     mockCount.mockResolvedValue(1);
     mockAggregate.mockResolvedValue({ _sum: { stock: 5 } });
@@ -797,7 +795,7 @@ describe("adminInventoryController.getInventorySummary", () => {
     expect(countCalls[1][0]).toEqual({ where: { stock: { gt: 0, lt: 10 } } });
   });
 
-  it("queries outOfStockCount with stock = 0", async () => {
+  it('queries outOfStockCount with stock = 0', async () => {
     mockProductCount.mockResolvedValue(1);
     mockCount.mockResolvedValue(1);
     mockAggregate.mockResolvedValue({ _sum: { stock: 5 } });
@@ -809,7 +807,7 @@ describe("adminInventoryController.getInventorySummary", () => {
     expect(countCalls[2][0]).toEqual({ where: { stock: 0 } });
   });
 
-  it("runs all five DB calls concurrently via Promise.all (all mocks called once)", async () => {
+  it('runs all five DB calls concurrently via Promise.all (all mocks called once)', async () => {
     mockProductCount.mockResolvedValue(5);
     mockCount.mockResolvedValue(10);
     mockAggregate.mockResolvedValue({ _sum: { stock: 500 } });
@@ -824,7 +822,7 @@ describe("adminInventoryController.getInventorySummary", () => {
     expect(mockAggregate).toHaveBeenCalledTimes(1);
   });
 
-  it("handles all zeros gracefully (fresh database state)", async () => {
+  it('handles all zeros gracefully (fresh database state)', async () => {
     mockProductCount.mockResolvedValue(0);
     mockCount.mockResolvedValue(0);
     mockAggregate.mockResolvedValue({ _sum: { stock: 0 } });
@@ -840,7 +838,7 @@ describe("adminInventoryController.getInventorySummary", () => {
     expect(data.outOfStockCount).toBe(0);
   });
 
-  it("handles very large stock totals without precision loss", async () => {
+  it('handles very large stock totals without precision loss', async () => {
     mockProductCount.mockResolvedValue(1000);
     mockCount.mockResolvedValue(5000);
     mockAggregate.mockResolvedValue({ _sum: { stock: 9_999_999 } });

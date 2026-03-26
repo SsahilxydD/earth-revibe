@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-import { Star, TrendingUp, ShoppingBag, Gift } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api-client";
-import { formatDate } from "@/lib/utils";
+import { useQuery } from '@tanstack/react-query';
+import { Star, TrendingUp, ShoppingBag, Gift } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { api } from '@/lib/api-client';
+import { formatDate } from '@/lib/utils';
 
 interface LoyaltyData {
   balance: number;
@@ -16,41 +16,41 @@ interface LoyaltyData {
 
 interface LoyaltyTransaction {
   id: string;
-  type: "earn" | "redeem" | "expire" | "bonus";
+  type: 'earn' | 'redeem' | 'expire' | 'bonus';
   points: number;
   description: string;
   createdAt: string;
 }
 
 const TYPE_STYLES: Record<string, { color: string; prefix: string }> = {
-  earn: { color: "text-green-600", prefix: "+" },
-  bonus: { color: "text-green-600", prefix: "+" },
-  redeem: { color: "text-[var(--color-sale)]", prefix: "-" },
-  expire: { color: "text-[var(--color-muted)]", prefix: "-" },
+  earn: { color: 'text-green-600', prefix: '+' },
+  bonus: { color: 'text-green-600', prefix: '+' },
+  redeem: { color: 'text-[var(--color-sale)]', prefix: '-' },
+  expire: { color: 'text-[var(--color-muted)]', prefix: '-' },
 };
 
 const HOW_IT_WORKS = [
   {
     icon: ShoppingBag,
-    title: "Shop & Earn",
-    description: "Earn 1 point for every Rs.10 spent on eligible purchases.",
+    title: 'Shop & Earn',
+    description: 'Earn 1 point for every Rs.10 spent on eligible purchases.',
   },
   {
     icon: Gift,
-    title: "Redeem Rewards",
-    description: "Use your points at checkout. 100 points = Rs.10 discount.",
+    title: 'Redeem Rewards',
+    description: 'Use your points at checkout. 100 points = Rs.10 discount.',
   },
   {
     icon: TrendingUp,
-    title: "Level Up",
-    description: "Higher tiers unlock bonus multipliers and exclusive perks.",
+    title: 'Level Up',
+    description: 'Higher tiers unlock bonus multipliers and exclusive perks.',
   },
 ] as const;
 
 export default function LoyaltyPage() {
   const { data: loyalty, isLoading } = useQuery({
-    queryKey: ["loyalty"],
-    queryFn: () => api.get<LoyaltyData>("/loyalty"),
+    queryKey: ['loyalty'],
+    queryFn: () => api.get<LoyaltyData>('/loyalty'),
   });
 
   if (isLoading) {
@@ -62,7 +62,7 @@ export default function LoyaltyPage() {
   }
 
   const balance = loyalty?.balance ?? 0;
-  const tier = loyalty?.tier ?? "Bronze";
+  const tier = loyalty?.tier ?? 'Bronze';
   const transactions = loyalty?.transactions ?? [];
 
   return (
@@ -75,7 +75,7 @@ export default function LoyaltyPage() {
               Available Points
             </p>
             <p className="mt-1 text-4xl font-bold tracking-tight">
-              {balance.toLocaleString("en-IN")}
+              {balance.toLocaleString('en-IN')}
             </p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
@@ -84,25 +84,19 @@ export default function LoyaltyPage() {
         </div>
         <div className="mt-4 flex items-center gap-4 border-t border-white/20 pt-4">
           <div>
-            <p className="text-[10px] uppercase tracking-wider opacity-70">
-              Tier
-            </p>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">Tier</p>
             <p className="text-sm font-bold">{tier}</p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wider opacity-70">
-              Total Earned
-            </p>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">Total Earned</p>
             <p className="text-sm font-bold">
-              {(loyalty?.totalEarned ?? 0).toLocaleString("en-IN")}
+              {(loyalty?.totalEarned ?? 0).toLocaleString('en-IN')}
             </p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wider opacity-70">
-              Total Redeemed
-            </p>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">Total Redeemed</p>
             <p className="text-sm font-bold">
-              {(loyalty?.totalRedeemed ?? 0).toLocaleString("en-IN")}
+              {(loyalty?.totalRedeemed ?? 0).toLocaleString('en-IN')}
             </p>
           </div>
         </div>
@@ -110,9 +104,7 @@ export default function LoyaltyPage() {
 
       {/* How It Works */}
       <div>
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
-          How It Works
-        </h3>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">How It Works</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {HOW_IT_WORKS.map((item) => (
             <div
@@ -123,9 +115,7 @@ export default function LoyaltyPage() {
                 <item.icon size={20} className="text-[var(--color-primary)]" />
               </div>
               <h4 className="text-sm font-bold">{item.title}</h4>
-              <p className="mt-1 text-xs text-[var(--color-muted)]">
-                {item.description}
-              </p>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">{item.description}</p>
             </div>
           ))}
         </div>
@@ -133,9 +123,7 @@ export default function LoyaltyPage() {
 
       {/* Transaction History */}
       <div>
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
-          Transaction History
-        </h3>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">Transaction History</h3>
         {transactions.length === 0 ? (
           <p className="text-sm text-[var(--color-muted)]">
             No transactions yet. Start shopping to earn points.
@@ -167,9 +155,7 @@ export default function LoyaltyPage() {
                       key={tx.id}
                       className="border-b border-[var(--color-border)] last:border-b-0"
                     >
-                      <td className="py-3 text-[var(--color-muted)]">
-                        {formatDate(tx.createdAt)}
-                      </td>
+                      <td className="py-3 text-[var(--color-muted)]">{formatDate(tx.createdAt)}</td>
                       <td className="py-3">
                         <span className="rounded-[var(--badge-radius)] bg-[var(--color-surface)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                           {tx.type}
@@ -178,7 +164,7 @@ export default function LoyaltyPage() {
                       <td className="py-3">{tx.description}</td>
                       <td className={`py-3 text-right font-bold ${style.color}`}>
                         {style.prefix}
-                        {tx.points.toLocaleString("en-IN")}
+                        {tx.points.toLocaleString('en-IN')}
                       </td>
                     </tr>
                   );

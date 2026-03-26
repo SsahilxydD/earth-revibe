@@ -1,12 +1,12 @@
-import slugify from "slugify";
-import { prisma, Prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
+import slugify from 'slugify';
+import { prisma, Prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
 import type {
   CreateProductInput,
   UpdateProductInput,
   ProductQuery,
   ProductVariantInput,
-} from "@earth-revibe/shared";
+} from '@earth-revibe/shared';
 
 function generateSlug(name: string): string {
   return slugify(name, { lower: true, strict: true });
@@ -38,7 +38,7 @@ export const productService = {
     if (status) {
       where.status = status;
     } else if (!adminMode) {
-      where.status = "ACTIVE";
+      where.status = 'ACTIVE';
     }
 
     if (category) {
@@ -53,7 +53,7 @@ export const productService = {
     }
 
     if (material) {
-      where.material = { contains: material, mode: "insensitive" };
+      where.material = { contains: material, mode: 'insensitive' };
     }
 
     if (isFeatured !== undefined) {
@@ -62,8 +62,8 @@ export const productService = {
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -71,7 +71,7 @@ export const productService = {
     if (size || color) {
       const variantFilter: Record<string, unknown> = {};
       if (size) variantFilter.size = size;
-      if (color) variantFilter.color = { contains: color, mode: "insensitive" };
+      if (color) variantFilter.color = { contains: color, mode: 'insensitive' };
       where.variants = { some: variantFilter };
     }
 
@@ -110,15 +110,15 @@ export const productService = {
       where: { slug },
       include: {
         images: {
-          orderBy: { sortOrder: "asc" },
+          orderBy: { sortOrder: 'asc' },
         },
         variants: {
           ...(includeAll ? {} : { where: { isActive: true } }),
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: 'asc' },
         },
         reviews: {
           where: { isApproved: true },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           include: {
             user: {
               select: { firstName: true, lastName: true },
@@ -132,7 +132,7 @@ export const productService = {
     });
 
     if (!product) {
-      throw ApiError.notFound("Product not found");
+      throw ApiError.notFound('Product not found');
     }
 
     return product;
@@ -144,7 +144,7 @@ export const productService = {
       where: { id: data.categoryId },
     });
     if (!category) {
-      throw ApiError.badRequest("Category not found");
+      throw ApiError.badRequest('Category not found');
     }
 
     // Auto-generate slug if not provided
@@ -153,7 +153,7 @@ export const productService = {
     // Check slug uniqueness
     const existingSlug = await prisma.product.findUnique({ where: { slug } });
     if (existingSlug) {
-      throw ApiError.conflict("A product with this slug already exists");
+      throw ApiError.conflict('A product with this slug already exists');
     }
 
     const product = await prisma.product.create({
@@ -198,7 +198,7 @@ export const productService = {
     // Check product exists
     const existing = await prisma.product.findUnique({ where: { id } });
     if (!existing) {
-      throw ApiError.notFound("Product not found");
+      throw ApiError.notFound('Product not found');
     }
 
     // Validate categoryId if provided
@@ -207,7 +207,7 @@ export const productService = {
         where: { id: data.categoryId },
       });
       if (!category) {
-        throw ApiError.badRequest("Category not found");
+        throw ApiError.badRequest('Category not found');
       }
     }
 
@@ -221,7 +221,7 @@ export const productService = {
     if (slug && slug !== existing.slug) {
       const existingSlug = await prisma.product.findUnique({ where: { slug } });
       if (existingSlug) {
-        throw ApiError.conflict("A product with this slug already exists");
+        throw ApiError.conflict('A product with this slug already exists');
       }
     }
 
@@ -250,13 +250,13 @@ export const productService = {
   async deleteProduct(id: string) {
     const existing = await prisma.product.findUnique({ where: { id } });
     if (!existing) {
-      throw ApiError.notFound("Product not found");
+      throw ApiError.notFound('Product not found');
     }
 
     // Soft delete by setting status to ARCHIVED
     const product = await prisma.product.update({
       where: { id },
-      data: { status: "ARCHIVED" },
+      data: { status: 'ARCHIVED' },
     });
 
     return product;
@@ -266,7 +266,7 @@ export const productService = {
     // Check product exists
     const product = await prisma.product.findUnique({ where: { id: productId } });
     if (!product) {
-      throw ApiError.notFound("Product not found");
+      throw ApiError.notFound('Product not found');
     }
 
     // Use a transaction with individual creates to get back the exact records
@@ -294,7 +294,7 @@ export const productService = {
   async updateProductVariant(variantId: string, data: Partial<ProductVariantInput>) {
     const existing = await prisma.productVariant.findUnique({ where: { id: variantId } });
     if (!existing) {
-      throw ApiError.notFound("Product variant not found");
+      throw ApiError.notFound('Product variant not found');
     }
 
     const variant = await prisma.productVariant.update({
@@ -308,7 +308,7 @@ export const productService = {
   async deleteProductVariant(variantId: string) {
     const existing = await prisma.productVariant.findUnique({ where: { id: variantId } });
     if (!existing) {
-      throw ApiError.notFound("Product variant not found");
+      throw ApiError.notFound('Product variant not found');
     }
 
     await prisma.productVariant.delete({ where: { id: variantId } });
@@ -322,7 +322,7 @@ export const productService = {
   ) {
     const product = await prisma.product.findUnique({ where: { id: productId } });
     if (!product) {
-      throw ApiError.notFound("Product not found");
+      throw ApiError.notFound('Product not found');
     }
 
     // Check if this is the first image — make it primary automatically
@@ -345,7 +345,7 @@ export const productService = {
   async deleteProductImage(imageId: string) {
     const existing = await prisma.productImage.findUnique({ where: { id: imageId } });
     if (!existing) {
-      throw ApiError.notFound("Product image not found");
+      throw ApiError.notFound('Product image not found');
     }
 
     await prisma.productImage.delete({ where: { id: imageId } });
@@ -354,7 +354,7 @@ export const productService = {
     if (existing.isPrimary) {
       const nextImage = await prisma.productImage.findFirst({
         where: { productId: existing.productId },
-        orderBy: { sortOrder: "asc" },
+        orderBy: { sortOrder: 'asc' },
       });
       if (nextImage) {
         await prisma.productImage.update({
@@ -370,7 +370,7 @@ export const productService = {
   async setProductImagePrimary(imageId: string) {
     const image = await prisma.productImage.findUnique({ where: { id: imageId } });
     if (!image) {
-      throw ApiError.notFound("Product image not found");
+      throw ApiError.notFound('Product image not found');
     }
 
     // Remove primary from all images of this product, then set the chosen one
@@ -390,7 +390,7 @@ export const productService = {
   async reorderProductImages(productId: string, imageIds: string[]) {
     const product = await prisma.product.findUnique({ where: { id: productId } });
     if (!product) {
-      throw ApiError.notFound("Product not found");
+      throw ApiError.notFound('Product not found');
     }
 
     // Update sort order for each image
@@ -405,7 +405,7 @@ export const productService = {
 
     return prisma.productImage.findMany({
       where: { productId },
-      orderBy: { sortOrder: "asc" },
+      orderBy: { sortOrder: 'asc' },
     });
   },
 };

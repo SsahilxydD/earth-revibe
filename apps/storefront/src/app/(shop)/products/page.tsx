@@ -1,32 +1,32 @@
-"use client";
+'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { ProductCard } from "@/components/product/product-card";
-import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
-import { FilterSidebar, type FilterState } from "@/components/product/filter-sidebar";
-import { SortDropdown } from "@/components/product/sort-dropdown";
-import { useInfiniteProducts } from "@/hooks/use-products";
-import { useProductNavStore } from "@/stores/product-nav-store";
+import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { ProductCard } from '@/components/product/product-card';
+import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
+import { FilterSidebar, type FilterState } from '@/components/product/filter-sidebar';
+import { SortDropdown } from '@/components/product/sort-dropdown';
+import { useInfiniteProducts } from '@/hooks/use-products';
+import { useProductNavStore } from '@/stores/product-nav-store';
 
-function parseSort(sort: string | null): { sortBy: string; sortOrder: "asc" | "desc" } {
+function parseSort(sort: string | null): { sortBy: string; sortOrder: 'asc' | 'desc' } {
   switch (sort) {
-    case "price-asc":
-      return { sortBy: "price", sortOrder: "asc" };
-    case "price-desc":
-      return { sortBy: "price", sortOrder: "desc" };
-    case "popular":
-      return { sortBy: "reviewCount", sortOrder: "desc" };
+    case 'price-asc':
+      return { sortBy: 'price', sortOrder: 'asc' };
+    case 'price-desc':
+      return { sortBy: 'price', sortOrder: 'desc' };
+    case 'popular':
+      return { sortBy: 'reviewCount', sortOrder: 'desc' };
     default:
-      return { sortBy: "createdAt", sortOrder: "desc" };
+      return { sortBy: 'createdAt', sortOrder: 'desc' };
   }
 }
 
-function sortToParam(sortBy: string, sortOrder: "asc" | "desc"): string {
-  if (sortBy === "price" && sortOrder === "asc") return "price-asc";
-  if (sortBy === "price" && sortOrder === "desc") return "price-desc";
-  if (sortBy === "reviewCount") return "popular";
-  return "newest";
+function sortToParam(sortBy: string, sortOrder: 'asc' | 'desc'): string {
+  if (sortBy === 'price' && sortOrder === 'asc') return 'price-asc';
+  if (sortBy === 'price' && sortOrder === 'desc') return 'price-desc';
+  if (sortBy === 'reviewCount') return 'popular';
+  return 'newest';
 }
 
 function ProductsContent() {
@@ -34,13 +34,13 @@ function ProductsContent() {
   const router = useRouter();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const category = searchParams.get("category") || "";
-  const sort = searchParams.get("sort");
-  const minPriceRaw = searchParams.get("minPrice");
-  const maxPriceRaw = searchParams.get("maxPrice");
-  const size = searchParams.get("size") || "";
-  const color = searchParams.get("color") || "";
-  const search = searchParams.get("search") || "";
+  const category = searchParams.get('category') || '';
+  const sort = searchParams.get('sort');
+  const minPriceRaw = searchParams.get('minPrice');
+  const maxPriceRaw = searchParams.get('maxPrice');
+  const size = searchParams.get('size') || '';
+  const color = searchParams.get('color') || '';
+  const search = searchParams.get('search') || '';
 
   const { sortBy, sortOrder } = parseSort(sort);
   const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
@@ -61,14 +61,8 @@ function ProductsContent() {
     [category, sortBy, sortOrder, minPrice, maxPrice, size, color, search]
   );
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-  } = useInfiniteProducts(queryParams);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
+    useInfiniteProducts(queryParams);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -79,7 +73,7 @@ function ProductsContent() {
           fetchNextPage();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: '200px' }
     );
     observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
@@ -114,7 +108,7 @@ function ProductsContent() {
   );
 
   const handleSortChange = useCallback(
-    (newSortBy: string, newSortOrder: "asc" | "desc") => {
+    (newSortBy: string, newSortOrder: 'asc' | 'desc') => {
       updateParams({ sort: sortToParam(newSortBy, newSortOrder) });
     },
     [updateParams]
@@ -130,7 +124,7 @@ function ProductsContent() {
   useEffect(() => {
     if (allProducts.length > 0) {
       const slugs = allProducts.map((p) => p.slug);
-      setNavContext(slugs, "All Products", `/products?${searchParams.toString()}`);
+      setNavContext(slugs, 'All Products', `/products?${searchParams.toString()}`);
     }
   }, [allProducts, searchParams, setNavContext]);
 
@@ -147,14 +141,11 @@ function ProductsContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold capitalize md:text-xl">
-          {search ? `Results for "${search}"` : "All Products"}
+          {search ? `Results for "${search}"` : 'All Products'}
         </h1>
         <div className="flex items-center gap-3">
           <FilterSidebar filters={currentFilters} onFilterChange={handleFilterChange} />
-          <SortDropdown
-            currentSort={`${sortBy}-${sortOrder}`}
-            onSortChange={handleSortChange}
-          />
+          <SortDropdown currentSort={`${sortBy}-${sortOrder}`} onSortChange={handleSortChange} />
         </div>
       </div>
 
@@ -179,7 +170,7 @@ function ProductsContent() {
             Try adjusting your filters or search terms.
           </p>
           <button
-            onClick={() => router.push("/products")}
+            onClick={() => router.push('/products')}
             className="mt-4 border border-[var(--color-primary)] px-6 py-2 text-sm font-semibold transition-colors hover:bg-[var(--color-surface)]"
           >
             Clear Filters

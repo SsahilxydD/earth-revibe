@@ -1,22 +1,15 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import {
-  Package,
-  Truck,
-  CheckCircle,
-  Clock,
-  MapPin,
-  Search,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api-client";
-import { formatDate } from "@/lib/utils";
-import { useToast } from "@/providers";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Package, Truck, CheckCircle, Clock, MapPin, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { api } from '@/lib/api-client';
+import { formatDate } from '@/lib/utils';
+import { useToast } from '@/providers';
+import { cn } from '@/lib/utils';
 
 interface TrackFormData {
   orderNumber: string;
@@ -40,11 +33,11 @@ const STATUS_ICONS: Record<string, typeof Package> = {
   placed: Clock,
   confirmed: CheckCircle,
   shipped: Truck,
-  "out-for-delivery": MapPin,
+  'out-for-delivery': MapPin,
   delivered: CheckCircle,
 };
 
-function OrderTimeline({ timeline }: { timeline: OrderStatus["timeline"] }) {
+function OrderTimeline({ timeline }: { timeline: OrderStatus['timeline'] }) {
   return (
     <div className="space-y-0">
       {timeline.map((step, idx) => {
@@ -56,12 +49,12 @@ function OrderTimeline({ timeline }: { timeline: OrderStatus["timeline"] }) {
             <div className="flex flex-col items-center">
               <div
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full",
+                  'flex h-8 w-8 items-center justify-center rounded-full',
                   step.isCompleted
-                    ? "bg-green-600 text-white"
+                    ? 'bg-green-600 text-white'
                     : step.isCurrent
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "bg-[var(--color-surface)] text-[var(--color-muted)]"
+                      ? 'bg-[var(--color-primary)] text-white'
+                      : 'bg-[var(--color-surface)] text-[var(--color-muted)]'
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -69,10 +62,8 @@ function OrderTimeline({ timeline }: { timeline: OrderStatus["timeline"] }) {
               {!isLast && (
                 <div
                   className={cn(
-                    "h-12 w-0.5",
-                    step.isCompleted
-                      ? "bg-green-600"
-                      : "bg-[var(--color-border)]"
+                    'h-12 w-0.5',
+                    step.isCompleted ? 'bg-green-600' : 'bg-[var(--color-border)]'
                   )}
                 />
               )}
@@ -80,10 +71,8 @@ function OrderTimeline({ timeline }: { timeline: OrderStatus["timeline"] }) {
             <div className="pb-10">
               <p
                 className={cn(
-                  "text-sm font-semibold",
-                  !step.isCompleted &&
-                    !step.isCurrent &&
-                    "text-[var(--color-muted)]"
+                  'text-sm font-semibold',
+                  !step.isCompleted && !step.isCurrent && 'text-[var(--color-muted)]'
                 )}
               >
                 {step.label}
@@ -94,9 +83,7 @@ function OrderTimeline({ timeline }: { timeline: OrderStatus["timeline"] }) {
                 </p>
               )}
               {step.description && (
-                <p className="mt-1 text-xs text-[var(--color-muted)]">
-                  {step.description}
-                </p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">{step.description}</p>
               )}
             </div>
           </div>
@@ -124,18 +111,13 @@ export default function TrackOrderPage() {
     setOrderStatus(null);
 
     try {
-      const result = await api.get<OrderStatus>(
-        `/orders/${data.orderNumber.trim()}/track`
-      );
+      const result = await api.get<OrderStatus>(`/orders/${data.orderNumber.trim()}/track`);
       setOrderStatus(result);
     } catch (error: any) {
       if (error?.status === 404) {
         setNotFound(true);
       } else {
-        addToast(
-          error?.message || "Failed to track order. Please try again.",
-          "error"
-        );
+        addToast(error?.message || 'Failed to track order. Please try again.', 'error');
       }
     } finally {
       setIsLoading(false);
@@ -145,21 +127,16 @@ export default function TrackOrderPage() {
   return (
     <div className="mx-auto max-w-xl px-4 py-12 lg:px-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold uppercase tracking-wider">
-          Track Your Order
-        </h1>
+        <h1 className="text-3xl font-bold uppercase tracking-wider">Track Your Order</h1>
         <p className="mt-2 text-sm text-[var(--color-muted)]">
           Enter your order number to see the latest status.
         </p>
       </div>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mt-8 flex gap-3"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 flex gap-3">
         <Input
-          {...register("orderNumber", {
-            required: "Please enter your order number",
+          {...register('orderNumber', {
+            required: 'Please enter your order number',
           })}
           placeholder="Enter order number (e.g. ER-20260312-XXXX)"
           error={errors.orderNumber?.message}
@@ -182,8 +159,8 @@ export default function TrackOrderPage() {
           <Package className="mx-auto h-10 w-10 text-[var(--color-muted)]" />
           <p className="mt-3 text-sm font-semibold">Order not found</p>
           <p className="mt-1 text-xs text-[var(--color-muted)]">
-            Please check your order number and try again. If the issue
-            persists, contact our support team.
+            Please check your order number and try again. If the issue persists, contact our support
+            team.
           </p>
         </div>
       )}
@@ -199,14 +176,14 @@ export default function TrackOrderPage() {
                 <p className="text-sm font-bold">{orderStatus.orderId}</p>
               </div>
               <span className="rounded-[var(--badge-radius)] bg-[var(--color-primary)] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
-                {orderStatus.status.replace(/-/g, " ")}
+                {orderStatus.status.replace(/-/g, ' ')}
               </span>
             </div>
 
             {orderStatus.estimatedDelivery && (
               <div className="mt-3 rounded-[var(--badge-radius)] bg-[var(--color-surface)] px-3 py-2">
                 <p className="text-xs text-[var(--color-muted)]">
-                  Estimated Delivery:{" "}
+                  Estimated Delivery:{' '}
                   <span className="font-semibold text-[var(--color-text)]">
                     {formatDate(orderStatus.estimatedDelivery)}
                   </span>

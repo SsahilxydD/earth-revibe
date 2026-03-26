@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { Spinner } from "@/components/ui/spinner";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { Spinner } from '@/components/ui/spinner';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -14,11 +14,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const supabase = createClient();
 
     async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
       if (!session) {
         setIsLoading(false);
-        router.replace("/login");
+        router.replace('/login');
         return;
       }
 
@@ -29,17 +31,17 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     checkSession();
 
     // Listen for auth state changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!session) {
-          setIsAuthenticated(false);
-          router.replace("/login");
-        } else {
-          setIsAuthenticated(true);
-          setIsLoading(false);
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setIsAuthenticated(false);
+        router.replace('/login');
+      } else {
+        setIsAuthenticated(true);
+        setIsLoading(false);
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
   }, [router]);

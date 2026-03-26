@@ -1,35 +1,34 @@
-"use client";
+'use client';
 
-import { use, useCallback } from "react";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { useQueryClient } from "@tanstack/react-query";
-import { ProductForm } from "@/components/products/product-form";
-import { useProduct, useUpdateProduct } from "@/hooks/use-products";
-import { toast } from "@/components/ui/toast";
-import { Spinner } from "@/components/ui/spinner";
-import type { CreateProductInput } from "@earth-revibe/shared";
+import { use, useCallback } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { useQueryClient } from '@tanstack/react-query';
+import { ProductForm } from '@/components/products/product-form';
+import { useProduct, useUpdateProduct } from '@/hooks/use-products';
+import { toast } from '@/components/ui/toast';
+import { Spinner } from '@/components/ui/spinner';
+import type { CreateProductInput } from '@earth-revibe/shared';
 
-export default function EditProductPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default function EditProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const queryClient = useQueryClient();
   const { data: product, isLoading, isError, error } = useProduct(slug);
   const updateProduct = useUpdateProduct();
 
-  const handleSubmit = useCallback(async (data: CreateProductInput) => {
-    try {
-      await updateProduct.mutateAsync({ id: product.id, data });
-      // Refetch product data so the form shows the saved values
-      await queryClient.invalidateQueries({ queryKey: ["admin-product", slug] });
-      toast.success("Product updated successfully");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update product");
-    }
-  }, [product?.id, slug, updateProduct, queryClient]);
+  const handleSubmit = useCallback(
+    async (data: CreateProductInput) => {
+      try {
+        await updateProduct.mutateAsync({ id: product.id, data });
+        // Refetch product data so the form shows the saved values
+        await queryClient.invalidateQueries({ queryKey: ['admin-product', slug] });
+        toast.success('Product updated successfully');
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to update product');
+      }
+    },
+    [product?.id, slug, updateProduct, queryClient]
+  );
 
   if (isLoading) {
     return (
@@ -44,7 +43,7 @@ export default function EditProductPage({
       <div className="text-center py-20 space-y-3">
         <p className="text-charcoal font-medium">Failed to load product</p>
         <p className="text-sm text-medium-gray">
-          {(error as any)?.message || "Something went wrong. Check your connection and try again."}
+          {(error as any)?.message || 'Something went wrong. Check your connection and try again.'}
         </p>
         <button
           onClick={() => window.location.reload()}
@@ -67,16 +66,11 @@ export default function EditProductPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link
-          href="/products"
-          className="p-2 rounded-lg hover:bg-off-white transition-colors"
-        >
+        <Link href="/products" className="p-2 rounded-lg hover:bg-off-white transition-colors">
           <ArrowLeft size={20} className="text-dark-gray" />
         </Link>
         <div>
-          <h1 className="text-2xl font-semibold text-charcoal">
-            Edit Product
-          </h1>
+          <h1 className="text-2xl font-semibold text-charcoal">Edit Product</h1>
           <p className="text-sm text-medium-gray mt-1">{product.name}</p>
         </div>
       </div>

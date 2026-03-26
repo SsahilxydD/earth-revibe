@@ -1,4 +1,4 @@
-import { prisma } from "@earth-revibe/db";
+import { prisma } from '@earth-revibe/db';
 
 export const settingsService = {
   async getSettings() {

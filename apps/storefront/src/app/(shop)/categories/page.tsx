@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import { useCategories } from "@/hooks/use-products";
-import { Spinner } from "@/components/ui/spinner";
-import { getImageUrl } from "@/lib/utils";
+import Image from 'next/image';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
+import { useCategories } from '@/hooks/use-products';
+import { Spinner } from '@/components/ui/spinner';
+import { getImageUrl } from '@/lib/utils';
 
 export default function CategoriesPage() {
   const { data: categories, isLoading, isError } = useCategories();

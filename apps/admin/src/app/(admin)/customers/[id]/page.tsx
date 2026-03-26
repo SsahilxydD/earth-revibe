@@ -1,45 +1,55 @@
-"use client";
+'use client';
 
-import { use } from "react";
-import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, ShoppingBag, Star, UserCheck, UserX, TrendingUp } from "lucide-react";
-import { Button, Badge, Card } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
-import { useCustomer, useToggleCustomerActive } from "@/hooks/use-customers";
+import { use } from 'react';
+import Link from 'next/link';
+import {
+  ArrowLeft,
+  Mail,
+  Phone,
+  MapPin,
+  ShoppingBag,
+  Star,
+  UserCheck,
+  UserX,
+  TrendingUp,
+} from 'lucide-react';
+import { Button, Badge, Card } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/toast';
+import { useCustomer, useToggleCustomerActive } from '@/hooks/use-customers';
 
-const segmentVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
-  VIP: "success",
-  Regular: "info",
-  New: "warning",
-  "At Risk": "error",
+const segmentVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+  VIP: 'success',
+  Regular: 'info',
+  New: 'warning',
+  'At Risk': 'error',
 };
 
-const statusVariant: Record<string, "success" | "warning" | "default" | "error" | "info"> = {
-  PLACED: "info",
-  CONFIRMED: "info",
-  PROCESSING: "warning",
-  SHIPPED: "warning",
-  OUT_FOR_DELIVERY: "warning",
-  DELIVERED: "success",
-  CANCELLED: "error",
-  RETURNED: "error",
-  REFUNDED: "default",
+const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+  PLACED: 'info',
+  CONFIRMED: 'info',
+  PROCESSING: 'warning',
+  SHIPPED: 'warning',
+  OUT_FOR_DELIVERY: 'warning',
+  DELIVERED: 'success',
+  CANCELLED: 'error',
+  RETURNED: 'error',
+  REFUNDED: 'default',
 };
 
 function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(amount));
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 }
 
@@ -52,7 +62,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   const handleToggle = async () => {
     if (!customer) return;
-    const action = customer.isActive ? "deactivate" : "activate";
+    const action = customer.isActive ? 'deactivate' : 'activate';
     if (!confirm(`Are you sure you want to ${action} this customer?`)) return;
     try {
       await toggleActive.mutateAsync(id);
@@ -94,24 +104,26 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
             <h1 className="text-2xl font-semibold text-charcoal">
               {customer.firstName} {customer.lastName}
             </h1>
-            <Badge variant={customer.isActive ? "success" : "error"}>
-              {customer.isActive ? "Active" : "Inactive"}
+            <Badge variant={customer.isActive ? 'success' : 'error'}>
+              {customer.isActive ? 'Active' : 'Inactive'}
             </Badge>
             {customer.segment && (
-              <Badge variant={segmentVariant[customer.segment] || "default"}>
+              <Badge variant={segmentVariant[customer.segment] || 'default'}>
                 {customer.segment}
               </Badge>
             )}
           </div>
-          <p className="text-sm text-medium-gray mt-1">Customer since {formatDate(customer.createdAt)}</p>
+          <p className="text-sm text-medium-gray mt-1">
+            Customer since {formatDate(customer.createdAt)}
+          </p>
         </div>
         <Button
-          variant={customer.isActive ? "danger" : "secondary"}
+          variant={customer.isActive ? 'danger' : 'secondary'}
           onClick={handleToggle}
           disabled={toggleActive.isPending}
         >
           {customer.isActive ? <UserX size={16} /> : <UserCheck size={16} />}
-          {customer.isActive ? "Deactivate" : "Activate"}
+          {customer.isActive ? 'Deactivate' : 'Activate'}
         </Button>
       </div>
 
@@ -126,7 +138,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                   <ShoppingBag size={20} className="text-info" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold text-charcoal">{customer._count?.orders || 0}</p>
+                  <p className="text-2xl font-semibold text-charcoal">
+                    {customer._count?.orders || 0}
+                  </p>
                   <p className="text-xs text-medium-gray">Total Orders</p>
                 </div>
               </div>
@@ -137,7 +151,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                   <span className="text-success font-semibold text-sm">&#8377;</span>
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold text-charcoal">{formatPrice(customer.totalSpent || 0)}</p>
+                  <p className="text-2xl font-semibold text-charcoal">
+                    {formatPrice(customer.totalSpent || 0)}
+                  </p>
                   <p className="text-xs text-medium-gray">Total Spent</p>
                 </div>
               </div>
@@ -148,7 +164,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                   <TrendingUp size={20} className="text-deep-earth" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold text-charcoal">{formatPrice(customer.avgOrderValue || 0)}</p>
+                  <p className="text-2xl font-semibold text-charcoal">
+                    {formatPrice(customer.avgOrderValue || 0)}
+                  </p>
                   <p className="text-xs text-medium-gray">Avg Order Value</p>
                 </div>
               </div>
@@ -186,14 +204,17 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     {customer.orders.map((order: any) => (
                       <tr key={order.id} className="border-b border-light-gray last:border-0">
                         <td className="py-2">
-                          <Link href={`/orders/${order.orderNumber}`} className="text-deep-earth hover:underline">
+                          <Link
+                            href={`/orders/${order.orderNumber}`}
+                            className="text-deep-earth hover:underline"
+                          >
                             #{order.orderNumber}
                           </Link>
                         </td>
                         <td className="py-2 text-dark-gray">{formatDate(order.createdAt)}</td>
                         <td className="py-2">
-                          <Badge variant={statusVariant[order.status] || "default"}>
-                            {order.status.replace(/_/g, " ")}
+                          <Badge variant={statusVariant[order.status] || 'default'}>
+                            {order.status.replace(/_/g, ' ')}
                           </Badge>
                         </td>
                         <td className="py-2 text-right font-medium text-charcoal">
@@ -226,7 +247,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               )}
               <div className="pt-2 border-t border-light-gray">
                 <p className="text-xs text-medium-gray">
-                  Email {customer.emailVerified ? "verified" : "not verified"}
+                  Email {customer.emailVerified ? 'verified' : 'not verified'}
                 </p>
                 {customer.lastLoginAt && (
                   <p className="text-xs text-medium-gray mt-1">
@@ -256,7 +277,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     <p className="text-dark-gray">{addr.fullName}</p>
                     <p className="text-dark-gray">{addr.line1}</p>
                     {addr.line2 && <p className="text-dark-gray">{addr.line2}</p>}
-                    <p className="text-dark-gray">{addr.city}, {addr.state} {addr.pinCode}</p>
+                    <p className="text-dark-gray">
+                      {addr.city}, {addr.state} {addr.pinCode}
+                    </p>
                   </div>
                 ))}
               </div>

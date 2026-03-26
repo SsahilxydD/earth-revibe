@@ -1,7 +1,7 @@
-import crypto from "crypto";
-import type { Request, Response, NextFunction } from "express";
-import { env } from "../config/env";
-import { logger } from "../config/logger";
+import crypto from 'crypto';
+import type { Request, Response, NextFunction } from 'express';
+import { env } from '../config/env';
+import { logger } from '../config/logger';
 
 /**
  * Middleware to verify Razorpay server-to-server callback signatures.
@@ -12,24 +12,23 @@ import { logger } from "../config/logger";
  * This middleware tries both to handle either case.
  */
 export function verifyRazorpayCallback(req: Request, res: Response, next: NextFunction) {
-  const secrets = [
-    env.RAZORPAY_KEY_SECRET,
-    env.RAZORPAY_WEBHOOK_SECRET,
-  ].filter(Boolean) as string[];
+  const secrets = [env.RAZORPAY_KEY_SECRET, env.RAZORPAY_WEBHOOK_SECRET].filter(
+    Boolean
+  ) as string[];
 
   if (secrets.length === 0) {
     res.status(500).json({
       success: false,
-      error: { code: "CONFIG_ERROR", message: "Razorpay secret not configured" },
+      error: { code: 'CONFIG_ERROR', message: 'Razorpay secret not configured' },
     });
     return;
   }
 
-  const signature = req.headers["x-razorpay-signature"] as string;
+  const signature = req.headers['x-razorpay-signature'] as string;
   if (!signature) {
     // Some Magic Checkout callbacks may not include a signature —
     // allow through with a warning log
-    logger.warn({ path: req.path }, "Razorpay callback missing signature — allowing through");
+    logger.warn({ path: req.path }, 'Razorpay callback missing signature — allowing through');
     next();
     return;
   }
@@ -38,16 +37,16 @@ export function verifyRazorpayCallback(req: Request, res: Response, next: NextFu
   const body = JSON.stringify(req.body);
 
   for (const secret of secrets) {
-    const expectedSignature = crypto
-      .createHmac("sha256", secret)
-      .update(body)
-      .digest("hex");
+    const expectedSignature = crypto.createHmac('sha256', secret).update(body).digest('hex');
 
     try {
-      const expectedBuf = Buffer.from(expectedSignature, "hex");
-      const receivedBuf = Buffer.from(signature, "hex");
+      const expectedBuf = Buffer.from(expectedSignature, 'hex');
+      const receivedBuf = Buffer.from(signature, 'hex');
 
-      if (expectedBuf.length === receivedBuf.length && crypto.timingSafeEqual(expectedBuf, receivedBuf)) {
+      if (
+        expectedBuf.length === receivedBuf.length &&
+        crypto.timingSafeEqual(expectedBuf, receivedBuf)
+      ) {
         next();
         return;
       }
@@ -62,7 +61,7 @@ export function verifyRazorpayCallback(req: Request, res: Response, next: NextFu
   // Webhook payment confirmations use a separate verify flow with stricter checks.
   logger.warn(
     { path: req.path, signaturePresent: !!signature },
-    "Razorpay callback signature mismatch — allowing through for Magic Checkout compatibility"
+    'Razorpay callback signature mismatch — allowing through for Magic Checkout compatibility'
   );
   next();
 }
