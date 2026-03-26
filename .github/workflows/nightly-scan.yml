@@ -1,0 +1,103 @@
+name: Nightly Codebase Scan
+
+on:
+  schedule:
+    # Run every night at 2 AM IST (8:30 PM UTC previous day)
+    - cron: '30 20 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  scan:
+    name: Claude Codebase Audit
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: earth_revibe_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      # --- Static checks ---
+      - name: Build shared packages
+        run: pnpm turbo build --filter=@earth-revibe/shared --filter=@earth-revibe/db
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/earth_revibe_test
+
+      - name: Type check
+        id: typecheck
+        run: pnpm lint 2>&1 | tee /tmp/typecheck-output.txt
+        continue-on-error: true
+
+      - name: Run tests
+        id: tests
+        run: pnpm turbo test 2>&1 | tee /tmp/test-output.txt
+        continue-on-error: true
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/earth_revibe_test
+          JWT_SECRET: test-secret-for-ci
+          NODE_ENV: test
+
+      - name: Security audit
+        id: audit
+        run: pnpm audit 2>&1 | tee /tmp/audit-output.txt
+        continue-on-error: true
+
+      # --- Claude deep analysis ---
+      - name: Get recent changes
+        run: git log --oneline --since="24 hours ago" > /tmp/recent-commits.txt
+
+      - name: Run Claude Nightly Scan
+        env:
+          # Claude CLI auth — set ONE of these as a GitHub secret:
+          CLAUDE_CODE_AUTH_TOKEN: ${{ secrets.CLAUDE_CODE_AUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node .github/scripts/nightly-scan.mjs
+
+      - name: Create issue if problems found
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('/tmp/scan-report.md')) return;
+            const report = fs.readFileSync('/tmp/scan-report.md', 'utf8');
+            if (!report.trim() || report.includes('NO_ISSUES_FOUND')) return;
+
+            const today = new Date().toISOString().split('T')[0];
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Nightly Scan] Issues found — ${today}`,
+              body: report,
+              labels: ['automated', 'nightly-scan'],
+            });

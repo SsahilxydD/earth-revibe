@@ -6,18 +6,28 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "clean": "turbo clean",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "turbo test",
     "db:generate": "turbo db:generate",
     "db:push": "turbo db:push",
     "db:seed": "turbo db:seed",
+    "prepare": "husky",
     "claw": "node scripts/claw.js",
     "claw:frontend": "node scripts/claw.js frontend",
     "claw:admin": "node scripts/claw.js admin",
     "claw:api": "node scripts/claw.js api"
   },
   "devDependencies": {
+    "@eslint/js": "^9.28.0",
     "@playwright/test": "^1.51.0",
+    "eslint": "^9.28.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.0",
+    "prettier": "^3.5.0",
     "turbo": "^2.8.13",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.34.0"
   },
   "packageManager": "pnpm@9.15.4",
   "engines": {
