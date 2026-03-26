@@ -408,6 +408,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
   const [showSizeSheet, setShowSizeSheet] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
+  const isCartOpen = useCartStore((s) => s.isOpen);
   const { addToast } = useToast();
 
   const selectedVariant = useMemo(
@@ -914,7 +915,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
       </div>
 
       {/* Mobile bottom dock — portaled to body so it works inside overflow containers. */}
-      {!isPreview && mounted && createPortal(<div
+      {!isPreview && mounted && !isCartOpen && createPortal(<div
         className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
