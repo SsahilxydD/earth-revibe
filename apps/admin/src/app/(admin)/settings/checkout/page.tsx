@@ -1,25 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import {
-  Save,
-  UserCheck,
-  Phone,
-  Settings,
-  Languages,
-  Heart,
-} from "lucide-react";
-import { Card, Button, Input, Select } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
-import { api } from "@/lib/api-client";
+import { useState, useEffect } from 'react';
+import { Save, UserCheck, Phone, Settings, Languages, Heart } from 'lucide-react';
+import { Card, Button, Input, Select } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
+import { api } from '@/lib/api-client';
 
-function Toggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (val: boolean) => void;
-}) {
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (val: boolean) => void }) {
   return (
     <button
       type="button"
@@ -27,12 +14,12 @@ function Toggle({
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-deep-earth/20 focus:ring-offset-1 ${
-        checked ? "bg-forest-green" : "bg-light-gray"
+        checked ? 'bg-forest-green' : 'bg-light-gray'
       }`}
     >
       <span
         className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-          checked ? "translate-x-4" : "translate-x-0"
+          checked ? 'translate-x-4' : 'translate-x-0'
         }`}
       />
     </button>
@@ -54,9 +41,7 @@ function ToggleRow({
     <div className="flex items-center justify-between gap-4 py-2">
       <div className="min-w-0">
         <p className="text-sm font-medium text-charcoal">{label}</p>
-        {description && (
-          <p className="text-xs text-medium-gray mt-0.5">{description}</p>
-        )}
+        {description && <p className="text-xs text-medium-gray mt-0.5">{description}</p>}
       </div>
       <Toggle checked={checked} onChange={onChange} />
     </div>
@@ -70,9 +55,7 @@ export default function CheckoutSettingsPage() {
   const [collectPhone, setCollectPhone] = useState(true);
 
   // Customer contact
-  const [contactMethod, setContactMethod] = useState<"email" | "email_or_phone">(
-    "email_or_phone"
-  );
+  const [contactMethod, setContactMethod] = useState<'email' | 'email_or_phone'>('email_or_phone');
   const [requireFullName, setRequireFullName] = useState(true);
   const [requireCompany, setRequireCompany] = useState(false);
 
@@ -83,50 +66,65 @@ export default function CheckoutSettingsPage() {
   const [sendShippingConfirmation, setSendShippingConfirmation] = useState(true);
 
   // Checkout language
-  const [language, setLanguage] = useState("en");
-  const [completeButtonText, setCompleteButtonText] = useState("");
+  const [language, setLanguage] = useState('en');
+  const [completeButtonText, setCompleteButtonText] = useState('');
 
   // Tips
   const [allowTips, setAllowTips] = useState(false);
-  const [tipPresets, setTipPresets] = useState("10,20,50");
+  const [tipPresets, setTipPresets] = useState('10,20,50');
 
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get("/admin/settings").then((data: any) => {
-      const cfg = data?.checkoutConfig;
-      if (!cfg) return;
-      if (cfg.requireLogin !== undefined) setRequireLogin(cfg.requireLogin);
-      if (cfg.allowGuest !== undefined) setAllowGuest(cfg.allowGuest);
-      if (cfg.collectPhone !== undefined) setCollectPhone(cfg.collectPhone);
-      if (cfg.contactMethod) setContactMethod(cfg.contactMethod);
-      if (cfg.requireFullName !== undefined) setRequireFullName(cfg.requireFullName);
-      if (cfg.requireCompany !== undefined) setRequireCompany(cfg.requireCompany);
-      if (cfg.autoFulfillDigital !== undefined) setAutoFulfillDigital(cfg.autoFulfillDigital);
-      if (cfg.autoArchive !== undefined) setAutoArchive(cfg.autoArchive);
-      if (cfg.sendOrderConfirmation !== undefined) setSendOrderConfirmation(cfg.sendOrderConfirmation);
-      if (cfg.sendShippingConfirmation !== undefined) setSendShippingConfirmation(cfg.sendShippingConfirmation);
-      if (cfg.language) setLanguage(cfg.language);
-      if (cfg.completeButtonText) setCompleteButtonText(cfg.completeButtonText);
-      if (cfg.allowTips !== undefined) setAllowTips(cfg.allowTips);
-      if (cfg.tipPresets) setTipPresets(cfg.tipPresets);
-    }).catch(() => {});
+    api
+      .get('/admin/settings')
+      .then((data: any) => {
+        const cfg = data?.checkoutConfig;
+        if (!cfg) return;
+        if (cfg.requireLogin !== undefined) setRequireLogin(cfg.requireLogin);
+        if (cfg.allowGuest !== undefined) setAllowGuest(cfg.allowGuest);
+        if (cfg.collectPhone !== undefined) setCollectPhone(cfg.collectPhone);
+        if (cfg.contactMethod) setContactMethod(cfg.contactMethod);
+        if (cfg.requireFullName !== undefined) setRequireFullName(cfg.requireFullName);
+        if (cfg.requireCompany !== undefined) setRequireCompany(cfg.requireCompany);
+        if (cfg.autoFulfillDigital !== undefined) setAutoFulfillDigital(cfg.autoFulfillDigital);
+        if (cfg.autoArchive !== undefined) setAutoArchive(cfg.autoArchive);
+        if (cfg.sendOrderConfirmation !== undefined)
+          setSendOrderConfirmation(cfg.sendOrderConfirmation);
+        if (cfg.sendShippingConfirmation !== undefined)
+          setSendShippingConfirmation(cfg.sendShippingConfirmation);
+        if (cfg.language) setLanguage(cfg.language);
+        if (cfg.completeButtonText) setCompleteButtonText(cfg.completeButtonText);
+        if (cfg.allowTips !== undefined) setAllowTips(cfg.allowTips);
+        if (cfg.tipPresets) setTipPresets(cfg.tipPresets);
+      })
+      .catch(() => {});
   }, []);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put("/admin/settings", {
+      await api.put('/admin/settings', {
         checkoutConfig: {
-          requireLogin, allowGuest, collectPhone, contactMethod,
-          requireFullName, requireCompany, autoFulfillDigital, autoArchive,
-          sendOrderConfirmation, sendShippingConfirmation,
-          language, completeButtonText, allowTips, tipPresets,
+          requireLogin,
+          allowGuest,
+          collectPhone,
+          contactMethod,
+          requireFullName,
+          requireCompany,
+          autoFulfillDigital,
+          autoArchive,
+          sendOrderConfirmation,
+          sendShippingConfirmation,
+          language,
+          completeButtonText,
+          allowTips,
+          tipPresets,
         },
       });
-      toast.success("Checkout settings saved");
+      toast.success('Checkout settings saved');
     } catch {
-      toast.error("Failed to save checkout settings");
+      toast.error('Failed to save checkout settings');
     } finally {
       setSaving(false);
     }
@@ -143,7 +141,7 @@ export default function CheckoutSettingsPage() {
         </div>
         <Button onClick={handleSave} disabled={saving}>
           <Save size={16} />
-          {saving ? "Saving..." : "Save"}
+          {saving ? 'Saving...' : 'Save'}
         </Button>
       </div>
 
@@ -152,9 +150,7 @@ export default function CheckoutSettingsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <UserCheck size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Customer accounts
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Customer accounts</h3>
           </div>
 
           <div className="divide-y divide-light-gray">
@@ -185,23 +181,19 @@ export default function CheckoutSettingsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Phone size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Customer contact
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Customer contact</h3>
           </div>
 
           <div>
-            <p className="text-sm font-medium text-charcoal mb-3">
-              How customers can check out
-            </p>
+            <p className="text-sm font-medium text-charcoal mb-3">How customers can check out</p>
             <div className="space-y-2">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="radio"
                   name="contactMethod"
                   value="email"
-                  checked={contactMethod === "email"}
-                  onChange={() => setContactMethod("email")}
+                  checked={contactMethod === 'email'}
+                  onChange={() => setContactMethod('email')}
                   className="h-4 w-4 text-deep-earth border-light-gray focus:ring-deep-earth/20"
                 />
                 <span className="text-sm text-charcoal">Email only</span>
@@ -211,13 +203,11 @@ export default function CheckoutSettingsPage() {
                   type="radio"
                   name="contactMethod"
                   value="email_or_phone"
-                  checked={contactMethod === "email_or_phone"}
-                  onChange={() => setContactMethod("email_or_phone")}
+                  checked={contactMethod === 'email_or_phone'}
+                  onChange={() => setContactMethod('email_or_phone')}
                   className="h-4 w-4 text-deep-earth border-light-gray focus:ring-deep-earth/20"
                 />
-                <span className="text-sm text-charcoal">
-                  Email or phone number
-                </span>
+                <span className="text-sm text-charcoal">Email or phone number</span>
               </label>
             </div>
           </div>
@@ -246,9 +236,7 @@ export default function CheckoutSettingsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Settings size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Order processing
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Order processing</h3>
           </div>
 
           <div className="divide-y divide-light-gray">
@@ -285,9 +273,7 @@ export default function CheckoutSettingsPage() {
         <div className="space-y-5">
           <div className="flex items-center gap-2">
             <Languages size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Checkout language
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Checkout language</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -296,8 +282,8 @@ export default function CheckoutSettingsPage() {
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
               options={[
-                { value: "en", label: "English" },
-                { value: "hi", label: "Hindi" },
+                { value: 'en', label: 'English' },
+                { value: 'hi', label: 'Hindi' },
               ]}
             />
             <Input
@@ -316,9 +302,7 @@ export default function CheckoutSettingsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Heart size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Tips / Additional charges
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Tips / Additional charges</h3>
           </div>
 
           <div className="divide-y divide-light-gray">

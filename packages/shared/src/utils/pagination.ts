@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from "../types";
+import type { PaginatedResponse } from '../types';
 
 /**
  * Normalize flat pagination fields to a nested `pagination` object.
@@ -9,7 +9,7 @@ import type { PaginatedResponse } from "../types";
  * Safe to call on already-normalized responses (returns as-is if `pagination` exists).
  */
 export function normalizePaginated<T = unknown, K extends string = string>(
-  raw: any,
+  raw: any
 ): PaginatedResponse<T, K> {
   if (raw && raw.pagination) return raw;
   return {

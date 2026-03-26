@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Menu,
   LogOut,
@@ -14,24 +14,44 @@ import {
   CreditCard,
   Headset,
   AlertTriangle,
-} from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { useUIStore } from "@/stores/ui-store";
+} from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { useUIStore } from '@/stores/ui-store';
 import {
   useNotifications,
   useNotificationCount,
   type AdminNotification,
-} from "@/hooks/use-notifications";
+} from '@/hooks/use-notifications';
 
 const notificationConfig: Record<
   string,
   { icon: typeof ShoppingCart; href: string; iconColor: string; iconBg: string }
 > = {
-  NEW_ORDER: { icon: ShoppingCart, href: "/orders", iconColor: "text-info", iconBg: "bg-info-bg" },
-  LOW_STOCK: { icon: Package, href: "/inventory", iconColor: "text-warning", iconBg: "bg-warning-bg" },
-  OUT_OF_STOCK: { icon: AlertTriangle, href: "/inventory", iconColor: "text-error", iconBg: "bg-error-bg" },
-  FAILED_PAYMENT: { icon: CreditCard, href: "/orders", iconColor: "text-error", iconBg: "bg-error-bg" },
-  PENDING_SUPPORT: { icon: Headset, href: "/support-tickets", iconColor: "text-purple-600", iconBg: "bg-purple-50" },
+  NEW_ORDER: { icon: ShoppingCart, href: '/orders', iconColor: 'text-info', iconBg: 'bg-info-bg' },
+  LOW_STOCK: {
+    icon: Package,
+    href: '/inventory',
+    iconColor: 'text-warning',
+    iconBg: 'bg-warning-bg',
+  },
+  OUT_OF_STOCK: {
+    icon: AlertTriangle,
+    href: '/inventory',
+    iconColor: 'text-error',
+    iconBg: 'bg-error-bg',
+  },
+  FAILED_PAYMENT: {
+    icon: CreditCard,
+    href: '/orders',
+    iconColor: 'text-error',
+    iconBg: 'bg-error-bg',
+  },
+  PENDING_SUPPORT: {
+    icon: Headset,
+    href: '/support-tickets',
+    iconColor: 'text-purple-600',
+    iconBg: 'bg-purple-50',
+  },
 };
 
 export function Topbar() {
@@ -64,17 +84,17 @@ export function Topbar() {
         setIsNotificationOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push('/login');
   };
 
-  const displayName = userEmail?.split("@")[0] ?? "Admin";
+  const displayName = userEmail?.split('@')[0] ?? 'Admin';
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
@@ -108,7 +128,7 @@ export function Topbar() {
           <Bell size={18} className="text-text-secondary" />
           {count > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center bg-error text-white text-[9px] font-bold px-1">
-              {count > 99 ? "99+" : count}
+              {count > 99 ? '99+' : count}
             </span>
           )}
         </button>
@@ -116,7 +136,9 @@ export function Topbar() {
         {isNotificationOpen && (
           <div className="absolute right-0 mt-1 w-80 bg-surface border border-border shadow-lg z-50">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <h3 className="font-heading text-sm font-semibold text-text-primary">Notifications</h3>
+              <h3 className="font-heading text-sm font-semibold text-text-primary">
+                Notifications
+              </h3>
               <Link
                 href="/notifications"
                 onClick={() => setIsNotificationOpen(false)}
@@ -149,9 +171,9 @@ export function Topbar() {
                   {notifications.map((notification: AdminNotification, index: number) => {
                     const config = notificationConfig[notification.type];
                     const Icon = config?.icon ?? Bell;
-                    const iconColor = config?.iconColor ?? "text-text-secondary";
-                    const iconBg = config?.iconBg ?? "bg-surface-tint";
-                    const href = config?.href ?? "/notifications";
+                    const iconColor = config?.iconColor ?? 'text-text-secondary';
+                    const iconBg = config?.iconBg ?? 'bg-surface-tint';
+                    const href = config?.href ?? '/notifications';
 
                     return (
                       <Link
@@ -170,13 +192,11 @@ export function Topbar() {
                             <p className="text-sm font-medium text-text-primary">
                               {notification.title}
                             </p>
-                            {notification.priority === "high" && (
+                            {notification.priority === 'high' && (
                               <span className="w-1.5 h-1.5 bg-error flex-shrink-0" />
                             )}
                           </div>
-                          <p className="text-xs text-text-muted mt-0.5">
-                            {notification.message}
-                          </p>
+                          <p className="text-xs text-text-muted mt-0.5">{notification.message}</p>
                         </div>
                       </Link>
                     );

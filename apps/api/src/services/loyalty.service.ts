@@ -1,5 +1,5 @@
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
 
 export const loyaltyService = {
   async getBalance(userId: string) {
@@ -7,7 +7,7 @@ export const loyaltyService = {
       where: { id: userId },
       select: { loyaltyPoints: true },
     });
-    if (!user) throw ApiError.notFound("User not found");
+    if (!user) throw ApiError.notFound('User not found');
     return { points: user.loyaltyPoints, value: user.loyaltyPoints };
   },
 
@@ -17,7 +17,7 @@ export const loyaltyService = {
         where: { userId },
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       }),
       prisma.loyaltyTransaction.count({ where: { userId } }),
     ]);
@@ -30,15 +30,15 @@ export const loyaltyService = {
       where: { id: userId },
       select: { loyaltyPoints: true },
     });
-    if (!user) throw ApiError.notFound("User not found");
+    if (!user) throw ApiError.notFound('User not found');
 
     const [earned, redeemed] = await Promise.all([
       prisma.loyaltyTransaction.aggregate({
-        where: { userId, type: "EARNED" },
+        where: { userId, type: 'EARNED' },
         _sum: { points: true },
       }),
       prisma.loyaltyTransaction.aggregate({
-        where: { userId, type: "REDEEMED" },
+        where: { userId, type: 'REDEEMED' },
         _sum: { points: true },
       }),
     ]);

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ApiError } from "../../utils/api-error";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ApiError } from '../../utils/api-error';
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 // Must be declared before any imports that touch @earth-revibe/db so that
@@ -13,7 +13,7 @@ const { mockUser, mockLoyaltyTransaction } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@earth-revibe/db", () => ({
+vi.mock('@earth-revibe/db', () => ({
   prisma: {
     user: mockUser,
     loyaltyTransaction: mockLoyaltyTransaction,
@@ -21,19 +21,19 @@ vi.mock("@earth-revibe/db", () => ({
 }));
 
 // ── Service under test ────────────────────────────────────────────────────────
-import { loyaltyService } from "../loyalty.service";
+import { loyaltyService } from '../loyalty.service';
 
 // ── Shared fixtures ───────────────────────────────────────────────────────────
-const USER_ID = "user-abc-123";
+const USER_ID = 'user-abc-123';
 
 const makeTransaction = (overrides: Record<string, unknown> = {}) => ({
-  id: "txn-1",
+  id: 'txn-1',
   userId: USER_ID,
-  type: "EARNED",
+  type: 'EARNED',
   points: 100,
-  description: "Purchase reward",
+  description: 'Purchase reward',
   orderId: null,
-  createdAt: new Date("2025-01-15T10:00:00Z"),
+  createdAt: new Date('2025-01-15T10:00:00Z'),
   ...overrides,
 });
 
@@ -45,7 +45,7 @@ beforeEach(() => {
 // ─────────────────────────────────────────────────────────────────────────────
 // getBalance
 // ─────────────────────────────────────────────────────────────────────────────
-describe("loyaltyService.getBalance", () => {
+describe('loyaltyService.getBalance', () => {
   it("returns points and value equal to the user's loyaltyPoints", async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 250 });
 
@@ -55,7 +55,7 @@ describe("loyaltyService.getBalance", () => {
     expect(result.value).toBe(250);
   });
 
-  it("enforces a 1:1 ratio — points always equals value", async () => {
+  it('enforces a 1:1 ratio — points always equals value', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 1337 });
 
     const result = await loyaltyService.getBalance(USER_ID);
@@ -63,7 +63,7 @@ describe("loyaltyService.getBalance", () => {
     expect(result.points).toBe(result.value);
   });
 
-  it("returns zero points when user has no loyalty points accumulated", async () => {
+  it('returns zero points when user has no loyalty points accumulated', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 0 });
 
     const result = await loyaltyService.getBalance(USER_ID);
@@ -72,7 +72,7 @@ describe("loyaltyService.getBalance", () => {
     expect(result.value).toBe(0);
   });
 
-  it("queries prisma with the correct userId and selects only loyaltyPoints", async () => {
+  it('queries prisma with the correct userId and selects only loyaltyPoints', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 10 });
 
     await loyaltyService.getBalance(USER_ID);
@@ -84,29 +84,29 @@ describe("loyaltyService.getBalance", () => {
     });
   });
 
-  it("throws ApiError with 404 / NOT_FOUND when user does not exist", async () => {
+  it('throws ApiError with 404 / NOT_FOUND when user does not exist', async () => {
     mockUser.findUnique.mockResolvedValue(null);
 
     await expect(loyaltyService.getBalance(USER_ID)).rejects.toThrow(ApiError);
     await expect(loyaltyService.getBalance(USER_ID)).rejects.toMatchObject({
       statusCode: 404,
-      code: "NOT_FOUND",
-      message: "User not found",
+      code: 'NOT_FOUND',
+      message: 'User not found',
     });
   });
 
-  it("does not swallow prisma errors — propagates unexpected DB failures", async () => {
-    mockUser.findUnique.mockRejectedValue(new Error("Connection timeout"));
+  it('does not swallow prisma errors — propagates unexpected DB failures', async () => {
+    mockUser.findUnique.mockRejectedValue(new Error('Connection timeout'));
 
-    await expect(loyaltyService.getBalance(USER_ID)).rejects.toThrow("Connection timeout");
+    await expect(loyaltyService.getBalance(USER_ID)).rejects.toThrow('Connection timeout');
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // getHistory
 // ─────────────────────────────────────────────────────────────────────────────
-describe("loyaltyService.getHistory", () => {
-  it("returns transactions, total, page, limit, and totalPages", async () => {
+describe('loyaltyService.getHistory', () => {
+  it('returns transactions, total, page, limit, and totalPages', async () => {
     const txns = [makeTransaction()];
     mockLoyaltyTransaction.findMany.mockResolvedValue(txns);
     mockLoyaltyTransaction.count.mockResolvedValue(1);
@@ -120,7 +120,7 @@ describe("loyaltyService.getHistory", () => {
     expect(result.totalPages).toBe(1);
   });
 
-  it("uses page=1 and limit=20 as defaults when not provided", async () => {
+  it('uses page=1 and limit=20 as defaults when not provided', async () => {
     mockLoyaltyTransaction.findMany.mockResolvedValue([]);
     mockLoyaltyTransaction.count.mockResolvedValue(0);
 
@@ -131,7 +131,7 @@ describe("loyaltyService.getHistory", () => {
     );
   });
 
-  it("calculates skip correctly — page 3 with limit 10 skips 20 records", async () => {
+  it('calculates skip correctly — page 3 with limit 10 skips 20 records', async () => {
     mockLoyaltyTransaction.findMany.mockResolvedValue([]);
     mockLoyaltyTransaction.count.mockResolvedValue(30);
 
@@ -144,7 +144,7 @@ describe("loyaltyService.getHistory", () => {
     expect(result.limit).toBe(10);
   });
 
-  it("calculates totalPages using ceiling division — 45 records / 20 per page = 3 pages", async () => {
+  it('calculates totalPages using ceiling division — 45 records / 20 per page = 3 pages', async () => {
     mockLoyaltyTransaction.findMany.mockResolvedValue([]);
     mockLoyaltyTransaction.count.mockResolvedValue(45);
 
@@ -153,7 +153,7 @@ describe("loyaltyService.getHistory", () => {
     expect(result.totalPages).toBe(3);
   });
 
-  it("calculates totalPages as 0 when there are no transactions", async () => {
+  it('calculates totalPages as 0 when there are no transactions', async () => {
     mockLoyaltyTransaction.findMany.mockResolvedValue([]);
     mockLoyaltyTransaction.count.mockResolvedValue(0);
 
@@ -163,18 +163,18 @@ describe("loyaltyService.getHistory", () => {
     expect(result.transactions).toHaveLength(0);
   });
 
-  it("orders results by createdAt descending", async () => {
+  it('orders results by createdAt descending', async () => {
     mockLoyaltyTransaction.findMany.mockResolvedValue([]);
     mockLoyaltyTransaction.count.mockResolvedValue(0);
 
     await loyaltyService.getHistory(USER_ID);
 
     expect(mockLoyaltyTransaction.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { createdAt: "desc" } })
+      expect.objectContaining({ orderBy: { createdAt: 'desc' } })
     );
   });
 
-  it("filters transactions by userId", async () => {
+  it('filters transactions by userId', async () => {
     mockLoyaltyTransaction.findMany.mockResolvedValue([]);
     mockLoyaltyTransaction.count.mockResolvedValue(0);
 
@@ -188,14 +188,14 @@ describe("loyaltyService.getHistory", () => {
     });
   });
 
-  it("runs findMany and count in parallel via Promise.all", async () => {
+  it('runs findMany and count in parallel via Promise.all', async () => {
     const order: string[] = [];
     mockLoyaltyTransaction.findMany.mockImplementation(async () => {
-      order.push("findMany");
+      order.push('findMany');
       return [];
     });
     mockLoyaltyTransaction.count.mockImplementation(async () => {
-      order.push("count");
+      order.push('count');
       return 0;
     });
 
@@ -203,19 +203,19 @@ describe("loyaltyService.getHistory", () => {
 
     // Both must have been called (order may vary depending on microtask scheduling,
     // but both must complete before the result is returned)
-    expect(order).toContain("findMany");
-    expect(order).toContain("count");
+    expect(order).toContain('findMany');
+    expect(order).toContain('count');
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // getSummary
 // ─────────────────────────────────────────────────────────────────────────────
-describe("loyaltyService.getSummary", () => {
-  it("returns currentBalance, totalEarned, totalRedeemed, and pointValue", async () => {
+describe('loyaltyService.getSummary', () => {
+  it('returns currentBalance, totalEarned, totalRedeemed, and pointValue', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 300 });
     mockLoyaltyTransaction.aggregate
-      .mockResolvedValueOnce({ _sum: { points: 500 } })  // EARNED
+      .mockResolvedValueOnce({ _sum: { points: 500 } }) // EARNED
       .mockResolvedValueOnce({ _sum: { points: -200 } }); // REDEEMED
 
     const result = await loyaltyService.getSummary(USER_ID);
@@ -226,18 +226,18 @@ describe("loyaltyService.getSummary", () => {
     expect(result.pointValue).toBe(1);
   });
 
-  it("throws ApiError 404 / NOT_FOUND when user does not exist", async () => {
+  it('throws ApiError 404 / NOT_FOUND when user does not exist', async () => {
     mockUser.findUnique.mockResolvedValue(null);
 
     await expect(loyaltyService.getSummary(USER_ID)).rejects.toThrow(ApiError);
     await expect(loyaltyService.getSummary(USER_ID)).rejects.toMatchObject({
       statusCode: 404,
-      code: "NOT_FOUND",
-      message: "User not found",
+      code: 'NOT_FOUND',
+      message: 'User not found',
     });
   });
 
-  it("does not call aggregate when user is not found", async () => {
+  it('does not call aggregate when user is not found', async () => {
     mockUser.findUnique.mockResolvedValue(null);
 
     await loyaltyService.getSummary(USER_ID).catch(() => undefined);
@@ -245,7 +245,7 @@ describe("loyaltyService.getSummary", () => {
     expect(mockLoyaltyTransaction.aggregate).not.toHaveBeenCalled();
   });
 
-  it("defaults totalEarned to 0 when aggregate _sum.points is null", async () => {
+  it('defaults totalEarned to 0 when aggregate _sum.points is null', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 0 });
     mockLoyaltyTransaction.aggregate
       .mockResolvedValueOnce({ _sum: { points: null } }) // EARNED → null
@@ -256,7 +256,7 @@ describe("loyaltyService.getSummary", () => {
     expect(result.totalEarned).toBe(0);
   });
 
-  it("defaults totalRedeemed to 0 when aggregate _sum.points is null", async () => {
+  it('defaults totalRedeemed to 0 when aggregate _sum.points is null', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 0 });
     mockLoyaltyTransaction.aggregate
       .mockResolvedValueOnce({ _sum: { points: null } })
@@ -267,7 +267,7 @@ describe("loyaltyService.getSummary", () => {
     expect(result.totalRedeemed).toBe(0);
   });
 
-  it("converts negative REDEEMED sum to a positive absolute value", async () => {
+  it('converts negative REDEEMED sum to a positive absolute value', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 800 });
     mockLoyaltyTransaction.aggregate
       .mockResolvedValueOnce({ _sum: { points: 1000 } })
@@ -279,7 +279,7 @@ describe("loyaltyService.getSummary", () => {
     expect(result.totalRedeemed).toBeGreaterThanOrEqual(0);
   });
 
-  it("aggregates EARNED transactions filtered by the correct type", async () => {
+  it('aggregates EARNED transactions filtered by the correct type', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 100 });
     mockLoyaltyTransaction.aggregate
       .mockResolvedValueOnce({ _sum: { points: 100 } })
@@ -288,10 +288,10 @@ describe("loyaltyService.getSummary", () => {
     await loyaltyService.getSummary(USER_ID);
 
     const calls = mockLoyaltyTransaction.aggregate.mock.calls;
-    expect(calls[0][0]).toMatchObject({ where: { userId: USER_ID, type: "EARNED" } });
+    expect(calls[0][0]).toMatchObject({ where: { userId: USER_ID, type: 'EARNED' } });
   });
 
-  it("aggregates REDEEMED transactions filtered by the correct type", async () => {
+  it('aggregates REDEEMED transactions filtered by the correct type', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 100 });
     mockLoyaltyTransaction.aggregate
       .mockResolvedValueOnce({ _sum: { points: 100 } })
@@ -300,10 +300,10 @@ describe("loyaltyService.getSummary", () => {
     await loyaltyService.getSummary(USER_ID);
 
     const calls = mockLoyaltyTransaction.aggregate.mock.calls;
-    expect(calls[1][0]).toMatchObject({ where: { userId: USER_ID, type: "REDEEMED" } });
+    expect(calls[1][0]).toMatchObject({ where: { userId: USER_ID, type: 'REDEEMED' } });
   });
 
-  it("always returns pointValue of 1 regardless of balance", async () => {
+  it('always returns pointValue of 1 regardless of balance', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 9999 });
     mockLoyaltyTransaction.aggregate
       .mockResolvedValueOnce({ _sum: { points: 9999 } })
@@ -314,7 +314,7 @@ describe("loyaltyService.getSummary", () => {
     expect(result.pointValue).toBe(1);
   });
 
-  it("handles a brand-new user with zero balance and no transactions", async () => {
+  it('handles a brand-new user with zero balance and no transactions', async () => {
     mockUser.findUnique.mockResolvedValue({ loyaltyPoints: 0 });
     mockLoyaltyTransaction.aggregate
       .mockResolvedValueOnce({ _sum: { points: null } })

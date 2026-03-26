@@ -1,7 +1,7 @@
-import { prisma } from "@earth-revibe/db";
-import { shiprocketRequest } from "../config/shiprocket";
-import { env } from "../config/env";
-import { APP_CONSTANTS } from "../config/constants";
+import { prisma } from '@earth-revibe/db';
+import { shiprocketRequest } from '../config/shiprocket';
+import { env } from '../config/env';
+import { APP_CONSTANTS } from '../config/constants';
 
 interface ShiprocketOrderItem {
   name: string;
@@ -33,15 +33,15 @@ export const shiprocketService = {
         `/courier/serviceability/?pickup_postcode=${env.SHIPROCKET_PICKUP_PINCODE}&delivery_postcode=${deliveryPincode}&weight=${weight}&cod=${codEnabled ? 1 : 0}`
       );
 
-      const couriers: ServiceabilityResult[] = (
-        data.data?.available_courier_companies || []
-      ).map((c: any) => ({
-        courier_name: c.courier_name,
-        courier_company_id: c.courier_company_id,
-        rate: c.rate,
-        etd: c.etd,
-        cod: c.cod === 1,
-      }));
+      const couriers: ServiceabilityResult[] = (data.data?.available_courier_companies || []).map(
+        (c: any) => ({
+          courier_name: c.courier_name,
+          courier_company_id: c.courier_company_id,
+          rate: c.rate,
+          etd: c.etd,
+          cod: c.cod === 1,
+        })
+      );
 
       return {
         serviceable: couriers.length > 0,
@@ -68,8 +68,8 @@ export const shiprocketService = {
       },
     });
 
-    if (!order) throw new Error("Order not found");
-    if (!order.address) throw new Error("Order has no address");
+    if (!order) throw new Error('Order not found');
+    if (!order.address) throw new Error('Order has no address');
 
     // Build line items for Shiprocket
     const orderItems: ShiprocketOrderItem[] = order.items.map((item) => ({
@@ -85,29 +85,31 @@ export const shiprocketService = {
       APP_CONSTANTS.MIN_SHIPPING_WEIGHT_KG
     );
 
-    const customerName = order.address.fullName || (order.user ? `${order.user.firstName} ${order.user.lastName}` : "Guest");
-    const customerPhone = order.address.phone || order.user?.phone || "";
+    const customerName =
+      order.address.fullName ||
+      (order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Guest');
+    const customerPhone = order.address.phone || order.user?.phone || '';
 
     // Create order on Shiprocket
-    const srOrder = await shiprocketRequest<any>("/orders/create/adhoc", {
-      method: "POST",
+    const srOrder = await shiprocketRequest<any>('/orders/create/adhoc', {
+      method: 'POST',
       body: {
         order_id: order.orderNumber,
-        order_date: new Date(order.createdAt).toISOString().split("T")[0],
-        pickup_location: env.SHIPROCKET_PICKUP_LOCATION || "Earthrevibe",
-        billing_customer_name: customerName.split(" ")[0],
-        billing_last_name: customerName.split(" ").slice(1).join(" ") || "",
+        order_date: new Date(order.createdAt).toISOString().split('T')[0],
+        pickup_location: env.SHIPROCKET_PICKUP_LOCATION || 'Earthrevibe',
+        billing_customer_name: customerName.split(' ')[0],
+        billing_last_name: customerName.split(' ').slice(1).join(' ') || '',
         billing_address: order.address.line1,
-        billing_address_2: order.address.line2 || "",
+        billing_address_2: order.address.line2 || '',
         billing_city: order.address.city,
         billing_pincode: order.address.pinCode,
         billing_state: order.address.state,
-        billing_country: "India",
-        billing_email: order.user?.email || order.guestEmail || "",
-        billing_phone: customerPhone.replace(/^\+91/, ""),
+        billing_country: 'India',
+        billing_email: order.user?.email || order.guestEmail || '',
+        billing_phone: customerPhone.replace(/^\+91/, ''),
         shipping_is_billing: true,
         order_items: orderItems,
-        payment_method: "Prepaid",
+        payment_method: 'Prepaid',
         sub_total: Number(order.totalAmount),
         length: 20,
         breadth: 15,
@@ -122,14 +124,14 @@ export const shiprocketService = {
       data: {
         shiprocketOrderId: srOrder.order_id,
         shiprocketShipmentId: srOrder.shipment_id,
-        status: "PROCESSING",
+        status: 'PROCESSING',
       },
     });
 
     await prisma.orderStatusHistory.create({
       data: {
         orderId,
-        status: "PROCESSING",
+        status: 'PROCESSING',
         note: `Shiprocket order created (ID: ${srOrder.order_id})`,
       },
     });
@@ -150,7 +152,7 @@ export const shiprocketService = {
     });
 
     if (!order?.shiprocketShipmentId) {
-      throw new Error("No Shiprocket shipment found for this order");
+      throw new Error('No Shiprocket shipment found for this order');
     }
 
     // If no courier specified, let Shiprocket pick the best one
@@ -159,8 +161,8 @@ export const shiprocketService = {
       body.courier_id = courierCompanyId;
     }
 
-    const result = await shiprocketRequest<any>("/courier/assign/awb", {
-      method: "POST",
+    const result = await shiprocketRequest<any>('/courier/assign/awb', {
+      method: 'POST',
       body,
     });
 
@@ -185,22 +187,22 @@ export const shiprocketService = {
    * Generate shipping label for a shipment.
    */
   async generateLabel(shiprocketShipmentId: number): Promise<string> {
-    const result = await shiprocketRequest<any>("/courier/generate/label", {
-      method: "POST",
+    const result = await shiprocketRequest<any>('/courier/generate/label', {
+      method: 'POST',
       body: { shipment_id: [shiprocketShipmentId] },
     });
-    return result.label_url || "";
+    return result.label_url || '';
   },
 
   /**
    * Generate manifest for a shipment.
    */
   async generateManifest(shiprocketShipmentId: number): Promise<string> {
-    const result = await shiprocketRequest<any>("/manifests/generate", {
-      method: "POST",
+    const result = await shiprocketRequest<any>('/manifests/generate', {
+      method: 'POST',
       body: { shipment_id: [shiprocketShipmentId] },
     });
-    return result.manifest_url || "";
+    return result.manifest_url || '';
   },
 
   /**
@@ -217,9 +219,7 @@ export const shiprocketService = {
     }
 
     try {
-      const result = await shiprocketRequest<any>(
-        `/courier/track/awb/${order.awbCode}`
-      );
+      const result = await shiprocketRequest<any>(`/courier/track/awb/${order.awbCode}`);
 
       const trackingData = result.tracking_data || {};
       return {
@@ -232,7 +232,7 @@ export const shiprocketService = {
         etd: trackingData.etd,
         activities: (trackingData.shipment_track_activities || []).map((a: any) => ({
           date: a.date,
-          status: a["sr-status-label"],
+          status: a['sr-status-label'],
           activity: a.activity,
           location: a.location,
         })),

@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { Suspense, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { CheckCircle, Package, ArrowRight, UserPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { useCartStore } from "@/stores/cart-store";
+import { Suspense, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { CheckCircle, Package, ArrowRight, UserPlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { useCartStore } from '@/stores/cart-store';
 
 function ConfirmationContent() {
   const searchParams = useSearchParams();
-  const orderId = searchParams.get("orderId");
-  const isNewAccount = searchParams.get("newAccount") === "1";
+  const orderId = searchParams.get('orderId');
+  const isNewAccount = searchParams.get('newAccount') === '1';
   const clearCart = useCartStore((s) => s.clearCart);
   const clearedRef = useRef(false);
 
@@ -33,13 +33,11 @@ function ConfirmationContent() {
           </div>
         </div>
 
-        <h1 className="mt-5 text-xl font-bold uppercase tracking-wider">
-          Order Confirmed!
-        </h1>
+        <h1 className="mt-5 text-xl font-bold uppercase tracking-wider">Order Confirmed!</h1>
 
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-          Thank you for your order. We&apos;ve received your payment and are
-          preparing your items for shipment.
+          Thank you for your order. We&apos;ve received your payment and are preparing your items
+          for shipment.
         </p>
 
         {/* Order number + delivery in a compact stack */}
@@ -69,12 +67,10 @@ function ConfirmationContent() {
             <div className="flex items-start gap-3">
               <UserPlus className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
               <div>
-                <p className="text-sm font-semibold text-green-900">
-                  Account created!
-                </p>
+                <p className="text-sm font-semibold text-green-900">Account created!</p>
                 <p className="mt-1 text-xs leading-relaxed text-green-700">
-                  We&apos;ve created an account for you. Check your email to set
-                  a password — then you can log in to track your orders anytime.
+                  We&apos;ve created an account for you. Check your email to set a password — then
+                  you can log in to track your orders anytime.
                 </p>
               </div>
             </div>

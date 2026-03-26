@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { adminOrderService } from "../services/admin-order.service";
+import type { Request, Response } from 'express';
+import { adminOrderService } from '../services/admin-order.service';
 
 export const adminOrderController = {
   async listOrders(req: Request, res: Response) {

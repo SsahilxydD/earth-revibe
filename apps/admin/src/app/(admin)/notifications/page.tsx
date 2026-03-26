@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
 import {
   Bell,
   ShoppingCart,
@@ -9,10 +9,10 @@ import {
   Headset,
   AlertTriangle,
   ArrowRight,
-} from "lucide-react";
-import { Card, Badge } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useNotifications, type AdminNotification } from "@/hooks/use-notifications";
+} from 'lucide-react';
+import { Card, Badge } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useNotifications, type AdminNotification } from '@/hooks/use-notifications';
 
 const notificationConfig: Record<
   string,
@@ -26,38 +26,38 @@ const notificationConfig: Record<
 > = {
   NEW_ORDER: {
     icon: ShoppingCart,
-    href: "/orders",
-    action: "View Orders",
-    color: "bg-blue-50 border-blue-200",
-    iconColor: "text-blue-600 bg-blue-100",
+    href: '/orders',
+    action: 'View Orders',
+    color: 'bg-blue-50 border-blue-200',
+    iconColor: 'text-blue-600 bg-blue-100',
   },
   LOW_STOCK: {
     icon: Package,
-    href: "/inventory",
-    action: "Check Inventory",
-    color: "bg-amber-50 border-amber-200",
-    iconColor: "text-amber-600 bg-amber-100",
+    href: '/inventory',
+    action: 'Check Inventory',
+    color: 'bg-amber-50 border-amber-200',
+    iconColor: 'text-amber-600 bg-amber-100',
   },
   OUT_OF_STOCK: {
     icon: AlertTriangle,
-    href: "/inventory",
-    action: "Check Inventory",
-    color: "bg-red-50 border-red-200",
-    iconColor: "text-red-600 bg-red-100",
+    href: '/inventory',
+    action: 'Check Inventory',
+    color: 'bg-red-50 border-red-200',
+    iconColor: 'text-red-600 bg-red-100',
   },
   FAILED_PAYMENT: {
     icon: CreditCard,
-    href: "/orders",
-    action: "View Orders",
-    color: "bg-red-50 border-red-200",
-    iconColor: "text-red-600 bg-red-100",
+    href: '/orders',
+    action: 'View Orders',
+    color: 'bg-red-50 border-red-200',
+    iconColor: 'text-red-600 bg-red-100',
   },
   PENDING_SUPPORT: {
     icon: Headset,
-    href: "/support-tickets",
-    action: "View Tickets",
-    color: "bg-purple-50 border-purple-200",
-    iconColor: "text-purple-600 bg-purple-100",
+    href: '/support-tickets',
+    action: 'View Tickets',
+    color: 'bg-purple-50 border-purple-200',
+    iconColor: 'text-purple-600 bg-purple-100',
   },
 };
 
@@ -67,10 +67,10 @@ function NotificationCard({ notification }: { notification: AdminNotification })
 
   return (
     <div
-      className={`flex items-center gap-4 p-4 rounded-lg border ${config?.color ?? "bg-gray-50 border-gray-200"}`}
+      className={`flex items-center gap-4 p-4 rounded-lg border ${config?.color ?? 'bg-gray-50 border-gray-200'}`}
     >
       <div
-        className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 ${config?.iconColor ?? "text-gray-600 bg-gray-100"}`}
+        className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 ${config?.iconColor ?? 'text-gray-600 bg-gray-100'}`}
       >
         <Icon size={22} />
       </div>
@@ -78,7 +78,10 @@ function NotificationCard({ notification }: { notification: AdminNotification })
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <h3 className="text-sm font-semibold text-charcoal">{notification.title}</h3>
-          <Badge variant={notification.priority === "high" ? "error" : "warning"} className="text-[10px]">
+          <Badge
+            variant={notification.priority === 'high' ? 'error' : 'warning'}
+            className="text-[10px]"
+          >
             {notification.priority}
           </Badge>
         </div>
@@ -86,10 +89,10 @@ function NotificationCard({ notification }: { notification: AdminNotification })
       </div>
 
       <Link
-        href={config?.href ?? "/notifications"}
+        href={config?.href ?? '/notifications'}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-light-gray text-sm font-medium text-charcoal hover:bg-off-white transition-colors flex-shrink-0"
       >
-        {config?.action ?? "View"}
+        {config?.action ?? 'View'}
         <ArrowRight size={14} />
       </Link>
     </div>
@@ -99,8 +102,8 @@ function NotificationCard({ notification }: { notification: AdminNotification })
 export default function NotificationsPage() {
   const { data: notifications, isLoading } = useNotifications();
 
-  const highPriority = notifications?.filter((n) => n.priority === "high") ?? [];
-  const mediumPriority = notifications?.filter((n) => n.priority === "medium") ?? [];
+  const highPriority = notifications?.filter((n) => n.priority === 'high') ?? [];
+  const mediumPriority = notifications?.filter((n) => n.priority === 'medium') ?? [];
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { referralService } from "../services/referral.service";
+import type { Request, Response } from 'express';
+import { referralService } from '../services/referral.service';
 
 export const referralController = {
   async getMyReferralCode(req: Request, res: Response) {

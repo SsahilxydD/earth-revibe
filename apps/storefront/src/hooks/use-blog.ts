@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  useQuery,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { BlogPost, BlogListParams, PaginatedResponse, ApiError } from '@/types';
 

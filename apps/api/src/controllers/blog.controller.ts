@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { blogService } from "../services/blog.service";
+import type { Request, Response } from 'express';
+import { blogService } from '../services/blog.service';
 
 export const blogController = {
   async listPublished(req: Request, res: Response) {

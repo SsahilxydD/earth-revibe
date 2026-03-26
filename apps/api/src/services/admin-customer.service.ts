@@ -1,6 +1,6 @@
-import { prisma, Prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import { APP_CONSTANTS } from "../config/constants";
+import { prisma, Prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import { APP_CONSTANTS } from '../config/constants';
 
 interface CustomerQuery {
   search?: string;
@@ -16,18 +16,18 @@ export const adminCustomerService = {
     const { search, isActive, page, limit, sortBy, sortOrder } = query;
 
     // Whitelist sortBy to prevent arbitrary field sorting
-    const allowedSortFields = ["createdAt", "email", "firstName", "lastName", "loyaltyPoints"];
-    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
+    const allowedSortFields = ['createdAt', 'email', 'firstName', 'lastName', 'loyaltyPoints'];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
 
-    const where: Prisma.UserWhereInput = { role: "CUSTOMER" };
+    const where: Prisma.UserWhereInput = { role: 'CUSTOMER' };
 
     if (isActive !== undefined) where.isActive = isActive;
     if (search) {
       where.OR = [
-        { email: { contains: search, mode: "insensitive" } },
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { phone: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -74,7 +74,7 @@ export const adminCustomerService = {
         addresses: true,
         orders: {
           take: 10,
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           include: {
             items: true,
             payment: { select: { status: true, paidAt: true } },
@@ -84,10 +84,10 @@ export const adminCustomerService = {
       },
     });
 
-    if (!customer) throw ApiError.notFound("Customer not found");
+    if (!customer) throw ApiError.notFound('Customer not found');
 
     const totalSpent = await prisma.order.aggregate({
-      where: { userId: id, status: { notIn: ["CANCELLED", "REFUNDED"] } },
+      where: { userId: id, status: { notIn: ['CANCELLED', 'REFUNDED'] } },
       _sum: { totalAmount: true },
     });
 
@@ -96,13 +96,13 @@ export const adminCustomerService = {
     const avgOrderValue = orderCount > 0 ? totalSpentValue / orderCount : 0;
 
     // Determine customer segment
-    let segment: "VIP" | "Regular" | "New" | "At Risk" = "New";
+    let segment: 'VIP' | 'Regular' | 'New' | 'At Risk' = 'New';
     if (totalSpentValue >= 10000) {
-      segment = "VIP";
+      segment = 'VIP';
     } else if (totalSpentValue >= 2000) {
-      segment = "Regular";
+      segment = 'Regular';
     } else if (orderCount <= 1) {
-      segment = "New";
+      segment = 'New';
     }
 
     // Check for "At Risk": had previous orders but none in the last 90 days
@@ -113,7 +113,7 @@ export const adminCustomerService = {
         where: { userId: id, createdAt: { gte: ninetyDaysAgo } },
       });
       if (recentOrderCount === 0) {
-        segment = "At Risk";
+        segment = 'At Risk';
       }
     }
 
@@ -128,9 +128,9 @@ export const adminCustomerService = {
   async exportCustomersCSV() {
     // Single query: fetch customers with order count and total spent using groupBy
     // This avoids N+1 queries (previously one aggregate query per customer)
-    const totalCount = await prisma.user.count({ where: { role: "CUSTOMER" } });
+    const totalCount = await prisma.user.count({ where: { role: 'CUSTOMER' } });
     const customers = await prisma.user.findMany({
-      where: { role: "CUSTOMER" },
+      where: { role: 'CUSTOMER' },
       select: {
         id: true,
         email: true,
@@ -148,10 +148,10 @@ export const adminCustomerService = {
 
     // Batch fetch total spent for all customers in one query
     const spentByUser = await prisma.order.groupBy({
-      by: ["userId"],
+      by: ['userId'],
       where: {
         userId: { in: customers.map((c) => c.id) },
-        status: { notIn: ["CANCELLED", "REFUNDED"] },
+        status: { notIn: ['CANCELLED', 'REFUNDED'] },
       },
       _sum: { totalAmount: true },
     });
@@ -161,23 +161,23 @@ export const adminCustomerService = {
     );
 
     const escapeCsv = (val: string) => {
-      if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
         return `"${val.replace(/"/g, '""')}"`;
       }
       return val;
     };
 
     const rows: string[] = [];
-    rows.push("Name,Email,Phone,Orders,Total Spent,Loyalty Points,Status,Joined Date");
+    rows.push('Name,Email,Phone,Orders,Total Spent,Loyalty Points,Status,Joined Date');
 
     for (const customer of customers) {
-      const name = `${customer.firstName || ""} ${customer.lastName || ""}`.trim();
-      const phone = customer.phone || "";
+      const name = `${customer.firstName || ''} ${customer.lastName || ''}`.trim();
+      const phone = customer.phone || '';
       const orders = customer._count?.orders || 0;
       const spent = spentMap.get(customer.id) || 0;
       const loyalty = customer.loyaltyPoints || 0;
-      const status = customer.isActive ? "Active" : "Inactive";
-      const joined = new Date(customer.createdAt).toISOString().split("T")[0];
+      const status = customer.isActive ? 'Active' : 'Inactive';
+      const joined = new Date(customer.createdAt).toISOString().split('T')[0];
 
       rows.push(
         [
@@ -189,17 +189,17 @@ export const adminCustomerService = {
           loyalty,
           status,
           joined,
-        ].join(",")
+        ].join(',')
       );
     }
 
-    const csv = rows.join("\n");
+    const csv = rows.join('\n');
     return { csv, truncated, totalCount, exportedCount: customers.length };
   },
 
   async toggleActive(id: string) {
     const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) throw ApiError.notFound("Customer not found");
+    if (!user) throw ApiError.notFound('Customer not found');
 
     const updated = await prisma.user.update({
       where: { id },

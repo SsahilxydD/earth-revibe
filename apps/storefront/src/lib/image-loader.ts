@@ -1,4 +1,4 @@
-import type { ImageLoaderProps } from "next/image";
+import type { ImageLoaderProps } from 'next/image';
 
 /**
  * Custom Next.js image loader.
@@ -12,14 +12,11 @@ import type { ImageLoaderProps } from "next/image";
  */
 export default function imageLoader({ src, width, quality }: ImageLoaderProps): string {
   // Supabase Storage object URLs → Supabase render/transform API
-  if (src.includes(".supabase.co/storage/v1/object/public/")) {
-    const renderUrl = src.replace(
-      "/storage/v1/object/public/",
-      "/storage/v1/render/image/public/"
-    );
+  if (src.includes('.supabase.co/storage/v1/object/public/')) {
+    const renderUrl = src.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
     const url = new URL(renderUrl);
-    url.searchParams.set("width", width.toString());
-    url.searchParams.set("quality", (quality ?? 75).toString());
+    url.searchParams.set('width', width.toString());
+    url.searchParams.set('quality', (quality ?? 75).toString());
     return url.toString();
   }
 

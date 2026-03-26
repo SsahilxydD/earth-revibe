@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { Mail, Phone, MapPin, Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { api } from "@/lib/api-client";
-import { useToast } from "@/providers";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { api } from '@/lib/api-client';
+import { useToast } from '@/providers';
 
 interface ContactFormData {
   name: string;
@@ -18,20 +18,20 @@ interface ContactFormData {
 const CONTACT_INFO = [
   {
     icon: Mail,
-    label: "Email",
-    value: "hello@earthrevibe.com",
-    href: "mailto:hello@earthrevibe.com",
+    label: 'Email',
+    value: 'hello@earthrevibe.com',
+    href: 'mailto:hello@earthrevibe.com',
   },
   {
     icon: Phone,
-    label: "Phone",
-    value: "+91 98765 43210",
-    href: "tel:+919876543210",
+    label: 'Phone',
+    value: '+91 98765 43210',
+    href: 'tel:+919876543210',
   },
   {
     icon: MapPin,
-    label: "Address",
-    value: "Earth Revibe HQ, Bandra West, Mumbai, Maharashtra 400050, India",
+    label: 'Address',
+    value: 'Earth Revibe HQ, Bandra West, Mumbai, Maharashtra 400050, India',
     href: null,
   },
 ];
@@ -50,14 +50,11 @@ export default function ContactPage() {
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
     try {
-      await api.post("/contact", data);
-      addToast("Message sent! We'll get back to you soon.", "success");
+      await api.post('/contact', data);
+      addToast("Message sent! We'll get back to you soon.", 'success');
       reset();
     } catch (error: any) {
-      addToast(
-        error?.message || "Failed to send message. Please try again.",
-        "error"
-      );
+      addToast(error?.message || 'Failed to send message. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -66,9 +63,7 @@ export default function ContactPage() {
   return (
     <div className="px-4 py-12 md:px-8 lg:px-12 xl:px-20">
       <div className="text-center">
-        <h1 className="text-3xl font-bold uppercase tracking-wider">
-          Contact Us
-        </h1>
+        <h1 className="text-3xl font-bold uppercase tracking-wider">Contact Us</h1>
         <p className="mt-2 text-sm text-[var(--color-muted)]">
           Have a question or feedback? We&apos;d love to hear from you.
         </p>
@@ -83,18 +78,18 @@ export default function ContactPage() {
           <div className="grid gap-5 sm:grid-cols-2">
             <Input
               label="Your Name"
-              {...register("name", { required: "Name is required" })}
+              {...register('name', { required: 'Name is required' })}
               error={errors.name?.message}
               placeholder="John Doe"
             />
             <Input
               label="Email Address"
               type="email"
-              {...register("email", {
-                required: "Email is required",
+              {...register('email', {
+                required: 'Email is required',
                 pattern: {
                   value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Enter a valid email address",
+                  message: 'Enter a valid email address',
                 },
               })}
               error={errors.email?.message}
@@ -104,7 +99,7 @@ export default function ContactPage() {
 
           <Input
             label="Subject"
-            {...register("subject", { required: "Subject is required" })}
+            {...register('subject', { required: 'Subject is required' })}
             error={errors.subject?.message}
             placeholder="What's this about?"
           />
@@ -114,11 +109,11 @@ export default function ContactPage() {
               Message
             </label>
             <textarea
-              {...register("message", {
-                required: "Message is required",
+              {...register('message', {
+                required: 'Message is required',
                 minLength: {
                   value: 10,
-                  message: "Message must be at least 10 characters",
+                  message: 'Message must be at least 10 characters',
                 },
               })}
               rows={6}
@@ -126,9 +121,7 @@ export default function ContactPage() {
               className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
             />
             {errors.message && (
-              <p className="mt-1 text-xs text-[var(--color-sale)]">
-                {errors.message.message}
-              </p>
+              <p className="mt-1 text-xs text-[var(--color-sale)]">{errors.message.message}</p>
             )}
           </div>
 
@@ -169,9 +162,7 @@ export default function ContactPage() {
           <div className="mt-8 flex aspect-[4/3] items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-surface)]">
             <div className="text-center">
               <MapPin className="mx-auto h-8 w-8 text-[var(--color-muted)]" />
-              <p className="mt-2 text-xs text-[var(--color-muted)]">
-                Mumbai, Maharashtra
-              </p>
+              <p className="mt-2 text-xs text-[var(--color-muted)]">Mumbai, Maharashtra</p>
             </div>
           </div>
 
@@ -180,9 +171,7 @@ export default function ContactPage() {
               Business Hours
             </p>
             <p className="mt-1 text-sm">Monday - Saturday: 10 AM - 7 PM IST</p>
-            <p className="text-sm text-[var(--color-muted)]">
-              Sunday: Closed
-            </p>
+            <p className="text-sm text-[var(--color-muted)]">Sunday: Closed</p>
           </div>
         </div>
       </div>

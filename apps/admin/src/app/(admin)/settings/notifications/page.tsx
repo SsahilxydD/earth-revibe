@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Bell,
   Mail,
@@ -12,9 +12,9 @@ import {
   AlertTriangle,
   CheckCircle,
   Save,
-} from "lucide-react";
-import { Card, Button, Input, Badge } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
+} from 'lucide-react';
+import { Card, Button, Input, Badge } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
 
 export default function NotificationsSettingsPage() {
   // Admin notifications
@@ -22,13 +22,11 @@ export default function NotificationsSettingsPage() {
   const [orderFulfilled, setOrderFulfilled] = useState(false);
   const [orderCancelled, setOrderCancelled] = useState(true);
   const [lowStock, setLowStock] = useState(true);
-  const [lowStockThreshold, setLowStockThreshold] = useState("10");
+  const [lowStockThreshold, setLowStockThreshold] = useState('10');
   const [failedPayment, setFailedPayment] = useState(true);
   const [newCustomer, setNewCustomer] = useState(false);
   const [newSupportTicket, setNewSupportTicket] = useState(true);
-  const [adminEmail, setAdminEmail] = useState(
-    "earthrevibeofficial@gmail.com"
-  );
+  const [adminEmail, setAdminEmail] = useState('earthrevibeofficial@gmail.com');
 
   // Customer notifications
   const [orderConfirmation, setOrderConfirmation] = useState(true);
@@ -44,10 +42,10 @@ export default function NotificationsSettingsPage() {
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
     if (adminEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)) {
-      errs.adminEmail = "Enter a valid email address";
+      errs.adminEmail = 'Enter a valid email address';
     }
     if (lowStockThreshold && (isNaN(Number(lowStockThreshold)) || Number(lowStockThreshold) < 1)) {
-      errs.lowStockThreshold = "Must be a positive number";
+      errs.lowStockThreshold = 'Must be a positive number';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -55,12 +53,12 @@ export default function NotificationsSettingsPage() {
 
   const handleSave = async () => {
     if (!validate()) {
-      toast.error("Please fix the validation errors");
+      toast.error('Please fix the validation errors');
       return;
     }
     setSaving(true);
     await new Promise((r) => setTimeout(r, 500));
-    toast.success("Notification settings saved");
+    toast.success('Notification settings saved');
     setSaving(false);
   };
 
@@ -68,16 +66,14 @@ export default function NotificationsSettingsPage() {
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-charcoal">
-            Notifications
-          </h2>
+          <h2 className="text-lg font-semibold text-charcoal">Notifications</h2>
           <p className="text-sm text-medium-gray mt-0.5">
             Manage how you and your customers receive notifications
           </p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
           <Save size={16} />
-          {saving ? "Saving..." : "Save"}
+          {saving ? 'Saving...' : 'Save'}
         </Button>
       </div>
 
@@ -86,9 +82,7 @@ export default function NotificationsSettingsPage() {
         <div className="space-y-5">
           <div className="flex items-center gap-2">
             <Bell size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Admin notifications
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Admin notifications</h3>
           </div>
 
           <div className="space-y-3">
@@ -120,9 +114,7 @@ export default function NotificationsSettingsPage() {
                   <AlertTriangle size={14} className="text-medium-gray" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-charcoal">
-                    Low stock alert
-                  </p>
+                  <p className="text-sm font-medium text-charcoal">Low stock alert</p>
                   <p className="text-xs text-medium-gray mt-0.5">
                     Get notified when product stock falls below threshold
                   </p>
@@ -132,7 +124,11 @@ export default function NotificationsSettingsPage() {
                         label="Threshold"
                         type="number"
                         value={lowStockThreshold}
-                        onChange={(e) => { setLowStockThreshold(e.target.value); if (errors.lowStockThreshold) setErrors((prev) => ({ ...prev, lowStockThreshold: "" })); }}
+                        onChange={(e) => {
+                          setLowStockThreshold(e.target.value);
+                          if (errors.lowStockThreshold)
+                            setErrors((prev) => ({ ...prev, lowStockThreshold: '' }));
+                        }}
                         placeholder="10"
                         error={errors.lowStockThreshold}
                       />
@@ -171,7 +167,10 @@ export default function NotificationsSettingsPage() {
               label="Admin notification email"
               type="email"
               value={adminEmail}
-              onChange={(e) => { setAdminEmail(e.target.value); if (errors.adminEmail) setErrors((prev) => ({ ...prev, adminEmail: "" })); }}
+              onChange={(e) => {
+                setAdminEmail(e.target.value);
+                if (errors.adminEmail) setErrors((prev) => ({ ...prev, adminEmail: '' }));
+              }}
               placeholder="admin@example.com"
               helperText="All admin notifications will be sent to this email"
               error={errors.adminEmail}
@@ -185,9 +184,7 @@ export default function NotificationsSettingsPage() {
         <div className="space-y-5">
           <div className="flex items-center gap-2">
             <Mail size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Customer notifications
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Customer notifications</h3>
           </div>
 
           <div className="space-y-3">
@@ -242,9 +239,7 @@ export default function NotificationsSettingsPage() {
         <div className="space-y-5">
           <div className="flex items-center gap-2">
             <Bell size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Notification channels
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Notification channels</h3>
           </div>
 
           <div className="space-y-3">
@@ -253,9 +248,7 @@ export default function NotificationsSettingsPage() {
                 <Mail size={16} className="text-deep-earth" />
                 <div>
                   <p className="text-sm font-medium text-charcoal">Email</p>
-                  <p className="text-xs text-medium-gray">
-                    Primary notification channel
-                  </p>
+                  <p className="text-xs text-medium-gray">Primary notification channel</p>
                 </div>
               </div>
               <Badge variant="success">Connected</Badge>
@@ -295,13 +288,7 @@ export default function NotificationsSettingsPage() {
 /*  Toggle                                                            */
 /* ------------------------------------------------------------------ */
 
-function Toggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
       type="button"
@@ -309,12 +296,12 @@ function Toggle({
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
-        checked ? "bg-forest-green" : "bg-light-gray"
+        checked ? 'bg-forest-green' : 'bg-light-gray'
       }`}
     >
       <span
         className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-          checked ? "translate-x-[18px]" : "translate-x-[3px]"
+          checked ? 'translate-x-[18px]' : 'translate-x-[3px]'
         }`}
       />
     </button>

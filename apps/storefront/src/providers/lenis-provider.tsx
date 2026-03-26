@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { ReactLenis } from "lenis/react";
-import type { ReactNode } from "react";
+import { useEffect, useState } from 'react';
+import { ReactLenis } from 'lenis/react';
+import type { ReactNode } from 'react';
 
 export function LenisProvider({ children }: { children: ReactNode }) {
   // Start as false — same on server and client (no hydration mismatch)
@@ -11,17 +11,17 @@ export function LenisProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Only enable on desktop with fine pointer (mouse/trackpad)
-    const mq = window.matchMedia("(pointer: fine) and (min-width: 1024px)");
+    const mq = window.matchMedia('(pointer: fine) and (min-width: 1024px)');
     setEnableLenis(mq.matches);
     const handler = (e: MediaQueryListEvent) => setEnableLenis(e.matches);
-    mq.addEventListener("change", handler);
+    mq.addEventListener('change', handler);
 
     // Let browser handle scroll restoration
-    if ("scrollRestoration" in window.history) {
-      window.history.scrollRestoration = "auto";
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'auto';
     }
 
-    return () => mq.removeEventListener("change", handler);
+    return () => mq.removeEventListener('change', handler);
   }, []);
 
   // Always render the same tree structure — Lenis wraps or doesn't

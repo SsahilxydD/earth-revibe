@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const addToCartSchema = z.object({
   variantId: z.string().min(1),

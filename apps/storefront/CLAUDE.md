@@ -5,20 +5,20 @@ Next.js 16 App Router. React 19. Tailwind CSS 4. TypeScript.
 ## Structure
 
 src/
-  app/
-    (auth)/        # login, register pages — public routes
-    (shop)/        # all shopping routes — layout with header/footer
-  components/
-    cart/          # cart drawer, cart item, cart summary
-    checkout/      # checkout form, payment, confirmation
-    home/          # hero, featured collections, new arrivals
-    layout/        # header, footer, nav, mobile menu
-    product/       # product card, product gallery, product filters
-    ui/            # shared primitives: button, input, badge, modal
-  hooks/           # custom React hooks
-  lib/             # api client (fetch wrappers), analytics helpers
-  providers/       # QueryClientProvider, AuthProvider, etc
-  stores/          # zustand stores: cart, ui, auth
+app/
+(auth)/ # login, register pages — public routes
+(shop)/ # all shopping routes — layout with header/footer
+components/
+cart/ # cart drawer, cart item, cart summary
+checkout/ # checkout form, payment, confirmation
+home/ # hero, featured collections, new arrivals
+layout/ # header, footer, nav, mobile menu
+product/ # product card, product gallery, product filters
+ui/ # shared primitives: button, input, badge, modal
+hooks/ # custom React hooks
+lib/ # api client (fetch wrappers), analytics helpers
+providers/ # QueryClientProvider, AuthProvider, etc
+stores/ # zustand stores: cart, ui, auth
 
 ## Patterns
 
@@ -36,4 +36,4 @@ src/
 Always use --swarm storefront-swarm for work in this directory.
 
 Example:
-  ruflo --agent coder --swarm storefront-swarm --task "Add wishlist toggle to ProductCard"
+ruflo --agent coder --swarm storefront-swarm --task "Add wishlist toggle to ProductCard"

@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { productService } from "../services/product.service";
+import type { Request, Response } from 'express';
+import { productService } from '../services/product.service';
 
 export const productController = {
   async listProducts(req: Request, res: Response) {
@@ -24,7 +24,7 @@ export const productController = {
 
   async deleteProduct(req: Request, res: Response) {
     await productService.deleteProduct(req.params.id as string);
-    res.json({ success: true, message: "Product archived successfully" });
+    res.json({ success: true, message: 'Product archived successfully' });
   },
 
   async addProductVariants(req: Request, res: Response) {
@@ -45,26 +45,21 @@ export const productController = {
 
   async deleteProductVariant(req: Request, res: Response) {
     await productService.deleteProductVariant(req.params.variantId as string);
-    res.json({ success: true, message: "Variant deleted successfully" });
+    res.json({ success: true, message: 'Variant deleted successfully' });
   },
 
   async addProductImage(req: Request, res: Response) {
-    const image = await productService.addProductImage(
-      req.params.id as string,
-      req.body
-    );
+    const image = await productService.addProductImage(req.params.id as string, req.body);
     res.status(201).json({ success: true, data: image });
   },
 
   async deleteProductImage(req: Request, res: Response) {
     await productService.deleteProductImage(req.params.imageId as string);
-    res.json({ success: true, message: "Image deleted successfully" });
+    res.json({ success: true, message: 'Image deleted successfully' });
   },
 
   async setProductImagePrimary(req: Request, res: Response) {
-    const image = await productService.setProductImagePrimary(
-      req.params.imageId as string
-    );
+    const image = await productService.setProductImagePrimary(req.params.imageId as string);
     res.json({ success: true, data: image });
   },
 

@@ -1,29 +1,29 @@
-"use client";
+'use client';
 
-import { useState, useMemo, useEffect } from "react";
-import { createPortal } from "react-dom";
-import Image from "next/image";
-import Link from "next/link";
-import { Star, Minus, Plus, Loader2, ChevronRight, Heart } from "lucide-react";
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Star, Minus, Plus, Loader2, ChevronRight, Heart } from 'lucide-react';
 // Lazy-load DOMPurify to avoid jsdom SSR crash (ENOENT default-stylesheet.css).
 // sanitize() is a no-op during SSR — the HTML re-renders correctly on hydration.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _purify: any = null;
 function sanitizeHTML(dirty: string): string {
-  if (typeof window === "undefined") return dirty;
+  if (typeof window === 'undefined') return dirty;
   if (!_purify) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _purify = require("isomorphic-dompurify");
+    _purify = require('isomorphic-dompurify');
     if (_purify.default) _purify = _purify.default;
   }
   return _purify.sanitize(dirty);
 }
-import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from "@/lib/utils";
-import { useCartStore } from "@/stores/cart-store";
-import { useToast } from "@/providers";
-import { Accordion } from "./accordion";
-import { RelatedProducts } from "./related-products";
-import type { Product, ProductVariant } from "@/types";
+import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
+import { useCartStore } from '@/stores/cart-store';
+import { useToast } from '@/providers';
+import { Accordion } from './accordion';
+import { RelatedProducts } from './related-products';
+import type { Product, ProductVariant } from '@/types';
 
 interface ProductDetailProps {
   product: Product;
@@ -42,7 +42,7 @@ function getUniqueColors(variants: ProductVariant[]) {
       seen.set(v.color, v.colorHex);
     }
   }
-  return Array.from(seen.entries()).map(([name, hex]) => ({ name, hex: hex || "#ccc" }));
+  return Array.from(seen.entries()).map(([name, hex]) => ({ name, hex: hex || '#ccc' }));
 }
 
 function getUniqueSizes(variants: ProductVariant[]) {
@@ -63,9 +63,7 @@ function getVariantStock(
   size: string | null
 ): number {
   const match = variants.find(
-    (v) =>
-      (color === null || v.color === color) &&
-      (size === null || v.size === size)
+    (v) => (color === null || v.color === color) && (size === null || v.size === size)
   );
   return match?.stock ?? 0;
 }
@@ -76,9 +74,7 @@ function getSelectedVariant(
   size: string | null
 ): ProductVariant | undefined {
   return variants.find(
-    (v) =>
-      (color === null || v.color === color) &&
-      (size === null || v.size === size)
+    (v) => (color === null || v.color === color) && (size === null || v.size === size)
   );
 }
 
@@ -93,27 +89,27 @@ interface MetafieldRow {
 
 function buildDetailsFit(p: Product): MetafieldRow[] {
   const rows: MetafieldRow[] = [];
-  if (p.material) rows.push({ label: "Material", value: p.material });
-  if (p.fit) rows.push({ label: "Fit", value: p.fit });
-  if (p.measurements) rows.push({ label: "Measurements", value: p.measurements });
-  if (p.printType) rows.push({ label: "Print Type", value: p.printType });
+  if (p.material) rows.push({ label: 'Material', value: p.material });
+  if (p.fit) rows.push({ label: 'Fit', value: p.fit });
+  if (p.measurements) rows.push({ label: 'Measurements', value: p.measurements });
+  if (p.printType) rows.push({ label: 'Print Type', value: p.printType });
   return rows;
 }
 
 function buildCompositionCare(p: Product): MetafieldRow[] {
   const rows: MetafieldRow[] = [];
-  if (p.composition) rows.push({ label: "Composition", value: p.composition });
-  if (p.careInstructions) rows.push({ label: "Care Instructions", value: p.careInstructions });
-  if (p.washInstructions) rows.push({ label: "Wash Instructions", value: p.washInstructions });
-  if (p.fabricWeight) rows.push({ label: "Fabric Weight", value: p.fabricWeight });
+  if (p.composition) rows.push({ label: 'Composition', value: p.composition });
+  if (p.careInstructions) rows.push({ label: 'Care Instructions', value: p.careInstructions });
+  if (p.washInstructions) rows.push({ label: 'Wash Instructions', value: p.washInstructions });
+  if (p.fabricWeight) rows.push({ label: 'Fabric Weight', value: p.fabricWeight });
   return rows;
 }
 
 function buildShippingReturns(p: Product): MetafieldRow[] {
   const rows: MetafieldRow[] = [];
-  if (p.shippingInfo) rows.push({ label: "Shipping", value: p.shippingInfo });
-  if (p.returnsInfo) rows.push({ label: "Returns", value: p.returnsInfo });
-  if (p.origin) rows.push({ label: "Origin", value: p.origin });
+  if (p.shippingInfo) rows.push({ label: 'Shipping', value: p.shippingInfo });
+  if (p.returnsInfo) rows.push({ label: 'Returns', value: p.returnsInfo });
+  if (p.origin) rows.push({ label: 'Origin', value: p.origin });
   return rows;
 }
 
@@ -126,9 +122,7 @@ function MetafieldSection({ rows }: { rows: MetafieldRow[] }) {
     <div className="space-y-2.5 text-[13px] leading-[1.6]">
       {rows.map((row) => (
         <div key={row.label} className="flex gap-2">
-          <span className="shrink-0 text-[#999999]">
-            {row.label}:
-          </span>
+          <span className="shrink-0 text-[#999999]">{row.label}:</span>
           <span className="text-[#666666]">{row.value}</span>
         </div>
       ))}
@@ -150,14 +144,14 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
             size={14}
             className={cn(
               star <= Math.round(rating)
-                ? "fill-[var(--color-star)] text-[var(--color-star)]"
-                : "fill-none text-[var(--color-border)]"
+                ? 'fill-[var(--color-star)] text-[var(--color-star)]'
+                : 'fill-none text-[var(--color-border)]'
             )}
           />
         ))}
       </div>
       <span className="text-xs text-[var(--color-muted)]">
-        ({count} {count === 1 ? "review" : "reviews"})
+        ({count} {count === 1 ? 'review' : 'reviews'})
       </span>
     </div>
   );
@@ -167,15 +161,15 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
 /*  Detail Tabs (Mobile — Zara-style)                                  */
 /* ------------------------------------------------------------------ */
 
-type TabKey = "description" | "composition" | "sizechart";
+type TabKey = 'description' | 'composition' | 'sizechart';
 
 function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const measurements = [
-    { name: "CHEST", desc: "Measure from one side to the other at the height of the armhole." },
-    { name: "FRONT LENGTH", desc: "Measure from the shoulder seam to the hem of the garment." },
-    { name: "SLEEVE LENGTH", desc: "Measure from the shoulder seam to the bottom of the sleeve." },
-    { name: "BACK WIDTH", desc: "Measure from one shoulder seam to the other." },
-    { name: "ARM WIDTH", desc: "Tape perpendicular to the sleeve up to the armhole." },
+    { name: 'CHEST', desc: 'Measure from one side to the other at the height of the armhole.' },
+    { name: 'FRONT LENGTH', desc: 'Measure from the shoulder seam to the hem of the garment.' },
+    { name: 'SLEEVE LENGTH', desc: 'Measure from the shoulder seam to the bottom of the sleeve.' },
+    { name: 'BACK WIDTH', desc: 'Measure from one shoulder seam to the other.' },
+    { name: 'ARM WIDTH', desc: 'Tape perpendicular to the sleeve up to the armhole.' },
   ];
 
   return (
@@ -183,7 +177,7 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
       {/* Backdrop */}
       <div
         className={`fixed inset-0 z-[60] bg-black transition-opacity duration-300 ${
-          isOpen ? "opacity-50 pointer-events-auto" : "opacity-0 pointer-events-none"
+          isOpen ? 'opacity-50 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
       />
@@ -191,12 +185,12 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
       {/* Sheet */}
       <div
         className={`fixed inset-x-0 bottom-0 z-[61] bg-white transition-transform duration-300 ease-out ${
-          isOpen ? "translate-y-0" : "translate-y-full"
+          isOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
         style={{
-          maxHeight: "90vh",
-          overflowY: "auto",
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
         }}
       >
@@ -206,15 +200,28 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
         </div>
 
         <div className="px-7 pb-8">
-          <h3 className="text-[15px] tracking-[0.15em] text-[var(--color-text)] mt-4" style={{ fontWeight: 300 }}>
+          <h3
+            className="text-[15px] tracking-[0.15em] text-[var(--color-text)] mt-4"
+            style={{ fontWeight: 300 }}
+          >
             HOW WE MEASURE THE GARMENT
           </h3>
 
-          <div style={{ marginTop: "32px" }}>
+          <div style={{ marginTop: '32px' }}>
             {measurements.map((m, i) => (
-              <div key={m.name} style={{ paddingTop: i === 0 ? 0 : "16px" }}>
-                <p className="text-[13px] tracking-wide text-[var(--color-text)]" style={{ lineHeight: 1, fontWeight: 400 }}>{m.name}</p>
-                <p className="text-[13px] text-[#666666]" style={{ marginTop: "8px", lineHeight: 1.5, fontWeight: 300 }}>{m.desc}</p>
+              <div key={m.name} style={{ paddingTop: i === 0 ? 0 : '16px' }}>
+                <p
+                  className="text-[13px] tracking-wide text-[var(--color-text)]"
+                  style={{ lineHeight: 1, fontWeight: 400 }}
+                >
+                  {m.name}
+                </p>
+                <p
+                  className="text-[13px] text-[#666666]"
+                  style={{ marginTop: '8px', lineHeight: 1.5, fontWeight: 300 }}
+                >
+                  {m.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -225,14 +232,14 @@ function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 }
 
 function SizeChartTable() {
-  const [unit, setUnit] = useState<"CM" | "IN">("IN");
+  const [unit, setUnit] = useState<'CM' | 'IN'>('IN');
   const [showGuide, setShowGuide] = useState(false);
 
   const dataIN = [
-    { area: "Chest", s: "39", m: "42", l: "45", xl: "48" },
-    { area: "Front length", s: "25", m: "26", l: "27", xl: "28" },
-    { area: "Sleeve length", s: "10.5", m: "10.5", l: "10.5", xl: "10.5" },
-    { area: "Shoulder", s: "21", m: "22", l: "23", xl: "24" },
+    { area: 'Chest', s: '39', m: '42', l: '45', xl: '48' },
+    { area: 'Front length', s: '25', m: '26', l: '27', xl: '28' },
+    { area: 'Sleeve length', s: '10.5', m: '10.5', l: '10.5', xl: '10.5' },
+    { area: 'Shoulder', s: '21', m: '22', l: '23', xl: '24' },
   ];
 
   const dataCM = dataIN.map((row) => ({
@@ -243,7 +250,7 @@ function SizeChartTable() {
     xl: (parseFloat(row.xl) * 2.54).toFixed(1),
   }));
 
-  const sizes = ["S", "M", "L", "XL"];
+  const sizes = ['S', 'M', 'L', 'XL'];
 
   return (
     <div>
@@ -258,31 +265,27 @@ function SizeChartTable() {
         type="button"
         onClick={() => setShowGuide((v) => !v)}
         className="text-[13px] text-[#666666]"
-        style={{ marginTop: "16px" }}
+        style={{ marginTop: '16px' }}
       >
         See <span className="underline underline-offset-2">how we measure the garment</span>
       </button>
 
       {/* CM / IN toggle */}
-      <div className="flex items-center gap-4" style={{ marginTop: "16px" }}>
+      <div className="flex items-center gap-4" style={{ marginTop: '16px' }}>
         <button
           type="button"
-          onClick={() => setUnit("CM")}
+          onClick={() => setUnit('CM')}
           className={`text-[13px] transition-colors ${
-            unit === "CM"
-              ? "text-[var(--color-text)] font-medium"
-              : "text-[#999999]"
+            unit === 'CM' ? 'text-[var(--color-text)] font-medium' : 'text-[#999999]'
           }`}
         >
           CM
         </button>
         <button
           type="button"
-          onClick={() => setUnit("IN")}
+          onClick={() => setUnit('IN')}
           className={`text-[13px] transition-colors ${
-            unit === "IN"
-              ? "text-[var(--color-text)] font-medium"
-              : "text-[#999999]"
+            unit === 'IN' ? 'text-[var(--color-text)] font-medium' : 'text-[#999999]'
           }`}
         >
           IN
@@ -290,35 +293,62 @@ function SizeChartTable() {
       </div>
 
       {/* Size chart table — CM values are always rendered (invisible) to reserve wider column widths */}
-      <table className="w-full" style={{ marginTop: "8px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+      <table
+        className="w-full"
+        style={{ marginTop: '8px', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+      >
         <thead>
           <tr>
-            <th className="text-left text-[13px] font-bold text-[var(--color-text)]" style={{ paddingBottom: "8px" }}>AREA</th>
+            <th
+              className="text-left text-[13px] font-bold text-[var(--color-text)]"
+              style={{ paddingBottom: '8px' }}
+            >
+              AREA
+            </th>
             {sizes.map((s) => (
-              <th key={s} className="text-left text-[13px] font-bold text-[var(--color-text)]" style={{ paddingBottom: "8px" }}>{s}</th>
+              <th
+                key={s}
+                className="text-left text-[13px] font-bold text-[var(--color-text)]"
+                style={{ paddingBottom: '8px' }}
+              >
+                {s}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {dataIN.map((rowIN, i) => {
             const rowCM = dataCM[i];
-            const active = unit === "IN" ? rowIN : rowCM;
-            const ghost = unit === "IN" ? rowCM : rowIN;
+            const active = unit === 'IN' ? rowIN : rowCM;
+            const ghost = unit === 'IN' ? rowCM : rowIN;
             return (
               <tr key={rowIN.area}>
-                <td className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px" }}>
+                <td
+                  className="text-[13px] text-[#666666]"
+                  style={{ paddingTop: '8px', paddingBottom: '8px' }}
+                >
                   {rowIN.area}
                 </td>
-                {(["s", "m", "l", "xl"] as const).map((col) => (
-                  <td key={col} className="text-[13px] text-[#666666]" style={{ paddingTop: "8px", paddingBottom: "8px", position: "relative" }}>
+                {(['s', 'm', 'l', 'xl'] as const).map((col) => (
+                  <td
+                    key={col}
+                    className="text-[13px] text-[#666666]"
+                    style={{ paddingTop: '8px', paddingBottom: '8px', position: 'relative' }}
+                  >
                     {/* ghost value — invisible but holds column width */}
-                    <span aria-hidden style={{ visibility: "hidden", display: "block", height: 0, overflow: "hidden" }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        visibility: 'hidden',
+                        display: 'block',
+                        height: 0,
+                        overflow: 'hidden',
+                      }}
+                    >
                       {ghost[col]}
                     </span>
                     {/* visible value */}
-                    <span style={{ position: "absolute", top: "8px", left: 0 }}>
-                      {active[col]}
-                    </span>
+                    <span style={{ position: 'absolute', top: '8px', left: 0 }}>{active[col]}</span>
                   </td>
                 ))}
               </tr>
@@ -340,12 +370,12 @@ function DetailTabs({
   description: string | null;
   compositionRows: MetafieldRow[];
 }) {
-  const [activeTab, setActiveTab] = useState<TabKey>("description");
+  const [activeTab, setActiveTab] = useState<TabKey>('description');
 
   const tabs: { key: TabKey; label: string }[] = [
-    { key: "description", label: "DESCRIPTION" },
-    { key: "composition", label: "COMPOSITION" },
-    { key: "sizechart", label: "SIZE CHART" },
+    { key: 'description', label: 'DESCRIPTION' },
+    { key: 'composition', label: 'COMPOSITION' },
+    { key: 'sizechart', label: 'SIZE CHART' },
   ];
 
   return (
@@ -357,10 +387,8 @@ function DetailTabs({
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "pb-3 text-xs font-bold tracking-wider transition-colors",
-              activeTab === tab.key
-                ? "text-[var(--color-text)]"
-                : "text-[var(--color-muted)]"
+              'pb-3 text-xs font-bold tracking-wider transition-colors',
+              activeTab === tab.key ? 'text-[var(--color-text)]' : 'text-[var(--color-muted)]'
             )}
           >
             {tab.label}
@@ -369,20 +397,23 @@ function DetailTabs({
       </div>
 
       {/* Tab content */}
-      <div className="px-4 pb-5 text-[13px] leading-[1.6] tracking-normal text-[#666666]" style={{ paddingTop: 0, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
-        {activeTab === "description" && description && (
+      <div
+        className="px-4 pb-5 text-[13px] leading-[1.6] tracking-normal text-[#666666]"
+        style={{ paddingTop: 0, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}
+      >
+        {activeTab === 'description' && description && (
           <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(description) }} />
         )}
-        {activeTab === "description" && !description && (
+        {activeTab === 'description' && !description && (
           <p className="text-[var(--color-muted)]">No description available.</p>
         )}
-        {activeTab === "composition" && compositionRows.length > 0 && (
+        {activeTab === 'composition' && compositionRows.length > 0 && (
           <MetafieldSection rows={compositionRows} />
         )}
-        {activeTab === "composition" && compositionRows.length === 0 && (
+        {activeTab === 'composition' && compositionRows.length === 0 && (
           <p className="text-[var(--color-muted)]">No composition info available.</p>
         )}
-        {activeTab === "sizechart" && <SizeChartTable />}
+        {activeTab === 'sizechart' && <SizeChartTable />}
       </div>
     </div>
   );
@@ -403,7 +434,9 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showSizeSheet, setShowSizeSheet] = useState(false);
 
@@ -417,8 +450,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
   );
 
   const displayPrice = selectedVariant?.price ?? product.price;
-  const isOnSale =
-    product.compareAtPrice !== null && product.compareAtPrice > displayPrice;
+  const isOnSale = product.compareAtPrice !== null && product.compareAtPrice > displayPrice;
 
   const canAddToCart =
     (colors.length === 0 || selectedColor !== null) &&
@@ -450,16 +482,16 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
       productId: product.id,
       name: product.name,
       slug: product.slug,
-      image: primaryImage?.url || "",
+      image: primaryImage?.url || '',
       price: displayPrice,
       compareAtPrice: product.compareAtPrice ?? undefined,
-      size: selectedSize || "",
-      color: selectedColor || "",
+      size: selectedSize || '',
+      color: selectedColor || '',
       maxQuantity: selectedVariant?.stock ?? 99,
       quantity,
     });
 
-    addToast("Added to cart", "success");
+    addToast('Added to cart', 'success');
     setIsAdding(false);
   };
 
@@ -479,16 +511,16 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
       productId: product.id,
       name: product.name,
       slug: product.slug,
-      image: primaryImage?.url || "",
+      image: primaryImage?.url || '',
       price: variant.price ?? product.price,
       compareAtPrice: product.compareAtPrice ?? undefined,
       size,
-      color: selectedColor || "",
+      color: selectedColor || '',
       maxQuantity: variant.stock,
       quantity,
     });
 
-    addToast("Added to cart", "success");
+    addToast('Added to cart', 'success');
     setIsAdding(false);
   };
 
@@ -519,10 +551,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
   const colorSelector = colors.length > 0 && (
     <div className="mt-6">
       <div className="mb-2 text-xs font-bold uppercase tracking-wider">
-        Color:{" "}
-        <span className="font-normal normal-case text-[var(--color-muted)]">
-          {selectedColor}
-        </span>
+        Color:{' '}
+        <span className="font-normal normal-case text-[var(--color-muted)]">{selectedColor}</span>
       </div>
       <div className="flex flex-wrap gap-2">
         {colors.map((color) => (
@@ -531,11 +561,11 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
             onClick={() => setSelectedColor(color.name)}
             title={color.name}
             className={cn(
-              "h-9 w-9 rounded-full border-2 transition-all",
+              'h-9 w-9 rounded-full border-2 transition-all',
               selectedColor === color.name
-                ? "ring-2 ring-[var(--color-primary)] ring-offset-2"
-                : "border-[var(--color-border)] hover:scale-110",
-              color.name.toLowerCase() === "white" && "border-gray-300"
+                ? 'ring-2 ring-[var(--color-primary)] ring-offset-2'
+                : 'border-[var(--color-border)] hover:scale-110',
+              color.name.toLowerCase() === 'white' && 'border-gray-300'
             )}
             style={{ backgroundColor: color.hex }}
           />
@@ -548,9 +578,9 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
     <div className="mt-6">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-bold uppercase tracking-wider">
-          Size:{" "}
+          Size:{' '}
           <span className="font-normal normal-case text-[var(--color-muted)]">
-            {selectedSize || "Select a size"}
+            {selectedSize || 'Select a size'}
           </span>
         </span>
         <button className="text-xs font-medium text-[var(--color-muted)] underline underline-offset-2 transition-colors hover:text-[var(--color-text)]">
@@ -570,12 +600,12 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
               }}
               disabled={isOutOfStock}
               className={cn(
-                "flex h-10 min-w-[3.5rem] items-center justify-center border px-4 text-sm font-semibold transition-colors",
+                'flex h-10 min-w-[3.5rem] items-center justify-center border px-4 text-sm font-semibold transition-colors',
                 isSelected
-                  ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
                   : isOutOfStock
-                    ? "cursor-not-allowed border-[var(--color-border)] text-[var(--color-sold-out)] line-through"
-                    : "border-[var(--color-primary)] hover:bg-[var(--color-surface)]"
+                    ? 'cursor-not-allowed border-[var(--color-border)] text-[var(--color-sold-out)] line-through'
+                    : 'border-[var(--color-primary)] hover:bg-[var(--color-surface)]'
               )}
             >
               {size}
@@ -601,9 +631,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           {quantity}
         </span>
         <button
-          onClick={() =>
-            setQuantity((q) => Math.min(selectedVariant?.stock ?? 99, q + 1))
-          }
+          onClick={() => setQuantity((q) => Math.min(selectedVariant?.stock ?? 99, q + 1))}
           className="flex h-10 w-10 items-center justify-center transition-colors hover:bg-[var(--color-surface)]"
           aria-label="Increase quantity"
         >
@@ -628,23 +656,23 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         onClick={handleAddToCart}
         disabled={!canAddToCart || isAdding}
         className={cn(
-          "flex h-[45px] w-full items-center justify-center gap-2 text-sm font-bold uppercase tracking-wider transition-opacity",
+          'flex h-[45px] w-full items-center justify-center gap-2 text-sm font-bold uppercase tracking-wider transition-opacity',
           canAddToCart
-            ? "bg-[var(--color-primary)] text-white hover:opacity-90"
-            : "cursor-not-allowed bg-[var(--color-sold-out)] text-white"
+            ? 'bg-[var(--color-primary)] text-white hover:opacity-90'
+            : 'cursor-not-allowed bg-[var(--color-sold-out)] text-white'
         )}
       >
-        {isAdding ? <Loader2 size={18} className="animate-spin" /> : "Add to Cart"}
+        {isAdding ? <Loader2 size={18} className="animate-spin" /> : 'Add to Cart'}
       </button>
 
       <button
         onClick={handleBuyNow}
         disabled={!canAddToCart || isAdding}
         className={cn(
-          "flex h-[45px] w-full items-center justify-center border-2 text-sm font-bold uppercase tracking-wider transition-colors",
+          'flex h-[45px] w-full items-center justify-center border-2 text-sm font-bold uppercase tracking-wider transition-colors',
           canAddToCart
-            ? "border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-surface)]"
-            : "cursor-not-allowed border-[var(--color-sold-out)] text-[var(--color-sold-out)]"
+            ? 'border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-surface)]'
+            : 'cursor-not-allowed border-[var(--color-sold-out)] text-[var(--color-sold-out)]'
         )}
       >
         Buy Now
@@ -656,11 +684,9 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
       >
         <Heart
           size={14}
-          className={cn(
-            isWishlisted && "fill-[var(--color-sale)] text-[var(--color-sale)]"
-          )}
+          className={cn(isWishlisted && 'fill-[var(--color-sale)] text-[var(--color-sale)]')}
         />
-        {isWishlisted ? "Added to Wishlist" : "Add to Wishlist"}
+        {isWishlisted ? 'Added to Wishlist' : 'Add to Wishlist'}
       </button>
     </div>
   );
@@ -746,12 +772,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
             )}
 
             <div className="mt-4 flex items-baseline gap-3">
-              <span
-                className={cn(
-                  "text-xl font-semibold",
-                  isOnSale && "text-[var(--color-sale)]"
-                )}
-              >
+              <span className={cn('text-xl font-semibold', isOnSale && 'text-[var(--color-sale)]')}>
                 {formatPrice(displayPrice)}
               </span>
               {isOnSale && (
@@ -761,9 +782,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
               )}
             </div>
 
-            <p className="mt-1 text-xs text-[var(--color-muted)]">
-              MRP incl. of all taxes
-            </p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">MRP incl. of all taxes</p>
 
             {product.shortDescription && (
               <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
@@ -812,10 +831,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         )}
 
         {/* Related products */}
-        <RelatedProducts
-          categorySlug={product.category?.slug}
-          excludeProductId={product.id}
-        />
+        <RelatedProducts categorySlug={product.category?.slug} excludeProductId={product.id} />
       </div>
 
       {/* ===== MOBILE LAYOUT (Zara-style) ===== */}
@@ -837,11 +853,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         )}
 
         {/* Detail tabs — after 1st image */}
-        <div style={{ marginTop: "16px" }}>
-          <DetailTabs
-            description={product.description}
-            compositionRows={compositionCareRows}
-          />
+        <div style={{ marginTop: '16px' }}>
+          <DetailTabs description={product.description} compositionRows={compositionCareRows} />
         </div>
 
         {/* Color code / SKU reference */}
@@ -853,7 +866,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
 
         {/* Remaining images — after tabs */}
         {sortedImages.length > 1 && (
-          <div className="mt-4 flex flex-col" style={{ gap: "16px" }}>
+          <div className="mt-4 flex flex-col" style={{ gap: '16px' }}>
             {sortedImages.slice(1).map((img) => (
               <Image
                 key={img.id}
@@ -872,14 +885,12 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         )}
 
         {/* Color selector (size is handled by bottom sheet on add-to-cart) */}
-        {colors.length > 0 && (
-          <div className="px-4 pt-4">
-            {colorSelector}
-          </div>
-        )}
+        {colors.length > 0 && <div className="px-4 pt-4">{colorSelector}</div>}
 
         {/* Accordions — measurements, shipping, additional info */}
-        {(detailsFitRows.length > 0 || shippingReturnsRows.length > 0 || additionalInfoRows.length > 0) && (
+        {(detailsFitRows.length > 0 ||
+          shippingReturnsRows.length > 0 ||
+          additionalInfoRows.length > 0) && (
           <div className="mt-4 px-4">
             {detailsFitRows.length > 0 && (
               <Accordion title="Measurements">
@@ -907,112 +918,115 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
 
         {/* Related products — shown after dock collapses, no extra bottom padding needed */}
         <div className="px-4 pb-6">
-          <RelatedProducts
-            categorySlug={product.category?.slug}
-            excludeProductId={product.id}
-          />
+          <RelatedProducts categorySlug={product.category?.slug} excludeProductId={product.id} />
         </div>
       </div>
 
       {/* Mobile bottom dock — portaled to body so it works inside overflow containers. */}
-      {!isPreview && mounted && !isCartOpen && createPortal(<div
-        className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        {/* Product name + price */}
-        <div className="px-4 pt-3">
-          <p className="text-sm font-semibold uppercase tracking-wide">{product.name}</p>
-          <div className="flex items-baseline gap-2">
-            <span
-              className={cn(
-                "text-sm",
-                isOnSale && "text-[var(--color-sale)]"
-              )}
-            >
-              {formatPrice(displayPrice)}
-            </span>
-            {isOnSale && (
-              <span className="text-xs text-[var(--color-muted)] line-through">
-                {formatPrice(product.compareAtPrice!)}
-              </span>
-            )}
-          </div>
-          <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
-            MRP incl. of all taxes
-          </p>
-        </div>
-
-        {/* ADD button — always opens size sheet on mobile when sizes exist */}
-        <div className="px-4 py-3">
-          <button
-            type="button"
-            onClick={handleMobileAddToCart}
-            disabled={isAdding}
-            className="flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
+      {!isPreview &&
+        mounted &&
+        !isCartOpen &&
+        createPortal(
+          <div
+            className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           >
-            {isAdding ? <Loader2 size={16} className="animate-spin" /> : "ADD"}
-          </button>
-        </div>
-      </div>, document.body)}
+            {/* Product name + price */}
+            <div className="px-4 pt-3">
+              <p className="text-sm font-semibold uppercase tracking-wide">{product.name}</p>
+              <div className="flex items-baseline gap-2">
+                <span className={cn('text-sm', isOnSale && 'text-[var(--color-sale)]')}>
+                  {formatPrice(displayPrice)}
+                </span>
+                {isOnSale && (
+                  <span className="text-xs text-[var(--color-muted)] line-through">
+                    {formatPrice(product.compareAtPrice!)}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+                MRP incl. of all taxes
+              </p>
+            </div>
+
+            {/* ADD button — always opens size sheet on mobile when sizes exist */}
+            <div className="px-4 py-3">
+              <button
+                type="button"
+                onClick={handleMobileAddToCart}
+                disabled={isAdding}
+                className="flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
+              >
+                {isAdding ? <Loader2 size={16} className="animate-spin" /> : 'ADD'}
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* ===== SIZE SELECTION SHEET (portaled to body so it works inside overflow containers) ===== */}
-      {!isPreview && mounted && createPortal(<>
-        {/* Backdrop */}
-        <div
-          className={`fixed inset-0 z-[70] bg-black transition-opacity duration-300 ${
-            showSizeSheet ? "opacity-50 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
-          onClick={() => setShowSizeSheet(false)}
-        />
+      {!isPreview &&
+        mounted &&
+        createPortal(
+          <>
+            {/* Backdrop */}
+            <div
+              className={`fixed inset-0 z-[70] bg-black transition-opacity duration-300 ${
+                showSizeSheet ? 'opacity-50 pointer-events-auto' : 'opacity-0 pointer-events-none'
+              }`}
+              onClick={() => setShowSizeSheet(false)}
+            />
 
-        {/* Sheet */}
-        <div
-          className={`fixed inset-x-0 bottom-0 z-[71] bg-white transition-transform duration-300 ease-out ${
-            showSizeSheet ? "translate-y-0" : "translate-y-full"
-          }`}
-          style={{
-            maxHeight: "70vh",
-            overflowY: "auto",
-            paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          }}
-        >
-          {/* Drag handle */}
-          <div className="sticky top-0 z-10 bg-white pt-5 pb-3 flex justify-center">
-            <div className="w-10 h-[3px] rounded-full bg-[#d0d0d0]" />
-          </div>
+            {/* Sheet */}
+            <div
+              className={`fixed inset-x-0 bottom-0 z-[71] bg-white transition-transform duration-300 ease-out ${
+                showSizeSheet ? 'translate-y-0' : 'translate-y-full'
+              }`}
+              style={{
+                maxHeight: '70vh',
+                overflowY: 'auto',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              }}
+            >
+              {/* Drag handle */}
+              <div className="sticky top-0 z-10 bg-white pt-5 pb-3 flex justify-center">
+                <div className="w-10 h-[3px] rounded-full bg-[#d0d0d0]" />
+              </div>
 
-          <div className="px-6 pb-8">
-            <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-center text-[var(--color-text)]">
-              Select Size
-            </h3>
+              <div className="px-6 pb-8">
+                <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-center text-[var(--color-text)]">
+                  Select Size
+                </h3>
 
-            <div className="mt-6 flex flex-col">
-              {sizes.map((size) => {
-                const stock = getVariantStock(product.variants, selectedColor, size);
-                const isOutOfStock = stock <= 0;
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => {
-                      if (!isOutOfStock) handleSizeSheetSelect(size);
-                    }}
-                    disabled={isOutOfStock}
-                    className={cn(
-                      "py-4 text-center text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors",
-                      isOutOfStock
-                        ? "text-[var(--color-sold-out)] cursor-not-allowed"
-                        : "text-[var(--color-text)] hover:bg-[var(--color-surface)]"
-                    )}
-                  >
-                    {size}
-                  </button>
-                );
-              })}
+                <div className="mt-6 flex flex-col">
+                  {sizes.map((size) => {
+                    const stock = getVariantStock(product.variants, selectedColor, size);
+                    const isOutOfStock = stock <= 0;
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => {
+                          if (!isOutOfStock) handleSizeSheetSelect(size);
+                        }}
+                        disabled={isOutOfStock}
+                        className={cn(
+                          'py-4 text-center text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors',
+                          isOutOfStock
+                            ? 'text-[var(--color-sold-out)] cursor-not-allowed'
+                            : 'text-[var(--color-text)] hover:bg-[var(--color-surface)]'
+                        )}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </>, document.body)}
+          </>,
+          document.body
+        )}
     </div>
   );
 }

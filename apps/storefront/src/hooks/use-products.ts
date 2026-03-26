@@ -1,18 +1,8 @@
 'use client';
 
-import {
-  useQuery,
-  useInfiniteQuery,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import type {
-  Product,
-  Category,
-  ProductListParams,
-  PaginatedResponse,
-  ApiError,
-} from '@/types';
+import type { Product, Category, ProductListParams, PaginatedResponse, ApiError } from '@/types';
 
 // ─── Query Keys ─────────────────────────────────────────────────────────────
 
@@ -63,7 +53,9 @@ export function useProducts(
   return useQuery<ProductsPage, ApiError>({
     queryKey: productKeys.list(params),
     queryFn: async ({ signal }) =>
-      normalizePaginated<Product, 'products'>(await api.get(`/products${buildProductQuery(params)}`, signal)),
+      normalizePaginated<Product, 'products'>(
+        await api.get(`/products${buildProductQuery(params)}`, signal)
+      ),
     ...options,
   });
 }
@@ -107,17 +99,13 @@ export function useInfiniteProducts(params: Omit<ProductListParams, 'page'> = {}
 
 // ─── useRelatedProducts ─────────────────────────────────────────────────────
 
-export function useRelatedProducts(
-  _categorySlug: string | undefined,
-  excludeId: string
-) {
+export function useRelatedProducts(_categorySlug: string | undefined, excludeId: string) {
   return useQuery<ProductsPage, ApiError>({
     queryKey: productKeys.related('all', excludeId),
     queryFn: async ({ signal }) =>
-      normalizePaginated<Product, 'products'>(await api.get(
-        `/products?limit=12&sortBy=createdAt&sortOrder=desc`,
-        signal
-      )),
+      normalizePaginated<Product, 'products'>(
+        await api.get(`/products?limit=12&sortBy=createdAt&sortOrder=desc`, signal)
+      ),
     select: (data) => ({
       ...data,
       products: data.products.filter((p) => p.id !== excludeId),

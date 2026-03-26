@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { settingsService } from "../services/settings.service";
+import type { Request, Response } from 'express';
+import { settingsService } from '../services/settings.service';
 
 export const adminSettingsController = {
   async getSettings(_req: Request, res: Response) {

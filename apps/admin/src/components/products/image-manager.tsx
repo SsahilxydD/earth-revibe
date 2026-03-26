@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect } from 'react';
 import {
   ImagePlus,
   Trash2,
@@ -12,16 +12,16 @@ import {
   AlertCircle,
   Upload,
   Link,
-} from "lucide-react";
-import { Button, Card } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
+} from 'lucide-react';
+import { Button, Card } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
 import {
   useUploadImage,
   useUploadImageFromUrl,
   useAddProductImage,
   useDeleteProductImage,
   useSetProductImagePrimary,
-} from "@/hooks/use-products";
+} from '@/hooks/use-products';
 
 interface ProductImage {
   id: string;
@@ -40,7 +40,7 @@ interface ImageManagerProps {
 
 // ── Per-file upload tracking ────────────────────────────────────────────────
 
-type FileStatus = "queued" | "uploading" | "done" | "error";
+type FileStatus = 'queued' | 'uploading' | 'done' | 'error';
 
 interface UploadItem {
   id: string;
@@ -64,15 +64,12 @@ async function runConcurrent<T>(
   concurrency: number
 ): Promise<void> {
   const queue = [...items];
-  const workers = Array.from(
-    { length: Math.min(concurrency, queue.length) },
-    async () => {
-      while (queue.length > 0) {
-        const item = queue.shift()!;
-        await onProcess(item);
-      }
+  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+    while (queue.length > 0) {
+      const item = queue.shift()!;
+      await onProcess(item);
     }
-  );
+  });
   await Promise.allSettled(workers);
 }
 
@@ -84,7 +81,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
-  const [urlValue, setUrlValue] = useState("");
+  const [urlValue, setUrlValue] = useState('');
   const [urlUploading, setUrlUploading] = useState(false);
 
   const uploadImage = useUploadImage();
@@ -95,7 +92,9 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
 
   // Keep a ref to the latest queue so the unmount cleanup reads current state
   const uploadQueueRef = useRef(uploadQueue);
-  useEffect(() => { uploadQueueRef.current = uploadQueue; }, [uploadQueue]);
+  useEffect(() => {
+    uploadQueueRef.current = uploadQueue;
+  }, [uploadQueue]);
 
   // Clean up object URLs on unmount
   useEffect(() => {
@@ -110,9 +109,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
     async (item: UploadItem) => {
       // Mark uploading
       setUploadQueue((prev) =>
-        prev.map((q) =>
-          q.id === item.id ? { ...q, status: "uploading" as const } : q
-        )
+        prev.map((q) => (q.id === item.id ? { ...q, status: 'uploading' as const } : q))
       );
 
       try {
@@ -126,15 +123,13 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
             url: uploadResult.url,
             thumbnailUrl: uploadResult.thumbnailUrl,
             publicId: uploadResult.id,
-            altText: item.file.name.replace(/\.[^/.]+$/, ""),
+            altText: item.file.name.replace(/\.[^/.]+$/, ''),
           },
         });
 
         // Mark done
         setUploadQueue((prev) =>
-          prev.map((q) =>
-            q.id === item.id ? { ...q, status: "done" as const } : q
-          )
+          prev.map((q) => (q.id === item.id ? { ...q, status: 'done' as const } : q))
         );
       } catch (err: any) {
         // Mark error
@@ -143,8 +138,8 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
             q.id === item.id
               ? {
                   ...q,
-                  status: "error" as const,
-                  error: err.message || "Upload failed",
+                  status: 'error' as const,
+                  error: err.message || 'Upload failed',
                 }
               : q
           )
@@ -160,24 +155,20 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
     async (items: UploadItem[]) => {
       setIsProcessing(true);
 
-      const queued = items.filter((i) => i.status === "queued");
+      const queued = items.filter((i) => i.status === 'queued');
       await runConcurrent(queued, processOneFile, MAX_CONCURRENT);
 
       setIsProcessing(false);
 
       // Show summary toast
       setUploadQueue((prev) => {
-        const doneCount = prev.filter((i) => i.status === "done").length;
-        const errorCount = prev.filter((i) => i.status === "error").length;
+        const doneCount = prev.filter((i) => i.status === 'done').length;
+        const errorCount = prev.filter((i) => i.status === 'error').length;
         if (doneCount > 0) {
-          toast.success(
-            `${doneCount} image${doneCount !== 1 ? "s" : ""} uploaded`
-          );
+          toast.success(`${doneCount} image${doneCount !== 1 ? 's' : ''} uploaded`);
         }
         if (errorCount > 0) {
-          toast.error(
-            `${errorCount} image${errorCount !== 1 ? "s" : ""} failed — retry below`
-          );
+          toast.error(`${errorCount} image${errorCount !== 1 ? 's' : ''} failed — retry below`);
         }
         return prev;
       });
@@ -193,7 +184,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
       if (fileArray.length === 0) return;
 
       // Validate
-      const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
       const maxSize = 100 * 1024 * 1024; // 100 MB
 
       const valid: File[] = [];
@@ -215,7 +206,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         file,
         preview: URL.createObjectURL(file),
-        status: "queued" as const,
+        status: 'queued' as const,
       }));
 
       setUploadQueue((prev) => {
@@ -234,7 +225,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
     (id: string) => {
       setUploadQueue((prev) => {
         const next = prev.map((q) =>
-          q.id === id ? { ...q, status: "queued" as const, error: undefined } : q
+          q.id === id ? { ...q, status: 'queued' as const, error: undefined } : q
         );
         // Re-process just the retried item
         const retryItem = next.find((q) => q.id === id);
@@ -261,11 +252,9 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
 
   const clearFinished = useCallback(() => {
     setUploadQueue((prev) => {
-      const toRemove = prev.filter(
-        (q) => q.status === "done" || q.status === "error"
-      );
+      const toRemove = prev.filter((q) => q.status === 'done' || q.status === 'error');
       toRemove.forEach((item) => URL.revokeObjectURL(item.preview));
-      return prev.filter((q) => q.status !== "done" && q.status !== "error");
+      return prev.filter((q) => q.status !== 'done' && q.status !== 'error');
     });
   }, []);
 
@@ -278,7 +267,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
     try {
       new URL(trimmed);
     } catch {
-      toast.error("Please enter a valid URL");
+      toast.error('Please enter a valid URL');
       return;
     }
 
@@ -292,15 +281,19 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
           url: result.url,
           thumbnailUrl: result.thumbnailUrl,
           publicId: result.id,
-          altText: trimmed.split("/").pop()?.replace(/\.[^/.]+$/, "") || "Image",
+          altText:
+            trimmed
+              .split('/')
+              .pop()
+              ?.replace(/\.[^/.]+$/, '') || 'Image',
         },
       });
 
-      toast.success("Image uploaded from URL");
-      setUrlValue("");
+      toast.success('Image uploaded from URL');
+      setUrlValue('');
       setShowUrlInput(false);
     } catch (err: any) {
-      toast.error(err.message || "Failed to upload from URL");
+      toast.error(err.message || 'Failed to upload from URL');
     } finally {
       setUrlUploading(false);
     }
@@ -314,7 +307,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
         addFiles(e.target.files);
       }
       // Reset so same file can be re-selected
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = '';
     },
     [addFiles]
   );
@@ -348,35 +341,31 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
   // ── Existing image actions ──────────────────────────────────────────────
 
   const handleDelete = async (imageId: string) => {
-    if (!confirm("Delete this image?")) return;
+    if (!confirm('Delete this image?')) return;
     try {
       await deleteImage.mutateAsync(imageId);
-      toast.success("Image deleted");
+      toast.success('Image deleted');
     } catch (err: any) {
-      toast.error(err.message || "Failed to delete image");
+      toast.error(err.message || 'Failed to delete image');
     }
   };
 
   const handleSetPrimary = async (imageId: string) => {
     try {
       await setPrimary.mutateAsync(imageId);
-      toast.success("Primary image updated");
+      toast.success('Primary image updated');
     } catch (err: any) {
-      toast.error(err.message || "Failed to set primary image");
+      toast.error(err.message || 'Failed to set primary image');
     }
   };
 
   // ── Derived state ───────────────────────────────────────────────────────
 
   const hasQueueItems = uploadQueue.length > 0;
-  const hasFinished = uploadQueue.some(
-    (q) => q.status === "done" || q.status === "error"
-  );
-  const doneCount = uploadQueue.filter((q) => q.status === "done").length;
+  const hasFinished = uploadQueue.some((q) => q.status === 'done' || q.status === 'error');
+  const doneCount = uploadQueue.filter((q) => q.status === 'done').length;
   const totalInQueue = uploadQueue.length;
-  const activeCount = uploadQueue.filter(
-    (q) => q.status === "uploading"
-  ).length;
+  const activeCount = uploadQueue.filter((q) => q.status === 'uploading').length;
 
   return (
     <Card>
@@ -385,7 +374,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
         <div>
           <h3 className="text-base font-semibold text-charcoal">Images</h3>
           <p className="text-xs text-medium-gray mt-0.5">
-            {images.length} image{images.length !== 1 ? "s" : ""} saved
+            {images.length} image{images.length !== 1 ? 's' : ''} saved
             {hasQueueItems && (
               <span className="ml-1.5">
                 &middot; {doneCount}/{totalInQueue} uploaded
@@ -447,7 +436,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
             value={urlValue}
             onChange={(e) => setUrlValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === 'Enter') {
                 e.preventDefault();
                 handleUrlUpload();
               }
@@ -463,12 +452,8 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
             onClick={handleUrlUpload}
             disabled={urlUploading || !urlValue.trim()}
           >
-            {urlUploading ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Upload size={16} />
-            )}
-            {urlUploading ? "Fetching..." : "Fetch"}
+            {urlUploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+            {urlUploading ? 'Fetching...' : 'Fetch'}
           </Button>
         </div>
       )}
@@ -498,28 +483,25 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
                     src={item.preview}
                     alt={item.file.name}
                     className={`w-full h-full object-cover transition-opacity ${
-                      item.status === "uploading" ? "opacity-50" : ""
-                    } ${item.status === "error" ? "opacity-40" : ""}`}
+                      item.status === 'uploading' ? 'opacity-50' : ''
+                    } ${item.status === 'error' ? 'opacity-40' : ''}`}
                   />
                 </div>
 
                 {/* Status overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  {item.status === "queued" && (
+                  {item.status === 'queued' && (
                     <span className="bg-charcoal/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
                       Queued
                     </span>
                   )}
-                  {item.status === "uploading" && (
-                    <Loader2
-                      size={20}
-                      className="text-deep-earth animate-spin"
-                    />
+                  {item.status === 'uploading' && (
+                    <Loader2 size={20} className="text-deep-earth animate-spin" />
                   )}
-                  {item.status === "done" && (
+                  {item.status === 'done' && (
                     <CheckCircle size={20} className="text-forest-green" />
                   )}
-                  {item.status === "error" && (
+                  {item.status === 'error' && (
                     <div className="flex flex-col items-center gap-1">
                       <AlertCircle size={18} className="text-error" />
                       <button
@@ -535,7 +517,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
                 </div>
 
                 {/* Remove button (visible for queued, done, error) */}
-                {item.status !== "uploading" && (
+                {item.status !== 'uploading' && (
                   <button
                     type="button"
                     onClick={() => removeFromQueue(item.id)}
@@ -546,9 +528,7 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
                 )}
 
                 {/* Filename */}
-                <p className="text-[9px] text-medium-gray truncate px-1 py-0.5">
-                  {item.file.name}
-                </p>
+                <p className="text-[9px] text-medium-gray truncate px-1 py-0.5">{item.file.name}</p>
               </div>
             ))}
           </div>
@@ -562,13 +542,13 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
             <div
               key={image.id}
               className={`relative group rounded-lg overflow-hidden border-2 ${
-                image.isPrimary ? "border-forest-green" : "border-light-gray"
+                image.isPrimary ? 'border-forest-green' : 'border-light-gray'
               }`}
             >
               <div className="aspect-square bg-off-white">
                 <img
                   src={image.url}
-                  alt={image.altText || "Product image"}
+                  alt={image.altText || 'Product image'}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -615,20 +595,18 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
           onClick={() => fileInputRef.current?.click()}
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
             dragOver
-              ? "border-deep-earth bg-deep-earth/5"
-              : "border-light-gray hover:border-deep-earth/40"
+              ? 'border-deep-earth bg-deep-earth/5'
+              : 'border-light-gray hover:border-deep-earth/40'
           }`}
         >
           <Upload
             size={32}
             className={`mx-auto mb-2 transition-colors ${
-              dragOver ? "text-deep-earth" : "text-medium-gray"
+              dragOver ? 'text-deep-earth' : 'text-medium-gray'
             }`}
           />
           <p className="text-sm text-medium-gray">
-            {dragOver
-              ? "Drop images here"
-              : "Drag & drop images or click to upload"}
+            {dragOver ? 'Drop images here' : 'Drag & drop images or click to upload'}
           </p>
           <p className="text-xs text-medium-gray mt-1">
             JPEG, PNG, WebP, GIF up to 100 MB &middot; Upload multiple at once
@@ -644,15 +622,13 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
           onDrop={handleDrop}
           className={`mt-3 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
             dragOver
-              ? "border-deep-earth bg-deep-earth/5"
-              : "border-light-gray hover:border-deep-earth/40"
+              ? 'border-deep-earth bg-deep-earth/5'
+              : 'border-light-gray hover:border-deep-earth/40'
           }`}
           onClick={() => fileInputRef.current?.click()}
         >
           <p className="text-xs text-medium-gray">
-            {dragOver
-              ? "Drop images here"
-              : "Drag & drop more images or click to upload"}
+            {dragOver ? 'Drop images here' : 'Drag & drop more images or click to upload'}
           </p>
         </div>
       )}

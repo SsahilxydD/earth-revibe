@@ -1,18 +1,18 @@
-import { rateLimit } from "express-rate-limit";
+import { rateLimit } from 'express-rate-limit';
 
-const isTest = process.env.NODE_ENV === "test";
+const isTest = process.env.NODE_ENV === 'test';
 
 // Login: 15 attempts per 15 minutes per IP
 export const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: isTest ? 1000 : 15,
-  standardHeaders: "draft-7",
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: {
     success: false,
     error: {
-      code: "RATE_LIMITED",
-      message: "Too many login attempts. Please try again in 15 minutes.",
+      code: 'RATE_LIMITED',
+      message: 'Too many login attempts. Please try again in 15 minutes.',
     },
   },
 });
@@ -21,13 +21,13 @@ export const loginRateLimit = rateLimit({
 export const registerRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: isTest ? 1000 : 3,
-  standardHeaders: "draft-7",
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: {
     success: false,
     error: {
-      code: "RATE_LIMITED",
-      message: "Too many registration attempts. Please try again later.",
+      code: 'RATE_LIMITED',
+      message: 'Too many registration attempts. Please try again later.',
     },
   },
 });
@@ -36,13 +36,13 @@ export const registerRateLimit = rateLimit({
 export const passwordResetRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: isTest ? 1000 : 3,
-  standardHeaders: "draft-7",
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: {
     success: false,
     error: {
-      code: "RATE_LIMITED",
-      message: "Too many password reset attempts. Please try again later.",
+      code: 'RATE_LIMITED',
+      message: 'Too many password reset attempts. Please try again later.',
     },
   },
 });

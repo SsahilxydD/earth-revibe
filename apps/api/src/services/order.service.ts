@@ -1,13 +1,18 @@
-import crypto from "crypto";
-import { prisma, Prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import { getRazorpay } from "../config/razorpay";
-import { env } from "../config/env";
-import { logger } from "../config/logger";
-import { APP_CONSTANTS } from "../config/constants";
-import { generateOrderNumber } from "@earth-revibe/shared";
-import { shiprocketService } from "./shiprocket.service";
-import type { CreateOrderInput, VerifyPaymentInput, OrderQuery, CancelOrderInput } from "@earth-revibe/shared";
+import crypto from 'crypto';
+import { prisma, Prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import { getRazorpay } from '../config/razorpay';
+import { env } from '../config/env';
+import { logger } from '../config/logger';
+import { APP_CONSTANTS } from '../config/constants';
+import { generateOrderNumber } from '@earth-revibe/shared';
+import { shiprocketService } from './shiprocket.service';
+import type {
+  CreateOrderInput,
+  VerifyPaymentInput,
+  OrderQuery,
+  CancelOrderInput,
+} from '@earth-revibe/shared';
 
 export const orderService = {
   async createOrder(userId: string, data: CreateOrderInput) {
@@ -20,7 +25,13 @@ export const orderService = {
             variant: {
               include: {
                 product: {
-                  select: { id: true, name: true, price: true, categoryId: true, images: { where: { isPrimary: true }, take: 1 } },
+                  select: {
+                    id: true,
+                    name: true,
+                    price: true,
+                    categoryId: true,
+                    images: { where: { isPrimary: true }, take: 1 },
+                  },
                 },
               },
             },
@@ -30,14 +41,14 @@ export const orderService = {
     });
 
     if (!cart || cart.items.length === 0) {
-      throw ApiError.badRequest("Cart is empty");
+      throw ApiError.badRequest('Cart is empty');
     }
 
     // Verify address belongs to user
     const address = await prisma.address.findFirst({
       where: { id: data.addressId, userId },
     });
-    if (!address) throw ApiError.badRequest("Invalid address");
+    if (!address) throw ApiError.badRequest('Invalid address');
 
     // Calculate subtotal
     let subtotal = 0;
@@ -72,36 +83,46 @@ export const orderService = {
       });
 
       if (!discount || !discount.isActive) {
-        throw ApiError.badRequest("Invalid discount code");
+        throw ApiError.badRequest('Invalid discount code');
       }
 
       if (discount.expiresAt < new Date() || discount.startsAt > new Date()) {
-        throw ApiError.badRequest("Discount code has expired");
+        throw ApiError.badRequest('Discount code has expired');
       }
 
       if (discount.usageLimit && discount.usageCount >= discount.usageLimit) {
-        throw ApiError.badRequest("Discount code usage limit reached");
+        throw ApiError.badRequest('Discount code usage limit reached');
       }
 
       // Per-user limit check
       const userUsageCount = await prisma.order.count({
-        where: { userId, discountCodeId: discount.id, status: { not: "CANCELLED" } },
+        where: { userId, discountCodeId: discount.id, status: { not: 'CANCELLED' } },
       });
       if (userUsageCount >= discount.perUserLimit) {
-        throw ApiError.badRequest("You have already used this discount code the maximum number of times");
+        throw ApiError.badRequest(
+          'You have already used this discount code the maximum number of times'
+        );
       }
 
       // Applicable products/categories check
       if (discount.applicableProducts.length > 0) {
-        const hasApplicableProduct = cartProductIds.some((id) => discount.applicableProducts.includes(id));
+        const hasApplicableProduct = cartProductIds.some((id) =>
+          discount.applicableProducts.includes(id)
+        );
         if (!hasApplicableProduct) {
-          throw ApiError.badRequest("This discount code is not applicable to the items in your cart");
+          throw ApiError.badRequest(
+            'This discount code is not applicable to the items in your cart'
+          );
         }
       }
       if (discount.applicableCategories.length > 0) {
-        const hasApplicableCategory = cartCategoryIds.some((id) => discount.applicableCategories.includes(id));
+        const hasApplicableCategory = cartCategoryIds.some((id) =>
+          discount.applicableCategories.includes(id)
+        );
         if (!hasApplicableCategory) {
-          throw ApiError.badRequest("This discount code is not applicable to the items in your cart");
+          throw ApiError.badRequest(
+            'This discount code is not applicable to the items in your cart'
+          );
         }
       }
 
@@ -110,18 +131,18 @@ export const orderService = {
       }
 
       // Calculate discount — handle all types
-      if (discount.type === "PERCENTAGE") {
+      if (discount.type === 'PERCENTAGE') {
         discountAmount = subtotal * (Number(discount.value) / 100);
         if (discount.maxDiscountAmount) {
           discountAmount = Math.min(discountAmount, Number(discount.maxDiscountAmount));
         }
-      } else if (discount.type === "FLAT") {
+      } else if (discount.type === 'FLAT') {
         // Cap flat discount at subtotal to prevent free orders
         discountAmount = Math.min(Number(discount.value), subtotal);
-      } else if (discount.type === "FREE_SHIPPING") {
+      } else if (discount.type === 'FREE_SHIPPING') {
         // Shipping is already free; discount amount stays 0
         discountAmount = 0;
-      } else if (discount.type === "BUY_X_GET_Y") {
+      } else if (discount.type === 'BUY_X_GET_Y') {
         // BUY_X_GET_Y requires product-level configuration — skip silently for v1
         discountAmount = 0;
       }
@@ -134,13 +155,15 @@ export const orderService = {
     if (data.loyaltyPointsToUse > 0) {
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user || user.loyaltyPoints < data.loyaltyPointsToUse) {
-        throw ApiError.badRequest("Insufficient loyalty points");
+        throw ApiError.badRequest('Insufficient loyalty points');
       }
 
       // Check minimum redemption threshold from LoyaltyConfig
       const loyaltyConfig = await prisma.loyaltyConfig.findFirst({ where: { isActive: true } });
       if (loyaltyConfig && data.loyaltyPointsToUse < loyaltyConfig.minRedeemPoints) {
-        throw ApiError.badRequest(`Minimum ${loyaltyConfig.minRedeemPoints} points required for redemption`);
+        throw ApiError.badRequest(
+          `Minimum ${loyaltyConfig.minRedeemPoints} points required for redemption`
+        );
       }
 
       // Cap loyalty discount at remaining amount after discount
@@ -159,97 +182,100 @@ export const orderService = {
     // Create Razorpay order
     const razorpayOrder = await getRazorpay().orders.create({
       amount: Math.round(totalAmount * 100), // Razorpay expects paise
-      currency: "INR",
+      currency: 'INR',
       receipt: orderNumber,
     });
 
     // Wrap DB writes in a Serializable transaction for atomicity + consistency
-    const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Re-validate prices and stock inside transaction to prevent stale-data races
-      for (const item of cart.items) {
-        const currentVariant = await tx.productVariant.findUnique({
-          where: { id: item.variantId },
-          select: { price: true, stock: true, product: { select: { price: true, name: true } } },
-        });
-        if (!currentVariant) {
-          throw ApiError.badRequest(`Product variant is no longer available`);
+    const order = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // Re-validate prices and stock inside transaction to prevent stale-data races
+        for (const item of cart.items) {
+          const currentVariant = await tx.productVariant.findUnique({
+            where: { id: item.variantId },
+            select: { price: true, stock: true, product: { select: { price: true, name: true } } },
+          });
+          if (!currentVariant) {
+            throw ApiError.badRequest(`Product variant is no longer available`);
+          }
+          const currentPrice = Number(currentVariant.price) || Number(currentVariant.product.price);
+          const cartPrice = Number(item.variant.price) || Number(item.variant.product.price);
+          if (currentPrice !== cartPrice) {
+            throw ApiError.conflict(
+              `Price changed for ${currentVariant.product.name}. Please refresh your cart.`
+            );
+          }
+          if (currentVariant.stock < item.quantity) {
+            throw ApiError.conflict(
+              `Insufficient stock for ${currentVariant.product.name}. Only ${currentVariant.stock} available.`
+            );
+          }
         }
-        const currentPrice = Number(currentVariant.price) || Number(currentVariant.product.price);
-        const cartPrice = Number(item.variant.price) || Number(item.variant.product.price);
-        if (currentPrice !== cartPrice) {
-          throw ApiError.conflict(
-            `Price changed for ${currentVariant.product.name}. Please refresh your cart.`
-          );
-        }
-        if (currentVariant.stock < item.quantity) {
-          throw ApiError.conflict(
-            `Insufficient stock for ${currentVariant.product.name}. Only ${currentVariant.stock} available.`
-          );
-        }
-      }
 
-      // Reserve stock by decrementing inside the transaction
-      for (const item of cart.items) {
-        const result = await tx.productVariant.updateMany({
-          where: { id: item.variantId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
-        });
-        if (result.count === 0) {
-          throw ApiError.conflict(`Stock reservation failed for variant ${item.variantId}`);
+        // Reserve stock by decrementing inside the transaction
+        for (const item of cart.items) {
+          const result = await tx.productVariant.updateMany({
+            where: { id: item.variantId, stock: { gte: item.quantity } },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (result.count === 0) {
+            throw ApiError.conflict(`Stock reservation failed for variant ${item.variantId}`);
+          }
         }
-      }
 
-      // Atomically increment discount usage inside transaction for consistency
-      if (discountCodeId) {
-        await tx.discountCode.update({
-          where: { id: discountCodeId },
-          data: { usageCount: { increment: 1 } },
-        });
-      }
+        // Atomically increment discount usage inside transaction for consistency
+        if (discountCodeId) {
+          await tx.discountCode.update({
+            where: { id: discountCodeId },
+            data: { usageCount: { increment: 1 } },
+          });
+        }
 
-      // Create order in DB
-      const createdOrder = await tx.order.create({
-        data: {
-          orderNumber,
-          userId,
-          addressId: data.addressId,
-          subtotal,
-          discountAmount,
-          shippingAmount,
-          taxAmount,
-          totalAmount,
-          loyaltyPointsUsed: loyaltyDiscount,
-          discountCodeId,
-          items: {
-            create: orderItems,
-          },
-          payment: {
-            create: {
-              razorpayOrderId: razorpayOrder.id,
-              amount: totalAmount,
-              status: "PENDING",
+        // Create order in DB
+        const createdOrder = await tx.order.create({
+          data: {
+            orderNumber,
+            userId,
+            addressId: data.addressId,
+            subtotal,
+            discountAmount,
+            shippingAmount,
+            taxAmount,
+            totalAmount,
+            loyaltyPointsUsed: loyaltyDiscount,
+            discountCodeId,
+            items: {
+              create: orderItems,
+            },
+            payment: {
+              create: {
+                razorpayOrderId: razorpayOrder.id,
+                amount: totalAmount,
+                status: 'PENDING',
+              },
+            },
+            statusHistory: {
+              create: {
+                status: 'PLACED',
+                note: 'Order placed, awaiting payment',
+              },
             },
           },
-          statusHistory: {
-            create: {
-              status: "PLACED",
-              note: "Order placed, awaiting payment",
-            },
+          include: {
+            items: true,
+            payment: true,
           },
-        },
-        include: {
-          items: true,
-          payment: true,
-        },
-      });
+        });
 
-      return createdOrder;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        return createdOrder;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
 
     return {
       order,
       razorpayOrderId: razorpayOrder.id,
-      razorpayKeyId: env.RAZORPAY_KEY_ID ?? "",
+      razorpayKeyId: env.RAZORPAY_KEY_ID ?? '',
       amount: totalAmount,
     };
   },
@@ -261,160 +287,165 @@ export const orderService = {
       include: { order: true },
     });
 
-    if (!payment) throw ApiError.notFound("Payment not found");
+    if (!payment) throw ApiError.notFound('Payment not found');
 
     // Verify signature
     if (!env.RAZORPAY_KEY_SECRET) {
-      throw ApiError.badRequest("Razorpay is not configured");
+      throw ApiError.badRequest('Razorpay is not configured');
     }
-    const body = data.razorpayOrderId + "|" + data.razorpayPaymentId;
+    const body = data.razorpayOrderId + '|' + data.razorpayPaymentId;
     const expectedSignature = crypto
-      .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
+      .createHmac('sha256', env.RAZORPAY_KEY_SECRET)
       .update(body)
-      .digest("hex");
+      .digest('hex');
 
     // Guard against mismatched buffer lengths (timingSafeEqual throws on length mismatch)
-    const expectedBuf = Buffer.from(expectedSignature, "hex");
-    const receivedBuf = Buffer.from(data.razorpaySignature, "hex");
-    if (expectedBuf.length !== receivedBuf.length || !crypto.timingSafeEqual(expectedBuf, receivedBuf)) {
+    const expectedBuf = Buffer.from(expectedSignature, 'hex');
+    const receivedBuf = Buffer.from(data.razorpaySignature, 'hex');
+    if (
+      expectedBuf.length !== receivedBuf.length ||
+      !crypto.timingSafeEqual(expectedBuf, receivedBuf)
+    ) {
       // Mark payment as failed
       await prisma.payment.update({
         where: { id: payment.id },
-        data: { status: "FAILED", failureReason: "Signature verification failed" },
+        data: { status: 'FAILED', failureReason: 'Signature verification failed' },
       });
-      throw ApiError.badRequest("Payment verification failed");
+      throw ApiError.badRequest('Payment verification failed');
     }
 
     // Wrap all post-verification writes in a transaction for data integrity
-    const { orderNumber, pointsEarned } = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Update payment
-      await tx.payment.update({
-        where: { id: payment.id },
-        data: {
-          razorpayPaymentId: data.razorpayPaymentId,
-          razorpaySignature: data.razorpaySignature,
-          status: "CAPTURED",
-          paidAt: new Date(),
-        },
-      });
-
-      // Update order status
-      await tx.order.update({
-        where: { id: payment.order.id },
-        data: { status: "CONFIRMED" },
-      });
-
-      await tx.orderStatusHistory.create({
-        data: {
-          orderId: payment.order.id,
-          status: "CONFIRMED",
-          note: "Payment received",
-        },
-      });
-
-      // Stock was already decremented at order creation time (Serializable transaction).
-      // No stock deduction needed here — payment verification only confirms the charge.
-
-      // Deduct loyalty points if used
-      if (payment.order.loyaltyPointsUsed > 0) {
-        await tx.user.update({
-          where: { id: userId },
-          data: { loyaltyPoints: { decrement: payment.order.loyaltyPointsUsed } },
-        });
-        await tx.loyaltyTransaction.create({
+    const { orderNumber, pointsEarned } = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // Update payment
+        await tx.payment.update({
+          where: { id: payment.id },
           data: {
-            userId,
-            type: "REDEEMED",
-            points: -payment.order.loyaltyPointsUsed,
-            description: `Redeemed for order #${payment.order.orderNumber}`,
-            orderId: payment.order.id,
+            razorpayPaymentId: data.razorpayPaymentId,
+            razorpaySignature: data.razorpaySignature,
+            status: 'CAPTURED',
+            paidAt: new Date(),
           },
         });
-      }
 
-      // Earn loyalty points (1 point per ₹100 spent)
-      const pointsEarned = Math.floor(Number(payment.order.totalAmount) / 100);
-      if (pointsEarned > 0) {
-        await tx.user.update({
-          where: { id: userId },
-          data: { loyaltyPoints: { increment: pointsEarned } },
-        });
+        // Update order status
         await tx.order.update({
           where: { id: payment.order.id },
-          data: { loyaltyPointsEarned: pointsEarned },
+          data: { status: 'CONFIRMED' },
         });
-        await tx.loyaltyTransaction.create({
+
+        await tx.orderStatusHistory.create({
           data: {
-            userId,
-            type: "EARNED",
-            points: pointsEarned,
-            description: `Earned from order #${payment.order.orderNumber}`,
             orderId: payment.order.id,
+            status: 'CONFIRMED',
+            note: 'Payment received',
           },
         });
-      }
 
-      // Handle referral conversion (first purchase by referred user)
-      const orderCount = await tx.order.count({
-        where: { userId, status: { not: "CANCELLED" } },
-      });
-      if (orderCount === 1) {
-        const referral = await tx.referral.findUnique({
-          where: { refereeId: userId },
-        });
-        if (referral && referral.status === "SIGNED_UP") {
-          const REFERRER_REWARD = APP_CONSTANTS.REFERRER_REWARD_POINTS;
-          const REFEREE_REWARD = APP_CONSTANTS.REFEREE_REWARD_POINTS;
+        // Stock was already decremented at order creation time (Serializable transaction).
+        // No stock deduction needed here — payment verification only confirms the charge.
 
-          await tx.referral.update({
-            where: { id: referral.id },
-            data: {
-              status: "CONVERTED",
-              referrerReward: REFERRER_REWARD,
-              refereeReward: REFEREE_REWARD,
-            },
-          });
-
-          await tx.user.update({
-            where: { id: referral.referrerId },
-            data: { loyaltyPoints: { increment: REFERRER_REWARD } },
-          });
-          await tx.loyaltyTransaction.create({
-            data: {
-              userId: referral.referrerId,
-              type: "BONUS",
-              points: REFERRER_REWARD,
-              description: "Referral reward - friend made first purchase",
-            },
-          });
-
+        // Deduct loyalty points if used
+        if (payment.order.loyaltyPointsUsed > 0) {
           await tx.user.update({
             where: { id: userId },
-            data: { loyaltyPoints: { increment: REFEREE_REWARD } },
+            data: { loyaltyPoints: { decrement: payment.order.loyaltyPointsUsed } },
           });
           await tx.loyaltyTransaction.create({
             data: {
               userId,
-              type: "BONUS",
-              points: REFEREE_REWARD,
-              description: "Welcome bonus - first purchase reward",
+              type: 'REDEEMED',
+              points: -payment.order.loyaltyPointsUsed,
+              description: `Redeemed for order #${payment.order.orderNumber}`,
+              orderId: payment.order.id,
             },
           });
         }
-      }
 
-      // Clear cart
-      const cart = await tx.cart.findUnique({ where: { userId } });
-      if (cart) {
-        await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-      }
+        // Earn loyalty points (1 point per ₹100 spent)
+        const pointsEarned = Math.floor(Number(payment.order.totalAmount) / 100);
+        if (pointsEarned > 0) {
+          await tx.user.update({
+            where: { id: userId },
+            data: { loyaltyPoints: { increment: pointsEarned } },
+          });
+          await tx.order.update({
+            where: { id: payment.order.id },
+            data: { loyaltyPointsEarned: pointsEarned },
+          });
+          await tx.loyaltyTransaction.create({
+            data: {
+              userId,
+              type: 'EARNED',
+              points: pointsEarned,
+              description: `Earned from order #${payment.order.orderNumber}`,
+              orderId: payment.order.id,
+            },
+          });
+        }
 
-      return { orderNumber: payment.order.orderNumber, pointsEarned };
-    });
+        // Handle referral conversion (first purchase by referred user)
+        const orderCount = await tx.order.count({
+          where: { userId, status: { not: 'CANCELLED' } },
+        });
+        if (orderCount === 1) {
+          const referral = await tx.referral.findUnique({
+            where: { refereeId: userId },
+          });
+          if (referral && referral.status === 'SIGNED_UP') {
+            const REFERRER_REWARD = APP_CONSTANTS.REFERRER_REWARD_POINTS;
+            const REFEREE_REWARD = APP_CONSTANTS.REFEREE_REWARD_POINTS;
+
+            await tx.referral.update({
+              where: { id: referral.id },
+              data: {
+                status: 'CONVERTED',
+                referrerReward: REFERRER_REWARD,
+                refereeReward: REFEREE_REWARD,
+              },
+            });
+
+            await tx.user.update({
+              where: { id: referral.referrerId },
+              data: { loyaltyPoints: { increment: REFERRER_REWARD } },
+            });
+            await tx.loyaltyTransaction.create({
+              data: {
+                userId: referral.referrerId,
+                type: 'BONUS',
+                points: REFERRER_REWARD,
+                description: 'Referral reward - friend made first purchase',
+              },
+            });
+
+            await tx.user.update({
+              where: { id: userId },
+              data: { loyaltyPoints: { increment: REFEREE_REWARD } },
+            });
+            await tx.loyaltyTransaction.create({
+              data: {
+                userId,
+                type: 'BONUS',
+                points: REFEREE_REWARD,
+                description: 'Welcome bonus - first purchase reward',
+              },
+            });
+          }
+        }
+
+        // Clear cart
+        const cart = await tx.cart.findUnique({ where: { userId } });
+        if (cart) {
+          await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+        }
+
+        return { orderNumber: payment.order.orderNumber, pointsEarned };
+      }
+    );
 
     // Auto-create Shiprocket shipment (non-blocking, outside transaction)
     shiprocketService.createShiprocketOrder(payment.order.id).catch((err) => {
-      logger.error({ err, orderId: payment.order.id }, "Failed to create Shiprocket shipment");
+      logger.error({ err, orderId: payment.order.id }, 'Failed to create Shiprocket shipment');
     });
 
     return { orderNumber, pointsEarned };
@@ -430,7 +461,7 @@ export const orderService = {
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: {
           items: true,
           payment: { select: { status: true, method: true, paidAt: true } },
@@ -449,12 +480,12 @@ export const orderService = {
         items: true,
         payment: true,
         address: true,
-        statusHistory: { orderBy: { createdAt: "desc" } },
+        statusHistory: { orderBy: { createdAt: 'desc' } },
         discountCode: { select: { code: true, type: true, value: true } },
       },
     });
 
-    if (!order) throw ApiError.notFound("Order not found");
+    if (!order) throw ApiError.notFound('Order not found');
 
     return order;
   },
@@ -465,23 +496,23 @@ export const orderService = {
       include: { payment: true },
     });
 
-    if (!order) throw ApiError.notFound("Order not found");
+    if (!order) throw ApiError.notFound('Order not found');
 
-    const cancellableStatuses = ["PLACED", "CONFIRMED", "PROCESSING"];
+    const cancellableStatuses = ['PLACED', 'CONFIRMED', 'PROCESSING'];
     if (!cancellableStatuses.includes(order.status)) {
-      throw ApiError.badRequest("Order cannot be cancelled at this stage");
+      throw ApiError.badRequest('Order cannot be cancelled at this stage');
     }
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.order.update({
         where: { id: order.id },
-        data: { status: "CANCELLED" },
+        data: { status: 'CANCELLED' },
       });
 
       await tx.orderStatusHistory.create({
         data: {
           orderId: order.id,
-          status: "CANCELLED",
+          status: 'CANCELLED',
           note: data.reason,
           changedBy: userId,
         },
@@ -505,7 +536,7 @@ export const orderService = {
         await tx.loyaltyTransaction.create({
           data: {
             userId,
-            type: "ADJUSTED",
+            type: 'ADJUSTED',
             points: order.loyaltyPointsUsed,
             description: `Points restored from cancelled order #${order.orderNumber}`,
             orderId: order.id,
@@ -522,7 +553,7 @@ export const orderService = {
         await tx.loyaltyTransaction.create({
           data: {
             userId,
-            type: "ADJUSTED",
+            type: 'ADJUSTED',
             points: -order.loyaltyPointsEarned,
             description: `Points reversed from cancelled order #${order.orderNumber}`,
             orderId: order.id,
@@ -534,10 +565,10 @@ export const orderService = {
       const referral = await tx.referral.findUnique({
         where: { refereeId: userId },
       });
-      if (referral && referral.status === "CONVERTED") {
+      if (referral && referral.status === 'CONVERTED') {
         // Check if user has any other non-cancelled orders
         const otherOrders = await tx.order.count({
-          where: { userId, status: { not: "CANCELLED" }, id: { not: order.id } },
+          where: { userId, status: { not: 'CANCELLED' }, id: { not: order.id } },
         });
         if (otherOrders === 0) {
           // Revert referral status and claw back rewards
@@ -546,7 +577,7 @@ export const orderService = {
 
           await tx.referral.update({
             where: { id: referral.id },
-            data: { status: "SIGNED_UP", referrerReward: 0, refereeReward: 0 },
+            data: { status: 'SIGNED_UP', referrerReward: 0, refereeReward: 0 },
           });
 
           if (referrerReward > 0) {
@@ -557,7 +588,7 @@ export const orderService = {
             await tx.loyaltyTransaction.create({
               data: {
                 userId: referral.referrerId,
-                type: "ADJUSTED",
+                type: 'ADJUSTED',
                 points: -referrerReward,
                 description: `Referral reward reversed - referred user cancelled order #${order.orderNumber}`,
               },
@@ -572,7 +603,7 @@ export const orderService = {
             await tx.loyaltyTransaction.create({
               data: {
                 userId,
-                type: "ADJUSTED",
+                type: 'ADJUSTED',
                 points: -refereeReward,
                 description: `Welcome bonus reversed - order #${order.orderNumber} cancelled`,
               },
@@ -582,7 +613,7 @@ export const orderService = {
       }
 
       // Initiate Razorpay refund if payment was captured
-      if (order.payment && order.payment.status === "CAPTURED" && order.payment.razorpayPaymentId) {
+      if (order.payment && order.payment.status === 'CAPTURED' && order.payment.razorpayPaymentId) {
         try {
           const refundAmountInPaise = Math.round(Number(order.payment.amount) * 100);
           const refundResult = await getRazorpay().payments.refund(
@@ -596,14 +627,14 @@ export const orderService = {
           await tx.payment.update({
             where: { id: order.payment.id },
             data: {
-              status: "REFUNDED",
+              status: 'REFUNDED',
               refundId: refundResult.id,
               refundAmount: Number(order.payment.amount),
             },
           });
         } catch (refundErr) {
           // Log but don't fail the cancellation — admin can manually refund
-          logger.error({ err: refundErr, orderNumber }, "Failed to auto-refund order");
+          logger.error({ err: refundErr, orderNumber }, 'Failed to auto-refund order');
         }
       }
 

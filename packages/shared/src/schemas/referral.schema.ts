@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const updateReferralConfigSchema = z.object({
   referrerReward: z.coerce.number().int().min(0),

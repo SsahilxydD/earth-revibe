@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, Search, Heart, ShoppingBag } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useCartStore } from "@/stores/cart-store";
-import { useUiStore } from "@/stores/ui-store";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, Search, Heart, ShoppingBag } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useCartStore } from '@/stores/cart-store';
+import { useUiStore } from '@/stores/ui-store';
 
 const NAV_ITEMS = [
-  { label: "Home", href: "/", icon: Home },
-  { label: "Search", href: "#search", icon: Search },
-  { label: "Wishlist", href: "/account/wishlist", icon: Heart },
-  { label: "Cart", href: "#cart", icon: ShoppingBag },
+  { label: 'Home', href: '/', icon: Home },
+  { label: 'Search', href: '#search', icon: Search },
+  { label: 'Wishlist', href: '/account/wishlist', icon: Heart },
+  { label: 'Cart', href: '#cart', icon: ShoppingBag },
 ] as const;
 
 export function MobileBottomBar() {
@@ -21,8 +21,7 @@ export function MobileBottomBar() {
   const { openSearch } = useUiStore();
 
   // Hide on product detail pages — the top header handles nav there
-  const isProductDetail =
-    pathname.startsWith("/products/") && pathname !== "/products";
+  const isProductDetail = pathname.startsWith('/products/') && pathname !== '/products';
 
   if (isProductDetail) return null;
 
@@ -33,7 +32,7 @@ export function MobileBottomBar() {
           const isActive = item.href === pathname;
           const Icon = item.icon;
 
-          if (item.href === "#search") {
+          if (item.href === '#search') {
             return (
               <button
                 key={item.label}
@@ -42,14 +41,12 @@ export function MobileBottomBar() {
                 aria-label={item.label}
               >
                 <Icon className="h-5 w-5 text-[var(--color-muted)]" />
-                <span className="text-[10px] text-[var(--color-muted)]">
-                  {item.label}
-                </span>
+                <span className="text-[10px] text-[var(--color-muted)]">{item.label}</span>
               </button>
             );
           }
 
-          if (item.href === "#cart") {
+          if (item.href === '#cart') {
             return (
               <button
                 key={item.label}
@@ -60,12 +57,10 @@ export function MobileBottomBar() {
                 <Icon className="h-5 w-5 text-[var(--color-muted)]" />
                 {itemCount > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-primary)] text-[9px] font-bold text-white">
-                    {itemCount > 99 ? "99+" : itemCount}
+                    {itemCount > 99 ? '99+' : itemCount}
                   </span>
                 )}
-                <span className="text-[10px] text-[var(--color-muted)]">
-                  {item.label}
-                </span>
+                <span className="text-[10px] text-[var(--color-muted)]">{item.label}</span>
               </button>
             );
           }
@@ -79,18 +74,16 @@ export function MobileBottomBar() {
             >
               <Icon
                 className={cn(
-                  "h-5 w-5",
-                  isActive
-                    ? "text-[var(--color-primary)]"
-                    : "text-[var(--color-muted)]"
+                  'h-5 w-5',
+                  isActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-muted)]'
                 )}
               />
               <span
                 className={cn(
-                  "text-[10px]",
+                  'text-[10px]',
                   isActive
-                    ? "font-semibold text-[var(--color-primary)]"
-                    : "text-[var(--color-muted)]"
+                    ? 'font-semibold text-[var(--color-primary)]'
+                    : 'text-[var(--color-muted)]'
                 )}
               >
                 {item.label}

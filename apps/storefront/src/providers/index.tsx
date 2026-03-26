@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useState, useCallback, createContext, useContext } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { CartDrawer } from "@/components/cart/cart-drawer";
-import { AuthInitializer } from "./auth-initializer";
+import { useState, useCallback, createContext, useContext } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { CartDrawer } from '@/components/cart/cart-drawer';
+import { AuthInitializer } from './auth-initializer';
 
 interface Toast {
   id: string;
   message: string;
-  type: "success" | "error" | "info";
+  type: 'success' | 'error' | 'info';
 }
 
 interface ToastContextValue {
-  addToast: (message: string, type?: Toast["type"]) => void;
+  addToast: (message: string, type?: Toast['type']) => void;
 }
 
 const ToastContext = createContext<ToastContextValue>({
@@ -21,18 +21,24 @@ const ToastContext = createContext<ToastContextValue>({
 
 export const useToast = () => useContext(ToastContext);
 
-function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: string) => void }) {
+function ToastContainer({
+  toasts,
+  onDismiss,
+}: {
+  toasts: Toast[];
+  onDismiss: (id: string) => void;
+}) {
   return (
     <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
       {toasts.map((toast) => (
         <div
           key={toast.id}
           className={`animate-slide-up rounded-[var(--button-radius)] px-4 py-3 text-sm font-medium text-white shadow-lg ${
-            toast.type === "error"
-              ? "bg-[var(--color-sale)]"
-              : toast.type === "success"
-                ? "bg-[var(--color-primary)]"
-                : "bg-[var(--color-muted)]"
+            toast.type === 'error'
+              ? 'bg-[var(--color-sale)]'
+              : toast.type === 'success'
+                ? 'bg-[var(--color-primary)]'
+                : 'bg-[var(--color-muted)]'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -57,8 +63,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 24 * 60 * 60 * 1000,  // 24 hours — effectively never stale
-            gcTime: 24 * 60 * 60 * 1000,    // 24 hours — never GC during session
+            staleTime: 24 * 60 * 60 * 1000, // 24 hours — effectively never stale
+            gcTime: 24 * 60 * 60 * 1000, // 24 hours — never GC during session
             retry: 1,
             refetchOnWindowFocus: false,
             refetchOnMount: false,
@@ -75,7 +81,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addToast = useCallback(
-    (message: string, type: Toast["type"] = "info") => {
+    (message: string, type: Toast['type'] = 'info') => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       setToasts((prev) => [...prev, { id, message, type }]);
       setTimeout(() => dismissToast(id), 4000);
@@ -86,9 +92,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastContext.Provider value={{ addToast }}>
-        <AuthInitializer>
-          {children}
-        </AuthInitializer>
+        <AuthInitializer>{children}</AuthInitializer>
         <CartDrawer />
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       </ToastContext.Provider>

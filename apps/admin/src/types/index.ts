@@ -73,10 +73,10 @@ export type {
 
   // Notification
   Notification,
-} from "@earth-revibe/shared";
+} from '@earth-revibe/shared';
 
 // Re-export ClientApiError as ApiError for consistency with storefront
-export type { ClientApiError as ApiError } from "@earth-revibe/shared";
+export type { ClientApiError as ApiError } from '@earth-revibe/shared';
 
 // Re-export enums
-export type { ProductStatus, OrderStatus, PaymentStatus } from "@earth-revibe/shared";
+export type { ProductStatus, OrderStatus, PaymentStatus } from '@earth-revibe/shared';

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { forwardRef } from "react";
+import { forwardRef } from 'react';
 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
@@ -8,8 +8,8 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, className = "", id, ...props }, ref) => {
-    const textareaId = id || label?.toLowerCase().replace(/\s+/g, "-");
+  ({ label, error, className = '', id, ...props }, ref) => {
+    const textareaId = id || label?.toLowerCase().replace(/\s+/g, '-');
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
@@ -22,8 +22,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={textareaId}
           className={`w-full px-4 py-3 border bg-surface text-text-primary text-sm placeholder:text-text-muted transition-colors duration-150 outline-none resize-y min-h-[80px] ${
             error
-              ? "border-error focus:border-error focus:ring-1 focus:ring-error/20"
-              : "border-border focus:border-primary focus:ring-1 focus:ring-primary/10"
+              ? 'border-error focus:border-error focus:ring-1 focus:ring-error/20'
+              : 'border-border focus:border-primary focus:ring-1 focus:ring-primary/10'
           } ${className}`}
           {...props}
         />
@@ -32,4 +32,4 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     );
   }
 );
-Textarea.displayName = "Textarea";
+Textarea.displayName = 'Textarea';

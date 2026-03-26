@@ -1,5 +1,5 @@
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
 
 export const wishlistService = {
   async getWishlist(userId: string) {
@@ -17,14 +17,14 @@ export const wishlistService = {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return items;
   },
 
   async addToWishlist(userId: string, productId: string) {
     const product = await prisma.product.findUnique({ where: { id: productId } });
-    if (!product) throw ApiError.notFound("Product not found");
+    if (!product) throw ApiError.notFound('Product not found');
 
     const existing = await prisma.wishlistItem.findUnique({
       where: { userId_productId: { userId, productId } },

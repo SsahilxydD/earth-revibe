@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { X, ChevronDown, Instagram, Twitter } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useUiStore, lockBodyScroll, unlockBodyScroll } from "@/stores/ui-store";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { X, ChevronDown, Instagram, Twitter } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useUiStore, lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 
 interface NavSection {
   label: string;
@@ -14,28 +14,28 @@ interface NavSection {
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    label: "NEW ARRIVALS",
-    href: "/categories/new-arrivals",
+    label: 'NEW ARRIVALS',
+    href: '/categories/new-arrivals',
   },
   {
-    label: "SHIRTS",
-    href: "/categories/shirts",
+    label: 'SHIRTS',
+    href: '/categories/shirts',
   },
   {
-    label: "T-SHIRTS",
-    href: "/categories/t-shirts",
+    label: 'T-SHIRTS',
+    href: '/categories/t-shirts',
   },
   {
-    label: "OUTERWEAR",
-    href: "/categories/outerwear",
+    label: 'OUTERWEAR',
+    href: '/categories/outerwear',
   },
   {
-    label: "ALL PRODUCTS",
-    href: "/products",
+    label: 'ALL PRODUCTS',
+    href: '/products',
   },
   {
-    label: "BESTSELLERS",
-    href: "/categories/bestsellers",
+    label: 'BESTSELLERS',
+    href: '/categories/bestsellers',
   },
 ];
 
@@ -64,18 +64,13 @@ export function MobileMenu() {
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 animate-fade-in"
-        onClick={closeMobileMenu}
-      />
+      <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={closeMobileMenu} />
 
       {/* Panel */}
       <div className="absolute left-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-white shadow-2xl animate-slide-in-left">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
-          <span className="text-lg font-bold uppercase tracking-[0.2em]">
-            Menu
-          </span>
+          <span className="text-lg font-bold uppercase tracking-[0.2em]">Menu</span>
           <button
             onClick={closeMobileMenu}
             className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-[var(--color-surface)]"
@@ -96,18 +91,13 @@ export function MobileMenu() {
                       onClick={() => toggleSection(section.label)}
                       className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold uppercase tracking-wider"
                     >
-                      <span
-                        className={cn(
-                          section.label === "SALE" &&
-                            "text-[var(--color-sale)]"
-                        )}
-                      >
+                      <span className={cn(section.label === 'SALE' && 'text-[var(--color-sale)]')}>
                         {section.label}
                       </span>
                       <ChevronDown
                         className={cn(
-                          "h-4 w-4 transition-transform duration-200",
-                          expandedSection === section.label && "rotate-180"
+                          'h-4 w-4 transition-transform duration-200',
+                          expandedSection === section.label && 'rotate-180'
                         )}
                       />
                     </button>
@@ -132,8 +122,8 @@ export function MobileMenu() {
                     href={section.href}
                     onClick={handleLinkClick}
                     className={cn(
-                      "block px-5 py-4 text-sm font-semibold uppercase tracking-wider",
-                      section.label === "SALE" && "text-[var(--color-sale)]"
+                      'block px-5 py-4 text-sm font-semibold uppercase tracking-wider',
+                      section.label === 'SALE' && 'text-[var(--color-sale)]'
                     )}
                   >
                     {section.label}

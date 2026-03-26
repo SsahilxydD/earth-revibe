@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { X } from "lucide-react";
-import { useUiStore } from "@/stores/ui-store";
+import { useState, useEffect, useCallback } from 'react';
+import { X } from 'lucide-react';
+import { useUiStore } from '@/stores/ui-store';
 
 const MESSAGES = [
-  "FREE SHIPPING ON ORDERS ABOVE \u20B9999",
-  "NEW ARRIVALS JUST DROPPED",
-  "EASY RETURNS WITHIN 7 DAYS",
+  'FREE SHIPPING ON ORDERS ABOVE \u20B9999',
+  'NEW ARRIVALS JUST DROPPED',
+  'EASY RETURNS WITHIN 7 DAYS',
 ];
 
 const ROTATE_INTERVAL = 4000;
@@ -38,7 +38,7 @@ export function AnnouncementBar() {
       <div className="flex items-center justify-center px-10 py-2.5">
         <p
           className={`text-center text-xs font-semibold tracking-[0.15em] transition-opacity duration-300 ${
-            isVisible ? "opacity-100" : "opacity-0"
+            isVisible ? 'opacity-100' : 'opacity-0'
           }`}
         >
           {MESSAGES[currentIndex]}

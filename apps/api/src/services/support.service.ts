@@ -1,10 +1,14 @@
-import { prisma, Prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { CreateTicketInput, CreateTicketMessageInput, TicketQuery } from "@earth-revibe/shared";
+import { prisma, Prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type {
+  CreateTicketInput,
+  CreateTicketMessageInput,
+  TicketQuery,
+} from '@earth-revibe/shared';
 
 function generateTicketNumber(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let code = "";
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
   for (let i = 0; i < 6; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
@@ -30,7 +34,9 @@ export const supportService = {
         },
       },
       include: {
-        messages: { include: { user: { select: { firstName: true, lastName: true, role: true } } } },
+        messages: {
+          include: { user: { select: { firstName: true, lastName: true, role: true } } },
+        },
       },
     });
 
@@ -39,13 +45,13 @@ export const supportService = {
 
   async listMyTickets(userId: string, page: number = 1, limit: number = 20, status?: string) {
     const where: Prisma.SupportTicketWhereInput = { userId };
-    if (status) where.status = status as "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
+    if (status) where.status = status as 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
 
     const [tickets, total] = await Promise.all([
       prisma.supportTicket.findMany({
         where,
         include: { _count: { select: { messages: true } } },
-        orderBy: { updatedAt: "desc" },
+        orderBy: { updatedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -61,24 +67,24 @@ export const supportService = {
       include: {
         messages: {
           include: { user: { select: { id: true, firstName: true, lastName: true, role: true } } },
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
 
-    if (!ticket) throw ApiError.notFound("Ticket not found");
+    if (!ticket) throw ApiError.notFound('Ticket not found');
 
     return ticket;
   },
 
   async addMessage(userId: string, ticketNumber: string, data: CreateTicketMessageInput) {
     const ticket = await prisma.supportTicket.findFirst({ where: { ticketNumber, userId } });
-    if (!ticket) throw ApiError.notFound("Ticket not found");
-    if (ticket.status === "CLOSED") {
-      throw ApiError.badRequest("Cannot reply to a closed ticket");
+    if (!ticket) throw ApiError.notFound('Ticket not found');
+    if (ticket.status === 'CLOSED') {
+      throw ApiError.badRequest('Cannot reply to a closed ticket');
     }
 
-    const statusUpdate = ticket.status === "RESOLVED" ? "OPEN" : undefined;
+    const statusUpdate = ticket.status === 'RESOLVED' ? 'OPEN' : undefined;
 
     const [message] = await Promise.all([
       prisma.ticketMessage.create({
@@ -92,7 +98,10 @@ export const supportService = {
       }),
       statusUpdate
         ? prisma.supportTicket.update({ where: { id: ticket.id }, data: { status: statusUpdate } })
-        : prisma.supportTicket.update({ where: { id: ticket.id }, data: { updatedAt: new Date() } }),
+        : prisma.supportTicket.update({
+            where: { id: ticket.id },
+            data: { updatedAt: new Date() },
+          }),
     ]);
 
     return message;
@@ -104,8 +113,8 @@ export const supportService = {
     if (query.priority) where.priority = query.priority;
     if (query.search) {
       where.OR = [
-        { ticketNumber: { contains: query.search, mode: "insensitive" } },
-        { subject: { contains: query.search, mode: "insensitive" } },
+        { ticketNumber: { contains: query.search, mode: 'insensitive' } },
+        { subject: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 
@@ -116,7 +125,7 @@ export const supportService = {
           user: { select: { firstName: true, lastName: true, email: true } },
           _count: { select: { messages: true } },
         },
-        orderBy: { updatedAt: "desc" },
+        orderBy: { updatedAt: 'desc' },
         skip: ((query.page || 1) - 1) * (query.limit || 20),
         take: query.limit || 20,
       }),
@@ -135,17 +144,17 @@ export const supportService = {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
         messages: {
           include: { user: { select: { id: true, firstName: true, lastName: true, role: true } } },
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
-    if (!ticket) throw ApiError.notFound("Ticket not found");
+    if (!ticket) throw ApiError.notFound('Ticket not found');
     return ticket;
   },
 
   async updateStatus(ticketNumber: string, status: string) {
     const ticket = await prisma.supportTicket.findUnique({ where: { ticketNumber } });
-    if (!ticket) throw ApiError.notFound("Ticket not found");
+    if (!ticket) throw ApiError.notFound('Ticket not found');
 
     return prisma.supportTicket.update({
       where: { id: ticket.id },
@@ -155,17 +164,17 @@ export const supportService = {
 
   async assignTicket(ticketNumber: string, assignedTo: string) {
     const ticket = await prisma.supportTicket.findUnique({ where: { ticketNumber } });
-    if (!ticket) throw ApiError.notFound("Ticket not found");
+    if (!ticket) throw ApiError.notFound('Ticket not found');
 
     return prisma.supportTicket.update({
       where: { id: ticket.id },
-      data: { assignedTo, status: ticket.status === "OPEN" ? "IN_PROGRESS" : undefined },
+      data: { assignedTo, status: ticket.status === 'OPEN' ? 'IN_PROGRESS' : undefined },
     });
   },
 
   async adminReply(userId: string, ticketNumber: string, data: CreateTicketMessageInput) {
     const ticket = await prisma.supportTicket.findUnique({ where: { ticketNumber } });
-    if (!ticket) throw ApiError.notFound("Ticket not found");
+    if (!ticket) throw ApiError.notFound('Ticket not found');
 
     const message = await prisma.ticketMessage.create({
       data: {
@@ -177,10 +186,10 @@ export const supportService = {
       include: { user: { select: { id: true, firstName: true, lastName: true, role: true } } },
     });
 
-    if (ticket.status === "OPEN") {
+    if (ticket.status === 'OPEN') {
       await prisma.supportTicket.update({
         where: { id: ticket.id },
-        data: { status: "IN_PROGRESS" },
+        data: { status: 'IN_PROGRESS' },
       });
     }
 

@@ -1,18 +1,8 @@
 'use client';
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import type {
-  Address,
-  CreateAddressPayload,
-  UpdateAddressPayload,
-  ApiError,
-} from '@/types';
+import type { Address, CreateAddressPayload, UpdateAddressPayload, ApiError } from '@/types';
 
 // ─── Query Keys ─────────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
-import { prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
+import { prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
 
 export const referralService = {
   async getMyReferralCode(userId: string) {
@@ -7,7 +7,7 @@ export const referralService = {
       where: { id: userId },
       select: { referralCode: true },
     });
-    if (!user) throw ApiError.notFound("User not found");
+    if (!user) throw ApiError.notFound('User not found');
     return { referralCode: user.referralCode };
   },
 
@@ -19,13 +19,13 @@ export const referralService = {
           select: { firstName: true, lastName: true, createdAt: true },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
 
     const stats = {
       total: referrals.length,
-      signedUp: referrals.filter((r) => r.status === "SIGNED_UP").length,
-      converted: referrals.filter((r) => r.status === "CONVERTED").length,
+      signedUp: referrals.filter((r) => r.status === 'SIGNED_UP').length,
+      converted: referrals.filter((r) => r.status === 'CONVERTED').length,
       totalRewardsEarned: referrals.reduce((sum, r) => sum + (r.referrerReward || 0), 0),
     };
 

@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useForm } from "react-hook-form";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Camera } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api-client";
-import { useAuthStore } from "@/stores/auth-store";
-import { useToast } from "@/providers";
+import { useForm } from 'react-hook-form';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Camera } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { api } from '@/lib/api-client';
+import { useAuthStore } from '@/stores/auth-store';
+import { useToast } from '@/providers';
 
 interface UserProfile {
   id: string;
@@ -37,38 +37,38 @@ export default function ProfilePage() {
   const { addToast } = useToast();
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile"],
-    queryFn: () => api.get<UserProfile>("/auth/me"),
+    queryKey: ['profile'],
+    queryFn: () => api.get<UserProfile>('/auth/me'),
   });
 
   const profileMutation = useMutation({
-    mutationFn: (data: ProfileForm) => api.put("/auth/profile", data),
+    mutationFn: (data: ProfileForm) => api.put('/auth/profile', data),
     onSuccess: (result: any) => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       if (result) {
         setUser({
-          id: result.id || profile?.id || "",
-          email: result.email || profile?.email || "",
+          id: result.id || profile?.id || '',
+          email: result.email || profile?.email || '',
           firstName: result.firstName,
           lastName: result.lastName,
-          role: result.role || "customer",
+          role: result.role || 'customer',
         });
       }
-      addToast("Profile updated successfully", "success");
+      addToast('Profile updated successfully', 'success');
     },
     onError: (err: any) => {
-      addToast(err?.message || "Failed to update profile", "error");
+      addToast(err?.message || 'Failed to update profile', 'error');
     },
   });
 
   const passwordMutation = useMutation({
-    mutationFn: (data: PasswordForm) => api.put("/auth/password", data),
+    mutationFn: (data: PasswordForm) => api.put('/auth/password', data),
     onSuccess: () => {
       passwordReset();
-      addToast("Password changed successfully", "success");
+      addToast('Password changed successfully', 'success');
     },
     onError: (err: any) => {
-      addToast(err?.message || "Failed to change password", "error");
+      addToast(err?.message || 'Failed to change password', 'error');
     },
   });
 
@@ -81,7 +81,7 @@ export default function ProfilePage() {
       ? {
           firstName: profile.firstName,
           lastName: profile.lastName,
-          phone: profile.phone || "",
+          phone: profile.phone || '',
         }
       : undefined,
   });
@@ -94,9 +94,9 @@ export default function ProfilePage() {
     watch: passwordWatch,
   } = useForm<PasswordForm>({
     defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmNewPassword: "",
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
     },
   });
 
@@ -114,11 +114,7 @@ export default function ProfilePage() {
       <div className="flex items-center gap-3 md:gap-4">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--color-surface)] md:h-20 md:w-20">
           {profile?.avatar ? (
-            <img
-              src={profile.avatar}
-              alt="Avatar"
-              className="h-full w-full object-cover"
-            />
+            <img src={profile.avatar} alt="Avatar" className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[var(--color-muted)]">
               {profile?.firstName?.[0]}
@@ -140,73 +136,66 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <hr style={{ marginTop: 28, marginBottom: 28, border: "none", borderTop: "1px solid #e5e5e5" }} />
+      <hr
+        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
+      />
 
       {/* Profile Form */}
       <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider">
-          Personal Information
-        </h3>
+        <h3 className="text-sm font-bold uppercase tracking-wider">Personal Information</h3>
         <p className="mt-1 mb-5 text-xs text-[var(--color-muted)]">
           Update your name and contact details.
         </p>
         <form
-          onSubmit={handleProfileSubmit((data) =>
-            profileMutation.mutate(data)
-          )}
+          onSubmit={handleProfileSubmit((data) => profileMutation.mutate(data))}
           className="space-y-4"
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
               label="First Name"
               error={profileErrors.firstName?.message}
-              {...profileRegister("firstName", {
-                required: "First name is required",
+              {...profileRegister('firstName', {
+                required: 'First name is required',
               })}
             />
             <Input
               label="Last Name"
               error={profileErrors.lastName?.message}
-              {...profileRegister("lastName", {
-                required: "Last name is required",
+              {...profileRegister('lastName', {
+                required: 'Last name is required',
               })}
             />
           </div>
-          <Input label="Email" value={profile?.email || ""} disabled />
+          <Input label="Email" value={profile?.email || ''} disabled />
           <Input
             label="Phone"
             type="tel"
             error={profileErrors.phone?.message}
-            {...profileRegister("phone", {
+            {...profileRegister('phone', {
               pattern: {
                 value: /^[6-9]\d{9}$/,
-                message: "Enter a valid 10-digit Indian phone number",
+                message: 'Enter a valid 10-digit Indian phone number',
               },
             })}
           />
-          <Button
-            type="submit"
-            loading={profileMutation.isPending}
-          >
+          <Button type="submit" loading={profileMutation.isPending}>
             Save Changes
           </Button>
         </form>
       </div>
 
-      <hr style={{ marginTop: 28, marginBottom: 28, border: "none", borderTop: "1px solid #e5e5e5" }} />
+      <hr
+        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
+      />
 
       {/* Change Password */}
       <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider">
-          Change Password
-        </h3>
+        <h3 className="text-sm font-bold uppercase tracking-wider">Change Password</h3>
         <p className="mt-1 mb-5 text-xs text-[var(--color-muted)]">
           Set a new password for your account.
         </p>
         <form
-          onSubmit={handlePasswordSubmit((data) =>
-            passwordMutation.mutate(data)
-          )}
+          onSubmit={handlePasswordSubmit((data) => passwordMutation.mutate(data))}
           className="max-w-md space-y-4"
         >
           <Input
@@ -214,8 +203,8 @@ export default function ProfilePage() {
             type="password"
             autoComplete="current-password"
             error={passwordErrors.currentPassword?.message}
-            {...passwordRegister("currentPassword", {
-              required: "Current password is required",
+            {...passwordRegister('currentPassword', {
+              required: 'Current password is required',
             })}
           />
           <Input
@@ -223,14 +212,12 @@ export default function ProfilePage() {
             type="password"
             autoComplete="new-password"
             error={passwordErrors.newPassword?.message}
-            {...passwordRegister("newPassword", {
-              required: "New password is required",
-              minLength: { value: 8, message: "Min 8 characters" },
+            {...passwordRegister('newPassword', {
+              required: 'New password is required',
+              minLength: { value: 8, message: 'Min 8 characters' },
               validate: {
-                uppercase: (v) =>
-                  /[A-Z]/.test(v) || "Must contain an uppercase letter",
-                number: (v) =>
-                  /[0-9]/.test(v) || "Must contain a number",
+                uppercase: (v) => /[A-Z]/.test(v) || 'Must contain an uppercase letter',
+                number: (v) => /[0-9]/.test(v) || 'Must contain a number',
               },
             })}
           />
@@ -239,17 +226,13 @@ export default function ProfilePage() {
             type="password"
             autoComplete="new-password"
             error={passwordErrors.confirmNewPassword?.message}
-            {...passwordRegister("confirmNewPassword", {
-              required: "Please confirm your new password",
+            {...passwordRegister('confirmNewPassword', {
+              required: 'Please confirm your new password',
               validate: (value) =>
-                value === passwordWatch("newPassword") ||
-                "Passwords do not match",
+                value === passwordWatch('newPassword') || 'Passwords do not match',
             })}
           />
-          <Button
-            type="submit"
-            loading={passwordMutation.isPending}
-          >
+          <Button type="submit" loading={passwordMutation.isPending}>
             Update Password
           </Button>
         </form>

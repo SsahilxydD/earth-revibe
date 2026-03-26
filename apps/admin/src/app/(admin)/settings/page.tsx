@@ -1,40 +1,32 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import {
-  Store,
-  Mail,
-  MapPin,
-  Globe,
-  Clock,
-  Save,
-  Flag,
-} from "lucide-react";
-import { Card, Button, Input, Select } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
-import { api } from "@/lib/api-client";
+import { useState } from 'react';
+import { Store, Mail, MapPin, Globe, Clock, Save, Flag } from 'lucide-react';
+import { Card, Button, Input, Select } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
+import { api } from '@/lib/api-client';
 
 export default function GeneralSettingsPage() {
-  const [storeName, setStoreName] = useState("Earth Revibe");
-  const [legalName, setLegalName] = useState("Earth Revibe");
-  const [email, setEmail] = useState("earthrevibeofficial@gmail.com");
-  const [phone, setPhone] = useState("9328706759");
-  const [address, setAddress] = useState("nana chiloda, Nana Chiloda");
-  const [city, setCity] = useState("Ahmedabad");
-  const [state, setState] = useState("Gujarat");
-  const [pincode, setPincode] = useState("382330");
-  const [country] = useState("India");
-  const [_currency] = useState("INR");
-  const [timezone, setTimezone] = useState("Asia/Kolkata");
-  const [unitSystem, setUnitSystem] = useState("metric");
-  const [weightUnit, setWeightUnit] = useState("kg");
-  const [orderPrefix, setOrderPrefix] = useState("ER-");
+  const [storeName, setStoreName] = useState('Earth Revibe');
+  const [legalName, setLegalName] = useState('Earth Revibe');
+  const [email, setEmail] = useState('earthrevibeofficial@gmail.com');
+  const [phone, setPhone] = useState('9328706759');
+  const [address, setAddress] = useState('nana chiloda, Nana Chiloda');
+  const [city, setCity] = useState('Ahmedabad');
+  const [state, setState] = useState('Gujarat');
+  const [pincode, setPincode] = useState('382330');
+  const [country] = useState('India');
+  const [_currency] = useState('INR');
+  const [timezone, setTimezone] = useState('Asia/Kolkata');
+  const [unitSystem, setUnitSystem] = useState('metric');
+  const [weightUnit, setWeightUnit] = useState('kg');
+  const [orderPrefix, setOrderPrefix] = useState('ER-');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put("/admin/settings", {
+      await api.put('/admin/settings', {
         storeName,
         legalName,
         email,
@@ -48,9 +40,9 @@ export default function GeneralSettingsPage() {
         weightUnit,
         orderPrefix,
       });
-      toast.success("Settings saved");
+      toast.success('Settings saved');
     } catch (err: any) {
-      toast.error(err.message || "Failed to save settings");
+      toast.error(err.message || 'Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -61,13 +53,11 @@ export default function GeneralSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-charcoal">General</h2>
-          <p className="text-sm text-medium-gray mt-0.5">
-            Basic information about your store
-          </p>
+          <p className="text-sm text-medium-gray mt-0.5">Basic information about your store</p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
           <Save size={16} />
-          {saving ? "Saving..." : "Save"}
+          {saving ? 'Saving...' : 'Save'}
         </Button>
       </div>
 
@@ -143,21 +133,9 @@ export default function GeneralSettingsPage() {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              label="City"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-            />
-            <Input
-              label="State"
-              value={state}
-              onChange={(e) => setState(e.target.value)}
-            />
-            <Input
-              label="PIN Code"
-              value={pincode}
-              onChange={(e) => setPincode(e.target.value)}
-            />
+            <Input label="City" value={city} onChange={(e) => setCity(e.target.value)} />
+            <Input label="State" value={state} onChange={(e) => setState(e.target.value)} />
+            <Input label="PIN Code" value={pincode} onChange={(e) => setPincode(e.target.value)} />
           </div>
 
           <div className="flex items-center gap-2 p-3 bg-off-white rounded-lg">
@@ -178,13 +156,9 @@ export default function GeneralSettingsPage() {
           <div className="flex items-center justify-between p-3 bg-off-white rounded-lg">
             <div>
               <p className="text-sm font-medium text-charcoal">Currency display</p>
-              <p className="text-xs text-medium-gray">
-                The currency used across your store
-              </p>
+              <p className="text-xs text-medium-gray">The currency used across your store</p>
             </div>
-            <span className="text-sm font-medium text-charcoal">
-              Indian Rupee (INR ₹)
-            </span>
+            <span className="text-sm font-medium text-charcoal">Indian Rupee (INR ₹)</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -193,12 +167,12 @@ export default function GeneralSettingsPage() {
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
               options={[
-                { value: "Asia/Kolkata", label: "(GMT+05:30) Chennai, Kolkata, Mumbai, New Delhi" },
-                { value: "Asia/Colombo", label: "(GMT+05:30) Sri Lanka" },
-                { value: "Asia/Dhaka", label: "(GMT+06:00) Dhaka" },
-                { value: "Asia/Dubai", label: "(GMT+04:00) Dubai" },
-                { value: "Europe/London", label: "(GMT+00:00) London" },
-                { value: "America/New_York", label: "(GMT-05:00) New York" },
+                { value: 'Asia/Kolkata', label: '(GMT+05:30) Chennai, Kolkata, Mumbai, New Delhi' },
+                { value: 'Asia/Colombo', label: '(GMT+05:30) Sri Lanka' },
+                { value: 'Asia/Dhaka', label: '(GMT+06:00) Dhaka' },
+                { value: 'Asia/Dubai', label: '(GMT+04:00) Dubai' },
+                { value: 'Europe/London', label: '(GMT+00:00) London' },
+                { value: 'America/New_York', label: '(GMT-05:00) New York' },
               ]}
             />
             <div className="grid grid-cols-2 gap-4">
@@ -207,8 +181,8 @@ export default function GeneralSettingsPage() {
                 value={unitSystem}
                 onChange={(e) => setUnitSystem(e.target.value)}
                 options={[
-                  { value: "metric", label: "Metric system" },
-                  { value: "imperial", label: "Imperial system" },
+                  { value: 'metric', label: 'Metric system' },
+                  { value: 'imperial', label: 'Imperial system' },
                 ]}
               />
               <Select
@@ -216,10 +190,10 @@ export default function GeneralSettingsPage() {
                 value={weightUnit}
                 onChange={(e) => setWeightUnit(e.target.value)}
                 options={[
-                  { value: "kg", label: "Kilogram (kg)" },
-                  { value: "g", label: "Gram (g)" },
-                  { value: "lb", label: "Pound (lb)" },
-                  { value: "oz", label: "Ounce (oz)" },
+                  { value: 'kg', label: 'Kilogram (kg)' },
+                  { value: 'g', label: 'Gram (g)' },
+                  { value: 'lb', label: 'Pound (lb)' },
+                  { value: 'oz', label: 'Ounce (oz)' },
                 ]}
               />
             </div>

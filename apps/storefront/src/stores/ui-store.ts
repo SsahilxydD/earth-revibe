@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { create } from "zustand";
+import { create } from 'zustand';
 
 /* ------------------------------------------------------------------ */
 /*  Body overflow lock — reference counted so overlapping modals       */
@@ -11,26 +11,26 @@ let overflowLockCount = 0;
 export function lockBodyScroll() {
   overflowLockCount++;
   if (overflowLockCount === 1) {
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden';
   }
 }
 
 export function unlockBodyScroll() {
   overflowLockCount = Math.max(0, overflowLockCount - 1);
   if (overflowLockCount === 0) {
-    document.body.style.overflow = "";
+    document.body.style.overflow = '';
   }
 }
 
 /* ------------------------------------------------------------------ */
 /*  Announcement dismissed persistence                                 */
 /* ------------------------------------------------------------------ */
-const ANNOUNCEMENT_KEY = "er-announcement-dismissed";
+const ANNOUNCEMENT_KEY = 'er-announcement-dismissed';
 
 function getAnnouncementDismissed(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === 'undefined') return false;
   try {
-    return sessionStorage.getItem(ANNOUNCEMENT_KEY) === "1";
+    return sessionStorage.getItem(ANNOUNCEMENT_KEY) === '1';
   } catch {
     return false;
   }
@@ -63,20 +63,22 @@ export const useUiStore = create<UiState>()((set) => ({
 
   openMobileMenu: () => set({ isMobileMenuOpen: true }),
   closeMobileMenu: () => set({ isMobileMenuOpen: false }),
-  toggleMobileMenu: () =>
-    set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
+  toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
 
   openSearch: () => set({ isSearchOpen: true }),
   closeSearch: () => set({ isSearchOpen: false }),
-  toggleSearch: () =>
-    set((state) => ({ isSearchOpen: !state.isSearchOpen })),
+  toggleSearch: () => set((state) => ({ isSearchOpen: !state.isSearchOpen })),
 
   dismissAnnouncement: () => {
-    try { sessionStorage.setItem(ANNOUNCEMENT_KEY, "1"); } catch {}
+    try {
+      sessionStorage.setItem(ANNOUNCEMENT_KEY, '1');
+    } catch {}
     set({ announcementDismissed: true });
   },
   resetAnnouncement: () => {
-    try { sessionStorage.removeItem(ANNOUNCEMENT_KEY); } catch {}
+    try {
+      sessionStorage.removeItem(ANNOUNCEMENT_KEY);
+    } catch {}
     set({ announcementDismissed: false });
   },
 }));

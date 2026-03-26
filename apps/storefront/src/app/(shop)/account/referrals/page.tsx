@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Copy, Check, Share2, Users, UserPlus, Gift } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api-client";
-import { useToast } from "@/providers";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Copy, Check, Share2, Users, UserPlus, Gift } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { api } from '@/lib/api-client';
+import { useToast } from '@/providers';
 
 interface ReferralData {
   referralCode: string;
@@ -24,23 +24,23 @@ export default function ReferralsPage() {
   const [linkCopied, setLinkCopied] = useState(false);
 
   const { data: referral, isLoading } = useQuery({
-    queryKey: ["referrals"],
-    queryFn: () => api.get<ReferralData>("/referrals"),
+    queryKey: ['referrals'],
+    queryFn: () => api.get<ReferralData>('/referrals'),
   });
 
-  const copyToClipboard = async (text: string, type: "code" | "link") => {
+  const copyToClipboard = async (text: string, type: 'code' | 'link') => {
     try {
       await navigator.clipboard.writeText(text);
-      if (type === "code") {
+      if (type === 'code') {
         setCodeCopied(true);
         setTimeout(() => setCodeCopied(false), 2000);
       } else {
         setLinkCopied(true);
         setTimeout(() => setLinkCopied(false), 2000);
       }
-      addToast("Copied to clipboard", "success");
+      addToast('Copied to clipboard', 'success');
     } catch {
-      addToast("Failed to copy", "error");
+      addToast('Failed to copy', 'error');
     }
   };
 
@@ -48,7 +48,7 @@ export default function ReferralsPage() {
     const message = encodeURIComponent(
       `Hey! Use my referral code ${referral?.referralCode} to get a discount on Earth Revibe! ${referral?.referralLink}`
     );
-    window.open(`https://wa.me/?text=${message}`, "_blank");
+    window.open(`https://wa.me/?text=${message}`, '_blank');
   };
 
   if (isLoading) {
@@ -59,8 +59,8 @@ export default function ReferralsPage() {
     );
   }
 
-  const code = referral?.referralCode ?? "---";
-  const link = referral?.referralLink ?? "";
+  const code = referral?.referralCode ?? '---';
+  const link = referral?.referralLink ?? '';
   const stats = referral?.stats ?? { invitesSent: 0, signedUp: 0, converted: 0 };
   const rewardsEarned = referral?.rewardsEarned ?? 0;
 
@@ -68,12 +68,9 @@ export default function ReferralsPage() {
     <div className="space-y-8 md:space-y-10">
       {/* Referral Code */}
       <div className="rounded-xl border border-[var(--color-border)] p-4 md:p-6">
-        <h2 className="mb-1 text-sm font-bold uppercase tracking-wider">
-          Your Referral Code
-        </h2>
+        <h2 className="mb-1 text-sm font-bold uppercase tracking-wider">Your Referral Code</h2>
         <p className="mb-4 text-xs text-[var(--color-muted)]">
-          Share your code with friends and earn rewards when they make their
-          first purchase.
+          Share your code with friends and earn rewards when they make their first purchase.
         </p>
 
         <div className="flex items-center gap-3">
@@ -81,7 +78,7 @@ export default function ReferralsPage() {
             {code}
           </div>
           <button
-            onClick={() => copyToClipboard(code, "code")}
+            onClick={() => copyToClipboard(code, 'code')}
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] text-white transition-colors hover:bg-[#2a2a2a]"
             aria-label="Copy referral code"
           >
@@ -92,9 +89,7 @@ export default function ReferralsPage() {
 
       {/* Share Buttons */}
       <div>
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
-          Share
-        </h3>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">Share</h3>
         <div className="flex flex-wrap gap-3">
           <button
             onClick={shareWhatsApp}
@@ -104,7 +99,7 @@ export default function ReferralsPage() {
             WhatsApp
           </button>
           <button
-            onClick={() => copyToClipboard(link, "link")}
+            onClick={() => copyToClipboard(link, 'link')}
             className="flex items-center gap-2 rounded-[var(--button-radius)] border border-[var(--color-border)] px-5 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface)]"
           >
             {linkCopied ? (
@@ -124,9 +119,7 @@ export default function ReferralsPage() {
 
       {/* Stats */}
       <div>
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
-          Your Stats
-        </h3>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">Your Stats</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl border border-[var(--color-border)] p-3 text-center md:p-4">
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">

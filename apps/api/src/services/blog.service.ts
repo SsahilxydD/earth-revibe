@@ -1,12 +1,17 @@
-import { prisma, Prisma, type BlogPostStatus } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
-import type { CreateBlogPostInput, UpdateBlogPostInput, CreateBlogCategoryInput, CreateBlogTagInput } from "@earth-revibe/shared";
+import { prisma, Prisma, type BlogPostStatus } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
+import type {
+  CreateBlogPostInput,
+  UpdateBlogPostInput,
+  CreateBlogCategoryInput,
+  CreateBlogTagInput,
+} from '@earth-revibe/shared';
 
 function slugify(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 }
 
 function calcReadTime(content: string): number {
@@ -15,7 +20,10 @@ function calcReadTime(content: string): number {
 
 export const blogService = {
   async listPublished(page: number = 1, limit: number = 12, categorySlug?: string) {
-    const where: Prisma.BlogPostWhereInput = { status: "PUBLISHED", publishedAt: { lte: new Date() } };
+    const where: Prisma.BlogPostWhereInput = {
+      status: 'PUBLISHED',
+      publishedAt: { lte: new Date() },
+    };
     if (categorySlug) {
       where.categories = { some: { category: { slug: categorySlug } } };
     }
@@ -34,7 +42,7 @@ export const blogService = {
           categories: { include: { category: true } },
           tags: { include: { tag: true } },
         },
-        orderBy: { publishedAt: "desc" },
+        orderBy: { publishedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -53,8 +61,8 @@ export const blogService = {
       },
     });
 
-    if (!post || post.status !== "PUBLISHED") {
-      throw ApiError.notFound("Blog post not found");
+    if (!post || post.status !== 'PUBLISHED') {
+      throw ApiError.notFound('Blog post not found');
     }
 
     return post;
@@ -65,8 +73,8 @@ export const blogService = {
     if (status) where.status = status as BlogPostStatus;
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { excerpt: { contains: search, mode: "insensitive" } },
+        { title: { contains: search, mode: 'insensitive' } },
+        { excerpt: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -77,7 +85,7 @@ export const blogService = {
           categories: { include: { category: true } },
           tags: { include: { tag: true } },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -95,7 +103,7 @@ export const blogService = {
         tags: { include: { tag: true } },
       },
     });
-    if (!post) throw ApiError.notFound("Blog post not found");
+    if (!post) throw ApiError.notFound('Blog post not found');
     return post;
   },
 
@@ -103,7 +111,7 @@ export const blogService = {
     const slug = data.slug || slugify(data.title);
 
     const existing = await prisma.blogPost.findUnique({ where: { slug } });
-    if (existing) throw ApiError.conflict("A post with this slug already exists");
+    if (existing) throw ApiError.conflict('A post with this slug already exists');
 
     const post = await prisma.blogPost.create({
       data: {
@@ -113,8 +121,13 @@ export const blogService = {
         content: data.content,
         featuredImage: data.featuredImage,
         authorId,
-        status: data.status || "DRAFT",
-        publishedAt: data.status === "PUBLISHED" ? new Date() : data.publishedAt ? new Date(data.publishedAt) : undefined,
+        status: data.status || 'DRAFT',
+        publishedAt:
+          data.status === 'PUBLISHED'
+            ? new Date()
+            : data.publishedAt
+              ? new Date(data.publishedAt)
+              : undefined,
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
         metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
@@ -122,9 +135,7 @@ export const blogService = {
         categories: data.categoryIds?.length
           ? { create: data.categoryIds.map((categoryId) => ({ categoryId })) }
           : undefined,
-        tags: data.tagIds?.length
-          ? { create: data.tagIds.map((tagId) => ({ tagId })) }
-          : undefined,
+        tags: data.tagIds?.length ? { create: data.tagIds.map((tagId) => ({ tagId })) } : undefined,
       },
       include: {
         categories: { include: { category: true } },
@@ -137,11 +148,11 @@ export const blogService = {
 
   async update(id: string, data: UpdateBlogPostInput) {
     const existing = await prisma.blogPost.findUnique({ where: { id } });
-    if (!existing) throw ApiError.notFound("Blog post not found");
+    if (!existing) throw ApiError.notFound('Blog post not found');
 
     if (data.slug && data.slug !== existing.slug) {
       const slugTaken = await prisma.blogPost.findUnique({ where: { slug: data.slug } });
-      if (slugTaken) throw ApiError.conflict("A post with this slug already exists");
+      if (slugTaken) throw ApiError.conflict('A post with this slug already exists');
     }
 
     if (data.categoryIds !== undefined) {
@@ -160,7 +171,12 @@ export const blogService = {
         content: data.content,
         featuredImage: data.featuredImage,
         status: data.status,
-        publishedAt: data.status === "PUBLISHED" && !existing.publishedAt ? new Date() : data.publishedAt ? new Date(data.publishedAt) : undefined,
+        publishedAt:
+          data.status === 'PUBLISHED' && !existing.publishedAt
+            ? new Date()
+            : data.publishedAt
+              ? new Date(data.publishedAt)
+              : undefined,
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
         metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
@@ -168,9 +184,7 @@ export const blogService = {
         categories: data.categoryIds?.length
           ? { create: data.categoryIds.map((categoryId) => ({ categoryId })) }
           : undefined,
-        tags: data.tagIds?.length
-          ? { create: data.tagIds.map((tagId) => ({ tagId })) }
-          : undefined,
+        tags: data.tagIds?.length ? { create: data.tagIds.map((tagId) => ({ tagId })) } : undefined,
       },
       include: {
         categories: { include: { category: true } },
@@ -183,12 +197,12 @@ export const blogService = {
 
   async delete(id: string) {
     const post = await prisma.blogPost.findUnique({ where: { id } });
-    if (!post) throw ApiError.notFound("Blog post not found");
+    if (!post) throw ApiError.notFound('Blog post not found');
     await prisma.blogPost.delete({ where: { id } });
   },
 
   async listCategories() {
-    return prisma.blogCategory.findMany({ orderBy: { name: "asc" } });
+    return prisma.blogCategory.findMany({ orderBy: { name: 'asc' } });
   },
 
   async createCategory(data: CreateBlogCategoryInput) {
@@ -201,7 +215,7 @@ export const blogService = {
   },
 
   async listTags() {
-    return prisma.blogTag.findMany({ orderBy: { name: "asc" } });
+    return prisma.blogTag.findMany({ orderBy: { name: 'asc' } });
   },
 
   async createTag(data: CreateBlogTagInput) {

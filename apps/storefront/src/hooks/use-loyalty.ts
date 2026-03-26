@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  useQuery,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { LoyaltyTransaction, ApiError } from '@/types';
 
@@ -28,8 +25,7 @@ export function useLoyaltyBalance(
 ) {
   return useQuery<LoyaltyBalance, ApiError>({
     queryKey: loyaltyKeys.balance(),
-    queryFn: ({ signal }) =>
-      api.get<LoyaltyBalance>('/loyalty/balance', signal),
+    queryFn: ({ signal }) => api.get<LoyaltyBalance>('/loyalty/balance', signal),
     ...options,
   });
 }
@@ -41,8 +37,7 @@ export function useLoyaltyTransactions(
 ) {
   return useQuery<LoyaltyTransaction[], ApiError>({
     queryKey: loyaltyKeys.transactions(),
-    queryFn: ({ signal }) =>
-      api.get<LoyaltyTransaction[]>('/loyalty/transactions', signal),
+    queryFn: ({ signal }) => api.get<LoyaltyTransaction[]>('/loyalty/transactions', signal),
     ...options,
   });
 }

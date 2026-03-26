@@ -1,25 +1,25 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState, useRef, useEffect } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SortOption {
   label: string;
   sortBy: string;
-  sortOrder: "asc" | "desc";
+  sortOrder: 'asc' | 'desc';
 }
 
 const SORT_OPTIONS: SortOption[] = [
-  { label: "Newest", sortBy: "createdAt", sortOrder: "desc" },
-  { label: "Price: Low to High", sortBy: "price", sortOrder: "asc" },
-  { label: "Price: High to Low", sortBy: "price", sortOrder: "desc" },
-  { label: "Most Popular", sortBy: "reviewCount", sortOrder: "desc" },
+  { label: 'Newest', sortBy: 'createdAt', sortOrder: 'desc' },
+  { label: 'Price: Low to High', sortBy: 'price', sortOrder: 'asc' },
+  { label: 'Price: High to Low', sortBy: 'price', sortOrder: 'desc' },
+  { label: 'Most Popular', sortBy: 'reviewCount', sortOrder: 'desc' },
 ];
 
 interface SortDropdownProps {
   currentSort: string;
-  onSortChange: (sortBy: string, sortOrder: "asc" | "desc") => void;
+  onSortChange: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
 }
 
 export function SortDropdown({ currentSort, onSortChange }: SortDropdownProps) {
@@ -27,9 +27,7 @@ export function SortDropdown({ currentSort, onSortChange }: SortDropdownProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const selectedOption =
-    SORT_OPTIONS.find(
-      (opt) => `${opt.sortBy}-${opt.sortOrder}` === currentSort
-    ) || SORT_OPTIONS[0];
+    SORT_OPTIONS.find((opt) => `${opt.sortBy}-${opt.sortOrder}` === currentSort) || SORT_OPTIONS[0];
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -37,8 +35,8 @@ export function SortDropdown({ currentSort, onSortChange }: SortDropdownProps) {
         setIsOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -48,13 +46,7 @@ export function SortDropdown({ currentSort, onSortChange }: SortDropdownProps) {
         className="flex items-center gap-1.5 border border-[var(--color-border)] px-3 py-2 text-sm font-medium transition-colors hover:border-[var(--color-text)]"
       >
         <span>Sort: {selectedOption.label}</span>
-        <ChevronDown
-          size={14}
-          className={cn(
-            "transition-transform",
-            isOpen && "rotate-180"
-          )}
-        />
+        <ChevronDown size={14} className={cn('transition-transform', isOpen && 'rotate-180')} />
       </button>
 
       {isOpen && (
@@ -70,8 +62,8 @@ export function SortDropdown({ currentSort, onSortChange }: SortDropdownProps) {
                   setIsOpen(false);
                 }}
                 className={cn(
-                  "block w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-[var(--color-surface)]",
-                  isSelected && "font-semibold"
+                  'block w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-[var(--color-surface)]',
+                  isSelected && 'font-semibold'
                 )}
               >
                 {option.label}

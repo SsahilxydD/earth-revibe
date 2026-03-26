@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Returns & Exchange Policy | Earth Revibe",
+  title: 'Returns & Exchange Policy | Earth Revibe',
   description:
     "Learn about Earth Revibe's hassle-free 7-day return and exchange policy. Easy returns, quick refunds.",
 };
@@ -9,12 +9,8 @@ export const metadata: Metadata = {
 export default function ReturnsPolicyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
-      <h1 className="text-3xl font-bold uppercase tracking-wider">
-        Returns & Exchange Policy
-      </h1>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">
-        Last updated: 1 January 2026
-      </p>
+      <h1 className="text-3xl font-bold uppercase tracking-wider">Returns & Exchange Policy</h1>
+      <p className="mt-2 text-xs text-[var(--color-muted)]">Last updated: 1 January 2026</p>
 
       <div className="mt-8 space-y-8 text-sm leading-relaxed text-[var(--color-muted)]">
         <section>
@@ -22,9 +18,9 @@ export default function ReturnsPolicyPage() {
             Easy 7-Day Returns
           </h2>
           <p>
-            We want you to love every piece you buy from Earth Revibe. If you
-            are not completely satisfied with your purchase, you can return it
-            within 7 days of delivery for a full refund or exchange.
+            We want you to love every piece you buy from Earth Revibe. If you are not completely
+            satisfied with your purchase, you can return it within 7 days of delivery for a full
+            refund or exchange.
           </p>
         </section>
 
@@ -57,33 +53,30 @@ export default function ReturnsPolicyPage() {
           </h2>
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              Log in to your Earth Revibe account and navigate to{" "}
-              <strong>My Orders</strong>.
+              Log in to your Earth Revibe account and navigate to <strong>My Orders</strong>.
+            </li>
+            <li>Select the order containing the item you wish to return.</li>
+            <li>
+              Click <strong>&quot;Return&quot;</strong> next to the item and select your reason for
+              return.
             </li>
             <li>
-              Select the order containing the item you wish to return.
+              Choose your preferred resolution: <strong>Refund</strong> or <strong>Exchange</strong>
+              .
             </li>
             <li>
-              Click <strong>&quot;Return&quot;</strong> next to the item and select your
-              reason for return.
-            </li>
-            <li>
-              Choose your preferred resolution: <strong>Refund</strong> or{" "}
-              <strong>Exchange</strong>.
-            </li>
-            <li>
-              Schedule a pickup from your address. Our courier partner will
-              collect the item within 2-3 business days.
+              Schedule a pickup from your address. Our courier partner will collect the item within
+              2-3 business days.
             </li>
           </ol>
           <p className="mt-3">
-            Alternatively, you can email us at{" "}
+            Alternatively, you can email us at{' '}
             <a
               href="mailto:returns@earthrevibe.com"
               className="font-semibold text-[var(--color-text)] underline"
             >
               returns@earthrevibe.com
-            </a>{" "}
+            </a>{' '}
             with your order number and reason for return.
           </p>
         </section>
@@ -93,14 +86,13 @@ export default function ReturnsPolicyPage() {
             Exchanges
           </h2>
           <p>
-            Want a different size or colour? We are happy to exchange your item,
-            subject to availability. The exchange process follows the same steps
-            as a return. If the desired size or colour is not available, we will
-            process a full refund instead.
+            Want a different size or colour? We are happy to exchange your item, subject to
+            availability. The exchange process follows the same steps as a return. If the desired
+            size or colour is not available, we will process a full refund instead.
           </p>
           <p className="mt-2">
-            Exchange shipping is free for your first exchange per order. For
-            additional exchanges, standard shipping charges apply.
+            Exchange shipping is free for your first exchange per order. For additional exchanges,
+            standard shipping charges apply.
           </p>
         </section>
 
@@ -109,25 +101,24 @@ export default function ReturnsPolicyPage() {
             Refunds
           </h2>
           <p>
-            Once we receive and inspect the returned item, we will notify you
-            via email about the approval or rejection of your refund.
+            Once we receive and inspect the returned item, we will notify you via email about the
+            approval or rejection of your refund.
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
-              <strong>Approved refunds</strong> are processed within 5-7
-              business days.
+              <strong>Approved refunds</strong> are processed within 5-7 business days.
             </li>
             <li>
-              <strong>UPI/Wallet payments:</strong> Refunded to the original
-              payment source within 2-3 business days.
+              <strong>UPI/Wallet payments:</strong> Refunded to the original payment source within
+              2-3 business days.
             </li>
             <li>
-              <strong>Credit/Debit Card:</strong> Refunded within 5-7 business
-              days (may take up to 10 days depending on your bank).
+              <strong>Credit/Debit Card:</strong> Refunded within 5-7 business days (may take up to
+              10 days depending on your bank).
             </li>
             <li>
-              <strong>COD orders:</strong> Refunded via bank transfer. Please
-              provide your bank details when initiating the return.
+              <strong>COD orders:</strong> Refunded via bank transfer. Please provide your bank
+              details when initiating the return.
             </li>
           </ul>
         </section>
@@ -137,10 +128,9 @@ export default function ReturnsPolicyPage() {
             Damaged or Defective Items
           </h2>
           <p>
-            If you receive a damaged or defective item, please contact us within
-            48 hours of delivery with clear photographs of the damage. We will
-            arrange a free return pickup and send you a replacement or full
-            refund immediately, no questions asked.
+            If you receive a damaged or defective item, please contact us within 48 hours of
+            delivery with clear photographs of the damage. We will arrange a free return pickup and
+            send you a replacement or full refund immediately, no questions asked.
           </p>
         </section>
 
@@ -149,9 +139,9 @@ export default function ReturnsPolicyPage() {
             Return Shipping
           </h2>
           <p>
-            Return shipping is free for all eligible returns. Our courier
-            partner will pick up the item from your doorstep. Please ensure the
-            item is securely packed in its original packaging.
+            Return shipping is free for all eligible returns. Our courier partner will pick up the
+            item from your doorstep. Please ensure the item is securely packed in its original
+            packaging.
           </p>
         </section>
 
@@ -159,12 +149,10 @@ export default function ReturnsPolicyPage() {
           <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
             Contact Us
           </h2>
-          <p>
-            For any return or exchange related queries, reach out to us at:
-          </p>
+          <p>For any return or exchange related queries, reach out to us at:</p>
           <div className="mt-2">
             <p>
-              Email:{" "}
+              Email:{' '}
               <a
                 href="mailto:returns@earthrevibe.com"
                 className="font-semibold text-[var(--color-text)] underline"

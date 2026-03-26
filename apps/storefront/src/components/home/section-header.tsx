@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from 'next/link';
 
 interface SectionHeaderProps {
   title: string;
@@ -9,7 +9,7 @@ interface SectionHeaderProps {
 export function SectionHeader({
   title,
   viewAllHref,
-  viewAllLabel = "View All",
+  viewAllLabel = 'View All',
 }: SectionHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-6 md:mb-8">

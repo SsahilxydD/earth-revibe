@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { ArrowUpRight, ArrowDownRight, ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { ArrowUpRight, ArrowDownRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
 
 interface Metric {
   label: string;
@@ -19,9 +19,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   const w = 52;
   const step = w / (data.length - 1);
 
-  const points = data
-    .map((v, i) => `${i * step},${h - ((v - min) / range) * h}`)
-    .join(" ");
+  const points = data.map((v, i) => `${i * step},${h - ((v - min) / range) * h}`).join(' ');
 
   return (
     <svg width={w} height={h} className="flex-shrink-0">
@@ -46,7 +44,7 @@ export function MetricsStrip({ metrics }: { metrics: Metric[] }) {
       <div className="flex items-stretch divide-x divide-light-gray">
         {visible.map((m) => {
           const isPositive = m.change >= 0;
-          const changeColor = isPositive ? "#16A34A" : "#DC2626";
+          const changeColor = isPositive ? '#16A34A' : '#DC2626';
           const sparkData = m.sparkline || generateSparkline(m.change);
 
           return (
@@ -60,11 +58,7 @@ export function MetricsStrip({ metrics }: { metrics: Metric[] }) {
                     className="inline-flex items-center gap-0.5 text-[11px] font-medium whitespace-nowrap"
                     style={{ color: changeColor }}
                   >
-                    {isPositive ? (
-                      <ArrowUpRight size={10} />
-                    ) : (
-                      <ArrowDownRight size={10} />
-                    )}
+                    {isPositive ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
                     {Math.abs(m.change).toFixed(0)}%
                   </span>
                 )}

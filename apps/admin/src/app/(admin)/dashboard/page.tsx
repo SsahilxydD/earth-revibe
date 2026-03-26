@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import { Skeleton } from "@/components/ui";
-import { FilterBar } from "@/components/dashboard/filter-bar";
-import { MetricsStrip } from "@/components/dashboard/metrics-strip";
-import { ActionCards } from "@/components/dashboard/action-cards";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { Skeleton } from '@/components/ui';
+import { FilterBar } from '@/components/dashboard/filter-bar';
+import { MetricsStrip } from '@/components/dashboard/metrics-strip';
+import { ActionCards } from '@/components/dashboard/action-cards';
 
 function formatINR(value: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
     maximumFractionDigits: 0,
   }).format(value);
 }
 
 export default function DashboardPage() {
-  const [period, setPeriod] = useState("30d");
+  const [period, setPeriod] = useState('30d');
 
   const { data, isLoading } = useQuery({
-    queryKey: ["home-dashboard", period],
+    queryKey: ['home-dashboard', period],
     queryFn: () => api.get(`/admin/analytics/home?period=${period}`),
   });
 
@@ -35,12 +35,36 @@ export default function DashboardPage() {
 
   const metrics = m
     ? [
-        { label: "Sessions", value: String(m.onlineSessions?.value || 0), change: m.onlineSessions?.change || 0 },
-        { label: "Total sales", value: formatINR(m.totalSales?.value || 0), change: m.totalSales?.change || 0 },
-        { label: "Orders", value: String(m.totalOrders?.value || 0), change: m.totalOrders?.change || 0 },
-        { label: "Conversion rate", value: `${(m.conversionRate?.value || 0).toFixed(1)}%`, change: m.conversionRate?.change || 0 },
-        { label: "Avg order value", value: formatINR(m.avgOrderValue?.value || 0), change: m.avgOrderValue?.change || 0 },
-        { label: "Returning rate", value: `${(m.returningCustomerRate?.value || 0).toFixed(1)}%`, change: m.returningCustomerRate?.change || 0 },
+        {
+          label: 'Sessions',
+          value: String(m.onlineSessions?.value || 0),
+          change: m.onlineSessions?.change || 0,
+        },
+        {
+          label: 'Total sales',
+          value: formatINR(m.totalSales?.value || 0),
+          change: m.totalSales?.change || 0,
+        },
+        {
+          label: 'Orders',
+          value: String(m.totalOrders?.value || 0),
+          change: m.totalOrders?.change || 0,
+        },
+        {
+          label: 'Conversion rate',
+          value: `${(m.conversionRate?.value || 0).toFixed(1)}%`,
+          change: m.conversionRate?.change || 0,
+        },
+        {
+          label: 'Avg order value',
+          value: formatINR(m.avgOrderValue?.value || 0),
+          change: m.avgOrderValue?.change || 0,
+        },
+        {
+          label: 'Returning rate',
+          value: `${(m.returningCustomerRate?.value || 0).toFixed(1)}%`,
+          change: m.returningCustomerRate?.change || 0,
+        },
       ]
     : [];
 

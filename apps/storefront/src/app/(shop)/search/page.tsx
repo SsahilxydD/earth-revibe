@@ -1,32 +1,32 @@
-"use client";
+'use client';
 
-import { Suspense, useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { Search, ChevronRight, X } from "lucide-react";
-import { ProductCard } from "@/components/product/product-card";
-import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
-import { SortDropdown } from "@/components/product/sort-dropdown";
-import { useInfiniteProducts } from "@/hooks/use-products";
+import { Suspense, useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Search, ChevronRight, X } from 'lucide-react';
+import { ProductCard } from '@/components/product/product-card';
+import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
+import { SortDropdown } from '@/components/product/sort-dropdown';
+import { useInfiniteProducts } from '@/hooks/use-products';
 
-function parseSort(sort: string | null): { sortBy: string; sortOrder: "asc" | "desc" } {
+function parseSort(sort: string | null): { sortBy: string; sortOrder: 'asc' | 'desc' } {
   switch (sort) {
-    case "price-asc":
-      return { sortBy: "price", sortOrder: "asc" };
-    case "price-desc":
-      return { sortBy: "price", sortOrder: "desc" };
-    case "popular":
-      return { sortBy: "reviewCount", sortOrder: "desc" };
+    case 'price-asc':
+      return { sortBy: 'price', sortOrder: 'asc' };
+    case 'price-desc':
+      return { sortBy: 'price', sortOrder: 'desc' };
+    case 'popular':
+      return { sortBy: 'reviewCount', sortOrder: 'desc' };
     default:
-      return { sortBy: "createdAt", sortOrder: "desc" };
+      return { sortBy: 'createdAt', sortOrder: 'desc' };
   }
 }
 
-function sortToParam(sortBy: string, sortOrder: "asc" | "desc"): string {
-  if (sortBy === "price" && sortOrder === "asc") return "price-asc";
-  if (sortBy === "price" && sortOrder === "desc") return "price-desc";
-  if (sortBy === "reviewCount") return "popular";
-  return "newest";
+function sortToParam(sortBy: string, sortOrder: 'asc' | 'desc'): string {
+  if (sortBy === 'price' && sortOrder === 'asc') return 'price-asc';
+  if (sortBy === 'price' && sortOrder === 'desc') return 'price-desc';
+  if (sortBy === 'reviewCount') return 'popular';
+  return 'newest';
 }
 
 function SearchContent() {
@@ -34,8 +34,8 @@ function SearchContent() {
   const router = useRouter();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const query = searchParams.get("q") || "";
-  const sort = searchParams.get("sort");
+  const query = searchParams.get('q') || '';
+  const sort = searchParams.get('sort');
   const { sortBy, sortOrder } = parseSort(sort);
 
   const [searchInput, setSearchInput] = useState(query);
@@ -55,14 +55,8 @@ function SearchContent() {
     [query, sortBy, sortOrder]
   );
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-  } = useInfiniteProducts(queryParams);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
+    useInfiniteProducts(queryParams);
 
   useEffect(() => {
     if (!loadMoreRef.current) return;
@@ -72,7 +66,7 @@ function SearchContent() {
           fetchNextPage();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: '200px' }
     );
     observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
@@ -90,17 +84,17 @@ function SearchContent() {
   );
 
   const handleSortChange = useCallback(
-    (newSortBy: string, newSortOrder: "asc" | "desc") => {
+    (newSortBy: string, newSortOrder: 'asc' | 'desc') => {
       const params = new URLSearchParams(searchParams.toString());
-      params.set("sort", sortToParam(newSortBy, newSortOrder));
+      params.set('sort', sortToParam(newSortBy, newSortOrder));
       router.push(`/search?${params.toString()}`, { scroll: false });
     },
     [searchParams, router]
   );
 
   const clearSearch = useCallback(() => {
-    setSearchInput("");
-    router.push("/search");
+    setSearchInput('');
+    router.push('/search');
   }, [router]);
 
   const allProducts = useMemo(
@@ -153,20 +147,15 @@ function SearchContent() {
         <div className="mb-8 flex flex-col gap-4 md:mb-10 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-lg font-semibold">
-              {isLoading
-                ? `Searching for "${query}"...`
-                : `Results for "${query}"`}
+              {isLoading ? `Searching for "${query}"...` : `Results for "${query}"`}
             </h1>
             {!isLoading && (
               <p className="mt-1 text-xs text-[var(--color-muted)]">
-                {totalCount} {totalCount === 1 ? "product" : "products"} found
+                {totalCount} {totalCount === 1 ? 'product' : 'products'} found
               </p>
             )}
           </div>
-          <SortDropdown
-            currentSort={`${sortBy}-${sortOrder}`}
-            onSortChange={handleSortChange}
-          />
+          <SortDropdown currentSort={`${sortBy}-${sortOrder}`} onSortChange={handleSortChange} />
         </div>
       )}
 
@@ -175,9 +164,7 @@ function SearchContent() {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Search size={48} className="mb-4 text-[var(--color-border)]" />
           <h2 className="text-lg font-semibold">Search our store</h2>
-          <p className="mt-1 text-sm text-[var(--color-muted)]">
-            Type a keyword to find products.
-          </p>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">Type a keyword to find products.</p>
         </div>
       ) : isLoading ? (
         <ProductGridSkeleton />
@@ -191,9 +178,7 @@ function SearchContent() {
       ) : allProducts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="mb-4 text-5xl">:/</div>
-          <h3 className="text-lg font-semibold">
-            No results found for &ldquo;{query}&rdquo;
-          </h3>
+          <h3 className="text-lg font-semibold">No results found for &ldquo;{query}&rdquo;</h3>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
             Try a different keyword or browse our collections.
           </p>

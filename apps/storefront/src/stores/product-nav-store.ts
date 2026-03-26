@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface ProductNavState {
   /** All product slugs sorted by category — the global swipe list */
@@ -27,11 +27,9 @@ export const useProductNavStore = create<ProductNavState>()((set, get) => ({
 
   setAllSlugs: (allSlugs) => set({ allSlugs }),
 
-  setNavContext: (slugs, sourceLabel, sourceUrl) =>
-    set({ slugs, sourceLabel, sourceUrl }),
+  setNavContext: (slugs, sourceLabel, sourceUrl) => set({ slugs, sourceLabel, sourceUrl }),
 
-  clearNavContext: () =>
-    set({ slugs: [], sourceLabel: null, sourceUrl: null }),
+  clearNavContext: () => set({ slugs: [], sourceLabel: null, sourceUrl: null }),
 
   getAdjacentSlugs: (slug) => {
     const { slugs, allSlugs } = get();

@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Request, Response } from "express";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Request, Response } from 'express';
 
 // ---------------------------------------------------------------------------
 // Mock @earth-revibe/db BEFORE importing the controller so the module sees
 // the mock when it resolves the import at test time.
 // ---------------------------------------------------------------------------
-vi.mock("@earth-revibe/db", () => ({
+vi.mock('@earth-revibe/db', () => ({
   prisma: {
     order: { count: vi.fn() },
     productVariant: { count: vi.fn() },
@@ -15,8 +15,8 @@ vi.mock("@earth-revibe/db", () => ({
 }));
 
 // Import AFTER the mock is registered.
-import { adminNotificationController } from "../admin-notification.controller";
-import { prisma } from "@earth-revibe/db";
+import { adminNotificationController } from '../admin-notification.controller';
+import { prisma } from '@earth-revibe/db';
 
 // ---------------------------------------------------------------------------
 // Typed aliases so TypeScript knows these are mocked functions.
@@ -61,7 +61,7 @@ function setupGetNotificationsMocks(counts: {
   pendingSupport: number;
 }) {
   orderCount.mockResolvedValueOnce(counts.newOrder);
-  variantCount.mockResolvedValueOnce(counts.lowStock);   // first call: low stock
+  variantCount.mockResolvedValueOnce(counts.lowStock); // first call: low stock
   variantCount.mockResolvedValueOnce(counts.outOfStock); // second call: out-of-stock
   paymentCount.mockResolvedValueOnce(counts.failedPayment);
   ticketCount.mockResolvedValueOnce(counts.pendingSupport);
@@ -87,7 +87,7 @@ function setupGetNotificationCountMocks(counts: {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("adminNotificationController.getNotifications", () => {
+describe('adminNotificationController.getNotifications', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -95,8 +95,8 @@ describe("adminNotificationController.getNotifications", () => {
   // -------------------------------------------------------------------------
   // Happy path — all counts non-zero
   // -------------------------------------------------------------------------
-  describe("when all counts are non-zero", () => {
-    it("returns all five notifications in the response", async () => {
+  describe('when all counts are non-zero', () => {
+    it('returns all five notifications in the response', async () => {
       setupGetNotificationsMocks({
         newOrder: 3,
         lowStock: 5,
@@ -114,7 +114,7 @@ describe("adminNotificationController.getNotifications", () => {
       expect(data).toHaveLength(5);
     });
 
-    it("includes NEW_ORDER notification with correct shape", async () => {
+    it('includes NEW_ORDER notification with correct shape', async () => {
       setupGetNotificationsMocks({
         newOrder: 3,
         lowStock: 5,
@@ -127,18 +127,18 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      const notification = data.find((n: { type: string }) => n.type === "NEW_ORDER");
+      const notification = data.find((n: { type: string }) => n.type === 'NEW_ORDER');
 
       expect(notification).toMatchObject({
-        type: "NEW_ORDER",
-        title: "New Orders",
-        message: "3 new orders need attention",
+        type: 'NEW_ORDER',
+        title: 'New Orders',
+        message: '3 new orders need attention',
         count: 3,
-        priority: "high",
+        priority: 'high',
       });
     });
 
-    it("includes LOW_STOCK notification with correct shape", async () => {
+    it('includes LOW_STOCK notification with correct shape', async () => {
       setupGetNotificationsMocks({
         newOrder: 3,
         lowStock: 5,
@@ -151,18 +151,18 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      const notification = data.find((n: { type: string }) => n.type === "LOW_STOCK");
+      const notification = data.find((n: { type: string }) => n.type === 'LOW_STOCK');
 
       expect(notification).toMatchObject({
-        type: "LOW_STOCK",
-        title: "Low Stock Alert",
-        message: "5 products running low",
+        type: 'LOW_STOCK',
+        title: 'Low Stock Alert',
+        message: '5 products running low',
         count: 5,
-        priority: "medium",
+        priority: 'medium',
       });
     });
 
-    it("includes OUT_OF_STOCK notification with correct shape", async () => {
+    it('includes OUT_OF_STOCK notification with correct shape', async () => {
       setupGetNotificationsMocks({
         newOrder: 3,
         lowStock: 5,
@@ -175,18 +175,18 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      const notification = data.find((n: { type: string }) => n.type === "OUT_OF_STOCK");
+      const notification = data.find((n: { type: string }) => n.type === 'OUT_OF_STOCK');
 
       expect(notification).toMatchObject({
-        type: "OUT_OF_STOCK",
-        title: "Out of Stock",
-        message: "2 products out of stock",
+        type: 'OUT_OF_STOCK',
+        title: 'Out of Stock',
+        message: '2 products out of stock',
         count: 2,
-        priority: "high",
+        priority: 'high',
       });
     });
 
-    it("includes FAILED_PAYMENT notification with correct shape", async () => {
+    it('includes FAILED_PAYMENT notification with correct shape', async () => {
       setupGetNotificationsMocks({
         newOrder: 3,
         lowStock: 5,
@@ -199,18 +199,18 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      const notification = data.find((n: { type: string }) => n.type === "FAILED_PAYMENT");
+      const notification = data.find((n: { type: string }) => n.type === 'FAILED_PAYMENT');
 
       expect(notification).toMatchObject({
-        type: "FAILED_PAYMENT",
-        title: "Failed Payments",
-        message: "1 payment failures",
+        type: 'FAILED_PAYMENT',
+        title: 'Failed Payments',
+        message: '1 payment failures',
         count: 1,
-        priority: "high",
+        priority: 'high',
       });
     });
 
-    it("includes PENDING_SUPPORT notification with correct shape", async () => {
+    it('includes PENDING_SUPPORT notification with correct shape', async () => {
       setupGetNotificationsMocks({
         newOrder: 3,
         lowStock: 5,
@@ -223,14 +223,14 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      const notification = data.find((n: { type: string }) => n.type === "PENDING_SUPPORT");
+      const notification = data.find((n: { type: string }) => n.type === 'PENDING_SUPPORT');
 
       expect(notification).toMatchObject({
-        type: "PENDING_SUPPORT",
-        title: "Support Tickets",
-        message: "7 tickets need response",
+        type: 'PENDING_SUPPORT',
+        title: 'Support Tickets',
+        message: '7 tickets need response',
         count: 7,
-        priority: "medium",
+        priority: 'medium',
       });
     });
   });
@@ -238,8 +238,8 @@ describe("adminNotificationController.getNotifications", () => {
   // -------------------------------------------------------------------------
   // All counts are zero
   // -------------------------------------------------------------------------
-  describe("when all counts are zero", () => {
-    it("returns an empty notifications array", async () => {
+  describe('when all counts are zero', () => {
+    it('returns an empty notifications array', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -261,8 +261,8 @@ describe("adminNotificationController.getNotifications", () => {
   // -------------------------------------------------------------------------
   // Mixed counts — some zero, some non-zero
   // -------------------------------------------------------------------------
-  describe("when only some counts are non-zero", () => {
-    it("omits notifications for zero counts and includes non-zero ones", async () => {
+  describe('when only some counts are non-zero', () => {
+    it('omits notifications for zero counts and includes non-zero ones', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -278,14 +278,14 @@ describe("adminNotificationController.getNotifications", () => {
       expect(data).toHaveLength(2);
 
       const types = data.map((n: { type: string }) => n.type);
-      expect(types).toContain("OUT_OF_STOCK");
-      expect(types).toContain("PENDING_SUPPORT");
-      expect(types).not.toContain("NEW_ORDER");
-      expect(types).not.toContain("LOW_STOCK");
-      expect(types).not.toContain("FAILED_PAYMENT");
+      expect(types).toContain('OUT_OF_STOCK');
+      expect(types).toContain('PENDING_SUPPORT');
+      expect(types).not.toContain('NEW_ORDER');
+      expect(types).not.toContain('LOW_STOCK');
+      expect(types).not.toContain('FAILED_PAYMENT');
     });
 
-    it("returns only NEW_ORDER when only new orders exist", async () => {
+    it('returns only NEW_ORDER when only new orders exist', async () => {
       setupGetNotificationsMocks({
         newOrder: 10,
         lowStock: 0,
@@ -299,11 +299,11 @@ describe("adminNotificationController.getNotifications", () => {
 
       const { data } = json.mock.calls[0][0];
       expect(data).toHaveLength(1);
-      expect(data[0].type).toBe("NEW_ORDER");
+      expect(data[0].type).toBe('NEW_ORDER');
       expect(data[0].count).toBe(10);
     });
 
-    it("returns only LOW_STOCK when only low-stock variants exist", async () => {
+    it('returns only LOW_STOCK when only low-stock variants exist', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 6,
@@ -317,10 +317,10 @@ describe("adminNotificationController.getNotifications", () => {
 
       const { data } = json.mock.calls[0][0];
       expect(data).toHaveLength(1);
-      expect(data[0].type).toBe("LOW_STOCK");
+      expect(data[0].type).toBe('LOW_STOCK');
     });
 
-    it("returns only FAILED_PAYMENT when only failed payments exist", async () => {
+    it('returns only FAILED_PAYMENT when only failed payments exist', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -334,15 +334,15 @@ describe("adminNotificationController.getNotifications", () => {
 
       const { data } = json.mock.calls[0][0];
       expect(data).toHaveLength(1);
-      expect(data[0].type).toBe("FAILED_PAYMENT");
+      expect(data[0].type).toBe('FAILED_PAYMENT');
     });
   });
 
   // -------------------------------------------------------------------------
   // Priority assignment
   // -------------------------------------------------------------------------
-  describe("priority assignment", () => {
-    it("assigns high priority to NEW_ORDER", async () => {
+  describe('priority assignment', () => {
+    it('assigns high priority to NEW_ORDER', async () => {
       setupGetNotificationsMocks({
         newOrder: 1,
         lowStock: 0,
@@ -355,10 +355,10 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      expect(data[0].priority).toBe("high");
+      expect(data[0].priority).toBe('high');
     });
 
-    it("assigns medium priority to LOW_STOCK", async () => {
+    it('assigns medium priority to LOW_STOCK', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 3,
@@ -371,10 +371,10 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      expect(data[0].priority).toBe("medium");
+      expect(data[0].priority).toBe('medium');
     });
 
-    it("assigns high priority to OUT_OF_STOCK", async () => {
+    it('assigns high priority to OUT_OF_STOCK', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -387,10 +387,10 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      expect(data[0].priority).toBe("high");
+      expect(data[0].priority).toBe('high');
     });
 
-    it("assigns high priority to FAILED_PAYMENT", async () => {
+    it('assigns high priority to FAILED_PAYMENT', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -403,10 +403,10 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      expect(data[0].priority).toBe("high");
+      expect(data[0].priority).toBe('high');
     });
 
-    it("assigns medium priority to PENDING_SUPPORT", async () => {
+    it('assigns medium priority to PENDING_SUPPORT', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -419,10 +419,10 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      expect(data[0].priority).toBe("medium");
+      expect(data[0].priority).toBe('medium');
     });
 
-    it("has exactly three high-priority types (NEW_ORDER, OUT_OF_STOCK, FAILED_PAYMENT)", async () => {
+    it('has exactly three high-priority types (NEW_ORDER, OUT_OF_STOCK, FAILED_PAYMENT)', async () => {
       setupGetNotificationsMocks({
         newOrder: 1,
         lowStock: 1,
@@ -436,16 +436,16 @@ describe("adminNotificationController.getNotifications", () => {
 
       const { data } = json.mock.calls[0][0];
       const highPriorityTypes = data
-        .filter((n: { priority: string }) => n.priority === "high")
+        .filter((n: { priority: string }) => n.priority === 'high')
         .map((n: { type: string }) => n.type);
 
       expect(highPriorityTypes).toHaveLength(3);
-      expect(highPriorityTypes).toContain("NEW_ORDER");
-      expect(highPriorityTypes).toContain("OUT_OF_STOCK");
-      expect(highPriorityTypes).toContain("FAILED_PAYMENT");
+      expect(highPriorityTypes).toContain('NEW_ORDER');
+      expect(highPriorityTypes).toContain('OUT_OF_STOCK');
+      expect(highPriorityTypes).toContain('FAILED_PAYMENT');
     });
 
-    it("has exactly two medium-priority types (LOW_STOCK, PENDING_SUPPORT)", async () => {
+    it('has exactly two medium-priority types (LOW_STOCK, PENDING_SUPPORT)', async () => {
       setupGetNotificationsMocks({
         newOrder: 1,
         lowStock: 1,
@@ -459,20 +459,20 @@ describe("adminNotificationController.getNotifications", () => {
 
       const { data } = json.mock.calls[0][0];
       const mediumPriorityTypes = data
-        .filter((n: { priority: string }) => n.priority === "medium")
+        .filter((n: { priority: string }) => n.priority === 'medium')
         .map((n: { type: string }) => n.type);
 
       expect(mediumPriorityTypes).toHaveLength(2);
-      expect(mediumPriorityTypes).toContain("LOW_STOCK");
-      expect(mediumPriorityTypes).toContain("PENDING_SUPPORT");
+      expect(mediumPriorityTypes).toContain('LOW_STOCK');
+      expect(mediumPriorityTypes).toContain('PENDING_SUPPORT');
     });
   });
 
   // -------------------------------------------------------------------------
   // Message formatting
   // -------------------------------------------------------------------------
-  describe("message formatting", () => {
-    it("interpolates the exact count into NEW_ORDER message", async () => {
+  describe('message formatting', () => {
+    it('interpolates the exact count into NEW_ORDER message', async () => {
       setupGetNotificationsMocks({
         newOrder: 42,
         lowStock: 0,
@@ -485,10 +485,10 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      expect(data[0].message).toBe("42 new orders need attention");
+      expect(data[0].message).toBe('42 new orders need attention');
     });
 
-    it("interpolates the exact count into LOW_STOCK message", async () => {
+    it('interpolates the exact count into LOW_STOCK message', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 8,
@@ -501,10 +501,10 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      expect(data[0].message).toBe("8 products running low");
+      expect(data[0].message).toBe('8 products running low');
     });
 
-    it("interpolates the exact count into OUT_OF_STOCK message", async () => {
+    it('interpolates the exact count into OUT_OF_STOCK message', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -517,10 +517,10 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      expect(data[0].message).toBe("13 products out of stock");
+      expect(data[0].message).toBe('13 products out of stock');
     });
 
-    it("interpolates the exact count into FAILED_PAYMENT message", async () => {
+    it('interpolates the exact count into FAILED_PAYMENT message', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -533,10 +533,10 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      expect(data[0].message).toBe("7 payment failures");
+      expect(data[0].message).toBe('7 payment failures');
     });
 
-    it("interpolates the exact count into PENDING_SUPPORT message", async () => {
+    it('interpolates the exact count into PENDING_SUPPORT message', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -549,10 +549,10 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const { data } = json.mock.calls[0][0];
-      expect(data[0].message).toBe("11 tickets need response");
+      expect(data[0].message).toBe('11 tickets need response');
     });
 
-    it("reflects large counts accurately (boundary: 10 000)", async () => {
+    it('reflects large counts accurately (boundary: 10 000)', async () => {
       setupGetNotificationsMocks({
         newOrder: 10000,
         lowStock: 0,
@@ -566,15 +566,15 @@ describe("adminNotificationController.getNotifications", () => {
 
       const { data } = json.mock.calls[0][0];
       expect(data[0].count).toBe(10000);
-      expect(data[0].message).toBe("10000 new orders need attention");
+      expect(data[0].message).toBe('10000 new orders need attention');
     });
   });
 
   // -------------------------------------------------------------------------
   // Prisma query correctness
   // -------------------------------------------------------------------------
-  describe("prisma query arguments", () => {
-    it("queries orders with PLACED and CONFIRMED statuses and 24-hour window", async () => {
+  describe('prisma query arguments', () => {
+    it('queries orders with PLACED and CONFIRMED statuses and 24-hour window', async () => {
       setupGetNotificationsMocks({
         newOrder: 1,
         lowStock: 0,
@@ -590,7 +590,7 @@ describe("adminNotificationController.getNotifications", () => {
 
       expect(orderCount).toHaveBeenCalledOnce();
       const [args] = orderCount.mock.calls[0];
-      expect(args.where.status).toEqual({ in: ["PLACED", "CONFIRMED"] });
+      expect(args.where.status).toEqual({ in: ['PLACED', 'CONFIRMED'] });
 
       const gte: Date = args.where.createdAt.gte;
       const windowMs = 24 * 60 * 60 * 1000;
@@ -598,7 +598,7 @@ describe("adminNotificationController.getNotifications", () => {
       expect(gte.getTime()).toBeLessThanOrEqual(after - windowMs + 50);
     });
 
-    it("queries low-stock variants with stock > 0 and stock < 10", async () => {
+    it('queries low-stock variants with stock > 0 and stock < 10', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 1,
@@ -615,7 +615,7 @@ describe("adminNotificationController.getNotifications", () => {
       expect(firstCall.where.stock).toEqual({ gt: 0, lt: 10 });
     });
 
-    it("queries out-of-stock variants with stock = 0", async () => {
+    it('queries out-of-stock variants with stock = 0', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -632,7 +632,7 @@ describe("adminNotificationController.getNotifications", () => {
       expect(secondCall.where.stock).toBe(0);
     });
 
-    it("queries payments with FAILED status and 24-hour window", async () => {
+    it('queries payments with FAILED status and 24-hour window', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -648,7 +648,7 @@ describe("adminNotificationController.getNotifications", () => {
 
       expect(paymentCount).toHaveBeenCalledOnce();
       const [args] = paymentCount.mock.calls[0];
-      expect(args.where.status).toBe("FAILED");
+      expect(args.where.status).toBe('FAILED');
 
       const gte: Date = args.where.createdAt.gte;
       const windowMs = 24 * 60 * 60 * 1000;
@@ -656,7 +656,7 @@ describe("adminNotificationController.getNotifications", () => {
       expect(gte.getTime()).toBeLessThanOrEqual(after - windowMs + 50);
     });
 
-    it("queries support tickets with OPEN and IN_PROGRESS statuses", async () => {
+    it('queries support tickets with OPEN and IN_PROGRESS statuses', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -670,10 +670,10 @@ describe("adminNotificationController.getNotifications", () => {
 
       expect(ticketCount).toHaveBeenCalledOnce();
       const [args] = ticketCount.mock.calls[0];
-      expect(args.where.status).toEqual({ in: ["OPEN", "IN_PROGRESS"] });
+      expect(args.where.status).toEqual({ in: ['OPEN', 'IN_PROGRESS'] });
     });
 
-    it("runs all five queries in parallel (all prisma mocks called once per invocation)", async () => {
+    it('runs all five queries in parallel (all prisma mocks called once per invocation)', async () => {
       setupGetNotificationsMocks({
         newOrder: 1,
         lowStock: 1,
@@ -695,8 +695,8 @@ describe("adminNotificationController.getNotifications", () => {
   // -------------------------------------------------------------------------
   // Response envelope
   // -------------------------------------------------------------------------
-  describe("response envelope", () => {
-    it("always sets success: true", async () => {
+  describe('response envelope', () => {
+    it('always sets success: true', async () => {
       setupGetNotificationsMocks({
         newOrder: 0,
         lowStock: 0,
@@ -711,7 +711,7 @@ describe("adminNotificationController.getNotifications", () => {
       expect(json.mock.calls[0][0].success).toBe(true);
     });
 
-    it("wraps notifications in a data property", async () => {
+    it('wraps notifications in a data property', async () => {
       setupGetNotificationsMocks({
         newOrder: 2,
         lowStock: 0,
@@ -724,7 +724,7 @@ describe("adminNotificationController.getNotifications", () => {
       await adminNotificationController.getNotifications(mockReq(), res);
 
       const body = json.mock.calls[0][0];
-      expect(body).toHaveProperty("data");
+      expect(body).toHaveProperty('data');
       expect(Array.isArray(body.data)).toBe(true);
     });
   });
@@ -734,7 +734,7 @@ describe("adminNotificationController.getNotifications", () => {
 // getNotificationCount
 // ===========================================================================
 
-describe("adminNotificationController.getNotificationCount", () => {
+describe('adminNotificationController.getNotificationCount', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -742,8 +742,8 @@ describe("adminNotificationController.getNotificationCount", () => {
   // -------------------------------------------------------------------------
   // Sum computation
   // -------------------------------------------------------------------------
-  describe("count summation", () => {
-    it("returns the sum of newOrder + outOfStock + failedPayment", async () => {
+  describe('count summation', () => {
+    it('returns the sum of newOrder + outOfStock + failedPayment', async () => {
       setupGetNotificationCountMocks({
         newOrder: 3,
         outOfStock: 5,
@@ -759,7 +759,7 @@ describe("adminNotificationController.getNotificationCount", () => {
       });
     });
 
-    it("returns 0 when all counts are zero", async () => {
+    it('returns 0 when all counts are zero', async () => {
       setupGetNotificationCountMocks({
         newOrder: 0,
         outOfStock: 0,
@@ -772,7 +772,7 @@ describe("adminNotificationController.getNotificationCount", () => {
       expect(json.mock.calls[0][0].data.count).toBe(0);
     });
 
-    it("returns newOrder count alone when others are zero", async () => {
+    it('returns newOrder count alone when others are zero', async () => {
       setupGetNotificationCountMocks({
         newOrder: 7,
         outOfStock: 0,
@@ -785,7 +785,7 @@ describe("adminNotificationController.getNotificationCount", () => {
       expect(json.mock.calls[0][0].data.count).toBe(7);
     });
 
-    it("returns outOfStock count alone when others are zero", async () => {
+    it('returns outOfStock count alone when others are zero', async () => {
       setupGetNotificationCountMocks({
         newOrder: 0,
         outOfStock: 9,
@@ -798,7 +798,7 @@ describe("adminNotificationController.getNotificationCount", () => {
       expect(json.mock.calls[0][0].data.count).toBe(9);
     });
 
-    it("returns failedPayment count alone when others are zero", async () => {
+    it('returns failedPayment count alone when others are zero', async () => {
       setupGetNotificationCountMocks({
         newOrder: 0,
         outOfStock: 0,
@@ -811,7 +811,7 @@ describe("adminNotificationController.getNotificationCount", () => {
       expect(json.mock.calls[0][0].data.count).toBe(4);
     });
 
-    it("sums large counts correctly (boundary: 10 000 each)", async () => {
+    it('sums large counts correctly (boundary: 10 000 each)', async () => {
       setupGetNotificationCountMocks({
         newOrder: 10000,
         outOfStock: 10000,
@@ -828,8 +828,8 @@ describe("adminNotificationController.getNotificationCount", () => {
   // -------------------------------------------------------------------------
   // Only high-priority sources queried
   // -------------------------------------------------------------------------
-  describe("queries only high-priority sources", () => {
-    it("does NOT query supportTicket (medium priority)", async () => {
+  describe('queries only high-priority sources', () => {
+    it('does NOT query supportTicket (medium priority)', async () => {
       setupGetNotificationCountMocks({
         newOrder: 1,
         outOfStock: 1,
@@ -842,7 +842,7 @@ describe("adminNotificationController.getNotificationCount", () => {
       expect(ticketCount).not.toHaveBeenCalled();
     });
 
-    it("queries exactly three prisma sources", async () => {
+    it('queries exactly three prisma sources', async () => {
       setupGetNotificationCountMocks({
         newOrder: 1,
         outOfStock: 1,
@@ -858,7 +858,7 @@ describe("adminNotificationController.getNotificationCount", () => {
       expect(ticketCount).not.toHaveBeenCalled();
     });
 
-    it("queries out-of-stock variants with stock = 0", async () => {
+    it('queries out-of-stock variants with stock = 0', async () => {
       setupGetNotificationCountMocks({
         newOrder: 0,
         outOfStock: 1,
@@ -872,7 +872,7 @@ describe("adminNotificationController.getNotificationCount", () => {
       expect(args.where.stock).toBe(0);
     });
 
-    it("queries orders with PLACED and CONFIRMED statuses", async () => {
+    it('queries orders with PLACED and CONFIRMED statuses', async () => {
       setupGetNotificationCountMocks({
         newOrder: 1,
         outOfStock: 0,
@@ -883,10 +883,10 @@ describe("adminNotificationController.getNotificationCount", () => {
       await adminNotificationController.getNotificationCount(mockReq(), res);
 
       const [args] = orderCount.mock.calls[0];
-      expect(args.where.status).toEqual({ in: ["PLACED", "CONFIRMED"] });
+      expect(args.where.status).toEqual({ in: ['PLACED', 'CONFIRMED'] });
     });
 
-    it("queries payments with FAILED status", async () => {
+    it('queries payments with FAILED status', async () => {
       setupGetNotificationCountMocks({
         newOrder: 0,
         outOfStock: 0,
@@ -897,15 +897,15 @@ describe("adminNotificationController.getNotificationCount", () => {
       await adminNotificationController.getNotificationCount(mockReq(), res);
 
       const [args] = paymentCount.mock.calls[0];
-      expect(args.where.status).toBe("FAILED");
+      expect(args.where.status).toBe('FAILED');
     });
   });
 
   // -------------------------------------------------------------------------
   // Response envelope
   // -------------------------------------------------------------------------
-  describe("response envelope", () => {
-    it("always sets success: true", async () => {
+  describe('response envelope', () => {
+    it('always sets success: true', async () => {
       setupGetNotificationCountMocks({
         newOrder: 0,
         outOfStock: 0,
@@ -918,7 +918,7 @@ describe("adminNotificationController.getNotificationCount", () => {
       expect(json.mock.calls[0][0].success).toBe(true);
     });
 
-    it("wraps count in a data object", async () => {
+    it('wraps count in a data object', async () => {
       setupGetNotificationCountMocks({
         newOrder: 1,
         outOfStock: 0,
@@ -929,9 +929,9 @@ describe("adminNotificationController.getNotificationCount", () => {
       await adminNotificationController.getNotificationCount(mockReq(), res);
 
       const body = json.mock.calls[0][0];
-      expect(body).toHaveProperty("data");
-      expect(body.data).toHaveProperty("count");
-      expect(typeof body.data.count).toBe("number");
+      expect(body).toHaveProperty('data');
+      expect(body.data).toHaveProperty('count');
+      expect(typeof body.data.count).toBe('number');
     });
   });
 });

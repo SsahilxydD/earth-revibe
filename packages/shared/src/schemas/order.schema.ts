@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { OrderStatus } from "../enums";
+import { z } from 'zod';
+import { OrderStatus } from '../enums';
 
 export const createOrderSchema = z.object({
   addressId: z.string().min(1),
@@ -42,8 +42,8 @@ export const adminOrderQuerySchema = z.object({
   endDate: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  sortBy: z.enum(["createdAt", "totalAmount", "orderNumber"]).default("createdAt"),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  sortBy: z.enum(['createdAt', 'totalAmount', 'orderNumber']).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 export const addOrderNoteSchema = z.object({

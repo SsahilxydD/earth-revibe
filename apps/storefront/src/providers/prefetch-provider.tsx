@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import { productKeys } from "@/hooks/use-products";
-import { useProductNavStore } from "@/stores/product-nav-store";
-import type { Product, Category } from "@/types";
+import { useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { productKeys } from '@/hooks/use-products';
+import { useProductNavStore } from '@/stores/product-nav-store';
+import type { Product, Category } from '@/types';
 
 /**
  * AGGRESSIVE MEMORY PREFETCH
@@ -26,14 +26,14 @@ import type { Product, Category } from "@/types";
  *  to start fetching before layout/paint, eliminating pop-in. */
 function preloadImage(url: string, highPriority = false) {
   if (!url) return;
-  if (highPriority && typeof document !== "undefined") {
+  if (highPriority && typeof document !== 'undefined') {
     // Avoid duplicate preload links
     if (document.querySelector(`link[href="${CSS.escape(url)}"]`)) return;
-    const link = document.createElement("link");
-    link.rel = "preload";
-    link.as = "image";
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
     link.href = url;
-    link.fetchPriority = "high";
+    link.fetchPriority = 'high';
     document.head.appendChild(link);
     return;
   }
@@ -53,7 +53,7 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
     const loadEverything = async () => {
       try {
         // ─── 1. Categories ───────────────────────────────────────
-        const categories = await api.get<Category[]>("/categories");
+        const categories = await api.get<Category[]>('/categories');
         queryClient.setQueryData(productKeys.categories, categories);
 
         // ─── 2. ALL products ─────────────────────────────────────
@@ -104,15 +104,17 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
                   if (img?.url) preloadImage(img.url);
                   if (img?.thumbnailUrl) preloadImage(img.thumbnailUrl);
                 }
-              } catch { /* skip */ }
+              } catch {
+                /* skip */
+              }
             })
           );
         }
 
         // ─── 4. Sort by category for infinite swipe ──────────────
         allProducts.sort((a: any, b: any) => {
-          const catA = a.category?.name || a.categoryId || "";
-          const catB = b.category?.name || b.categoryId || "";
+          const catA = a.category?.name || a.categoryId || '';
+          const catB = b.category?.name || b.categoryId || '';
           if (catA !== catB) return catA.localeCompare(catB);
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
@@ -121,13 +123,17 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
 
         // ─── 5. Homepage sections ────────────────────────────────
         try {
-          const sections: any = await api.get("/homepage");
-          queryClient.setQueryData(["homepage-sections"], sections);
+          const sections: any = await api.get('/homepage');
+          queryClient.setQueryData(['homepage-sections'], sections);
           // Preload homepage section images
           if (Array.isArray(sections)) {
-            sections.forEach((s: any) => { if (s?.imageUrl) preloadImage(s.imageUrl); });
+            sections.forEach((s: any) => {
+              if (s?.imageUrl) preloadImage(s.imageUrl);
+            });
           }
-        } catch { /* non-critical */ }
+        } catch {
+          /* non-critical */
+        }
 
         // ─── 6. Also cache product lists per category ────────────
         if (Array.isArray(categories)) {
@@ -138,12 +144,23 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
             // Pre-populate the infinite query cache for each category
             if (catProducts.length > 0) {
               queryClient.setQueryData(
-                [...productKeys.lists(), "infinite", { category: cat.slug, sortBy: "createdAt", sortOrder: "desc", limit: 12 }],
+                [
+                  ...productKeys.lists(),
+                  'infinite',
+                  { category: cat.slug, sortBy: 'createdAt', sortOrder: 'desc', limit: 12 },
+                ],
                 {
-                  pages: [{
-                    products: catProducts.slice(0, 12),
-                    pagination: { page: 1, limit: 12, total: catProducts.length, totalPages: Math.ceil(catProducts.length / 12) },
-                  }],
+                  pages: [
+                    {
+                      products: catProducts.slice(0, 12),
+                      pagination: {
+                        page: 1,
+                        limit: 12,
+                        total: catProducts.length,
+                        totalPages: Math.ceil(catProducts.length / 12),
+                      },
+                    },
+                  ],
                   pageParams: [1],
                 }
               );

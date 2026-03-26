@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { BlogPostStatus } from "../enums";
+import { z } from 'zod';
+import { BlogPostStatus } from '../enums';
 
 export const createBlogPostSchema = z.object({
   title: z.string().min(5).max(200),

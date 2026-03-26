@@ -1,25 +1,25 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import type { InventoryListParams } from "@/types";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import type { InventoryListParams } from '@/types';
 
 export function useInventory(params: InventoryListParams = {}) {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") {
+    if (value !== undefined && value !== '') {
       searchParams.set(key, String(value));
     }
   });
 
   return useQuery({
-    queryKey: ["admin-inventory", params],
+    queryKey: ['admin-inventory', params],
     queryFn: () => api.get(`/admin/inventory?${searchParams.toString()}`),
   });
 }
 
 export function useInventorySummary() {
   return useQuery({
-    queryKey: ["admin-inventory-summary"],
-    queryFn: () => api.get("/admin/inventory/summary"),
+    queryKey: ['admin-inventory-summary'],
+    queryFn: () => api.get('/admin/inventory/summary'),
   });
 }
 
@@ -29,8 +29,8 @@ export function useUpdateStock() {
     mutationFn: ({ variantId, stock }: { variantId: string; stock: number }) =>
       api.put(`/admin/inventory/${variantId}/stock`, { stock }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory-summary"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory-summary'] });
     },
   });
 }
@@ -48,8 +48,8 @@ export function useAdjustStock() {
       reason: string;
     }) => api.post(`/admin/inventory/${variantId}/adjust`, { adjustment, reason }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory-summary"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory-summary'] });
     },
   });
 }
@@ -58,10 +58,10 @@ export function useBulkUpdateStock() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (updates: { variantId: string; stock: number }[]) =>
-      api.put("/admin/inventory/bulk", { updates }),
+      api.put('/admin/inventory/bulk', { updates }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory-summary"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory-summary'] });
     },
   });
 }

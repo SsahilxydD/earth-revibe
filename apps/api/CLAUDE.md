@@ -1,20 +1,20 @@
 # API — apps/api
 
 Express 5. TypeScript. Prisma 7. PostgreSQL 16.
-REST API at /api/v1/. All endpoints require JWT auth except /auth/* and public product/category reads.
+REST API at /api/v1/. All endpoints require JWT auth except /auth/\* and public product/category reads.
 
 ## Structure
 
 src/
-  config/        # env config, db config, cloudinary config
-  controllers/   # request handlers — thin, delegate to services
-  middleware/    # auth, error handler, rate limiter, validation
-  routes/        # express routers — one file per resource
-  services/      # business logic — all DB access goes here
-  types/         # express Request augmentation, shared types
-  utils/         # helpers: jwt, email, slugify, pagination
-  app.ts         # express app setup (no listen here)
-  index.ts       # server listen entry point
+config/ # env config, db config, cloudinary config
+controllers/ # request handlers — thin, delegate to services
+middleware/ # auth, error handler, rate limiter, validation
+routes/ # express routers — one file per resource
+services/ # business logic — all DB access goes here
+types/ # express Request augmentation, shared types
+utils/ # helpers: jwt, email, slugify, pagination
+app.ts # express app setup (no listen here)
+index.ts # server listen entry point
 
 ## Patterns
 
@@ -39,5 +39,5 @@ admin-inventory, admin-support, admin-notification
 Always use --swarm api-swarm for work in this directory.
 
 Example:
-  ruflo --agent coder --swarm api-swarm --task "Add endpoint to bulk update inventory stock levels"
-  ruflo --agent security-architect --swarm api-swarm --task "Audit auth middleware for token validation gaps"
+ruflo --agent coder --swarm api-swarm --task "Add endpoint to bulk update inventory stock levels"
+ruflo --agent security-architect --swarm api-swarm --task "Audit auth middleware for token validation gaps"

@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  useQuery,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { Referral, ApiError } from '@/types';
 
@@ -29,8 +26,7 @@ export function useReferralInfo(
 ) {
   return useQuery<ReferralInfo, ApiError>({
     queryKey: referralKeys.info(),
-    queryFn: ({ signal }) =>
-      api.get<ReferralInfo>('/referrals/info', signal),
+    queryFn: ({ signal }) => api.get<ReferralInfo>('/referrals/info', signal),
     ...options,
   });
 }

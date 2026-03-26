@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { orderService } from "../services/order.service";
+import type { Request, Response } from 'express';
+import { orderService } from '../services/order.service';
 
 export const orderController = {
   async createOrder(req: Request, res: Response) {
@@ -13,7 +13,10 @@ export const orderController = {
   },
 
   async listOrders(req: Request, res: Response) {
-    const result = await orderService.listOrders(req.user!.id, res.locals.validatedQuery || req.query);
+    const result = await orderService.listOrders(
+      req.user!.id,
+      res.locals.validatedQuery || req.query
+    );
     res.json({ success: true, data: result });
   },
 

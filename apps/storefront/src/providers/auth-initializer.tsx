@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import { useAuthStore } from "@/stores/auth-store";
+import { useEffect, useRef } from 'react';
+import { useAuthStore } from '@/stores/auth-store';
 
 /**
  * Runs checkAuth() once on app mount to restore session from httpOnly cookies.

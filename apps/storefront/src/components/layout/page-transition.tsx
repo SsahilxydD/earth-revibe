@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
 /**
  * Passthrough — no animation. Framer Motion page transitions cause

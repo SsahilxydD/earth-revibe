@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { X, ShoppingBag } from "lucide-react";
-import { useCartStore } from "@/stores/cart-store";
-import { lockBodyScroll, unlockBodyScroll } from "@/stores/ui-store";
-import { formatPrice } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { CartItemRow } from "./cart-item";
-import { api } from "@/lib/api-client";
-import { useRazorpay } from "@/hooks/use-razorpay";
-import { useToast } from "@/providers";
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { X, ShoppingBag } from 'lucide-react';
+import { useCartStore } from '@/stores/cart-store';
+import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
+import { formatPrice } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { CartItemRow } from './cart-item';
+import { api } from '@/lib/api-client';
+import { useRazorpay } from '@/hooks/use-razorpay';
+import { useToast } from '@/providers';
 
 const FREE_SHIPPING_THRESHOLD = 999;
 
@@ -27,8 +27,8 @@ export function CartDrawer() {
     getTotal,
   } = useCartStore();
 
-  const [discountInput, setDiscountInput] = useState("");
-  const [discountError, setDiscountError] = useState("");
+  const [discountInput, setDiscountInput] = useState('');
+  const [discountError, setDiscountError] = useState('');
   const [applyingDiscount, setApplyingDiscount] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -51,25 +51,25 @@ export function CartDrawer() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) closeCart();
+      if (e.key === 'Escape' && isOpen) closeCart();
     };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeCart]);
 
   const handleApplyDiscount = async () => {
     if (!discountInput.trim()) return;
     setApplyingDiscount(true);
-    setDiscountError("");
+    setDiscountError('');
     try {
       const result = await api.post<{ code: string; discountAmount: number }>(
-        "/discounts/validate",
+        '/discounts/validate',
         { code: discountInput.trim(), orderTotal: subtotal }
       );
       applyDiscount(result.code, result.discountAmount);
-      setDiscountInput("");
+      setDiscountInput('');
     } catch (error: any) {
-      setDiscountError(error?.message || "Invalid discount code");
+      setDiscountError(error?.message || 'Invalid discount code');
     } finally {
       setApplyingDiscount(false);
     }
@@ -87,7 +87,7 @@ export function CartDrawer() {
         amount: number;
         orderNumber: string;
         prefill: { name: string; email: string; contact: string };
-      }>("/checkout/create-order", {
+      }>('/checkout/create-order', {
         items: items.map((item) => ({
           variantId: item.id,
           quantity: item.quantity,
@@ -100,7 +100,7 @@ export function CartDrawer() {
         orderId: result.orderNumber,
         razorpayOrderId: result.razorpayOrderId,
         amount: Math.round(result.amount * 100),
-        currency: "INR",
+        currency: 'INR',
         customerName: result.prefill.name,
         customerEmail: result.prefill.email,
         customerPhone: result.prefill.contact,
@@ -108,7 +108,7 @@ export function CartDrawer() {
       });
 
       if (!paymentResponse) {
-        addToast("Payment was cancelled. You can try again.", "info");
+        addToast('Payment was cancelled. You can try again.', 'info');
         setIsCheckingOut(false);
         return;
       }
@@ -117,7 +117,7 @@ export function CartDrawer() {
         orderNumber: string;
         pointsEarned: number;
         accountAutoCreated: boolean;
-      }>("/checkout/verify-payment", {
+      }>('/checkout/verify-payment', {
         razorpayOrderId: paymentResponse.razorpay_order_id,
         razorpayPaymentId: paymentResponse.razorpay_payment_id,
         razorpaySignature: paymentResponse.razorpay_signature,
@@ -128,10 +128,10 @@ export function CartDrawer() {
       closeCart();
       setIsCheckingOut(false);
       const params = new URLSearchParams({ orderId: verification.orderNumber });
-      if (verification.accountAutoCreated) params.set("newAccount", "1");
+      if (verification.accountAutoCreated) params.set('newAccount', '1');
       router.push(`/checkout/confirmation?${params.toString()}`);
     } catch (error: any) {
-      addToast(error?.message || "Something went wrong. Please try again.", "error");
+      addToast(error?.message || 'Something went wrong. Please try again.', 'error');
       setIsCheckingOut(false);
     }
   }, [items, discountCode, initiatePayment, addToast, clearCart, closeCart, router]);
@@ -141,18 +141,13 @@ export function CartDrawer() {
   return (
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 animate-fade-in"
-        onClick={closeCart}
-      />
+      <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={closeCart} />
 
       {/* Drawer */}
       <div className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl animate-slide-in-right">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
-          <h2 className="text-sm font-bold uppercase tracking-[0.2em]">
-            Your Cart
-          </h2>
+          <h2 className="text-sm font-bold uppercase tracking-[0.2em]">Your Cart</h2>
           <button
             onClick={closeCart}
             className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-[var(--color-surface)]"
@@ -166,9 +161,7 @@ export function CartDrawer() {
           /* Empty state */
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-5">
             <ShoppingBag className="h-16 w-16 text-[var(--color-border)]" />
-            <p className="text-sm font-medium text-[var(--color-muted)]">
-              Your cart is empty
-            </p>
+            <p className="text-sm font-medium text-[var(--color-muted)]">Your cart is empty</p>
             <Button onClick={closeCart} variant="primary" size="md">
               Continue Shopping
             </Button>
@@ -228,16 +221,14 @@ export function CartDrawer() {
                     </Button>
                   </div>
                   {discountError && (
-                    <p className="mt-1 text-xs text-[var(--color-sale)]">
-                      {discountError}
-                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-sale)]">{discountError}</p>
                   )}
                 </div>
               ) : (
                 <div className="mb-4 flex items-center justify-between rounded-[var(--badge-radius)] bg-[var(--color-surface)] px-3 py-2 text-sm">
                   <span>
-                    <span className="font-semibold">{discountCode}</span>
-                    {" "}&minus;{formatPrice(discountAmount)}
+                    <span className="font-semibold">{discountCode}</span> &minus;
+                    {formatPrice(discountAmount)}
                   </span>
                   <button
                     onClick={removeDiscount}
@@ -273,7 +264,11 @@ export function CartDrawer() {
                 onClick={launchMagicCheckout}
                 loading={isCheckingOut || isRazorpayLoading}
               >
-                {isCheckingOut ? "Preparing..." : isRazorpayLoading ? "Opening payment..." : "Checkout"}
+                {isCheckingOut
+                  ? 'Preparing...'
+                  : isRazorpayLoading
+                    ? 'Opening payment...'
+                    : 'Checkout'}
               </Button>
             </div>
           </>

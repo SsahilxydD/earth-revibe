@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { categoryService } from "../services/category.service";
+import type { Request, Response } from 'express';
+import { categoryService } from '../services/category.service';
 
 export const categoryController = {
   async listCategories(_req: Request, res: Response) {
@@ -24,11 +24,11 @@ export const categoryController = {
 
   async deleteCategory(req: Request, res: Response) {
     await categoryService.deleteCategory(req.params.id as string);
-    res.json({ success: true, message: "Category deleted successfully" });
+    res.json({ success: true, message: 'Category deleted successfully' });
   },
 
   async reorderCategories(req: Request, res: Response) {
     await categoryService.reorderCategories(req.body);
-    res.json({ success: true, message: "Categories reordered successfully" });
+    res.json({ success: true, message: 'Categories reordered successfully' });
   },
 };

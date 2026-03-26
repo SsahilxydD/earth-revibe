@@ -1,33 +1,33 @@
-"use client";
+'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { ProductCard } from "@/components/product/product-card";
-import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
-import { FilterSidebar, type FilterState } from "@/components/product/filter-sidebar";
-import { SortDropdown } from "@/components/product/sort-dropdown";
-import { useInfiniteProducts, useCategories } from "@/hooks/use-products";
-import { useProductNavStore } from "@/stores/product-nav-store";
+import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ProductCard } from '@/components/product/product-card';
+import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
+import { FilterSidebar, type FilterState } from '@/components/product/filter-sidebar';
+import { SortDropdown } from '@/components/product/sort-dropdown';
+import { useInfiniteProducts, useCategories } from '@/hooks/use-products';
+import { useProductNavStore } from '@/stores/product-nav-store';
 
-function parseSort(sort: string | null): { sortBy: string; sortOrder: "asc" | "desc" } {
+function parseSort(sort: string | null): { sortBy: string; sortOrder: 'asc' | 'desc' } {
   switch (sort) {
-    case "price-asc":
-      return { sortBy: "price", sortOrder: "asc" };
-    case "price-desc":
-      return { sortBy: "price", sortOrder: "desc" };
-    case "popular":
-      return { sortBy: "reviewCount", sortOrder: "desc" };
+    case 'price-asc':
+      return { sortBy: 'price', sortOrder: 'asc' };
+    case 'price-desc':
+      return { sortBy: 'price', sortOrder: 'desc' };
+    case 'popular':
+      return { sortBy: 'reviewCount', sortOrder: 'desc' };
     default:
-      return { sortBy: "createdAt", sortOrder: "desc" };
+      return { sortBy: 'createdAt', sortOrder: 'desc' };
   }
 }
 
-function sortToParam(sortBy: string, sortOrder: "asc" | "desc"): string {
-  if (sortBy === "price" && sortOrder === "asc") return "price-asc";
-  if (sortBy === "price" && sortOrder === "desc") return "price-desc";
-  if (sortBy === "reviewCount") return "popular";
-  return "newest";
+function sortToParam(sortBy: string, sortOrder: 'asc' | 'desc'): string {
+  if (sortBy === 'price' && sortOrder === 'asc') return 'price-asc';
+  if (sortBy === 'price' && sortOrder === 'desc') return 'price-desc';
+  if (sortBy === 'reviewCount') return 'popular';
+  return 'newest';
 }
 
 function CategoryContent() {
@@ -40,11 +40,11 @@ function CategoryContent() {
   const { data: categories } = useCategories();
   const currentCategory = categories?.find((c) => c.slug === slug);
 
-  const sort = searchParams.get("sort");
-  const minPriceRaw = searchParams.get("minPrice");
-  const maxPriceRaw = searchParams.get("maxPrice");
-  const size = searchParams.get("size") || "";
-  const color = searchParams.get("color") || "";
+  const sort = searchParams.get('sort');
+  const minPriceRaw = searchParams.get('minPrice');
+  const maxPriceRaw = searchParams.get('maxPrice');
+  const size = searchParams.get('size') || '';
+  const color = searchParams.get('color') || '';
 
   const { sortBy, sortOrder } = parseSort(sort);
   const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
@@ -64,14 +64,8 @@ function CategoryContent() {
     [slug, sortBy, sortOrder, minPrice, maxPrice, size, color]
   );
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-  } = useInfiniteProducts(queryParams);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
+    useInfiniteProducts(queryParams);
 
   useEffect(() => {
     if (!loadMoreRef.current) return;
@@ -81,7 +75,7 @@ function CategoryContent() {
           fetchNextPage();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: '200px' }
     );
     observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
@@ -98,7 +92,7 @@ function CategoryContent() {
         }
       }
       const qs = p.toString();
-      router.push(`/categories/${slug}${qs ? `?${qs}` : ""}`, { scroll: false });
+      router.push(`/categories/${slug}${qs ? `?${qs}` : ''}`, { scroll: false });
     },
     [searchParams, router, slug]
   );
@@ -116,7 +110,7 @@ function CategoryContent() {
   );
 
   const handleSortChange = useCallback(
-    (newSortBy: string, newSortOrder: "asc" | "desc") => {
+    (newSortBy: string, newSortOrder: 'asc' | 'desc') => {
       updateParams({ sort: sortToParam(newSortBy, newSortOrder) });
     },
     [updateParams]
@@ -127,7 +121,7 @@ function CategoryContent() {
     [data]
   );
 
-  const categoryName = currentCategory?.name || slug.replace(/-/g, " ");
+  const categoryName = currentCategory?.name || slug.replace(/-/g, ' ');
 
   // Populate navigation store so product detail page can swipe between products
   const setNavContext = useProductNavStore((s) => s.setNavContext);
@@ -150,15 +144,10 @@ function CategoryContent() {
     <div className="min-h-[200dvh] px-4 py-4 md:px-8 lg:px-12 xl:px-20">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold capitalize md:text-xl">
-          {categoryName}
-        </h1>
+        <h1 className="text-lg font-bold capitalize md:text-xl">{categoryName}</h1>
         <div className="flex items-center gap-3">
           <FilterSidebar filters={currentFilters} onFilterChange={handleFilterChange} />
-          <SortDropdown
-            currentSort={`${sortBy}-${sortOrder}`}
-            onSortChange={handleSortChange}
-          />
+          <SortDropdown currentSort={`${sortBy}-${sortOrder}`} onSortChange={handleSortChange} />
         </div>
       </div>
 

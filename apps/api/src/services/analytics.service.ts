@@ -1,5 +1,5 @@
-import { prisma } from "@earth-revibe/db";
-import { APP_CONSTANTS } from "../config/constants";
+import { prisma } from '@earth-revibe/db';
+import { APP_CONSTANTS } from '../config/constants';
 
 export const analyticsService = {
   async getDashboardStats() {
@@ -21,11 +21,14 @@ export const analyticsService = {
       lowStockProducts,
     ] = await Promise.all([
       prisma.order.aggregate({
-        where: { status: { notIn: ["CANCELLED"] }, createdAt: { gte: startOfMonth } },
+        where: { status: { notIn: ['CANCELLED'] }, createdAt: { gte: startOfMonth } },
         _sum: { totalAmount: true },
       }),
       prisma.order.aggregate({
-        where: { status: { notIn: ["CANCELLED"] }, createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
+        where: {
+          status: { notIn: ['CANCELLED'] },
+          createdAt: { gte: startOfLastMonth, lte: endOfLastMonth },
+        },
         _sum: { totalAmount: true },
       }),
       prisma.order.count({
@@ -34,22 +37,32 @@ export const analyticsService = {
       prisma.order.count({
         where: { createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
       }),
-      prisma.user.count({ where: { role: "CUSTOMER" } }),
+      prisma.user.count({ where: { role: 'CUSTOMER' } }),
       prisma.user.count({
-        where: { role: "CUSTOMER", createdAt: { gte: startOfWeek } },
+        where: { role: 'CUSTOMER', createdAt: { gte: startOfWeek } },
       }),
-      prisma.product.count({ where: { status: "ACTIVE" } }),
+      prisma.product.count({ where: { status: 'ACTIVE' } }),
       prisma.productVariant.count({ where: { stock: { lte: APP_CONSTANTS.LOW_STOCK_THRESHOLD } } }),
     ]);
 
     const thisMonthRev = Number(totalRevenue._sum.totalAmount || 0);
     const lastMonthRev = Number(lastMonthRevenue._sum.totalAmount || 0);
-    const revenueChange = lastMonthRev > 0 ? (((thisMonthRev - lastMonthRev) / lastMonthRev) * 100).toFixed(1) : "0";
-    const ordersChange = ordersLastMonth > 0 ? (((ordersThisMonth - ordersLastMonth) / ordersLastMonth) * 100).toFixed(1) : "0";
+    const revenueChange =
+      lastMonthRev > 0 ? (((thisMonthRev - lastMonthRev) / lastMonthRev) * 100).toFixed(1) : '0';
+    const ordersChange =
+      ordersLastMonth > 0
+        ? (((ordersThisMonth - ordersLastMonth) / ordersLastMonth) * 100).toFixed(1)
+        : '0';
 
     return {
-      revenue: { value: thisMonthRev, change: `${Number(revenueChange) >= 0 ? "+" : ""}${revenueChange}% from last month` },
-      orders: { value: ordersThisMonth, change: `${Number(ordersChange) >= 0 ? "+" : ""}${ordersChange}% from last month` },
+      revenue: {
+        value: thisMonthRev,
+        change: `${Number(revenueChange) >= 0 ? '+' : ''}${revenueChange}% from last month`,
+      },
+      orders: {
+        value: ordersThisMonth,
+        change: `${Number(ordersChange) >= 0 ? '+' : ''}${ordersChange}% from last month`,
+      },
       customers: { value: totalCustomers, change: `+${newCustomersThisWeek} new this week` },
       products: { value: totalProducts, change: `${lowStockProducts} low stock` },
     };
@@ -63,11 +76,11 @@ export const analyticsService = {
       const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
       const result = await prisma.order.aggregate({
-        where: { status: { notIn: ["CANCELLED"] }, createdAt: { gte: start, lte: end } },
+        where: { status: { notIn: ['CANCELLED'] }, createdAt: { gte: start, lte: end } },
         _sum: { totalAmount: true },
       });
       months.push({
-        month: start.toLocaleString("en-IN", { month: "short" }),
+        month: start.toLocaleString('en-IN', { month: 'short' }),
         revenue: Number(result._sum.totalAmount || 0),
       });
     }
@@ -78,7 +91,7 @@ export const analyticsService = {
   async getRecentOrders(limit: number = 5) {
     const orders = await prisma.order.findMany({
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       include: {
         user: { select: { firstName: true, lastName: true } },
       },
@@ -86,31 +99,31 @@ export const analyticsService = {
 
     return orders.map((o) => ({
       id: o.orderNumber,
-      customer: o.user ? `${o.user.firstName} ${o.user.lastName}` : o.guestEmail || "Guest",
+      customer: o.user ? `${o.user.firstName} ${o.user.lastName}` : o.guestEmail || 'Guest',
       total: o.totalAmount,
       status: o.status,
-      date: o.createdAt.toISOString().split("T")[0],
+      date: o.createdAt.toISOString().split('T')[0],
     }));
   },
 
-  async getHomeDashboard(period: string = "today") {
+  async getHomeDashboard(period: string = 'today') {
     const now = new Date();
     let startDate: Date;
     let prevStartDate: Date;
     let prevEndDate: Date;
 
-    if (period === "today") {
+    if (period === 'today') {
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       prevStartDate = new Date(startDate);
       prevStartDate.setDate(prevStartDate.getDate() - 1);
       prevEndDate = new Date(startDate);
-    } else if (period === "7d") {
+    } else if (period === '7d') {
       startDate = new Date(now);
       startDate.setDate(now.getDate() - 7);
       prevStartDate = new Date(startDate);
       prevStartDate.setDate(prevStartDate.getDate() - 7);
       prevEndDate = new Date(startDate);
-    } else if (period === "90d") {
+    } else if (period === '90d') {
       startDate = new Date(now);
       startDate.setDate(now.getDate() - 90);
       prevStartDate = new Date(startDate);
@@ -138,22 +151,28 @@ export const analyticsService = {
       ordersByStatus,
     ] = await Promise.all([
       prisma.order.aggregate({
-        where: { status: { notIn: ["CANCELLED"] }, createdAt: { gte: startDate } },
+        where: { status: { notIn: ['CANCELLED'] }, createdAt: { gte: startDate } },
         _sum: { totalAmount: true },
       }),
       prisma.order.aggregate({
-        where: { status: { notIn: ["CANCELLED"] }, createdAt: { gte: prevStartDate, lt: prevEndDate } },
+        where: {
+          status: { notIn: ['CANCELLED'] },
+          createdAt: { gte: prevStartDate, lt: prevEndDate },
+        },
         _sum: { totalAmount: true },
       }),
       prisma.order.count({ where: { createdAt: { gte: startDate } } }),
       prisma.order.count({ where: { createdAt: { gte: prevStartDate, lt: prevEndDate } } }),
       prisma.order.aggregate({
-        where: { status: { notIn: ["CANCELLED"] }, createdAt: { gte: startDate } },
+        where: { status: { notIn: ['CANCELLED'] }, createdAt: { gte: startDate } },
         _avg: { totalAmount: true },
         _count: true,
       }),
       prisma.order.aggregate({
-        where: { status: { notIn: ["CANCELLED"] }, createdAt: { gte: prevStartDate, lt: prevEndDate } },
+        where: {
+          status: { notIn: ['CANCELLED'] },
+          createdAt: { gte: prevStartDate, lt: prevEndDate },
+        },
         _avg: { totalAmount: true },
       }),
       prisma.$queryRaw<{ count: number }[]>`
@@ -169,7 +188,7 @@ export const analyticsService = {
       prisma.order.findMany({
         where: { createdAt: { gte: startDate } },
         select: { userId: true },
-        distinct: ["userId"],
+        distinct: ['userId'],
       }),
       prisma.$queryRaw<{ name: string; quantity: number; revenue: number }[]>`
         SELECT p.name, SUM(oi.quantity)::int as quantity, SUM(oi."totalPrice")::numeric as revenue
@@ -182,7 +201,7 @@ export const analyticsService = {
         ORDER BY quantity DESC
         LIMIT 5
       `,
-      period === "today"
+      period === 'today'
         ? Promise.resolve([])
         : prisma.$queryRaw<{ date: string; revenue: number }[]>`
             SELECT DATE("createdAt") as date, SUM("totalAmount") as revenue
@@ -192,7 +211,7 @@ export const analyticsService = {
             ORDER BY date ASC
           `,
       prisma.order.groupBy({
-        by: ["status"],
+        by: ['status'],
         where: { createdAt: { gte: startDate } },
         _count: true,
       }),
@@ -206,7 +225,8 @@ export const analyticsService = {
     const prevAvgValue = Number(prevAvgOrder._avg.totalAmount || 0);
     const returningCount = returningCustomers[0]?.count || 0;
     const totalUniqueCustomers = totalOrderCustomers.length;
-    const returningRate = totalUniqueCustomers > 0 ? (returningCount / totalUniqueCustomers) * 100 : 0;
+    const returningRate =
+      totalUniqueCustomers > 0 ? (returningCount / totalUniqueCustomers) * 100 : 0;
 
     const calcChange = (curr: number, prev: number) => {
       if (prev === 0) return curr > 0 ? 100 : 0;
@@ -216,7 +236,10 @@ export const analyticsService = {
     return {
       metrics: {
         totalSales: { value: totalSales, change: calcChange(totalSales, prevTotalSales) },
-        totalOrders: { value: totalOrdersCount, change: calcChange(totalOrdersCount, prevOrdersCount) },
+        totalOrders: {
+          value: totalOrdersCount,
+          change: calcChange(totalOrdersCount, prevOrdersCount),
+        },
         avgOrderValue: { value: avgValue, change: calcChange(avgValue, prevAvgValue) },
         returningCustomerRate: { value: returningRate, change: 0 },
         conversionRate: { value: 0, change: 0 },
@@ -227,13 +250,16 @@ export const analyticsService = {
         quantity: Number(p.quantity),
         revenue: Number(p.revenue),
       })),
-      salesOverTime: revenueByDay.map((r) => ({ date: String(r.date), revenue: Number(r.revenue) })),
+      salesOverTime: revenueByDay.map((r) => ({
+        date: String(r.date),
+        revenue: Number(r.revenue),
+      })),
       ordersByStatus: ordersByStatus.map((s) => ({ status: s.status, count: s._count })),
     };
   },
 
-  async getAnalytics(period: string = "30d") {
-    const days = period === "7d" ? 7 : period === "90d" ? 90 : 30;
+  async getAnalytics(period: string = '30d') {
+    const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
@@ -247,7 +273,7 @@ export const analyticsService = {
       openTickets,
     ] = await Promise.all([
       prisma.order.groupBy({
-        by: ["status"],
+        by: ['status'],
         where: { createdAt: { gte: startDate } },
         _count: true,
       }),
@@ -277,12 +303,12 @@ export const analyticsService = {
         ORDER BY DATE_TRUNC('month', "createdAt") ASC
       `,
       prisma.order.aggregate({
-        where: { createdAt: { gte: startDate }, status: { notIn: ["CANCELLED"] } },
+        where: { createdAt: { gte: startDate }, status: { notIn: ['CANCELLED'] } },
         _avg: { totalAmount: true },
         _count: true,
       }),
       prisma.supportTicket.count({ where: { createdAt: { gte: startDate } } }),
-      prisma.supportTicket.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
+      prisma.supportTicket.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
     ]);
 
     return {

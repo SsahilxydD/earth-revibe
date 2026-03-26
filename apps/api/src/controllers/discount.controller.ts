@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { discountService } from "../services/discount.service";
+import type { Request, Response } from 'express';
+import { discountService } from '../services/discount.service';
 
 export const discountController = {
   async validateDiscount(req: Request, res: Response) {

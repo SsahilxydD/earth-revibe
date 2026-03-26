@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import crypto from "crypto";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import crypto from 'crypto';
 
 // ---------------------------------------------------------------------------
 // Hoisted mock variables — must come before any vi.mock() calls
@@ -105,7 +105,7 @@ const mocks = vi.hoisted(() => {
     razorpayOrdersFetch: vi.fn(),
 
     // ── shared ────────────────────────────────────────────────────────────
-    generateOrderNumber: vi.fn(() => "ORD-TEST-001"),
+    generateOrderNumber: vi.fn(() => 'ORD-TEST-001'),
   };
 });
 
@@ -113,7 +113,7 @@ const mocks = vi.hoisted(() => {
 // Module mocks
 // ---------------------------------------------------------------------------
 
-vi.mock("@earth-revibe/db", () => ({
+vi.mock('@earth-revibe/db', () => ({
   prisma: {
     productVariant: mocks.productVariant,
     product: mocks.product,
@@ -126,11 +126,11 @@ vi.mock("@earth-revibe/db", () => ({
     $transaction: mocks.$transaction,
   },
   Prisma: {
-    TransactionIsolationLevel: { Serializable: "Serializable" },
+    TransactionIsolationLevel: { Serializable: 'Serializable' },
   },
 }));
 
-vi.mock("../../config/razorpay", () => ({
+vi.mock('../../config/razorpay', () => ({
   getRazorpay: vi.fn(() => ({
     orders: {
       create: mocks.razorpayOrdersCreate,
@@ -139,15 +139,15 @@ vi.mock("../../config/razorpay", () => ({
   })),
 }));
 
-vi.mock("../../config/env", () => ({
-  env: { RAZORPAY_KEY_ID: "test_key", RAZORPAY_KEY_SECRET: "test_secret" },
+vi.mock('../../config/env', () => ({
+  env: { RAZORPAY_KEY_ID: 'test_key', RAZORPAY_KEY_SECRET: 'test_secret' },
 }));
 
-vi.mock("../../config/logger", () => ({
+vi.mock('../../config/logger', () => ({
   logger: { error: vi.fn() },
 }));
 
-vi.mock("../../config/constants", () => ({
+vi.mock('../../config/constants', () => ({
   APP_CONSTANTS: {
     CHECKOUT_EXPIRY_MS: 7_200_000, // 2 hours
     REFERRER_REWARD_POINTS: 100,
@@ -155,11 +155,11 @@ vi.mock("../../config/constants", () => ({
   },
 }));
 
-vi.mock("@earth-revibe/shared", () => ({
+vi.mock('@earth-revibe/shared', () => ({
   generateOrderNumber: mocks.generateOrderNumber,
 }));
 
-vi.mock("../shiprocket.service", () => ({
+vi.mock('../shiprocket.service', () => ({
   shiprocketService: {
     createShiprocketOrder: vi.fn(() => Promise.resolve()),
   },
@@ -169,13 +169,13 @@ vi.mock("../shiprocket.service", () => ({
 // Subject under test — imported AFTER all vi.mock() calls
 // ---------------------------------------------------------------------------
 
-import { checkoutService, restoreExpiredReservations } from "../checkout.service";
-import { ApiError } from "../../utils/api-error";
+import { checkoutService, restoreExpiredReservations } from '../checkout.service';
+import { ApiError } from '../../utils/api-error';
 
 // ---------------------------------------------------------------------------
 // Fixed date constant (avoids test-time drift)
 // ---------------------------------------------------------------------------
-const FIXED_DATE = new Date("2026-01-01T00:00:00.000Z");
+const FIXED_DATE = new Date('2026-01-01T00:00:00.000Z');
 
 // ---------------------------------------------------------------------------
 // Fixture factories — always return new objects (immutable pattern)
@@ -183,18 +183,18 @@ const FIXED_DATE = new Date("2026-01-01T00:00:00.000Z");
 
 function makeVariant(overrides: Record<string, unknown> = {}) {
   return {
-    id: "variant-1",
-    size: "M",
-    color: "Black",
+    id: 'variant-1',
+    size: 'M',
+    color: 'Black',
     stock: 10,
     price: 500,
     product: {
-      id: "product-1",
-      name: "Test Tee",
-      slug: "test-tee",
+      id: 'product-1',
+      name: 'Test Tee',
+      slug: 'test-tee',
       price: 500,
-      categoryId: "cat-1",
-      images: [{ url: "https://cdn.example.com/img.jpg", isPrimary: true }],
+      categoryId: 'cat-1',
+      images: [{ url: 'https://cdn.example.com/img.jpg', isPrimary: true }],
     },
     ...overrides,
   };
@@ -205,12 +205,12 @@ function makeDiscount(overrides: Record<string, unknown> = {}) {
   // Individual tests override startsAt/expiresAt to test expiry scenarios.
   const now = Date.now();
   return {
-    id: "dc-1",
-    code: "SAVE10",
-    type: "PERCENTAGE",
+    id: 'dc-1',
+    code: 'SAVE10',
+    type: 'PERCENTAGE',
     value: 10,
     isActive: true,
-    startsAt: new Date(now - 86_400_000),  // started 1 day ago
+    startsAt: new Date(now - 86_400_000), // started 1 day ago
     expiresAt: new Date(now + 86_400_000), // expires 1 day from now
     usageLimit: null,
     usageCount: 0,
@@ -225,7 +225,7 @@ function makeDiscount(overrides: Record<string, unknown> = {}) {
 
 function makeCheckoutInput(overrides: Record<string, unknown> = {}) {
   return {
-    items: [{ variantId: "variant-1", quantity: 2 }],
+    items: [{ variantId: 'variant-1', quantity: 2 }],
     discountCode: null,
     loyaltyPointsToUse: 0,
     guestEmail: null,
@@ -235,27 +235,27 @@ function makeCheckoutInput(overrides: Record<string, unknown> = {}) {
 
 function makeRazorpayOrder(overrides: Record<string, unknown> = {}) {
   return {
-    id: "rzp_order_abc123",
+    id: 'rzp_order_abc123',
     amount: 100_000,
-    currency: "INR",
-    receipt: "ORD-TEST-001",
+    currency: 'INR',
+    receipt: 'ORD-TEST-001',
     ...overrides,
   };
 }
 
 function makePendingCheckout(overrides: Record<string, unknown> = {}) {
   return {
-    id: "pc-1",
-    orderNumber: "ORD-TEST-001",
-    userId: "user-1",
+    id: 'pc-1',
+    orderNumber: 'ORD-TEST-001',
+    userId: 'user-1',
     guestEmail: null,
-    razorpayOrderId: "rzp_order_abc123",
+    razorpayOrderId: 'rzp_order_abc123',
     discountCode: null,
     loyaltyPointsToUse: 0,
     subtotal: 1000,
     discountAmount: 0,
     loyaltyDiscount: 0,
-    itemsJson: JSON.stringify([{ variantId: "variant-1", quantity: 2 }]),
+    itemsJson: JSON.stringify([{ variantId: 'variant-1', quantity: 2 }]),
     stockReserved: true,
     reservedAt: FIXED_DATE,
     createdAt: FIXED_DATE,
@@ -265,16 +265,16 @@ function makePendingCheckout(overrides: Record<string, unknown> = {}) {
 
 function makeAddress(overrides: Record<string, unknown> = {}) {
   return {
-    id: "addr-1",
-    userId: "user-1",
-    label: "Home",
-    fullName: "Test User",
-    phone: "9876543210",
-    line1: "123 Test St",
-    line2: "",
-    city: "Mumbai",
-    state: "Maharashtra",
-    pinCode: "400001",
+    id: 'addr-1',
+    userId: 'user-1',
+    label: 'Home',
+    fullName: 'Test User',
+    phone: '9876543210',
+    line1: '123 Test St',
+    line2: '',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    pinCode: '400001',
     isDefault: true,
     ...overrides,
   };
@@ -282,10 +282,10 @@ function makeAddress(overrides: Record<string, unknown> = {}) {
 
 function makeVerifyInput(overrides: Record<string, unknown> = {}) {
   // Generate a real HMAC so the signature check passes
-  const orderId = "rzp_order_abc123";
-  const paymentId = "pay_test_001";
-  const body = orderId + "|" + paymentId;
-  const sig = crypto.createHmac("sha256", "test_secret").update(body).digest("hex");
+  const orderId = 'rzp_order_abc123';
+  const paymentId = 'pay_test_001';
+  const body = orderId + '|' + paymentId;
+  const sig = crypto.createHmac('sha256', 'test_secret').update(body).digest('hex');
   return {
     razorpayOrderId: orderId,
     razorpayPaymentId: paymentId,
@@ -299,16 +299,14 @@ function makeVerifyInput(overrides: Record<string, unknown> = {}) {
 // Used for createMagicOrder's Serializable $transaction.
 // ---------------------------------------------------------------------------
 function setupCreateTransaction() {
-  mocks.$transaction.mockImplementationOnce(
-    (fn: (tx: unknown) => unknown, _opts?: unknown) => fn(mocks.txClient)
+  mocks.$transaction.mockImplementationOnce((fn: (tx: unknown) => unknown, _opts?: unknown) =>
+    fn(mocks.txClient)
   );
 }
 
 // Full tx client for verifyMagicPayment (has order, discountCode, user, etc.)
 function setupVerifyTransaction() {
-  mocks.$transaction.mockImplementationOnce(
-    (fn: (tx: unknown) => unknown) => fn(mocks.txClient)
-  );
+  mocks.$transaction.mockImplementationOnce((fn: (tx: unknown) => unknown) => fn(mocks.txClient));
 }
 
 // ---------------------------------------------------------------------------
@@ -317,43 +315,41 @@ function setupVerifyTransaction() {
 beforeEach(() => {
   vi.resetAllMocks();
   // Re-wire generateOrderNumber after reset
-  mocks.generateOrderNumber.mockReturnValue("ORD-TEST-001");
+  mocks.generateOrderNumber.mockReturnValue('ORD-TEST-001');
 });
 
 // ===========================================================================
 // createMagicOrder
 // ===========================================================================
 
-describe("checkoutService.createMagicOrder", () => {
+describe('checkoutService.createMagicOrder', () => {
   // ─────────────────────────────────────────────────────────────────────────
   // Guest checkout validation
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe("guest checkout — email validation", () => {
-    it("throws 400 BAD_REQUEST when guest checks out without an email", async () => {
+  describe('guest checkout — email validation', () => {
+    it('throws 400 BAD_REQUEST when guest checks out without an email', async () => {
       const input = makeCheckoutInput({ guestEmail: null });
 
-      await expect(
-        checkoutService.createMagicOrder(null, input as any)
-      ).rejects.toMatchObject({
+      await expect(checkoutService.createMagicOrder(null, input as any)).rejects.toMatchObject({
         statusCode: 400,
-        message: "Guest checkout requires an email address",
+        message: 'Guest checkout requires an email address',
       });
 
       // Should bail out before touching the DB
       expect(mocks.productVariant.findMany).not.toHaveBeenCalled();
     });
 
-    it("throws error that is an ApiError instance for missing guest email", async () => {
+    it('throws error that is an ApiError instance for missing guest email', async () => {
       const err = await checkoutService
         .createMagicOrder(null, makeCheckoutInput() as any)
         .catch((e) => e);
 
       expect(err).toBeInstanceOf(ApiError);
-      expect(err.code).toBe("BAD_REQUEST");
+      expect(err.code).toBe('BAD_REQUEST');
     });
 
-    it("proceeds past email check when guestEmail is provided", async () => {
+    it('proceeds past email check when guestEmail is provided', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -363,15 +359,15 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
-      const input = makeCheckoutInput({ guestEmail: "guest@example.com" });
+      const input = makeCheckoutInput({ guestEmail: 'guest@example.com' });
 
       const result = await checkoutService.createMagicOrder(null, input as any);
 
-      expect(result).toHaveProperty("razorpayOrderId");
-      expect(result.prefill.email).toBe("guest@example.com");
+      expect(result).toHaveProperty('razorpayOrderId');
+      expect(result.prefill.email).toBe('guest@example.com');
     });
 
-    it("uses empty string for prefill.name and empty contact for guest users", async () => {
+    it('uses empty string for prefill.name and empty contact for guest users', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -383,10 +379,10 @@ describe("checkoutService.createMagicOrder", () => {
 
       const result = await checkoutService.createMagicOrder(
         null,
-        makeCheckoutInput({ guestEmail: "g@x.com" }) as any
+        makeCheckoutInput({ guestEmail: 'g@x.com' }) as any
       );
 
-      expect(result.prefill).toEqual({ name: "", email: "g@x.com", contact: "" });
+      expect(result.prefill).toEqual({ name: '', email: 'g@x.com', contact: '' });
     });
   });
 
@@ -394,49 +390,46 @@ describe("checkoutService.createMagicOrder", () => {
   // Variant validation
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe("variant availability validation", () => {
-    it("throws 400 when a requested variant is not found in DB", async () => {
+  describe('variant availability validation', () => {
+    it('throws 400 when a requested variant is not found in DB', async () => {
       // Only 1 variant returned for 2 requested
-      mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant({ id: "variant-1" })]);
+      mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant({ id: 'variant-1' })]);
 
       const input = makeCheckoutInput({
         items: [
-          { variantId: "variant-1", quantity: 1 },
-          { variantId: "variant-MISSING", quantity: 1 },
+          { variantId: 'variant-1', quantity: 1 },
+          { variantId: 'variant-MISSING', quantity: 1 },
         ],
       });
 
-      await expect(
-        checkoutService.createMagicOrder("user-1", input as any)
-      ).rejects.toMatchObject({
+      await expect(checkoutService.createMagicOrder('user-1', input as any)).rejects.toMatchObject({
         statusCode: 400,
-        message: "One or more items are no longer available",
+        message: 'One or more items are no longer available',
       });
     });
 
-    it("proceeds when all requested variants are found", async () => {
-      const v1 = makeVariant({ id: "variant-1" });
-      const v2 = makeVariant({ id: "variant-2", product: { ...makeVariant().product, id: "product-2" } });
+    it('proceeds when all requested variants are found', async () => {
+      const v1 = makeVariant({ id: 'variant-1' });
+      const v2 = makeVariant({
+        id: 'variant-2',
+        product: { ...makeVariant().product, id: 'product-2' },
+      });
       mocks.productVariant.findMany.mockResolvedValueOnce([v1, v2]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
       setupCreateTransaction();
-      mocks.txVariantFindUnique
-        .mockResolvedValueOnce(v1)
-        .mockResolvedValueOnce(v2);
+      mocks.txVariantFindUnique.mockResolvedValueOnce(v1).mockResolvedValueOnce(v2);
       mocks.txVariantUpdateMany.mockResolvedValue({ count: 1 });
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
       const input = makeCheckoutInput({
         items: [
-          { variantId: "variant-1", quantity: 1 },
-          { variantId: "variant-2", quantity: 1 },
+          { variantId: 'variant-1', quantity: 1 },
+          { variantId: 'variant-2', quantity: 1 },
         ],
       });
 
-      await expect(
-        checkoutService.createMagicOrder("user-1", input as any)
-      ).resolves.toBeDefined();
+      await expect(checkoutService.createMagicOrder('user-1', input as any)).resolves.toBeDefined();
     });
   });
 
@@ -444,37 +437,35 @@ describe("checkoutService.createMagicOrder", () => {
   // Stock validation (pre-transaction check)
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe("stock quantity validation — pre-transaction", () => {
-    it("throws 400 when quantity exceeds available stock", async () => {
+  describe('stock quantity validation — pre-transaction', () => {
+    it('throws 400 when quantity exceeds available stock', async () => {
       const variant = makeVariant({ stock: 3 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
 
       const input = makeCheckoutInput({
-        items: [{ variantId: "variant-1", quantity: 5 }],
+        items: [{ variantId: 'variant-1', quantity: 5 }],
       });
 
-      await expect(
-        checkoutService.createMagicOrder("user-1", input as any)
-      ).rejects.toMatchObject({
+      await expect(checkoutService.createMagicOrder('user-1', input as any)).rejects.toMatchObject({
         statusCode: 400,
-        message: expect.stringContaining("only has 3 in stock"),
+        message: expect.stringContaining('only has 3 in stock'),
       });
     });
 
-    it("throws 400 when quantity exceeds stock by exactly one", async () => {
+    it('throws 400 when quantity exceeds stock by exactly one', async () => {
       const variant = makeVariant({ stock: 4 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
 
       const input = makeCheckoutInput({
-        items: [{ variantId: "variant-1", quantity: 5 }],
+        items: [{ variantId: 'variant-1', quantity: 5 }],
       });
 
-      await expect(
-        checkoutService.createMagicOrder("user-1", input as any)
-      ).rejects.toMatchObject({ statusCode: 400 });
+      await expect(checkoutService.createMagicOrder('user-1', input as any)).rejects.toMatchObject({
+        statusCode: 400,
+      });
     });
 
-    it("allows order when quantity exactly equals available stock", async () => {
+    it('allows order when quantity exactly equals available stock', async () => {
       const variant = makeVariant({ stock: 2 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -485,24 +476,28 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
       const input = makeCheckoutInput({
-        items: [{ variantId: "variant-1", quantity: 2 }],
+        items: [{ variantId: 'variant-1', quantity: 2 }],
       });
 
-      await expect(
-        checkoutService.createMagicOrder("user-1", input as any)
-      ).resolves.toBeDefined();
+      await expect(checkoutService.createMagicOrder('user-1', input as any)).resolves.toBeDefined();
     });
 
-    it("includes variant name and stock count in the stock error message", async () => {
-      const variant = makeVariant({ stock: 1, product: { ...makeVariant().product, name: "Eco Tee" } });
+    it('includes variant name and stock count in the stock error message', async () => {
+      const variant = makeVariant({
+        stock: 1,
+        product: { ...makeVariant().product, name: 'Eco Tee' },
+      });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
 
       const err = await checkoutService
-        .createMagicOrder("user-1", makeCheckoutInput({ items: [{ variantId: "variant-1", quantity: 5 }] }) as any)
+        .createMagicOrder(
+          'user-1',
+          makeCheckoutInput({ items: [{ variantId: 'variant-1', quantity: 5 }] }) as any
+        )
         .catch((e) => e);
 
-      expect(err.message).toContain("Eco Tee");
-      expect(err.message).toContain("1");
+      expect(err.message).toContain('Eco Tee');
+      expect(err.message).toContain('1');
     });
   });
 
@@ -510,9 +505,12 @@ describe("checkoutService.createMagicOrder", () => {
   // Price calculation
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe("price calculation", () => {
-    it("uses variant.price when it is non-zero", async () => {
-      const variant = makeVariant({ price: 750, product: { ...makeVariant().product, price: 500 } });
+  describe('price calculation', () => {
+    it('uses variant.price when it is non-zero', async () => {
+      const variant = makeVariant({
+        price: 750,
+        product: { ...makeVariant().product, price: 500 },
+      });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
       setupCreateTransaction();
@@ -521,9 +519,9 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
-      const input = makeCheckoutInput({ items: [{ variantId: "variant-1", quantity: 1 }] });
+      const input = makeCheckoutInput({ items: [{ variantId: 'variant-1', quantity: 1 }] });
 
-      await checkoutService.createMagicOrder("user-1", input as any);
+      await checkoutService.createMagicOrder('user-1', input as any);
 
       // 750 * 1 = 750 INR → 75000 paise
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
@@ -531,7 +529,7 @@ describe("checkoutService.createMagicOrder", () => {
       );
     });
 
-    it("falls back to product.price when variant.price is 0", async () => {
+    it('falls back to product.price when variant.price is 0', async () => {
       const variant = makeVariant({ price: 0, product: { ...makeVariant().product, price: 600 } });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -541,9 +539,9 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
-      const input = makeCheckoutInput({ items: [{ variantId: "variant-1", quantity: 2 }] });
+      const input = makeCheckoutInput({ items: [{ variantId: 'variant-1', quantity: 2 }] });
 
-      await checkoutService.createMagicOrder("user-1", input as any);
+      await checkoutService.createMagicOrder('user-1', input as any);
 
       // 600 * 2 = 1200 INR → 120000 paise
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
@@ -551,27 +549,29 @@ describe("checkoutService.createMagicOrder", () => {
       );
     });
 
-    it("accumulates line-item totals correctly across multiple variants", async () => {
-      const v1 = makeVariant({ id: "variant-1", price: 500 });
-      const v2 = makeVariant({ id: "variant-2", price: 300, product: { ...makeVariant().product, id: "product-2" } });
+    it('accumulates line-item totals correctly across multiple variants', async () => {
+      const v1 = makeVariant({ id: 'variant-1', price: 500 });
+      const v2 = makeVariant({
+        id: 'variant-2',
+        price: 300,
+        product: { ...makeVariant().product, id: 'product-2' },
+      });
       mocks.productVariant.findMany.mockResolvedValueOnce([v1, v2]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
       setupCreateTransaction();
-      mocks.txVariantFindUnique
-        .mockResolvedValueOnce(v1)
-        .mockResolvedValueOnce(v2);
+      mocks.txVariantFindUnique.mockResolvedValueOnce(v1).mockResolvedValueOnce(v2);
       mocks.txVariantUpdateMany.mockResolvedValue({ count: 1 });
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
       const input = makeCheckoutInput({
         items: [
-          { variantId: "variant-1", quantity: 2 }, // 1000
-          { variantId: "variant-2", quantity: 1 }, // 300
+          { variantId: 'variant-1', quantity: 2 }, // 1000
+          { variantId: 'variant-2', quantity: 1 }, // 300
         ],
       });
 
-      await checkoutService.createMagicOrder("user-1", input as any);
+      await checkoutService.createMagicOrder('user-1', input as any);
 
       // 1300 INR → 130000 paise
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
@@ -579,7 +579,7 @@ describe("checkoutService.createMagicOrder", () => {
       );
     });
 
-    it("sends line_items with prices in paise to Razorpay", async () => {
+    it('sends line_items with prices in paise to Razorpay', async () => {
       const variant = makeVariant({ price: 499 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -589,15 +589,15 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
-      const input = makeCheckoutInput({ items: [{ variantId: "variant-1", quantity: 1 }] });
-      await checkoutService.createMagicOrder("user-1", input as any);
+      const input = makeCheckoutInput({ items: [{ variantId: 'variant-1', quantity: 1 }] });
+      await checkoutService.createMagicOrder('user-1', input as any);
 
       const lineItem = mocks.razorpayOrdersCreate.mock.calls[0][0].line_items[0];
       expect(lineItem.price).toBe(49_900);
       expect(lineItem.offer_price).toBe(49_900);
     });
 
-    it("passes line_items_total separately from order amount", async () => {
+    it('passes line_items_total separately from order amount', async () => {
       const variant = makeVariant({ price: 500 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -607,7 +607,7 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
-      await checkoutService.createMagicOrder("user-1", makeCheckoutInput() as any);
+      await checkoutService.createMagicOrder('user-1', makeCheckoutInput() as any);
 
       const call = mocks.razorpayOrdersCreate.mock.calls[0][0];
       // qty=2 * 500 = 1000 INR → 100000 paise
@@ -619,13 +619,13 @@ describe("checkoutService.createMagicOrder", () => {
   // Discount code — calculateDiscount helper
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe("discount code application", () => {
+  describe('discount code application', () => {
     async function applyWithDiscount(discountOverrides: Record<string, unknown> = {}, qty = 2) {
       const variant = makeVariant({ price: 500 });
       const discount = makeDiscount(discountOverrides);
 
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(discount);
       mocks.order.count.mockResolvedValueOnce(0);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -636,16 +636,16 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
       return checkoutService.createMagicOrder(
-        "user-1",
+        'user-1',
         makeCheckoutInput({
-          discountCode: "SAVE10",
-          items: [{ variantId: "variant-1", quantity: qty }],
+          discountCode: 'SAVE10',
+          items: [{ variantId: 'variant-1', quantity: qty }],
         }) as any
       );
     }
 
-    it("applies PERCENTAGE discount correctly", async () => {
-      await applyWithDiscount({ type: "PERCENTAGE", value: 10 });
+    it('applies PERCENTAGE discount correctly', async () => {
+      await applyWithDiscount({ type: 'PERCENTAGE', value: 10 });
 
       // subtotal=1000, 10% = 100 → total 900 → 90000 paise
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
@@ -653,9 +653,9 @@ describe("checkoutService.createMagicOrder", () => {
       );
     });
 
-    it("caps PERCENTAGE discount at maxDiscountAmount when limit is set", async () => {
+    it('caps PERCENTAGE discount at maxDiscountAmount when limit is set', async () => {
       // 20% of 1000 = 200, capped at 150
-      await applyWithDiscount({ type: "PERCENTAGE", value: 20, maxDiscountAmount: 150 });
+      await applyWithDiscount({ type: 'PERCENTAGE', value: 20, maxDiscountAmount: 150 });
 
       // 1000 - 150 = 850 → 85000 paise
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
@@ -663,9 +663,9 @@ describe("checkoutService.createMagicOrder", () => {
       );
     });
 
-    it("does NOT cap PERCENTAGE discount when actual discount is below maxDiscountAmount", async () => {
+    it('does NOT cap PERCENTAGE discount when actual discount is below maxDiscountAmount', async () => {
       // 5% of 1000 = 50, max is 200 — no capping needed
-      await applyWithDiscount({ type: "PERCENTAGE", value: 5, maxDiscountAmount: 200 });
+      await applyWithDiscount({ type: 'PERCENTAGE', value: 5, maxDiscountAmount: 200 });
 
       // 1000 - 50 = 950 → 95000 paise
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
@@ -673,8 +673,8 @@ describe("checkoutService.createMagicOrder", () => {
       );
     });
 
-    it("applies FLAT discount correctly", async () => {
-      await applyWithDiscount({ type: "FLAT", value: 200 });
+    it('applies FLAT discount correctly', async () => {
+      await applyWithDiscount({ type: 'FLAT', value: 200 });
 
       // 1000 - 200 = 800 → 80000 paise
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
@@ -682,17 +682,17 @@ describe("checkoutService.createMagicOrder", () => {
       );
     });
 
-    it("caps FLAT discount at subtotal to prevent negative total", async () => {
+    it('caps FLAT discount at subtotal to prevent negative total', async () => {
       // Flat 1500 > subtotal 1000 → discount capped at 1000 → total 0
-      await applyWithDiscount({ type: "FLAT", value: 1500 });
+      await applyWithDiscount({ type: 'FLAT', value: 1500 });
 
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
         expect.objectContaining({ amount: 0 })
       );
     });
 
-    it("applies FREE_SHIPPING discount as zero monetary reduction", async () => {
-      await applyWithDiscount({ type: "FREE_SHIPPING" });
+    it('applies FREE_SHIPPING discount as zero monetary reduction', async () => {
+      await applyWithDiscount({ type: 'FREE_SHIPPING' });
 
       // No monetary change → 1000 INR → 100000 paise
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
@@ -700,188 +700,188 @@ describe("checkoutService.createMagicOrder", () => {
       );
     });
 
-    it("throws 400 for BUY_X_GET_Y discount type (unsupported)", async () => {
+    it('throws 400 for BUY_X_GET_Y discount type (unsupported)', async () => {
       const variant = makeVariant({ price: 500 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
-      mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ type: "BUY_X_GET_Y" }));
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
+      mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ type: 'BUY_X_GET_Y' }));
       mocks.order.count.mockResolvedValueOnce(0);
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ discountCode: "BXGY" }) as any
+          'user-1',
+          makeCheckoutInput({ discountCode: 'BXGY' }) as any
         )
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: "This discount type is not yet supported",
+        message: 'This discount type is not yet supported',
       });
     });
 
-    it("throws 400 when discount code does not exist", async () => {
+    it('throws 400 when discount code does not exist', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(null);
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ discountCode: "FAKE" }) as any
+          'user-1',
+          makeCheckoutInput({ discountCode: 'FAKE' }) as any
         )
-      ).rejects.toMatchObject({ statusCode: 400, message: "Invalid discount code" });
+      ).rejects.toMatchObject({ statusCode: 400, message: 'Invalid discount code' });
     });
 
-    it("throws 400 when discount code is inactive", async () => {
+    it('throws 400 when discount code is inactive', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ isActive: false }));
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ discountCode: "SAVE10" }) as any
+          'user-1',
+          makeCheckoutInput({ discountCode: 'SAVE10' }) as any
         )
-      ).rejects.toMatchObject({ statusCode: 400, message: "Invalid discount code" });
+      ).rejects.toMatchObject({ statusCode: 400, message: 'Invalid discount code' });
     });
 
-    it("throws 400 when discount code has expired (expiresAt in the past)", async () => {
+    it('throws 400 when discount code has expired (expiresAt in the past)', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(
         makeDiscount({ expiresAt: new Date(Date.now() - 86_400_000) })
       );
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ discountCode: "SAVE10" }) as any
+          'user-1',
+          makeCheckoutInput({ discountCode: 'SAVE10' }) as any
         )
-      ).rejects.toMatchObject({ statusCode: 400, message: "Discount code has expired" });
+      ).rejects.toMatchObject({ statusCode: 400, message: 'Discount code has expired' });
     });
 
-    it("throws 400 when discount code has not started yet (startsAt in the future)", async () => {
+    it('throws 400 when discount code has not started yet (startsAt in the future)', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(
         makeDiscount({ startsAt: new Date(Date.now() + 86_400_000) })
       );
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ discountCode: "SAVE10" }) as any
+          'user-1',
+          makeCheckoutInput({ discountCode: 'SAVE10' }) as any
         )
-      ).rejects.toMatchObject({ statusCode: 400, message: "Discount code has expired" });
+      ).rejects.toMatchObject({ statusCode: 400, message: 'Discount code has expired' });
     });
 
-    it("throws 400 when global usage limit is reached", async () => {
+    it('throws 400 when global usage limit is reached', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(
         makeDiscount({ usageLimit: 100, usageCount: 100 })
       );
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ discountCode: "SAVE10" }) as any
+          'user-1',
+          makeCheckoutInput({ discountCode: 'SAVE10' }) as any
         )
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: "Discount code usage limit reached",
+        message: 'Discount code usage limit reached',
       });
     });
 
-    it("throws 400 when per-user limit is exceeded (user already used it)", async () => {
+    it('throws 400 when per-user limit is exceeded (user already used it)', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ perUserLimit: 1 }));
       mocks.order.count.mockResolvedValueOnce(1); // already used once
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ discountCode: "SAVE10" }) as any
+          'user-1',
+          makeCheckoutInput({ discountCode: 'SAVE10' }) as any
         )
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: expect.stringContaining("maximum number of times"),
+        message: expect.stringContaining('maximum number of times'),
       });
     });
 
-    it("throws 400 when subtotal is below the minimum order value", async () => {
+    it('throws 400 when subtotal is below the minimum order value', async () => {
       const variant = makeVariant({ price: 200 }); // subtotal = 400 for qty 2
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ minOrderValue: 500 }));
       mocks.order.count.mockResolvedValueOnce(0);
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
+          'user-1',
           makeCheckoutInput({
-            discountCode: "SAVE10",
-            items: [{ variantId: "variant-1", quantity: 2 }],
+            discountCode: 'SAVE10',
+            items: [{ variantId: 'variant-1', quantity: 2 }],
           }) as any
         )
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: expect.stringContaining("Minimum order value"),
+        message: expect.stringContaining('Minimum order value'),
       });
     });
 
-    it("throws 400 when none of the cart products are in applicableProducts", async () => {
+    it('throws 400 when none of the cart products are in applicableProducts', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(
-        makeDiscount({ applicableProducts: ["product-OTHER"] })
+        makeDiscount({ applicableProducts: ['product-OTHER'] })
       );
       mocks.order.count.mockResolvedValueOnce(0);
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ discountCode: "SAVE10" }) as any
+          'user-1',
+          makeCheckoutInput({ discountCode: 'SAVE10' }) as any
         )
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: "This discount code is not applicable to the items in your cart",
+        message: 'This discount code is not applicable to the items in your cart',
       });
     });
 
-    it("throws 400 when none of the cart categories are in applicableCategories", async () => {
+    it('throws 400 when none of the cart categories are in applicableCategories', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(
-        makeDiscount({ applicableCategories: ["cat-OTHER"] })
+        makeDiscount({ applicableCategories: ['cat-OTHER'] })
       );
       mocks.order.count.mockResolvedValueOnce(0);
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ discountCode: "SAVE10" }) as any
+          'user-1',
+          makeCheckoutInput({ discountCode: 'SAVE10' }) as any
         )
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: "This discount code is not applicable to the items in your cart",
+        message: 'This discount code is not applicable to the items in your cart',
       });
     });
 
-    it("allows discount when cart product is in applicableProducts list", async () => {
+    it('allows discount when cart product is in applicableProducts list', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       mocks.discountCode.findUnique.mockResolvedValueOnce(
-        makeDiscount({ type: "FLAT", value: 50, applicableProducts: ["product-1"] })
+        makeDiscount({ type: 'FLAT', value: 50, applicableProducts: ['product-1'] })
       );
       mocks.order.count.mockResolvedValueOnce(0);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -893,8 +893,8 @@ describe("checkoutService.createMagicOrder", () => {
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ discountCode: "SAVE10" }) as any
+          'user-1',
+          makeCheckoutInput({ discountCode: 'SAVE10' }) as any
         )
       ).resolves.toBeDefined();
     });
@@ -904,7 +904,7 @@ describe("checkoutService.createMagicOrder", () => {
   // Loyalty points
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe("loyalty points", () => {
+  describe('loyalty points', () => {
     function setupHappyPath(variant: ReturnType<typeof makeVariant>) {
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -914,15 +914,15 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
     }
 
-    it("skips loyalty points for guest users even when loyaltyPointsToUse > 0", async () => {
+    it('skips loyalty points for guest users even when loyaltyPointsToUse > 0', async () => {
       const variant = makeVariant({ price: 500 });
       setupHappyPath(variant);
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
       const input = makeCheckoutInput({
-        guestEmail: "guest@example.com",
+        guestEmail: 'guest@example.com',
         loyaltyPointsToUse: 200,
-        items: [{ variantId: "variant-1", quantity: 2 }],
+        items: [{ variantId: 'variant-1', quantity: 2 }],
       });
 
       const result = await checkoutService.createMagicOrder(null, input as any);
@@ -931,16 +931,16 @@ describe("checkoutService.createMagicOrder", () => {
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
         expect.objectContaining({ amount: 100_000 })
       );
-      expect(result).toHaveProperty("razorpayOrderId");
+      expect(result).toHaveProperty('razorpayOrderId');
     });
 
-    it("stores loyaltyPointsToUse=0 in pendingCheckout for guest users", async () => {
+    it('stores loyaltyPointsToUse=0 in pendingCheckout for guest users', async () => {
       const variant = makeVariant();
       setupHappyPath(variant);
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
       const input = makeCheckoutInput({
-        guestEmail: "g@x.com",
+        guestEmail: 'g@x.com',
         loyaltyPointsToUse: 999,
       });
 
@@ -953,68 +953,64 @@ describe("checkoutService.createMagicOrder", () => {
       );
     });
 
-    it("throws 400 when authenticated user has insufficient loyalty points", async () => {
+    it('throws 400 when authenticated user has insufficient loyalty points', async () => {
       const variant = makeVariant({ price: 500 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.user.findUnique.mockResolvedValueOnce({ id: "user-1", loyaltyPoints: 50 });
+      mocks.user.findUnique.mockResolvedValueOnce({ id: 'user-1', loyaltyPoints: 50 });
 
       const input = makeCheckoutInput({
         loyaltyPointsToUse: 200,
-        items: [{ variantId: "variant-1", quantity: 2 }],
+        items: [{ variantId: 'variant-1', quantity: 2 }],
       });
 
-      await expect(
-        checkoutService.createMagicOrder("user-1", input as any)
-      ).rejects.toMatchObject({
+      await expect(checkoutService.createMagicOrder('user-1', input as any)).rejects.toMatchObject({
         statusCode: 400,
-        message: "Insufficient loyalty points",
+        message: 'Insufficient loyalty points',
       });
     });
 
-    it("throws 400 when user does not exist but loyaltyPointsToUse > 0", async () => {
+    it('throws 400 when user does not exist but loyaltyPointsToUse > 0', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
+          'user-1',
           makeCheckoutInput({ loyaltyPointsToUse: 100 }) as any
         )
-      ).rejects.toMatchObject({ statusCode: 400, message: "Insufficient loyalty points" });
+      ).rejects.toMatchObject({ statusCode: 400, message: 'Insufficient loyalty points' });
     });
 
-    it("throws 400 when points are below minimum redemption threshold", async () => {
+    it('throws 400 when points are below minimum redemption threshold', async () => {
       const variant = makeVariant({ price: 500 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.user.findUnique.mockResolvedValueOnce({ id: "user-1", loyaltyPoints: 500 });
+      mocks.user.findUnique.mockResolvedValueOnce({ id: 'user-1', loyaltyPoints: 500 });
       mocks.loyaltyConfig.findFirst.mockResolvedValueOnce({ isActive: true, minRedeemPoints: 100 });
 
       const input = makeCheckoutInput({
         loyaltyPointsToUse: 50, // below threshold
-        items: [{ variantId: "variant-1", quantity: 2 }],
+        items: [{ variantId: 'variant-1', quantity: 2 }],
       });
 
-      await expect(
-        checkoutService.createMagicOrder("user-1", input as any)
-      ).rejects.toMatchObject({
+      await expect(checkoutService.createMagicOrder('user-1', input as any)).rejects.toMatchObject({
         statusCode: 400,
-        message: expect.stringContaining("100 points required"),
+        message: expect.stringContaining('100 points required'),
       });
     });
 
-    it("applies loyalty discount for authenticated users with sufficient points", async () => {
+    it('applies loyalty discount for authenticated users with sufficient points', async () => {
       const variant = makeVariant({ price: 500 });
       setupHappyPath(variant);
-      mocks.user.findUnique.mockResolvedValueOnce({ id: "user-1", loyaltyPoints: 500 });
+      mocks.user.findUnique.mockResolvedValueOnce({ id: 'user-1', loyaltyPoints: 500 });
       mocks.loyaltyConfig.findFirst.mockResolvedValueOnce({ isActive: true, minRedeemPoints: 10 });
 
       const input = makeCheckoutInput({
         loyaltyPointsToUse: 200,
-        items: [{ variantId: "variant-1", quantity: 2 }],
+        items: [{ variantId: 'variant-1', quantity: 2 }],
       });
 
-      await checkoutService.createMagicOrder("user-1", input as any);
+      await checkoutService.createMagicOrder('user-1', input as any);
 
       // 1000 - 200 = 800 → 80000 paise
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
@@ -1022,14 +1018,16 @@ describe("checkoutService.createMagicOrder", () => {
       );
     });
 
-    it("caps loyalty discount at (lineItemsTotal - discountAmount) to prevent overpaying", async () => {
+    it('caps loyalty discount at (lineItemsTotal - discountAmount) to prevent overpaying', async () => {
       // subtotal=1000, flat discount=600, max loyalty=400, user requests 700
       const variant = makeVariant({ price: 500 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
-      mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ type: "FLAT", value: 600 }));
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
+      mocks.discountCode.findUnique.mockResolvedValueOnce(
+        makeDiscount({ type: 'FLAT', value: 600 })
+      );
       mocks.order.count.mockResolvedValueOnce(0);
-      mocks.user.findUnique.mockResolvedValueOnce({ id: "user-1", loyaltyPoints: 1000 });
+      mocks.user.findUnique.mockResolvedValueOnce({ id: 'user-1', loyaltyPoints: 1000 });
       mocks.loyaltyConfig.findFirst.mockResolvedValueOnce({ isActive: true, minRedeemPoints: 10 });
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
       setupCreateTransaction();
@@ -1038,12 +1036,12 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
 
       const input = makeCheckoutInput({
-        discountCode: "SAVE10",
+        discountCode: 'SAVE10',
         loyaltyPointsToUse: 700,
-        items: [{ variantId: "variant-1", quantity: 2 }],
+        items: [{ variantId: 'variant-1', quantity: 2 }],
       });
 
-      await checkoutService.createMagicOrder("user-1", input as any);
+      await checkoutService.createMagicOrder('user-1', input as any);
 
       // subtotal=1000, flat=600, maxLoyalty=400, loyaltyUsed=min(700,400)=400 → total=0
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
@@ -1056,15 +1054,17 @@ describe("checkoutService.createMagicOrder", () => {
   // Total never negative
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe("total amount — never negative", () => {
-    it("clamps total to 0 when discounts exceed subtotal", async () => {
+  describe('total amount — never negative', () => {
+    it('clamps total to 0 when discounts exceed subtotal', async () => {
       const variant = makeVariant({ price: 100 }); // subtotal = 200 for qty 2
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
       // FLAT discount = 150, leaving 50; loyalty 100 would exceed remainder
-      mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ type: "FLAT", value: 150 }));
+      mocks.discountCode.findUnique.mockResolvedValueOnce(
+        makeDiscount({ type: 'FLAT', value: 150 })
+      );
       mocks.order.count.mockResolvedValueOnce(0);
-      mocks.user.findUnique.mockResolvedValueOnce({ id: "user-1", loyaltyPoints: 1000 });
+      mocks.user.findUnique.mockResolvedValueOnce({ id: 'user-1', loyaltyPoints: 1000 });
       mocks.loyaltyConfig.findFirst.mockResolvedValueOnce({ isActive: true, minRedeemPoints: 1 });
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
       setupCreateTransaction();
@@ -1073,23 +1073,25 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
 
       const input = makeCheckoutInput({
-        discountCode: "SAVE10",
+        discountCode: 'SAVE10',
         loyaltyPointsToUse: 100,
-        items: [{ variantId: "variant-1", quantity: 2 }],
+        items: [{ variantId: 'variant-1', quantity: 2 }],
       });
 
-      await checkoutService.createMagicOrder("user-1", input as any);
+      await checkoutService.createMagicOrder('user-1', input as any);
 
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
         expect.objectContaining({ amount: 0 })
       );
     });
 
-    it("passes amount=0 in paise (not a negative value) when fully discounted", async () => {
+    it('passes amount=0 in paise (not a negative value) when fully discounted', async () => {
       const variant = makeVariant({ price: 50 }); // subtotal 100
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: "product-1", categoryId: "cat-1" }]);
-      mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ type: "FLAT", value: 999 }));
+      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
+      mocks.discountCode.findUnique.mockResolvedValueOnce(
+        makeDiscount({ type: 'FLAT', value: 999 })
+      );
       mocks.order.count.mockResolvedValueOnce(0);
       mocks.user.findUnique.mockResolvedValueOnce(null);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -1099,10 +1101,10 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
 
       await checkoutService.createMagicOrder(
-        "user-1",
+        'user-1',
         makeCheckoutInput({
-          discountCode: "SAVE10",
-          items: [{ variantId: "variant-1", quantity: 2 }],
+          discountCode: 'SAVE10',
+          items: [{ variantId: 'variant-1', quantity: 2 }],
         }) as any
       );
 
@@ -1116,31 +1118,34 @@ describe("checkoutService.createMagicOrder", () => {
   // Serializable transaction — stock reservation & price revalidation
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe("stock reservation transaction (Serializable isolation)", () => {
-    it("throws CONFLICT 409 when price changes between pre-check and transaction", async () => {
+  describe('stock reservation transaction (Serializable isolation)', () => {
+    it('throws CONFLICT 409 when price changes between pre-check and transaction', async () => {
       const variant = makeVariant({ price: 500 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
 
       // Inside tx: variant price has changed
-      const updatedVariant = makeVariant({ price: 600, product: { ...makeVariant().product, price: 600 } });
+      const updatedVariant = makeVariant({
+        price: 600,
+        product: { ...makeVariant().product, price: 600 },
+      });
       mocks.txVariantFindUnique.mockResolvedValueOnce(updatedVariant);
-      mocks.$transaction.mockImplementationOnce(
-        (fn: (tx: unknown) => unknown, _opts?: unknown) => fn(mocks.txClient)
+      mocks.$transaction.mockImplementationOnce((fn: (tx: unknown) => unknown, _opts?: unknown) =>
+        fn(mocks.txClient)
       );
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ items: [{ variantId: "variant-1", quantity: 2 }] }) as any
+          'user-1',
+          makeCheckoutInput({ items: [{ variantId: 'variant-1', quantity: 2 }] }) as any
         )
       ).rejects.toMatchObject({
         statusCode: 409,
-        message: expect.stringContaining("Price changed"),
+        message: expect.stringContaining('Price changed'),
       });
     });
 
-    it("throws CONFLICT 409 when stock drops below requested quantity inside transaction", async () => {
+    it('throws CONFLICT 409 when stock drops below requested quantity inside transaction', async () => {
       const variant = makeVariant({ price: 500, stock: 10 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -1148,22 +1153,22 @@ describe("checkoutService.createMagicOrder", () => {
       // Inside tx: stock has been depleted
       const depleted = makeVariant({ price: 500, stock: 1 });
       mocks.txVariantFindUnique.mockResolvedValueOnce(depleted);
-      mocks.$transaction.mockImplementationOnce(
-        (fn: (tx: unknown) => unknown, _opts?: unknown) => fn(mocks.txClient)
+      mocks.$transaction.mockImplementationOnce((fn: (tx: unknown) => unknown, _opts?: unknown) =>
+        fn(mocks.txClient)
       );
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ items: [{ variantId: "variant-1", quantity: 5 }] }) as any
+          'user-1',
+          makeCheckoutInput({ items: [{ variantId: 'variant-1', quantity: 5 }] }) as any
         )
       ).rejects.toMatchObject({
         statusCode: 409,
-        message: expect.stringContaining("Insufficient stock"),
+        message: expect.stringContaining('Insufficient stock'),
       });
     });
 
-    it("throws CONFLICT 409 when updateMany returns count=0 (concurrent reservation race)", async () => {
+    it('throws CONFLICT 409 when updateMany returns count=0 (concurrent reservation race)', async () => {
       const variant = makeVariant({ price: 500, stock: 10 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -1171,41 +1176,41 @@ describe("checkoutService.createMagicOrder", () => {
       // findUnique is fine but updateMany fails (another request grabbed last stock)
       mocks.txVariantFindUnique.mockResolvedValueOnce(variant);
       mocks.txVariantUpdateMany.mockResolvedValueOnce({ count: 0 });
-      mocks.$transaction.mockImplementationOnce(
-        (fn: (tx: unknown) => unknown, _opts?: unknown) => fn(mocks.txClient)
+      mocks.$transaction.mockImplementationOnce((fn: (tx: unknown) => unknown, _opts?: unknown) =>
+        fn(mocks.txClient)
       );
 
       await expect(
         checkoutService.createMagicOrder(
-          "user-1",
-          makeCheckoutInput({ items: [{ variantId: "variant-1", quantity: 2 }] }) as any
+          'user-1',
+          makeCheckoutInput({ items: [{ variantId: 'variant-1', quantity: 2 }] }) as any
         )
       ).rejects.toMatchObject({
         statusCode: 409,
-        message: expect.stringContaining("Stock reservation failed"),
+        message: expect.stringContaining('Stock reservation failed'),
       });
     });
 
-    it("throws 400 when variant is no longer available inside transaction", async () => {
+    it('throws 400 when variant is no longer available inside transaction', async () => {
       const variant = makeVariant({ price: 500 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
 
       // Inside tx: variant was deleted
       mocks.txVariantFindUnique.mockResolvedValueOnce(null);
-      mocks.$transaction.mockImplementationOnce(
-        (fn: (tx: unknown) => unknown, _opts?: unknown) => fn(mocks.txClient)
+      mocks.$transaction.mockImplementationOnce((fn: (tx: unknown) => unknown, _opts?: unknown) =>
+        fn(mocks.txClient)
       );
 
       await expect(
-        checkoutService.createMagicOrder("user-1", makeCheckoutInput() as any)
+        checkoutService.createMagicOrder('user-1', makeCheckoutInput() as any)
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: "Product variant is no longer available",
+        message: 'Product variant is no longer available',
       });
     });
 
-    it("creates pendingCheckout with stockReserved=true inside transaction", async () => {
+    it('creates pendingCheckout with stockReserved=true inside transaction', async () => {
       const variant = makeVariant({ price: 500 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -1215,19 +1220,19 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
-      await checkoutService.createMagicOrder("user-1", makeCheckoutInput() as any);
+      await checkoutService.createMagicOrder('user-1', makeCheckoutInput() as any);
 
       expect(mocks.txPendingCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             stockReserved: true,
-            orderNumber: "ORD-TEST-001",
+            orderNumber: 'ORD-TEST-001',
           }),
         })
       );
     });
 
-    it("passes Serializable isolation level to $transaction", async () => {
+    it('passes Serializable isolation level to $transaction', async () => {
       const variant = makeVariant({ price: 500 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -1237,15 +1242,15 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
-      await checkoutService.createMagicOrder("user-1", makeCheckoutInput() as any);
+      await checkoutService.createMagicOrder('user-1', makeCheckoutInput() as any);
 
       expect(mocks.$transaction).toHaveBeenCalledWith(
         expect.any(Function),
-        expect.objectContaining({ isolationLevel: "Serializable" })
+        expect.objectContaining({ isolationLevel: 'Serializable' })
       );
     });
 
-    it("decrements stock with a conditional filter to prevent over-reservation", async () => {
+    it('decrements stock with a conditional filter to prevent over-reservation', async () => {
       const variant = makeVariant({ price: 500, stock: 10 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -1256,14 +1261,14 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
       await checkoutService.createMagicOrder(
-        "user-1",
-        makeCheckoutInput({ items: [{ variantId: "variant-1", quantity: 3 }] }) as any
+        'user-1',
+        makeCheckoutInput({ items: [{ variantId: 'variant-1', quantity: 3 }] }) as any
       );
 
       expect(mocks.txVariantUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            id: "variant-1",
+            id: 'variant-1',
             stock: { gte: 3 },
           }),
           data: { stock: { decrement: 3 } },
@@ -1276,28 +1281,28 @@ describe("checkoutService.createMagicOrder", () => {
   // Return value
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe("return value", () => {
-    it("returns razorpayOrderId, razorpayKeyId, amount, orderNumber and prefill", async () => {
+  describe('return value', () => {
+    it('returns razorpayOrderId, razorpayKeyId, amount, orderNumber and prefill', async () => {
       const variant = makeVariant({ price: 500 });
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder({ id: "rzp_order_xyz" }));
+      mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder({ id: 'rzp_order_xyz' }));
       setupCreateTransaction();
       mocks.txVariantFindUnique.mockResolvedValueOnce(variant);
       mocks.txVariantUpdateMany.mockResolvedValueOnce({ count: 1 });
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce(null);
 
-      const result = await checkoutService.createMagicOrder("user-1", makeCheckoutInput() as any);
+      const result = await checkoutService.createMagicOrder('user-1', makeCheckoutInput() as any);
 
       expect(result).toMatchObject({
-        razorpayOrderId: "rzp_order_xyz",
-        razorpayKeyId: "test_key",
-        orderNumber: "ORD-TEST-001",
+        razorpayOrderId: 'rzp_order_xyz',
+        razorpayKeyId: 'test_key',
+        orderNumber: 'ORD-TEST-001',
         prefill: expect.any(Object),
       });
     });
 
-    it("populates prefill from DB user record for authenticated users", async () => {
+    it('populates prefill from DB user record for authenticated users', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -1306,22 +1311,22 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txVariantUpdateMany.mockResolvedValueOnce({ count: 1 });
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce({
-        email: "alice@example.com",
-        firstName: "Alice",
-        lastName: "Smith",
-        phone: "9876543210",
+        email: 'alice@example.com',
+        firstName: 'Alice',
+        lastName: 'Smith',
+        phone: '9876543210',
       });
 
-      const result = await checkoutService.createMagicOrder("user-1", makeCheckoutInput() as any);
+      const result = await checkoutService.createMagicOrder('user-1', makeCheckoutInput() as any);
 
       expect(result.prefill).toEqual({
-        name: "Alice Smith",
-        email: "alice@example.com",
-        contact: "9876543210",
+        name: 'Alice Smith',
+        email: 'alice@example.com',
+        contact: '9876543210',
       });
     });
 
-    it("uses guestEmail as prefill.email and empty name/contact for guest users", async () => {
+    it('uses guestEmail as prefill.email and empty name/contact for guest users', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -1333,13 +1338,13 @@ describe("checkoutService.createMagicOrder", () => {
 
       const result = await checkoutService.createMagicOrder(
         null,
-        makeCheckoutInput({ guestEmail: "guest@x.com" }) as any
+        makeCheckoutInput({ guestEmail: 'guest@x.com' }) as any
       );
 
-      expect(result.prefill).toEqual({ name: "", email: "guest@x.com", contact: "" });
+      expect(result.prefill).toEqual({ name: '', email: 'guest@x.com', contact: '' });
     });
 
-    it("uses empty string for contact when user has no phone", async () => {
+    it('uses empty string for contact when user has no phone', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -1348,18 +1353,18 @@ describe("checkoutService.createMagicOrder", () => {
       mocks.txVariantUpdateMany.mockResolvedValueOnce({ count: 1 });
       mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
       mocks.user.findUnique.mockResolvedValueOnce({
-        email: "bob@x.com",
-        firstName: "Bob",
-        lastName: "",
+        email: 'bob@x.com',
+        firstName: 'Bob',
+        lastName: '',
         phone: null,
       });
 
-      const result = await checkoutService.createMagicOrder("user-1", makeCheckoutInput() as any);
+      const result = await checkoutService.createMagicOrder('user-1', makeCheckoutInput() as any);
 
-      expect(result.prefill.contact).toBe("");
+      expect(result.prefill.contact).toBe('');
     });
 
-    it("stores razorpay notes with correct userId and guestEmail fields", async () => {
+    it('stores razorpay notes with correct userId and guestEmail fields', async () => {
       const variant = makeVariant();
       mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
       mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
@@ -1371,12 +1376,12 @@ describe("checkoutService.createMagicOrder", () => {
 
       await checkoutService.createMagicOrder(
         null,
-        makeCheckoutInput({ guestEmail: "g@x.com" }) as any
+        makeCheckoutInput({ guestEmail: 'g@x.com' }) as any
       );
 
       const notes = mocks.razorpayOrdersCreate.mock.calls[0][0].notes;
-      expect(notes.userId).toBe("guest");
-      expect(notes.guestEmail).toBe("g@x.com");
+      expect(notes.userId).toBe('guest');
+      expect(notes.guestEmail).toBe('g@x.com');
     });
   });
 });
@@ -1385,28 +1390,28 @@ describe("checkoutService.createMagicOrder", () => {
 // getShippingInfo
 // ===========================================================================
 
-describe("checkoutService.getShippingInfo", () => {
-  it("marks India (IN) addresses as serviceable", async () => {
+describe('checkoutService.getShippingInfo', () => {
+  it('marks India (IN) addresses as serviceable', async () => {
     const result = await checkoutService.getShippingInfo({
-      addresses: [{ id: "addr-1", zipcode: "400001", country: "IN" }],
+      addresses: [{ id: 'addr-1', zipcode: '400001', country: 'IN' }],
     } as any);
 
     expect(result.addresses[0].shipping_methods[0].serviceable).toBe(true);
   });
 
-  it("marks non-IN addresses as NOT serviceable", async () => {
+  it('marks non-IN addresses as NOT serviceable', async () => {
     const result = await checkoutService.getShippingInfo({
-      addresses: [{ id: "addr-2", zipcode: "10001", country: "US" }],
+      addresses: [{ id: 'addr-2', zipcode: '10001', country: 'US' }],
     } as any);
 
     expect(result.addresses[0].shipping_methods[0].serviceable).toBe(false);
   });
 
-  it("returns shipping_fee=0 for all addresses", async () => {
+  it('returns shipping_fee=0 for all addresses', async () => {
     const result = await checkoutService.getShippingInfo({
       addresses: [
-        { id: "a", zipcode: "400001", country: "IN" },
-        { id: "b", zipcode: "10001", country: "US" },
+        { id: 'a', zipcode: '400001', country: 'IN' },
+        { id: 'b', zipcode: '10001', country: 'US' },
       ],
     } as any);
 
@@ -1415,36 +1420,36 @@ describe("checkoutService.getShippingInfo", () => {
     });
   });
 
-  it("maps each address id correctly in the response", async () => {
+  it('maps each address id correctly in the response', async () => {
     const result = await checkoutService.getShippingInfo({
       addresses: [
-        { id: "addr-A", zipcode: "110001", country: "IN" },
-        { id: "addr-B", zipcode: "W1A 1AA", country: "GB" },
+        { id: 'addr-A', zipcode: '110001', country: 'IN' },
+        { id: 'addr-B', zipcode: 'W1A 1AA', country: 'GB' },
       ],
     } as any);
 
-    expect(result.addresses[0].id).toBe("addr-A");
-    expect(result.addresses[1].id).toBe("addr-B");
+    expect(result.addresses[0].id).toBe('addr-A');
+    expect(result.addresses[1].id).toBe('addr-B');
   });
 
-  it("returns an empty addresses array when input has no addresses", async () => {
+  it('returns an empty addresses array when input has no addresses', async () => {
     const result = await checkoutService.getShippingInfo({ addresses: [] } as any);
     expect(result.addresses).toEqual([]);
   });
 
-  it("returns cod=false for all addresses", async () => {
+  it('returns cod=false for all addresses', async () => {
     const result = await checkoutService.getShippingInfo({
-      addresses: [{ id: "x", zipcode: "400001", country: "IN" }],
+      addresses: [{ id: 'x', zipcode: '400001', country: 'IN' }],
     } as any);
 
     expect(result.addresses[0].shipping_methods[0].cod).toBe(false);
   });
 
-  it("handles multiple IN addresses correctly", async () => {
+  it('handles multiple IN addresses correctly', async () => {
     const result = await checkoutService.getShippingInfo({
       addresses: [
-        { id: "1", zipcode: "400001", country: "IN" },
-        { id: "2", zipcode: "110001", country: "IN" },
+        { id: '1', zipcode: '400001', country: 'IN' },
+        { id: '2', zipcode: '110001', country: 'IN' },
       ],
     } as any);
 
@@ -1458,40 +1463,40 @@ describe("checkoutService.getShippingInfo", () => {
 // getPromotions
 // ===========================================================================
 
-describe("checkoutService.getPromotions", () => {
-  it("returns active promotions mapped to code/summary/description", async () => {
+describe('checkoutService.getPromotions', () => {
+  it('returns active promotions mapped to code/summary/description', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([
-      makeDiscount({ code: "SAVE10", type: "PERCENTAGE", value: 10 }),
-      makeDiscount({ code: "FLAT50", type: "FLAT", value: 50 }),
+      makeDiscount({ code: 'SAVE10', type: 'PERCENTAGE', value: 10 }),
+      makeDiscount({ code: 'FLAT50', type: 'FLAT', value: 50 }),
     ]);
 
     const result = await checkoutService.getPromotions({} as any);
 
     expect(result.promotions).toHaveLength(2);
-    expect(result.promotions[0].code).toBe("SAVE10");
-    expect(result.promotions[0].summary).toContain("10% off");
-    expect(result.promotions[1].code).toBe("FLAT50");
-    expect(result.promotions[1].summary).toContain("₹50 off");
+    expect(result.promotions[0].code).toBe('SAVE10');
+    expect(result.promotions[0].summary).toContain('10% off');
+    expect(result.promotions[1].code).toBe('FLAT50');
+    expect(result.promotions[1].summary).toContain('₹50 off');
   });
 
-  it("includes maxDiscountAmount in PERCENTAGE summary when set", async () => {
+  it('includes maxDiscountAmount in PERCENTAGE summary when set', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([
-      makeDiscount({ type: "PERCENTAGE", value: 20, maxDiscountAmount: 200 }),
+      makeDiscount({ type: 'PERCENTAGE', value: 20, maxDiscountAmount: 200 }),
     ]);
 
     const result = await checkoutService.getPromotions({} as any);
 
-    expect(result.promotions[0].summary).toContain("up to ₹200");
+    expect(result.promotions[0].summary).toContain('up to ₹200');
   });
 
-  it("omits cap text from PERCENTAGE summary when maxDiscountAmount is null", async () => {
+  it('omits cap text from PERCENTAGE summary when maxDiscountAmount is null', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([
-      makeDiscount({ type: "PERCENTAGE", value: 15, maxDiscountAmount: null }),
+      makeDiscount({ type: 'PERCENTAGE', value: 15, maxDiscountAmount: null }),
     ]);
 
     const result = await checkoutService.getPromotions({} as any);
 
-    expect(result.promotions[0].summary).not.toContain("up to");
+    expect(result.promotions[0].summary).not.toContain('up to');
   });
 
   it("shows 'No minimum order' description when minOrderValue is null", async () => {
@@ -1499,18 +1504,18 @@ describe("checkoutService.getPromotions", () => {
 
     const result = await checkoutService.getPromotions({} as any);
 
-    expect(result.promotions[0].description).toBe("No minimum order");
+    expect(result.promotions[0].description).toBe('No minimum order');
   });
 
-  it("shows minimum order value in description when set", async () => {
+  it('shows minimum order value in description when set', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([makeDiscount({ minOrderValue: 500 })]);
 
     const result = await checkoutService.getPromotions({} as any);
 
-    expect(result.promotions[0].description).toContain("500");
+    expect(result.promotions[0].description).toContain('500');
   });
 
-  it("returns empty promotions array when no active codes exist", async () => {
+  it('returns empty promotions array when no active codes exist', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([]);
 
     const result = await checkoutService.getPromotions({} as any);
@@ -1518,7 +1523,7 @@ describe("checkoutService.getPromotions", () => {
     expect(result.promotions).toEqual([]);
   });
 
-  it("queries DB with isActive=true and date-window constraints", async () => {
+  it('queries DB with isActive=true and date-window constraints', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([]);
 
     await checkoutService.getPromotions({} as any);
@@ -1529,7 +1534,7 @@ describe("checkoutService.getPromotions", () => {
     expect(call.where.expiresAt).toBeDefined();
   });
 
-  it("limits results to 10 promotions", async () => {
+  it('limits results to 10 promotions', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([]);
 
     await checkoutService.getPromotions({} as any);
@@ -1543,89 +1548,95 @@ describe("checkoutService.getPromotions", () => {
 // applyPromotion
 // ===========================================================================
 
-describe("checkoutService.applyPromotion", () => {
-  it("returns error object when pending checkout is not found", async () => {
+describe('checkoutService.applyPromotion', () => {
+  it('returns error object when pending checkout is not found', async () => {
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(null);
 
     const result = await checkoutService.applyPromotion({
-      order_id: "ORD-MISSING",
-      code: "SAVE10",
+      order_id: 'ORD-MISSING',
+      code: 'SAVE10',
     } as any);
 
     expect(result).toEqual({
-      error: { code: "INVALID_PROMOTION", message: "Order not found" },
+      error: { code: 'INVALID_PROMOTION', message: 'Order not found' },
     });
   });
 
-  it("returns promotion object with value in paise when code is valid", async () => {
+  it('returns promotion object with value in paise when code is valid', async () => {
     const pending = makePendingCheckout({ subtotal: 1000 });
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
-    mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ type: "FLAT", value: 100 }));
+    mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ type: 'FLAT', value: 100 }));
 
     const result = await checkoutService.applyPromotion({
-      order_id: "ORD-TEST-001",
-      code: "SAVE10",
+      order_id: 'ORD-TEST-001',
+      code: 'SAVE10',
     } as any);
 
-    expect(result).toHaveProperty("promotion");
+    expect(result).toHaveProperty('promotion');
     const promo = (result as any).promotion;
-    expect(promo.code).toBe("SAVE10");
+    expect(promo.code).toBe('SAVE10');
     expect(promo.value).toBe(10_000); // 100 INR → 10000 paise
-    expect(promo.value_type).toBe("fixed_amount");
+    expect(promo.value_type).toBe('fixed_amount');
   });
 
-  it("returns promotion with reference_id equal to the code", async () => {
+  it('returns promotion with reference_id equal to the code', async () => {
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(makePendingCheckout({ subtotal: 500 }));
-    mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ type: "FLAT", value: 50 }));
+    mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ type: 'FLAT', value: 50 }));
 
-    const result = await checkoutService.applyPromotion({ order_id: "ORD-TEST-001", code: "FLAT50" } as any);
+    const result = await checkoutService.applyPromotion({
+      order_id: 'ORD-TEST-001',
+      code: 'FLAT50',
+    } as any);
 
-    expect((result as any).promotion.reference_id).toBe("FLAT50");
-    expect((result as any).promotion.type).toBe("coupon");
+    expect((result as any).promotion.reference_id).toBe('FLAT50');
+    expect((result as any).promotion.type).toBe('coupon');
   });
 
-  it("returns error object when discount code does not exist (throws ApiError)", async () => {
+  it('returns error object when discount code does not exist (throws ApiError)', async () => {
     const pending = makePendingCheckout({ subtotal: 1000 });
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
     mocks.discountCode.findUnique.mockResolvedValueOnce(null);
 
     const result = await checkoutService.applyPromotion({
-      order_id: "ORD-TEST-001",
-      code: "INVALID",
+      order_id: 'ORD-TEST-001',
+      code: 'INVALID',
     } as any);
 
-    expect(result).toHaveProperty("error");
-    expect((result as any).error.code).toBe("INVALID_PROMOTION");
-    expect((result as any).error.message).toBe("Invalid discount code");
+    expect(result).toHaveProperty('error');
+    expect((result as any).error.code).toBe('INVALID_PROMOTION');
+    expect((result as any).error.message).toBe('Invalid discount code');
   });
 
   it("returns 'Invalid code' message for unexpected non-ApiError exceptions", async () => {
     const pending = makePendingCheckout({ subtotal: 1000 });
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
-    mocks.discountCode.findUnique.mockRejectedValueOnce(new Error("DB crash"));
+    mocks.discountCode.findUnique.mockRejectedValueOnce(new Error('DB crash'));
 
     const result = await checkoutService.applyPromotion({
-      order_id: "ORD-TEST-001",
-      code: "SAVE10",
+      order_id: 'ORD-TEST-001',
+      code: 'SAVE10',
     } as any);
 
     expect(result).toEqual({
-      error: { code: "INVALID_PROMOTION", message: "Invalid code" },
+      error: { code: 'INVALID_PROMOTION', message: 'Invalid code' },
     });
   });
 
-  it("returns error object (not a thrown exception) when calculateDiscount throws a generic error", async () => {
+  it('returns error object (not a thrown exception) when calculateDiscount throws a generic error', async () => {
     // pendingCheckout is found, but the discountCode DB call throws a generic error
     const pending = makePendingCheckout({ subtotal: 500 });
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
-    mocks.discountCode.findUnique.mockRejectedValueOnce(new TypeError("Network error"));
+    mocks.discountCode.findUnique.mockRejectedValueOnce(new TypeError('Network error'));
 
-    const result = await checkoutService.applyPromotion({ order_id: "ORD-TEST-001", code: "SAVE10" } as any);
+    const result = await checkoutService.applyPromotion({
+      order_id: 'ORD-TEST-001',
+      code: 'SAVE10',
+    } as any);
 
     // applyPromotion catches non-ApiError errors and returns an error object
-    expect(result).toHaveProperty("error");
-    expect((result as any).error.code).toBe("INVALID_PROMOTION");
-    expect((result as any).error.message).toBe("Invalid code");
+    expect(result).toHaveProperty('error');
+    expect((result as any).error.code).toBe('INVALID_PROMOTION');
+    expect((result as any).error.message).toBe('Invalid code');
   });
 });
 
@@ -1633,16 +1644,16 @@ describe("checkoutService.applyPromotion", () => {
 // verifyMagicPayment
 // ===========================================================================
 
-describe("checkoutService.verifyMagicPayment", () => {
+describe('checkoutService.verifyMagicPayment', () => {
   // Build a valid HMAC signature for testing happy paths
   function makeValidSignature(orderId: string, paymentId: string) {
-    const body = orderId + "|" + paymentId;
-    return crypto.createHmac("sha256", "test_secret").update(body).digest("hex");
+    const body = orderId + '|' + paymentId;
+    return crypto.createHmac('sha256', 'test_secret').update(body).digest('hex');
   }
 
   function makeValidVerifyInput(overrides: Record<string, unknown> = {}) {
-    const orderId = "rzp_order_abc123";
-    const paymentId = "pay_test_001";
+    const orderId = 'rzp_order_abc123';
+    const paymentId = 'pay_test_001';
     return {
       razorpayOrderId: orderId,
       razorpayPaymentId: paymentId,
@@ -1654,17 +1665,17 @@ describe("checkoutService.verifyMagicPayment", () => {
   function makeRzpOrderFetch(addressOverrides: Record<string, unknown> = {}) {
     return {
       customer_details: {
-        contact: "+919876543210",
-        email: "customer@example.com",
+        contact: '+919876543210',
+        email: 'customer@example.com',
         shipping_address: {
-          name: "Test Customer",
-          line1: "123 Test St",
-          line2: "",
-          city: "Mumbai",
-          state: "Maharashtra",
-          zipcode: "400001",
-          country: "IN",
-          tag: "Home",
+          name: 'Test Customer',
+          line1: '123 Test St',
+          line2: '',
+          city: 'Mumbai',
+          state: 'Maharashtra',
+          zipcode: '400001',
+          country: 'IN',
+          tag: 'Home',
           ...addressOverrides,
         },
       },
@@ -1673,92 +1684,92 @@ describe("checkoutService.verifyMagicPayment", () => {
 
   // ── HMAC signature verification ──────────────────────────────────────────
 
-  describe("signature verification", () => {
-    it("throws 400 BAD_REQUEST when the signature is invalid", async () => {
-      const input = makeValidVerifyInput({ razorpaySignature: "invalid_sig" });
+  describe('signature verification', () => {
+    it('throws 400 BAD_REQUEST when the signature is invalid', async () => {
+      const input = makeValidVerifyInput({ razorpaySignature: 'invalid_sig' });
 
       await expect(
-        checkoutService.verifyMagicPayment("user-1", input as any)
+        checkoutService.verifyMagicPayment('user-1', input as any)
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: "Payment verification failed",
+        message: 'Payment verification failed',
       });
     });
 
-    it("throws 400 when signature is all zeros (tampered)", async () => {
+    it('throws 400 when signature is all zeros (tampered)', async () => {
       const input = makeValidVerifyInput({
-        razorpaySignature: "0".repeat(64),
+        razorpaySignature: '0'.repeat(64),
       });
 
       await expect(
-        checkoutService.verifyMagicPayment("user-1", input as any)
+        checkoutService.verifyMagicPayment('user-1', input as any)
       ).rejects.toMatchObject({ statusCode: 400 });
     });
 
-    it("proceeds past signature check when HMAC is correct", async () => {
+    it('proceeds past signature check when HMAC is correct', async () => {
       const input = makeValidVerifyInput();
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(null);
 
       // Will throw 404 (not found), NOT 400 (bad signature)
       await expect(
-        checkoutService.verifyMagicPayment("user-1", input as any)
+        checkoutService.verifyMagicPayment('user-1', input as any)
       ).rejects.toMatchObject({ statusCode: 404 });
     });
   });
 
   // ── Pending checkout lookup ───────────────────────────────────────────────
 
-  describe("pending checkout lookup", () => {
-    it("throws 404 when pending checkout is not found", async () => {
+  describe('pending checkout lookup', () => {
+    it('throws 404 when pending checkout is not found', async () => {
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(null);
 
       await expect(
-        checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any)
+        checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any)
       ).rejects.toMatchObject({
         statusCode: 404,
-        message: "Checkout session not found",
+        message: 'Checkout session not found',
       });
     });
 
-    it("throws 403 when authenticated userId mismatches the pending checkout userId", async () => {
-      const pending = makePendingCheckout({ userId: "user-OTHER" });
+    it('throws 403 when authenticated userId mismatches the pending checkout userId', async () => {
+      const pending = makePendingCheckout({ userId: 'user-OTHER' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
 
       await expect(
-        checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any)
+        checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any)
       ).rejects.toMatchObject({
         statusCode: 403,
-        message: "Checkout session does not belong to this user",
+        message: 'Checkout session does not belong to this user',
       });
     });
 
     it("allows access when userId matches the pending checkout's userId", async () => {
-      const pending = makePendingCheckout({ userId: "user-1" });
+      const pending = makePendingCheckout({ userId: 'user-1' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
       mocks.address.findFirst.mockResolvedValueOnce(makeAddress());
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txOrderCount.mockResolvedValueOnce(1);
       mocks.txReferralFindUnique.mockResolvedValueOnce(null);
       mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
       await expect(
-        checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any)
+        checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any)
       ).resolves.toBeDefined();
     });
 
-    it("allows guest access when both userId and pending.userId are null", async () => {
-      const pending = makePendingCheckout({ userId: null, guestEmail: "g@x.com" });
+    it('allows guest access when both userId and pending.userId are null', async () => {
+      const pending = makePendingCheckout({ userId: null, guestEmail: 'g@x.com' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.address.create.mockResolvedValueOnce(makeAddress({ id: "addr-new" }));
+      mocks.address.create.mockResolvedValueOnce(makeAddress({ id: 'addr-new' }));
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
       await expect(
@@ -1769,76 +1780,76 @@ describe("checkoutService.verifyMagicPayment", () => {
 
   // ── Address handling ──────────────────────────────────────────────────────
 
-  describe("shipping address handling", () => {
-    it("reuses existing address for authenticated user when pinCode+line1 match", async () => {
-      const pending = makePendingCheckout({ userId: "user-1" });
+  describe('shipping address handling', () => {
+    it('reuses existing address for authenticated user when pinCode+line1 match', async () => {
+      const pending = makePendingCheckout({ userId: 'user-1' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
-      const existingAddr = makeAddress({ id: "addr-existing" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
+      const existingAddr = makeAddress({ id: 'addr-existing' });
       mocks.address.findFirst.mockResolvedValueOnce(existingAddr);
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txOrderCount.mockResolvedValueOnce(0);
       mocks.txReferralFindUnique.mockResolvedValueOnce(null);
       mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
-      await checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any);
+      await checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any);
 
       expect(mocks.address.create).not.toHaveBeenCalled();
       // Address ID from existing address is used in order create
       expect(mocks.txOrderCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ addressId: "addr-existing" }),
+          data: expect.objectContaining({ addressId: 'addr-existing' }),
         })
       );
     });
 
-    it("creates new address for authenticated user when no existing match", async () => {
-      const pending = makePendingCheckout({ userId: "user-1" });
+    it('creates new address for authenticated user when no existing match', async () => {
+      const pending = makePendingCheckout({ userId: 'user-1' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
       mocks.address.findFirst.mockResolvedValueOnce(null); // no existing match
       mocks.address.count.mockResolvedValueOnce(2);
-      mocks.address.create.mockResolvedValueOnce(makeAddress({ id: "addr-new", isDefault: false }));
+      mocks.address.create.mockResolvedValueOnce(makeAddress({ id: 'addr-new', isDefault: false }));
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txOrderCount.mockResolvedValueOnce(0);
       mocks.txReferralFindUnique.mockResolvedValueOnce(null);
       mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
-      await checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any);
+      await checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any);
 
       expect(mocks.address.create).toHaveBeenCalledOnce();
       expect(mocks.address.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ userId: "user-1", isDefault: false }),
+          data: expect.objectContaining({ userId: 'user-1', isDefault: false }),
         })
       );
     });
 
-    it("sets isDefault=true when creating the first address for a user", async () => {
-      const pending = makePendingCheckout({ userId: "user-1" });
+    it('sets isDefault=true when creating the first address for a user', async () => {
+      const pending = makePendingCheckout({ userId: 'user-1' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
       mocks.address.findFirst.mockResolvedValueOnce(null);
       mocks.address.count.mockResolvedValueOnce(0); // first address
-      mocks.address.create.mockResolvedValueOnce(makeAddress({ id: "addr-1", isDefault: true }));
+      mocks.address.create.mockResolvedValueOnce(makeAddress({ id: 'addr-1', isDefault: true }));
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txOrderCount.mockResolvedValueOnce(0);
       mocks.txReferralFindUnique.mockResolvedValueOnce(null);
       mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
-      await checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any);
+      await checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any);
 
       expect(mocks.address.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1847,14 +1858,16 @@ describe("checkoutService.verifyMagicPayment", () => {
       );
     });
 
-    it("creates unlinked address for guest users (no userId)", async () => {
-      const pending = makePendingCheckout({ userId: null, guestEmail: "g@x.com" });
+    it('creates unlinked address for guest users (no userId)', async () => {
+      const pending = makePendingCheckout({ userId: null, guestEmail: 'g@x.com' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.address.create.mockResolvedValueOnce(makeAddress({ id: "addr-guest", userId: undefined }));
+      mocks.address.create.mockResolvedValueOnce(
+        makeAddress({ id: 'addr-guest', userId: undefined })
+      );
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
       await checkoutService.verifyMagicPayment(null, makeValidVerifyInput() as any);
@@ -1866,25 +1879,25 @@ describe("checkoutService.verifyMagicPayment", () => {
       );
     });
 
-    it("throws 400 when no address from Razorpay and no default address for authenticated user", async () => {
-      const pending = makePendingCheckout({ userId: "user-1" });
+    it('throws 400 when no address from Razorpay and no default address for authenticated user', async () => {
+      const pending = makePendingCheckout({ userId: 'user-1' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce({
         customer_details: {}, // no shipping_address
       });
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
       mocks.address.findFirst.mockResolvedValueOnce(null); // no default address
 
       await expect(
-        checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any)
+        checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any)
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: "No shipping address found",
+        message: 'No shipping address found',
       });
     });
 
-    it("throws 400 for guest checkout when no address from Razorpay", async () => {
-      const pending = makePendingCheckout({ userId: null, guestEmail: "g@x.com" });
+    it('throws 400 for guest checkout when no address from Razorpay', async () => {
+      const pending = makePendingCheckout({ userId: null, guestEmail: 'g@x.com' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce({
         customer_details: {}, // no shipping_address
@@ -1894,35 +1907,35 @@ describe("checkoutService.verifyMagicPayment", () => {
         checkoutService.verifyMagicPayment(null, makeValidVerifyInput() as any)
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: "No shipping address provided for guest checkout",
+        message: 'No shipping address provided for guest checkout',
       });
     });
   });
 
   // ── Total amount — never negative ────────────────────────────────────────
 
-  describe("total amount — never negative in verifyMagicPayment", () => {
-    it("clamps total to 0 when discounts exceed subtotal in pending checkout", async () => {
+  describe('total amount — never negative in verifyMagicPayment', () => {
+    it('clamps total to 0 when discounts exceed subtotal in pending checkout', async () => {
       // discount=600, loyaltyDiscount=600 but subtotal=500 → total would be negative
       const pending = makePendingCheckout({
-        userId: "user-1",
+        userId: 'user-1',
         subtotal: 500,
         discountAmount: 400,
         loyaltyDiscount: 200, // 500 - 400 - 200 = -100 → clamped to 0
       });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
       mocks.address.findFirst.mockResolvedValueOnce(makeAddress());
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant({ price: 250 })]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txOrderCount.mockResolvedValueOnce(0);
       mocks.txReferralFindUnique.mockResolvedValueOnce(null);
       mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
-      await checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any);
+      await checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any);
 
       expect(mocks.txOrderCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1934,10 +1947,10 @@ describe("checkoutService.verifyMagicPayment", () => {
 
   // ── Return value ──────────────────────────────────────────────────────────
 
-  describe("return value", () => {
-    it("returns orderNumber and pointsEarned (1 per 100 INR) for authenticated user", async () => {
+  describe('return value', () => {
+    it('returns orderNumber and pointsEarned (1 per 100 INR) for authenticated user', async () => {
       const pending = makePendingCheckout({
-        userId: "user-1",
+        userId: 'user-1',
         subtotal: 1000,
         discountAmount: 0,
         loyaltyDiscount: 0,
@@ -1945,11 +1958,11 @@ describe("checkoutService.verifyMagicPayment", () => {
       });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
       mocks.address.findFirst.mockResolvedValueOnce(makeAddress());
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant({ price: 500 })]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txOrderUpdate.mockResolvedValueOnce({});
       mocks.txUserUpdate.mockResolvedValue({});
       mocks.txLoyaltyTransactionCreate.mockResolvedValue({});
@@ -1957,28 +1970,31 @@ describe("checkoutService.verifyMagicPayment", () => {
       mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
-      const result = await checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any);
+      const result = await checkoutService.verifyMagicPayment(
+        'user-1',
+        makeValidVerifyInput() as any
+      );
 
-      expect(result).toHaveProperty("orderNumber", "ORD-TEST-001");
-      expect(result).toHaveProperty("pointsEarned");
+      expect(result).toHaveProperty('orderNumber', 'ORD-TEST-001');
+      expect(result).toHaveProperty('pointsEarned');
       // 1000 INR / 100 = 10 points
       expect(result.pointsEarned).toBe(10);
     });
 
-    it("returns pointsEarned=0 for guest users (no loyalty accrual)", async () => {
+    it('returns pointsEarned=0 for guest users (no loyalty accrual)', async () => {
       const pending = makePendingCheckout({
         userId: null,
-        guestEmail: "g@x.com",
+        guestEmail: 'g@x.com',
         subtotal: 1000,
         discountAmount: 0,
         loyaltyDiscount: 0,
       });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.address.create.mockResolvedValueOnce(makeAddress({ id: "addr-g" }));
+      mocks.address.create.mockResolvedValueOnce(makeAddress({ id: 'addr-g' }));
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant({ price: 500 })]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
       const result = await checkoutService.verifyMagicPayment(null, makeValidVerifyInput() as any);
@@ -1989,10 +2005,10 @@ describe("checkoutService.verifyMagicPayment", () => {
 
   // ── Loyalty points deduction in transaction ───────────────────────────────
 
-  describe("loyalty points deduction in transaction", () => {
-    it("decrements user loyalty points when loyaltyPointsToUse > 0", async () => {
+  describe('loyalty points deduction in transaction', () => {
+    it('decrements user loyalty points when loyaltyPointsToUse > 0', async () => {
       const pending = makePendingCheckout({
-        userId: "user-1",
+        userId: 'user-1',
         subtotal: 1000,
         discountAmount: 0,
         loyaltyDiscount: 200,
@@ -2000,11 +2016,11 @@ describe("checkoutService.verifyMagicPayment", () => {
       });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
       mocks.address.findFirst.mockResolvedValueOnce(makeAddress());
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant({ price: 500 })]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txOrderUpdate.mockResolvedValueOnce({});
       mocks.txUserUpdate.mockResolvedValue({});
       mocks.txLoyaltyTransactionCreate.mockResolvedValue({});
@@ -2012,19 +2028,19 @@ describe("checkoutService.verifyMagicPayment", () => {
       mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
-      await checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any);
+      await checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any);
 
       expect(mocks.txUserUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: "user-1" },
+          where: { id: 'user-1' },
           data: { loyaltyPoints: { decrement: 200 } },
         })
       );
     });
 
-    it("skips loyalty deduction when loyaltyPointsToUse is 0", async () => {
+    it('skips loyalty deduction when loyaltyPointsToUse is 0', async () => {
       const pending = makePendingCheckout({
-        userId: "user-1",
+        userId: 'user-1',
         subtotal: 1000,
         discountAmount: 0,
         loyaltyDiscount: 0,
@@ -2032,11 +2048,11 @@ describe("checkoutService.verifyMagicPayment", () => {
       });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
       mocks.address.findFirst.mockResolvedValueOnce(makeAddress());
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant({ price: 500 })]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txOrderUpdate.mockResolvedValueOnce({});
       mocks.txUserUpdate.mockResolvedValue({});
       mocks.txLoyaltyTransactionCreate.mockResolvedValue({});
@@ -2044,7 +2060,7 @@ describe("checkoutService.verifyMagicPayment", () => {
       mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
-      await checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any);
+      await checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any);
 
       // decrement should NOT be called for deducting loyalty (increment for earning may be called)
       const decrementCalls = mocks.txUserUpdate.mock.calls.filter(
@@ -2056,20 +2072,20 @@ describe("checkoutService.verifyMagicPayment", () => {
 
   // ── Stock deduction fallback (legacy stockReserved=false) ────────────────
 
-  describe("legacy stock deduction (stockReserved=false)", () => {
-    it("deducts stock inside transaction when stockReserved=false", async () => {
+  describe('legacy stock deduction (stockReserved=false)', () => {
+    it('deducts stock inside transaction when stockReserved=false', async () => {
       const pending = makePendingCheckout({
-        userId: "user-1",
+        userId: 'user-1',
         stockReserved: false,
-        itemsJson: JSON.stringify([{ variantId: "variant-1", quantity: 2 }]),
+        itemsJson: JSON.stringify([{ variantId: 'variant-1', quantity: 2 }]),
       });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
       mocks.address.findFirst.mockResolvedValueOnce(makeAddress());
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       setupVerifyTransaction();
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
       mocks.txVariantUpdateMany.mockResolvedValueOnce({ count: 1 });
       mocks.txOrderCount.mockResolvedValueOnce(0);
       mocks.txReferralFindUnique.mockResolvedValueOnce(null);
@@ -2079,24 +2095,24 @@ describe("checkoutService.verifyMagicPayment", () => {
       mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
-      await checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any);
+      await checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any);
 
       expect(mocks.txVariantUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ id: "variant-1", stock: { gte: 2 } }),
+          where: expect.objectContaining({ id: 'variant-1', stock: { gte: 2 } }),
           data: { stock: { decrement: 2 } },
         })
       );
     });
 
-    it("throws 400 when legacy stock deduction fails (insufficient stock)", async () => {
+    it('throws 400 when legacy stock deduction fails (insufficient stock)', async () => {
       const pending = makePendingCheckout({
-        userId: "user-1",
+        userId: 'user-1',
         stockReserved: false,
       });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: "u@x.com" });
+      mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
       mocks.address.findFirst.mockResolvedValueOnce(makeAddress());
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       mocks.$transaction.mockImplementationOnce(async (fn: (tx: unknown) => unknown) => {
@@ -2109,11 +2125,14 @@ describe("checkoutService.verifyMagicPayment", () => {
         };
         return fn(txWithFailingStock);
       });
-      mocks.txOrderCreate.mockResolvedValueOnce({ id: "order-1" });
+      mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
 
       await expect(
-        checkoutService.verifyMagicPayment("user-1", makeValidVerifyInput() as any)
-      ).rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining("Insufficient stock") });
+        checkoutService.verifyMagicPayment('user-1', makeValidVerifyInput() as any)
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: expect.stringContaining('Insufficient stock'),
+      });
     });
   });
 });
@@ -2122,8 +2141,8 @@ describe("checkoutService.verifyMagicPayment", () => {
 // restoreExpiredReservations
 // ===========================================================================
 
-describe("restoreExpiredReservations", () => {
-  it("returns 0 when there are no expired pending checkouts", async () => {
+describe('restoreExpiredReservations', () => {
+  it('returns 0 when there are no expired pending checkouts', async () => {
     mocks.pendingCheckout.findMany.mockResolvedValueOnce([]);
 
     const count = await restoreExpiredReservations();
@@ -2132,12 +2151,12 @@ describe("restoreExpiredReservations", () => {
     expect(mocks.$transaction).not.toHaveBeenCalled();
   });
 
-  it("restores stock and deletes checkout for a single expired reservation", async () => {
+  it('restores stock and deletes checkout for a single expired reservation', async () => {
     const expiredCheckout = makePendingCheckout({
-      id: "pc-expired-1",
+      id: 'pc-expired-1',
       itemsJson: JSON.stringify([
-        { variantId: "variant-1", quantity: 3 },
-        { variantId: "variant-2", quantity: 1 },
+        { variantId: 'variant-1', quantity: 3 },
+        { variantId: 'variant-2', quantity: 1 },
       ]),
     });
     mocks.pendingCheckout.findMany.mockResolvedValueOnce([expiredCheckout]);
@@ -2157,21 +2176,27 @@ describe("restoreExpiredReservations", () => {
     expect(count).toBe(1);
     // Variant-1: restore 3 units
     expect(mocks.txVariantUpdate).toHaveBeenCalledWith({
-      where: { id: "variant-1" },
+      where: { id: 'variant-1' },
       data: { stock: { increment: 3 } },
     });
     // Variant-2: restore 1 unit
     expect(mocks.txVariantUpdate).toHaveBeenCalledWith({
-      where: { id: "variant-2" },
+      where: { id: 'variant-2' },
       data: { stock: { increment: 1 } },
     });
-    expect(mocks.txPendingCheckoutDelete).toHaveBeenCalledWith({ where: { id: "pc-expired-1" } });
+    expect(mocks.txPendingCheckoutDelete).toHaveBeenCalledWith({ where: { id: 'pc-expired-1' } });
   });
 
-  it("processes multiple expired checkouts and returns the correct count", async () => {
+  it('processes multiple expired checkouts and returns the correct count', async () => {
     const checkouts = [
-      makePendingCheckout({ id: "pc-1", itemsJson: JSON.stringify([{ variantId: "vA", quantity: 2 }]) }),
-      makePendingCheckout({ id: "pc-2", itemsJson: JSON.stringify([{ variantId: "vB", quantity: 5 }]) }),
+      makePendingCheckout({
+        id: 'pc-1',
+        itemsJson: JSON.stringify([{ variantId: 'vA', quantity: 2 }]),
+      }),
+      makePendingCheckout({
+        id: 'pc-2',
+        itemsJson: JSON.stringify([{ variantId: 'vB', quantity: 5 }]),
+      }),
     ];
     mocks.pendingCheckout.findMany.mockResolvedValueOnce(checkouts);
 
@@ -2191,11 +2216,20 @@ describe("restoreExpiredReservations", () => {
     expect(mocks.$transaction).toHaveBeenCalledTimes(2);
   });
 
-  it("runs each expired checkout restore in its own isolated transaction", async () => {
+  it('runs each expired checkout restore in its own isolated transaction', async () => {
     const checkouts = [
-      makePendingCheckout({ id: "pc-A", itemsJson: JSON.stringify([{ variantId: "v1", quantity: 1 }]) }),
-      makePendingCheckout({ id: "pc-B", itemsJson: JSON.stringify([{ variantId: "v2", quantity: 1 }]) }),
-      makePendingCheckout({ id: "pc-C", itemsJson: JSON.stringify([{ variantId: "v3", quantity: 1 }]) }),
+      makePendingCheckout({
+        id: 'pc-A',
+        itemsJson: JSON.stringify([{ variantId: 'v1', quantity: 1 }]),
+      }),
+      makePendingCheckout({
+        id: 'pc-B',
+        itemsJson: JSON.stringify([{ variantId: 'v2', quantity: 1 }]),
+      }),
+      makePendingCheckout({
+        id: 'pc-C',
+        itemsJson: JSON.stringify([{ variantId: 'v3', quantity: 1 }]),
+      }),
     ];
     mocks.pendingCheckout.findMany.mockResolvedValueOnce(checkouts);
 
@@ -2215,7 +2249,7 @@ describe("restoreExpiredReservations", () => {
     expect(mocks.$transaction).toHaveBeenCalledTimes(3);
   });
 
-  it("queries only checkouts older than CHECKOUT_EXPIRY_MS with stockReserved=true", async () => {
+  it('queries only checkouts older than CHECKOUT_EXPIRY_MS with stockReserved=true', async () => {
     mocks.pendingCheckout.findMany.mockResolvedValueOnce([]);
 
     await restoreExpiredReservations();
@@ -2226,7 +2260,7 @@ describe("restoreExpiredReservations", () => {
     expect(call.where.createdAt.lt).toBeInstanceOf(Date);
   });
 
-  it("the expiry date is approximately 2 hours in the past", async () => {
+  it('the expiry date is approximately 2 hours in the past', async () => {
     mocks.pendingCheckout.findMany.mockResolvedValueOnce([]);
 
     const beforeCall = Date.now();
@@ -2242,10 +2276,10 @@ describe("restoreExpiredReservations", () => {
     expect(diffMs).toBeLessThanOrEqual(7_200_000 + afterCall - beforeCall + 100);
   });
 
-  it("restores correct quantity per variant item", async () => {
+  it('restores correct quantity per variant item', async () => {
     const expiredCheckout = makePendingCheckout({
-      id: "pc-qty-test",
-      itemsJson: JSON.stringify([{ variantId: "special-variant", quantity: 7 }]),
+      id: 'pc-qty-test',
+      itemsJson: JSON.stringify([{ variantId: 'special-variant', quantity: 7 }]),
     });
     mocks.pendingCheckout.findMany.mockResolvedValueOnce([expiredCheckout]);
 
@@ -2262,12 +2296,12 @@ describe("restoreExpiredReservations", () => {
     await restoreExpiredReservations();
 
     expect(mocks.txVariantUpdate).toHaveBeenCalledWith({
-      where: { id: "special-variant" },
+      where: { id: 'special-variant' },
       data: { stock: { increment: 7 } },
     });
   });
 
-  it("returns 0 and skips transactions when no checkouts have stockReserved=true (empty result)", async () => {
+  it('returns 0 and skips transactions when no checkouts have stockReserved=true (empty result)', async () => {
     mocks.pendingCheckout.findMany.mockResolvedValueOnce([]);
 
     const result = await restoreExpiredReservations();
@@ -2282,70 +2316,73 @@ describe("restoreExpiredReservations", () => {
 // ApiError shape — cross-cutting
 // ===========================================================================
 
-describe("ApiError shapes produced by checkoutService", () => {
-  it("guest-email-missing error is ApiError with statusCode 400 and code BAD_REQUEST", async () => {
+describe('ApiError shapes produced by checkoutService', () => {
+  it('guest-email-missing error is ApiError with statusCode 400 and code BAD_REQUEST', async () => {
     const err = await checkoutService
       .createMagicOrder(null, makeCheckoutInput() as any)
       .catch((e) => e);
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.statusCode).toBe(400);
-    expect(err.code).toBe("BAD_REQUEST");
+    expect(err.code).toBe('BAD_REQUEST');
   });
 
-  it("variant-not-found error is ApiError with statusCode 400", async () => {
+  it('variant-not-found error is ApiError with statusCode 400', async () => {
     mocks.productVariant.findMany.mockResolvedValueOnce([]); // empty results
 
     const err = await checkoutService
-      .createMagicOrder("user-1", makeCheckoutInput() as any)
+      .createMagicOrder('user-1', makeCheckoutInput() as any)
       .catch((e) => e);
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.statusCode).toBe(400);
   });
 
-  it("price-changed error is ApiError with statusCode 409 and code CONFLICT", async () => {
+  it('price-changed error is ApiError with statusCode 409 and code CONFLICT', async () => {
     const variant = makeVariant({ price: 500 });
     mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
     mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
-    const updatedVariant = makeVariant({ price: 750, product: { ...makeVariant().product, price: 750 } });
+    const updatedVariant = makeVariant({
+      price: 750,
+      product: { ...makeVariant().product, price: 750 },
+    });
     mocks.txVariantFindUnique.mockResolvedValueOnce(updatedVariant);
     mocks.$transaction.mockImplementationOnce((fn: (tx: unknown) => unknown, _opts?: unknown) =>
       fn(mocks.txClient)
     );
 
     const err = await checkoutService
-      .createMagicOrder("user-1", makeCheckoutInput() as any)
+      .createMagicOrder('user-1', makeCheckoutInput() as any)
       .catch((e) => e);
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.statusCode).toBe(409);
-    expect(err.code).toBe("CONFLICT");
+    expect(err.code).toBe('CONFLICT');
   });
 
-  it("pending-checkout-not-found error is ApiError with statusCode 404 and code NOT_FOUND", async () => {
+  it('pending-checkout-not-found error is ApiError with statusCode 404 and code NOT_FOUND', async () => {
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(null);
 
     const err = await checkoutService
-      .verifyMagicPayment("user-1", makeVerifyInput() as any)
+      .verifyMagicPayment('user-1', makeVerifyInput() as any)
       .catch((e) => e);
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.statusCode).toBe(404);
-    expect(err.code).toBe("NOT_FOUND");
+    expect(err.code).toBe('NOT_FOUND');
   });
 
-  it("session-ownership error is ApiError with statusCode 403 and code FORBIDDEN", async () => {
+  it('session-ownership error is ApiError with statusCode 403 and code FORBIDDEN', async () => {
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(
-      makePendingCheckout({ userId: "user-OTHER" })
+      makePendingCheckout({ userId: 'user-OTHER' })
     );
 
     const err = await checkoutService
-      .verifyMagicPayment("user-1", makeVerifyInput() as any)
+      .verifyMagicPayment('user-1', makeVerifyInput() as any)
       .catch((e) => e);
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.statusCode).toBe(403);
-    expect(err.code).toBe("FORBIDDEN");
+    expect(err.code).toBe('FORBIDDEN');
   });
 });

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { create } from "zustand";
-import { api } from "@/lib/api-client";
-import { createClient } from "@/lib/supabase/client";
+import { create } from 'zustand';
+import { api } from '@/lib/api-client';
+import { createClient } from '@/lib/supabase/client';
 
 export interface AuthUser {
   id: string;
@@ -36,7 +36,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   logout: async () => {
     try {
-      await api.post("/auth/logout");
+      await api.post('/auth/logout');
     } catch {
       // Logout even if API call fails
     }
@@ -53,7 +53,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
   checkAuth: async () => {
     set({ isLoading: true });
     try {
-      const user = await api.get<AuthUser>("/auth/me");
+      const user = await api.get<AuthUser>('/auth/me');
       set({ user, isAuthenticated: true, isLoading: false });
     } catch {
       set({ user: null, isAuthenticated: false, isLoading: false });

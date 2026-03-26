@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { Minus, Plus, Trash2 } from "lucide-react";
-import { useCartStore, type CartItem } from "@/stores/cart-store";
-import { formatPrice, getImageUrl } from "@/lib/utils";
+import Image from 'next/image';
+import { Minus, Plus, Trash2 } from 'lucide-react';
+import { useCartStore, type CartItem } from '@/stores/cart-store';
+import { formatPrice, getImageUrl } from '@/lib/utils';
 
 interface CartItemRowProps {
   item: CartItem;
@@ -31,7 +31,7 @@ export function CartItemRow({ item }: CartItemRowProps) {
           <p className="truncate text-sm font-semibold">{item.name}</p>
           <p className="mt-0.5 text-xs text-[var(--color-muted)]">
             {item.size && `Size: ${item.size}`}
-            {item.size && item.color && " / "}
+            {item.size && item.color && ' / '}
             {item.color && `Color: ${item.color}`}
           </p>
         </div>
@@ -62,9 +62,7 @@ export function CartItemRow({ item }: CartItemRowProps) {
 
           {/* Price + remove */}
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold">
-              {formatPrice(item.price * item.quantity)}
-            </span>
+            <span className="text-sm font-semibold">{formatPrice(item.price * item.quantity)}</span>
             <button
               onClick={() => removeItem(item.id)}
               className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-sale)]"

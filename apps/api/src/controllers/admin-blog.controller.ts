@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
-import { blogService } from "../services/blog.service";
+import type { Request, Response } from 'express';
+import { blogService } from '../services/blog.service';
 
 export const adminBlogController = {
   async listAll(req: Request, res: Response) {
@@ -31,7 +31,7 @@ export const adminBlogController = {
   async delete(req: Request, res: Response) {
     const id = req.params.id as string;
     await blogService.delete(id);
-    res.json({ success: true, message: "Post deleted" });
+    res.json({ success: true, message: 'Post deleted' });
   },
 
   async listCategories(_req: Request, res: Response) {
@@ -47,7 +47,7 @@ export const adminBlogController = {
   async deleteCategory(req: Request, res: Response) {
     const id = req.params.id as string;
     await blogService.deleteCategory(id);
-    res.json({ success: true, message: "Category deleted" });
+    res.json({ success: true, message: 'Category deleted' });
   },
 
   async listTags(_req: Request, res: Response) {
@@ -63,6 +63,6 @@ export const adminBlogController = {
   async deleteTag(req: Request, res: Response) {
     const id = req.params.id as string;
     await blogService.deleteTag(id);
-    res.json({ success: true, message: "Tag deleted" });
+    res.json({ success: true, message: 'Tag deleted' });
   },
 };

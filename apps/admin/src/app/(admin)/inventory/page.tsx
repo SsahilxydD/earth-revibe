@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 import {
   Search,
   Package,
@@ -12,30 +12,30 @@ import {
   X,
   Plus,
   Minus,
-} from "lucide-react";
-import { Button, Badge, Card, Select, Modal } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
-import { StatCard } from "@/components/dashboard/stat-card";
+} from 'lucide-react';
+import { Button, Badge, Card, Select, Modal } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/toast';
+import { StatCard } from '@/components/dashboard/stat-card';
 import {
   useInventory,
   useInventorySummary,
   useUpdateStock,
   useAdjustStock,
   useBulkUpdateStock,
-} from "@/hooks/use-inventory";
+} from '@/hooks/use-inventory';
 
 const filterOptions = [
-  { value: "", label: "All Stock Levels" },
-  { value: "low", label: "Low Stock" },
-  { value: "out", label: "Out of Stock" },
+  { value: '', label: 'All Stock Levels' },
+  { value: 'low', label: 'Low Stock' },
+  { value: 'out', label: 'Out of Stock' },
 ];
 
 const sortOptions = [
-  { value: "stock_asc", label: "Stock: Low to High" },
-  { value: "stock_desc", label: "Stock: High to Low" },
-  { value: "product_name", label: "Product Name" },
-  { value: "updated_at", label: "Recently Updated" },
+  { value: 'stock_asc', label: 'Stock: Low to High' },
+  { value: 'stock_desc', label: 'Stock: High to Low' },
+  { value: 'product_name', label: 'Product Name' },
+  { value: 'updated_at', label: 'Recently Updated' },
 ];
 
 function StockBadge({ stock }: { stock: number }) {
@@ -49,14 +49,14 @@ function StockBadge({ stock }: { stock: number }) {
 }
 
 export default function InventoryPage() {
-  const [search, setSearch] = useState("");
-  const [lowStock, setLowStock] = useState("");
-  const [sortBy, setSortBy] = useState("stock_asc");
+  const [search, setSearch] = useState('');
+  const [lowStock, setLowStock] = useState('');
+  const [sortBy, setSortBy] = useState('stock_asc');
   const [page, setPage] = useState(1);
 
   // Inline editing state
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState("");
+  const [editValue, setEditValue] = useState('');
 
   // Adjust modal state
   const [adjustModal, setAdjustModal] = useState<{
@@ -65,13 +65,13 @@ export default function InventoryPage() {
     variant: string;
     currentStock: number;
   } | null>(null);
-  const [adjustAmount, setAdjustAmount] = useState("");
-  const [adjustReason, setAdjustReason] = useState("");
+  const [adjustAmount, setAdjustAmount] = useState('');
+  const [adjustReason, setAdjustReason] = useState('');
 
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkModal, setBulkModal] = useState(false);
-  const [bulkStockValue, setBulkStockValue] = useState("");
+  const [bulkStockValue, setBulkStockValue] = useState('');
 
   const { data, isLoading, isError } = useInventory({
     page,
@@ -98,25 +98,25 @@ export default function InventoryPage() {
 
   const cancelEdit = useCallback(() => {
     setEditingId(null);
-    setEditValue("");
+    setEditValue('');
   }, []);
 
   const saveEdit = useCallback(
     (variantId: string) => {
       const stock = parseInt(editValue, 10);
       if (isNaN(stock) || stock < 0) {
-        toast.error("Stock must be a non-negative number");
+        toast.error('Stock must be a non-negative number');
         return;
       }
       updateStock.mutate(
         { variantId, stock },
         {
           onSuccess: () => {
-            toast.success("Stock updated successfully");
+            toast.success('Stock updated successfully');
             cancelEdit();
           },
           onError: (err: any) => {
-            toast.error(err.message || "Failed to update stock");
+            toast.error(err.message || 'Failed to update stock');
           },
         }
       );
@@ -128,8 +128,8 @@ export default function InventoryPage() {
   const openAdjustModal = useCallback(
     (variantId: string, productName: string, variant: string, currentStock: number) => {
       setAdjustModal({ variantId, productName, variant, currentStock });
-      setAdjustAmount("");
-      setAdjustReason("");
+      setAdjustAmount('');
+      setAdjustReason('');
     },
     []
   );
@@ -138,11 +138,11 @@ export default function InventoryPage() {
     if (!adjustModal) return;
     const adjustment = parseInt(adjustAmount, 10);
     if (isNaN(adjustment) || adjustment === 0) {
-      toast.error("Adjustment must be a non-zero number");
+      toast.error('Adjustment must be a non-zero number');
       return;
     }
     if (!adjustReason.trim()) {
-      toast.error("Please provide a reason for the adjustment");
+      toast.error('Please provide a reason for the adjustment');
       return;
     }
     adjustStock.mutate(
@@ -153,11 +153,11 @@ export default function InventoryPage() {
       },
       {
         onSuccess: () => {
-          toast.success("Stock adjusted successfully");
+          toast.success('Stock adjusted successfully');
           setAdjustModal(null);
         },
         onError: (err: any) => {
-          toast.error(err.message || "Failed to adjust stock");
+          toast.error(err.message || 'Failed to adjust stock');
         },
       }
     );
@@ -186,17 +186,17 @@ export default function InventoryPage() {
 
   const openBulkModal = useCallback(() => {
     if (selectedIds.size === 0) {
-      toast.warning("Select at least one variant to bulk update");
+      toast.warning('Select at least one variant to bulk update');
       return;
     }
-    setBulkStockValue("");
+    setBulkStockValue('');
     setBulkModal(true);
   }, [selectedIds.size]);
 
   const submitBulkUpdate = useCallback(() => {
     const stock = parseInt(bulkStockValue, 10);
     if (isNaN(stock) || stock < 0) {
-      toast.error("Stock must be a non-negative number");
+      toast.error('Stock must be a non-negative number');
       return;
     }
     const updates = Array.from(selectedIds).map((variantId) => ({
@@ -210,7 +210,7 @@ export default function InventoryPage() {
         setSelectedIds(new Set());
       },
       onError: (err: any) => {
-        toast.error(err.message || "Failed to bulk update stock");
+        toast.error(err.message || 'Failed to bulk update stock');
       },
     });
   }, [bulkStockValue, selectedIds, bulkUpdateStock]);
@@ -220,9 +220,7 @@ export default function InventoryPage() {
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-semibold text-charcoal">Inventory</h1>
-        <p className="text-sm text-medium-gray mt-1">
-          Manage product stock levels and inventory
-        </p>
+        <p className="text-sm text-medium-gray mt-1">Manage product stock levels and inventory</p>
       </div>
 
       {/* Summary cards */}
@@ -252,14 +250,14 @@ export default function InventoryPage() {
             title="Low Stock"
             value={String(summary?.lowStockCount || 0)}
             change="variants below threshold"
-            changeType={summary?.lowStockCount > 0 ? "negative" : "positive"}
+            changeType={summary?.lowStockCount > 0 ? 'negative' : 'positive'}
             icon={AlertTriangle}
           />
           <StatCard
             title="Out of Stock"
             value={String(summary?.outOfStockCount || 0)}
             change="variants with zero stock"
-            changeType={summary?.outOfStockCount > 0 ? "negative" : "positive"}
+            changeType={summary?.outOfStockCount > 0 ? 'negative' : 'positive'}
             icon={XCircle}
           />
         </div>
@@ -322,7 +320,9 @@ export default function InventoryPage() {
           <div className="p-12 text-center">
             <p className="text-charcoal font-medium mb-1">Failed to load inventory</p>
             <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
-            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>Retry</Button>
+            <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
           </div>
         ) : !variants.length ? (
           <div className="p-12 text-center">
@@ -341,38 +341,25 @@ export default function InventoryPage() {
                     <th className="text-left px-4 py-3 w-10">
                       <input
                         type="checkbox"
-                        checked={
-                          variants.length > 0 &&
-                          selectedIds.size === variants.length
-                        }
+                        checked={variants.length > 0 && selectedIds.size === variants.length}
                         onChange={toggleSelectAll}
                         className="rounded border-light-gray text-deep-earth focus:ring-deep-earth/20"
                       />
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-medium-gray">
-                      Product
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-medium-gray">
-                      Variant
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-medium-gray">
-                      SKU
-                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-medium-gray">Product</th>
+                    <th className="text-left px-4 py-3 font-medium text-medium-gray">Variant</th>
+                    <th className="text-left px-4 py-3 font-medium text-medium-gray">SKU</th>
                     <th className="text-left px-4 py-3 font-medium text-medium-gray">
                       Current Stock
                     </th>
-                    <th className="text-right px-4 py-3 font-medium text-medium-gray">
-                      Actions
-                    </th>
+                    <th className="text-right px-4 py-3 font-medium text-medium-gray">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {variants.map((variant: any) => {
                     const isEditing = editingId === variant.id;
                     const primaryImage = variant.product?.images?.[0];
-                    const variantLabel = [variant.size, variant.color]
-                      .filter(Boolean)
-                      .join(" / ");
+                    const variantLabel = [variant.size, variant.color].filter(Boolean).join(' / ');
 
                     return (
                       <tr
@@ -397,19 +384,12 @@ export default function InventoryPage() {
                               />
                             ) : (
                               <div className="w-9 h-9 rounded-md bg-off-white flex items-center justify-center">
-                                <Package
-                                  size={16}
-                                  className="text-medium-gray"
-                                />
+                                <Package size={16} className="text-medium-gray" />
                               </div>
                             )}
                             <div>
-                              <p className="font-medium text-charcoal">
-                                {variant.product?.name}
-                              </p>
-                              <p className="text-xs text-medium-gray">
-                                {variant.product?.status}
-                              </p>
+                              <p className="font-medium text-charcoal">{variant.product?.name}</p>
+                              <p className="text-xs text-medium-gray">{variant.product?.status}</p>
                             </div>
                           </div>
                         </td>
@@ -421,14 +401,12 @@ export default function InventoryPage() {
                                 style={{ backgroundColor: variant.colorHex }}
                               />
                             )}
-                            <span className="text-dark-gray">
-                              {variantLabel || "--"}
-                            </span>
+                            <span className="text-dark-gray">{variantLabel || '--'}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-dark-gray font-mono text-xs">
-                            {variant.sku || "--"}
+                            {variant.sku || '--'}
                           </span>
                         </td>
                         <td className="px-4 py-3">
@@ -440,8 +418,8 @@ export default function InventoryPage() {
                                 value={editValue}
                                 onChange={(e) => setEditValue(e.target.value)}
                                 onKeyDown={(e) => {
-                                  if (e.key === "Enter") saveEdit(variant.id);
-                                  if (e.key === "Escape") cancelEdit();
+                                  if (e.key === 'Enter') saveEdit(variant.id);
+                                  if (e.key === 'Escape') cancelEdit();
                                 }}
                                 className="w-20 px-2 py-1 rounded border border-deep-earth bg-white text-sm text-charcoal outline-none focus:ring-2 focus:ring-deep-earth/20"
                                 autoFocus
@@ -484,7 +462,7 @@ export default function InventoryPage() {
                               onClick={() =>
                                 openAdjustModal(
                                   variant.id,
-                                  variant.product?.name || "Unknown",
+                                  variant.product?.name || 'Unknown',
                                   variantLabel,
                                   variant.stock
                                 )
@@ -541,20 +519,15 @@ export default function InventoryPage() {
         {adjustModal && (
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-charcoal font-medium">
-                {adjustModal.productName}
-              </p>
+              <p className="text-sm text-charcoal font-medium">{adjustModal.productName}</p>
               <p className="text-xs text-medium-gray">{adjustModal.variant}</p>
               <p className="text-sm text-dark-gray mt-1">
-                Current stock:{" "}
-                <span className="font-semibold">{adjustModal.currentStock}</span>
+                Current stock: <span className="font-semibold">{adjustModal.currentStock}</span>
               </p>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-charcoal block mb-1">
-                Adjustment
-              </label>
+              <label className="text-sm font-medium text-charcoal block mb-1">Adjustment</label>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
@@ -584,21 +557,16 @@ export default function InventoryPage() {
               </div>
               {adjustAmount && !isNaN(parseInt(adjustAmount, 10)) && (
                 <p className="text-xs text-medium-gray mt-1">
-                  New stock will be:{" "}
+                  New stock will be:{' '}
                   <span className="font-semibold">
-                    {Math.max(
-                      0,
-                      adjustModal.currentStock + parseInt(adjustAmount, 10)
-                    )}
+                    {Math.max(0, adjustModal.currentStock + parseInt(adjustAmount, 10))}
                   </span>
                 </p>
               )}
             </div>
 
             <div>
-              <label className="text-sm font-medium text-charcoal block mb-1">
-                Reason
-              </label>
+              <label className="text-sm font-medium text-charcoal block mb-1">Reason</label>
               <textarea
                 value={adjustReason}
                 onChange={(e) => setAdjustReason(e.target.value)}
@@ -609,19 +577,11 @@ export default function InventoryPage() {
             </div>
 
             <div className="flex gap-2 justify-end pt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setAdjustModal(null)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setAdjustModal(null)}>
                 Cancel
               </Button>
-              <Button
-                size="sm"
-                onClick={submitAdjust}
-                disabled={adjustStock.isPending}
-              >
-                {adjustStock.isPending ? "Saving..." : "Apply Adjustment"}
+              <Button size="sm" onClick={submitAdjust} disabled={adjustStock.isPending}>
+                {adjustStock.isPending ? 'Saving...' : 'Apply Adjustment'}
               </Button>
             </div>
           </div>
@@ -637,17 +597,13 @@ export default function InventoryPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-dark-gray">
-            Set the stock level for{" "}
-            <span className="font-semibold text-charcoal">
-              {selectedIds.size}
-            </span>{" "}
-            selected variant(s). This will replace their current stock values.
+            Set the stock level for{' '}
+            <span className="font-semibold text-charcoal">{selectedIds.size}</span> selected
+            variant(s). This will replace their current stock values.
           </p>
 
           <div>
-            <label className="text-sm font-medium text-charcoal block mb-1">
-              New Stock Level
-            </label>
+            <label className="text-sm font-medium text-charcoal block mb-1">New Stock Level</label>
             <input
               type="number"
               min="0"
@@ -659,21 +615,11 @@ export default function InventoryPage() {
           </div>
 
           <div className="flex gap-2 justify-end pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setBulkModal(false)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setBulkModal(false)}>
               Cancel
             </Button>
-            <Button
-              size="sm"
-              onClick={submitBulkUpdate}
-              disabled={bulkUpdateStock.isPending}
-            >
-              {bulkUpdateStock.isPending
-                ? "Updating..."
-                : `Update ${selectedIds.size} Variant(s)`}
+            <Button size="sm" onClick={submitBulkUpdate} disabled={bulkUpdateStock.isPending}>
+              {bulkUpdateStock.isPending ? 'Updating...' : `Update ${selectedIds.size} Variant(s)`}
             </Button>
           </div>
         </div>

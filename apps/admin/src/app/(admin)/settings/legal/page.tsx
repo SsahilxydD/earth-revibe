@@ -1,36 +1,29 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import {
-  Shield,
-  Building,
-  FileText,
-  Mail,
-  CheckCircle,
-  Save,
-} from "lucide-react";
-import { Card, Button, Input, Select } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
+import { useState } from 'react';
+import { Shield, Building, FileText, Mail, CheckCircle, Save } from 'lucide-react';
+import { Card, Button, Input, Select } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
 
 export default function LegalSettingsPage() {
   // Business registration
-  const [legalName, setLegalName] = useState("Earth Revibe");
-  const [businessType, setBusinessType] = useState("sole_proprietorship");
-  const [pan, setPan] = useState("");
-  const [gstin, setGstin] = useState("");
+  const [legalName, setLegalName] = useState('Earth Revibe');
+  const [businessType, setBusinessType] = useState('sole_proprietorship');
+  const [pan, setPan] = useState('');
+  const [gstin, setGstin] = useState('');
 
   // Registered address
-  const [addressLine1, setAddressLine1] = useState("");
-  const [addressLine2, setAddressLine2] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [pin, setPin] = useState("");
+  const [addressLine1, setAddressLine1] = useState('');
+  const [addressLine2, setAddressLine2] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [pin, setPin] = useState('');
 
   // Contact information
-  const [legalEmail, setLegalEmail] = useState("");
-  const [legalPhone, setLegalPhone] = useState("");
-  const [grievanceOfficerName, setGrievanceOfficerName] = useState("");
-  const [grievanceOfficerEmail, setGrievanceOfficerEmail] = useState("");
+  const [legalEmail, setLegalEmail] = useState('');
+  const [legalPhone, setLegalPhone] = useState('');
+  const [grievanceOfficerName, setGrievanceOfficerName] = useState('');
+  const [grievanceOfficerEmail, setGrievanceOfficerEmail] = useState('');
 
   // Compliance
   const [displayGstin, setDisplayGstin] = useState(false);
@@ -43,22 +36,22 @@ export default function LegalSettingsPage() {
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
     if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
-      errs.pan = "PAN must be in format ABCDE1234F";
+      errs.pan = 'PAN must be in format ABCDE1234F';
     }
     if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/.test(gstin)) {
-      errs.gstin = "Invalid GSTIN format (e.g. 22AAAAA0000A1Z5)";
+      errs.gstin = 'Invalid GSTIN format (e.g. 22AAAAA0000A1Z5)';
     }
     if (pin && !/^[1-9][0-9]{5}$/.test(pin)) {
-      errs.pin = "PIN must be a 6-digit number";
+      errs.pin = 'PIN must be a 6-digit number';
     }
     if (legalPhone && !/^\+?[0-9\s-]{7,15}$/.test(legalPhone)) {
-      errs.legalPhone = "Enter a valid phone number";
+      errs.legalPhone = 'Enter a valid phone number';
     }
     if (legalEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(legalEmail)) {
-      errs.legalEmail = "Enter a valid email address";
+      errs.legalEmail = 'Enter a valid email address';
     }
     if (grievanceOfficerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(grievanceOfficerEmail)) {
-      errs.grievanceOfficerEmail = "Enter a valid email address";
+      errs.grievanceOfficerEmail = 'Enter a valid email address';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -66,12 +59,12 @@ export default function LegalSettingsPage() {
 
   const handleSave = async () => {
     if (!validate()) {
-      toast.error("Please fix the validation errors");
+      toast.error('Please fix the validation errors');
       return;
     }
     setSaving(true);
     await new Promise((r) => setTimeout(r, 500));
-    toast.success("Legal settings saved");
+    toast.success('Legal settings saved');
     setSaving(false);
   };
 
@@ -86,7 +79,7 @@ export default function LegalSettingsPage() {
         </div>
         <Button onClick={handleSave} disabled={saving}>
           <Save size={16} />
-          {saving ? "Saving..." : "Save"}
+          {saving ? 'Saving...' : 'Save'}
         </Button>
       </div>
 
@@ -95,9 +88,7 @@ export default function LegalSettingsPage() {
         <div className="space-y-5">
           <div className="flex items-center gap-2">
             <Building size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Business registration
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Business registration</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -112,10 +103,10 @@ export default function LegalSettingsPage() {
               value={businessType}
               onChange={(e) => setBusinessType(e.target.value)}
               options={[
-                { value: "sole_proprietorship", label: "Sole Proprietorship" },
-                { value: "partnership", label: "Partnership" },
-                { value: "llp", label: "LLP" },
-                { value: "private_limited", label: "Private Limited" },
+                { value: 'sole_proprietorship', label: 'Sole Proprietorship' },
+                { value: 'partnership', label: 'Partnership' },
+                { value: 'llp', label: 'LLP' },
+                { value: 'private_limited', label: 'Private Limited' },
               ]}
             />
           </div>
@@ -124,7 +115,10 @@ export default function LegalSettingsPage() {
             <Input
               label="PAN Number"
               value={pan}
-              onChange={(e) => { setPan(e.target.value.toUpperCase()); if (errors.pan) setErrors((prev) => ({ ...prev, pan: "" })); }}
+              onChange={(e) => {
+                setPan(e.target.value.toUpperCase());
+                if (errors.pan) setErrors((prev) => ({ ...prev, pan: '' }));
+              }}
               placeholder="ABCDE1234F"
               error={errors.pan}
               maxLength={10}
@@ -132,7 +126,10 @@ export default function LegalSettingsPage() {
             <Input
               label="GSTIN"
               value={gstin}
-              onChange={(e) => { setGstin(e.target.value.toUpperCase()); if (errors.gstin) setErrors((prev) => ({ ...prev, gstin: "" })); }}
+              onChange={(e) => {
+                setGstin(e.target.value.toUpperCase());
+                if (errors.gstin) setErrors((prev) => ({ ...prev, gstin: '' }));
+              }}
               placeholder="22AAAAA0000A1Z5"
               error={errors.gstin}
               maxLength={15}
@@ -146,9 +143,7 @@ export default function LegalSettingsPage() {
         <div className="space-y-5">
           <div className="flex items-center gap-2">
             <FileText size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Registered address
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Registered address</h3>
           </div>
 
           <Input
@@ -180,7 +175,10 @@ export default function LegalSettingsPage() {
             <Input
               label="PIN Code"
               value={pin}
-              onChange={(e) => { setPin(e.target.value.replace(/\D/g, "")); if (errors.pin) setErrors((prev) => ({ ...prev, pin: "" })); }}
+              onChange={(e) => {
+                setPin(e.target.value.replace(/\D/g, ''));
+                if (errors.pin) setErrors((prev) => ({ ...prev, pin: '' }));
+              }}
               placeholder="PIN Code"
               error={errors.pin}
               maxLength={6}
@@ -199,9 +197,7 @@ export default function LegalSettingsPage() {
         <div className="space-y-5">
           <div className="flex items-center gap-2">
             <Mail size={16} className="text-deep-earth" />
-            <h3 className="text-sm font-semibold text-charcoal">
-              Contact information
-            </h3>
+            <h3 className="text-sm font-semibold text-charcoal">Contact information</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -209,7 +205,10 @@ export default function LegalSettingsPage() {
               label="Legal email"
               type="email"
               value={legalEmail}
-              onChange={(e) => { setLegalEmail(e.target.value); if (errors.legalEmail) setErrors((prev) => ({ ...prev, legalEmail: "" })); }}
+              onChange={(e) => {
+                setLegalEmail(e.target.value);
+                if (errors.legalEmail) setErrors((prev) => ({ ...prev, legalEmail: '' }));
+              }}
               placeholder="legal@example.com"
               helperText="For legal and compliance notices"
               error={errors.legalEmail}
@@ -217,7 +216,10 @@ export default function LegalSettingsPage() {
             <Input
               label="Legal phone"
               value={legalPhone}
-              onChange={(e) => { setLegalPhone(e.target.value); if (errors.legalPhone) setErrors((prev) => ({ ...prev, legalPhone: "" })); }}
+              onChange={(e) => {
+                setLegalPhone(e.target.value);
+                if (errors.legalPhone) setErrors((prev) => ({ ...prev, legalPhone: '' }));
+              }}
               placeholder="+91 XXXXX XXXXX"
               error={errors.legalPhone}
             />
@@ -234,7 +236,11 @@ export default function LegalSettingsPage() {
               label="Customer grievance officer email"
               type="email"
               value={grievanceOfficerEmail}
-              onChange={(e) => { setGrievanceOfficerEmail(e.target.value); if (errors.grievanceOfficerEmail) setErrors((prev) => ({ ...prev, grievanceOfficerEmail: "" })); }}
+              onChange={(e) => {
+                setGrievanceOfficerEmail(e.target.value);
+                if (errors.grievanceOfficerEmail)
+                  setErrors((prev) => ({ ...prev, grievanceOfficerEmail: '' }));
+              }}
               placeholder="grievance@example.com"
               error={errors.grievanceOfficerEmail}
             />
@@ -275,13 +281,10 @@ export default function LegalSettingsPage() {
           </div>
 
           <div className="flex items-start gap-2 p-3 bg-off-white rounded-lg">
-            <CheckCircle
-              size={14}
-              className="text-forest-green mt-0.5 flex-shrink-0"
-            />
+            <CheckCircle size={14} className="text-forest-green mt-0.5 flex-shrink-0" />
             <span className="text-xs text-dark-gray">
-              As per Indian E-Commerce Rules 2020, sellers must display certain
-              information on their website.
+              As per Indian E-Commerce Rules 2020, sellers must display certain information on their
+              website.
             </span>
           </div>
         </div>
@@ -294,13 +297,7 @@ export default function LegalSettingsPage() {
 /*  Toggle                                                            */
 /* ------------------------------------------------------------------ */
 
-function Toggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
       type="button"
@@ -308,12 +305,12 @@ function Toggle({
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
-        checked ? "bg-forest-green" : "bg-light-gray"
+        checked ? 'bg-forest-green' : 'bg-light-gray'
       }`}
     >
       <span
         className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-          checked ? "translate-x-[18px]" : "translate-x-[3px]"
+          checked ? 'translate-x-[18px]' : 'translate-x-[3px]'
         }`}
       />
     </button>

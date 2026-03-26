@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { productKeys } from "./use-products";
-import { useProductNavStore } from "@/stores/product-nav-store";
-import { api } from "@/lib/api-client";
-import type { Product } from "@/types";
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { productKeys } from './use-products';
+import { useProductNavStore } from '@/stores/product-nav-store';
+import { api } from '@/lib/api-client';
+import type { Product } from '@/types';
 
 export function usePrefetchAdjacentProducts(currentSlug: string) {
   const queryClient = useQueryClient();

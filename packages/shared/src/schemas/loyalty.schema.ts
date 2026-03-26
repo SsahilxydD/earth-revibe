@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const updateLoyaltyConfigSchema = z.object({
   pointsPerRupee: z.coerce.number().positive(),

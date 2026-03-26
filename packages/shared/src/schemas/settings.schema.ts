@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const updateStoreSettingsSchema = z.object({
   storeName: z.string().min(2).max(100).optional(),
@@ -27,7 +27,7 @@ export const createAdminUserSchema = z.object({
   lastName: z.string().min(2).max(50),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(["ADMIN", "SUPPORT_STAFF"]),
+  role: z.enum(['ADMIN', 'SUPPORT_STAFF']),
 });
 
 export type UpdateStoreSettingsInput = z.infer<typeof updateStoreSettingsSchema>;

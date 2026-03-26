@@ -1,6 +1,6 @@
-import type { Request, Response } from "express";
-import { prisma, Prisma } from "@earth-revibe/db";
-import { ApiError } from "../utils/api-error";
+import type { Request, Response } from 'express';
+import { prisma, Prisma } from '@earth-revibe/db';
+import { ApiError } from '../utils/api-error';
 
 export const adminDiscountController = {
   async listDiscounts(req: Request, res: Response) {
@@ -13,10 +13,10 @@ export const adminDiscountController = {
     const where: Prisma.DiscountCodeWhereInput = {};
 
     if (search) {
-      where.code = { contains: search, mode: "insensitive" };
+      where.code = { contains: search, mode: 'insensitive' };
     }
-    if (isActive === "true") where.isActive = true;
-    if (isActive === "false") where.isActive = false;
+    if (isActive === 'true') where.isActive = true;
+    if (isActive === 'false') where.isActive = false;
     if (type) where.type = type as Prisma.EnumDiscountTypeFilter;
 
     const [discounts, total] = await Promise.all([
@@ -24,7 +24,7 @@ export const adminDiscountController = {
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       }),
       prisma.discountCode.count({ where }),
     ]);
@@ -44,7 +44,7 @@ export const adminDiscountController = {
   async getDiscount(req: Request, res: Response) {
     const id = req.params.id as string;
     const discount = await prisma.discountCode.findUnique({ where: { id } });
-    if (!discount) throw ApiError.notFound("Discount code not found");
+    if (!discount) throw ApiError.notFound('Discount code not found');
     res.json({ success: true, data: discount });
   },
 
@@ -64,7 +64,7 @@ export const adminDiscountController = {
     const existing = await prisma.discountCode.findUnique({
       where: { code: code.toUpperCase() },
     });
-    if (existing) throw ApiError.conflict("Discount code already exists");
+    if (existing) throw ApiError.conflict('Discount code already exists');
 
     const discount = await prisma.discountCode.create({
       data: {
@@ -87,7 +87,7 @@ export const adminDiscountController = {
     const id = req.params.id as string;
 
     const existing = await prisma.discountCode.findUnique({ where: { id } });
-    if (!existing) throw ApiError.notFound("Discount code not found");
+    if (!existing) throw ApiError.notFound('Discount code not found');
 
     const {
       code,
@@ -106,7 +106,7 @@ export const adminDiscountController = {
       const duplicate = await prisma.discountCode.findUnique({
         where: { code: code.toUpperCase() },
       });
-      if (duplicate) throw ApiError.conflict("Discount code already exists");
+      if (duplicate) throw ApiError.conflict('Discount code already exists');
     }
 
     const discount = await prisma.discountCode.update({
@@ -135,17 +135,17 @@ export const adminDiscountController = {
     const id = req.params.id as string;
 
     const existing = await prisma.discountCode.findUnique({ where: { id } });
-    if (!existing) throw ApiError.notFound("Discount code not found");
+    if (!existing) throw ApiError.notFound('Discount code not found');
 
     await prisma.discountCode.delete({ where: { id } });
-    res.json({ success: true, message: "Discount code deleted" });
+    res.json({ success: true, message: 'Discount code deleted' });
   },
 
   async toggleActive(req: Request, res: Response) {
     const id = req.params.id as string;
 
     const discount = await prisma.discountCode.findUnique({ where: { id } });
-    if (!discount) throw ApiError.notFound("Discount code not found");
+    if (!discount) throw ApiError.notFound('Discount code not found');
 
     const updated = await prisma.discountCode.update({
       where: { id },

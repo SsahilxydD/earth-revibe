@@ -1,16 +1,16 @@
-import { prisma } from "@earth-revibe/db";
+import { prisma } from '@earth-revibe/db';
 
 export const searchService = {
   async search(query: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
     const where = {
-      status: "ACTIVE" as const,
+      status: 'ACTIVE' as const,
       OR: [
-        { name: { contains: query, mode: "insensitive" as const } },
-        { description: { contains: query, mode: "insensitive" as const } },
-        { shortDescription: { contains: query, mode: "insensitive" as const } },
-        { category: { name: { contains: query, mode: "insensitive" as const } } },
+        { name: { contains: query, mode: 'insensitive' as const } },
+        { description: { contains: query, mode: 'insensitive' as const } },
+        { shortDescription: { contains: query, mode: 'insensitive' as const } },
+        { category: { name: { contains: query, mode: 'insensitive' as const } } },
       ],
     };
 
@@ -23,7 +23,7 @@ export const searchService = {
           images: { where: { isPrimary: true }, take: 1 },
           category: { select: { name: true, slug: true } },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       }),
       prisma.product.count({ where }),
     ]);
@@ -41,8 +41,8 @@ export const searchService = {
     const [products, categories, blogPosts] = await Promise.all([
       prisma.product.findMany({
         where: {
-          status: "ACTIVE",
-          name: { contains: query, mode: "insensitive" },
+          status: 'ACTIVE',
+          name: { contains: query, mode: 'insensitive' },
         },
         select: {
           name: true,
@@ -55,15 +55,15 @@ export const searchService = {
       prisma.category.findMany({
         where: {
           isActive: true,
-          name: { contains: query, mode: "insensitive" },
+          name: { contains: query, mode: 'insensitive' },
         },
         select: { name: true, slug: true },
         take: 3,
       }),
       prisma.blogPost.findMany({
         where: {
-          status: "PUBLISHED",
-          title: { contains: query, mode: "insensitive" },
+          status: 'PUBLISHED',
+          title: { contains: query, mode: 'insensitive' },
         },
         select: { title: true, slug: true },
         take: 2,

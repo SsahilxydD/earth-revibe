@@ -1,10 +1,10 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const paginationQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   sortBy: z.string().optional(),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 export const apiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
@@ -19,10 +19,14 @@ export const apiErrorSchema = z.object({
   error: z.object({
     code: z.string(),
     message: z.string(),
-    details: z.array(z.object({
-      field: z.string().optional(),
-      message: z.string(),
-    })).optional(),
+    details: z
+      .array(
+        z.object({
+          field: z.string().optional(),
+          message: z.string(),
+        })
+      )
+      .optional(),
   }),
 });
 

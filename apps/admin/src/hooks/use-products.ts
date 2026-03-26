@@ -1,22 +1,25 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import { createClient } from "@/lib/supabase/client";
-import type { ProductListParams } from "@/types";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { createClient } from '@/lib/supabase/client';
+import type { ProductListParams } from '@/types';
 
 // Ensure API_BASE is always an absolute URL - guard against missing https:// protocol
 function resolveApiBase(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL || "https://earth-revibeapi-production.up.railway.app/api/v1";
-  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+  const raw =
+    process.env.NEXT_PUBLIC_API_URL || 'https://earth-revibeapi-production.up.railway.app/api/v1';
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
   return `https://${raw}`;
 }
 const API_BASE = resolveApiBase();
 
 /** Get auth token from Supabase session for raw fetch calls that bypass the API client */
 async function getAuthToken(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null;
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     return session?.access_token ?? null;
   } catch {
     return null;
@@ -26,20 +29,20 @@ async function getAuthToken(): Promise<string | null> {
 export function useProducts(params: ProductListParams = {}) {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") {
+    if (value !== undefined && value !== '') {
       searchParams.set(key, String(value));
     }
   });
 
   return useQuery({
-    queryKey: ["admin-products", params],
+    queryKey: ['admin-products', params],
     queryFn: () => api.get(`/admin/products?${searchParams.toString()}`),
   });
 }
 
 export function useProduct(slug: string) {
   return useQuery({
-    queryKey: ["admin-product", slug],
+    queryKey: ['admin-product', slug],
     queryFn: () => api.get(`/admin/products/${slug}`),
     enabled: !!slug,
   });
@@ -48,9 +51,9 @@ export function useProduct(slug: string) {
 export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => api.post("/products", data),
+    mutationFn: (data: any) => api.post('/products', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
     },
   });
 }
@@ -58,11 +61,10 @@ export function useCreateProduct() {
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
-      api.put(`/products/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => api.put(`/products/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-product'] });
     },
   });
 }
@@ -72,7 +74,7 @@ export function useDeleteProduct() {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/products/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
     },
   });
 }
@@ -82,20 +84,20 @@ export function useExportProductsCSV() {
     mutationFn: async () => {
       const token = await getAuthToken();
       const res = await fetch(`${API_BASE}/admin/products/export-csv`, {
-        method: "GET",
+        method: 'GET',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        throw new Error(json?.error?.message || "Failed to export CSV");
+        throw new Error(json?.error?.message || 'Failed to export CSV');
       }
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      a.download = `products-${new Date().toISOString().split("T")[0]}.csv`;
+      a.download = `products-${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -109,10 +111,15 @@ export function useBulkUpdateProducts() {
   return useMutation({
     mutationFn: (data: {
       productIds: string[];
-      updates: { price?: number; compareAtPrice?: number | null; status?: string; categoryId?: string };
-    }) => api.put("/admin/products/bulk-update", data),
+      updates: {
+        price?: number;
+        compareAtPrice?: number | null;
+        status?: string;
+        categoryId?: string;
+      };
+    }) => api.put('/admin/products/bulk-update', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
     },
   });
 }
@@ -120,10 +127,9 @@ export function useBulkUpdateProducts() {
 export function useImportProductsCSV() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (csvContent: string) =>
-      api.post("/admin/products/import-csv", { csv: csvContent }),
+    mutationFn: (csvContent: string) => api.post('/admin/products/import-csv', { csv: csvContent }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
     },
   });
 }
@@ -136,7 +142,7 @@ export function useAddProductVariants() {
     mutationFn: ({ productId, variants }: { productId: string; variants: any[] }) =>
       api.post(`/products/${productId}/variants`, { variants }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-product'] });
     },
   });
 }
@@ -147,7 +153,7 @@ export function useUpdateProductVariant() {
     mutationFn: ({ variantId, data }: { variantId: string; data: any }) =>
       api.put(`/products/variants/${variantId}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-product'] });
     },
   });
 }
@@ -155,10 +161,9 @@ export function useUpdateProductVariant() {
 export function useDeleteProductVariant() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (variantId: string) =>
-      api.delete(`/products/variants/${variantId}`),
+    mutationFn: (variantId: string) => api.delete(`/products/variants/${variantId}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-product'] });
     },
   });
 }
@@ -168,10 +173,15 @@ export function useDeleteProductVariant() {
 export function useAddProductImage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, data }: { productId: string; data: { url: string; thumbnailUrl?: string; publicId: string; altText?: string } }) =>
-      api.post(`/products/${productId}/images`, data),
+    mutationFn: ({
+      productId,
+      data,
+    }: {
+      productId: string;
+      data: { url: string; thumbnailUrl?: string; publicId: string; altText?: string };
+    }) => api.post(`/products/${productId}/images`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-product'] });
     },
   });
 }
@@ -179,10 +189,9 @@ export function useAddProductImage() {
 export function useDeleteProductImage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (imageId: string) =>
-      api.delete(`/products/images/${imageId}`),
+    mutationFn: (imageId: string) => api.delete(`/products/images/${imageId}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-product'] });
     },
   });
 }
@@ -190,10 +199,9 @@ export function useDeleteProductImage() {
 export function useSetProductImagePrimary() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (imageId: string) =>
-      api.put(`/products/images/${imageId}/primary`),
+    mutationFn: (imageId: string) => api.put(`/products/images/${imageId}/primary`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-product'] });
     },
   });
 }
@@ -203,10 +211,10 @@ export function useUploadImage() {
     mutationFn: async (file: File) => {
       const token = await getAuthToken();
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append('file', file);
 
       const res = await fetch(`${API_BASE}/upload/image`, {
-        method: "POST",
+        method: 'POST',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -215,7 +223,7 @@ export function useUploadImage() {
 
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        throw new Error(json?.error?.message || "Failed to upload image");
+        throw new Error(json?.error?.message || 'Failed to upload image');
       }
 
       const json = await res.json();
@@ -229,9 +237,9 @@ export function useUploadImageFromUrl() {
     mutationFn: async (imageUrl: string) => {
       const token = await getAuthToken();
       const res = await fetch(`${API_BASE}/upload/image-from-url`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ url: imageUrl }),
@@ -239,7 +247,7 @@ export function useUploadImageFromUrl() {
 
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        throw new Error(json?.error?.message || "Failed to upload image from URL");
+        throw new Error(json?.error?.message || 'Failed to upload image from URL');
       }
 
       const json = await res.json();

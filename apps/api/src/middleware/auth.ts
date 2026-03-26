@@ -1,11 +1,11 @@
-import type { Request, Response, NextFunction } from "express";
-import { createRemoteJWKSet, jwtVerify } from "jose";
-import { prisma } from "@earth-revibe/db";
-import { env } from "../config/env";
-import { logger } from "../config/logger";
-import { ApiError } from "../utils/api-error";
-import { getAccessTokenFromRequest } from "../utils/cookies";
-import type { UserRole } from "@earth-revibe/shared";
+import type { Request, Response, NextFunction } from 'express';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { prisma } from '@earth-revibe/db';
+import { env } from '../config/env';
+import { logger } from '../config/logger';
+import { ApiError } from '../utils/api-error';
+import { getAccessTokenFromRequest } from '../utils/cookies';
+import type { UserRole } from '@earth-revibe/shared';
 
 const userSelect = {
   id: true,
@@ -56,10 +56,10 @@ async function verifyToken(token: string) {
       },
       create: {
         email,
-        passwordHash: "supabase-managed",
-        firstName: userMeta?.first_name || userMeta?.name?.split(" ")[0] || email.split("@")[0],
-        lastName: userMeta?.last_name || userMeta?.name?.split(" ").slice(1).join(" ") || "",
-        role: (supabaseRole as any) || "CUSTOMER",
+        passwordHash: 'supabase-managed',
+        firstName: userMeta?.first_name || userMeta?.name?.split(' ')[0] || email.split('@')[0],
+        lastName: userMeta?.last_name || userMeta?.name?.split(' ').slice(1).join(' ') || '',
+        role: (supabaseRole as any) || 'CUSTOMER',
         emailVerified: true,
         isActive: true,
         lastLoginAt: new Date(),
@@ -69,27 +69,23 @@ async function verifyToken(token: string) {
 
     if (user.isActive) return user;
   } catch (err) {
-    logger.error({ err }, "Supabase JWT verification failed");
+    logger.error({ err }, 'Supabase JWT verification failed');
   }
 
   return null;
 }
 
-export const authenticate = async (
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
+export const authenticate = async (req: Request, _res: Response, next: NextFunction) => {
   const token = getAccessTokenFromRequest(req);
 
   if (!token) {
-    throw ApiError.unauthorized("No token provided");
+    throw ApiError.unauthorized('No token provided');
   }
 
   const user = await verifyToken(token);
 
   if (!user) {
-    throw ApiError.unauthorized("Invalid or expired token");
+    throw ApiError.unauthorized('Invalid or expired token');
   }
 
   req.user = user;
@@ -101,11 +97,7 @@ export const authenticate = async (
  * but does NOT reject the request if no token is provided.
  * Used for guest-capable endpoints like guest checkout.
  */
-export const optionalAuthenticate = async (
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
+export const optionalAuthenticate = async (req: Request, _res: Response, next: NextFunction) => {
   const token = getAccessTokenFromRequest(req);
 
   if (!token) {
@@ -123,11 +115,11 @@ export const optionalAuthenticate = async (
 export const authorize = (...roles: UserRole[]) => {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
-      throw ApiError.unauthorized("Authentication required");
+      throw ApiError.unauthorized('Authentication required');
     }
 
     if (!roles.includes(req.user.role as UserRole)) {
-      throw ApiError.forbidden("Insufficient permissions");
+      throw ApiError.forbidden('Insufficient permissions');
     }
 
     next();

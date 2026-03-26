@@ -1,5 +1,5 @@
-import CircuitBreaker from "opossum";
-import { logger } from "../config/logger";
+import CircuitBreaker from 'opossum';
+import { logger } from '../config/logger';
 
 export function createCircuitBreaker<T>(
   fn: (...args: any[]) => Promise<T>,
@@ -14,17 +14,11 @@ export function createCircuitBreaker<T>(
     ...options,
   });
 
-  breaker.on("open", () =>
-    logger.warn({ circuit: name }, "Circuit breaker opened")
-  );
-  breaker.on("halfOpen", () =>
-    logger.info({ circuit: name }, "Circuit breaker half-open")
-  );
-  breaker.on("close", () =>
-    logger.info({ circuit: name }, "Circuit breaker closed")
-  );
-  breaker.on("failure", (err: Error) =>
-    logger.error({ circuit: name, error: err.message }, "Circuit breaker call failed")
+  breaker.on('open', () => logger.warn({ circuit: name }, 'Circuit breaker opened'));
+  breaker.on('halfOpen', () => logger.info({ circuit: name }, 'Circuit breaker half-open'));
+  breaker.on('close', () => logger.info({ circuit: name }, 'Circuit breaker closed'));
+  breaker.on('failure', (err: Error) =>
+    logger.error({ circuit: name, error: err.message }, 'Circuit breaker call failed')
   );
 
   return breaker;
