@@ -9,11 +9,13 @@ const {
   mockAddressFindFirst,
   mockDiscountCodeFindUnique,
   mockOrderCount,
+  mockOrderFindFirst,
   mockUserFindUnique,
   mockLoyaltyConfigFindFirst,
   mockOrderFindUnique,
   mockOrderFindMany,
   mockPaymentFindUnique,
+  mockPaymentFindFirst,
   mockPaymentUpdate,
   mockTransaction,
   // tx-level mocks
@@ -98,12 +100,14 @@ const {
     mockCartFindUnique: vi.fn(),
     mockAddressFindFirst: vi.fn(),
     mockDiscountCodeFindUnique: vi.fn(),
+    mockOrderFindFirst: vi.fn(),
     mockOrderCount: vi.fn(),
     mockUserFindUnique: vi.fn(),
     mockLoyaltyConfigFindFirst: vi.fn(),
     mockOrderFindUnique: vi.fn(),
     mockOrderFindMany: vi.fn(),
     mockPaymentFindUnique: vi.fn(),
+    mockPaymentFindFirst: vi.fn(),
     mockPaymentUpdate: vi.fn(),
     mockTransaction,
     mockTxProductVariantFindUnique,
@@ -144,6 +148,7 @@ vi.mock('@earth-revibe/db', () => ({
     discountCode: { findUnique: mockDiscountCodeFindUnique },
     order: {
       count: mockOrderCount,
+      findFirst: mockOrderFindFirst,
       findUnique: mockOrderFindUnique,
       findMany: mockOrderFindMany,
     },
@@ -151,6 +156,7 @@ vi.mock('@earth-revibe/db', () => ({
     loyaltyConfig: { findFirst: mockLoyaltyConfigFindFirst },
     payment: {
       findUnique: mockPaymentFindUnique,
+      findFirst: mockPaymentFindFirst,
       update: mockPaymentUpdate,
     },
     $transaction: mockTransaction,
@@ -436,7 +442,7 @@ function setupVerifyPaymentHappyPath({
   orderCount = 1,
 } = {}) {
   const order = makeFullOrder({ loyaltyPointsUsed, totalAmount });
-  mockPaymentFindUnique.mockResolvedValueOnce(makePaymentRecord({ order }));
+  mockPaymentFindFirst.mockResolvedValueOnce(makePaymentRecord({ order }));
   mockTxPaymentUpdate.mockResolvedValueOnce({});
   mockTxOrderUpdate.mockResolvedValue({});
   mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
@@ -951,18 +957,16 @@ describe('orderService', () => {
         expect(result.amount).toBe(1000);
       });
 
-      it('throws 400 for BUY_X_GET_Y discount type (unsupported)', async () => {
-        mockCartFindUnique.mockResolvedValueOnce(makeCart());
-        mockAddressFindFirst.mockResolvedValueOnce(makeAddress());
-        mockDiscountCodeFindUnique.mockResolvedValueOnce(makeDiscount({ type: 'BUY_X_GET_Y' }));
-        mockOrderCount.mockResolvedValueOnce(0);
+      it('applies 0 discount for BUY_X_GET_Y type (silently skipped in v1)', async () => {
+        setupCreateOrderHappyPath({ discountCode: { type: 'BUY_X_GET_Y' } });
 
-        await expect(
-          orderService.createOrder(USER_ID, { ...BASE_CREATE_INPUT, discountCode: 'SAVE10' })
-        ).rejects.toMatchObject({
-          statusCode: 400,
-          message: 'This discount type is not yet supported',
+        const result = await orderService.createOrder(USER_ID, {
+          ...BASE_CREATE_INPUT,
+          discountCode: 'SAVE10',
         });
+
+        // BUY_X_GET_Y yields discountAmount=0 — full price charged
+        expect(result.amount).toBe(1000);
       });
 
       it('increments discountCode usageCount atomically inside the transaction', async () => {
@@ -1321,7 +1325,7 @@ describe('orderService', () => {
 
     function computeSignature(orderId: string, paymentId: string) {
       // Replicate the service's HMAC-SHA256 logic with test_secret
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const cryptoMod = require('crypto');
       const body = orderId + '|' + paymentId;
       return cryptoMod.createHmac('sha256', 'test_secret').update(body).digest('hex');
@@ -1342,7 +1346,7 @@ describe('orderService', () => {
 
     describe('payment lookup and ownership', () => {
       it('throws 404 when payment is not found', async () => {
-        mockPaymentFindUnique.mockResolvedValueOnce(null);
+        mockPaymentFindFirst.mockResolvedValueOnce(null);
 
         await expect(orderService.verifyPayment(USER_ID, makeVerifyInput())).rejects.toMatchObject({
           statusCode: 404,
@@ -1350,14 +1354,13 @@ describe('orderService', () => {
         });
       });
 
-      it("throws 403 when payment belongs to a different user's order", async () => {
-        mockPaymentFindUnique.mockResolvedValueOnce(
-          makePaymentRecord({ order: makeFullOrder({ userId: 'other-user-999' }) })
-        );
+      it("throws 404 when payment belongs to a different user's order (findFirst filters by userId)", async () => {
+        // findFirst uses where: { order: { userId } } so mismatched user returns null
+        mockPaymentFindFirst.mockResolvedValueOnce(null);
 
         await expect(orderService.verifyPayment(USER_ID, makeVerifyInput())).rejects.toMatchObject({
-          statusCode: 403,
-          message: 'Not your order',
+          statusCode: 404,
+          message: 'Payment not found',
         });
       });
     });
@@ -1368,7 +1371,7 @@ describe('orderService', () => {
 
     describe('signature verification', () => {
       it('throws 400 and marks payment FAILED when signature is invalid', async () => {
-        mockPaymentFindUnique.mockResolvedValueOnce(makePaymentRecord());
+        mockPaymentFindFirst.mockResolvedValueOnce(makePaymentRecord());
         mockPaymentUpdate.mockResolvedValueOnce({});
 
         await expect(
@@ -1386,7 +1389,7 @@ describe('orderService', () => {
       });
 
       it('stores the failure reason in the payment record on signature mismatch', async () => {
-        mockPaymentFindUnique.mockResolvedValueOnce(makePaymentRecord());
+        mockPaymentFindFirst.mockResolvedValueOnce(makePaymentRecord());
         mockPaymentUpdate.mockResolvedValueOnce({});
 
         await orderService
@@ -1579,7 +1582,7 @@ describe('orderService', () => {
     describe('referral conversion on first purchase', () => {
       function setupWithReferral({ status = 'SIGNED_UP', orderCount = 1 } = {}) {
         const order = makeFullOrder({ totalAmount: 1000 });
-        mockPaymentFindUnique.mockResolvedValueOnce(makePaymentRecord({ order }));
+        mockPaymentFindFirst.mockResolvedValueOnce(makePaymentRecord({ order }));
         mockTxPaymentUpdate.mockResolvedValueOnce({});
         mockTxOrderUpdate.mockResolvedValue({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
@@ -1670,7 +1673,7 @@ describe('orderService', () => {
 
       it('does not call cartItemDeleteMany when no cart exists for the user', async () => {
         const order = makeFullOrder({ totalAmount: 1000 });
-        mockPaymentFindUnique.mockResolvedValueOnce(makePaymentRecord({ order }));
+        mockPaymentFindFirst.mockResolvedValueOnce(makePaymentRecord({ order }));
         mockTxPaymentUpdate.mockResolvedValueOnce({});
         mockTxOrderUpdate.mockResolvedValue({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
@@ -1820,7 +1823,7 @@ describe('orderService', () => {
 
   describe('getOrder', () => {
     it('returns the full order when it exists and belongs to the user', async () => {
-      mockOrderFindUnique.mockResolvedValueOnce({
+      mockOrderFindFirst.mockResolvedValueOnce({
         ...makeFullOrder(),
         items: [],
         payment: null,
@@ -1835,7 +1838,7 @@ describe('orderService', () => {
     });
 
     it('throws 404 NOT_FOUND when order does not exist', async () => {
-      mockOrderFindUnique.mockResolvedValueOnce(null);
+      mockOrderFindFirst.mockResolvedValueOnce(null);
 
       await expect(orderService.getOrder(USER_ID, 'ORD-MISSING')).rejects.toMatchObject({
         statusCode: 404,
@@ -1844,40 +1847,33 @@ describe('orderService', () => {
       });
     });
 
-    it('throws 403 FORBIDDEN when order belongs to a different user', async () => {
-      mockOrderFindUnique.mockResolvedValueOnce({
-        ...makeFullOrder(),
-        userId: 'other-user-999',
-        items: [],
-        payment: null,
-        address: null,
-        statusHistory: [],
-        discountCode: null,
-      });
+    it('throws 404 NOT_FOUND when order belongs to a different user (findFirst filters by userId)', async () => {
+      // findFirst uses where: { orderNumber, userId } so mismatched user returns null → 404
+      mockOrderFindFirst.mockResolvedValueOnce(null);
 
       await expect(orderService.getOrder(USER_ID, ORDER_NUMBER)).rejects.toMatchObject({
-        statusCode: 403,
-        code: 'FORBIDDEN',
-        message: 'Not your order',
+        statusCode: 404,
+        code: 'NOT_FOUND',
+        message: 'Order not found',
       });
     });
 
     it('queries by orderNumber field', async () => {
-      mockOrderFindUnique.mockResolvedValueOnce(null);
+      mockOrderFindFirst.mockResolvedValueOnce(null);
 
       await orderService.getOrder(USER_ID, 'ORD-XYZ').catch(() => {});
 
-      expect(mockOrderFindUnique).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { orderNumber: 'ORD-XYZ' } })
+      expect(mockOrderFindFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { orderNumber: 'ORD-XYZ', userId: USER_ID } })
       );
     });
 
     it('includes items, payment, address, statusHistory, and discountCode in the query', async () => {
-      mockOrderFindUnique.mockResolvedValueOnce(null);
+      mockOrderFindFirst.mockResolvedValueOnce(null);
 
       await orderService.getOrder(USER_ID, ORDER_NUMBER).catch(() => {});
 
-      const callArg = mockOrderFindUnique.mock.calls[0][0];
+      const callArg = mockOrderFindFirst.mock.calls[0][0];
       expect(callArg.include).toMatchObject({
         items: true,
         payment: true,
@@ -1897,25 +1893,26 @@ describe('orderService', () => {
 
     describe('pre-condition checks', () => {
       it('throws 404 NOT_FOUND when order does not exist', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(null);
+        mockOrderFindFirst.mockResolvedValueOnce(null);
 
         await expect(
           orderService.cancelOrder(USER_ID, 'ORD-MISSING', BASE_CANCEL_INPUT)
         ).rejects.toMatchObject({ statusCode: 404, code: 'NOT_FOUND' });
       });
 
-      it('throws 403 FORBIDDEN when order belongs to another user', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder({ userId: 'other-user-999' }));
+      it('throws 404 NOT_FOUND when order belongs to another user (findFirst filters by userId)', async () => {
+        // findFirst uses where: { orderNumber, userId } so mismatched user returns null → 404
+        mockOrderFindFirst.mockResolvedValueOnce(null);
 
         await expect(
           orderService.cancelOrder(USER_ID, ORDER_NUMBER, BASE_CANCEL_INPUT)
-        ).rejects.toMatchObject({ statusCode: 403, code: 'FORBIDDEN', message: 'Not your order' });
+        ).rejects.toMatchObject({ statusCode: 404, code: 'NOT_FOUND' });
       });
 
       it.each([['SHIPPED'], ['DELIVERED'], ['RETURNED'], ['REFUNDED'], ['CANCELLED']])(
         "throws 400 when order status is '%s' (not cancellable)",
         async (status) => {
-          mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder({ status }));
+          mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ status }));
 
           await expect(
             orderService.cancelOrder(USER_ID, ORDER_NUMBER, BASE_CANCEL_INPUT)
@@ -1929,7 +1926,7 @@ describe('orderService', () => {
       it.each([['PLACED'], ['CONFIRMED'], ['PROCESSING']])(
         "allows cancellation when order status is '%s'",
         async (status) => {
-          mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder({ status }));
+          mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ status }));
           mockTxOrderUpdate.mockResolvedValueOnce({});
           mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
           mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -1948,7 +1945,7 @@ describe('orderService', () => {
 
     describe('order status state machine', () => {
       it('sets order status to CANCELLED', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder({ status: 'CONFIRMED' }));
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ status: 'CONFIRMED' }));
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -1962,7 +1959,7 @@ describe('orderService', () => {
       });
 
       it('creates CANCELLED status history with the cancellation reason', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder());
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder());
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -1988,7 +1985,7 @@ describe('orderService', () => {
 
     describe('stock restoration', () => {
       it('restores stock for each order item on cancellation', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder());
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder());
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([
@@ -2010,7 +2007,7 @@ describe('orderService', () => {
       });
 
       it('does not update variants when order has no items', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder());
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder());
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2028,7 +2025,7 @@ describe('orderService', () => {
 
     describe('loyalty points restore and clawback', () => {
       it('restores loyaltyPointsUsed when they were spent on the cancelled order', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder({ loyaltyPointsUsed: 200 }));
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ loyaltyPointsUsed: 200 }));
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2050,7 +2047,7 @@ describe('orderService', () => {
       });
 
       it('does not restore loyalty points when none were used', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder({ loyaltyPointsUsed: 0 }));
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ loyaltyPointsUsed: 0 }));
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2065,7 +2062,7 @@ describe('orderService', () => {
       });
 
       it('claws back earned loyalty points when loyaltyPointsEarned > 0', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder({ loyaltyPointsEarned: 10 }));
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ loyaltyPointsEarned: 10 }));
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2087,7 +2084,7 @@ describe('orderService', () => {
       });
 
       it('does not claw back earned points when loyaltyPointsEarned is 0', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder({ loyaltyPointsEarned: 0 }));
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ loyaltyPointsEarned: 0 }));
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2108,7 +2105,7 @@ describe('orderService', () => {
 
     describe('referral reward clawback', () => {
       it("claws back referral rewards when this is the user's only non-cancelled order", async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder());
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder());
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2143,7 +2140,7 @@ describe('orderService', () => {
       });
 
       it('does not claw back referral rewards when user has other active orders', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder());
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder());
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2163,7 +2160,7 @@ describe('orderService', () => {
       });
 
       it('does not attempt clawback when no referral record exists', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder());
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder());
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2175,7 +2172,7 @@ describe('orderService', () => {
       });
 
       it('does not clawback when referral status is SIGNED_UP (not yet converted)', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder());
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder());
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2194,7 +2191,7 @@ describe('orderService', () => {
       });
 
       it('order count check excludes the order being cancelled', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder({ id: 'order-db-001' }));
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ id: 'order-db-001' }));
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2221,7 +2218,7 @@ describe('orderService', () => {
       });
 
       it('skips referrer deduction when referrerReward is 0', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder());
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder());
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2251,7 +2248,7 @@ describe('orderService', () => {
 
     describe('Razorpay auto-refund', () => {
       it('initiates refund when payment is CAPTURED and has razorpayPaymentId', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(
+        mockOrderFindFirst.mockResolvedValueOnce(
           makeFullOrder({
             payment: {
               id: 'pay-001',
@@ -2282,7 +2279,7 @@ describe('orderService', () => {
       });
 
       it('uses Math.round for paise conversion of refund amount', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(
+        mockOrderFindFirst.mockResolvedValueOnce(
           makeFullOrder({
             payment: {
               id: 'pay-001',
@@ -2306,7 +2303,7 @@ describe('orderService', () => {
       });
 
       it('does not initiate refund when payment status is PENDING', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(
+        mockOrderFindFirst.mockResolvedValueOnce(
           makeFullOrder({
             payment: { id: 'pay-001', status: 'PENDING', razorpayPaymentId: null, amount: 1000 },
           })
@@ -2322,7 +2319,7 @@ describe('orderService', () => {
       });
 
       it('does not initiate refund when payment is null', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder({ payment: null }));
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ payment: null }));
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
@@ -2334,7 +2331,7 @@ describe('orderService', () => {
       });
 
       it('does not initiate refund when CAPTURED payment has no razorpayPaymentId', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(
+        mockOrderFindFirst.mockResolvedValueOnce(
           makeFullOrder({
             payment: { id: 'pay-001', status: 'CAPTURED', razorpayPaymentId: null, amount: 1000 },
           })
@@ -2350,7 +2347,7 @@ describe('orderService', () => {
       });
 
       it('logs the error but completes cancellation when Razorpay refund fails', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(
+        mockOrderFindFirst.mockResolvedValueOnce(
           makeFullOrder({
             payment: {
               id: 'pay-001',
@@ -2373,7 +2370,7 @@ describe('orderService', () => {
       });
 
       it('returns orderNumber in the response after successful cancellation', async () => {
-        mockOrderFindUnique.mockResolvedValueOnce(makeFullOrder());
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder());
         mockTxOrderUpdate.mockResolvedValueOnce({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);

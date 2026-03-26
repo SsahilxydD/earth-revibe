@@ -431,15 +431,15 @@ describe('validateDiscount — FREE_SHIPPING calculation', () => {
 // ===========================================================================
 
 describe('validateDiscount — BUY_X_GET_Y calculation', () => {
-  it("throws 'not yet supported' for BUY_X_GET_Y type", async () => {
+  it('returns discountAmount of 0 for BUY_X_GET_Y type (silently skipped in v1)', async () => {
     mockDiscountCode.findUnique.mockResolvedValue(
       makeDiscount({ type: 'BUY_X_GET_Y', value: '1' })
     );
 
-    await expect(discountService.validateDiscount(VALID_INPUT)).rejects.toMatchObject({
-      statusCode: 400,
-      message: 'This discount type is not yet supported',
-    });
+    const result = await discountService.validateDiscount(VALID_INPUT);
+
+    expect(result.discountAmount).toBe(0);
+    expect(result.valid).toBe(true);
   });
 });
 

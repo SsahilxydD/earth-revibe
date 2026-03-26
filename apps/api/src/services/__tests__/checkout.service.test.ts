@@ -38,7 +38,9 @@ const mocks = vi.hoisted(() => {
     },
     user: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       update: vi.fn(),
+      create: vi.fn(),
     },
     loyaltyConfig: { findFirst: vi.fn() },
     order: { count: vi.fn() },
@@ -144,7 +146,7 @@ vi.mock('../../config/env', () => ({
 }));
 
 vi.mock('../../config/logger', () => ({
-  logger: { error: vi.fn() },
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 vi.mock('../../config/constants', () => ({
@@ -163,6 +165,21 @@ vi.mock('../shiprocket.service', () => ({
   shiprocketService: {
     createShiprocketOrder: vi.fn(() => Promise.resolve()),
   },
+}));
+
+vi.mock('../../config/supabase', () => ({
+  getSupabaseAdmin: vi.fn(() => ({
+    auth: {
+      admin: {
+        createUser: vi.fn().mockResolvedValue({ data: { user: null }, error: { message: 'mock' } }),
+      },
+    },
+  })),
+  getSupabaseAnon: vi.fn(() => ({
+    auth: {
+      resetPasswordForEmail: vi.fn().mockResolvedValue({ error: null }),
+    },
+  })),
 }));
 
 // ---------------------------------------------------------------------------
@@ -327,26 +344,41 @@ describe('checkoutService.createMagicOrder', () => {
   // Guest checkout validation
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe('guest checkout — email validation', () => {
-    it('throws 400 BAD_REQUEST when guest checks out without an email', async () => {
+  describe('guest checkout — email handling', () => {
+    it('proceeds without guestEmail for guest checkout (Magic Checkout collects email during payment)', async () => {
+      const variant = makeVariant();
+      mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
+      mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
+      setupCreateTransaction();
+      mocks.txVariantFindUnique.mockResolvedValueOnce(variant);
+      mocks.txVariantUpdateMany.mockResolvedValueOnce({ count: 1 });
+      mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
+      mocks.user.findUnique.mockResolvedValueOnce(null);
+
       const input = makeCheckoutInput({ guestEmail: null });
 
-      await expect(checkoutService.createMagicOrder(null, input as any)).rejects.toMatchObject({
-        statusCode: 400,
-        message: 'Guest checkout requires an email address',
-      });
+      const result = await checkoutService.createMagicOrder(null, input as any);
 
-      // Should bail out before touching the DB
-      expect(mocks.productVariant.findMany).not.toHaveBeenCalled();
+      expect(result).toHaveProperty('razorpayOrderId');
+      expect(mocks.productVariant.findMany).toHaveBeenCalled();
     });
 
-    it('throws error that is an ApiError instance for missing guest email', async () => {
-      const err = await checkoutService
-        .createMagicOrder(null, makeCheckoutInput() as any)
-        .catch((e) => e);
+    it('uses provided guestEmail for prefill when available', async () => {
+      const variant = makeVariant();
+      mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
+      mocks.razorpayOrdersCreate.mockResolvedValueOnce(makeRazorpayOrder());
+      setupCreateTransaction();
+      mocks.txVariantFindUnique.mockResolvedValueOnce(variant);
+      mocks.txVariantUpdateMany.mockResolvedValueOnce({ count: 1 });
+      mocks.txPendingCheckoutCreate.mockResolvedValueOnce({});
+      mocks.user.findUnique.mockResolvedValueOnce(null);
 
-      expect(err).toBeInstanceOf(ApiError);
-      expect(err.code).toBe('BAD_REQUEST');
+      const err = await checkoutService.createMagicOrder(
+        null,
+        makeCheckoutInput({ guestEmail: 'guest@example.com' }) as any
+      );
+
+      expect(err.prefill.email).toBe('guest@example.com');
     });
 
     it('proceeds past email check when guestEmail is provided', async () => {
@@ -700,22 +732,13 @@ describe('checkoutService.createMagicOrder', () => {
       );
     });
 
-    it('throws 400 for BUY_X_GET_Y discount type (unsupported)', async () => {
-      const variant = makeVariant({ price: 500 });
-      mocks.productVariant.findMany.mockResolvedValueOnce([variant]);
-      mocks.product.findMany.mockResolvedValueOnce([{ id: 'product-1', categoryId: 'cat-1' }]);
-      mocks.discountCode.findUnique.mockResolvedValueOnce(makeDiscount({ type: 'BUY_X_GET_Y' }));
-      mocks.order.count.mockResolvedValueOnce(0);
+    it('applies 0 discount for BUY_X_GET_Y type (silently skipped in v1)', async () => {
+      await applyWithDiscount({ type: 'BUY_X_GET_Y', value: 10 });
 
-      await expect(
-        checkoutService.createMagicOrder(
-          'user-1',
-          makeCheckoutInput({ discountCode: 'BXGY' }) as any
-        )
-      ).rejects.toMatchObject({
-        statusCode: 400,
-        message: 'This discount type is not yet supported',
-      });
+      // BUY_X_GET_Y yields discountAmount=0 — full price charged (1000 INR = 100000 paise for qty 2 * 500)
+      expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: 100_000 })
+      );
     });
 
     it('throws 400 when discount code does not exist', async () => {
@@ -1464,7 +1487,7 @@ describe('checkoutService.getShippingInfo', () => {
 // ===========================================================================
 
 describe('checkoutService.getPromotions', () => {
-  it('returns active promotions mapped to code/summary/description', async () => {
+  it('returns active promotions mapped to code/description/summary', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([
       makeDiscount({ code: 'SAVE10', type: 'PERCENTAGE', value: 10 }),
       makeDiscount({ code: 'FLAT50', type: 'FLAT', value: 50 }),
@@ -1474,45 +1497,45 @@ describe('checkoutService.getPromotions', () => {
 
     expect(result.promotions).toHaveLength(2);
     expect(result.promotions[0].code).toBe('SAVE10');
-    expect(result.promotions[0].summary).toContain('10% off');
+    expect(result.promotions[0].description).toContain('10% off');
     expect(result.promotions[1].code).toBe('FLAT50');
-    expect(result.promotions[1].summary).toContain('₹50 off');
+    expect(result.promotions[1].description).toContain('₹50 off');
   });
 
-  it('includes maxDiscountAmount in PERCENTAGE summary when set', async () => {
+  it('includes maxDiscountAmount in PERCENTAGE description when set', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([
       makeDiscount({ type: 'PERCENTAGE', value: 20, maxDiscountAmount: 200 }),
     ]);
 
     const result = await checkoutService.getPromotions({} as any);
 
-    expect(result.promotions[0].summary).toContain('up to ₹200');
+    expect(result.promotions[0].description).toContain('up to ₹200');
   });
 
-  it('omits cap text from PERCENTAGE summary when maxDiscountAmount is null', async () => {
+  it('omits cap text from PERCENTAGE description when maxDiscountAmount is null', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([
       makeDiscount({ type: 'PERCENTAGE', value: 15, maxDiscountAmount: null }),
     ]);
 
     const result = await checkoutService.getPromotions({} as any);
 
-    expect(result.promotions[0].summary).not.toContain('up to');
+    expect(result.promotions[0].description).not.toContain('up to');
   });
 
-  it("shows 'No minimum order' description when minOrderValue is null", async () => {
+  it("shows 'No minimum order' summary when minOrderValue is null", async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([makeDiscount({ minOrderValue: null })]);
 
     const result = await checkoutService.getPromotions({} as any);
 
-    expect(result.promotions[0].description).toBe('No minimum order');
+    expect(result.promotions[0].summary).toBe('No minimum order');
   });
 
-  it('shows minimum order value in description when set', async () => {
+  it('shows minimum order value in summary when set', async () => {
     mocks.discountCode.findMany.mockResolvedValueOnce([makeDiscount({ minOrderValue: 500 })]);
 
     const result = await checkoutService.getPromotions({} as any);
 
-    expect(result.promotions[0].description).toContain('500');
+    expect(result.promotions[0].summary).toContain('500');
   });
 
   it('returns empty promotions array when no active codes exist', async () => {
@@ -1549,17 +1572,16 @@ describe('checkoutService.getPromotions', () => {
 // ===========================================================================
 
 describe('checkoutService.applyPromotion', () => {
-  it('returns error object when pending checkout is not found', async () => {
-    mocks.pendingCheckout.findUnique.mockResolvedValueOnce(null);
+  it('returns promotion_not_applicable when pending checkout is not found', async () => {
+    // applyPromotion tries findUnique by razorpayOrderId first, then by orderNumber
+    mocks.pendingCheckout.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
 
     const result = await checkoutService.applyPromotion({
       order_id: 'ORD-MISSING',
       code: 'SAVE10',
     } as any);
 
-    expect(result).toEqual({
-      error: { code: 'INVALID_PROMOTION', message: 'Order not found' },
-    });
+    expect(result).toEqual({ promotion_not_applicable: true });
   });
 
   it('returns promotion object with value in paise when code is valid', async () => {
@@ -1575,7 +1597,7 @@ describe('checkoutService.applyPromotion', () => {
     expect(result).toHaveProperty('promotion');
     const promo = (result as any).promotion;
     expect(promo.code).toBe('SAVE10');
-    expect(promo.value).toBe(10_000); // 100 INR → 10000 paise
+    expect(promo.value).toBe('10000'); // 100 INR → 10000 paise (string per Razorpay API)
     expect(promo.value_type).toBe('fixed_amount');
   });
 
@@ -1592,7 +1614,7 @@ describe('checkoutService.applyPromotion', () => {
     expect((result as any).promotion.type).toBe('coupon');
   });
 
-  it('returns error object when discount code does not exist (throws ApiError)', async () => {
+  it('returns promotion_not_applicable when discount code does not exist', async () => {
     const pending = makePendingCheckout({ subtotal: 1000 });
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
     mocks.discountCode.findUnique.mockResolvedValueOnce(null);
@@ -1602,12 +1624,10 @@ describe('checkoutService.applyPromotion', () => {
       code: 'INVALID',
     } as any);
 
-    expect(result).toHaveProperty('error');
-    expect((result as any).error.code).toBe('INVALID_PROMOTION');
-    expect((result as any).error.message).toBe('Invalid discount code');
+    expect(result).toEqual({ promotion_not_applicable: true });
   });
 
-  it("returns 'Invalid code' message for unexpected non-ApiError exceptions", async () => {
+  it('returns promotion_not_applicable for unexpected non-ApiError exceptions', async () => {
     const pending = makePendingCheckout({ subtotal: 1000 });
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
     mocks.discountCode.findUnique.mockRejectedValueOnce(new Error('DB crash'));
@@ -1617,12 +1637,10 @@ describe('checkoutService.applyPromotion', () => {
       code: 'SAVE10',
     } as any);
 
-    expect(result).toEqual({
-      error: { code: 'INVALID_PROMOTION', message: 'Invalid code' },
-    });
+    expect(result).toEqual({ promotion_not_applicable: true });
   });
 
-  it('returns error object (not a thrown exception) when calculateDiscount throws a generic error', async () => {
+  it('returns promotion_not_applicable (not a thrown exception) when calculateDiscount throws a generic error', async () => {
     // pendingCheckout is found, but the discountCode DB call throws a generic error
     const pending = makePendingCheckout({ subtotal: 500 });
     mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
@@ -1633,10 +1651,8 @@ describe('checkoutService.applyPromotion', () => {
       code: 'SAVE10',
     } as any);
 
-    // applyPromotion catches non-ApiError errors and returns an error object
-    expect(result).toHaveProperty('error');
-    expect((result as any).error.code).toBe('INVALID_PROMOTION');
-    expect((result as any).error.message).toBe('Invalid code');
+    // applyPromotion catches errors and returns promotion_not_applicable
+    expect(result).toEqual({ promotion_not_applicable: true });
   });
 });
 
@@ -1766,10 +1782,19 @@ describe('checkoutService.verifyMagicPayment', () => {
       const pending = makePendingCheckout({ userId: null, guestEmail: 'g@x.com' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
+      // Auto-create user flow: findUnique returns null (no existing user by email)
+      mocks.user.findUnique.mockResolvedValueOnce(null);
+      // findFirst returns null (no existing user by phone)
+      mocks.user.findFirst.mockResolvedValueOnce(null);
+      // Auto-create user
+      mocks.user.create.mockResolvedValueOnce({ id: 'auto-user-1', email: 'customer@example.com' });
       mocks.address.create.mockResolvedValueOnce(makeAddress({ id: 'addr-new' }));
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       setupVerifyTransaction();
       mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
+      mocks.txOrderCount.mockResolvedValueOnce(1);
+      mocks.txReferralFindUnique.mockResolvedValueOnce(null);
+      mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
       await expect(
@@ -1862,21 +1887,25 @@ describe('checkoutService.verifyMagicPayment', () => {
       const pending = makePendingCheckout({ userId: null, guestEmail: 'g@x.com' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
-      mocks.address.create.mockResolvedValueOnce(
-        makeAddress({ id: 'addr-guest', userId: undefined })
-      );
+      // Auto-create user flow
+      mocks.user.findUnique.mockResolvedValueOnce(null);
+      mocks.user.findFirst.mockResolvedValueOnce(null);
+      mocks.user.create.mockResolvedValueOnce({ id: 'auto-user-1', email: 'customer@example.com' });
+      // After auto-creation, the user is no longer a "guest" — address is linked to auto-created user
+      mocks.address.findFirst.mockResolvedValueOnce(null);
+      mocks.address.count.mockResolvedValueOnce(0);
+      mocks.address.create.mockResolvedValueOnce(makeAddress({ id: 'addr-guest' }));
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       setupVerifyTransaction();
       mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
+      mocks.txOrderCount.mockResolvedValueOnce(1);
+      mocks.txReferralFindUnique.mockResolvedValueOnce(null);
+      mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
       await checkoutService.verifyMagicPayment(null, makeValidVerifyInput() as any);
 
-      expect(mocks.address.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.not.objectContaining({ userId: expect.anything() }),
-        })
-      );
+      expect(mocks.address.create).toHaveBeenCalledOnce();
     });
 
     it('throws 400 when no address from Razorpay and no default address for authenticated user', async () => {
@@ -1900,14 +1929,22 @@ describe('checkoutService.verifyMagicPayment', () => {
       const pending = makePendingCheckout({ userId: null, guestEmail: 'g@x.com' });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce({
-        customer_details: {}, // no shipping_address
+        customer_details: {}, // no shipping_address, no email
       });
+      // Auto-create user flow — no customer email means isGuest stays true
+      // (customerEmail would be '' since no customer_details.email and pending.guestEmail is 'g@x.com')
+      // Actually guestEmail exists so auto-create fires
+      mocks.user.findUnique.mockResolvedValueOnce(null);
+      mocks.user.findFirst.mockResolvedValueOnce(null);
+      mocks.user.create.mockResolvedValueOnce({ id: 'auto-user-1', email: 'g@x.com' });
+      // After auto-creation, user is no longer guest → tries to find default address
+      mocks.address.findFirst.mockResolvedValueOnce(null);
 
       await expect(
         checkoutService.verifyMagicPayment(null, makeValidVerifyInput() as any)
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: 'No shipping address provided for guest checkout',
+        message: 'No shipping address found',
       });
     });
   });
@@ -1981,7 +2018,7 @@ describe('checkoutService.verifyMagicPayment', () => {
       expect(result.pointsEarned).toBe(10);
     });
 
-    it('returns pointsEarned=0 for guest users (no loyalty accrual)', async () => {
+    it('returns pointsEarned for auto-created guest users', async () => {
       const pending = makePendingCheckout({
         userId: null,
         guestEmail: 'g@x.com',
@@ -1991,15 +2028,28 @@ describe('checkoutService.verifyMagicPayment', () => {
       });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
+      // Auto-create user flow
+      mocks.user.findUnique.mockResolvedValueOnce(null);
+      mocks.user.findFirst.mockResolvedValueOnce(null);
+      mocks.user.create.mockResolvedValueOnce({ id: 'auto-user-1', email: 'customer@example.com' });
+      mocks.address.findFirst.mockResolvedValueOnce(null);
+      mocks.address.count.mockResolvedValueOnce(0);
       mocks.address.create.mockResolvedValueOnce(makeAddress({ id: 'addr-g' }));
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant({ price: 500 })]);
       setupVerifyTransaction();
       mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
+      mocks.txOrderUpdate.mockResolvedValueOnce({});
+      mocks.txUserUpdate.mockResolvedValue({});
+      mocks.txLoyaltyTransactionCreate.mockResolvedValue({});
+      mocks.txOrderCount.mockResolvedValueOnce(1);
+      mocks.txReferralFindUnique.mockResolvedValueOnce(null);
+      mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
       const result = await checkoutService.verifyMagicPayment(null, makeValidVerifyInput() as any);
 
-      expect(result.pointsEarned).toBe(0);
+      // Auto-created users earn points (1000 INR / 100 = 10 points)
+      expect(result.pointsEarned).toBe(10);
     });
   });
 
@@ -2317,7 +2367,10 @@ describe('restoreExpiredReservations', () => {
 // ===========================================================================
 
 describe('ApiError shapes produced by checkoutService', () => {
-  it('guest-email-missing error is ApiError with statusCode 400 and code BAD_REQUEST', async () => {
+  it('variant-not-available error is ApiError with statusCode 400 and code BAD_REQUEST', async () => {
+    // Guest checkout no longer requires email — test a different error path
+    mocks.productVariant.findMany.mockResolvedValueOnce([]); // no variants found
+
     const err = await checkoutService
       .createMagicOrder(null, makeCheckoutInput() as any)
       .catch((e) => e);

@@ -12,6 +12,9 @@ vi.mock('@earth-revibe/db', () => ({
       update: vi.fn(),
     },
   },
+  Prisma: {
+    JsonNull: null,
+  },
 }));
 
 // Mock logger

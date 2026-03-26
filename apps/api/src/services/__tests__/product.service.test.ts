@@ -18,11 +18,13 @@ const mockPrismaFns = vi.hoisted(() => ({
   },
   productVariant: {
     findUnique: vi.fn(),
+    create: vi.fn(),
     createMany: vi.fn(),
     findMany: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
   },
+  $transaction: vi.fn(),
   productImage: {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
@@ -589,14 +591,18 @@ describe('productService.addProductVariants', () => {
   it('creates variants and returns them ordered by createdAt desc', async () => {
     const variant = makeVariant();
     vi.mocked(prisma.product.findUnique).mockResolvedValue(makeProduct() as any);
-    vi.mocked(prisma.productVariant.createMany).mockResolvedValue({ count: 1 } as any);
-    vi.mocked(prisma.productVariant.findMany).mockResolvedValue([variant] as any);
+    // $transaction receives an array of Prisma promises and resolves them
+    vi.mocked(prisma.$transaction).mockResolvedValue([variant] as any);
 
     const result = await productService.addProductVariants('prod-1', variantInput);
 
-    expect(prisma.productVariant.createMany).toHaveBeenCalledTimes(1);
-    const createCall = vi.mocked(prisma.productVariant.createMany).mock.calls[0][0] as any;
-    expect(createCall.data[0]).toMatchObject({ productId: 'prod-1', sku: 'ECO-S-WHT' });
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    // The service passes an array of prisma.productVariant.create() calls
+    expect(prisma.productVariant.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ productId: 'prod-1', sku: 'ECO-S-WHT' }),
+      })
+    );
     expect(result).toEqual([variant]);
   });
 
@@ -606,19 +612,22 @@ describe('productService.addProductVariants', () => {
     await expect(productService.addProductVariants('ghost-id', variantInput)).rejects.toMatchObject(
       { statusCode: 404, code: 'NOT_FOUND' }
     );
-    expect(prisma.productVariant.createMany).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('fetches the same number of variants as were created', async () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValue(makeProduct() as any);
-    vi.mocked(prisma.productVariant.createMany).mockResolvedValue({ count: 3 } as any);
-    vi.mocked(prisma.productVariant.findMany).mockResolvedValue([] as any);
+    // $transaction returns the created variants
+    vi.mocked(prisma.$transaction).mockResolvedValue([
+      makeVariant(),
+      makeVariant(),
+      makeVariant(),
+    ] as any);
 
-    await productService.addProductVariants('prod-1', variantInput);
+    const result = await productService.addProductVariants('prod-1', variantInput);
 
-    const findCall = vi.mocked(prisma.productVariant.findMany).mock.calls[0][0] as any;
-    expect(findCall.take).toBe(3);
-    expect(findCall.where.productId).toBe('prod-1');
+    // The result is whatever $transaction returns
+    expect(result).toHaveLength(3);
   });
 });
 
