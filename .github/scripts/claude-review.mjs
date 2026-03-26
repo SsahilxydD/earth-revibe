@@ -62,7 +62,7 @@ ${truncatedDiff}
 writeFileSync('/tmp/claude-prompt.txt', prompt);
 
 try {
-  const review = execSync('cat /tmp/claude-prompt.txt | claude -p --output-format text', {
+  const review = execSync('cat /tmp/claude-prompt.txt | claude -p --bare --output-format text', {
     encoding: 'utf8',
     timeout: 300_000, // 5 minute timeout
     maxBuffer: 10 * 1024 * 1024,

@@ -71,7 +71,7 @@ Keep the report concise and actionable. Use markdown formatting.`;
 writeFileSync('/tmp/claude-prompt.txt', prompt);
 
 try {
-  const report = execSync('cat /tmp/claude-prompt.txt | claude -p --output-format text', {
+  const report = execSync('cat /tmp/claude-prompt.txt | claude -p --bare --output-format text', {
     encoding: 'utf8',
     timeout: 300_000,
     maxBuffer: 10 * 1024 * 1024,
