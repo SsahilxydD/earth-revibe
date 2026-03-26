@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => {
   const mockAdminUpdateUserById = vi.fn();
   const mockAdminListUsers = vi.fn();
   const mockAdminGetUser = vi.fn();
+  const mockAdminDeleteUser = vi.fn();
 
   const mockSupabaseAdmin = {
     auth: {
@@ -30,6 +31,7 @@ const mocks = vi.hoisted(() => {
         createUser: mockAdminCreateUser,
         updateUserById: mockAdminUpdateUserById,
         listUsers: mockAdminListUsers,
+        deleteUser: mockAdminDeleteUser,
       },
       getUser: mockAdminGetUser,
     },
@@ -54,6 +56,10 @@ const mocks = vi.hoisted(() => {
   const mockPrismaUserFindUnique = vi.fn();
   const mockPrismaUserUpsert = vi.fn();
   const mockPrismaReferralCreate = vi.fn();
+  const mockPrismaPasswordResetTokenFindUnique = vi.fn();
+  const mockPrismaPasswordResetTokenCreate = vi.fn();
+  const mockPrismaPasswordResetTokenUpdate = vi.fn();
+  const mockPrismaPasswordResetTokenUpdateMany = vi.fn();
 
   const mockPrisma = {
     user: {
@@ -65,7 +71,16 @@ const mocks = vi.hoisted(() => {
     referral: {
       create: mockPrismaReferralCreate,
     },
+    passwordResetToken: {
+      findUnique: mockPrismaPasswordResetTokenFindUnique,
+      create: mockPrismaPasswordResetTokenCreate,
+      update: mockPrismaPasswordResetTokenUpdate,
+      updateMany: mockPrismaPasswordResetTokenUpdateMany,
+    },
   };
+
+  // Email service mock
+  const mockSendPasswordResetEmail = vi.fn();
 
   // Logger mock — suppress all output during tests
   const mockLogger = {
@@ -82,6 +97,7 @@ const mocks = vi.hoisted(() => {
     mockAdminUpdateUserById,
     mockAdminListUsers,
     mockAdminGetUser,
+    mockAdminDeleteUser,
     mockAnonSignIn,
     mockAnonRefreshSession,
     mockAnonResetPasswordForEmail,
@@ -91,6 +107,11 @@ const mocks = vi.hoisted(() => {
     mockPrismaUserFindUnique,
     mockPrismaUserUpsert,
     mockPrismaReferralCreate,
+    mockPrismaPasswordResetTokenFindUnique,
+    mockPrismaPasswordResetTokenCreate,
+    mockPrismaPasswordResetTokenUpdate,
+    mockPrismaPasswordResetTokenUpdateMany,
+    mockSendPasswordResetEmail,
     mockLogger,
   };
 });
@@ -119,6 +140,12 @@ vi.mock('../../config/env', () => ({
 
 vi.mock('../../config/logger', () => ({
   logger: mocks.mockLogger,
+}));
+
+vi.mock('../email.service', () => ({
+  emailService: {
+    sendPasswordResetEmail: mocks.mockSendPasswordResetEmail,
+  },
 }));
 
 // ---------------------------------------------------------------------------
@@ -578,30 +605,41 @@ describe('authService.logout', () => {
 // forgotPassword
 // ===========================================================================
 describe('authService.forgotPassword', () => {
-  it('calls resetPasswordForEmail with correct redirect URL', async () => {
-    mocks.mockAnonResetPasswordForEmail.mockResolvedValueOnce({ data: {}, error: null });
+  it('generates a token, stores it, and sends a reset email for existing user', async () => {
+    const prismaUser = makePrismaUser({ email: 'user@example.com' });
+    mocks.mockPrismaUserFindUnique.mockResolvedValueOnce(prismaUser);
+    mocks.mockAdminListUsers.mockResolvedValueOnce({
+      data: { users: [makeSupabaseUser({ email: 'user@example.com' })] },
+    });
+    mocks.mockPrismaPasswordResetTokenUpdateMany.mockResolvedValueOnce({ count: 0 });
+    mocks.mockPrismaPasswordResetTokenCreate.mockResolvedValueOnce({});
+    mocks.mockSendPasswordResetEmail.mockResolvedValueOnce(undefined);
 
     await authService.forgotPassword('user@example.com');
 
-    expect(mocks.mockAnonResetPasswordForEmail).toHaveBeenCalledWith('user@example.com', {
-      redirectTo: 'http://localhost:3000/reset-password',
-    });
+    expect(mocks.mockPrismaPasswordResetTokenUpdateMany).toHaveBeenCalledOnce();
+    expect(mocks.mockPrismaPasswordResetTokenCreate).toHaveBeenCalledOnce();
+    expect(mocks.mockSendPasswordResetEmail).toHaveBeenCalledWith(
+      'user@example.com',
+      expect.any(String)
+    );
   });
 
-  it('resolves (does not throw) even when Supabase returns an error — to avoid email enumeration', async () => {
-    mocks.mockAnonResetPasswordForEmail.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'User not found' },
-    });
+  it('resolves (does not throw) when user email is not found in Prisma — prevents email enumeration', async () => {
+    mocks.mockPrismaUserFindUnique.mockResolvedValueOnce(null);
 
     await expect(authService.forgotPassword('ghost@example.com')).resolves.toBeUndefined();
-    expect(mocks.mockLogger.error).toHaveBeenCalledOnce();
+    expect(mocks.mockPrismaPasswordResetTokenCreate).not.toHaveBeenCalled();
   });
 
-  it('resolves for an empty email string without crashing', async () => {
-    mocks.mockAnonResetPasswordForEmail.mockResolvedValueOnce({ data: {}, error: null });
+  it('resolves without sending email when user is not found in Supabase', async () => {
+    mocks.mockPrismaUserFindUnique.mockResolvedValueOnce(
+      makePrismaUser({ email: 'user@example.com' })
+    );
+    mocks.mockAdminListUsers.mockResolvedValueOnce({ data: { users: [] } });
 
-    await expect(authService.forgotPassword('')).resolves.toBeUndefined();
+    await expect(authService.forgotPassword('user@example.com')).resolves.toBeUndefined();
+    expect(mocks.mockSendPasswordResetEmail).not.toHaveBeenCalled();
   });
 });
 
@@ -609,52 +647,87 @@ describe('authService.forgotPassword', () => {
 // resetPassword
 // ===========================================================================
 describe('authService.resetPassword', () => {
-  it('updates the Supabase user password when token is valid', async () => {
-    const supaUser = makeSupabaseUser({ id: 'supa-uid-reset' });
+  it('validates token, updates Supabase password, and marks token as used', async () => {
+    const resetToken = {
+      token: 'valid-token-hex',
+      email: 'test@example.com',
+      usedAt: null,
+      expiresAt: new Date(Date.now() + 3600000), // 1 hour from now
+    };
+    const supaUser = makeSupabaseUser({ id: 'supa-uid-reset', email: 'test@example.com' });
 
-    mocks.mockAdminGetUser.mockResolvedValueOnce({
-      data: { user: supaUser },
-      error: null,
+    mocks.mockPrismaPasswordResetTokenFindUnique.mockResolvedValueOnce(resetToken);
+    mocks.mockAdminListUsers.mockResolvedValueOnce({
+      data: { users: [supaUser] },
     });
     mocks.mockAdminUpdateUserById.mockResolvedValueOnce({ data: {}, error: null });
+    mocks.mockPrismaPasswordResetTokenUpdate.mockResolvedValueOnce({});
 
-    await authService.resetPassword('valid-access-token', 'NewPass123!');
+    await authService.resetPassword('valid-token-hex', 'NewPass123!');
 
-    expect(mocks.mockAdminGetUser).toHaveBeenCalledWith('valid-access-token');
+    expect(mocks.mockPrismaPasswordResetTokenFindUnique).toHaveBeenCalledWith({
+      where: { token: 'valid-token-hex' },
+    });
     expect(mocks.mockAdminUpdateUserById).toHaveBeenCalledWith('supa-uid-reset', {
       password: 'NewPass123!',
     });
+    expect(mocks.mockPrismaPasswordResetTokenUpdate).toHaveBeenCalledWith({
+      where: { token: 'valid-token-hex' },
+      data: { usedAt: expect.any(Date) },
+    });
   });
 
-  it('throws bad request (400) when getUser returns an error', async () => {
-    mocks.mockAdminGetUser.mockResolvedValueOnce({
-      data: { user: null },
-      error: { message: 'JWT expired' },
-    });
+  it('throws bad request (400) when token is not found in DB', async () => {
+    mocks.mockPrismaPasswordResetTokenFindUnique.mockResolvedValueOnce(null);
 
-    await expect(authService.resetPassword('expired-token', 'NewPass123!')).rejects.toMatchObject({
+    await expect(authService.resetPassword('invalid-token', 'NewPass123!')).rejects.toMatchObject({
       statusCode: 400,
-      message: 'Invalid or expired reset token',
+      message: 'Invalid reset link. Please request a new one.',
     });
 
     expect(mocks.mockAdminUpdateUserById).not.toHaveBeenCalled();
   });
 
-  it('throws bad request (400) when getUser returns null user without error', async () => {
-    mocks.mockAdminGetUser.mockResolvedValueOnce({
-      data: { user: null },
-      error: null,
+  it('throws bad request (400) when token has already been used', async () => {
+    mocks.mockPrismaPasswordResetTokenFindUnique.mockResolvedValueOnce({
+      token: 'used-token',
+      email: 'test@example.com',
+      usedAt: new Date(),
+      expiresAt: new Date(Date.now() + 3600000),
     });
 
-    await expect(authService.resetPassword('bad-token', 'NewPass123!')).rejects.toMatchObject({
+    await expect(authService.resetPassword('used-token', 'NewPass123!')).rejects.toMatchObject({
       statusCode: 400,
+      message: 'This reset link has already been used.',
     });
   });
 
-  it('throws internal (500) when updateUserById fails', async () => {
-    mocks.mockAdminGetUser.mockResolvedValueOnce({
-      data: { user: makeSupabaseUser({ id: 'supa-uid-reset' }) },
-      error: null,
+  it('throws bad request (400) when token has expired', async () => {
+    mocks.mockPrismaPasswordResetTokenFindUnique.mockResolvedValueOnce({
+      token: 'expired-token',
+      email: 'test@example.com',
+      usedAt: null,
+      expiresAt: new Date(Date.now() - 1000), // expired
+    });
+
+    await expect(authService.resetPassword('expired-token', 'NewPass123!')).rejects.toMatchObject({
+      statusCode: 400,
+      message: 'This reset link has expired. Please request a new one.',
+    });
+  });
+
+  it('throws internal (500) when Supabase updateUserById fails', async () => {
+    const resetToken = {
+      token: 'valid-token',
+      email: 'test@example.com',
+      usedAt: null,
+      expiresAt: new Date(Date.now() + 3600000),
+    };
+    const supaUser = makeSupabaseUser({ id: 'supa-uid-reset', email: 'test@example.com' });
+
+    mocks.mockPrismaPasswordResetTokenFindUnique.mockResolvedValueOnce(resetToken);
+    mocks.mockAdminListUsers.mockResolvedValueOnce({
+      data: { users: [supaUser] },
     });
     mocks.mockAdminUpdateUserById.mockResolvedValueOnce({
       data: null,
@@ -663,7 +736,7 @@ describe('authService.resetPassword', () => {
 
     await expect(authService.resetPassword('valid-token', 'NewPass123!')).rejects.toMatchObject({
       statusCode: 500,
-      message: 'Password reset failed',
+      message: 'Password reset failed. Please try again.',
     });
 
     expect(mocks.mockLogger.error).toHaveBeenCalledOnce();
