@@ -9,6 +9,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "turbo test",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots",
+    "test:api": "vitest run --config tests/api/vitest.config.ts",
     "db:generate": "turbo db:generate",
     "db:push": "turbo db:push",
     "db:seed": "turbo db:seed",
@@ -26,8 +29,10 @@
     "lint-staged": "^16.1.0",
     "prettier": "^3.5.0",
     "turbo": "^2.8.13",
+    "supertest": "^7.2.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.34.0"
+    "typescript-eslint": "^8.34.0",
+    "vitest": "^4.0.18"
   },
   "packageManager": "pnpm@9.15.4",
   "engines": {
