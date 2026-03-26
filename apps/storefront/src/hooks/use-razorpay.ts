@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from 'react';
 
 declare global {
   interface Window {
@@ -53,7 +53,7 @@ interface InitiatePaymentParams {
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
-    if (typeof window !== "undefined" && window.Razorpay) {
+    if (typeof window !== 'undefined' && window.Razorpay) {
       resolve(true);
       return;
     }
@@ -61,13 +61,13 @@ function loadRazorpayScript(): Promise<boolean> {
     // Guard against duplicate script injection from concurrent callers
     const existing = document.querySelector('script[src*="checkout.razorpay.com"]');
     if (existing) {
-      existing.addEventListener("load", () => resolve(true));
-      existing.addEventListener("error", () => resolve(false));
+      existing.addEventListener('load', () => resolve(true));
+      existing.addEventListener('error', () => resolve(false));
       return;
     }
 
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
@@ -80,32 +80,28 @@ export function useRazorpay() {
   const razorpayRef = useRef<RazorpayInstance | null>(null);
 
   const initiatePayment = useCallback(
-    async (
-      params: InitiatePaymentParams
-    ): Promise<RazorpayResponse | null> => {
+    async (params: InitiatePaymentParams): Promise<RazorpayResponse | null> => {
       setIsLoading(true);
 
       const loaded = await loadRazorpayScript();
       if (!loaded) {
         setIsLoading(false);
-        throw new Error(
-          "Failed to load Razorpay SDK. Please check your internet connection."
-        );
+        throw new Error('Failed to load Razorpay SDK. Please check your internet connection.');
       }
 
       const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
       if (!key) {
         setIsLoading(false);
-        throw new Error("Razorpay key is not configured.");
+        throw new Error('Razorpay key is not configured.');
       }
 
       return new Promise<RazorpayResponse | null>((resolve, reject) => {
         const options: RazorpayOptions = {
           key,
           amount: params.amount,
-          currency: params.currency || "INR",
-          name: "Earth Revibe",
-          description: params.description || "Order Payment",
+          currency: params.currency || 'INR',
+          name: 'Earth Revibe',
+          description: params.description || 'Order Payment',
           order_id: params.razorpayOrderId,
           prefill: {
             name: params.customerName,
@@ -113,7 +109,7 @@ export function useRazorpay() {
             contact: params.customerPhone,
           },
           theme: {
-            color: "#121212",
+            color: '#121212',
           },
           handler: (response: RazorpayResponse) => {
             setIsLoading(false);
@@ -131,11 +127,9 @@ export function useRazorpay() {
           const rzp = new window.Razorpay(options);
           razorpayRef.current = rzp;
           rzp.open();
-        } catch (error) {
+        } catch {
           setIsLoading(false);
-          reject(
-            new Error("Failed to initialize Razorpay checkout.")
-          );
+          reject(new Error('Failed to initialize Razorpay checkout.'));
         }
       });
     },

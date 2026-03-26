@@ -13,6 +13,7 @@ export default tseslint.config(
       '**/prisma/generated/**',
       '**/sw.js',
       '**/serwist-sw.ts',
+      '**/next-env.d.ts',
     ],
   },
   {
@@ -24,17 +25,23 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-empty': ['error', { allowEmptyCatch: true }],
     },
   },
-  // Node.js scripts (.github/scripts/) need Node globals
+  // Config files (next.config.mjs, etc.) need Node globals
   {
-    files: ['.github/scripts/**/*.mjs'],
+    files: ['**/*.config.mjs', '**/*.config.js', '.github/scripts/**/*.mjs'],
     languageOptions: {
       globals: {
         console: 'readonly',
         process: 'readonly',
         fetch: 'readonly',
+        crypto: 'readonly',
+        Buffer: 'readonly',
+        URL: 'readonly',
+        __dirname: 'readonly',
       },
     },
     rules: {

@@ -1,0 +1,69 @@
+name: E2E & Integration Tests
+
+on:
+  pull_request:
+    branches: [main]
+  # Allow manual trigger for debugging
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-integration:
+    name: API Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run API integration tests
+        run: pnpm exec vitest run --config tests/api/vitest.config.ts --dir tests/api
+        env:
+          API_TEST_URL: https://earth-revibeapi-production.up.railway.app
+
+  e2e:
+    name: E2E Tests (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [desktop-chrome, tablet, mobile]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests (${{ matrix.project }})
+        run: pnpm exec playwright test --project=${{ matrix.project }}
+        env:
+          PLAYWRIGHT_BASE_URL: https://storefront-tawny-one.vercel.app
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results-${{ matrix.project }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

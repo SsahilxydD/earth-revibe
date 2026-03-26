@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
-import { ChevronLeft, ShoppingBag, Loader2 } from "lucide-react";
-import { useCartStore } from "@/stores/cart-store";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { formatPrice, getImageUrl } from "@/lib/utils";
-import { api } from "@/lib/api-client";
-import { useToast } from "@/providers";
-import { useRazorpay } from "@/hooks/use-razorpay";
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
+import { ChevronLeft, ShoppingBag, Loader2 } from 'lucide-react';
+import { useCartStore } from '@/stores/cart-store';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { formatPrice, getImageUrl } from '@/lib/utils';
+import { api } from '@/lib/api-client';
+import { useToast } from '@/providers';
+import { useRazorpay } from '@/hooks/use-razorpay';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function CheckoutPage() {
         amount: number;
         orderNumber: string;
         prefill: { name: string; email: string; contact: string };
-      }>("/checkout/create-order", {
+      }>('/checkout/create-order', {
         items: items.map((item) => ({
           variantId: item.id,
           quantity: item.quantity,
@@ -53,7 +53,7 @@ export default function CheckoutPage() {
         orderId: result.orderNumber,
         razorpayOrderId: result.razorpayOrderId,
         amount: Math.round(result.amount * 100), // paise
-        currency: "INR",
+        currency: 'INR',
         customerName: result.prefill.name,
         customerEmail: result.prefill.email,
         customerPhone: result.prefill.contact,
@@ -62,7 +62,7 @@ export default function CheckoutPage() {
 
       if (!paymentResponse) {
         // User dismissed the popup
-        addToast("Payment was cancelled. You can try again.", "info");
+        addToast('Payment was cancelled. You can try again.', 'info');
         setHasLaunched(false);
         return;
       }
@@ -72,7 +72,7 @@ export default function CheckoutPage() {
         orderNumber: string;
         pointsEarned: number;
         accountAutoCreated: boolean;
-      }>("/checkout/verify-payment", {
+      }>('/checkout/verify-payment', {
         razorpayOrderId: paymentResponse.razorpay_order_id,
         razorpayPaymentId: paymentResponse.razorpay_payment_id,
         razorpaySignature: paymentResponse.razorpay_signature,
@@ -80,13 +80,10 @@ export default function CheckoutPage() {
 
       clearCart();
       const params = new URLSearchParams({ orderId: verification.orderNumber });
-      if (verification.accountAutoCreated) params.set("newAccount", "1");
+      if (verification.accountAutoCreated) params.set('newAccount', '1');
       router.push(`/checkout/confirmation?${params.toString()}`);
     } catch (error: any) {
-      addToast(
-        error?.message || "Something went wrong. Please try again.",
-        "error"
-      );
+      addToast(error?.message || 'Something went wrong. Please try again.', 'error');
       setIsCreatingOrder(false);
       setHasLaunched(false);
     }
@@ -95,7 +92,7 @@ export default function CheckoutPage() {
   // Auto-launch Magic Checkout when page loads with items
   useEffect(() => {
     if (items.length === 0) {
-      router.replace("/cart");
+      router.replace('/cart');
       return;
     }
     // Small delay to let the page render before opening popup
@@ -103,7 +100,7 @@ export default function CheckoutPage() {
       launchMagicCheckout();
     }, 500);
     return () => clearTimeout(timer);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   if (items.length === 0) {
     return (
@@ -129,9 +126,7 @@ export default function CheckoutPage() {
         Back to cart
       </Link>
 
-      <h1 className="mt-4 text-2xl font-bold uppercase tracking-wider">
-        Checkout
-      </h1>
+      <h1 className="mt-4 text-2xl font-bold uppercase tracking-wider">Checkout</h1>
 
       {/* Order summary while Magic Checkout loads */}
       <div className="mt-8">
@@ -139,9 +134,7 @@ export default function CheckoutPage() {
           <div className="flex flex-col items-center justify-center py-16">
             <Spinner className="h-8 w-8" />
             <p className="mt-4 text-sm font-semibold uppercase tracking-wider">
-              {isCreatingOrder
-                ? "Preparing your order..."
-                : "Opening payment..."}
+              {isCreatingOrder ? 'Preparing your order...' : 'Opening payment...'}
             </p>
             <p className="mt-1 text-xs text-[var(--color-muted)]">
               Please wait, Razorpay checkout will open shortly.
@@ -154,7 +147,7 @@ export default function CheckoutPage() {
             {/* Order items summary */}
             <div className="rounded-[var(--button-radius)] border border-[var(--color-border)] p-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                Order Summary ({items.length} {items.length === 1 ? "item" : "items"})
+                Order Summary ({items.length} {items.length === 1 ? 'item' : 'items'})
               </h3>
               <div className="mt-3 divide-y divide-[var(--color-border)]">
                 {items.map((item) => (
@@ -173,14 +166,12 @@ export default function CheckoutPage() {
                         <p className="text-sm font-semibold">{item.name}</p>
                         <p className="text-xs text-[var(--color-muted)]">
                           {item.size && `Size: ${item.size}`}
-                          {item.size && item.color && " | "}
+                          {item.size && item.color && ' | '}
                           {item.color && `Color: ${item.color}`}
-                          {" | "}Qty: {item.quantity}
+                          {' | '}Qty: {item.quantity}
                         </p>
                       </div>
-                      <p className="text-sm font-bold">
-                        {formatPrice(item.price * item.quantity)}
-                      </p>
+                      <p className="text-sm font-bold">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   </div>
                 ))}
@@ -189,17 +180,8 @@ export default function CheckoutPage() {
 
             {/* Retry button if popup was dismissed */}
             <div className="mt-6">
-              <Button
-                fullWidth
-                size="lg"
-                onClick={launchMagicCheckout}
-                disabled={isCreatingOrder}
-              >
-                {isCreatingOrder ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Proceed to Pay"
-                )}
+              <Button fullWidth size="lg" onClick={launchMagicCheckout} disabled={isCreatingOrder}>
+                {isCreatingOrder ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Proceed to Pay'}
               </Button>
               <p className="mt-2 text-center text-xs text-[var(--color-muted)]">
                 Address and payment handled securely by Razorpay

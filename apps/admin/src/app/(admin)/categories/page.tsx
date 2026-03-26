@@ -1,15 +1,20 @@
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, Package, Search } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { createCategorySchema, type CreateCategoryInput } from "@earth-revibe/shared";
-import { Button, Input, Textarea, Card, Badge, Modal } from "@/components/ui";
-import { toast } from "@/components/ui/toast";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories";
-import { useProducts, useBulkUpdateProducts } from "@/hooks/use-products";
+import { useState, useMemo } from 'react';
+import { Plus, Pencil, Trash2, Package, Search } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { createCategorySchema, type CreateCategoryInput } from '@earth-revibe/shared';
+import { Button, Input, Textarea, Card, Badge, Modal } from '@/components/ui';
+import { toast } from '@/components/ui/toast';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  useCategories,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from '@/hooks/use-categories';
+import { useProducts, useBulkUpdateProducts } from '@/hooks/use-products';
 
 /* ------------------------------------------------------------------ */
 /*  Product picker modal for a category                                */
@@ -21,7 +26,7 @@ function CategoryProductPicker({
   category: { id: string; name: string };
   onClose: () => void;
 }) {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [pendingAdds, setPendingAdds] = useState<Set<string>>(new Set());
   const { data, isLoading, isError } = useProducts({ page: 1, limit: 100 });
   const bulkUpdate = useBulkUpdateProducts();
@@ -32,14 +37,11 @@ function CategoryProductPicker({
     if (!search.trim()) return allProducts;
     const q = search.toLowerCase();
     return allProducts.filter(
-      (p: any) =>
-        p.name.toLowerCase().includes(q) ||
-        p.category?.name?.toLowerCase().includes(q)
+      (p: any) => p.name.toLowerCase().includes(q) || p.category?.name?.toLowerCase().includes(q)
     );
   }, [allProducts, search]);
 
-  const isInCategory = (p: any) =>
-    p.categoryId === category.id || p.category?.id === category.id;
+  const isInCategory = (p: any) => p.categoryId === category.id || p.category?.id === category.id;
 
   const isChecked = (p: any) => isInCategory(p) || pendingAdds.has(p.id);
 
@@ -70,7 +72,7 @@ function CategoryProductPicker({
       setPendingAdds(new Set());
       onClose();
     } catch (err: any) {
-      toast.error(err.message || "Failed to update products");
+      toast.error(err.message || 'Failed to update products');
     }
   };
 
@@ -79,7 +81,7 @@ function CategoryProductPicker({
     const inCat = filtered.filter((p: any) => isChecked(p));
     const notInCat = filtered.filter((p: any) => !isChecked(p));
     return [...inCat, ...notInCat];
-  }, [filtered, pendingAdds]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filtered, pendingAdds]);
 
   return (
     <div className="space-y-4">
@@ -113,10 +115,14 @@ function CategoryProductPicker({
             ))}
           </div>
         ) : isError ? (
-          <p className="p-6 text-center text-sm text-red-500">Failed to load products. Check your session.</p>
+          <p className="p-6 text-center text-sm text-red-500">
+            Failed to load products. Check your session.
+          </p>
         ) : filtered.length === 0 ? (
           <p className="p-6 text-center text-sm text-medium-gray">
-            {allProducts.length === 0 ? "No products in the catalog yet." : "No products match your search."}
+            {allProducts.length === 0
+              ? 'No products in the catalog yet.'
+              : 'No products match your search.'}
           </p>
         ) : (
           sorted.map((product: any) => {
@@ -126,7 +132,7 @@ function CategoryProductPicker({
               <label
                 key={product.id}
                 className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
-                  isPending ? "bg-deep-earth/5" : "hover:bg-off-white/50"
+                  isPending ? 'bg-deep-earth/5' : 'hover:bg-off-white/50'
                 }`}
               >
                 <input
@@ -137,13 +143,13 @@ function CategoryProductPicker({
                   className="w-4 h-4 rounded border-light-gray text-deep-earth focus:ring-deep-earth disabled:opacity-50"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-charcoal truncate">
-                    {product.name}
-                  </p>
+                  <p className="text-sm font-medium text-charcoal truncate">{product.name}</p>
                   <p className="text-xs text-medium-gray">
-                    {alreadyIn ? category.name : product.category?.name || "No category"}
-                    {" "}&middot; {product.status}
-                    {isPending && <span className="ml-1 text-deep-earth font-medium">• will be added</span>}
+                    {alreadyIn ? category.name : product.category?.name || 'No category'} &middot;{' '}
+                    {product.status}
+                    {isPending && (
+                      <span className="ml-1 text-deep-earth font-medium">• will be added</span>
+                    )}
                   </p>
                 </div>
               </label>
@@ -156,15 +162,12 @@ function CategoryProductPicker({
         <Button variant="ghost" onClick={onClose}>
           Cancel
         </Button>
-        <Button
-          onClick={handleSave}
-          disabled={pendingAdds.size === 0 || bulkUpdate.isPending}
-        >
+        <Button onClick={handleSave} disabled={pendingAdds.size === 0 || bulkUpdate.isPending}>
           {bulkUpdate.isPending
-            ? "Saving..."
+            ? 'Saving...'
             : pendingAdds.size > 0
-              ? `Save (${pendingAdds.size} change${pendingAdds.size > 1 ? "s" : ""})`
-              : "Done"}
+              ? `Save (${pendingAdds.size} change${pendingAdds.size > 1 ? 's' : ''})`
+              : 'Done'}
         </Button>
       </div>
     </div>
@@ -195,7 +198,7 @@ export default function CategoriesPage() {
 
   const openCreate = () => {
     setEditingCategory(null);
-    reset({ name: "", description: "", slug: "", sortOrder: 0, isActive: true });
+    reset({ name: '', description: '', slug: '', sortOrder: 0, isActive: true });
     setIsModalOpen(true);
   };
 
@@ -203,9 +206,9 @@ export default function CategoriesPage() {
     setEditingCategory(category);
     reset({
       name: category.name,
-      description: category.description || "",
+      description: category.description || '',
       slug: category.slug,
-      image: category.image || "",
+      image: category.image || '',
       sortOrder: category.sortOrder,
       isActive: category.isActive,
     });
@@ -216,15 +219,15 @@ export default function CategoriesPage() {
     try {
       if (editingCategory) {
         await updateCategory.mutateAsync({ id: editingCategory.id, data });
-        toast.success("Category updated");
+        toast.success('Category updated');
       } else {
         await createCategory.mutateAsync(data);
-        toast.success("Category created");
+        toast.success('Category created');
       }
       setIsModalOpen(false);
       reset();
     } catch (err: any) {
-      toast.error(err.message || "Failed to save category");
+      toast.error(err.message || 'Failed to save category');
     }
   };
 
@@ -232,9 +235,9 @@ export default function CategoriesPage() {
     if (!confirm(`Delete category "${name}"? This cannot be undone.`)) return;
     try {
       await deleteCategory.mutateAsync(id);
-      toast.success("Category deleted");
+      toast.success('Category deleted');
     } catch (err: any) {
-      toast.error(err.message || "Failed to delete category");
+      toast.error(err.message || 'Failed to delete category');
     }
   };
 
@@ -280,7 +283,10 @@ export default function CategoriesPage() {
               </thead>
               <tbody>
                 {categories.map((cat: any) => (
-                  <tr key={cat.id} className="border-b border-light-gray last:border-0 hover:bg-off-white/50">
+                  <tr
+                    key={cat.id}
+                    className="border-b border-light-gray last:border-0 hover:bg-off-white/50"
+                  >
                     <td className="px-6 py-3">
                       <div>
                         <p className="font-medium text-charcoal">{cat.name}</p>
@@ -292,8 +298,8 @@ export default function CategoriesPage() {
                     <td className="px-6 py-3 text-dark-gray">{cat.slug}</td>
                     <td className="px-6 py-3 text-dark-gray">{cat.sortOrder}</td>
                     <td className="px-6 py-3">
-                      <Badge variant={cat.isActive ? "success" : "default"}>
-                        {cat.isActive ? "Active" : "Inactive"}
+                      <Badge variant={cat.isActive ? 'success' : 'default'}>
+                        {cat.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </td>
                     <td className="px-6 py-3">
@@ -333,45 +339,45 @@ export default function CategoriesPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingCategory ? "Edit Category" : "Add Category"}
+        title={editingCategory ? 'Edit Category' : 'Add Category'}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
             label="Category Name"
             placeholder="e.g. Tops & Basics"
             error={errors.name?.message}
-            {...register("name")}
+            {...register('name')}
           />
           <Input
             label="Slug (auto-generated if empty)"
             placeholder="tops-and-basics"
             error={errors.slug?.message}
-            {...register("slug")}
+            {...register('slug')}
           />
           <Textarea
             label="Description"
             placeholder="Category description..."
             rows={3}
             error={errors.description?.message}
-            {...register("description")}
+            {...register('description')}
           />
           <Input
             label="Image URL"
             placeholder="https://..."
             error={errors.image?.message}
-            {...register("image")}
+            {...register('image')}
           />
           <Input
             label="Sort Order"
             type="number"
             error={errors.sortOrder?.message}
-            {...register("sortOrder", { valueAsNumber: true })}
+            {...register('sortOrder', { valueAsNumber: true })}
           />
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               className="w-4 h-4 rounded border-light-gray text-deep-earth focus:ring-deep-earth"
-              {...register("isActive")}
+              {...register('isActive')}
             />
             <span className="text-sm text-charcoal">Active</span>
           </label>
@@ -381,7 +387,7 @@ export default function CategoriesPage() {
               Cancel
             </Button>
             <Button type="submit" isLoading={isSubmitting}>
-              {editingCategory ? "Update" : "Create"}
+              {editingCategory ? 'Update' : 'Create'}
             </Button>
           </div>
         </form>
@@ -391,7 +397,7 @@ export default function CategoriesPage() {
       <Modal
         isOpen={!!pickerCategory}
         onClose={() => setPickerCategory(null)}
-        title={`Products in ${pickerCategory?.name || ""}`}
+        title={`Products in ${pickerCategory?.name || ''}`}
         size="lg"
       >
         {pickerCategory && (
