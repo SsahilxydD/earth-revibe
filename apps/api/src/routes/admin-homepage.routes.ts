@@ -27,12 +27,10 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { label, href, sortOrder } = req.body;
     if (!label || !href) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          error: { code: 'BAD_REQUEST', message: 'label and href are required' },
-        });
+      res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'label and href are required' },
+      });
       return;
     }
     const section = await prisma.homepageSection.create({
@@ -53,12 +51,10 @@ router.put(
   asyncHandler(async (req: Request, res: Response) => {
     const { orderedIds } = req.body;
     if (!Array.isArray(orderedIds)) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          error: { code: 'BAD_REQUEST', message: 'orderedIds array is required' },
-        });
+      res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'orderedIds array is required' },
+      });
       return;
     }
 
