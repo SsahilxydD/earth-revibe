@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -436,8 +436,27 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-hide the mobile dock when the sentinel (before "You May Also Like") enters the viewport
+  useEffect(() => {
+    if (isPreview || !sentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting || entry.boundingClientRect.top < 0) {
+          setShowDock(false);
+        } else {
+          setShowDock(true);
+        }
+      },
+      { threshold: 0 }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [isPreview]);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showSizeSheet, setShowSizeSheet] = useState(false);
+  const [showDock, setShowDock] = useState(true);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const addItem = useCartStore((s) => s.addItem);
   const isCartOpen = useCartStore((s) => s.isOpen);
@@ -884,7 +903,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         )}
 
         {/* Color selector (size is handled by bottom sheet on add-to-cart) */}
-        {colors.length > 0 && <div className="px-4 pt-4">{colorSelector}</div>}
+        {colors.length > 0 && <div className="px-4">{colorSelector}</div>}
 
         {/* Accordions — measurements, shipping, additional info */}
         {(detailsFitRows.length > 0 ||
@@ -910,10 +929,10 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         )}
 
         {/* Spacer — reserves room so content above isn't hidden behind the fixed dock */}
-        <div className="h-[120px]" />
+        {showDock && <div className="h-[120px]" />}
 
-        {/* Sentinel — marks where the dock should collapse. Static div, no async dependency. */}
-        <div data-dock-hide aria-hidden="true" />
+        {/* Sentinel — marks where the dock should collapse */}
+        <div ref={sentinelRef} data-dock-hide aria-hidden="true" />
 
         {/* Related products — shown after dock collapses */}
         <div className="px-4 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
@@ -925,6 +944,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
       {!isPreview &&
         mounted &&
         !isCartOpen &&
+        showDock &&
         createPortal(
           <div
             className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
