@@ -77,11 +77,9 @@ export function Footer() {
             <FooterColumn title="About Us" links={ABOUT_LINKS} />
           </div>
           <FooterColumn title="Customer Service" links={CUSTOMER_LINKS} />
-          <div className="text-right">
-            <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-black">
-              Connect
-            </h3>
-            <div className="mt-4 flex gap-3 justify-end">
+          <div className="flex flex-col items-end gap-4 text-right">
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-black">Connect</h3>
+            <div className="flex gap-3">
               <a
                 href="https://www.instagram.com/earthrevibe.co/"
                 target="_blank"

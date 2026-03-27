@@ -56,7 +56,7 @@ function ProductsContent() {
       sizes: size ? [size] : undefined,
       colors: color ? [color] : undefined,
       search: search || undefined,
-      limit: 12,
+      limit: 48,
     }),
     [category, sortBy, sortOrder, minPrice, maxPrice, size, color, search]
   );
