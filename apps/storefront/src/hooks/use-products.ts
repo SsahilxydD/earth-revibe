@@ -99,18 +99,27 @@ export function useInfiniteProducts(params: Omit<ProductListParams, 'page'> = {}
 
 // ─── useRelatedProducts ─────────────────────────────────────────────────────
 
-export function useRelatedProducts(categorySlug: string | undefined, excludeId: string) {
-  const categoryParam = categorySlug ? `&category=${categorySlug}` : '';
-  const key = categorySlug || 'all';
-  return useQuery<ProductsPage, ApiError>({
-    queryKey: productKeys.related(key, excludeId),
-    queryFn: async ({ signal }) =>
+export function useRelatedProducts(_categorySlug: string | undefined, excludeId: string) {
+  return useInfiniteQuery<ProductsPage, ApiError>({
+    queryKey: productKeys.related('all', excludeId),
+    queryFn: async ({ pageParam, signal }) =>
       normalizePaginated<Product, 'products'>(
-        await api.get(`/products?limit=20&sortBy=createdAt&sortOrder=desc${categoryParam}`, signal)
+        await api.get(
+          `/products?limit=12&sortBy=createdAt&sortOrder=desc&page=${pageParam}`,
+          signal
+        )
       ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { page, totalPages } = lastPage.pagination;
+      return page < totalPages ? page + 1 : undefined;
+    },
     select: (data) => ({
       ...data,
-      products: data.products.filter((p) => p.id !== excludeId),
+      pages: data.pages.map((p) => ({
+        ...p,
+        products: p.products.filter((prod) => prod.id !== excludeId),
+      })),
     }),
   });
 }
