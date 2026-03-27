@@ -53,7 +53,7 @@ function FooterColumn({
 
 export function Footer() {
   return (
-    <footer className="bg-white pb-[calc(9rem+env(safe-area-inset-bottom,0px))] text-black lg:pb-0">
+    <footer className="bg-white pb-[calc(4rem+env(safe-area-inset-bottom,0px))] text-black md:pb-0">
       {/* Logo */}
       <div className="flex justify-center px-4 pt-8 pb-4">
         <Link href="/">
