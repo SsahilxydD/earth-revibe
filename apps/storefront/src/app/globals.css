@@ -26,6 +26,8 @@
 html {
   overscroll-behavior-x: none;
   background: #ffffff;
+  /* iOS: ensure background fills behind safe area when viewport-fit=cover */
+  min-height: 100%;
 }
 body {
   font-family: var(--font-body);
@@ -36,6 +38,7 @@ body {
   /* iOS Safari: prevent white flash on page transitions */
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+  min-height: 100%;
 }
 ::selection {
   background: #121212;
