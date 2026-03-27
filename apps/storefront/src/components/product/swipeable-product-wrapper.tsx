@@ -334,8 +334,17 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // Seed cache
+  // Sync when navigating to a different product via client-side routing
   useEffect(() => {
+    if (initialSlug !== currentSlug) {
+      setCurrentSlug(initialSlug);
+      setCurrentProduct(initialProduct);
+      setDockVisible(true);
+      // Scroll to top — both window (non-swipe) and current panel (swipe)
+      window.scrollTo(0, 0);
+      if (currentPanelRef.current) currentPanelRef.current.scrollTop = 0;
+    }
+    // Seed cache
     queryClient.setQueryData(productKeys.detail(initialSlug), initialProduct);
   }, [initialSlug, initialProduct, queryClient]);
 
