@@ -7,7 +7,7 @@ import { useUiStore } from '@/stores/ui-store';
 const MESSAGES = [
   'FREE SHIPPING ON ALL ORDERS',
   'NEW ARRIVALS JUST DROPPED',
-  'EASY RETURNS WITHIN 7 DAYS',
+  'EASY & HASSLE FREE RETURNS',
 ];
 
 const ROTATE_INTERVAL = 4000;
