@@ -99,12 +99,14 @@ export function useInfiniteProducts(params: Omit<ProductListParams, 'page'> = {}
 
 // ─── useRelatedProducts ─────────────────────────────────────────────────────
 
-export function useRelatedProducts(_categorySlug: string | undefined, excludeId: string) {
+export function useRelatedProducts(categorySlug: string | undefined, excludeId: string) {
+  const categoryParam = categorySlug ? `&category=${categorySlug}` : '';
+  const key = categorySlug || 'all';
   return useQuery<ProductsPage, ApiError>({
-    queryKey: productKeys.related('all', excludeId),
+    queryKey: productKeys.related(key, excludeId),
     queryFn: async ({ signal }) =>
       normalizePaginated<Product, 'products'>(
-        await api.get(`/products?limit=12&sortBy=createdAt&sortOrder=desc`, signal)
+        await api.get(`/products?limit=20&sortBy=createdAt&sortOrder=desc${categoryParam}`, signal)
       ),
     select: (data) => ({
       ...data,
