@@ -26,7 +26,10 @@ export function MobileBottomBar() {
   if (isProductDetail) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-white md:hidden">
+    <div
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-white md:hidden"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
       <nav className="flex items-center justify-around px-2 py-2">
         {NAV_ITEMS.map((item) => {
           const isActive = item.href === pathname;
@@ -95,9 +98,6 @@ export function MobileBottomBar() {
           );
         })}
       </nav>
-
-      {/* Safe area spacer for iOS */}
-      <div className="h-[env(safe-area-inset-bottom)]" />
     </div>
   );
 }
