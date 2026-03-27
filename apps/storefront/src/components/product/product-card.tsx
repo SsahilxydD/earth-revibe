@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Heart, Plus } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
+import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/use-wishlist';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -15,9 +16,31 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, index = 99 }: ProductCardProps) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const router = useRouter();
   const prefetched = useRef(false);
+
+  // Wishlist — real API state
+  const { data: wishlistItems } = useWishlist({ enabled: typeof window !== 'undefined' });
+  const addToWishlist = useAddToWishlist();
+  const removeFromWishlist = useRemoveFromWishlist();
+
+  const isWishlisted = useMemo(
+    () => wishlistItems?.some((item) => item.product?.id === product.id) ?? false,
+    [wishlistItems, product.id]
+  );
+
+  const toggleWishlist = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isWishlisted) {
+        removeFromWishlist.mutate(product.id);
+      } else {
+        addToWishlist.mutate(product.id);
+      }
+    },
+    [isWishlisted, product.id, addToWishlist, removeFromWishlist]
+  );
 
   // First 4 cards are above the fold on mobile (2-col grid) — load eagerly
   const isAboveFold = index < 4;
@@ -105,11 +128,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
 
           {/* Wishlist button */}
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsWishlisted((prev) => !prev);
-            }}
+            onClick={toggleWishlist}
             className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-white"
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
@@ -121,21 +140,6 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               )}
             />
           </button>
-
-          {/* Add to cart button */}
-          {!isOutOfStock && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                router.push(`/products/${product.slug}`);
-              }}
-              className="absolute bottom-1.5 right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-white"
-              aria-label="Add to cart"
-            >
-              <Plus size={14} className="text-black/60" />
-            </button>
-          )}
         </div>
 
         {/* Product info */}
