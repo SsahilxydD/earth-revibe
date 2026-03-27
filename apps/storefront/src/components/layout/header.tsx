@@ -12,11 +12,12 @@ import { SearchOverlay } from './search-overlay';
 
 const NAV_LINKS = [
   { label: 'NEW ARRIVALS', href: '/categories/new-arrivals' },
-  { label: 'SHIRTS', href: '/categories/shirts' },
-  { label: 'T-SHIRTS', href: '/categories/t-shirts' },
-  { label: 'OUTERWEAR', href: '/categories/outerwear' },
-  { label: 'ALL PRODUCTS', href: '/products' },
   { label: 'BESTSELLERS', href: '/categories/bestsellers' },
+  { label: 'ALL PRODUCTS', href: '/products' },
+  { label: 'T-SHIRTS', href: '/categories/t-shirts' },
+  { label: 'SHIRTS', href: '/categories/shirts' },
+  { label: 'POLOS', href: '/categories/polos' },
+  { label: 'BOTTOMWEAR', href: '/categories/bottomwear' },
 ];
 
 export function Header() {

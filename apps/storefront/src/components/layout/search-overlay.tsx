@@ -18,11 +18,12 @@ const MAX_RECENT = 5;
 /* ------------------------------------------------------------------ */
 const BROWSE_CATEGORIES = [
   { label: 'New Arrivals', href: '/categories/new-arrivals', icon: Sparkles },
-  { label: 'Shirts', href: '/categories/shirts', icon: Shirt },
-  { label: 'T-Shirts', href: '/categories/t-shirts', icon: Shirt },
-  { label: 'Outerwear', href: '/categories/outerwear', icon: Shirt },
-  { label: 'All Products', href: '/products', icon: Grid3X3 },
   { label: 'Bestsellers', href: '/categories/bestsellers', icon: Sparkles },
+  { label: 'All Products', href: '/products', icon: Grid3X3 },
+  { label: 'T-Shirts', href: '/categories/t-shirts', icon: Shirt },
+  { label: 'Shirts', href: '/categories/shirts', icon: Shirt },
+  { label: 'Polos', href: '/categories/polos', icon: Shirt },
+  { label: 'Bottomwear', href: '/categories/bottomwear', icon: Shirt },
 ];
 
 /* ------------------------------------------------------------------ */

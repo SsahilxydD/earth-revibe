@@ -5,10 +5,12 @@ import Image from 'next/image';
 
 const SHOP_LINKS = [
   { label: 'New Arrivals', href: '/categories/new-arrivals' },
-  { label: 'Shirts', href: '/categories/shirts' },
-  { label: 'T-Shirts', href: '/categories/t-shirts' },
-  { label: 'Outerwear', href: '/categories/outerwear' },
   { label: 'Bestsellers', href: '/categories/bestsellers' },
+  { label: 'All Products', href: '/products' },
+  { label: 'T-Shirts', href: '/categories/t-shirts' },
+  { label: 'Shirts', href: '/categories/shirts' },
+  { label: 'Polos', href: '/categories/polos' },
+  { label: 'Bottomwear', href: '/categories/bottomwear' },
 ];
 
 const CUSTOMER_LINKS = [
