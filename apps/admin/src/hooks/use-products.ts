@@ -206,6 +206,17 @@ export function useSetProductImagePrimary() {
   });
 }
 
+export function useReorderProductImages() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ productId, imageIds }: { productId: string; imageIds: string[] }) =>
+      api.put(`/products/${productId}/images/reorder`, { imageIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-product'] });
+    },
+  });
+}
+
 export function useUploadImage() {
   return useMutation({
     mutationFn: async (file: File) => {

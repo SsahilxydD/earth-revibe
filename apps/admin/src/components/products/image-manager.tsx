@@ -12,6 +12,8 @@ import {
   AlertCircle,
   Upload,
   Link,
+  ArrowLeft,
+  ArrowRight,
 } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import { toast } from '@/components/ui/toast';
@@ -21,6 +23,7 @@ import {
   useAddProductImage,
   useDeleteProductImage,
   useSetProductImagePrimary,
+  useReorderProductImages,
 } from '@/hooks/use-products';
 
 interface ProductImage {
@@ -89,6 +92,37 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
   const addImage = useAddProductImage();
   const deleteImage = useDeleteProductImage();
   const setPrimary = useSetProductImagePrimary();
+  const reorderImages = useReorderProductImages();
+
+  // Local reorder state — staged until "Update Order" is clicked
+  const [localOrder, setLocalOrder] = useState<ProductImage[] | null>(null);
+  const displayImages = localOrder ?? images;
+  const hasOrderChanges = localOrder !== null;
+
+  // Sync local order when images change from server (e.g., after upload/delete)
+  useEffect(() => {
+    setLocalOrder(null);
+  }, [images]);
+
+  const swapImages = (fromIndex: number, toIndex: number) => {
+    const current = [...(localOrder ?? images)];
+    [current[fromIndex], current[toIndex]] = [current[toIndex], current[fromIndex]];
+    setLocalOrder(current);
+  };
+
+  const handleSaveOrder = async () => {
+    if (!localOrder) return;
+    try {
+      await reorderImages.mutateAsync({
+        productId,
+        imageIds: localOrder.map((img) => img.id),
+      });
+      setLocalOrder(null);
+      toast.success('Image order updated');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update order');
+    }
+  };
 
   // Keep a ref to the latest queue so the unmount cleanup reads current state
   const uploadQueueRef = useRef(uploadQueue);
@@ -535,10 +569,30 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
         </div>
       )}
 
+      {/* Reorder controls */}
+      {hasOrderChanges && (
+        <div className="mb-3 flex items-center justify-between rounded-lg bg-amber-50 border border-amber-200 px-4 py-2">
+          <p className="text-xs text-amber-700 font-medium">Image order changed — save to apply</p>
+          <div className="flex gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setLocalOrder(null)}>
+              Reset
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSaveOrder}
+              disabled={reorderImages.isPending}
+            >
+              {reorderImages.isPending ? 'Saving...' : 'Update Order'}
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Existing images grid */}
-      {images.length > 0 ? (
+      {displayImages.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {images.map((image) => (
+          {displayImages.map((image, idx) => (
             <div
               key={image.id}
               className={`relative group rounded-lg overflow-hidden border-2 ${
@@ -553,12 +607,41 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
                 />
               </div>
 
+              {/* Position badge */}
+              <span className="absolute top-2 right-2 bg-charcoal/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                {idx + 1}
+              </span>
+
               {/* Primary badge */}
               {image.isPrimary && (
                 <span className="absolute top-2 left-2 bg-forest-green text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
                   Primary
                 </span>
               )}
+
+              {/* Swap arrows */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                {idx > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => swapImages(idx, idx - 1)}
+                    className="p-1.5 bg-white/90 rounded-md hover:bg-white transition-colors shadow-sm"
+                    title="Move left"
+                  >
+                    <ArrowLeft size={14} className="text-charcoal" />
+                  </button>
+                )}
+                {idx < displayImages.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={() => swapImages(idx, idx + 1)}
+                    className="p-1.5 bg-white/90 rounded-md hover:bg-white transition-colors shadow-sm"
+                    title="Move right"
+                  >
+                    <ArrowRight size={14} className="text-charcoal" />
+                  </button>
+                )}
+              </div>
 
               {/* Hover overlay with actions */}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
