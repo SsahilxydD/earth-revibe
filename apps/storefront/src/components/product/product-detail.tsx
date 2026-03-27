@@ -67,6 +67,13 @@ function getVariantStock(
   return match?.stock ?? 0;
 }
 
+function stockIndicator(stock: number): { label: string; className: string } | null {
+  if (stock <= 0) return null;
+  if (stock >= 20) return { label: 'In Stock', className: 'text-green-600' };
+  if (stock >= 10) return { label: `${stock} left`, className: 'text-amber-500' };
+  return { label: `Only ${stock} left`, className: 'text-[var(--color-sale)]' };
+}
+
 function getSelectedVariant(
   variants: ProductVariant[],
   color: string | null,
@@ -235,21 +242,23 @@ function SizeChartTable() {
   const [showGuide, setShowGuide] = useState(false);
 
   const dataIN = [
-    { area: 'Chest', s: '39', m: '42', l: '45', xl: '48' },
-    { area: 'Front length', s: '25', m: '26', l: '27', xl: '28' },
-    { area: 'Sleeve length', s: '10.5', m: '10.5', l: '10.5', xl: '10.5' },
-    { area: 'Shoulder', s: '21', m: '22', l: '23', xl: '24' },
+    { area: 'Chest', xs: '36', s: '39', m: '42', l: '45', xl: '48', xxl: '51' },
+    { area: 'Front length', xs: '24', s: '25', m: '26', l: '27', xl: '28', xxl: '29' },
+    { area: 'Sleeve length', xs: '10.5', s: '10.5', m: '10.5', l: '10.5', xl: '10.5', xxl: '10.5' },
+    { area: 'Shoulder', xs: '20', s: '21', m: '22', l: '23', xl: '24', xxl: '25' },
   ];
 
   const dataCM = dataIN.map((row) => ({
     area: row.area,
+    xs: (parseFloat(row.xs) * 2.54).toFixed(1),
     s: (parseFloat(row.s) * 2.54).toFixed(1),
     m: (parseFloat(row.m) * 2.54).toFixed(1),
     l: (parseFloat(row.l) * 2.54).toFixed(1),
     xl: (parseFloat(row.xl) * 2.54).toFixed(1),
+    xxl: (parseFloat(row.xxl) * 2.54).toFixed(1),
   }));
 
-  const sizes = ['S', 'M', 'L', 'XL'];
+  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
   return (
     <div>
@@ -328,7 +337,7 @@ function SizeChartTable() {
                 >
                   {rowIN.area}
                 </td>
-                {(['s', 'm', 'l', 'xl'] as const).map((col) => (
+                {(['xs', 's', 'm', 'l', 'xl', 'xxl'] as const).map((col) => (
                   <td
                     key={col}
                     className="text-[13px] text-[#666666]"
@@ -610,6 +619,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           const stock = getVariantStock(product.variants, selectedColor, size);
           const isOutOfStock = stock <= 0;
           const isSelected = selectedSize === size;
+          const indicator = stockIndicator(stock);
           return (
             <button
               key={size}
@@ -618,7 +628,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
               }}
               disabled={isOutOfStock}
               className={cn(
-                'flex h-10 min-w-[3.5rem] items-center justify-center border px-4 text-sm font-semibold transition-colors',
+                'flex min-w-[3.5rem] flex-col items-center justify-center border px-4 py-2 transition-colors',
                 isSelected
                   ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
                   : isOutOfStock
@@ -626,7 +636,15 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                     : 'border-[var(--color-primary)] hover:bg-[var(--color-surface)]'
               )}
             >
-              {size}
+              <span className="text-sm font-semibold">{size}</span>
+              {indicator && !isSelected && (
+                <span className={cn('text-[9px] mt-0.5', indicator.className)}>
+                  {indicator.label}
+                </span>
+              )}
+              {indicator && isSelected && (
+                <span className="text-[9px] mt-0.5 text-white/70">{indicator.label}</span>
+              )}
             </button>
           );
         })}
@@ -1021,6 +1039,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                   {sizes.map((size) => {
                     const stock = getVariantStock(product.variants, selectedColor, size);
                     const isOutOfStock = stock <= 0;
+                    const indicator = stockIndicator(stock);
                     return (
                       <button
                         key={size}
@@ -1030,13 +1049,28 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                         }}
                         disabled={isOutOfStock}
                         className={cn(
-                          'py-4 text-center text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors',
+                          'flex items-center justify-between py-4 px-2 text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors',
                           isOutOfStock
                             ? 'text-[var(--color-sold-out)] cursor-not-allowed'
                             : 'text-[var(--color-text)] hover:bg-[var(--color-surface)]'
                         )}
                       >
-                        {size}
+                        <span>{size}</span>
+                        {indicator && (
+                          <span
+                            className={cn(
+                              'text-[10px] normal-case tracking-normal',
+                              indicator.className
+                            )}
+                          >
+                            {indicator.label}
+                          </span>
+                        )}
+                        {isOutOfStock && (
+                          <span className="text-[10px] normal-case tracking-normal text-[var(--color-sold-out)]">
+                            Sold out
+                          </span>
+                        )}
                       </button>
                     );
                   })}
