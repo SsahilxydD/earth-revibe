@@ -1049,7 +1049,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                         }}
                         disabled={isOutOfStock}
                         className={cn(
-                          'flex items-center justify-between py-4 px-2 text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors',
+                          'flex items-center justify-center gap-3 py-4 px-2 text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors',
                           isOutOfStock
                             ? 'text-[var(--color-sold-out)] cursor-not-allowed'
                             : 'text-[var(--color-text)] hover:bg-[var(--color-surface)]'

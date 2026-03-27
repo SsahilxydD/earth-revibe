@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ProductCard } from '@/components/product/product-card';
@@ -116,24 +116,24 @@ function CategoryContent() {
     [updateParams]
   );
 
-  const rawProducts = useMemo(
-    () => data?.pages.flatMap((page) => page.products ?? []) ?? [],
-    [data]
-  );
-
-  // Randomize product order on each mount
-  const [seed] = useState(() => Math.random());
+  // Shuffle each page individually as it arrives — keeps existing products stable
+  const shuffledPagesRef = useRef<Map<number, any[]>>(new Map());
   const allProducts = useMemo(() => {
-    if (rawProducts.length === 0) return rawProducts;
-    const shuffled = [...rawProducts];
-    let s = seed;
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      s = (s * 16807) % 2147483647;
-      const j = Math.floor((s / 2147483647) * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  }, [rawProducts, seed]);
+    if (!data?.pages) return [];
+    const result: any[] = [];
+    data.pages.forEach((page, pageIndex) => {
+      if (!shuffledPagesRef.current.has(pageIndex)) {
+        const products = [...(page.products ?? [])];
+        for (let i = products.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [products[i], products[j]] = [products[j], products[i]];
+        }
+        shuffledPagesRef.current.set(pageIndex, products);
+      }
+      result.push(...shuffledPagesRef.current.get(pageIndex)!);
+    });
+    return result;
+  }, [data]);
 
   const categoryName = currentCategory?.name || slug.replace(/-/g, ' ');
 
