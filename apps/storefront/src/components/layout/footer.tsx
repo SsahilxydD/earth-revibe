@@ -73,15 +73,15 @@ export function Footer() {
       <div className="px-4 py-6 md:px-8 lg:px-12 xl:px-20">
         <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 md:gap-x-8">
           <FooterColumn title="Shop" links={SHOP_LINKS} />
-          <FooterColumn title="About Us" links={ABOUT_LINKS} />
-          <div className="text-left md:text-right">
-            <FooterColumn title="Customer Service" links={CUSTOMER_LINKS} />
+          <div className="text-right">
+            <FooterColumn title="About Us" links={ABOUT_LINKS} />
           </div>
-          <div className="text-left md:text-right">
+          <FooterColumn title="Customer Service" links={CUSTOMER_LINKS} />
+          <div className="text-right">
             <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-black">
               Connect
             </h3>
-            <div className="flex gap-3 md:justify-end">
+            <div className="flex gap-3 justify-end">
               <a
                 href="https://www.instagram.com/earthrevibe.co/"
                 target="_blank"
