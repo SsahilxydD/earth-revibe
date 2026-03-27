@@ -19,7 +19,7 @@ export function useTickets(
 ) {
   return useQuery<SupportTicket[], ApiError>({
     queryKey: supportKeys.lists(),
-    queryFn: ({ signal }) => api.get<SupportTicket[]>('/support/tickets', signal),
+    queryFn: ({ signal }) => api.get<SupportTicket[]>('/support', signal),
     ...options,
   });
 }
@@ -32,7 +32,7 @@ export function useTicket(
 ) {
   return useQuery<SupportTicket, ApiError>({
     queryKey: supportKeys.detail(ticketNumber),
-    queryFn: ({ signal }) => api.get<SupportTicket>(`/support/tickets/${ticketNumber}`, signal),
+    queryFn: ({ signal }) => api.get<SupportTicket>(`/support/${ticketNumber}`, signal),
     enabled: !!ticketNumber,
     ...options,
   });
@@ -44,7 +44,7 @@ export function useCreateTicket() {
   const queryClient = useQueryClient();
 
   return useMutation<SupportTicket, ApiError, CreateTicketPayload>({
-    mutationFn: (payload) => api.post<SupportTicket>('/support/tickets', payload),
+    mutationFn: (payload) => api.post<SupportTicket>('/support', payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: supportKeys.lists() });
     },
@@ -62,7 +62,7 @@ export function useReplyToTicket() {
     { ticketNumber: string; payload: ReplyToTicketPayload }
   >({
     mutationFn: ({ ticketNumber, payload }) =>
-      api.post<SupportTicket>(`/support/tickets/${ticketNumber}/replies`, payload),
+      api.post<SupportTicket>(`/support/${ticketNumber}/messages`, payload),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: supportKeys.detail(variables.ticketNumber),
