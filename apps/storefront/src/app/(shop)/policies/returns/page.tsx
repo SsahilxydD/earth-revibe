@@ -8,13 +8,17 @@ export const metadata: Metadata = {
 
 export default function ReturnsPolicyPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
-      <h1 className="text-3xl font-bold uppercase tracking-wider">Returns & Exchange Policy</h1>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">Last updated: 1 January 2026</p>
+    <div>
+      <section className="border-b border-[var(--color-border)] py-12 text-center md:py-16">
+        <h1 className="text-2xl font-bold uppercase tracking-[0.15em] md:text-3xl">
+          Returns & Exchange Policy
+        </h1>
+        <p className="mt-2 text-xs text-[var(--color-muted)]">Last updated: 1 January 2026</p>
+      </section>
 
-      <div className="mt-8 space-y-8 text-sm leading-relaxed text-[var(--color-muted)]">
+      <div className="mx-auto max-w-2xl px-6 py-10 space-y-8 text-sm leading-[1.8] text-[var(--color-muted)] md:py-14">
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Easy 7-Day Returns
           </h2>
           <p>
@@ -25,7 +29,7 @@ export default function ReturnsPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Return Eligibility
           </h2>
           <p>To be eligible for a return, the item must be:</p>
@@ -48,7 +52,7 @@ export default function ReturnsPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             How to Initiate a Return
           </h2>
           <ol className="list-decimal space-y-2 pl-5">
@@ -82,7 +86,7 @@ export default function ReturnsPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Exchanges
           </h2>
           <p>
@@ -97,7 +101,7 @@ export default function ReturnsPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Refunds
           </h2>
           <p>
@@ -124,7 +128,7 @@ export default function ReturnsPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Damaged or Defective Items
           </h2>
           <p>
@@ -135,7 +139,7 @@ export default function ReturnsPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Return Shipping
           </h2>
           <p>
@@ -146,7 +150,7 @@ export default function ReturnsPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Contact Us
           </h2>
           <p>For any return or exchange related queries, reach out to us at:</p>

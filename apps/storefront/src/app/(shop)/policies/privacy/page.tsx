@@ -8,13 +8,17 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
-      <h1 className="text-3xl font-bold uppercase tracking-wider">Privacy Policy</h1>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">Last updated: 1 January 2026</p>
+    <div>
+      <section className="border-b border-[var(--color-border)] py-12 text-center md:py-16">
+        <h1 className="text-2xl font-bold uppercase tracking-[0.15em] md:text-3xl">
+          Privacy Policy
+        </h1>
+        <p className="mt-2 text-xs text-[var(--color-muted)]">Last updated: 1 January 2026</p>
+      </section>
 
-      <div className="mt-8 space-y-8 text-sm leading-relaxed text-[var(--color-muted)]">
+      <div className="mx-auto max-w-2xl px-6 py-10 space-y-8 text-sm leading-[1.8] text-[var(--color-muted)] md:py-14">
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             1. Information We Collect
           </h2>
           <p>
@@ -44,7 +48,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             2. How We Use Your Information
           </h2>
           <ul className="list-disc space-y-1 pl-5">
@@ -59,7 +63,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             3. Information Sharing
           </h2>
           <p>
@@ -85,7 +89,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             4. Cookies
           </h2>
           <p>
@@ -97,7 +101,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             5. Data Security
           </h2>
           <p>
@@ -109,7 +113,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             6. Data Retention
           </h2>
           <p>
@@ -121,7 +125,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             7. Your Rights
           </h2>
           <p>
@@ -147,7 +151,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             8. Children&apos;s Privacy
           </h2>
           <p>
@@ -158,7 +162,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             9. Changes to This Policy
           </h2>
           <p>
@@ -168,7 +172,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             10. Contact Us
           </h2>
           <p>If you have any questions about this privacy policy, please contact us at:</p>

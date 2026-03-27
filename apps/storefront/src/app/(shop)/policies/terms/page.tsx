@@ -8,13 +8,17 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
-      <h1 className="text-3xl font-bold uppercase tracking-wider">Terms & Conditions</h1>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">Last updated: 1 January 2026</p>
+    <div>
+      <section className="border-b border-[var(--color-border)] py-12 text-center md:py-16">
+        <h1 className="text-2xl font-bold uppercase tracking-[0.15em] md:text-3xl">
+          Terms & Conditions
+        </h1>
+        <p className="mt-2 text-xs text-[var(--color-muted)]">Last updated: 1 January 2026</p>
+      </section>
 
-      <div className="mt-8 space-y-8 text-sm leading-relaxed text-[var(--color-muted)]">
+      <div className="mx-auto max-w-2xl px-6 py-10 space-y-8 text-sm leading-[1.8] text-[var(--color-muted)] md:py-14">
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             1. Acceptance of Terms
           </h2>
           <p>
@@ -25,7 +29,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             2. Use of the Website
           </h2>
           <ul className="list-disc space-y-1 pl-5">
@@ -46,7 +50,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             3. Products and Pricing
           </h2>
           <ul className="list-disc space-y-1 pl-5">
@@ -70,7 +74,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             4. Orders and Payment
           </h2>
           <ul className="list-disc space-y-1 pl-5">
@@ -94,7 +98,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             5. Shipping and Delivery
           </h2>
           <p>
@@ -111,7 +115,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             6. Returns and Refunds
           </h2>
           <p>
@@ -127,7 +131,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             7. Intellectual Property
           </h2>
           <p>
@@ -139,7 +143,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             8. User Content
           </h2>
           <p>
@@ -150,7 +154,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             9. Limitation of Liability
           </h2>
           <p>
@@ -162,7 +166,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             10. Governing Law
           </h2>
           <p>
@@ -173,7 +177,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             11. Changes to Terms
           </h2>
           <p>
@@ -184,7 +188,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             12. Contact Us
           </h2>
           <p>For any questions regarding these terms, please contact us at:</p>

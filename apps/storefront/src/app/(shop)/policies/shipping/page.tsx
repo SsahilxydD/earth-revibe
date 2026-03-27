@@ -8,13 +8,17 @@ export const metadata: Metadata = {
 
 export default function ShippingPolicyPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 lg:px-8">
-      <h1 className="text-3xl font-bold uppercase tracking-wider">Shipping Policy</h1>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">Last updated: 1 January 2026</p>
+    <div>
+      <section className="border-b border-[var(--color-border)] py-12 text-center md:py-16">
+        <h1 className="text-2xl font-bold uppercase tracking-[0.15em] md:text-3xl">
+          Shipping Policy
+        </h1>
+        <p className="mt-2 text-xs text-[var(--color-muted)]">Last updated: 1 January 2026</p>
+      </section>
 
-      <div className="mt-8 space-y-8 text-sm leading-relaxed text-[var(--color-muted)]">
+      <div className="mx-auto max-w-2xl px-6 py-10 space-y-8 text-sm leading-[1.8] text-[var(--color-muted)] md:py-14">
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Shipping Charges
           </h2>
           <div className="overflow-hidden rounded-[var(--button-radius)] border border-[var(--color-border)]">
@@ -48,7 +52,7 @@ export default function ShippingPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Delivery Timelines
           </h2>
           <div className="overflow-hidden rounded-[var(--button-radius)] border border-[var(--color-border)]">
@@ -87,7 +91,7 @@ export default function ShippingPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Shipping Partners
           </h2>
           <p>
@@ -103,7 +107,7 @@ export default function ShippingPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Order Processing
           </h2>
           <p>
@@ -117,7 +121,7 @@ export default function ShippingPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Order Tracking
           </h2>
           <p>
@@ -138,7 +142,7 @@ export default function ShippingPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Shipping Restrictions
           </h2>
           <ul className="list-disc space-y-1 pl-5">
@@ -152,7 +156,7 @@ export default function ShippingPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Delivery Issues
           </h2>
           <p>
@@ -163,7 +167,7 @@ export default function ShippingPolicyPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wider text-[var(--color-text)]">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Contact Us
           </h2>
           <p>For shipping-related queries, contact us at:</p>
