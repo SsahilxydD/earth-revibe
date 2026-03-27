@@ -180,7 +180,7 @@ export default function PrivacyPolicyPage() {
             <p>
               <strong>Earth Revibe</strong>
             </p>
-            <p>Bandra West, Mumbai, Maharashtra 400050, India</p>
+            <p>Ashram Road, Ahmedabad, Gujarat 380009, India</p>
             <p>
               Email:{' '}
               <a

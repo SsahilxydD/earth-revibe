@@ -96,7 +96,7 @@ const FAQ_DATA: FaqCategory[] = [
       {
         question: 'Is Cash on Delivery available?',
         answer:
-          'Yes, COD is available for orders up to \u20B95,000 at select pin codes. A \u20B949 COD fee applies. Availability shown at checkout.',
+          'Yes, COD is available for orders up to \u20B95,000 at select pin codes. A \u20B9149 COD fee applies. Availability shown at checkout.',
       },
       {
         question: 'My payment failed but money was debited.',

@@ -602,8 +602,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
   );
 
   const sizeSelector = sizes.length > 0 && (
-    <div className="mt-6">
-      <div className="mb-2 flex items-center justify-between">
+    <div className="mt-6 text-center">
+      <div className="mb-2 flex items-center justify-center gap-4">
         <span className="text-xs font-bold uppercase tracking-wider">
           Size:{' '}
           <span className="font-normal normal-case text-[var(--color-muted)]">
@@ -614,7 +614,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           Size Guide
         </button>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap justify-center gap-2">
         {sizes.map((size) => {
           const stock = getVariantStock(product.variants, selectedColor, size);
           const isOutOfStock = stock <= 0;

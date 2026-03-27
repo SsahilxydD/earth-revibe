@@ -81,7 +81,7 @@ export function Footer() {
             <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-black">
               Connect
             </h3>
-            <div className="flex gap-3 justify-end">
+            <div className="mt-2 flex gap-3 justify-end">
               <a
                 href="https://www.instagram.com/earthrevibe.co/"
                 target="_blank"

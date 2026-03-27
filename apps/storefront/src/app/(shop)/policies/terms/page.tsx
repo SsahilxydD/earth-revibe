@@ -172,7 +172,7 @@ export default function TermsPage() {
           <p>
             These terms shall be governed by and construed in accordance with the laws of India. Any
             disputes arising from these terms or your use of the website shall be subject to the
-            exclusive jurisdiction of the courts in Mumbai, Maharashtra.
+            exclusive jurisdiction of the courts in Ahmedabad, Gujarat.
           </p>
         </section>
 
@@ -196,7 +196,7 @@ export default function TermsPage() {
             <p>
               <strong>Earth Revibe</strong>
             </p>
-            <p>Bandra West, Mumbai, Maharashtra 400050, India</p>
+            <p>Ashram Road, Ahmedabad, Gujarat 380009, India</p>
             <p>
               Email:{' '}
               <a

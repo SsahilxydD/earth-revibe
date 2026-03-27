@@ -191,7 +191,7 @@ export default function ContactPage() {
         <div className="mx-auto max-w-sm px-6">
           <MapPin className="mx-auto h-4 w-4 text-[var(--color-muted)]" />
           <p className="mt-3 text-sm text-[var(--color-muted)]">
-            Earth Revibe HQ, Bandra West, Mumbai, Maharashtra 400050, India
+            Earth Revibe, Ashram Road, Ahmedabad, Gujarat 380009, India
           </p>
         </div>
       </section>

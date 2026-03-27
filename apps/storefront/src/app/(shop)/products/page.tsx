@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/product/product-card';
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
@@ -114,10 +114,25 @@ function ProductsContent() {
     [updateParams]
   );
 
-  const allProducts = useMemo(
+  const rawProducts = useMemo(
     () => data?.pages.flatMap((page) => page.products ?? []) ?? [],
     [data]
   );
+
+  // Randomize product order on each mount — stable seed per page visit
+  const [seed] = useState(() => Math.random());
+  const allProducts = useMemo(() => {
+    if (rawProducts.length === 0) return rawProducts;
+    const shuffled = [...rawProducts];
+    // Fisher-Yates with seeded PRNG
+    let s = seed;
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      s = (s * 16807) % 2147483647;
+      const j = Math.floor((s / 2147483647) * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, [rawProducts, seed]);
 
   // Populate navigation store so product detail page can swipe between products
   const setNavContext = useProductNavStore((s) => s.setNavContext);
