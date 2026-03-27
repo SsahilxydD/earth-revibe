@@ -69,7 +69,7 @@ function getVariantStock(
 
 function stockIndicator(stock: number): { label: string; className: string } | null {
   if (stock <= 0) return null;
-  if (stock >= 20) return { label: 'In Stock', className: 'text-green-600' };
+  if (stock >= 20) return { label: `${stock} in stock`, className: 'text-green-600' };
   if (stock >= 10) return { label: `${stock} left`, className: 'text-amber-500' };
   return { label: `Only ${stock} left`, className: 'text-[var(--color-sale)]' };
 }
@@ -946,8 +946,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </div>
         )}
 
-        {/* Spacer — reserves room so content above isn't hidden behind the fixed dock */}
-        {showDock && <div className="h-[120px]" />}
+        {/* Spacer — always rendered to prevent layout shift when dock hides */}
+        <div className="h-[120px]" />
 
         {/* Sentinel — marks where the dock should collapse */}
         <div ref={sentinelRef} data-dock-hide aria-hidden="true" />
