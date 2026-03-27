@@ -4,178 +4,34 @@ import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { productKeys } from '@/hooks/use-products';
-import { useProductNavStore } from '@/stores/product-nav-store';
-import type { Product, Category } from '@/types';
+import type { Category } from '@/types';
 
 /**
- * AGGRESSIVE MEMORY PREFETCH
+ * LIGHTWEIGHT PREFETCH
  *
- * Loads the ENTIRE catalog into browser memory on first page load:
- * - All categories (JSON)
- * - All products with full details (JSON)
- * - All product images (preloaded into browser image cache)
- * - Homepage sections
+ * Only prefetches categories (tiny JSON, ~1KB) on first load.
+ * Product data is fetched on-demand when pages are visited and
+ * cached by TanStack Query with reasonable staleTime/gcTime.
  *
- * After ~3-5s, the entire site is in memory. Every navigation is instant.
- * Total memory: ~2-5MB JSON + ~30-50MB images (browser cache managed).
+ * Previous version loaded the ENTIRE catalog into memory (all products,
+ * all details, all images) causing 1GB+ memory usage. Now the site
+ * only loads what the user actually views.
  */
-
-/** Preload an image into browser memory cache.
- *  Uses <link rel="preload"> for high-priority images (fetchpriority=high),
- *  falls back to Image() for the rest. The link approach tells the browser
- *  to start fetching before layout/paint, eliminating pop-in. */
-function preloadImage(url: string, highPriority = false) {
-  if (!url) return;
-  if (highPriority && typeof document !== 'undefined') {
-    // Avoid duplicate preload links
-    if (document.querySelector(`link[href="${CSS.escape(url)}"]`)) return;
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'image';
-    link.href = url;
-    link.fetchPriority = 'high';
-    document.head.appendChild(link);
-    return;
-  }
-  const img = new Image();
-  img.src = url;
-}
-
 export function PrefetchProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
-  const setAllSlugs = useProductNavStore((s) => s.setAllSlugs);
   const prefetched = useRef(false);
 
   useEffect(() => {
     if (prefetched.current) return;
     prefetched.current = true;
 
-    const loadEverything = async () => {
-      try {
-        // ─── 1. Categories ───────────────────────────────────────
-        const categories = await api.get<Category[]>('/categories');
-        queryClient.setQueryData(productKeys.categories, categories);
-
-        // ─── 2. ALL products ─────────────────────────────────────
-        const allProducts: Product[] = [];
-        let page = 1;
-        let hasMore = true;
-
-        while (hasMore) {
-          const res: any = await api.get(`/products?page=${page}&limit=100`);
-          const products = res?.products || [];
-
-          if (Array.isArray(products)) {
-            for (const product of products) {
-              if (!product?.slug) continue;
-              allProducts.push(product);
-
-              // Preload images into browser cache using background Image() — low priority,
-              // doesn't block initial render. Only preload the primary thumbnail per product.
-              const images = product.images || [];
-              const primary = images[0];
-              if (primary?.thumbnailUrl) preloadImage(primary.thumbnailUrl);
-              else if (primary?.url) preloadImage(primary.url);
-            }
-          }
-
-          const totalPages = res?.totalPages || 1;
-          page < totalPages ? page++ : (hasMore = false);
-        }
-
-        // ─── 3. Fetch FULL product details in parallel batches ─────────
-        // List endpoint doesn't include variants — detail page needs them.
-        // Fetch 5 at a time to avoid overwhelming the API.
-        const BATCH_SIZE = 5;
-        for (let i = 0; i < allProducts.length; i += BATCH_SIZE) {
-          const batch = allProducts.slice(i, i + BATCH_SIZE);
-          await Promise.allSettled(
-            batch.map(async (product) => {
-              const cached = queryClient.getQueryData(productKeys.detail(product.slug));
-              if (cached && (cached as any).variants) return;
-
-              try {
-                const full = await api.get<Product>(`/products/${product.slug}`);
-                queryClient.setQueryData(productKeys.detail(product.slug), full);
-
-                // Preload ALL images from full product
-                const fullImages = (full as any)?.images || [];
-                for (const img of fullImages) {
-                  if (img?.url) preloadImage(img.url);
-                  if (img?.thumbnailUrl) preloadImage(img.thumbnailUrl);
-                }
-              } catch {
-                /* skip */
-              }
-            })
-          );
-        }
-
-        // ─── 4. Sort by category for infinite swipe ──────────────
-        allProducts.sort((a: any, b: any) => {
-          const catA = a.category?.name || a.categoryId || '';
-          const catB = b.category?.name || b.categoryId || '';
-          if (catA !== catB) return catA.localeCompare(catB);
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        });
-
-        setAllSlugs(allProducts.map((p) => p.slug));
-
-        // ─── 5. Homepage sections ────────────────────────────────
-        try {
-          const sections: any = await api.get('/homepage');
-          queryClient.setQueryData(['homepage-sections'], sections);
-          // Preload homepage section images
-          if (Array.isArray(sections)) {
-            sections.forEach((s: any) => {
-              if (s?.imageUrl) preloadImage(s.imageUrl);
-            });
-          }
-        } catch {
-          /* non-critical */
-        }
-
-        // ─── 6. Also cache product lists per category ────────────
-        if (Array.isArray(categories)) {
-          for (const cat of categories) {
-            const catProducts = allProducts.filter(
-              (p: any) => p.category?.slug === cat.slug || p.categoryId === cat.id
-            );
-            // Pre-populate the infinite query cache for each category
-            if (catProducts.length > 0) {
-              queryClient.setQueryData(
-                [
-                  ...productKeys.lists(),
-                  'infinite',
-                  { category: cat.slug, sortBy: 'createdAt', sortOrder: 'desc', limit: 12 },
-                ],
-                {
-                  pages: [
-                    {
-                      products: catProducts.slice(0, 12),
-                      pagination: {
-                        page: 1,
-                        limit: 12,
-                        total: catProducts.length,
-                        totalPages: Math.ceil(catProducts.length / 12),
-                      },
-                    },
-                  ],
-                  pageParams: [1],
-                }
-              );
-            }
-          }
-        }
-      } catch {
-        // Silently fail — prefetch is best-effort
-      }
-    };
-
-    // Start loading 500ms after first render
-    const timer = setTimeout(loadEverything, 500);
-    return () => clearTimeout(timer);
-  }, [queryClient, setAllSlugs]);
+    // Prefetch categories — they're used by filters and nav, tiny payload
+    queryClient.prefetchQuery({
+      queryKey: productKeys.categories,
+      queryFn: ({ signal }) => api.get<Category[]>('/categories', signal),
+      staleTime: 10 * 60 * 1000,
+    });
+  }, [queryClient]);
 
   return <>{children}</>;
 }

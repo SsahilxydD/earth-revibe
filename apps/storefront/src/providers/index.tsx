@@ -63,11 +63,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 24 * 60 * 60 * 1000, // 24 hours — effectively never stale
-            gcTime: 24 * 60 * 60 * 1000, // 24 hours — never GC during session
+            staleTime: 5 * 60 * 1000, // 5 min — fast nav, fresh enough data
+            gcTime: 10 * 60 * 1000, // 10 min — free memory for unvisited pages
             retry: 1,
             refetchOnWindowFocus: false,
-            refetchOnMount: false,
             refetchOnReconnect: false,
           },
         },
