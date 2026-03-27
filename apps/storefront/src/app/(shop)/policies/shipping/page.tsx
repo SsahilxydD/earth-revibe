@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Shipping Policy | Earth Revibe',
   description:
-    'Earth Revibe shipping information. Free shipping on orders above Rs.999. Delivery timelines and shipping partners.',
+    'Earth Revibe shipping information. Free shipping on all orders. Delivery timelines and shipping partners.',
 };
 
 export default function ShippingPolicyPage() {
@@ -21,34 +21,11 @@ export default function ShippingPolicyPage() {
           <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
             Shipping Charges
           </h2>
-          <div className="overflow-hidden rounded-[var(--button-radius)] border border-[var(--color-border)]">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-[var(--color-surface)]">
-                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-[var(--color-text)]">
-                    Order Value
-                  </th>
-                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-[var(--color-text)]">
-                    Shipping Fee
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t border-[var(--color-border)]">
-                  <td className="px-4 py-3">Above Rs.999</td>
-                  <td className="px-4 py-3 font-semibold text-green-600">FREE</td>
-                </tr>
-                <tr className="border-t border-[var(--color-border)]">
-                  <td className="px-4 py-3">Below Rs.999</td>
-                  <td className="px-4 py-3">Rs.79</td>
-                </tr>
-                <tr className="border-t border-[var(--color-border)]">
-                  <td className="px-4 py-3">COD Orders</td>
-                  <td className="px-4 py-3">Rs.49 additional COD handling fee</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <p>
+            We offer{' '}
+            <strong className="text-[var(--color-text)]">free shipping on all orders</strong> across
+            India. No minimum order value required.
+          </p>
         </section>
 
         <section>
@@ -175,13 +152,13 @@ export default function ShippingPolicyPage() {
             <p>
               Email:{' '}
               <a
-                href="mailto:shipping@earthrevibe.com"
+                href="mailto:contact@earthrevibe.in"
                 className="font-semibold text-[var(--color-text)] underline"
               >
-                shipping@earthrevibe.com
+                contact@earthrevibe.in
               </a>
             </p>
-            <p>Phone: +91 98765 43210 (Mon-Sat, 10 AM - 7 PM IST)</p>
+            <p>Phone: +91 93287 06759 (Mon-Sat, 10 AM - 7 PM IST)</p>
           </div>
         </section>
       </div>

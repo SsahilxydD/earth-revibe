@@ -11,7 +11,7 @@ import { formatPrice, getImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
 
-const FREE_SHIPPING_THRESHOLD = 999;
+// Free shipping on all orders
 
 function CartItemRow({ item }: { item: CartItem }) {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -92,29 +92,10 @@ function CartItemRow({ item }: { item: CartItem }) {
   );
 }
 
-function FreeShippingBar({ subtotal }: { subtotal: number }) {
-  const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
-  const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
-
-  if (remaining <= 0) {
-    return (
-      <div className="rounded-[var(--badge-radius)] bg-green-50 px-4 py-3 text-center text-sm font-medium text-green-700">
-        You have unlocked free shipping!
-      </div>
-    );
-  }
-
+function FreeShippingBar() {
   return (
-    <div className="rounded-[var(--badge-radius)] bg-[var(--color-surface)] px-4 py-3">
-      <p className="text-center text-sm text-[var(--color-muted)]">
-        {formatPrice(remaining)} away from free shipping!
-      </p>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--color-border)]">
-        <div
-          className="h-full rounded-full bg-[var(--color-primary)] transition-all duration-500"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+    <div className="rounded-[var(--badge-radius)] bg-green-50 px-4 py-3 text-center text-sm font-medium text-green-700">
+      Free shipping on all orders
     </div>
   );
 }
@@ -154,7 +135,7 @@ export default function CartPage() {
 
   const subtotal = getSubtotal();
   const total = getTotal();
-  const shippingEstimate = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 79;
+  const shippingEstimate = 0; // Always free shipping
 
   const handleApplyDiscount = async () => {
     if (!couponInput.trim()) return;
@@ -195,7 +176,7 @@ export default function CartPage() {
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_400px]">
         {/* Left: Cart Items */}
         <div>
-          <FreeShippingBar subtotal={subtotal} />
+          <FreeShippingBar />
           <div className="mt-6">
             {items.map((item) => (
               <CartItemRow key={item.id} item={item} />

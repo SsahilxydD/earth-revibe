@@ -12,7 +12,7 @@ import { api } from '@/lib/api-client';
 import { useRazorpay } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
 
-const FREE_SHIPPING_THRESHOLD = 999;
+// Free shipping on all orders — no threshold
 
 export function CartDrawer() {
   const {
@@ -39,8 +39,7 @@ export function CartDrawer() {
 
   const subtotal = getSubtotal();
   const total = getTotal();
-  const shippingProgress = Math.min(subtotal / FREE_SHIPPING_THRESHOLD, 1);
-  const amountToFreeShipping = Math.max(FREE_SHIPPING_THRESHOLD - subtotal, 0);
+  // Always free shipping
 
   useEffect(() => {
     if (isOpen) {
@@ -168,23 +167,11 @@ export function CartDrawer() {
           </div>
         ) : (
           <>
-            {/* Free shipping bar */}
+            {/* Free shipping banner */}
             <div className="border-b border-[var(--color-border)] px-5 py-3">
-              {amountToFreeShipping > 0 ? (
-                <p className="mb-2 text-center text-xs text-[var(--color-muted)]">
-                  {formatPrice(amountToFreeShipping)} away from free shipping!
-                </p>
-              ) : (
-                <p className="mb-2 text-center text-xs font-semibold text-green-600">
-                  You qualify for free shipping!
-                </p>
-              )}
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface)]">
-                <div
-                  className="h-full rounded-full bg-[var(--color-primary)] transition-all duration-500"
-                  style={{ width: `${shippingProgress * 100}%` }}
-                />
-              </div>
+              <p className="text-center text-xs font-semibold text-green-600">
+                Free shipping on all orders
+              </p>
             </div>
 
             {/* Items list */}

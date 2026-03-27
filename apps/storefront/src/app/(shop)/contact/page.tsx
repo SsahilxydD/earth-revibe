@@ -58,14 +58,14 @@ export default function ContactPage() {
             {
               icon: Mail,
               label: 'Email',
-              value: 'hello@earthrevibe.in',
-              href: 'mailto:hello@earthrevibe.in',
+              value: 'contact@earthrevibe.in',
+              href: 'mailto:contact@earthrevibe.in',
             },
             {
               icon: Phone,
               label: 'Phone',
-              value: '+91 98765 43210',
-              href: 'tel:+919876543210',
+              value: '+91 93287 06759',
+              href: 'tel:+919328706759',
             },
             {
               icon: Clock,

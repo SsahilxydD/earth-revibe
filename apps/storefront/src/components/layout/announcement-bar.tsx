@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 import { useUiStore } from '@/stores/ui-store';
 
 const MESSAGES = [
-  'FREE SHIPPING ON ORDERS ABOVE \u20B9999',
+  'FREE SHIPPING ON ALL ORDERS',
   'NEW ARRIVALS JUST DROPPED',
   'EASY RETURNS WITHIN 7 DAYS',
 ];

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Returns & Exchange Policy | Earth Revibe',
   description:
-    "Learn about Earth Revibe's hassle-free 7-day return and exchange policy. Easy returns, quick refunds.",
+    "Learn about Earth Revibe's hassle-free 72-hour return and exchange policy. Easy returns, quick refunds.",
 };
 
 export default function ReturnsPolicyPage() {
@@ -19,11 +19,11 @@ export default function ReturnsPolicyPage() {
       <div className="mx-auto max-w-2xl px-6 py-10 space-y-8 text-sm leading-[1.8] text-[var(--color-muted)] md:py-14">
         <section>
           <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-text)]">
-            Easy 7-Day Returns
+            Easy 72-Hour Returns
           </h2>
           <p>
             We want you to love every piece you buy from Earth Revibe. If you are not completely
-            satisfied with your purchase, you can return it within 7 days of delivery for a full
+            satisfied with your purchase, you can return it within 72 hours of delivery for a full
             refund or exchange.
           </p>
         </section>
@@ -36,7 +36,7 @@ export default function ReturnsPolicyPage() {
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>Unused, unwashed, and in its original condition</li>
             <li>In its original packaging with all tags attached</li>
-            <li>Returned within 7 days of the delivery date</li>
+            <li>Returned within 72 hours of the delivery date</li>
             <li>Accompanied by the original invoice or order confirmation</li>
           </ul>
           <p className="mt-3 font-semibold text-[var(--color-text)]">
@@ -76,10 +76,10 @@ export default function ReturnsPolicyPage() {
           <p className="mt-3">
             Alternatively, you can email us at{' '}
             <a
-              href="mailto:returns@earthrevibe.com"
+              href="mailto:contact@earthrevibe.in"
               className="font-semibold text-[var(--color-text)] underline"
             >
-              returns@earthrevibe.com
+              contact@earthrevibe.in
             </a>{' '}
             with your order number and reason for return.
           </p>
@@ -158,13 +158,13 @@ export default function ReturnsPolicyPage() {
             <p>
               Email:{' '}
               <a
-                href="mailto:returns@earthrevibe.com"
+                href="mailto:contact@earthrevibe.in"
                 className="font-semibold text-[var(--color-text)] underline"
               >
-                returns@earthrevibe.com
+                contact@earthrevibe.in
               </a>
             </p>
-            <p>Phone: +91 98765 43210 (Mon-Sat, 10 AM - 7 PM IST)</p>
+            <p>Phone: +91 93287 06759 (Mon-Sat, 10 AM - 7 PM IST)</p>
           </div>
         </section>
       </div>

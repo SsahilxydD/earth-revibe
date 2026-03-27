@@ -200,13 +200,13 @@ export default function TermsPage() {
             <p>
               Email:{' '}
               <a
-                href="mailto:legal@earthrevibe.com"
+                href="mailto:contact@earthrevibe.in"
                 className="font-semibold text-[var(--color-text)] underline"
               >
-                legal@earthrevibe.com
+                contact@earthrevibe.in
               </a>
             </p>
-            <p>Phone: +91 98765 43210</p>
+            <p>Phone: +91 93287 06759</p>
           </div>
         </section>
       </div>

@@ -141,10 +141,10 @@ export default function PrivacyPolicyPage() {
           <p className="mt-2">
             To exercise any of these rights, please email us at{' '}
             <a
-              href="mailto:privacy@earthrevibe.com"
+              href="mailto:contact@earthrevibe.in"
               className="font-semibold text-[var(--color-text)] underline"
             >
-              privacy@earthrevibe.com
+              contact@earthrevibe.in
             </a>
             .
           </p>
@@ -184,13 +184,13 @@ export default function PrivacyPolicyPage() {
             <p>
               Email:{' '}
               <a
-                href="mailto:privacy@earthrevibe.com"
+                href="mailto:contact@earthrevibe.in"
                 className="font-semibold text-[var(--color-text)] underline"
               >
-                privacy@earthrevibe.com
+                contact@earthrevibe.in
               </a>
             </p>
-            <p>Phone: +91 98765 43210</p>
+            <p>Phone: +91 93287 06759</p>
           </div>
         </section>
       </div>

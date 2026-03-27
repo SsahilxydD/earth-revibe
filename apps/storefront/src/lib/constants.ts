@@ -7,7 +7,8 @@ export const SORT_OPTIONS = [
   { value: 'popular', label: 'Most Popular', sortBy: 'reviewCount', sortOrder: 'desc' },
 ] as const;
 
-export const FREE_SHIPPING_THRESHOLD = 999;
+// Free shipping on all orders — no threshold
+export const FREE_SHIPPING_THRESHOLD = 0;
 
 export const INDIAN_STATES = [
   'Andhra Pradesh',

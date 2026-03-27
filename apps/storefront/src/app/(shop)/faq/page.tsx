@@ -27,7 +27,7 @@ const FAQ_DATA: FaqCategory[] = [
       {
         question: 'Can I modify or cancel my order?',
         answer:
-          'You can modify or cancel within 1 hour of placing it. After that, the order enters processing and cannot be changed. Contact hello@earthrevibe.in for help.',
+          'You can modify or cancel within 1 hour of placing it. After that, the order enters processing and cannot be changed. Contact contact@earthrevibe.in for help.',
       },
       {
         question: 'How do I track my order?',
@@ -46,8 +46,7 @@ const FAQ_DATA: FaqCategory[] = [
     items: [
       {
         question: 'What are the shipping charges?',
-        answer:
-          'Free shipping on all orders above \u20B9999. For orders below \u20B9999, a flat fee of \u20B979 applies. We ship across India via trusted courier partners.',
+        answer: 'We offer free shipping on all orders across India via trusted courier partners.',
       },
       {
         question: 'How long does delivery take?',
@@ -67,7 +66,7 @@ const FAQ_DATA: FaqCategory[] = [
       {
         question: 'What is your return policy?',
         answer:
-          '7-day easy returns from date of delivery. Items must be unused, unwashed, in original packaging with tags attached. Sale items and innerwear are not eligible.',
+          'Returns and exchanges are accepted within 72 hours of delivery. Items must be unused, unwashed, in original packaging with tags attached. Sale items and innerwear are not eligible.',
       },
       {
         question: 'How do I initiate a return?',
@@ -82,7 +81,7 @@ const FAQ_DATA: FaqCategory[] = [
       {
         question: 'Can I exchange for a different size?',
         answer:
-          'Yes, exchanges are available within 7 days of delivery, subject to stock availability. Select \u201cExchange\u201d instead of \u201cReturn\u201d when initiating.',
+          'Yes, exchanges are available within 72 hours of delivery, subject to stock availability. Select \u201cExchange\u201d instead of \u201cReturn\u201d when initiating.',
       },
     ],
   },
@@ -122,7 +121,7 @@ const FAQ_DATA: FaqCategory[] = [
       {
         question: 'How do I delete my account?',
         answer:
-          'Email hello@earthrevibe.in from your registered email. Your account and data will be permanently deleted within 30 days.',
+          'Email contact@earthrevibe.in from your registered email. Your account and data will be permanently deleted within 30 days.',
       },
     ],
   },
