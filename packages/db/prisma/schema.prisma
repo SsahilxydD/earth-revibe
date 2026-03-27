@@ -119,10 +119,23 @@ model Category {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  products    Product[]
+  products         Product[]
+  productCategories ProductCategory[]
 
   @@index([parentId])
   @@map("categories")
+}
+
+model ProductCategory {
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([productId, categoryId])
+  @@index([categoryId])
+  @@map("product_categories")
 }
 
 model HomepageSection {
@@ -167,11 +180,12 @@ model Product {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  images          ProductImage[]
-  variants        ProductVariant[]
-  reviews         Review[]
-  wishlistItems   WishlistItem[]
-  tags            ProductTag[]
+  images            ProductImage[]
+  variants          ProductVariant[]
+  reviews           Review[]
+  wishlistItems     WishlistItem[]
+  tags              ProductTag[]
+  productCategories ProductCategory[]
 
   @@index([categoryId])
   @@index([status])

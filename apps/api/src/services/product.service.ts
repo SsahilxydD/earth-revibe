@@ -42,7 +42,14 @@ export const productService = {
     }
 
     if (category) {
-      where.category = { slug: category };
+      // Match products by primary category OR via the many-to-many join table
+      const categoryFilter: Prisma.ProductWhereInput = {
+        OR: [
+          { category: { slug: category } },
+          { productCategories: { some: { category: { slug: category } } } },
+        ],
+      };
+      where.AND = [...((where.AND as Prisma.ProductWhereInput[]) || []), categoryFilter];
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {

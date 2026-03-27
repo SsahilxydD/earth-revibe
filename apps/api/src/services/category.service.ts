@@ -17,7 +17,7 @@ export const categoryService = {
       where: { isActive: true },
       orderBy: { sortOrder: 'asc' },
       include: {
-        _count: { select: { products: true } },
+        _count: { select: { productCategories: true } },
       },
     });
 
@@ -32,7 +32,7 @@ export const categoryService = {
       isActive: cat.isActive,
       createdAt: cat.createdAt,
       updatedAt: cat.updatedAt,
-      productCount: cat._count.products,
+      productCount: cat._count.productCategories,
     }));
   },
 
@@ -161,5 +161,47 @@ export const categoryService = {
     );
 
     await prisma.$transaction(updates);
+  },
+
+  /** Add products to a category via join table (does NOT change primary categoryId) */
+  async addProductsToCategory(categoryId: string, productIds: string[]) {
+    const category = await prisma.category.findUnique({ where: { id: categoryId } });
+    if (!category) throw ApiError.notFound('Category not found');
+
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true },
+    });
+
+    if (products.length === 0) throw ApiError.badRequest('No valid products found');
+
+    // Upsert into join table — skipDuplicates avoids errors if already assigned
+    await prisma.productCategory.createMany({
+      data: products.map((p) => ({ productId: p.id, categoryId })),
+      skipDuplicates: true,
+    });
+
+    return { addedCount: products.length };
+  },
+
+  /** Remove products from a category (join table only — does NOT touch primary categoryId) */
+  async removeProductsFromCategory(categoryId: string, productIds: string[]) {
+    const result = await prisma.productCategory.deleteMany({
+      where: {
+        categoryId,
+        productId: { in: productIds },
+      },
+    });
+
+    return { removedCount: result.count };
+  },
+
+  /** List product IDs assigned to a category (via join table) */
+  async getCategoryProductIds(categoryId: string): Promise<string[]> {
+    const rows = await prisma.productCategory.findMany({
+      where: { categoryId },
+      select: { productId: true },
+    });
+    return rows.map((r) => r.productId);
   },
 };

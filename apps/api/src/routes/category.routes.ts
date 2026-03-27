@@ -45,4 +45,24 @@ router.delete(
   asyncHandler(categoryController.deleteCategory)
 );
 
+// Many-to-many product-category assignment
+router.get(
+  '/:id/products',
+  authenticate,
+  authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  asyncHandler(categoryController.getCategoryProductIds)
+);
+router.post(
+  '/:id/products',
+  authenticate,
+  authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  asyncHandler(categoryController.addProductsToCategory)
+);
+router.delete(
+  '/:id/products',
+  authenticate,
+  authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  asyncHandler(categoryController.removeProductsFromCategory)
+);
+
 export { router as categoryRouter };

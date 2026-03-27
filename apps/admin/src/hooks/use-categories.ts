@@ -37,3 +37,38 @@ export function useDeleteCategory() {
     },
   });
 }
+
+/** Add products to a category via join table (products stay in their original category too) */
+export function useAddProductsToCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ categoryId, productIds }: { categoryId: string; productIds: string[] }) =>
+      api.post(`/categories/${categoryId}/products`, { productIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+    },
+  });
+}
+
+/** Remove products from a category (join table only) */
+export function useRemoveProductsFromCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ categoryId, productIds }: { categoryId: string; productIds: string[] }) =>
+      api.delete(`/categories/${categoryId}/products`, { productIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+    },
+  });
+}
+
+/** Get product IDs assigned to a category (via join table) */
+export function useCategoryProductIds(categoryId: string) {
+  return useQuery({
+    queryKey: ['admin-category-products', categoryId],
+    queryFn: () => api.get(`/categories/${categoryId}/products`),
+    enabled: !!categoryId,
+  });
+}

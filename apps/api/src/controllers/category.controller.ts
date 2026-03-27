@@ -31,4 +31,24 @@ export const categoryController = {
     await categoryService.reorderCategories(req.body);
     res.json({ success: true, message: 'Categories reordered successfully' });
   },
+
+  async addProductsToCategory(req: Request, res: Response) {
+    const { productIds } = req.body;
+    const result = await categoryService.addProductsToCategory(req.params.id as string, productIds);
+    res.json({ success: true, data: result });
+  },
+
+  async removeProductsFromCategory(req: Request, res: Response) {
+    const { productIds } = req.body;
+    const result = await categoryService.removeProductsFromCategory(
+      req.params.id as string,
+      productIds
+    );
+    res.json({ success: true, data: result });
+  },
+
+  async getCategoryProductIds(req: Request, res: Response) {
+    const productIds = await categoryService.getCategoryProductIds(req.params.id as string);
+    res.json({ success: true, data: productIds });
+  },
 };

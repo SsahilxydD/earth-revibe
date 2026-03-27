@@ -13,8 +13,10 @@ import {
   useCreateCategory,
   useUpdateCategory,
   useDeleteCategory,
+  useAddProductsToCategory,
+  useCategoryProductIds,
 } from '@/hooks/use-categories';
-import { useProducts, useBulkUpdateProducts } from '@/hooks/use-products';
+import { useProducts } from '@/hooks/use-products';
 
 /* ------------------------------------------------------------------ */
 /*  Product picker modal for a category                                */
@@ -29,7 +31,14 @@ function CategoryProductPicker({
   const [search, setSearch] = useState('');
   const [pendingAdds, setPendingAdds] = useState<Set<string>>(new Set());
   const { data, isLoading, isError } = useProducts({ page: 1, limit: 100 });
-  const bulkUpdate = useBulkUpdateProducts();
+  const addProducts = useAddProductsToCategory();
+
+  // Fetch product IDs already in this category via join table
+  const { data: categoryProductData } = useCategoryProductIds(category.id);
+  const assignedIds = useMemo(() => {
+    const ids = (categoryProductData as any)?.data || categoryProductData || [];
+    return new Set<string>(Array.isArray(ids) ? ids : []);
+  }, [categoryProductData]);
 
   const allProducts: any[] = (data as any)?.products || [];
 
@@ -41,12 +50,13 @@ function CategoryProductPicker({
     );
   }, [allProducts, search]);
 
-  const isInCategory = (p: any) => p.categoryId === category.id || p.category?.id === category.id;
+  const isInCategory = (p: any) =>
+    p.categoryId === category.id || p.category?.id === category.id || assignedIds.has(p.id);
 
   const isChecked = (p: any) => isInCategory(p) || pendingAdds.has(p.id);
 
   const toggleProduct = (productId: string, alreadyInCategory: boolean) => {
-    if (alreadyInCategory) return; // can't remove — must move to another category
+    if (alreadyInCategory) return;
     setPendingAdds((prev) => {
       const next = new Set(prev);
       if (next.has(productId)) {
@@ -64,11 +74,11 @@ function CategoryProductPicker({
       return;
     }
     try {
-      await bulkUpdate.mutateAsync({
+      await addProducts.mutateAsync({
+        categoryId: category.id,
         productIds: Array.from(pendingAdds),
-        updates: { categoryId: category.id },
       });
-      toast.success(`${pendingAdds.size} product(s) moved to ${category.name}`);
+      toast.success(`${pendingAdds.size} product(s) added to ${category.name}`);
       setPendingAdds(new Set());
       onClose();
     } catch (err: any) {
@@ -162,8 +172,8 @@ function CategoryProductPicker({
         <Button variant="ghost" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={pendingAdds.size === 0 || bulkUpdate.isPending}>
-          {bulkUpdate.isPending
+        <Button onClick={handleSave} disabled={pendingAdds.size === 0 || addProducts.isPending}>
+          {addProducts.isPending
             ? 'Saving...'
             : pendingAdds.size > 0
               ? `Save (${pendingAdds.size} change${pendingAdds.size > 1 ? 's' : ''})`
