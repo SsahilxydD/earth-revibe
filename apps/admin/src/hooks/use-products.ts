@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
+import { revalidateStorefront } from '@/lib/revalidate-storefront';
 import type { ProductListParams } from '@/types';
 
 // Ensure API_BASE is always an absolute URL - guard against missing https:// protocol
@@ -54,6 +55,7 @@ export function useCreateProduct() {
     mutationFn: (data: any) => api.post('/products', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -65,6 +67,7 @@ export function useUpdateProduct() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       queryClient.invalidateQueries({ queryKey: ['admin-product'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -75,6 +78,7 @@ export function useDeleteProduct() {
     mutationFn: (id: string) => api.delete(`/products/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -120,6 +124,7 @@ export function useBulkUpdateProducts() {
     }) => api.put('/admin/products/bulk-update', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -130,6 +135,7 @@ export function useImportProductsCSV() {
     mutationFn: (csvContent: string) => api.post('/admin/products/import-csv', { csv: csvContent }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -143,6 +149,7 @@ export function useAddProductVariants() {
       api.post(`/products/${productId}/variants`, { variants }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-product'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -154,6 +161,7 @@ export function useUpdateProductVariant() {
       api.put(`/products/variants/${variantId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-product'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -164,6 +172,7 @@ export function useDeleteProductVariant() {
     mutationFn: (variantId: string) => api.delete(`/products/variants/${variantId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-product'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -182,6 +191,7 @@ export function useAddProductImage() {
     }) => api.post(`/products/${productId}/images`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-product'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -192,6 +202,7 @@ export function useDeleteProductImage() {
     mutationFn: (imageId: string) => api.delete(`/products/images/${imageId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-product'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -202,6 +213,7 @@ export function useSetProductImagePrimary() {
     mutationFn: (imageId: string) => api.put(`/products/images/${imageId}/primary`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-product'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -213,6 +225,7 @@ export function useReorderProductImages() {
       api.put(`/products/${productId}/images/reorder`, { imageIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-product'] });
+      revalidateStorefront(['products']);
     },
   });
 }

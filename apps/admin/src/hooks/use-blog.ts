@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { toast } from '@/components/ui';
+import { revalidateStorefront } from '@/lib/revalidate-storefront';
 
 export function useBlogPosts(page: number = 1, status?: string, search?: string) {
   return useQuery({
@@ -42,6 +43,7 @@ export function useCreateBlogPost() {
     mutationFn: (data: any) => api.post('/admin/blog', data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-blog-posts'] });
+      revalidateStorefront(['blog']);
       toast.success('Blog post created');
     },
     onError: (err: any) => toast.error(err.message || 'Failed to create post'),
@@ -55,6 +57,7 @@ export function useUpdateBlogPost() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-blog-posts'] });
       qc.invalidateQueries({ queryKey: ['admin-blog-post'] });
+      revalidateStorefront(['blog']);
       toast.success('Blog post updated');
     },
     onError: (err: any) => toast.error(err.message || 'Failed to update post'),
@@ -67,6 +70,7 @@ export function useDeleteBlogPost() {
     mutationFn: (id: string) => api.delete(`/admin/blog/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-blog-posts'] });
+      revalidateStorefront(['blog']);
       toast.success('Blog post deleted');
     },
     onError: (err: any) => toast.error(err.message || 'Failed to delete post'),

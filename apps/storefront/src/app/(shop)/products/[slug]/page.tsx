@@ -17,7 +17,7 @@ function resolveApiBase(): string {
 async function getProduct(slug: string): Promise<Product | null> {
   try {
     const res = await fetch(`${resolveApiBase()}/products/${slug}`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 300, tags: ['products', `product-${slug}`] },
     });
     if (!res.ok) return null;
     const json = await res.json();

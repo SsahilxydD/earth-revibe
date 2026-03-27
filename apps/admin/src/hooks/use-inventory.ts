@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { revalidateStorefront } from '@/lib/revalidate-storefront';
 import type { InventoryListParams } from '@/types';
 
 export function useInventory(params: InventoryListParams = {}) {
@@ -31,6 +32,7 @@ export function useUpdateStock() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
       queryClient.invalidateQueries({ queryKey: ['admin-inventory-summary'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -50,6 +52,7 @@ export function useAdjustStock() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
       queryClient.invalidateQueries({ queryKey: ['admin-inventory-summary'] });
+      revalidateStorefront(['products']);
     },
   });
 }
@@ -62,6 +65,7 @@ export function useBulkUpdateStock() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
       queryClient.invalidateQueries({ queryKey: ['admin-inventory-summary'] });
+      revalidateStorefront(['products']);
     },
   });
 }

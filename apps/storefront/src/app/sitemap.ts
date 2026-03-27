@@ -24,7 +24,7 @@ async function fetchProducts(): Promise<Product[]> {
     const baseUrl = apiBase.startsWith('http') ? apiBase : `https://${apiBase}`;
 
     const res = await fetch(`${baseUrl}/products?limit=1000`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 3600, tags: ['products'] },
     });
 
     if (!res.ok) return [];
@@ -43,7 +43,7 @@ async function fetchCollections(): Promise<Collection[]> {
     const baseUrl = apiBase.startsWith('http') ? apiBase : `https://${apiBase}`;
 
     const res = await fetch(`${baseUrl}/categories?limit=100`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 3600, tags: ['categories'] },
     });
 
     if (!res.ok) return [];
@@ -62,7 +62,7 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
     const baseUrl = apiBase.startsWith('http') ? apiBase : `https://${apiBase}`;
 
     const res = await fetch(`${baseUrl}/blog/posts?limit=500`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 3600, tags: ['blog'] },
     });
 
     if (!res.ok) return [];

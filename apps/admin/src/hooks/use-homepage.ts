@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { revalidateStorefront } from '@/lib/revalidate-storefront';
 
 export interface HomepageSection {
   id: string;
@@ -26,6 +27,7 @@ export function useUpdateHomepageSection() {
       api.patch<HomepageSection>(`/admin/homepage/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
+      revalidateStorefront(['homepage']);
     },
   });
 }
@@ -37,6 +39,7 @@ export function useCreateHomepageSection() {
       api.post<HomepageSection>('/admin/homepage', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
+      revalidateStorefront(['homepage']);
     },
   });
 }
@@ -47,6 +50,7 @@ export function useReorderHomepageSections() {
     mutationFn: (orderedIds: string[]) => api.put('/admin/homepage/reorder', { orderedIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
+      revalidateStorefront(['homepage']);
     },
   });
 }
@@ -57,6 +61,7 @@ export function useDeleteHomepageSection() {
     mutationFn: (id: string) => api.delete(`/admin/homepage/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
+      revalidateStorefront(['homepage']);
     },
   });
 }

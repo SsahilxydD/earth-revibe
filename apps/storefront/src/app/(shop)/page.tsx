@@ -17,7 +17,7 @@ async function getSections(): Promise<HomepageSection[]> {
     const apiBase =
       process.env.NEXT_PUBLIC_API_URL || 'https://earth-revibeapi-production.up.railway.app/api/v1';
     const base = apiBase.startsWith('http') ? apiBase : `https://${apiBase}`;
-    const res = await fetch(`${base}/homepage`, { next: { revalidate: 60 } });
+    const res = await fetch(`${base}/homepage`, { next: { revalidate: 60, tags: ['homepage'] } });
     if (!res.ok) return [];
     const json = await res.json();
     return json.data ?? [];

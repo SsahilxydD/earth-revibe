@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { revalidateStorefront } from '@/lib/revalidate-storefront';
 
 export function useCategories() {
   return useQuery({
@@ -14,6 +15,7 @@ export function useCreateCategory() {
     mutationFn: (data: any) => api.post('/categories', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      revalidateStorefront(['categories']);
     },
   });
 }
@@ -24,6 +26,7 @@ export function useUpdateCategory() {
     mutationFn: ({ id, data }: { id: string; data: any }) => api.put(`/categories/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      revalidateStorefront(['categories']);
     },
   });
 }
@@ -34,6 +37,7 @@ export function useDeleteCategory() {
     mutationFn: (id: string) => api.delete(`/categories/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      revalidateStorefront(['categories']);
     },
   });
 }
@@ -47,6 +51,7 @@ export function useAddProductsToCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      revalidateStorefront(['categories', 'products']);
     },
   });
 }
@@ -60,6 +65,7 @@ export function useRemoveProductsFromCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      revalidateStorefront(['categories', 'products']);
     },
   });
 }
