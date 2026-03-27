@@ -12,7 +12,6 @@ let _purify: any = null;
 function sanitizeHTML(dirty: string): string {
   if (typeof window === 'undefined') return dirty;
   if (!_purify) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     _purify = require('isomorphic-dompurify');
     if (_purify.default) _purify = _purify.default;
   }
@@ -916,8 +915,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         {/* Sentinel — marks where the dock should collapse. Static div, no async dependency. */}
         <div data-dock-hide aria-hidden="true" />
 
-        {/* Related products — shown after dock collapses, no extra bottom padding needed */}
-        <div className="px-4 pb-6">
+        {/* Related products — shown after dock collapses */}
+        <div className="px-4 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
           <RelatedProducts categorySlug={product.category?.slug} excludeProductId={product.id} />
         </div>
       </div>
