@@ -4,7 +4,6 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import {
   ImagePlus,
   Trash2,
-  Star,
   Loader2,
   X,
   RotateCcw,
@@ -22,7 +21,6 @@ import {
   useUploadImageFromUrl,
   useAddProductImage,
   useDeleteProductImage,
-  useSetProductImagePrimary,
   useReorderProductImages,
 } from '@/hooks/use-products';
 
@@ -91,7 +89,6 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
   const uploadFromUrl = useUploadImageFromUrl();
   const addImage = useAddProductImage();
   const deleteImage = useDeleteProductImage();
-  const setPrimary = useSetProductImagePrimary();
   const reorderImages = useReorderProductImages();
 
   // Local reorder state — staged until "Update Order" is clicked
@@ -384,15 +381,6 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
     }
   };
 
-  const handleSetPrimary = async (imageId: string) => {
-    try {
-      await setPrimary.mutateAsync(imageId);
-      toast.success('Primary image updated');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to set primary image');
-    }
-  };
-
   // ── Derived state ───────────────────────────────────────────────────────
 
   const hasQueueItems = uploadQueue.length > 0;
@@ -612,8 +600,8 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
                 {idx + 1}
               </span>
 
-              {/* Primary badge */}
-              {image.isPrimary && (
+              {/* Primary badge — first image is always primary */}
+              {idx === 0 && (
                 <span className="absolute top-2 left-2 bg-forest-green text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
                   Primary
                 </span>
@@ -643,19 +631,8 @@ export function ImageManager({ productId, images }: ImageManagerProps) {
                 )}
               </div>
 
-              {/* Hover overlay with actions */}
+              {/* Hover overlay with delete action */}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                {!image.isPrimary && (
-                  <button
-                    type="button"
-                    onClick={() => handleSetPrimary(image.id)}
-                    disabled={setPrimary.isPending}
-                    className="p-2 bg-white rounded-lg hover:bg-off-white transition-colors"
-                    title="Set as primary"
-                  >
-                    <Star size={16} className="text-amber-500" />
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={() => handleDelete(image.id)}

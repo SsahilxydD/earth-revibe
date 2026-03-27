@@ -400,12 +400,12 @@ export const productService = {
       throw ApiError.notFound('Product not found');
     }
 
-    // Update sort order for each image
+    // Update sort order for each image and make the first one primary
     await Promise.all(
       imageIds.map((id, index) =>
         prisma.productImage.update({
           where: { id },
-          data: { sortOrder: index },
+          data: { sortOrder: index, isPrimary: index === 0 },
         })
       )
     );
