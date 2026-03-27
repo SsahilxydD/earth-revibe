@@ -70,7 +70,7 @@ export function Footer() {
       </div>
 
       {/* Columns — Shop left, then Customer Service, About Us, Connect pushed right */}
-      <div className="px-4 py-6 md:px-8 lg:px-12 xl:px-20">
+      <div className="mx-auto max-w-5xl px-8 py-6 md:px-12 lg:px-16">
         <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 md:gap-x-8">
           <FooterColumn title="Shop" links={SHOP_LINKS} />
           <div className="text-right">
