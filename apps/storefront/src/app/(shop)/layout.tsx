@@ -7,15 +7,15 @@ import { PageTransition } from '@/components/layout/page-transition';
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <div className="flex min-h-[100dvh] flex-col">
       <AnnouncementBar />
       <Header />
-      <main className="min-h-[100dvh]">
+      <main className="flex-1">
         <PageTransition>{children}</PageTransition>
       </main>
       <Footer />
       <MobileBottomBar />
       <NewsletterPopup />
-    </>
+    </div>
   );
 }
