@@ -35,6 +35,17 @@ ruflo memory stats                     # see what's stored
 
 Store design decisions after completing work so future sessions can reference them.
 
+## Thinking Protocol
+
+Always use the `mcp__sequential-thinking__sequentialthinking` MCP tool on every prompt before writing any code or making changes. Use it to:
+
+- Break down the task into steps
+- Analyze existing code for side effects before editing
+- Loop through multiple thoughts (adjust `totalThoughts` as needed)
+- Verify your approach before acting
+
+This is mandatory — never skip sequential thinking, even for small tasks.
+
 ## Key Conventions
 
 - All Zod schemas live in `packages/shared/src/schemas/` — never duplicate in apps

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, X, Clock, ArrowRight, Grid3X3, Sparkles, Shirt } from 'lucide-react';
 import { useUiStore, lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 import { api } from '@/lib/api-client';
@@ -62,6 +63,7 @@ function saveRecentSearch(query: string) {
 
 export function SearchOverlay() {
   const { closeSearch } = useUiStore();
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<AutocompleteResult | null>(null);
@@ -113,7 +115,7 @@ export function SearchOverlay() {
     if (query.trim()) {
       saveRecentSearch(query.trim());
       closeSearch();
-      window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
     }
   };
 

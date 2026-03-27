@@ -102,6 +102,40 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               </span>
             </div>
           )}
+
+          {/* Wishlist button */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsWishlisted((prev) => !prev);
+            }}
+            className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-white"
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            <Heart
+              size={14}
+              className={cn(
+                'transition-colors',
+                isWishlisted ? 'fill-[var(--color-sale)] text-[var(--color-sale)]' : 'text-black/60'
+              )}
+            />
+          </button>
+
+          {/* Add to cart button */}
+          {!isOutOfStock && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push(`/products/${product.slug}`);
+              }}
+              className="absolute bottom-1.5 right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-white"
+              aria-label="Add to cart"
+            >
+              <Plus size={14} className="text-black/60" />
+            </button>
+          )}
         </div>
 
         {/* Product info */}
@@ -121,40 +155,6 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
           </div>
         </div>
       </Link>
-
-      {/* Wishlist button */}
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setIsWishlisted((prev) => !prev);
-        }}
-        className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-white"
-        aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-      >
-        <Heart
-          size={14}
-          className={cn(
-            'transition-colors',
-            isWishlisted ? 'fill-[var(--color-sale)] text-[var(--color-sale)]' : 'text-black/60'
-          )}
-        />
-      </button>
-
-      {/* Add to cart button */}
-      {!isOutOfStock && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            router.push(`/products/${product.slug}`);
-          }}
-          className="absolute bottom-[3.2rem] right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-white"
-          aria-label="Add to cart"
-        >
-          <Plus size={14} className="text-black/60" />
-        </button>
-      )}
     </div>
   );
 }

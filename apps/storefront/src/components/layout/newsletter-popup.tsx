@@ -50,7 +50,7 @@ export function NewsletterPopup() {
         <h3 className="mt-6 text-base font-bold uppercase tracking-[0.2em]">Join the Culture</h3>
 
         {/* Description — single line */}
-        <p className="mt-3 whitespace-nowrap text-sm text-black/50">
+        <p className="mt-3 text-sm text-black/50">
           Get early access to drops, deals and exclusive content.
         </p>
 

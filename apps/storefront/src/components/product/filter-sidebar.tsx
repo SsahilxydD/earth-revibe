@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCategories } from '@/hooks/use-products';
+import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
 
@@ -205,13 +206,9 @@ export function FilterSidebar({ filters, onFilterChange }: FilterSidebarProps) {
 
   useEffect(() => {
     if (isMobileOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      lockBodyScroll();
+      return () => unlockBodyScroll();
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isMobileOpen]);
 
   return (

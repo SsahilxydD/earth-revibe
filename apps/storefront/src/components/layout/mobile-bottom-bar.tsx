@@ -72,7 +72,7 @@ export function MobileBottomBar() {
             <Link
               key={item.label}
               href={item.href}
-              className="flex flex-col items-center gap-0.5 px-3 py-1"
+              className="relative flex flex-col items-center gap-0.5 px-3 py-1"
               aria-label={item.label}
             >
               <Icon
