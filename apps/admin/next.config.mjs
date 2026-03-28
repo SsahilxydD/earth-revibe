@@ -1,8 +1,6 @@
 import { withSentryConfig } from '@sentry/nextjs';
 
-const API_ORIGIN =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, '') ||
-  'https://earth-revibeapi-production.up.railway.app';
+const API_ORIGIN = 'https://earth-revibeapi-production.up.railway.app';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
