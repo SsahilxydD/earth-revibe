@@ -19,7 +19,9 @@ function sanitizeHTML(dirty: string): string {
   return _purify.sanitize(dirty);
 }
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
+import { api } from '@/lib/api-client';
 import { useCartStore } from '@/stores/cart-store';
+import { useRazorpay } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
 import { Accordion } from './accordion';
 import { RelatedProducts } from './related-products';
@@ -530,6 +532,13 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
     setSelectedSize(size);
     setShowSizeSheet(false);
 
+    // If Buy Now triggered the size sheet, go straight to checkout — no cart
+    if (buyNowRef.current) {
+      buyNowRef.current = false;
+      executeBuyNow(size);
+      return;
+    }
+
     const variant = getSelectedVariant(product.variants, selectedColor, size);
     if (!variant || variant.stock <= 0) return;
 
@@ -553,11 +562,59 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
 
     addToast('Added to cart', 'success');
     setIsAdding(false);
+  };
 
-    // If Buy Now was triggered via size sheet, redirect to checkout
-    if (buyNowRef.current) {
-      buyNowRef.current = false;
-      router.push('/checkout');
+  const { initiatePayment } = useRazorpay();
+
+  const executeBuyNow = async (size?: string) => {
+    const variant = getSelectedVariant(product.variants, selectedColor, size || selectedSize);
+    if (!variant || variant.stock <= 0) return;
+
+    setIsBuyingNow(true);
+    try {
+      // Create order directly — no cart involved
+      const result = await api.post<{
+        razorpayOrderId: string;
+        razorpayKeyId: string;
+        amount: number;
+        orderNumber: string;
+        prefill: { name: string; email: string; contact: string };
+      }>('/checkout/create-order', {
+        items: [{ variantId: variant.id, quantity }],
+        loyaltyPointsToUse: 0,
+      });
+
+      // Open Razorpay Magic Checkout directly
+      const paymentResponse = await initiatePayment({
+        orderId: result.orderNumber,
+        razorpayOrderId: result.razorpayOrderId,
+        amount: Math.round(result.amount * 100),
+        currency: 'INR',
+        customerName: result.prefill?.name,
+        customerEmail: result.prefill?.email,
+        customerPhone: result.prefill?.contact,
+        description: `Order ${result.orderNumber}`,
+      });
+
+      if (!paymentResponse) {
+        addToast('Payment was cancelled', 'info');
+        setIsBuyingNow(false);
+        return;
+      }
+
+      // Verify payment
+      await api.post('/checkout/verify-payment', {
+        razorpayOrderId: paymentResponse.razorpay_order_id,
+        razorpayPaymentId: paymentResponse.razorpay_payment_id,
+        razorpaySignature: paymentResponse.razorpay_signature,
+      });
+
+      addToast('Order placed successfully!', 'success');
+      router.push('/account/orders');
+    } catch (err: any) {
+      addToast(err?.message || 'Something went wrong', 'error');
+    } finally {
+      setIsBuyingNow(false);
     }
   };
 
@@ -567,9 +624,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
       setShowSizeSheet(true);
       return;
     }
-    setIsBuyingNow(true);
-    await handleAddToCart();
-    router.push('/checkout');
+    executeBuyNow();
   };
 
   const handleMobileBuyNow = () => {
@@ -578,7 +633,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
       setShowSizeSheet(true);
       return;
     }
-    handleBuyNow();
+    executeBuyNow();
   };
 
   const detailsFitRows = buildDetailsFit(product);
@@ -973,7 +1028,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         )}
 
         {/* Add to Cart + Buy Now buttons — below accordions */}
-        <div className="mt-6 px-4 flex gap-3">
+        <div className="mt-8 mb-2 px-4 flex gap-3">
           <button
             type="button"
             onClick={handleMobileAddToCart}
