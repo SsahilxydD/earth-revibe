@@ -2,9 +2,10 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Minus, Plus, Loader2, ChevronRight, Heart } from 'lucide-react';
+import { Star, Minus, Plus, Loader2, ChevronRight, Heart, ShoppingCart, Zap } from 'lucide-react';
 // Lazy-load DOMPurify to avoid jsdom SSR crash (ENOENT default-stylesheet.css).
 // sanitize() is a no-op during SSR — the HTML re-renders correctly on hydration.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -438,9 +439,12 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
   const [selectedColor, setSelectedColor] = useState<string | null>(
     colors.length > 0 ? colors[0].name : null
   );
+  const router = useRouter();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
+  const buyNowRef = useRef(false);
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -549,10 +553,32 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
 
     addToast('Added to cart', 'success');
     setIsAdding(false);
+
+    // If Buy Now was triggered via size sheet, redirect to checkout
+    if (buyNowRef.current) {
+      buyNowRef.current = false;
+      router.push('/checkout');
+    }
   };
 
   const handleBuyNow = async () => {
+    if (sizes.length > 0 && !selectedSize) {
+      buyNowRef.current = true;
+      setShowSizeSheet(true);
+      return;
+    }
+    setIsBuyingNow(true);
     await handleAddToCart();
+    router.push('/checkout');
+  };
+
+  const handleMobileBuyNow = () => {
+    if (sizes.length > 0) {
+      buyNowRef.current = true;
+      setShowSizeSheet(true);
+      return;
+    }
+    handleBuyNow();
   };
 
   const detailsFitRows = buildDetailsFit(product);
@@ -946,6 +972,40 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </div>
         )}
 
+        {/* Add to Cart + Buy Now buttons — below accordions */}
+        <div className="mt-6 px-4 flex gap-3">
+          <button
+            type="button"
+            onClick={handleMobileAddToCart}
+            disabled={isAdding}
+            className="flex h-12 flex-1 items-center justify-center gap-2 border border-[var(--color-primary)] text-sm font-bold uppercase tracking-[0.15em] text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white"
+          >
+            {isAdding && !isBuyingNow ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <>
+                <ShoppingCart size={16} />
+                Add to Cart
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleMobileBuyNow}
+            disabled={isAdding || isBuyingNow}
+            className="flex h-12 flex-1 items-center justify-center gap-2 bg-[var(--color-primary)] text-sm font-bold uppercase tracking-[0.15em] text-white transition-opacity hover:opacity-90"
+          >
+            {isBuyingNow ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <>
+                <Zap size={16} />
+                Buy Now
+              </>
+            )}
+          </button>
+        </div>
+
         {/* Spacer — always rendered to prevent layout shift when dock hides */}
         <div className="h-[120px]" />
 
@@ -994,7 +1054,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                 disabled={isAdding}
                 className="flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
               >
-                {isAdding ? <Loader2 size={16} className="animate-spin" /> : 'ADD'}
+                {isAdding ? <Loader2 size={16} className="animate-spin" /> : 'ADD TO CART'}
               </button>
             </div>
           </div>,
