@@ -1028,7 +1028,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         )}
 
         {/* Add to Cart + Buy Now buttons — below accordions */}
-        <div className="mt-8 mb-2 px-4 flex gap-3">
+        <div className="mt-6 px-4 flex gap-3">
           <button
             type="button"
             onClick={handleMobileAddToCart}
@@ -1061,8 +1061,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </button>
         </div>
 
-        {/* Spacer — always rendered to prevent layout shift when dock hides */}
-        <div className="h-[120px]" />
+        {/* Spacer for the fixed dock at the bottom */}
+        <div className="h-16" />
 
         {/* Sentinel — marks where the dock should collapse */}
         <div ref={sentinelRef} data-dock-hide aria-hidden="true" />
