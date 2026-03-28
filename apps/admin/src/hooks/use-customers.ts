@@ -3,14 +3,12 @@ import { api } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
 import type { CustomerListParams } from '@/types';
 
-// Ensure API_BASE is always an absolute URL
-function resolveApiBase(): string {
-  const raw =
-    process.env.NEXT_PUBLIC_API_URL || 'https://earth-revibeapi-production.up.railway.app/api/v1';
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-  return `https://${raw}`;
-}
-const API_BASE = resolveApiBase();
+// In the browser, use the same-origin proxy to avoid CORS.
+// On the server, call Railway directly.
+const API_BASE =
+  typeof window !== 'undefined'
+    ? '/api/v1'
+    : process.env.NEXT_PUBLIC_API_URL || 'https://earth-revibeapi-production.up.railway.app/api/v1';
 
 /** Get auth token from Supabase session for raw fetch calls that bypass the API client */
 async function getAuthToken(): Promise<string | null> {
