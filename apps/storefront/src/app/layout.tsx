@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { Archivo_Narrow, Poppins } from 'next/font/google';
+import { GoogleAnalytics } from '@next/third-parties/google';
 import { Providers } from '@/providers';
 import { LenisProvider } from '@/providers/lenis-provider';
 import { PrefetchProvider } from '@/providers/prefetch-provider';
+import { PostHogProvider, PostHogPageview } from '@/providers/posthog-provider';
 import './globals.css';
 
 const archivoNarrow = Archivo_Narrow({
@@ -60,11 +62,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body>
-        <Providers>
-          <PrefetchProvider>
-            <LenisProvider>{children}</LenisProvider>
-          </PrefetchProvider>
-        </Providers>
+        <PostHogProvider>
+          <PostHogPageview />
+          <Providers>
+            <PrefetchProvider>
+              <LenisProvider>{children}</LenisProvider>
+            </PrefetchProvider>
+          </Providers>
+        </PostHogProvider>
+        {process.env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />}
       </body>
     </html>
   );
