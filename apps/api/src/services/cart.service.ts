@@ -1,6 +1,6 @@
 import { prisma } from '@earth-revibe/db';
 import { ApiError } from '../utils/api-error';
-import type { AddToCartInput, UpdateCartItemInput } from '@earth-revibe/shared';
+import type { AddToCartInput, UpdateCartItemInput, SyncCartInput } from '@earth-revibe/shared';
 
 export const cartService = {
   async getCart(userId: string) {
@@ -143,5 +143,34 @@ export const cartService = {
     if (cart) {
       await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     }
+  },
+
+  async syncCart(userId: string, data: SyncCartInput) {
+    // Get or create cart
+    let cart = await prisma.cart.findUnique({ where: { userId } });
+    if (!cart) {
+      cart = await prisma.cart.create({ data: { userId } });
+    }
+
+    // Replace all items atomically
+    await prisma.$transaction(async (tx) => {
+      await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+      if (data.items.length > 0) {
+        await tx.cartItem.createMany({
+          data: data.items.map((item) => ({
+            cartId: cart.id,
+            variantId: item.variantId,
+            quantity: item.quantity,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      // Touch updatedAt so abandoned cart detection sees recent activity
+      await tx.cart.update({ where: { id: cart.id }, data: { updatedAt: new Date() } });
+    });
+
+    return this.getCart(userId);
   },
 };

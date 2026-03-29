@@ -2,10 +2,36 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
+import { useCartStore } from '@/stores/cart-store';
+import { api } from '@/lib/api-client';
+
+interface ServerCartItem {
+  variantId: string;
+  quantity: number;
+  variant: {
+    id: string;
+    size: string | null;
+    color: string | null;
+    stock: number;
+    price: number | null;
+    product: {
+      id: string;
+      name: string;
+      slug: string;
+      price: number;
+      images: { url: string }[];
+    };
+  };
+}
+
+interface ServerCart {
+  items: ServerCartItem[];
+}
 
 /**
  * Runs checkAuth() once on app mount to restore session from httpOnly cookies.
- * Without this, the Zustand auth store resets to null on every page load.
+ * After auth is restored, merges server-side cart with local cart so
+ * abandoned cart detection can track items in the database.
  */
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
   const checkAuth = useAuthStore((s) => s.checkAuth);
@@ -14,7 +40,40 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (checkedRef.current) return;
     checkedRef.current = true;
-    checkAuth();
+
+    checkAuth().then(async () => {
+      const user = useAuthStore.getState().user;
+      if (!user) return;
+
+      try {
+        const serverCart = await api.get<ServerCart>('/cart');
+        const localItems = useCartStore.getState().items;
+
+        // If local cart has items, sync them to server (local wins)
+        if (localItems.length > 0) {
+          await api.post('/cart/sync', {
+            items: localItems.map((i) => ({ variantId: i.id, quantity: i.quantity })),
+          });
+        } else if (serverCart.items.length > 0) {
+          // If local cart is empty but server has items, restore from server
+          const restoredItems = serverCart.items.map((item) => ({
+            id: item.variant.id,
+            productId: item.variant.product.id,
+            name: item.variant.product.name,
+            slug: item.variant.product.slug,
+            image: item.variant.product.images[0]?.url || '',
+            price: Number(item.variant.price ?? item.variant.product.price),
+            size: item.variant.size || '',
+            color: item.variant.color || '',
+            quantity: item.quantity,
+            maxQuantity: item.variant.stock,
+          }));
+          useCartStore.setState({ items: restoredItems });
+        }
+      } catch {
+        // Cart merge is best-effort — don't break the app
+      }
+    });
   }, [checkAuth]);
 
   return <>{children}</>;

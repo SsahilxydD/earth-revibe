@@ -3,7 +3,7 @@ import { cartController } from '../controllers/cart.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { asyncHandler } from '../utils/async-handler';
-import { addToCartSchema, updateCartItemSchema } from '@earth-revibe/shared';
+import { addToCartSchema, updateCartItemSchema, syncCartSchema } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
 
@@ -18,5 +18,6 @@ router.put(
 );
 router.delete('/items/:variantId', asyncHandler(cartController.removeItem));
 router.delete('/', asyncHandler(cartController.clearCart));
+router.post('/sync', validate({ body: syncCartSchema }), asyncHandler(cartController.syncCart));
 
 export { router as cartRouter };

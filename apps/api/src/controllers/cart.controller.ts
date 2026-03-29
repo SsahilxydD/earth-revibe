@@ -30,4 +30,9 @@ export const cartController = {
     await cartService.clearCart(req.user!.id);
     res.json({ success: true, message: 'Cart cleared' });
   },
+
+  async syncCart(req: Request, res: Response) {
+    const cart = await cartService.syncCart(req.user!.id, req.body);
+    res.json({ success: true, data: cart });
+  },
 };

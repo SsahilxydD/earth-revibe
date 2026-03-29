@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { api } from '@/lib/api-client';
 
 export interface CartItem {
   id: string;
@@ -40,6 +41,22 @@ interface CartState {
   getTotal: () => number;
 }
 
+// Debounced sync to server — only fires for logged-in users
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleSyncToServer(items: CartItem[]) {
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try {
+      await api.post('/cart/sync', {
+        items: items.map((i) => ({ variantId: i.id, quantity: i.quantity })),
+      });
+    } catch {
+      // Sync is best-effort — local cart is the source of truth
+    }
+  }, 1000);
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -58,41 +75,46 @@ export const useCartStore = create<CartState>()(
           (i) => i.productId === item.productId && i.size === item.size && i.color === item.color
         );
 
+        let updatedItems: CartItem[];
         if (existingIndex > -1) {
           const existing = items[existingIndex];
           const newQuantity = Math.min(
             existing.quantity + (item.quantity || 1),
             existing.maxQuantity
           );
-          const updatedItems = items.map((i, idx) =>
+          updatedItems = items.map((i, idx) =>
             idx === existingIndex ? { ...i, quantity: newQuantity } : i
           );
-          set({ items: updatedItems, isOpen: true });
         } else {
           const newItem: CartItem = {
             ...item,
             quantity: item.quantity || 1,
           };
-          set({ items: [...items, newItem], isOpen: true });
+          updatedItems = [...items, newItem];
         }
+        set({ items: updatedItems, isOpen: true });
+        scheduleSyncToServer(updatedItems);
       },
 
       removeItem: (id) => {
-        set((state) => ({
-          items: state.items.filter((i) => i.id !== id),
-        }));
+        const updatedItems = get().items.filter((i) => i.id !== id);
+        set({ items: updatedItems });
+        scheduleSyncToServer(updatedItems);
       },
 
       updateQuantity: (id, quantity) => {
         if (quantity < 1) return;
-        set((state) => ({
-          items: state.items.map((i) =>
-            i.id === id ? { ...i, quantity: Math.min(quantity, i.maxQuantity) } : i
-          ),
-        }));
+        const updatedItems = get().items.map((i) =>
+          i.id === id ? { ...i, quantity: Math.min(quantity, i.maxQuantity) } : i
+        );
+        set({ items: updatedItems });
+        scheduleSyncToServer(updatedItems);
       },
 
-      clearCart: () => set({ items: [], discountCode: '', discountAmount: 0 }),
+      clearCart: () => {
+        set({ items: [], discountCode: '', discountAmount: 0 });
+        scheduleSyncToServer([]);
+      },
 
       applyDiscount: (code, amount) => set({ discountCode: code, discountAmount: amount }),
 

@@ -9,5 +9,15 @@ export const updateCartItemSchema = z.object({
   quantity: z.coerce.number().int().min(1),
 });
 
+export const syncCartSchema = z.object({
+  items: z.array(
+    z.object({
+      variantId: z.string().min(1),
+      quantity: z.coerce.number().int().min(1),
+    })
+  ),
+});
+
 export type AddToCartInput = z.infer<typeof addToCartSchema>;
 export type UpdateCartItemInput = z.infer<typeof updateCartItemSchema>;
+export type SyncCartInput = z.infer<typeof syncCartSchema>;
