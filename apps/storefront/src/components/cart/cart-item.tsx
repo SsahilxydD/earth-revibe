@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useCartStore, type CartItem } from '@/stores/cart-store';
 import { formatPrice, getImageUrl } from '@/lib/utils';
+import { trackRemoveFromCart } from '@/lib/analytics';
 
 interface CartItemRowProps {
   item: CartItem;
@@ -64,7 +65,10 @@ export function CartItemRow({ item }: CartItemRowProps) {
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">{formatPrice(item.price * item.quantity)}</span>
             <button
-              onClick={() => removeItem(item.id)}
+              onClick={() => {
+                trackRemoveFromCart({ id: item.id, name: item.name });
+                removeItem(item.id);
+              }}
               className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-sale)]"
               aria-label="Remove item"
             >

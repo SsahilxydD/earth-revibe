@@ -19,6 +19,7 @@ function sanitizeHTML(dirty: string): string {
   return _purify.sanitize(dirty);
 }
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
+import { trackProductViewed, trackAddToCart } from '@/lib/analytics';
 import { api } from '@/lib/api-client';
 import { useCartStore } from '@/stores/cart-store';
 import { useRazorpay } from '@/hooks/use-razorpay';
@@ -450,7 +451,13 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
-  }, []);
+    trackProductViewed({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      category: product.category?.name,
+    });
+  }, [product.id, product.name, product.price, product.category?.name]);
 
   // Auto-hide the mobile dock when the sentinel (before "You May Also Like") enters the viewport
   useEffect(() => {
@@ -524,6 +531,13 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
       quantity,
     });
 
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: displayPrice,
+      quantity,
+      variant: selectedSize || selectedColor || undefined,
+    });
     addToast('Added to cart', 'success');
     setIsAdding(false);
   };
@@ -560,6 +574,13 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
       quantity,
     });
 
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: variant.price ?? product.price,
+      quantity,
+      variant: size || selectedColor || undefined,
+    });
     addToast('Added to cart', 'success');
     setIsAdding(false);
   };

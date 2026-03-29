@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Heart } from 'lucide-react';
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
+import { trackWishlistToggle } from '@/lib/analytics';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/use-wishlist';
 import type { Product } from '@/types';
 
@@ -34,8 +35,10 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
       e.preventDefault();
       e.stopPropagation();
       if (isWishlisted) {
+        trackWishlistToggle({ id: product.id, name: product.name, added: false });
         removeFromWishlist.mutate(product.id);
       } else {
+        trackWishlistToggle({ id: product.id, name: product.name, added: true });
         addToWishlist.mutate(product.id);
       }
     },

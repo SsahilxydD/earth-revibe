@@ -4,6 +4,7 @@ import { Suspense, useState, useCallback, useEffect, useMemo, useRef } from 'rea
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, ChevronRight, X } from 'lucide-react';
+import { trackSearch } from '@/lib/analytics';
 import { ProductCard } from '@/components/product/product-card';
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
 import { SortDropdown } from '@/components/product/sort-dropdown';
@@ -77,6 +78,7 @@ function SearchContent() {
       e.preventDefault();
       const trimmed = searchInput.trim();
       if (trimmed) {
+        trackSearch(trimmed);
         router.push(`/search?q=${encodeURIComponent(trimmed)}`);
       }
     },

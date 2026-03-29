@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { api } from '@/lib/api-client';
+import { identifyUser, resetUser } from '@/lib/analytics';
 import { createClient } from '@/lib/supabase/client';
 
 export interface AuthUser {
@@ -27,12 +28,16 @@ export const useAuthStore = create<AuthState>()((set) => ({
   isLoading: true,
   isAuthenticated: false,
 
-  setUser: (user) =>
+  setUser: (user) => {
+    if (user) {
+      identifyUser(user.id, { email: user.email, name: `${user.firstName} ${user.lastName}` });
+    }
     set({
       user,
       isAuthenticated: user !== null,
       isLoading: false,
-    }),
+    });
+  },
 
   logout: async () => {
     try {
@@ -47,6 +52,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
     } catch {
       // Best effort
     }
+    resetUser();
     set({ user: null, isAuthenticated: false, isLoading: false });
   },
 

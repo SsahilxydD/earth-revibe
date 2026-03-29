@@ -12,6 +12,7 @@ import { formatPrice, getImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
 import { useRazorpay } from '@/hooks/use-razorpay';
+import { trackCheckoutStarted, trackPurchaseCompleted } from '@/lib/analytics';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -48,6 +49,11 @@ export default function CheckoutPage() {
 
       setIsCreatingOrder(false);
 
+      trackCheckoutStarted({
+        total: result.amount,
+        itemCount: items.length,
+      });
+
       // Open Razorpay Magic Checkout — address, payment, coupons all handled by Razorpay
       const paymentResponse = await initiatePayment({
         orderId: result.orderNumber,
@@ -76,6 +82,13 @@ export default function CheckoutPage() {
         razorpayOrderId: paymentResponse.razorpay_order_id,
         razorpayPaymentId: paymentResponse.razorpay_payment_id,
         razorpaySignature: paymentResponse.razorpay_signature,
+      });
+
+      trackPurchaseCompleted({
+        orderId: verification.orderNumber,
+        total: result.amount,
+        itemCount: items.length,
+        paymentMethod: 'razorpay',
       });
 
       clearCart();
