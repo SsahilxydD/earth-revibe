@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { Archivo_Narrow, Poppins } from 'next/font/google';
 import { GoogleAnalytics } from '@next/third-parties/google';
@@ -63,7 +64,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body>
         <PostHogProvider>
-          <PostHogPageview />
+          <Suspense fallback={null}>
+            <PostHogPageview />
+          </Suspense>
           <Providers>
             <PrefetchProvider>
               <LenisProvider>{children}</LenisProvider>

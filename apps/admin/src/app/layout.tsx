@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import { GoogleAnalytics } from '@next/third-parties/google';
@@ -31,7 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="bg-surface text-text-primary antialiased">
         <PostHogProvider>
-          <PostHogPageview />
+          <Suspense fallback={null}>
+            <PostHogPageview />
+          </Suspense>
           <QueryProvider>
             {children}
             <ToastContainer />
