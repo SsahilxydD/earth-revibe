@@ -20,6 +20,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       person_profiles: 'identified_only',
       capture_pageview: false, // we handle this manually for SPA navigation
       capture_pageleave: true,
+      defaults: '2026-01-30',
     });
   }, []);
 
