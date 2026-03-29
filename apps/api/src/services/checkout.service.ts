@@ -8,6 +8,7 @@ import { APP_CONSTANTS } from '../config/constants';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
 import { getSupabaseAdmin, getSupabaseAnon } from '../config/supabase';
+import { getPostHog } from '../config/posthog';
 import type {
   CreateMagicCheckoutInput,
   ShippingInfoRequest,
@@ -814,6 +815,27 @@ export const checkoutService = {
     shiprocketService.createShiprocketOrder(orderId).catch((err) => {
       logger.error({ err, orderId }, 'Failed to create Shiprocket shipment');
     });
+
+    // Server-side PostHog purchase tracking (guaranteed — doesn't depend on client JS)
+    const ph = getPostHog();
+    if (ph) {
+      const distinctId = effectiveUserId || guestEmail || 'anonymous';
+      ph.capture({
+        distinctId,
+        event: 'purchase_completed',
+        properties: {
+          order_id: finalOrderNumber,
+          total: totalAmount,
+          item_count: cartItems.length,
+          discount_amount: discountAmount,
+          payment_method: 'razorpay',
+          is_guest: isGuest,
+          loyalty_points_earned: pointsEarned,
+          account_auto_created: accountAutoCreated,
+          $set: guestEmail ? { email: guestEmail } : undefined,
+        },
+      });
+    }
 
     return { orderNumber: finalOrderNumber, pointsEarned, accountAutoCreated };
   },

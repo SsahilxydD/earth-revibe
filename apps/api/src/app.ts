@@ -183,6 +183,159 @@ app.post('/api/v1/internal/cleanup', async (_req, res) => {
   }
 });
 
+// Abandoned cart detection — call via Vercel/Railway cron every hour
+app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
+  try {
+    const { prisma } = await import('@earth-revibe/db');
+    const { getPostHog } = await import('./config/posthog.js');
+
+    const ph = getPostHog();
+    if (!ph) {
+      res.json({ success: true, data: { tracked: 0, reason: 'PostHog not configured' } });
+      return;
+    }
+
+    // Find carts updated 1-2 hours ago with items, belonging to users who have no recent order
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+
+    const abandonedCarts = await prisma.cart.findMany({
+      where: {
+        updatedAt: { gte: twoHoursAgo, lte: oneHourAgo },
+        items: { some: {} },
+        user: {
+          orders: {
+            none: { createdAt: { gte: twoHoursAgo } },
+          },
+        },
+      },
+      include: {
+        user: { select: { id: true, email: true, firstName: true } },
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: { select: { id: true, name: true, slug: true, price: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    let tracked = 0;
+    for (const cart of abandonedCarts) {
+      if (!cart.user?.email) continue;
+
+      const cartItems = cart.items.map((item) => ({
+        productId: item.variant.product.id,
+        name: item.variant.product.name,
+        slug: item.variant.product.slug,
+        price: Number(item.variant.product.price),
+        quantity: item.quantity,
+        variantId: item.variantId,
+      }));
+
+      ph.capture({
+        distinctId: cart.user.id,
+        event: 'cart_abandoned',
+        properties: {
+          email: cart.user.email,
+          first_name: cart.user.firstName,
+          item_count: cartItems.length,
+          cart_total: cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
+          cart_items: cartItems,
+        },
+      });
+      tracked++;
+    }
+
+    await ph.flush();
+
+    logger.info({ tracked }, 'Abandoned cart detection completed');
+    res.json({ success: true, data: { tracked } });
+  } catch (err) {
+    logger.error({ err }, 'Abandoned cart detection failed');
+    res.status(500).json({
+      success: false,
+      error: { code: 'ABANDONED_CART_FAILED', message: 'Abandoned cart detection failed' },
+    });
+  }
+});
+
+// PostHog webhook receiver — sends abandoned cart emails via Resend
+app.post('/api/v1/webhooks/posthog', async (req, res) => {
+  try {
+    const { getResend } = await import('./config/resend.js');
+    const resend = getResend();
+
+    if (!resend) {
+      res.status(200).json({ success: true, reason: 'Resend not configured' });
+      return;
+    }
+
+    const { event, properties } = req.body;
+
+    if (event === 'cart_abandoned' && properties?.email) {
+      const cartItems = properties.cart_items || [];
+      const firstName = properties.first_name || 'there';
+      const frontendUrl = env.FRONTEND_URL;
+
+      const itemRows = cartItems
+        .map(
+          (item: { name: string; price: number; quantity: number; slug: string }) =>
+            `<tr>
+              <td style="padding:12px 8px;border-bottom:1px solid #eee;">
+                <a href="${frontendUrl}/products/${item.slug}" style="color:#121212;text-decoration:none;font-weight:600;">${item.name}</a>
+              </td>
+              <td style="padding:12px 8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
+              <td style="padding:12px 8px;border-bottom:1px solid #eee;text-align:right;">₹${item.price.toLocaleString('en-IN')}</td>
+            </tr>`
+        )
+        .join('');
+
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || 'Earth Revibe <noreply@earthrevibe.com>',
+        to: properties.email,
+        subject: 'You left something behind!',
+        html: `
+          <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:32px 16px;">
+            <h1 style="font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 16px;">Hey ${firstName},</h1>
+            <p style="color:#666;font-size:14px;line-height:1.6;margin:0 0 24px;">
+              Looks like you left some items in your cart. They're still waiting for you!
+            </p>
+            <table style="width:100%;border-collapse:collapse;margin:0 0 24px;">
+              <thead>
+                <tr style="border-bottom:2px solid #121212;">
+                  <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">Item</th>
+                  <th style="padding:8px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">Qty</th>
+                  <th style="padding:8px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">Price</th>
+                </tr>
+              </thead>
+              <tbody>${itemRows}</tbody>
+            </table>
+            <div style="text-align:center;margin:32px 0;">
+              <a href="${frontendUrl}/cart" style="display:inline-block;background:#121212;color:#fff;padding:14px 40px;text-decoration:none;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+                Complete Your Order
+              </a>
+            </div>
+            <p style="color:#999;font-size:12px;text-align:center;margin:24px 0 0;">
+              Free shipping on all orders. Questions? Reply to this email.
+            </p>
+          </div>
+        `,
+      });
+
+      logger.info({ email: properties.email }, 'Abandoned cart email sent');
+    }
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    logger.error({ err }, 'PostHog webhook processing failed');
+    res.status(200).json({ success: true }); // Always 200 to prevent retries
+  }
+});
+
 // API routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/products', productRouter);

@@ -4,6 +4,7 @@ import { env } from './config/env';
 import { logger } from './config/logger';
 import { APP_CONSTANTS } from './config/constants';
 import { prisma } from '@earth-revibe/db';
+import { shutdownPostHog } from './config/posthog';
 
 const start = async () => {
   try {
@@ -16,6 +17,7 @@ const start = async () => {
       logger.info({ signal }, 'Shutting down gracefully');
       server.close(async () => {
         logger.info('HTTP server closed');
+        await shutdownPostHog();
         await prisma.$disconnect();
         logger.info('Database disconnected');
         process.exit(0);

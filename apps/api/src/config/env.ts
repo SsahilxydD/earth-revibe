@@ -30,6 +30,12 @@ const envSchema = z.object({
   SHIPROCKET_PASSWORD: z.string().optional(),
   SHIPROCKET_PICKUP_PINCODE: z.string().default('110001'),
   SHIPROCKET_PICKUP_LOCATION: z.string().default('Earthrevibe'),
+  // PostHog server-side analytics
+  POSTHOG_API_KEY: z.string().optional(),
+  POSTHOG_HOST: z.string().default('https://us.i.posthog.com'),
+  // Resend email service
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().default('Earth Revibe <noreply@earthrevibe.com>'),
 });
 
 export const env = envSchema.parse(process.env);

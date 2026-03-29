@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { prisma } from '@earth-revibe/db';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
+import { getPostHog } from '../config/posthog';
 import { webhookLimiter } from '../middleware/rate-limit';
 import { asyncHandler } from '../utils/async-handler';
 
@@ -63,6 +64,27 @@ router.post(
               where: { id: payment.orderId },
               data: { status: 'CONFIRMED' },
             });
+
+            // Server-side tracking — guaranteed even if client JS didn't fire
+            const ph = getPostHog();
+            if (ph) {
+              const order = await prisma.order.findUnique({
+                where: { id: payment.orderId },
+                select: { orderNumber: true, userId: true, guestEmail: true, totalAmount: true },
+              });
+              if (order) {
+                ph.capture({
+                  distinctId: order.userId || order.guestEmail || 'anonymous',
+                  event: 'payment_captured_webhook',
+                  properties: {
+                    order_id: order.orderNumber,
+                    total: Number(order.totalAmount),
+                    payment_method: mapPaymentMethod(paymentEntity.method),
+                    razorpay_payment_id: paymentEntity.id,
+                  },
+                });
+              }
+            }
           }
           break;
         }
@@ -85,6 +107,24 @@ router.post(
               where: { id: payment.orderId },
               data: { status: 'CANCELLED' },
             });
+
+            const phFailed = getPostHog();
+            if (phFailed) {
+              const failedOrder = await prisma.order.findUnique({
+                where: { id: payment.orderId },
+                select: { orderNumber: true, userId: true, guestEmail: true },
+              });
+              if (failedOrder) {
+                phFailed.capture({
+                  distinctId: failedOrder.userId || failedOrder.guestEmail || 'anonymous',
+                  event: 'payment_failed',
+                  properties: {
+                    order_id: failedOrder.orderNumber,
+                    error: paymentEntity.error_description,
+                  },
+                });
+              }
+            }
           }
           break;
         }
