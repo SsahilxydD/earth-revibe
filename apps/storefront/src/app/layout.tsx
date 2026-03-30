@@ -23,11 +23,18 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'Earth Revibe | Streetwear for the Culture',
+  title: 'Earth Revibe | Vacation-Ready Minimal Fits',
   description:
-    'Shop the freshest Indian streetwear. Oversized tees, hoodies, joggers and more. Free shipping on all orders.',
+    'Shop vacation-ready, minimal fashion from India. Relaxed-fit tees, breezy essentials and more. Free shipping on all orders.',
   applicationName: 'Earth Revibe',
-  keywords: ['streetwear', 'Indian streetwear', 'oversized tees', 'hoodies', 'earth revibe'],
+  keywords: [
+    'vacation wear',
+    'minimal fashion',
+    'relaxed fits',
+    'resort wear',
+    'earth revibe',
+    'Indian fashion',
+  ],
   verification: {
     google: 'bdBwgxCng0DKUGTBNhIQca-CzzCSz5m8dyCwKbQqCbw',
   },
@@ -41,8 +48,9 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: 'Earth Revibe | Streetwear for the Culture',
-    description: 'Shop the freshest Indian streetwear. Oversized tees, hoodies, joggers and more.',
+    title: 'Earth Revibe | Vacation-Ready Minimal Fits',
+    description:
+      'Shop vacation-ready, minimal fashion from India. Relaxed-fit tees, breezy essentials and more.',
     type: 'website',
     locale: 'en_IN',
     siteName: 'Earth Revibe',

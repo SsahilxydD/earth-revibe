@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description =
     product.seoDescription ||
     product.shortDescription ||
-    `Shop ${product.name} at Earth Revibe. Indian streetwear.`;
+    `Shop ${product.name} at Earth Revibe. Vacation-ready minimal fashion.`;
 
   const primaryImage = product.images.find((img) => img.isPrimary) || product.images[0];
 
@@ -82,7 +82,7 @@ function buildProductJsonLd(product: Product) {
     image: product.images.map((img) => img.url),
     sku: product.variants[0]?.sku || product.id,
     brand: { '@type': 'Brand', name: 'Earth Revibe' },
-    category: product.category?.name || 'Streetwear',
+    category: product.category?.name || 'Fashion',
     ...(product.material && { material: product.material }),
     offers: {
       '@type': 'AggregateOffer',

@@ -15,14 +15,14 @@ export function BrandStory() {
             MEETS CRAZY
           </h2>
           <p className="mt-5 md:mt-6 text-sm md:text-base text-white/70 leading-relaxed max-w-lg">
-            Born on the streets of India, Earth Revibe is more than a brand &mdash; it&apos;s a
-            movement. We craft sustainable streetwear that doesn&apos;t compromise on style. Every
-            piece is designed to let you express who you are, rooted in Indian culture and built for
-            the global stage.
+            Born in India, Earth Revibe is more than a brand &mdash; it&apos;s a feeling. We craft
+            vacation-ready, minimal clothing that doesn&apos;t compromise on style. Every piece is
+            designed for effortless living, rooted in Indian aesthetics and built for wherever life
+            takes you.
           </p>
           <p className="mt-3 md:mt-4 text-sm md:text-base text-white/70 leading-relaxed max-w-lg">
-            From oversized silhouettes to bold graphics, we believe fashion should be fun, fearless,
-            and kind to the planet.
+            From relaxed silhouettes to clean aesthetics, we believe fashion should be effortless,
+            minimal, and kind to the planet.
           </p>
           <div className="mt-6 md:mt-8">
             <Link

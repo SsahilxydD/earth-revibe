@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Our Story | Earth Revibe',
   description:
-    "Born from Indian street culture. Earth Revibe creates conscious streetwear that's built to last.",
+    "Born in India. Earth Revibe creates vacation-ready, minimal fashion that's built to last.",
 };
 
 export default function AboutPage() {
@@ -20,9 +20,9 @@ export default function AboutPage() {
             Our Story
           </h1>
           <p className="mt-6 text-sm leading-relaxed text-white/60">
-            Born from the streets of India, Earth Revibe is a celebration of culture, creativity,
-            and conscious living. We blend the raw energy of Indian street culture with sustainable
-            fashion practices to create clothing that feels as good as it looks.
+            Born in India, Earth Revibe is a celebration of minimal living, creativity, and
+            conscious fashion. We blend the warmth of Indian aesthetics with sustainable practices
+            to create vacation-ready clothing that feels as good as it looks.
           </p>
         </div>
       </section>
@@ -35,12 +35,12 @@ export default function AboutPage() {
               Our Mission
             </p>
             <h2 className="mt-3 text-xl font-bold uppercase tracking-wider">
-              Redefining Indian Streetwear
+              Redefining Indian Fashion
             </h2>
             <p className="mt-4 text-sm leading-[1.8] text-[var(--color-muted)]">
-              We started Earth Revibe with a simple belief: Indian streetwear deserves to be
-              world-class. Every design we create is rooted in Indian culture while pushing the
-              boundaries of contemporary fashion.
+              We started Earth Revibe with a simple belief: Indian fashion deserves to be effortless
+              and world-class. Every design we create is rooted in minimal aesthetics while
+              embracing the warmth of vacation-ready style.
             </p>
             <p className="mt-3 text-sm leading-[1.8] text-[var(--color-muted)]">
               From the colours of Holi to the geometry of Mughal architecture, India is our endless
