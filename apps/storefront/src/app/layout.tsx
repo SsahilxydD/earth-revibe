@@ -28,6 +28,9 @@ export const metadata: Metadata = {
     'Shop the freshest Indian streetwear. Oversized tees, hoodies, joggers and more. Free shipping on all orders.',
   applicationName: 'Earth Revibe',
   keywords: ['streetwear', 'Indian streetwear', 'oversized tees', 'hoodies', 'earth revibe'],
+  verification: {
+    google: 'bdBwgxCng0DKUGTBNhIQca-CzzCSz5m8dyCwKbQqCbw',
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
