@@ -1,6 +1,7 @@
 import slugify from 'slugify';
 import { prisma, Prisma } from '@earth-revibe/db';
 import { ApiError } from '../utils/api-error';
+import { notifyIndexNow } from '../utils/indexnow';
 import type {
   CreateProductInput,
   UpdateProductInput,
@@ -198,6 +199,9 @@ export const productService = {
       },
     });
 
+    // Notify search engines about new product
+    notifyIndexNow([`/products/${product.slug}`]).catch(() => {});
+
     return product;
   },
 
@@ -250,6 +254,9 @@ export const productService = {
         variants: true,
       },
     });
+
+    // Notify search engines about updated product
+    notifyIndexNow([`/products/${product.slug}`]).catch(() => {});
 
     return product;
   },

@@ -71,6 +71,45 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
+function buildProductJsonLd(product: Product) {
+  const inStock = product.variants.some((v) => v.stock > 0);
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.shortDescription || product.seoDescription || product.name,
+    image: product.images.map((img) => img.url),
+    sku: product.variants[0]?.sku || product.id,
+    brand: { '@type': 'Brand', name: 'Earth Revibe' },
+    category: product.category?.name || 'Streetwear',
+    ...(product.material && { material: product.material }),
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'INR',
+      lowPrice: Math.min(
+        product.price,
+        ...product.variants.filter((v) => v.price).map((v) => v.price!)
+      ),
+      highPrice: Math.max(
+        product.price,
+        ...product.variants.filter((v) => v.price).map((v) => v.price!)
+      ),
+      offerCount: product.variants.length || 1,
+      availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url: `https://earthrevibe.com/products/${product.slug}`,
+    },
+    ...(product.averageRating &&
+      product.reviewCount > 0 && {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: product.averageRating,
+          reviewCount: product.reviewCount,
+        },
+      }),
+  };
+}
+
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
   const product = await getProduct(slug);
@@ -79,5 +118,15 @@ export default async function ProductPage({ params }: PageProps) {
     notFound();
   }
 
-  return <SwipeableProductWrapper initialProduct={product} initialSlug={slug} />;
+  const jsonLd = buildProductJsonLd(product);
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <SwipeableProductWrapper initialProduct={product} initialSlug={slug} />
+    </>
+  );
 }
