@@ -19,7 +19,12 @@ function sanitizeHTML(dirty: string): string {
   return _purify.sanitize(dirty);
 }
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
-import { trackProductViewed, trackAddToCart } from '@/lib/analytics';
+import {
+  trackProductViewed,
+  trackAddToCart,
+  trackCheckoutStarted,
+  trackPurchaseCompleted,
+} from '@/lib/analytics';
 import { api } from '@/lib/api-client';
 import { useCartStore } from '@/stores/cart-store';
 import { useRazorpay } from '@/hooks/use-razorpay';
@@ -605,6 +610,11 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         loyaltyPointsToUse: 0,
       });
 
+      trackCheckoutStarted({
+        total: result.amount,
+        itemCount: quantity,
+      });
+
       // Open Razorpay Magic Checkout directly
       const paymentResponse = await initiatePayment({
         orderId: result.orderNumber,
@@ -628,6 +638,13 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         razorpayOrderId: paymentResponse.razorpay_order_id,
         razorpayPaymentId: paymentResponse.razorpay_payment_id,
         razorpaySignature: paymentResponse.razorpay_signature,
+      });
+
+      trackPurchaseCompleted({
+        orderId: result.orderNumber,
+        total: result.amount,
+        itemCount: quantity,
+        paymentMethod: 'razorpay',
       });
 
       addToast('Order placed successfully!', 'success');
