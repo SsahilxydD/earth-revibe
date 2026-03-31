@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { useUiStore } from '@/stores/ui-store';
 
 const MESSAGES = [
+  'LAUNCH SPECIAL: Use code EARTH15 for 15% off',
   'FREE SHIPPING ON ALL ORDERS',
   'NEW ARRIVALS JUST DROPPED',
   'EASY & HASSLE FREE RETURNS',

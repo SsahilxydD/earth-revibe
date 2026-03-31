@@ -63,12 +63,15 @@ export default async function HomePage() {
             />
           )}
 
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 md:gap-6">
             <span
               className="select-none text-center font-['Archivo_Narrow'] text-3xl font-bold uppercase tracking-[0.25em] text-white md:text-5xl lg:text-6xl"
               style={{ textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}
             >
               {section.label}
+            </span>
+            <span className="inline-block border border-white px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-colors duration-300 hover:bg-white hover:text-black md:px-8 md:py-3 md:text-sm">
+              Shop Now
             </span>
           </div>
         </Link>

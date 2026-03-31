@@ -62,6 +62,20 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/collections/all',
+        destination: '/products',
+        permanent: true,
+      },
+      {
+        source: '/collections/:slug',
+        destination: '/categories/:slug',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(withSerwist(nextConfig), {

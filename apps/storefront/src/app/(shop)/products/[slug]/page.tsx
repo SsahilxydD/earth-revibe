@@ -56,13 +56,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     keywords: product.seoKeywords || undefined,
+    alternates: {
+      canonical: `/products/${slug}`,
+    },
     openGraph: {
       title,
       description,
       type: 'website',
       images: primaryImage
-        ? [{ url: primaryImage.url, alt: primaryImage.altText || product.name }]
+        ? [
+            {
+              url: primaryImage.url,
+              width: 1200,
+              height: 630,
+              alt: primaryImage.altText || product.name,
+            },
+          ]
         : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: primaryImage ? [primaryImage.url] : undefined,
     },
   };
 }

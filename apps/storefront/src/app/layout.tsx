@@ -24,9 +24,13 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.earthrevibe.com'),
+  alternates: {
+    canonical: '/',
+  },
   title: 'Earth Revibe | Vacation-Ready Minimal Fits',
   description:
-    'Shop vacation-ready, minimal fashion from India. Relaxed-fit tees, breezy essentials and more. Free shipping on all orders.',
+    'Shop vacation-ready, minimal fashion from India. Relaxed-fit shirts, polos, breezy essentials and bottomwear. Free shipping on all orders.',
   applicationName: 'Earth Revibe',
   keywords: [
     'vacation wear',
@@ -35,7 +39,14 @@ export const metadata: Metadata = {
     'resort wear',
     'earth revibe',
     'Indian fashion',
+    'shirts',
+    'polos',
+    'bottomwear',
   ],
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/Earth Revibe Logo Black.png',
+  },
   verification: {
     google: 'bdBwgxCng0DKUGTBNhIQca-CzzCSz5m8dyCwKbQqCbw',
   },
@@ -51,18 +62,31 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Earth Revibe | Vacation-Ready Minimal Fits',
     description:
-      'Shop vacation-ready, minimal fashion from India. Relaxed-fit tees, breezy essentials and more.',
+      'Shop vacation-ready, minimal fashion from India. Relaxed-fit shirts, polos, breezy essentials and bottomwear.',
     type: 'website',
     locale: 'en_IN',
     siteName: 'Earth Revibe',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Earth Revibe — Vacation-Ready Minimal Fashion from India',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Earth Revibe | Vacation-Ready Minimal Fits',
+    description:
+      'Shop vacation-ready, minimal fashion from India. Relaxed-fit shirts, polos, breezy essentials and bottomwear.',
+    images: ['/og-image.png'],
   },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: '#121212',
   viewportFit: 'cover',
 };
@@ -74,6 +98,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${archivoNarrow.variable} ${poppins.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Earth Revibe',
+              url: 'https://www.earthrevibe.com',
+              logo: 'https://www.earthrevibe.com/Earth Revibe Logo Black.png',
+              description:
+                'Vacation-ready, minimal fashion from India. Relaxed-fit shirts, polos, breezy essentials and bottomwear.',
+              contactPoint: {
+                '@type': 'ContactPoint',
+                email: 'contact@earthrevibe.in',
+                telephone: '+91-93287-06759',
+                contactType: 'customer service',
+              },
+              sameAs: [
+                'https://www.instagram.com/earthrevibe',
+                'https://www.facebook.com/earthrevibe',
+              ],
+            }),
+          }}
+        />
+      </head>
       <body>
         <PostHogProvider>
           <Suspense fallback={null}>

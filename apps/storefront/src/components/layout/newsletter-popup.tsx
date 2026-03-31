@@ -13,7 +13,7 @@ export function NewsletterPopup() {
     const dismissed = localStorage.getItem(STORAGE_KEY);
     if (dismissed) return;
 
-    const timer = setTimeout(() => setShow(true), 5000);
+    const timer = setTimeout(() => setShow(true), 15000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -72,7 +72,7 @@ export function NewsletterPopup() {
             type="submit"
             className="w-full rounded-[var(--button-radius)] bg-black py-3.5 text-xs font-bold uppercase tracking-[0.15em] text-white hover:bg-black/90 transition-colors"
           >
-            Subscribe
+            Join the List
           </button>
         </form>
       </div>

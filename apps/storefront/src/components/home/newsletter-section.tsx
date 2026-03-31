@@ -123,7 +123,7 @@ export function NewsletterSection() {
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>Subscribe</span>
+                  <span>Join</span>
                   <Send className="w-3.5 h-3.5" />
                 </>
               )}
