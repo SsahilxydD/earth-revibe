@@ -19,6 +19,7 @@ import {
   Warehouse,
   Bell,
   LayoutTemplate,
+  GitBranchPlus,
 } from 'lucide-react';
 import { useUIStore } from '@/stores/ui-store';
 
@@ -34,6 +35,7 @@ const navItems = [
   { label: 'Blog', href: '/blog', icon: FileText },
   { label: 'Support', href: '/support-tickets', icon: Headset },
   { label: 'Notifications', href: '/notifications', icon: Bell },
+  { label: 'Funnels', href: '/funnels', icon: GitBranchPlus },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
