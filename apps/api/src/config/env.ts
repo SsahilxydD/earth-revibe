@@ -30,6 +30,9 @@ const envSchema = z.object({
   SHIPROCKET_PASSWORD: z.string().optional(),
   SHIPROCKET_PICKUP_PINCODE: z.string().default('110001'),
   SHIPROCKET_PICKUP_LOCATION: z.string().default('Earthrevibe'),
+  // Meta Conversions API (server-side pixel)
+  META_PIXEL_ID: z.string().default('1263879098593572'),
+  META_CONVERSIONS_API_TOKEN: z.string().optional(),
   // PostHog server-side analytics
   POSTHOG_API_KEY: z.string().optional(),
   POSTHOG_HOST: z.string().default('https://us.i.posthog.com'),

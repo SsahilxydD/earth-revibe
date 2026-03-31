@@ -9,6 +9,7 @@ import { generateOrderNumber } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
 import { getSupabaseAdmin, getSupabaseAnon } from '../config/supabase';
 import { getPostHog } from '../config/posthog';
+import { sendMetaEvent } from '../utils/meta-conversions';
 import type {
   CreateMagicCheckoutInput,
   ShippingInfoRequest,
@@ -836,6 +837,19 @@ export const checkoutService = {
         },
       });
     }
+
+    // Meta Conversions API — server-side Purchase event (bypasses ad blockers)
+    sendMetaEvent({
+      eventName: 'Purchase',
+      email: guestEmail || undefined,
+      userId: effectiveUserId || undefined,
+      value: totalAmount,
+      currency: 'INR',
+      contentIds: cartItems.map((ci) => ci.variantId),
+      contentType: 'product',
+      numItems: cartItems.length,
+      orderId: finalOrderNumber,
+    }).catch(() => {});
 
     return { orderNumber: finalOrderNumber, pointsEarned, accountAutoCreated };
   },

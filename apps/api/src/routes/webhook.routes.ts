@@ -5,6 +5,7 @@ import { prisma } from '@earth-revibe/db';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
 import { getPostHog } from '../config/posthog';
+import { sendMetaEvent } from '../utils/meta-conversions';
 import { webhookLimiter } from '../middleware/rate-limit';
 import { asyncHandler } from '../utils/async-handler';
 
@@ -83,6 +84,17 @@ router.post(
                     razorpay_payment_id: paymentEntity.id,
                   },
                 });
+
+                // Meta Conversions API — redundant Purchase for reliability
+                sendMetaEvent({
+                  eventName: 'Purchase',
+                  email: order.guestEmail || undefined,
+                  userId: order.userId || undefined,
+                  value: Number(order.totalAmount),
+                  currency: 'INR',
+                  orderId: order.orderNumber,
+                  contentType: 'product',
+                }).catch(() => {});
               }
             }
           }
