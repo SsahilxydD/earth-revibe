@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -111,13 +111,15 @@ export function FunnelCanvas() {
     [addNode, setNodes]
   );
 
-  // Sync store nodes to local state when they change externally
-  // (e.g., when analytics data updates node counts)
-  const storeNodesJson = JSON.stringify(storeNodes.map((n) => n.id));
-  const localNodesJson = JSON.stringify(nodes.map((n) => n.id));
-  if (storeNodesJson !== localNodesJson) {
-    setNodes(storeNodes);
-  }
+  // Sync store nodes → local React Flow state when store changes externally
+  // (e.g., when analytics data updates node userCount/conversionRate, or when nodes are added/removed)
+  const prevStoreRef = useRef(storeNodes);
+  useEffect(() => {
+    if (prevStoreRef.current !== storeNodes) {
+      prevStoreRef.current = storeNodes;
+      setNodes(storeNodes);
+    }
+  }, [storeNodes, setNodes]);
 
   return (
     <div className="relative h-full w-full">

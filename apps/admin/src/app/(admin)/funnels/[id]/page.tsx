@@ -63,7 +63,7 @@ export default function FunnelEditorPage({ params }: PageProps) {
     data: analytics,
     isLoading: isLoadingAnalytics,
     refetch,
-  } = useFunnelAnalytics(!isEditMode);
+  } = useFunnelAnalytics(!isEditMode); // livePolling=true in Live Data mode
 
   const handleSave = () => {
     setIsSaving(true);

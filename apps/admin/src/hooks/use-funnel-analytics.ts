@@ -10,22 +10,22 @@ interface StepAnalytics {
   dropOff: number;
 }
 
-interface FunnelAnalyticsData {
+export interface FunnelAnalyticsData {
   steps: StepAnalytics[];
   totalEntries: number;
   totalCompletions: number;
   overallConversion: number;
   biggestDropOff: { step: string; percentage: number } | null;
+  isMockData: boolean;
 }
 
 /**
- * Fetches analytics data for the active funnel.
+ * Fetches real analytics data from PostHog via server-side API route.
+ * Falls back to consistent mock data if POSTHOG_PERSONAL_API_KEY is not configured.
  *
- * In production, this would call PostHog's Query API or Trends endpoint.
- * For now, it generates realistic mock data based on funnel structure
- * so the UI is fully functional before PostHog API integration.
+ * @param livePolling - When true, auto-refreshes every 60s (Live Data mode)
  */
-export function useFunnelAnalytics(enabled = true) {
+export function useFunnelAnalytics(livePolling = false) {
   const nodes = useFunnelStore((s) => s.nodes);
   const edges = useFunnelStore((s) => s.edges);
   const dateRange = useFunnelStore((s) => s.dateRange);
@@ -34,19 +34,6 @@ export function useFunnelAnalytics(enabled = true) {
   return useQuery<FunnelAnalyticsData>({
     queryKey: ['funnel-analytics', nodes.map((n) => n.data.eventName), dateRange],
     queryFn: async () => {
-      // TODO: Replace with real PostHog API call:
-      // const response = await fetch(`${POSTHOG_HOST}/api/projects/${PROJECT_ID}/insights/funnel`, {
-      //   method: 'POST',
-      //   headers: { Authorization: `Bearer ${POSTHOG_API_KEY}` },
-      //   body: JSON.stringify({
-      //     events: orderedNodes.map(n => ({ id: n.data.eventName, type: 'events' })),
-      //     date_from: dateRange.from,
-      //     date_to: dateRange.to,
-      //   }),
-      // });
-
-      // Generate realistic mock data based on funnel structure
-      // Walk edges to determine step order from trigger node
       const orderedNodes = getOrderedNodes(nodes, edges);
 
       if (orderedNodes.length === 0) {
@@ -56,60 +43,76 @@ export function useFunnelAnalytics(enabled = true) {
           totalCompletions: 0,
           overallConversion: 0,
           biggestDropOff: null,
+          isMockData: false,
         };
       }
 
-      // Simulate realistic drop-off at each step
-      const baseVisitors = 800 + Math.floor(Math.random() * 400);
-      const dropOffRates: Record<string, number> = {
-        session_start: 0,
-        $pageview: 0.15,
-        view_item: 0.4,
-        add_to_cart: 0.55,
-        begin_checkout: 0.35,
-        purchase: 0.3,
-        remove_from_cart: 0.1,
-        search: 0.2,
-        custom: 0.25,
-      };
+      const eventNames = orderedNodes.map((n) => n.data.eventName);
 
-      let currentUsers = baseVisitors;
+      // Call our server-side API route which proxies to PostHog
+      let eventCounts: Record<string, number>;
+      let isMockData = false;
+
+      try {
+        const res = await fetch('/api/posthog/funnel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            events: eventNames,
+            dateFrom: dateRange.from,
+            dateTo: dateRange.to,
+          }),
+        });
+
+        const data = await res.json();
+        eventCounts = data.results ?? {};
+        isMockData = data.mock === true;
+      } catch {
+        // Network error — use empty counts
+        eventCounts = {};
+        isMockData = true;
+      }
+
+      // Build step analytics from the ordered nodes + PostHog counts
       const steps: StepAnalytics[] = [];
       let biggestDropOff: { step: string; percentage: number } | null = null;
-
       const analyticsMap: Record<
         string,
         { userCount: number; conversionRate: number; dropOff: number }
       > = {};
 
+      const firstStepCount = eventCounts[orderedNodes[0].data.eventName] ?? 0;
+
       for (let i = 0; i < orderedNodes.length; i++) {
         const node = orderedNodes[i];
         const eventName = node.data.eventName;
-        const dropRate = dropOffRates[eventName] ?? 0.3;
+        const userCount = eventCounts[eventName] ?? 0;
 
-        if (i > 0) {
-          const dropped = Math.floor(currentUsers * dropRate);
-          currentUsers = Math.max(1, currentUsers - dropped);
-        }
+        const prevCount = i > 0 ? (eventCounts[orderedNodes[i - 1].data.eventName] ?? 0) : 0;
+        const conversionRate =
+          firstStepCount > 0 ? (userCount / firstStepCount) * 100 : i === 0 ? 100 : 0;
+        const dropOff = i > 0 && prevCount > 0 ? ((prevCount - userCount) / prevCount) * 100 : 0;
 
-        const conversionRate = i === 0 ? 100 : (currentUsers / baseVisitors) * 100;
-        const dropOff = i === 0 ? 0 : dropRate * 100;
-
-        steps.push({
+        const stepData: StepAnalytics = {
           eventName,
-          userCount: currentUsers,
-          conversionRate: Math.round(conversionRate * 10) / 10,
-          dropOff: Math.round(dropOff * 10) / 10,
-        });
-
-        analyticsMap[eventName] = {
-          userCount: currentUsers,
+          userCount,
           conversionRate: Math.round(conversionRate * 10) / 10,
           dropOff: Math.round(dropOff * 10) / 10,
         };
 
-        if (i > 0 && (!biggestDropOff || dropOff > biggestDropOff.percentage)) {
-          biggestDropOff = { step: node.data.label, percentage: Math.round(dropOff * 10) / 10 };
+        steps.push(stepData);
+
+        analyticsMap[eventName] = {
+          userCount,
+          conversionRate: stepData.conversionRate,
+          dropOff: stepData.dropOff,
+        };
+
+        if (i > 0 && (!biggestDropOff || stepData.dropOff > biggestDropOff.percentage)) {
+          biggestDropOff = {
+            step: node.data.label,
+            percentage: stepData.dropOff,
+          };
         }
       }
 
@@ -126,10 +129,11 @@ export function useFunnelAnalytics(enabled = true) {
         overallConversion:
           totalEntries > 0 ? Math.round((totalCompletions / totalEntries) * 1000) / 10 : 0,
         biggestDropOff,
+        isMockData,
       };
     },
-    enabled: enabled && nodes.length > 0,
-    refetchInterval: 60_000, // Poll every 60s in live mode
+    enabled: nodes.length > 0,
+    refetchInterval: livePolling ? 60_000 : false,
     staleTime: 30_000,
   });
 }
@@ -141,15 +145,13 @@ function getOrderedNodes(
   nodes: ReturnType<typeof useFunnelStore.getState>['nodes'],
   edges: ReturnType<typeof useFunnelStore.getState>['edges']
 ) {
-  // Find trigger node (entry point)
   const triggerNode = nodes.find((n) => n.data.type === 'trigger');
-  if (!triggerNode) return nodes; // fallback: return all nodes
+  if (!triggerNode) return nodes;
 
   const ordered: typeof nodes = [triggerNode];
   const visited = new Set([triggerNode.id]);
   let currentId = triggerNode.id;
 
-  // BFS through edges
   while (true) {
     const nextEdge = edges.find((e) => e.source === currentId && !visited.has(e.target));
     if (!nextEdge) break;
@@ -162,7 +164,6 @@ function getOrderedNodes(
     currentId = nextNode.id;
   }
 
-  // Add any unconnected nodes at the end
   for (const node of nodes) {
     if (!visited.has(node.id)) {
       ordered.push(node);
