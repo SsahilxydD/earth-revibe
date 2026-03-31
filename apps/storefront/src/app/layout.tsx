@@ -136,6 +136,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </Providers>
         </PostHogProvider>
         {process.env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />}
+        <Script
+          src="https://cloud.umami.is/script.js"
+          data-website-id="f850adc3-3314-491f-8993-da97186ec464"
+          strategy="afterInteractive"
+        />
         <Script id="meta-pixel" strategy="afterInteractive">{`
           !function(f,b,e,v,n,t,s)
           {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
