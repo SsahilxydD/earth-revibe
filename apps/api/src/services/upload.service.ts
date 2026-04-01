@@ -26,7 +26,7 @@ export interface UploadResult {
 const BUCKET = 'product-images';
 
 function getSupabaseAdmin() {
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+  return createClient(env.SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { persistSession: false },
   });
 }
