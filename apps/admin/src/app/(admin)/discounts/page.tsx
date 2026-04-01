@@ -6,6 +6,7 @@ import { Button, Badge, Card, Select } from '@/components/ui';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/toast';
 import { Modal } from '@/components/ui/modal';
+import { CalendarPicker } from '@/components/ui/calendar';
 import {
   useDiscounts,
   useCreateDiscount,
@@ -525,16 +526,12 @@ export default function DiscountsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-charcoal">Expires At *</label>
-              <input
-                type="datetime-local"
-                value={form.expiresAt}
-                onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
-                className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
-              />
-            </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-charcoal">Expires At *</label>
+            <CalendarPicker
+              value={form.expiresAt}
+              onChange={(val) => setForm({ ...form, expiresAt: val })}
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
