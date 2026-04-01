@@ -3,12 +3,10 @@ import type { ImageLoaderProps } from 'next/image';
 /**
  * Custom Next.js image loader.
  *
- * - Cloudflare/Cloudinary: routes directly to their CDN transform APIs
- *   (bypasses Vercel proxy entirely — zero cache writes)
- * - Supabase Storage: routes through Vercel's /_next/image proxy because
- *   Supabase's image transform API requires a separate add-on.
- *   Vercel resizes + caches these, but only one fetch per size.
- * - Local images: uses Vercel's built-in optimization
+ * - Cloudflare: direct CDN transform (no Vercel proxy)
+ * - Cloudinary: direct CDN transform (no Vercel proxy)
+ * - Supabase: returns raw URL as-is (images are too large for transform APIs)
+ * - Local: returns raw URL for Next.js static serving
  */
 export default function imageLoader({ src, width, quality }: ImageLoaderProps): string {
   const q = quality ?? 75;
@@ -25,6 +23,7 @@ export default function imageLoader({ src, width, quality }: ImageLoaderProps): 
     return cleaned.replace('/upload/', `/upload/w_${width},f_auto,q_${q}/`);
   }
 
-  // Everything else (Supabase, local images) — use Vercel's image optimization
-  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=${q}`;
+  // Supabase Storage & local images — return as-is
+  // (Supabase transform API rejects files >25MB, Vercel proxy also fails on large PNGs)
+  return src;
 }

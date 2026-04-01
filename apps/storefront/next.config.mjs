@@ -33,15 +33,6 @@ const nextConfig = {
   images: {
     loader: 'custom',
     loaderFile: './src/lib/image-loader.ts',
-    // Supabase URLs still go through Vercel's /_next/image proxy
-    // (Supabase Image Transforms requires a separate add-on).
-    // Cloudflare/Cloudinary bypass Vercel entirely via the custom loader.
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-      },
-    ],
   },
   // Proxy API requests through Vercel so mobile browsers never call Railway
   // directly. Indian mobile carriers (Jio, Airtel) have DNS/routing issues
