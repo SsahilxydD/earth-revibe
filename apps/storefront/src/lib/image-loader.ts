@@ -7,15 +7,21 @@ import type { ImageLoaderProps } from 'next/image';
  * /_next/image proxy. This prevents Vercel from re-fetching originals from
  * Supabase Storage on every cache miss, which was draining Supabase bandwidth.
  *
- * - Supabase URLs → Supabase's built-in image transform API
- * - Cloudflare URLs → Cloudflare's /w=N,format=auto variant suffix
- * - Cloudinary URLs → Cloudinary's w_N,f_auto transform
- * - Everything else → returned as-is
+ * Handles both raw and pre-transformed URLs (from getImageUrl), replacing
+ * any existing width/quality params with the values Next.js requests.
  */
 export default function imageLoader({ src, width, quality }: ImageLoaderProps): string {
   const q = quality ?? 75;
 
-  // Supabase Storage → use Supabase's render/transform API
+  // Supabase Storage render/transform URL (already transformed by getImageUrl)
+  if (src.includes('.supabase.co/storage/v1/render/image/public/')) {
+    const url = new URL(src);
+    url.searchParams.set('width', width.toString());
+    url.searchParams.set('quality', q.toString());
+    return url.toString();
+  }
+
+  // Supabase Storage raw URL → convert to render/transform API
   if (src.includes('.supabase.co/storage/v1/object/public/')) {
     const renderUrl = src.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
     const url = new URL(renderUrl);
@@ -24,16 +30,20 @@ export default function imageLoader({ src, width, quality }: ImageLoaderProps): 
     return url.toString();
   }
 
-  // Cloudflare Image Delivery → variant suffix
+  // Cloudflare Image Delivery — replace any existing variant suffix
   if (src.includes('imagedelivery.net')) {
-    return src.replace(/\/public$/, `/w=${width},quality=${q},format=auto`);
+    // Strip existing variant (e.g., /w=600,format=auto or /public) and apply new one
+    const base = src.replace(/\/[^/]*$/, '');
+    return `${base}/w=${width},quality=${q},format=auto`;
   }
 
-  // Legacy Cloudinary
+  // Legacy Cloudinary — replace or insert transforms
   if (src.includes('cloudinary.com')) {
-    return src.replace('/upload/', `/upload/w_${width},f_auto,q_${q}/`);
+    // Remove existing transforms if present, then add new ones
+    const cleaned = src.replace(/\/upload\/[^/]*\//, '/upload/');
+    return cleaned.replace('/upload/', `/upload/w_${width},f_auto,q_${q}/`);
   }
 
-  // Fallback: return as-is (data URIs, local images, etc.)
+  // Local images (e.g., /poster1.png) — return as-is, Next.js handles these
   return src;
 }
