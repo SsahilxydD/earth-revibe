@@ -25,16 +25,41 @@ export async function hashPassword(password: string): Promise<string> {
   });
 }
 
-/** Verify a password against a "salt:hash" string. */
-async function verifyPassword(password: string, stored: string): Promise<boolean> {
+/**
+ * Verify a password against a stored hash.
+ * Supports both scrypt ("salt:hash") and legacy bcrypt ("$2a$..." / "$2b$...") formats.
+ * Returns { valid, isBcrypt } so callers can auto-migrate bcrypt hashes to scrypt.
+ */
+async function verifyPassword(
+  password: string,
+  stored: string
+): Promise<{ valid: boolean; isBcrypt: boolean }> {
+  // Legacy bcrypt hash (from old seed / Supabase auth era)
+  if (stored.startsWith('$2a$') || stored.startsWith('$2b$')) {
+    // bcrypt verify using constant-time comparison built into the format:
+    // We do a manual check since bcryptjs isn't a dependency of the API.
+    // Import dynamically so it doesn't break if bcryptjs is absent.
+    try {
+      const bcrypt = await import('bcryptjs');
+      const valid = await bcrypt.compare(password, stored);
+      return { valid, isBcrypt: true };
+    } catch {
+      // bcryptjs not installed — can't verify legacy hash
+      logger.warn('bcrypt hash found but bcryptjs not installed — cannot verify');
+      return { valid: false, isBcrypt: true };
+    }
+  }
+
+  // Current scrypt format: "salt:hash"
   const [salt, hash] = stored.split(':');
-  if (!salt || !hash) return false;
-  return new Promise((resolve, reject) => {
+  if (!salt || !hash) return { valid: false, isBcrypt: false };
+  const valid = await new Promise<boolean>((resolve, reject) => {
     crypto.scrypt(password, salt, 64, (err, derivedKey) => {
       if (err) reject(err);
       else resolve(crypto.timingSafeEqual(Buffer.from(hash, 'hex'), derivedKey));
     });
   });
+  return { valid, isBcrypt: false };
 }
 
 /** Hash an OTP code with SHA-256 for storage. */
@@ -188,7 +213,7 @@ export const authService = {
       throw ApiError.unauthorized('Invalid email or password');
     }
 
-    const valid = await verifyPassword(password, user.passwordHash);
+    const { valid, isBcrypt } = await verifyPassword(password, user.passwordHash);
     if (!valid) {
       throw ApiError.unauthorized('Invalid email or password');
     }
@@ -197,9 +222,18 @@ export const authService = {
       throw ApiError.forbidden('Account is deactivated');
     }
 
+    // Auto-migrate legacy bcrypt hash to scrypt on successful login
+    const updateData: { lastLoginAt: Date; passwordHash?: string } = {
+      lastLoginAt: new Date(),
+    };
+    if (isBcrypt) {
+      updateData.passwordHash = await hashPassword(password);
+      logger.info({ userId: user.id }, 'Migrated password hash from bcrypt to scrypt');
+    }
+
     await prisma.user.update({
       where: { id: user.id },
-      data: { lastLoginAt: new Date() },
+      data: updateData,
     });
 
     const accessToken = await signAccessToken(user);

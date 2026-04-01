@@ -1,7 +1,18 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+
+/** Hash a password with scrypt (must match apps/api/src/services/auth.service.ts) */
+function hashPassword(password: string): Promise<string> {
+  const salt = crypto.randomBytes(16).toString('hex');
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+      if (err) reject(err);
+      else resolve(`${salt}:${derivedKey.toString('hex')}`);
+    });
+  });
+}
 
 const prisma = new PrismaClient();
 
@@ -246,7 +257,7 @@ async function main() {
 
   // 1. Admin user
   console.log('Creating admin user...');
-  const passwordHash = await bcrypt.hash('Admin@123456', 12);
+  const passwordHash = await hashPassword('Admin@123456');
   await prisma.user.upsert({
     where: { email: 'admin@earthrevibe.com' },
     update: {},
