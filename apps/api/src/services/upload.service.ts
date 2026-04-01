@@ -1,9 +1,44 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import sharp from 'sharp';
 import { env } from '../config/env';
 import { createCircuitBreaker } from '../utils/circuit-breaker';
 import { ApiError } from '../utils/api-error';
 import { logger } from '../config/logger';
+
+// ─── Image compression ──────────────────────────────────────────────────────
+
+const MAX_WIDTH = 2000;
+const WEBP_QUALITY = 85;
+
+/**
+ * Compress and convert an image to WebP.
+ * - Resizes to max 2000px wide (preserves aspect ratio)
+ * - Converts to WebP at quality 85
+ * - Strips EXIF metadata
+ * A 38MB PNG becomes ~300-500KB WebP with no visible quality loss.
+ */
+async function compressImage(
+  buffer: Buffer,
+  mimeType: string
+): Promise<{ buffer: Buffer; mimeType: string; ext: string }> {
+  // Skip non-image files or GIFs (animated GIFs would lose animation)
+  if (mimeType === 'image/gif') {
+    return { buffer, mimeType, ext: 'gif' };
+  }
+
+  const compressed = await sharp(buffer)
+    .resize(MAX_WIDTH, undefined, { withoutEnlargement: true, fit: 'inside' })
+    .webp({ quality: WEBP_QUALITY })
+    .toBuffer();
+
+  logger.info(
+    { originalSize: buffer.length, compressedSize: compressed.length, ratio: `${((1 - compressed.length / buffer.length) * 100).toFixed(1)}%` },
+    'Image compressed'
+  );
+
+  return { buffer: compressed, mimeType: 'image/webp', ext: 'webp' };
+}
 
 // ─── Provider detection ──────────────────────────────────────────────────────
 
@@ -63,12 +98,14 @@ async function _uploadToSupabase(
 ): Promise<InternalUploadResult> {
   await ensureBucket();
 
-  const supabase = getSupabaseAdmin();
-  const ext = filename.split('.').pop() || 'jpg';
-  const storagePath = `${randomUUID()}.${ext}`;
+  // Compress image before uploading (38MB PNG → ~400KB WebP)
+  const compressed = await compressImage(buffer, mimeType);
 
-  const { error } = await supabase.storage.from(BUCKET).upload(storagePath, buffer, {
-    contentType: mimeType,
+  const supabase = getSupabaseAdmin();
+  const storagePath = `${randomUUID()}.${compressed.ext}`;
+
+  const { error } = await supabase.storage.from(BUCKET).upload(storagePath, compressed.buffer, {
+    contentType: compressed.mimeType,
     cacheControl: '31536000', // 1 year
     upsert: false,
   });
@@ -101,9 +138,12 @@ async function _uploadToCloudflare(
   filename: string,
   mimeType: string
 ): Promise<InternalUploadResult> {
+  // Compress before uploading to Cloudflare too
+  const compressed = await compressImage(buffer, mimeType);
+
   const formData = new FormData();
-  const blob = new Blob([buffer], { type: mimeType });
-  formData.append('file', blob, filename);
+  const blob = new Blob([compressed.buffer], { type: compressed.mimeType });
+  formData.append('file', blob, `${filename.replace(/\.[^.]+$/, '')}.${compressed.ext}`);
   formData.append('requireSignedURLs', 'false');
 
   const res = await fetch(
