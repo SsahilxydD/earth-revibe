@@ -83,12 +83,21 @@ export function NewsletterPopup() {
     e.preventDefault();
     if (!email.trim()) return;
 
-    // Save email for abandoned cart tracking
-    localStorage.setItem(EMAIL_KEY, email.trim());
-    emailRef.current = email.trim();
+    const trimmedEmail = email.trim();
 
-    // Sync current cart to server immediately
-    syncGuestCart(email.trim());
+    // Save email for abandoned cart tracking
+    localStorage.setItem(EMAIL_KEY, trimmedEmail);
+    emailRef.current = trimmedEmail;
+
+    // Sync current cart to server
+    syncGuestCart(trimmedEmail);
+
+    // Send discount code email instantly (fire-and-forget)
+    fetch(`${window.location.origin}/api/v1/newsletter/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: trimmedEmail }),
+    }).catch(() => {});
 
     dismiss();
   };

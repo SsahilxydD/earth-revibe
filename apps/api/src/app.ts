@@ -464,12 +464,10 @@ app.post('/api/v1/cart/guest-snapshot', async (req, res) => {
     };
 
     if (!email || !items || items.length === 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: { code: 'BAD_REQUEST', message: 'Email and items required' },
-        });
+      return res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: 'Email and items required' },
+      });
     }
 
     const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -485,11 +483,73 @@ app.post('/api/v1/cart/guest-snapshot', async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     logger.error({ err }, 'Guest cart snapshot failed');
+    res.status(500).json({
+      success: false,
+      error: { code: 'SNAPSHOT_FAILED', message: 'Failed to save cart snapshot' },
+    });
+  }
+});
+
+// Newsletter subscribe — instantly sends EARTH15OFF discount code via email
+app.post('/api/v1/newsletter/subscribe', async (req, res) => {
+  try {
+    const { getResend } = await import('./config/resend.js');
+    const resend = getResend();
+    const { email } = req.body as { email?: string };
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res
+        .status(400)
+        .json({ success: false, error: { code: 'BAD_REQUEST', message: 'Valid email required' } });
+    }
+
+    // Send discount code email instantly
+    if (resend) {
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || 'Earth Revibe <noreply@earthrevibe.com>',
+        to: email,
+        subject: "Welcome! Here's 15% off your first order",
+        html: `
+          <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:40px 24px;background:#fff">
+            <div style="text-align:center;margin-bottom:32px">
+              <p style="font-size:18px;font-weight:600;letter-spacing:2px;color:#000;margin:0">EARTH REVIBE</p>
+            </div>
+            <h2 style="font-size:20px;font-weight:700;color:#000;margin:0 0 16px;text-align:center">Welcome to the Culture</h2>
+            <p style="color:#666;font-size:14px;line-height:1.7;text-align:center;margin:0 0 24px">
+              Thanks for joining! As promised, here's your exclusive discount code for 15% off your first order:
+            </p>
+            <div style="text-align:center;margin:24px 0">
+              <div style="display:inline-block;background:#000;color:#fff;padding:16px 40px;font-size:24px;font-weight:700;letter-spacing:4px;border-radius:8px">
+                EARTH15OFF
+              </div>
+            </div>
+            <p style="color:#999;font-size:13px;text-align:center;margin:24px 0 0">
+              Apply it at checkout. No minimum order. Free shipping on all orders.
+            </p>
+            <div style="text-align:center;margin:32px 0 0">
+              <a href="${env.FRONTEND_URL}/products" style="display:inline-block;background:#000;color:#fff;padding:14px 40px;text-decoration:none;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em">
+                Start Shopping
+              </a>
+            </div>
+            <div style="margin-top:40px;padding-top:20px;border-top:1px solid #eee;text-align:center">
+              <p style="font-size:11px;color:#999;margin:0">Earth Revibe &bull; earthrevibeofficial@gmail.com</p>
+            </div>
+          </div>
+        `,
+      });
+      logger.info({ email }, 'Newsletter discount email sent');
+    } else {
+      logger.info({ email }, 'Newsletter signup (Resend not configured, email logged)');
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    logger.error({ err }, 'Newsletter subscribe failed');
     res
       .status(500)
       .json({
         success: false,
-        error: { code: 'SNAPSHOT_FAILED', message: 'Failed to save cart snapshot' },
+        error: { code: 'SUBSCRIBE_FAILED', message: 'Failed to subscribe' },
       });
   }
 });
