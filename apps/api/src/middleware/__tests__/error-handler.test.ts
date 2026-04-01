@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { request, isSupabaseConfigured } from '../../test/helpers';
+import { request } from '../../test/helpers';
 
-const describeIf = isSupabaseConfigured() ? describe : describe.skip;
-
-describeIf('errorHandler middleware', () => {
+describe('errorHandler middleware', () => {
   it('should return structured error for ApiError (401 on bad login)', async () => {
     const res = await request
       .post('/api/v1/auth/login')

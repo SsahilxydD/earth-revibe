@@ -8,7 +8,7 @@ import { loginSchema, type LoginInput } from '@earth-revibe/shared';
 import { Leaf } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { toast } from '@/components/ui/toast';
-import { createClient } from '@/lib/supabase/client';
+import { api } from '@/lib/api-client';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -25,17 +25,7 @@ export default function AdminLoginPage() {
   const onSubmit = async (data: LoginInput) => {
     setIsLoading(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (error) {
-        toast.error(error.message || 'Invalid credentials');
-        return;
-      }
-
+      await api.post('/auth/login', data);
       toast.success('Welcome back!');
       router.push('/dashboard');
       router.refresh();

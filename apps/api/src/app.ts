@@ -198,15 +198,15 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
 
     // Find carts that:
     // 1. Have items in them
-    // 2. Were last updated at least 1 hour ago (user isn't actively shopping)
+    // 2. Were last updated at least 30 minutes ago (user isn't actively shopping)
     // 3. Haven't already received an abandoned cart email
     // 4. Belong to users who haven't placed an order in the last 24 hours
-    const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const abandonedCarts = await prisma.cart.findMany({
       where: {
-        updatedAt: { lte: oneHourAgo },
+        updatedAt: { lte: thirtyMinAgo },
         abandonedEmailSentAt: null,
         items: { some: {} },
         user: {
@@ -331,11 +331,11 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
 
     // ── Guest abandoned carts ──────────────────────────────────────────
     // Process guest carts captured via newsletter popup email
-    const guestOneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+    const guestThirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
     const guestCarts = await prisma.guestAbandonedCart.findMany({
       where: {
         emailSent: false,
-        updatedAt: { lte: guestOneHourAgo },
+        updatedAt: { lte: guestThirtyMinAgo },
       },
     });
 

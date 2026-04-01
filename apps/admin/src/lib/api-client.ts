@@ -1,5 +1,3 @@
-import { createClient } from '@/lib/supabase/client';
-
 // In the browser, use the same-origin proxy (/api/v1) so requests avoid CORS.
 // On the server (SSR), call Railway directly for speed.
 const API_BASE =
@@ -19,37 +17,22 @@ interface ApiResponse<T = any> {
 }
 
 class ApiClient {
-  /** Get access token from Supabase session — Supabase handles refresh automatically */
-  private async getToken(): Promise<string | null> {
-    if (typeof window === 'undefined') return null;
-
-    try {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      return session?.access_token ?? null;
-    } catch {
-      return null;
-    }
-  }
-
   async request<T = any>(
     path: string,
     options: RequestInit = {},
     signal?: AbortSignal
   ): Promise<T> {
-    const token = await this.getToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
     };
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const res = await fetch(`${API_BASE}${path}`, { ...options, headers, signal });
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+      credentials: 'include',
+      signal,
+    });
 
     let json: ApiResponse<T>;
     try {

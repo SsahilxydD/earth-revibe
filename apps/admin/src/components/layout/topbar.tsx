@@ -15,7 +15,7 @@ import {
   Headset,
   AlertTriangle,
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { api } from '@/lib/api-client';
 import { useUIStore } from '@/stores/ui-store';
 import {
   useNotifications,
@@ -69,10 +69,12 @@ export function Topbar() {
   const count = notificationCount?.count ?? 0;
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserEmail(session?.user?.email ?? null);
-    });
+    api
+      .get<{ email: string }>('/auth/me')
+      .then((user) => {
+        setUserEmail(user.email ?? null);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -89,8 +91,9 @@ export function Topbar() {
   }, []);
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    try {
+      await api.post('/auth/logout');
+    } catch {}
     router.push('/login');
   };
 

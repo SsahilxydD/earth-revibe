@@ -16,7 +16,7 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   phone         String?   @unique
-  passwordHash  String    @default("supabase-managed")
+  passwordHash  String    @default("")
   firstName     String
   lastName      String
   avatar        String?
@@ -52,6 +52,19 @@ enum UserRole {
   ADMIN
   SUPER_ADMIN
   SUPPORT_STAFF
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String   @db.VarChar(15)
+  codeHash  String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([phone, verified, expiresAt])
+  @@map("otp_codes")
 }
 
 model RefreshToken {

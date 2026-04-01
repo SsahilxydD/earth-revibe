@@ -1,38 +1,226 @@
 'use client';
 
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api-client';
+import { useAuthStore } from '@/stores/auth-store';
+
+type Step = 'phone' | 'otp';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const checkAuth = useAuthStore((s) => s.checkAuth);
+
+  const [step, setStep] = useState<Step>('phone');
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [shake, setShake] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
 
-  const handleGoogleLogin = async () => {
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Countdown timer for resend
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const id = setTimeout(() => setResendTimer((t) => t - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendTimer]);
+
+  const maskedPhone = phone ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : '';
+
+  const handleSendOtp = async () => {
+    if (phone.length !== 10 || !/^[6-9]\d{9}$/.test(phone)) {
+      setError('Enter a valid 10-digit mobile number');
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-      }
+      await api.post('/auth/send-otp', { phone: `+91${phone}` });
+      setStep('otp');
+      setResendTimer(30);
+      setOtp(Array(6).fill(''));
+      setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } catch (err: any) {
-      setError(err?.message || 'Something went wrong');
+      setError(err?.message || 'Failed to send OTP');
+    } finally {
       setLoading(false);
     }
   };
+
+  const handleVerifyOtp = useCallback(
+    async (code: string) => {
+      setLoading(true);
+      setError('');
+      try {
+        await api.post('/auth/verify-otp', { phone: `+91${phone}`, code });
+        await checkAuth();
+        router.replace('/');
+      } catch (err: any) {
+        setError(err?.message || 'Verification failed');
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [phone, checkAuth, router]
+  );
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d?$/.test(value)) return;
+
+    const next = [...otp];
+    next[index] = value;
+    setOtp(next);
+
+    if (value && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-submit when all 6 digits entered
+    if (value && index === 5) {
+      const code = next.join('');
+      if (code.length === 6) {
+        handleVerifyOtp(code);
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+
+    const next = Array(6).fill('');
+    for (let i = 0; i < pasted.length; i++) {
+      next[i] = pasted[i];
+    }
+    setOtp(next);
+
+    if (pasted.length === 6) {
+      handleVerifyOtp(pasted);
+    } else {
+      otpRefs.current[pasted.length]?.focus();
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendTimer > 0) return;
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/auth/send-otp', { phone: `+91${phone}` });
+      setResendTimer(30);
+      setOtp(Array(6).fill(''));
+      otpRefs.current[0]?.focus();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to resend OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (step === 'otp') {
+    return (
+      <div>
+        <h1 className="mb-2 text-center text-xl font-bold uppercase tracking-wider">Verify OTP</h1>
+        <p className="mb-6 text-center text-sm text-[var(--color-muted)]">
+          OTP sent to {maskedPhone}
+        </p>
+
+        {error && (
+          <div className="mb-4 rounded-[var(--button-radius)] bg-red-50 px-4 py-3 text-sm text-[var(--color-sale)]">
+            {error}
+          </div>
+        )}
+
+        <div
+          className={`mb-6 flex justify-center gap-2 ${shake ? 'animate-shake' : ''}`}
+          onPaste={handleOtpPaste}
+        >
+          {otp.map((digit, i) => (
+            <input
+              key={i}
+              ref={(el) => {
+                otpRefs.current[i] = el;
+              }}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleOtpChange(i, e.target.value)}
+              onKeyDown={(e) => handleOtpKeyDown(i, e)}
+              disabled={loading}
+              className="h-12 w-11 rounded-lg border border-[var(--color-border)] bg-white text-center text-lg font-semibold transition-colors focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] disabled:opacity-60"
+              autoComplete="one-time-code"
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => handleVerifyOtp(otp.join(''))}
+          disabled={loading || otp.join('').length !== 6}
+          className="flex h-12 w-full items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
+        >
+          {loading ? 'Verifying...' : 'Verify'}
+        </button>
+
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <button
+            type="button"
+            onClick={() => {
+              setStep('phone');
+              setError('');
+              setOtp(Array(6).fill(''));
+            }}
+            className="text-[var(--color-muted)] hover:text-[var(--color-primary)]"
+          >
+            Change number
+          </button>
+          {resendTimer > 0 ? (
+            <span className="text-[var(--color-muted)]">Resend in {resendTimer}s</span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={loading}
+              className="text-[var(--color-primary)] hover:underline disabled:opacity-60"
+            >
+              Resend OTP
+            </button>
+          )}
+        </div>
+
+        <style>{`
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+          }
+          .animate-shake {
+            animation: shake 0.4s ease-in-out;
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div>
       <h1 className="mb-2 text-center text-xl font-bold uppercase tracking-wider">Log In</h1>
       <p className="mb-6 text-center text-sm text-[var(--color-muted)]">
-        Sign in with your Google account to continue.
+        Enter your phone number to continue.
       </p>
 
       {error && (
@@ -41,37 +229,43 @@ export default function LoginPage() {
         </div>
       )}
 
+      <div className="mb-4">
+        <label htmlFor="phone" className="mb-1.5 block text-sm font-medium">
+          Phone Number
+        </label>
+        <div className="flex">
+          <span className="flex h-12 items-center rounded-l-[var(--button-radius)] border border-r-0 border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-muted)]">
+            +91
+          </span>
+          <input
+            id="phone"
+            type="tel"
+            inputMode="numeric"
+            maxLength={10}
+            placeholder="98765 43210"
+            value={phone}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, '').slice(0, 10);
+              setPhone(v);
+              setError('');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSendOtp();
+            }}
+            disabled={loading}
+            className="h-12 w-full rounded-r-[var(--button-radius)] border border-[var(--color-border)] bg-white px-3 text-sm transition-colors focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] disabled:opacity-60"
+            autoFocus
+          />
+        </div>
+      </div>
+
       <button
         type="button"
-        onClick={handleGoogleLogin}
-        disabled={loading}
-        className="flex h-12 w-full items-center justify-center gap-3 rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white text-sm font-medium transition-colors hover:bg-[var(--color-surface)] disabled:opacity-60"
+        onClick={handleSendOtp}
+        disabled={loading || phone.length !== 10}
+        className="flex h-12 w-full items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
       >
-        {loading ? (
-          <span className="text-[var(--color-muted)]">Redirecting...</span>
-        ) : (
-          <>
-            <svg width="18" height="18" viewBox="0 0 24 24">
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
-            </svg>
-            Continue with Google
-          </>
-        )}
+        {loading ? 'Sending OTP...' : 'Send OTP'}
       </button>
     </div>
   );

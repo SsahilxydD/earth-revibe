@@ -167,21 +167,6 @@ vi.mock('../shiprocket.service', () => ({
   },
 }));
 
-vi.mock('../../config/supabase', () => ({
-  getSupabaseAdmin: vi.fn(() => ({
-    auth: {
-      admin: {
-        createUser: vi.fn().mockResolvedValue({ data: { user: null }, error: { message: 'mock' } }),
-      },
-    },
-  })),
-  getSupabaseAnon: vi.fn(() => ({
-    auth: {
-      resetPasswordForEmail: vi.fn().mockResolvedValue({ error: null }),
-    },
-  })),
-}));
-
 // ---------------------------------------------------------------------------
 // Subject under test — imported AFTER all vi.mock() calls
 // ---------------------------------------------------------------------------

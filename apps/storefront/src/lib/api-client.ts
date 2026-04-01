@@ -1,5 +1,3 @@
-import { createClient } from '@/lib/supabase/client';
-
 // In the browser, use the same-origin proxy (/api/v1) so requests go through
 // Vercel's edge instead of hitting Railway directly. This avoids mobile carrier
 // DNS/routing issues (Jio, Airtel) that block connections to Railway.
@@ -15,56 +13,7 @@ interface ApiResponse<T = any> {
   error?: { code: string; message: string; details?: { field?: string; message: string }[] };
 }
 
-/**
- * Get the current Supabase access token from the browser session.
- * Returns null on the server or if no session exists.
- */
-async function getSupabaseToken(): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
-  try {
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
-  } catch {
-    return null;
-  }
-}
-
 class ApiClient {
-  private refreshPromise: Promise<boolean> | null = null;
-
-  private async refreshAccessToken(): Promise<boolean> {
-    if (this.refreshPromise) return this.refreshPromise;
-    this.refreshPromise = this._doRefresh().finally(() => {
-      this.refreshPromise = null;
-    });
-    return this.refreshPromise;
-  }
-
-  private async _doRefresh(): Promise<boolean> {
-    try {
-      // Try refreshing the Supabase session first
-      if (typeof window !== 'undefined') {
-        const supabase = createClient();
-        const { data, error } = await supabase.auth.refreshSession();
-        if (!error && data.session) return true;
-      }
-      // Fallback to API cookie refresh
-      const res = await fetch(`${API_BASE}/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!res.ok) return false;
-      const json = await res.json();
-      return json.success === true;
-    } catch {
-      return false;
-    }
-  }
-
   async request<T = any>(
     path: string,
     options: RequestInit = {},
@@ -74,13 +23,6 @@ class ApiClient {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
     };
-
-    // Attach Supabase Bearer token — works through the Vercel proxy
-    // (unlike httpOnly cookies which are domain-bound to Railway)
-    const token = await getSupabaseToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
 
     let res: Response;
     try {
@@ -93,24 +35,7 @@ class ApiClient {
     } catch {
       throw { status: 0, code: 'NETWORK_ERROR', message: 'Cannot reach the server.' };
     }
-    if (res.status === 401) {
-      const refreshed = await this.refreshAccessToken();
-      if (refreshed) {
-        // Re-read token after refresh
-        const newToken = await getSupabaseToken();
-        if (newToken) headers['Authorization'] = `Bearer ${newToken}`;
-        try {
-          res = await fetch(`${API_BASE}${path}`, {
-            ...options,
-            headers,
-            credentials: 'include',
-            signal,
-          });
-        } catch {
-          throw { status: 0, code: 'NETWORK_ERROR', message: 'Cannot reach the server.' };
-        }
-      }
-    }
+
     let json: ApiResponse<T>;
     try {
       json = await res.json();

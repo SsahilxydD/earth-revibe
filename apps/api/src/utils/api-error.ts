@@ -32,6 +32,10 @@ export class ApiError extends Error {
     return new ApiError(404, message, 'NOT_FOUND');
   }
 
+  static tooManyRequests(message: string = 'Too many requests') {
+    return new ApiError(429, message, 'RATE_LIMITED');
+  }
+
   static conflict(message: string) {
     return new ApiError(409, message, 'CONFLICT');
   }

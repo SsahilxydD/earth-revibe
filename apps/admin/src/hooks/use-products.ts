@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { createClient } from '@/lib/supabase/client';
 import { revalidateStorefront } from '@/lib/revalidate-storefront';
 import type { ProductListParams } from '@/types';
 
@@ -10,20 +9,6 @@ const API_BASE =
   typeof window !== 'undefined'
     ? '/api/v1'
     : process.env.NEXT_PUBLIC_API_URL || 'https://earth-revibeapi-production.up.railway.app/api/v1';
-
-/** Get auth token from Supabase session for raw fetch calls that bypass the API client */
-async function getAuthToken(): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
-  try {
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export function useProducts(params: ProductListParams = {}) {
   const searchParams = new URLSearchParams();
@@ -84,12 +69,9 @@ export function useDeleteProduct() {
 export function useExportProductsCSV() {
   return useMutation({
     mutationFn: async () => {
-      const token = await getAuthToken();
       const res = await fetch(`${API_BASE}/admin/products/export-csv`, {
         method: 'GET',
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        credentials: 'include',
       });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
@@ -231,15 +213,12 @@ export function useReorderProductImages() {
 export function useUploadImage() {
   return useMutation({
     mutationFn: async (file: File) => {
-      const token = await getAuthToken();
       const formData = new FormData();
       formData.append('file', file);
 
       const res = await fetch(`${API_BASE}/upload/image`, {
         method: 'POST',
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        credentials: 'include',
         body: formData,
       });
 
@@ -257,13 +236,10 @@ export function useUploadImage() {
 export function useUploadImageFromUrl() {
   return useMutation({
     mutationFn: async (imageUrl: string) => {
-      const token = await getAuthToken();
       const res = await fetch(`${API_BASE}/upload/image-from-url`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: imageUrl }),
       });
 

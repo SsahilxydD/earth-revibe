@@ -54,6 +54,27 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+// ── WhatsApp OTP Auth ──────────────────────────────────────────────
+
+export const sendOtpSchema = z.object({
+  phone: z
+    .string()
+    .regex(/^\+91[6-9]\d{9}$/, 'Invalid Indian mobile number. Use +91 followed by 10 digits.'),
+});
+
+export const verifyOtpSchema = z.object({
+  phone: z
+    .string()
+    .regex(/^\+91[6-9]\d{9}$/, 'Invalid Indian mobile number. Use +91 followed by 10 digits.'),
+  code: z
+    .string()
+    .length(6, 'OTP must be 6 digits')
+    .regex(/^\d{6}$/, 'OTP must be numeric'),
+});
+
+export type SendOtpInput = z.infer<typeof sendOtpSchema>;
+export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;

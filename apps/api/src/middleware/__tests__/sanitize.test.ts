@@ -1,14 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import {
-  request,
-  cleanupTestData,
-  makeRegisterPayload,
-  isSupabaseConfigured,
-} from '../../test/helpers';
+import { request, cleanupTestData, makeRegisterPayload } from '../../test/helpers';
 
-const describeIf = isSupabaseConfigured() ? describe : describe.skip;
-
-describeIf('sanitize middleware', () => {
+describe('sanitize middleware', () => {
   const createdUserIds: string[] = [];
 
   afterEach(async () => {

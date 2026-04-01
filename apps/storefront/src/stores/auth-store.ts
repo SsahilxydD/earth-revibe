@@ -3,11 +3,11 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api-client';
 import { identifyUser, resetUser } from '@/lib/analytics';
-import { createClient } from '@/lib/supabase/client';
 
 export interface AuthUser {
   id: string;
   email: string;
+  phone?: string;
   firstName: string;
   lastName: string;
   role: string;
@@ -44,13 +44,6 @@ export const useAuthStore = create<AuthState>()((set) => ({
       await api.post('/auth/logout');
     } catch {
       // Logout even if API call fails
-    }
-    // Also sign out of Supabase (clears Google OAuth session)
-    try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-    } catch {
-      // Best effort
     }
     resetUser();
     set({ user: null, isAuthenticated: false, isLoading: false });
