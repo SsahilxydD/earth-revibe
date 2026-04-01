@@ -62,7 +62,6 @@ interface DiscountFormData {
   maxDiscountAmount: string;
   usageLimit: string;
   perUserLimit: string;
-  startsAt: string;
   expiresAt: string;
 }
 
@@ -75,7 +74,6 @@ const emptyForm: DiscountFormData = {
   maxDiscountAmount: '',
   usageLimit: '',
   perUserLimit: '1',
-  startsAt: '',
   expiresAt: '',
 };
 
@@ -120,7 +118,6 @@ export default function DiscountsPage() {
       maxDiscountAmount: discount.maxDiscountAmount ? String(discount.maxDiscountAmount) : '',
       usageLimit: discount.usageLimit ? String(discount.usageLimit) : '',
       perUserLimit: discount.perUserLimit ? String(discount.perUserLimit) : '1',
-      startsAt: formatDateTimeLocal(discount.startsAt),
       expiresAt: formatDateTimeLocal(discount.expiresAt),
     });
     setIsModalOpen(true);
@@ -143,12 +140,12 @@ export default function DiscountsPage() {
       toast.error('Value must be greater than 0');
       return;
     }
-    if (!form.startsAt || !form.expiresAt) {
-      toast.error('Start and expiry dates are required');
+    if (!form.expiresAt) {
+      toast.error('Expiry date is required');
       return;
     }
-    if (new Date(form.expiresAt) <= new Date(form.startsAt)) {
-      toast.error('Expiry date must be after start date');
+    if (new Date(form.expiresAt) <= new Date()) {
+      toast.error('Expiry date must be in the future');
       return;
     }
 
@@ -161,7 +158,7 @@ export default function DiscountsPage() {
       maxDiscountAmount: form.maxDiscountAmount ? Number(form.maxDiscountAmount) : undefined,
       usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
       perUserLimit: form.perUserLimit ? Number(form.perUserLimit) : 1,
-      startsAt: form.startsAt,
+      startsAt: new Date().toISOString(),
       expiresAt: form.expiresAt,
     };
 
@@ -197,8 +194,7 @@ export default function DiscountsPage() {
 
   const isNowActive = (discount: any) => {
     if (!discount.isActive) return false;
-    const now = new Date();
-    return new Date(discount.startsAt) <= now && new Date(discount.expiresAt) >= now;
+    return new Date(discount.expiresAt) >= new Date();
   };
 
   return (
@@ -344,14 +340,11 @@ export default function DiscountsPage() {
                             ? 'Inactive'
                             : isNowActive(discount)
                               ? 'Active'
-                              : new Date(discount.startsAt) > new Date()
-                                ? 'Scheduled'
-                                : 'Expired'}
+                              : 'Expired'}
                         </Badge>
                       </td>
                       <td className="px-6 py-3 text-dark-gray text-xs">
-                        <div>{formatDate(discount.startsAt)}</div>
-                        <div>to {formatDate(discount.expiresAt)}</div>
+                        <div>Expires {formatDate(discount.expiresAt)}</div>
                       </td>
                       <td className="px-6 py-3">
                         <div className="flex justify-end gap-0.5">
@@ -532,16 +525,7 @@ export default function DiscountsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-charcoal">Starts At *</label>
-              <input
-                type="datetime-local"
-                value={form.startsAt}
-                onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
-                className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-charcoal">Expires At *</label>
               <input
