@@ -504,37 +504,112 @@ app.post('/api/v1/newsletter/subscribe', async (req, res) => {
     }
 
     // Send discount code email instantly
+    const logoUrl = `${env.FRONTEND_URL}/Earth%20Revibe%20Logo%20Black.png`;
+    const frontendUrl = env.FRONTEND_URL;
+
     if (resend) {
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || 'Earth Revibe <noreply@earthrevibe.com>',
         to: email,
-        subject: "Welcome! Here's 15% off your first order",
+        subject: "You're in. Here's 15% off your first order.",
         html: `
-          <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:40px 24px;background:#fff">
-            <div style="text-align:center;margin-bottom:32px">
-              <p style="font-size:18px;font-weight:600;letter-spacing:2px;color:#000;margin:0">EARTH REVIBE</p>
-            </div>
-            <h2 style="font-size:20px;font-weight:700;color:#000;margin:0 0 16px;text-align:center">Welcome to the Culture</h2>
-            <p style="color:#666;font-size:14px;line-height:1.7;text-align:center;margin:0 0 24px">
-              Thanks for joining! As promised, here's your exclusive discount code for 15% off your first order:
-            </p>
-            <div style="text-align:center;margin:24px 0">
-              <div style="display:inline-block;background:#000;color:#fff;padding:16px 40px;font-size:24px;font-weight:700;letter-spacing:4px;border-radius:8px">
-                EARTH15OFF
-              </div>
-            </div>
-            <p style="color:#999;font-size:13px;text-align:center;margin:24px 0 0">
-              Apply it at checkout. No minimum order. Free shipping on all orders.
-            </p>
-            <div style="text-align:center;margin:32px 0 0">
-              <a href="${env.FRONTEND_URL}/products" style="display:inline-block;background:#000;color:#fff;padding:14px 40px;text-decoration:none;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em">
-                Start Shopping
-              </a>
-            </div>
-            <div style="margin-top:40px;padding-top:20px;border-top:1px solid #eee;text-align:center">
-              <p style="font-size:11px;color:#999;margin:0">Earth Revibe &bull; earthrevibeofficial@gmail.com</p>
-            </div>
-          </div>
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f5f0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
+
+<!-- Outer wrapper -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:40px 16px">
+<tr><td align="center">
+
+<!-- Main card -->
+<table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:0;max-width:560px;width:100%">
+
+  <!-- Black header with logo -->
+  <tr>
+    <td style="background:#121212;padding:40px 40px 32px;text-align:center">
+      <img src="${logoUrl}" alt="Earth Revibe" width="48" height="48" style="display:block;margin:0 auto 16px;filter:invert(1)">
+      <p style="margin:0;font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.5);text-transform:uppercase">Vacation-Ready Minimal Fits</p>
+    </td>
+  </tr>
+
+  <!-- Welcome message -->
+  <tr>
+    <td style="padding:40px 40px 0;text-align:center">
+      <h1 style="margin:0 0 8px;font-size:28px;font-weight:300;color:#121212;letter-spacing:-0.5px">You're in.</h1>
+      <p style="margin:0;font-size:15px;color:#888;line-height:1.6">
+        Welcome to the Earth Revibe community.<br>
+        Here's something to get you started.
+      </p>
+    </td>
+  </tr>
+
+  <!-- Discount code block -->
+  <tr>
+    <td style="padding:32px 40px">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#121212;border-radius:12px">
+        <tr>
+          <td style="padding:32px 24px;text-align:center">
+            <p style="margin:0 0 8px;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.4);text-transform:uppercase">Your Exclusive Code</p>
+            <p style="margin:0 0 8px;font-size:36px;font-weight:700;color:#ffffff;letter-spacing:6px;font-family:'Courier New',monospace">EARTH15OFF</p>
+            <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.6)">15% off your first order</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Perks row -->
+  <tr>
+    <td style="padding:0 40px 32px">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" style="text-align:center;padding:16px 8px;border:1px solid #f0f0f0;border-right:none">
+            <p style="margin:0;font-size:16px">&#x2728;</p>
+            <p style="margin:4px 0 0;font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase">No Minimum</p>
+          </td>
+          <td width="34%" style="text-align:center;padding:16px 8px;border:1px solid #f0f0f0">
+            <p style="margin:0;font-size:16px">&#x1F69A;</p>
+            <p style="margin:4px 0 0;font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase">Free Shipping</p>
+          </td>
+          <td width="33%" style="text-align:center;padding:16px 8px;border:1px solid #f0f0f0;border-left:none">
+            <p style="margin:0;font-size:16px">&#x1F504;</p>
+            <p style="margin:4px 0 0;font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase">Easy Returns</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- CTA button -->
+  <tr>
+    <td style="padding:0 40px 40px;text-align:center">
+      <a href="${frontendUrl}/products" style="display:inline-block;background:#121212;color:#ffffff;padding:16px 48px;text-decoration:none;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px">
+        Shop the Collection
+      </a>
+    </td>
+  </tr>
+
+</table>
+<!-- End main card -->
+
+<!-- Footer -->
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
+  <tr>
+    <td style="padding:24px 40px;text-align:center">
+      <p style="margin:0 0 8px;font-size:11px;color:#999">
+        <a href="${frontendUrl}" style="color:#999;text-decoration:none">earthrevibe.com</a>
+        &nbsp;&bull;&nbsp;
+        <a href="https://instagram.com/earthrevibe" style="color:#999;text-decoration:none">Instagram</a>
+      </p>
+      <p style="margin:0;font-size:10px;color:#ccc">
+        EST. 2024 &mdash; India &nbsp;|&nbsp; Vacation-ready fashion for the culture
+      </p>
+    </td>
+  </tr>
+</table>
+
+</td></tr></table>
+</body></html>
         `,
       });
       logger.info({ email }, 'Newsletter discount email sent');
@@ -545,12 +620,10 @@ app.post('/api/v1/newsletter/subscribe', async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     logger.error({ err }, 'Newsletter subscribe failed');
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: { code: 'SUBSCRIBE_FAILED', message: 'Failed to subscribe' },
-      });
+    res.status(500).json({
+      success: false,
+      error: { code: 'SUBSCRIBE_FAILED', message: 'Failed to subscribe' },
+    });
   }
 });
 
