@@ -47,6 +47,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.imagedelivery.net',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdn.shopify.com',
+      },
     ],
   },
   // Proxy API requests through Vercel so mobile browsers never call Railway
