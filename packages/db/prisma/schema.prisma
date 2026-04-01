@@ -290,6 +290,20 @@ model CartItem {
   @@map("cart_items")
 }
 
+model GuestAbandonedCart {
+  id        String   @id @default(cuid())
+  email     String
+  firstName String?
+  items     Json     // [{ variantId, productName, slug, price, quantity }]
+  cartTotal Float    @default(0)
+  emailSent Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([email])
+  @@map("guest_abandoned_carts")
+}
+
 // ==========================================
 // ORDERS & PAYMENTS
 // ==========================================

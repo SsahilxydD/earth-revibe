@@ -329,16 +329,168 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
       tracked++;
     }
 
+    // ── Guest abandoned carts ──────────────────────────────────────────
+    // Process guest carts captured via newsletter popup email
+    const guestOneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+    const guestCarts = await prisma.guestAbandonedCart.findMany({
+      where: {
+        emailSent: false,
+        updatedAt: { lte: guestOneHourAgo },
+      },
+    });
+
+    let guestEmailed = 0;
+
+    for (const guest of guestCarts) {
+      if (!guest.email) continue;
+
+      const items = guest.items as {
+        productName: string;
+        slug: string;
+        price: number;
+        quantity: number;
+      }[];
+      if (!items || items.length === 0) continue;
+
+      if (resend) {
+        try {
+          const firstName = guest.firstName || 'there';
+          const itemRows = items
+            .map(
+              (item) =>
+                `<tr>
+                  <td style="padding:12px 8px;border-bottom:1px solid #eee;">
+                    <a href="${frontendUrl}/products/${item.slug}" style="color:#121212;text-decoration:none;font-weight:600;">${item.productName}</a>
+                  </td>
+                  <td style="padding:12px 8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
+                  <td style="padding:12px 8px;border-bottom:1px solid #eee;text-align:right;">\u20B9${item.price.toLocaleString('en-IN')}</td>
+                </tr>`
+            )
+            .join('');
+
+          await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || 'Earth Revibe <noreply@earthrevibe.com>',
+            to: guest.email,
+            subject: 'You left something behind!',
+            html: `
+              <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:32px 16px;">
+                <h1 style="font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 16px;">Hey ${firstName},</h1>
+                <p style="color:#666;font-size:14px;line-height:1.6;margin:0 0 24px;">
+                  Looks like you left some items in your cart. They're still waiting for you!
+                </p>
+                <table style="width:100%;border-collapse:collapse;margin:0 0 24px;">
+                  <thead>
+                    <tr style="border-bottom:2px solid #121212;">
+                      <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">Item</th>
+                      <th style="padding:8px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">Qty</th>
+                      <th style="padding:8px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>${itemRows}</tbody>
+                </table>
+                <div style="text-align:center;margin:32px 0;">
+                  <a href="${frontendUrl}/cart" style="display:inline-block;background:#121212;color:#fff;padding:14px 40px;text-decoration:none;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+                    Complete Your Order
+                  </a>
+                </div>
+                <p style="color:#999;font-size:12px;text-align:center;margin:24px 0 0;">
+                  Free shipping on all orders. Questions? Reply to this email.
+                </p>
+              </div>
+            `,
+          });
+          guestEmailed++;
+          logger.info({ email: guest.email }, 'Guest abandoned cart email sent');
+        } catch (emailErr) {
+          logger.error(
+            { err: emailErr, email: guest.email },
+            'Failed to send guest abandoned cart email'
+          );
+        }
+      }
+
+      // Mark as sent
+      await prisma.guestAbandonedCart.update({
+        where: { id: guest.id },
+        data: { emailSent: true },
+      });
+
+      // Track in PostHog
+      if (ph) {
+        ph.capture({
+          distinctId: guest.email,
+          event: 'cart_abandoned',
+          properties: {
+            email: guest.email,
+            first_name: guest.firstName,
+            item_count: items.length,
+            cart_total: guest.cartTotal,
+            is_guest: true,
+          },
+        });
+      }
+
+      tracked++;
+    }
+
     if (ph) await ph.flush();
 
-    logger.info({ tracked, emailed }, 'Abandoned cart detection completed');
-    res.json({ success: true, data: { tracked, emailed } });
+    logger.info({ tracked, emailed, guestEmailed }, 'Abandoned cart detection completed');
+    res.json({ success: true, data: { tracked, emailed, guestEmailed } });
   } catch (err) {
     logger.error({ err }, 'Abandoned cart detection failed');
     res.status(500).json({
       success: false,
       error: { code: 'ABANDONED_CART_FAILED', message: 'Abandoned cart detection failed' },
     });
+  }
+});
+
+// Guest cart snapshot — called when newsletter popup captures an email
+// Stores the guest's email + cart items so abandoned cart emails work for non-logged-in visitors
+app.post('/api/v1/cart/guest-snapshot', async (req, res) => {
+  try {
+    const { prisma } = await import('@earth-revibe/db');
+    const { email, firstName, items } = req.body as {
+      email?: string;
+      firstName?: string;
+      items?: {
+        variantId: string;
+        productName: string;
+        slug: string;
+        price: number;
+        quantity: number;
+      }[];
+    };
+
+    if (!email || !items || items.length === 0) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Email and items required' },
+        });
+    }
+
+    const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+    // Upsert — update if this email already has a snapshot
+    await prisma.guestAbandonedCart.upsert({
+      where: { email },
+      create: { email, firstName, items, cartTotal },
+      update: { items, cartTotal, firstName, emailSent: false, updatedAt: new Date() },
+    });
+
+    logger.info({ email, itemCount: items.length }, 'Guest cart snapshot saved');
+    res.json({ success: true });
+  } catch (err) {
+    logger.error({ err }, 'Guest cart snapshot failed');
+    res
+      .status(500)
+      .json({
+        success: false,
+        error: { code: 'SNAPSHOT_FAILED', message: 'Failed to save cart snapshot' },
+      });
   }
 });
 

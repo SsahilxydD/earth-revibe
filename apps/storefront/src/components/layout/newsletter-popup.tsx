@@ -1,13 +1,58 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { X } from 'lucide-react';
+import { useCartStore } from '@/stores/cart-store';
 
 const STORAGE_KEY = 'er-newsletter-dismissed';
+const EMAIL_KEY = 'er-guest-email';
+
+/**
+ * Syncs guest email + cart items to the server for abandoned cart recovery.
+ * Called when the newsletter popup captures an email, and on beforeunload
+ * if the guest has items in cart.
+ */
+function syncGuestCart(email: string) {
+  const items = useCartStore.getState().items;
+  if (!items || items.length === 0) return;
+
+  const payload = {
+    email,
+    items: items.map((i) => ({
+      variantId: i.id,
+      productName: i.name,
+      slug: i.slug,
+      price: i.price,
+      quantity: i.quantity,
+    })),
+  };
+
+  // Use sendBeacon for reliability (works even on page unload)
+  const apiBase =
+    typeof window !== 'undefined' && window.location.origin
+      ? `${window.location.origin}/api/v1`
+      : '';
+
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon(
+      `${apiBase}/cart/guest-snapshot`,
+      new Blob([JSON.stringify(payload)], { type: 'application/json' })
+    );
+  } else {
+    fetch(`${apiBase}/cart/guest-snapshot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {});
+  }
+}
 
 export function NewsletterPopup() {
   const [show, setShow] = useState(false);
+  const [email, setEmail] = useState('');
+  const emailRef = useRef<string | null>(null);
 
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY);
@@ -16,6 +61,37 @@ export function NewsletterPopup() {
     const timer = setTimeout(() => setShow(true), 15000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Sync cart on page unload if guest email is captured
+  useEffect(() => {
+    // Check if we already have a guest email from a previous session
+    const savedEmail = localStorage.getItem(EMAIL_KEY);
+    if (savedEmail) emailRef.current = savedEmail;
+
+    const handleUnload = () => {
+      const guestEmail = emailRef.current;
+      if (guestEmail) {
+        syncGuestCart(guestEmail);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, []);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    // Save email for abandoned cart tracking
+    localStorage.setItem(EMAIL_KEY, email.trim());
+    emailRef.current = email.trim();
+
+    // Sync current cart to server immediately
+    syncGuestCart(email.trim());
+
+    dismiss();
+  };
 
   const dismiss = () => {
     setShow(false);
@@ -55,15 +131,11 @@ export function NewsletterPopup() {
         </p>
 
         {/* Form */}
-        <form
-          className="mt-8 flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            dismiss();
-          }}
-        >
+        <form className="mt-8 flex flex-col gap-3" onSubmit={handleSubmit}>
           <input
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Your email address"
             className="w-full rounded-[var(--button-radius)] border border-black/15 px-4 py-3.5 text-center text-sm outline-none focus:border-black/40"
             required

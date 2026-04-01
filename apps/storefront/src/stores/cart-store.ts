@@ -41,18 +41,43 @@ interface CartState {
   getTotal: () => number;
 }
 
-// Debounced sync to server — only fires for logged-in users
+// Debounced sync to server — fires for logged-in users (auth cart sync)
+// and for guests who gave their email via newsletter popup (abandoned cart recovery)
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleSyncToServer(items: CartItem[]) {
   if (syncTimer) clearTimeout(syncTimer);
   syncTimer = setTimeout(async () => {
+    // Try authenticated cart sync first
     try {
       await api.post('/cart/sync', {
         items: items.map((i) => ({ variantId: i.id, quantity: i.quantity })),
       });
     } catch {
-      // Sync is best-effort — local cart is the source of truth
+      // Auth sync failed (not logged in) — try guest snapshot if email exists
+      if (typeof window !== 'undefined') {
+        const guestEmail = localStorage.getItem('er-guest-email');
+        if (guestEmail && items.length > 0) {
+          try {
+            await fetch(`${window.location.origin}/api/v1/cart/guest-snapshot`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email: guestEmail,
+                items: items.map((i) => ({
+                  variantId: i.id,
+                  productName: i.name,
+                  slug: i.slug,
+                  price: i.price,
+                  quantity: i.quantity,
+                })),
+              }),
+            });
+          } catch {
+            // Best-effort
+          }
+        }
+      }
     }
   }, 1000);
 }
