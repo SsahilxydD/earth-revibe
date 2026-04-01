@@ -3,24 +3,37 @@ import type { ImageLoaderProps } from 'next/image';
 /**
  * Custom Next.js image loader.
  *
- * Routes Supabase Storage URLs through Supabase's built-in image transformation
- * API so images are optimised and served directly from Supabase's CDN — never
- * proxied through Vercel's /_next/image endpoint, which would count as cached egress.
+ * Routes images directly to their origin CDN instead of through Vercel's
+ * /_next/image proxy. This prevents Vercel from re-fetching originals from
+ * Supabase Storage on every cache miss, which was draining Supabase bandwidth.
  *
- * All other URLs (Cloudflare imagedelivery.net, already-transformed CDN URLs)
- * are returned as-is because getImageUrl() has already applied their transforms.
+ * - Supabase URLs → Supabase's built-in image transform API
+ * - Cloudflare URLs → Cloudflare's /w=N,format=auto variant suffix
+ * - Cloudinary URLs → Cloudinary's w_N,f_auto transform
+ * - Everything else → returned as-is
  */
 export default function imageLoader({ src, width, quality }: ImageLoaderProps): string {
-  // Supabase Storage object URLs → Supabase render/transform API
+  const q = quality ?? 75;
+
+  // Supabase Storage → use Supabase's render/transform API
   if (src.includes('.supabase.co/storage/v1/object/public/')) {
     const renderUrl = src.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
     const url = new URL(renderUrl);
     url.searchParams.set('width', width.toString());
-    url.searchParams.set('quality', (quality ?? 75).toString());
+    url.searchParams.set('quality', q.toString());
     return url.toString();
   }
 
-  // Everything else (Cloudflare, legacy Cloudinary) is already transformed
-  // by getImageUrl() — pass through unchanged.
+  // Cloudflare Image Delivery → variant suffix
+  if (src.includes('imagedelivery.net')) {
+    return src.replace(/\/public$/, `/w=${width},quality=${q},format=auto`);
+  }
+
+  // Legacy Cloudinary
+  if (src.includes('cloudinary.com')) {
+    return src.replace('/upload/', `/upload/w_${width},f_auto,q_${q}/`);
+  }
+
+  // Fallback: return as-is (data URIs, local images, etc.)
   return src;
 }

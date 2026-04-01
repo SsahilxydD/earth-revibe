@@ -31,24 +31,8 @@ const nextConfig = {
   },
   transpilePackages: ['@earth-revibe/shared'],
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'imagedelivery.net',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.imagedelivery.net',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cdn.shopify.com',
-      },
-    ],
+    loader: 'custom',
+    loaderFile: './src/lib/image-loader.ts',
   },
   // Proxy API requests through Vercel so mobile browsers never call Railway
   // directly. Indian mobile carriers (Jio, Airtel) have DNS/routing issues
