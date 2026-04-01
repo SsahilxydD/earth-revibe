@@ -183,9 +183,10 @@ app.post('/api/v1/internal/cleanup', async (_req, res) => {
   }
 });
 
-// Abandoned cart detection — call via Railway/Vercel cron every hour
-// Sends recovery emails directly via Resend (no third-party dependency for the critical path).
-// Also fires cart_abandoned to PostHog + GA4 for analytics dashboards.
+// Abandoned cart detection — called by cron-job.org every hour.
+// Sends recovery emails via Resend, fires cart_abandoned to PostHog.
+// Fixed: old query only caught carts updated 1-2h ago (narrow window).
+// Now catches ALL carts idle for 1h+ that haven't already received an email.
 app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
   try {
     const { prisma } = await import('@earth-revibe/db');
@@ -195,17 +196,22 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
     const ph = getPostHog();
     const resend = getResend();
 
-    // Find carts updated 1-2 hours ago with items, belonging to users who have no recent order
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    // Find carts that:
+    // 1. Have items in them
+    // 2. Were last updated at least 1 hour ago (user isn't actively shopping)
+    // 3. Haven't already received an abandoned cart email
+    // 4. Belong to users who haven't placed an order in the last 24 hours
     const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const abandonedCarts = await prisma.cart.findMany({
       where: {
-        updatedAt: { gte: twoHoursAgo, lte: oneHourAgo },
+        updatedAt: { lte: oneHourAgo },
+        abandonedEmailSentAt: null,
         items: { some: {} },
         user: {
           orders: {
-            none: { createdAt: { gte: twoHoursAgo } },
+            none: { createdAt: { gte: twentyFourHoursAgo } },
           },
         },
       },
@@ -241,7 +247,7 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
 
       const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-      // 1. Send recovery email directly — no third-party webhook dependency
+      // 1. Send recovery email via Resend
       if (resend) {
         try {
           const firstName = cart.user.firstName || 'there';
@@ -299,7 +305,13 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
         }
       }
 
-      // 2. Fire event to PostHog for analytics dashboards (non-blocking)
+      // 2. Mark the cart so we don't send duplicate emails
+      await prisma.cart.update({
+        where: { id: cart.id },
+        data: { abandonedEmailSentAt: new Date() },
+      });
+
+      // 3. Fire event to PostHog for analytics dashboards
       if (ph) {
         ph.capture({
           distinctId: cart.user.id,

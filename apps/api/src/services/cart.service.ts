@@ -71,10 +71,12 @@ export const cartService = {
       throw ApiError.badRequest(`Only ${variant.stock} items available`);
     }
 
-    // Get or create cart
+    // Get or create cart — reset abandoned email flag since user is actively shopping
     let cart = await prisma.cart.findUnique({ where: { userId } });
     if (!cart) {
       cart = await prisma.cart.create({ data: { userId } });
+    } else if (cart.abandonedEmailSentAt) {
+      await prisma.cart.update({ where: { id: cart.id }, data: { abandonedEmailSentAt: null } });
     }
 
     // Upsert cart item
@@ -167,8 +169,11 @@ export const cartService = {
         });
       }
 
-      // Touch updatedAt so abandoned cart detection sees recent activity
-      await tx.cart.update({ where: { id: cart.id }, data: { updatedAt: new Date() } });
+      // Touch updatedAt and reset abandoned email flag — user is actively shopping
+      await tx.cart.update({
+        where: { id: cart.id },
+        data: { updatedAt: new Date(), abandonedEmailSentAt: null },
+      });
     });
 
     return this.getCart(userId);
