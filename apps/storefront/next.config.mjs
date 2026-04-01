@@ -31,8 +31,23 @@ const nextConfig = {
   },
   transpilePackages: ['@earth-revibe/shared'],
   images: {
-    loader: 'custom',
-    loaderFile: './src/lib/image-loader.ts',
+    // Vercel's built-in image optimization — works great now that uploads
+    // are auto-compressed to <1MB WebP by the API. Serves AVIF/WebP at
+    // exact responsive sizes with aggressive CDN caching.
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'imagedelivery.net',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.imagedelivery.net',
+      },
+    ],
   },
   // Proxy API requests through Vercel so mobile browsers never call Railway
   // directly. Indian mobile carriers (Jio, Airtel) have DNS/routing issues
