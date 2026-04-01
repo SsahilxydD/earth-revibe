@@ -1,5 +1,6 @@
 import { env } from '../config/env';
 import { logger } from '../config/logger';
+import { ApiError } from '../utils/api-error';
 
 const GRAPH_API_URL = `https://graph.facebook.com/v22.0/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
@@ -34,18 +35,24 @@ export async function sendWhatsAppOtp(phone: string, code: string): Promise<void
     },
   };
 
-  const res = await fetch(GRAPH_API_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    logger.error({ err }, 'WhatsApp API network error');
+    throw ApiError.serviceUnavailable('Unable to send OTP. Please try again later.');
+  }
 
   if (!res.ok) {
     const text = await res.text();
     logger.error({ status: res.status, body: text }, 'WhatsApp API error');
-    throw new Error('Failed to send WhatsApp OTP');
+    throw ApiError.serviceUnavailable('Unable to send OTP. Please try again later.');
   }
 }
