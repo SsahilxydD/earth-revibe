@@ -182,7 +182,7 @@ function CategoryContent() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4 xl:grid-cols-5">
             {allProducts.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}

@@ -82,7 +82,7 @@ async function signAccessToken(user: { id: string; role: string }): Promise<stri
   return new SignJWT({ sub: user.id, role: user.role })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('1h')
+    .setExpirationTime('7d')
     .sign(JWT_SECRET_KEY);
 }
 

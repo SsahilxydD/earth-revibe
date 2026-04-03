@@ -15,7 +15,7 @@ export function setAccessCookie(res: Response, accessToken: string) {
   res.cookie(ACCESS_COOKIE, accessToken, {
     ...baseCookieOptions,
     path: '/',
-    maxAge: 60 * 60 * 1000, // 1 hour
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 }
 

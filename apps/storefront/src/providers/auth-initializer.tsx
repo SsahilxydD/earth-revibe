@@ -49,26 +49,41 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
         const serverCart = await api.get<ServerCart>('/cart');
         const localItems = useCartStore.getState().items;
 
-        // If local cart has items, sync them to server (local wins)
-        if (localItems.length > 0) {
+        // Convert server cart to local format
+        const serverItems = serverCart.items.map((item) => ({
+          id: item.variant.id,
+          productId: item.variant.product.id,
+          name: item.variant.product.name,
+          slug: item.variant.product.slug,
+          image: item.variant.product.images[0]?.url || '',
+          price: Number(item.variant.price ?? item.variant.product.price),
+          size: item.variant.size || '',
+          color: item.variant.color || '',
+          quantity: item.quantity,
+          maxQuantity: item.variant.stock,
+        }));
+
+        if (serverItems.length > 0 && localItems.length > 0) {
+          // Merge: start with server cart, add any local-only items
+          const serverIds = new Set(serverItems.map((i) => i.id));
+          const localOnly = localItems.filter((i) => !serverIds.has(i.id));
+          const merged = [...serverItems, ...localOnly];
+          useCartStore.setState({ items: merged });
+
+          // Sync merged cart back to server
+          if (localOnly.length > 0) {
+            await api.post('/cart/sync', {
+              items: merged.map((i) => ({ variantId: i.id, quantity: i.quantity })),
+            });
+          }
+        } else if (serverItems.length > 0) {
+          // Server has items, local empty — restore from server
+          useCartStore.setState({ items: serverItems });
+        } else if (localItems.length > 0) {
+          // Local has items, server empty — push local to server
           await api.post('/cart/sync', {
             items: localItems.map((i) => ({ variantId: i.id, quantity: i.quantity })),
           });
-        } else if (serverCart.items.length > 0) {
-          // If local cart is empty but server has items, restore from server
-          const restoredItems = serverCart.items.map((item) => ({
-            id: item.variant.id,
-            productId: item.variant.product.id,
-            name: item.variant.product.name,
-            slug: item.variant.product.slug,
-            image: item.variant.product.images[0]?.url || '',
-            price: Number(item.variant.price ?? item.variant.product.price),
-            size: item.variant.size || '',
-            color: item.variant.color || '',
-            quantity: item.quantity,
-            maxQuantity: item.variant.stock,
-          }));
-          useCartStore.setState({ items: restoredItems });
         }
       } catch {
         // Cart merge is best-effort — don't break the app
