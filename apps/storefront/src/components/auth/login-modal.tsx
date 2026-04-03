@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
-import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 import { cn } from '@/lib/utils';
 
 type Step = 'phone' | 'otp';
@@ -31,6 +30,8 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
   const phoneRef = useRef<HTMLInputElement>(null);
 
   // Reset state when modal opens
+  // Note: do NOT lock/unlock body scroll here — the cart drawer already manages it.
+  // Adding a second lock/unlock pair causes the cart to become scrollable when the modal closes.
   useEffect(() => {
     if (isOpen) {
       setStep('phone');
@@ -38,12 +39,8 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
       setOtp(Array(6).fill(''));
       setError('');
       setLoading(false);
-      lockBodyScroll();
       setTimeout(() => phoneRef.current?.focus(), 100);
     }
-    return () => {
-      if (isOpen) unlockBodyScroll();
-    };
   }, [isOpen]);
 
   // Countdown timer for resend
@@ -94,7 +91,8 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
         await api.post('/auth/verify-otp', { phone: `+91${phone}`, code });
         await checkAuth();
         onClose();
-        onSuccess?.();
+        // Delay onSuccess so auth state propagates before checkout starts
+        if (onSuccess) setTimeout(onSuccess, 100);
       } catch (err: any) {
         setError(err?.message || 'Verification failed');
         setShake(true);
