@@ -116,23 +116,9 @@ function CategoryContent() {
     [updateParams]
   );
 
-  // Shuffle each page individually as it arrives — keeps existing products stable
-  const shuffledPagesRef = useRef<Map<number, any[]>>(new Map());
   const allProducts = useMemo(() => {
     if (!data?.pages) return [];
-    const result: any[] = [];
-    data.pages.forEach((page, pageIndex) => {
-      if (!shuffledPagesRef.current.has(pageIndex)) {
-        const products = [...(page.products ?? [])];
-        for (let i = products.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [products[i], products[j]] = [products[j], products[i]];
-        }
-        shuffledPagesRef.current.set(pageIndex, products);
-      }
-      result.push(...shuffledPagesRef.current.get(pageIndex)!);
-    });
-    return result;
+    return data.pages.flatMap((page) => page.products ?? []);
   }, [data]);
 
   const categoryName = currentCategory?.name || slug.replace(/-/g, ' ');

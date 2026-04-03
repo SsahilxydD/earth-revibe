@@ -31,8 +31,8 @@ function buildProductQuery(params: ProductListParams): string {
   if (params.category) searchParams.set('category', params.category);
   if (params.minPrice != null) searchParams.set('minPrice', String(params.minPrice));
   if (params.maxPrice != null) searchParams.set('maxPrice', String(params.maxPrice));
-  if (params.sizes?.length) searchParams.set('sizes', params.sizes.join(','));
-  if (params.colors?.length) searchParams.set('colors', params.colors.join(','));
+  if (params.sizes?.length) searchParams.set('size', params.sizes.join(','));
+  if (params.colors?.length) searchParams.set('color', params.colors.join(','));
   if (params.sortBy) searchParams.set('sortBy', params.sortBy);
   if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
   if (params.isFeatured != null) searchParams.set('isFeatured', String(params.isFeatured));

@@ -114,25 +114,9 @@ function ProductsContent() {
     [updateParams]
   );
 
-  // Shuffle each page individually as it arrives — keeps existing products stable
-  const shuffledPagesRef = useRef<Map<number, any[]>>(new Map());
   const allProducts = useMemo(() => {
     if (!data?.pages) return [];
-    const result: any[] = [];
-    data.pages.forEach((page, pageIndex) => {
-      // Only shuffle a page once — cache the result
-      if (!shuffledPagesRef.current.has(pageIndex)) {
-        const products = [...(page.products ?? [])];
-        // Fisher-Yates shuffle
-        for (let i = products.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [products[i], products[j]] = [products[j], products[i]];
-        }
-        shuffledPagesRef.current.set(pageIndex, products as any);
-      }
-      result.push(...(shuffledPagesRef.current.get(pageIndex) as any[]));
-    });
-    return result;
+    return data.pages.flatMap((page) => page.products ?? []);
   }, [data]);
 
   // Populate navigation store so product detail page can swipe between products

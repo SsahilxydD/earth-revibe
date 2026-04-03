@@ -48,7 +48,6 @@ function FilterContent({ filters, onFilterChange }: FilterSidebarProps) {
   const { data: categories } = useCategories();
 
   const hasActiveFilters =
-    filters.category ||
     filters.minPrice !== undefined ||
     filters.maxPrice !== undefined ||
     filters.size ||
@@ -56,7 +55,7 @@ function FilterContent({ filters, onFilterChange }: FilterSidebarProps) {
 
   const clearAll = () => {
     onFilterChange({
-      category: '',
+      category: filters.category, // preserve category — it's part of the URL on category pages
       minPrice: undefined,
       maxPrice: undefined,
       size: '',

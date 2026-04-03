@@ -45,7 +45,7 @@ export const productQuerySchema = z.object({
   isFeatured: z.coerce.boolean().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  sortBy: z.enum(['price', 'createdAt', 'name']).default('createdAt'),
+  sortBy: z.enum(['price', 'createdAt', 'name', 'reviewCount']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
