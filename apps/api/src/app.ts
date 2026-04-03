@@ -192,6 +192,7 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
     const { prisma } = await import('@earth-revibe/db');
     const { getPostHog } = await import('./config/posthog.js');
     const { getResend } = await import('./config/resend.js');
+    const { sendWhatsAppAbandonedCart } = await import('./services/whatsapp.service.js');
 
     const ph = getPostHog();
     const resend = getResend();
@@ -216,7 +217,7 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
         },
       },
       include: {
-        user: { select: { id: true, email: true, firstName: true } },
+        user: { select: { id: true, email: true, phone: true, firstName: true } },
         items: {
           include: {
             variant: {
@@ -231,10 +232,11 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
 
     let tracked = 0;
     let emailed = 0;
+    let whatsapped = 0;
     const frontendUrl = env.FRONTEND_URL;
 
     for (const cart of abandonedCarts) {
-      if (!cart.user?.email) continue;
+      if (!cart.user?.email && !cart.user?.phone) continue;
 
       const cartItems = cart.items.map((item) => ({
         productId: item.variant.product.id,
@@ -305,13 +307,21 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
         }
       }
 
-      // 2. Mark the cart so we don't send duplicate emails
+      // 2. Send WhatsApp recovery message (if user has phone)
+      if (cart.user?.phone) {
+        const firstName = cart.user.firstName || 'there';
+        const itemNames = cartItems.map((i) => i.name).join(', ');
+        const sent = await sendWhatsAppAbandonedCart(cart.user.phone, firstName, itemNames);
+        if (sent) whatsapped++;
+      }
+
+      // 3. Mark the cart so we don't send duplicate messages
       await prisma.cart.update({
         where: { id: cart.id },
         data: { abandonedEmailSentAt: new Date() },
       });
 
-      // 3. Fire event to PostHog for analytics dashboards
+      // 4. Fire event to PostHog for analytics dashboards
       if (ph) {
         ph.capture({
           distinctId: cart.user.id,
@@ -435,8 +445,8 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
 
     if (ph) await ph.flush();
 
-    logger.info({ tracked, emailed, guestEmailed }, 'Abandoned cart detection completed');
-    res.json({ success: true, data: { tracked, emailed, guestEmailed } });
+    logger.info({ tracked, emailed, whatsapped, guestEmailed }, 'Abandoned cart detection completed');
+    res.json({ success: true, data: { tracked, emailed, whatsapped, guestEmailed } });
   } catch (err) {
     logger.error({ err }, 'Abandoned cart detection failed');
     res.status(500).json({
