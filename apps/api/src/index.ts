@@ -5,6 +5,7 @@ import { logger } from './config/logger';
 import { APP_CONSTANTS } from './config/constants';
 import { prisma } from '@earth-revibe/db';
 import { shutdownPostHog } from './config/posthog';
+import { runAbandonedCartCheck } from './jobs/abandoned-cart-job';
 
 const start = async () => {
   try {
@@ -12,9 +13,24 @@ const start = async () => {
       logger.info({ port: env.PORT, env: env.NODE_ENV }, 'Earth Revibe API running');
     });
 
+    // Run abandoned cart check every 30 minutes
+    const THIRTY_MINUTES = 30 * 60 * 1000;
+    const abandonedCartInterval = setInterval(() => {
+      runAbandonedCartCheck().catch((err) => {
+        logger.error({ err }, 'Abandoned cart job failed');
+      });
+    }, THIRTY_MINUTES);
+    // Run once on startup after a short delay
+    setTimeout(() => {
+      runAbandonedCartCheck().catch((err) => {
+        logger.error({ err }, 'Initial abandoned cart check failed');
+      });
+    }, 10_000);
+
     // Graceful shutdown
     const shutdown = async (signal: string) => {
       logger.info({ signal }, 'Shutting down gracefully');
+      clearInterval(abandonedCartInterval);
       server.close(async () => {
         logger.info('HTTP server closed');
         await shutdownPostHog();

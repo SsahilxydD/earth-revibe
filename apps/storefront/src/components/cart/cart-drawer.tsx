@@ -4,10 +4,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
+import { useAuthStore } from '@/stores/auth-store';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { CartItemRow } from './cart-item';
+import { LoginModal } from '@/components/auth/login-modal';
 import { api } from '@/lib/api-client';
 import { useRazorpay } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
@@ -31,7 +33,9 @@ export function CartDrawer() {
   const [discountError, setDiscountError] = useState('');
   const [applyingDiscount, setApplyingDiscount] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const router = useRouter();
   const clearCart = useCartStore((s) => s.clearCart);
   const { initiatePayment, isLoading: isRazorpayLoading } = useRazorpay();
@@ -248,7 +252,7 @@ export function CartDrawer() {
                 variant="primary"
                 fullWidth
                 size="lg"
-                onClick={launchMagicCheckout}
+                onClick={isAuthenticated ? launchMagicCheckout : () => setShowLoginModal(true)}
                 loading={isCheckingOut || isRazorpayLoading}
               >
                 {isCheckingOut
@@ -261,6 +265,13 @@ export function CartDrawer() {
           </>
         )}
       </div>
+
+      {/* Login modal — shown when unauthenticated user tries to checkout */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={launchMagicCheckout}
+      />
     </div>
   );
 }
