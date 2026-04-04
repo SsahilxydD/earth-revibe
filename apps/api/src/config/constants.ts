@@ -1,5 +1,5 @@
 export const APP_CONSTANTS = {
-  /** Pending checkouts older than this are considered stale (2 hours) */
+  /** Pending checkouts older than this are considered stale (2 hours). */
   CHECKOUT_EXPIRY_MS: 2 * 60 * 60 * 1000,
 
   /** Low stock threshold for product variant alerts */
