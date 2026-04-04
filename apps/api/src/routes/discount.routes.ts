@@ -16,4 +16,20 @@ router.post(
   asyncHandler(discountController.validateDiscount)
 );
 
+// ─── Razorpay Magic Checkout coupon endpoints ────────────────────────────────
+// These match Razorpay's expected request/response format for coupon integration.
+// Docs: https://razorpay.com/docs/payments/magic-checkout/coupons/
+
+// GET promotions — Razorpay calls this to list available coupons
+router.post(
+  '/razorpay/get-promotions',
+  asyncHandler(discountController.razorpayGetPromotions)
+);
+
+// APPLY promotion — Razorpay calls this when user applies a coupon
+router.post(
+  '/razorpay/apply-promotion',
+  asyncHandler(discountController.razorpayApplyPromotion)
+);
+
 export { router as discountRouter };
