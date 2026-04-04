@@ -1,6 +1,18 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { request, cleanupTestData, makeRegisterPayload } from '../../test/helpers';
 
+/** Extract a named cookie value from a supertest response. */
+function getCookie(res: { headers: Record<string, string | string[]> }, name: string): string {
+  const raw = res.headers['set-cookie'];
+  const cookies = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  for (const c of cookies) {
+    if (c.startsWith(`${name}=`)) {
+      return c.split(';')[0].split('=').slice(1).join('=');
+    }
+  }
+  return '';
+}
+
 describe('Auth Routes', () => {
   const createdUserIds: string[] = [];
 
@@ -16,9 +28,11 @@ describe('Auth Routes', () => {
       const res = await request.post('/api/v1/auth/register').send(payload).expect(201);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.user.email).toBe(payload.email);
-      expect(res.body.data.accessToken).toBeDefined();
-      createdUserIds.push(res.body.data.user.id);
+      expect(res.body.data.email).toBe(payload.email);
+      // Tokens are in httpOnly cookies, not in the JSON body
+      expect(getCookie(res, 'access_token')).toBeTruthy();
+      expect(getCookie(res, 'refresh_token')).toBeTruthy();
+      createdUserIds.push(res.body.data.id);
     });
 
     it('should reject invalid email (400)', async () => {
@@ -41,7 +55,7 @@ describe('Auth Routes', () => {
       const payload = makeRegisterPayload();
 
       const first = await request.post('/api/v1/auth/register').send(payload);
-      createdUserIds.push(first.body.data.user.id);
+      createdUserIds.push(first.body.data.id);
 
       const res = await request.post('/api/v1/auth/register').send(payload).expect(409);
 
@@ -50,10 +64,10 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /api/v1/auth/login', () => {
-    it('should login with valid credentials (200)', async () => {
+    it('should login with valid credentials and set auth cookies (200)', async () => {
       const payload = makeRegisterPayload();
       const registerRes = await request.post('/api/v1/auth/register').send(payload);
-      createdUserIds.push(registerRes.body.data.user.id);
+      createdUserIds.push(registerRes.body.data.id);
 
       const res = await request
         .post('/api/v1/auth/login')
@@ -61,8 +75,10 @@ describe('Auth Routes', () => {
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.user.email).toBe(payload.email);
-      expect(res.body.data.accessToken).toBeDefined();
+      expect(res.body.data.email).toBe(payload.email);
+      // Tokens live in httpOnly cookies
+      expect(getCookie(res, 'access_token')).toBeTruthy();
+      expect(getCookie(res, 'refresh_token')).toBeTruthy();
     });
 
     it('should reject invalid credentials (401)', async () => {
@@ -79,12 +95,12 @@ describe('Auth Routes', () => {
     it('should return user profile with valid token (200)', async () => {
       const payload = makeRegisterPayload();
       const registerRes = await request.post('/api/v1/auth/register').send(payload);
-      const { accessToken } = registerRes.body.data;
-      createdUserIds.push(registerRes.body.data.user.id);
+      const accessToken = getCookie(registerRes, 'access_token');
+      createdUserIds.push(registerRes.body.data.id);
 
       const res = await request
         .get('/api/v1/auth/me')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', `access_token=${accessToken}`)
         .expect(200);
 
       expect(res.body.data.email).toBe(payload.email);
@@ -95,27 +111,36 @@ describe('Auth Routes', () => {
     });
 
     it('should reject invalid token (401)', async () => {
-      await request.get('/api/v1/auth/me').set('Authorization', 'Bearer invalid-token').expect(401);
+      await request.get('/api/v1/auth/me').set('Cookie', 'access_token=invalid-token').expect(401);
     });
   });
 
   describe('POST /api/v1/auth/refresh', () => {
-    it('should return new tokens (200)', async () => {
+    it('should rotate tokens via refresh cookie (200)', async () => {
       const payload = makeRegisterPayload();
       const registerRes = await request.post('/api/v1/auth/register').send(payload);
-      createdUserIds.push(registerRes.body.data.user.id);
+      createdUserIds.push(registerRes.body.data.id);
 
       const loginRes = await request
         .post('/api/v1/auth/login')
         .send({ email: payload.email, password: payload.password });
 
+      const refreshToken = getCookie(loginRes, 'refresh_token');
+
       const res = await request
         .post('/api/v1/auth/refresh')
-        .send({ refreshToken: loginRes.body.data.refreshToken })
+        .set('Cookie', `refresh_token=${refreshToken}`)
         .expect(200);
 
-      expect(res.body.data.accessToken).toBeDefined();
-      expect(res.body.data.refreshToken).toBeDefined();
+      expect(res.body.success).toBe(true);
+      // New cookies issued
+      expect(getCookie(res, 'access_token')).toBeTruthy();
+      expect(getCookie(res, 'refresh_token')).toBeTruthy();
+      // Old refresh token should no longer work (rotation)
+      await request
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', `refresh_token=${refreshToken}`)
+        .expect(401);
     });
   });
 
@@ -123,12 +148,12 @@ describe('Auth Routes', () => {
     it('should change password with valid current password (200)', async () => {
       const payload = makeRegisterPayload();
       const registerRes = await request.post('/api/v1/auth/register').send(payload);
-      const { accessToken } = registerRes.body.data;
-      createdUserIds.push(registerRes.body.data.user.id);
+      const accessToken = getCookie(registerRes, 'access_token');
+      createdUserIds.push(registerRes.body.data.id);
 
       await request
         .put('/api/v1/auth/password')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', `access_token=${accessToken}`)
         .send({
           currentPassword: payload.password,
           newPassword: 'NewPass123',

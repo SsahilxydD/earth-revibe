@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { api } from '@/lib/api-client';
 
 interface AdminUser {
   id: string;
@@ -17,8 +18,9 @@ interface AuthState {
   clearUser: () => void;
   setLoading: (loading: boolean) => void;
 
-  login: (user: AdminUser, accessToken: string, refreshToken: string) => void;
-  logout: () => void;
+  login: (user: AdminUser) => void;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -30,15 +32,27 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearUser: () => set({ user: null, isAuthenticated: false, isLoading: false }),
   setLoading: (isLoading) => set({ isLoading }),
 
-  login: (user, accessToken, refreshToken) => {
-    localStorage.setItem('adminAccessToken', accessToken);
-    localStorage.setItem('adminRefreshToken', refreshToken);
+  login: (user) => {
+    // Tokens are in httpOnly cookies — no localStorage needed
     set({ user, isAuthenticated: true, isLoading: false });
   },
 
-  logout: () => {
-    localStorage.removeItem('adminAccessToken');
-    localStorage.removeItem('adminRefreshToken');
+  logout: async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Logout even if API call fails
+    }
     set({ user: null, isAuthenticated: false, isLoading: false });
+  },
+
+  checkAuth: async () => {
+    set({ isLoading: true });
+    try {
+      const user = await api.get<AdminUser>('/auth/me');
+      set({ user, isAuthenticated: true, isLoading: false });
+    } catch {
+      set({ user: null, isAuthenticated: false, isLoading: false });
+    }
   },
 }));

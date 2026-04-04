@@ -4,6 +4,7 @@ import { prisma } from '@earth-revibe/db';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
 import { ApiError } from '../utils/api-error';
+import { APP_CONSTANTS } from '../config/constants';
 import { sendWhatsAppOtp } from './whatsapp.service';
 import type {
   SendOtpInput,
@@ -77,13 +78,41 @@ function generateReferralCode(userId: string): string {
   return `REVIBE-${userId.slice(-6).toUpperCase()}`;
 }
 
-/** Sign a JWT access token for the given user. */
+/** Sign a JWT access token for the given user (15-minute expiry). */
 async function signAccessToken(user: { id: string; role: string }): Promise<string> {
   return new SignJWT({ sub: user.id, role: user.role })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('7d')
+    .setExpirationTime('15m')
     .sign(JWT_SECRET_KEY);
+}
+
+/**
+ * Generate a refresh token, store its SHA-256 hash in the database.
+ * Returns the raw token (to be set as a cookie).
+ */
+async function createRefreshToken(userId: string): Promise<string> {
+  const raw = crypto.randomBytes(64).toString('hex');
+  const hashed = crypto.createHash('sha256').update(raw).digest('hex');
+  const expiresAt = new Date(Date.now() + APP_CONSTANTS.REFRESH_TOKEN_EXPIRY_MS);
+
+  await prisma.refreshToken.create({
+    data: { token: hashed, userId, expiresAt },
+  });
+
+  return raw;
+}
+
+/**
+ * Issue a fresh access + refresh token pair for a user.
+ * Used by login, verifyOtp, and refresh flows.
+ */
+async function issueTokenPair(user: { id: string; role: string }) {
+  const [accessToken, refreshToken] = await Promise.all([
+    signAccessToken(user),
+    createRefreshToken(user.id),
+  ]);
+  return { accessToken, refreshToken };
 }
 
 export const authService = {
@@ -188,7 +217,7 @@ export const authService = {
       throw ApiError.forbidden('Account is deactivated');
     }
 
-    const accessToken = await signAccessToken(user);
+    const tokens = await issueTokenPair(user);
 
     return {
       user: {
@@ -199,7 +228,7 @@ export const authService = {
         role: user.role,
         referralCode: user.referralCode,
       },
-      accessToken,
+      ...tokens,
     };
   },
 
@@ -236,7 +265,7 @@ export const authService = {
       data: updateData,
     });
 
-    const accessToken = await signAccessToken(user);
+    const tokens = await issueTokenPair(user);
 
     return {
       user: {
@@ -246,7 +275,7 @@ export const authService = {
         lastName: user.lastName,
         role: user.role,
       },
-      accessToken,
+      ...tokens,
     };
   },
 
@@ -294,5 +323,64 @@ export const authService = {
       },
     });
     return user;
+  },
+
+  /**
+   * Rotate a refresh token: validate the old one, delete it, issue a new pair.
+   * If the token is reused after rotation, all tokens for the user are revoked (theft detection).
+   */
+  async refresh(rawToken: string) {
+    const hashed = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    const stored = await prisma.refreshToken.findUnique({ where: { token: hashed } });
+
+    if (!stored) {
+      // Token not found — could be a reuse attack. We can't identify the user from
+      // the raw token alone, so just reject. If we had token families we could revoke
+      // all tokens for the user, but the simpler approach is sufficient here.
+      logger.warn('Refresh token not found — possible reuse or expired token');
+      throw ApiError.unauthorized('Invalid refresh token');
+    }
+
+    if (stored.expiresAt < new Date()) {
+      await prisma.refreshToken.delete({ where: { id: stored.id } });
+      throw ApiError.unauthorized('Refresh token expired');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: stored.userId },
+      select: { id: true, role: true, isActive: true },
+    });
+
+    if (!user || !user.isActive) {
+      await prisma.refreshToken.deleteMany({ where: { userId: stored.userId } });
+      throw ApiError.unauthorized('Account not found or deactivated');
+    }
+
+    // Delete the used token (rotation — each token is single-use)
+    await prisma.refreshToken.delete({ where: { id: stored.id } });
+
+    // Issue new pair
+    return issueTokenPair(user);
+  },
+
+  /**
+   * Revoke all refresh tokens for a user (used on logout).
+   */
+  async revokeAllTokens(userId: string) {
+    await prisma.refreshToken.deleteMany({ where: { userId } });
+  },
+
+  /**
+   * Revoke all tokens for the user who owns a given refresh token.
+   * Used when logout happens after the access token has already expired
+   * (so req.user is unavailable), but the refresh cookie is still present.
+   */
+  async revokeByRefreshToken(rawToken: string) {
+    const hashed = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const stored = await prisma.refreshToken.findUnique({ where: { token: hashed } });
+    if (stored) {
+      await prisma.refreshToken.deleteMany({ where: { userId: stored.userId } });
+    }
   },
 };

@@ -19,6 +19,10 @@ const withSerwist = withSerwistInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Skip lint + typecheck during Vercel builds — they run in CI already.
+  // Saves ~30-60s per build which adds up fast on the free tier.
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
   // Cache client-side navigation data so back/forward never re-fetches.
   // This is the fix for iOS Safari blink — without this, dynamic pages
   // (useSearchParams) have staleTimes.dynamic = 0 meaning every

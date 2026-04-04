@@ -45,3 +45,6 @@ coverage/
 .env.development
 .vercel/
 vectors.db
+
+# Code review graph
+.code-review-graph/

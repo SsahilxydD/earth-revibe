@@ -1,47 +1,35 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '@/components/ui/spinner';
-import { api } from '@/lib/api-client';
+import { useAuthStore } from '@/stores/auth-store';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const checkedRef = useRef(false);
 
   useEffect(() => {
-    async function checkSession() {
-      try {
-        await api.get('/auth/me');
-        setIsAuthenticated(true);
-      } catch {
-        router.replace('/login');
-      } finally {
-        setIsLoading(false);
-      }
+    if (checkedRef.current) return;
+    checkedRef.current = true;
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/login');
     }
+  }, [isLoading, isAuthenticated, router]);
 
-    checkSession();
-  }, [router]);
-
-  if (isLoading) {
+  if (isLoading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-off-white">
         <div className="flex flex-col items-center gap-3">
           <Spinner size="lg" className="text-deep-earth" />
-          <p className="text-sm text-medium-gray">Loading admin panel...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-off-white">
-        <div className="flex flex-col items-center gap-3">
-          <Spinner size="lg" className="text-deep-earth" />
-          <p className="text-sm text-medium-gray">Redirecting...</p>
+          <p className="text-sm text-medium-gray">
+            {isLoading ? 'Loading admin panel...' : 'Redirecting...'}
+          </p>
         </div>
       </div>
     );

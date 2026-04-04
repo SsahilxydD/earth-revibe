@@ -1,7 +1,7 @@
 import { Router, type IRouter } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { validate } from '../middleware/validate';
-import { authenticate } from '../middleware/auth';
+import { authenticate, optionalAuthenticate } from '../middleware/auth';
 import { asyncHandler } from '../utils/async-handler';
 import { otpRateLimit } from '../middleware/auth-rate-limit';
 import {
@@ -25,7 +25,8 @@ router.post(
   validate({ body: verifyOtpSchema }),
   asyncHandler(authController.verifyOtp)
 );
-router.post('/logout', asyncHandler(authController.logout));
+router.post('/refresh', asyncHandler(authController.refresh));
+router.post('/logout', optionalAuthenticate, asyncHandler(authController.logout));
 router.get('/me', authenticate, asyncHandler(authController.getMe));
 router.put(
   '/profile',

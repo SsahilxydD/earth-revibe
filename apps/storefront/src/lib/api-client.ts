@@ -13,11 +13,28 @@ interface ApiResponse<T = any> {
   error?: { code: string; message: string; details?: { field?: string; message: string }[] };
 }
 
+// Mutex: prevents multiple tabs/requests from calling /auth/refresh simultaneously.
+// When the first 401 triggers a refresh, all subsequent 401s queue behind it.
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 class ApiClient {
   async request<T = any>(
     path: string,
     options: RequestInit = {},
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    _isRetry = false
   ): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -34,6 +51,31 @@ class ApiClient {
       });
     } catch {
       throw { status: 0, code: 'NETWORK_ERROR', message: 'Cannot reach the server.' };
+    }
+
+    // Auto-refresh on 401 (expired access token) — but not if this IS the retry
+    // and not for the refresh endpoint itself
+    if (
+      res.status === 401 &&
+      !_isRetry &&
+      path !== '/auth/refresh' &&
+      path !== '/auth/login' &&
+      path !== '/auth/verify-otp' &&
+      typeof window !== 'undefined'
+    ) {
+      // Coalesce concurrent refresh calls behind a single promise
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+      }
+      const refreshed = await refreshPromise;
+      if (refreshed) {
+        return this.request<T>(path, options, signal, true);
+      }
+      // Refresh failed — force logout
+      const { useAuthStore } = await import('@/stores/auth-store');
+      useAuthStore.getState().logout();
     }
 
     let json: ApiResponse<T>;

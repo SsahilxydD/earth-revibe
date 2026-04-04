@@ -16,23 +16,68 @@ interface ApiResponse<T = any> {
   };
 }
 
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 class ApiClient {
   async request<T = any>(
     path: string,
     options: RequestInit = {},
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    _isRetry = false
   ): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
     };
 
-    const res = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers,
-      credentials: 'include',
-      signal,
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers,
+        credentials: 'include',
+        signal,
+      });
+    } catch {
+      throw {
+        status: 0,
+        code: 'NETWORK_ERROR',
+        message: 'Cannot reach the API server. Check CORS or network.',
+      };
+    }
+
+    // Auto-refresh on 401 — but not for auth endpoints or retries
+    if (
+      res.status === 401 &&
+      !_isRetry &&
+      path !== '/auth/refresh' &&
+      path !== '/auth/login' &&
+      typeof window !== 'undefined'
+    ) {
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+      }
+      const refreshed = await refreshPromise;
+      if (refreshed) {
+        return this.request<T>(path, options, signal, true);
+      }
+      // Refresh failed — redirect to login
+      window.location.href = '/login';
+    }
 
     let json: ApiResponse<T>;
     try {

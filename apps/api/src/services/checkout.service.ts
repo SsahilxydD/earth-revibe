@@ -213,10 +213,14 @@ export const checkoutService = {
         select: { email: true, firstName: true, lastName: true, phone: true },
       });
       if (user) {
+        // Razorpay Magic Checkout needs +91 format to auto-recognize the user
+        // and skip re-asking for phone — avoids the "double login" experience
+        let phone = user.phone || '';
+        if (phone && !phone.startsWith('+')) phone = `+91${phone}`;
         prefill = {
           name: `${user.firstName} ${user.lastName}`.trim(),
           email: user.email,
-          contact: user.phone || '',
+          contact: phone,
         };
       }
     }

@@ -27,6 +27,7 @@ interface RazorpayOptions {
   modal?: {
     ondismiss?: () => void;
   };
+  one_click_checkout?: boolean;
 }
 
 interface RazorpayInstance {
@@ -111,6 +112,7 @@ export function useRazorpay() {
           theme: {
             color: '#121212',
           },
+          one_click_checkout: true,
           handler: (response: RazorpayResponse) => {
             setIsLoading(false);
             resolve(response);
