@@ -13,10 +13,12 @@ const baseCookieOptions: CookieOptions = {
 };
 
 export function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+  // Cookie maxAge matches refresh token (7 days) so the browser keeps it around.
+  // The JWT inside still expires in 15 min — the client auto-refreshes on 401.
   res.cookie(ACCESS_COOKIE, accessToken, {
     ...baseCookieOptions,
     path: '/',
-    maxAge: 15 * 60 * 1000, // 15 minutes
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
   res.cookie(REFRESH_COOKIE, refreshToken, {
     ...baseCookieOptions,
