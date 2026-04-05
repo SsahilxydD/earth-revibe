@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4 py-12">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-white px-4 py-10 sm:py-12">
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.02]"
         style={{
@@ -10,16 +10,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           backgroundSize: '24px 24px',
         }}
       />
-      <div className="relative z-10 w-full max-w-md">
-        <div className="mb-8 text-center">
+      <div className="relative z-10 w-full max-w-sm sm:max-w-md">
+        <div className="mb-6 text-center">
           <Link
             href="/"
-            className="inline-block text-2xl font-bold uppercase tracking-[0.3em] text-[var(--color-primary)]"
+            className="inline-block text-xl font-bold uppercase tracking-[0.3em] text-[var(--color-primary)] sm:text-2xl"
           >
             Earth Revibe
           </Link>
         </div>
-        <div className="rounded-2xl border border-[var(--color-border)] bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border border-[var(--color-border)] bg-white px-5 py-7 shadow-sm sm:p-8">
           {children}
         </div>
       </div>

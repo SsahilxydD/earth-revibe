@@ -133,19 +133,19 @@ export default function LoginPage() {
   if (step === 'otp') {
     return (
       <div>
-        <h1 className="mb-2 text-center text-xl font-bold uppercase tracking-wider">Verify OTP</h1>
-        <p className="mb-6 text-center text-sm text-[var(--color-muted)]">
-          OTP sent to {maskedPhone}
-        </p>
+        <h1 className="mb-1.5 text-center text-lg font-bold uppercase tracking-wider sm:text-xl">
+          Verify OTP
+        </h1>
+        <p className="mb-7 text-center text-sm text-[var(--color-muted)]">Sent to {maskedPhone}</p>
 
         {error && (
-          <div className="mb-4 rounded-[var(--button-radius)] bg-red-50 px-4 py-3 text-sm text-[var(--color-sale)]">
+          <div className="mb-4 rounded-[var(--button-radius)] bg-red-50 px-4 py-3 text-center text-sm text-[var(--color-sale)]">
             {error}
           </div>
         )}
 
         <div
-          className={`mb-6 flex justify-center gap-2 ${shake ? 'animate-shake' : ''}`}
+          className={`mb-6 flex justify-center gap-2.5 ${shake ? 'animate-shake' : ''}`}
           onPaste={handleOtpPaste}
         >
           {otp.map((digit, i) => (
@@ -161,7 +161,7 @@ export default function LoginPage() {
               onChange={(e) => handleOtpChange(i, e.target.value)}
               onKeyDown={(e) => handleOtpKeyDown(i, e)}
               disabled={loading}
-              className="h-12 w-11 rounded-lg border border-[var(--color-border)] bg-white text-center text-lg font-semibold transition-colors focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] disabled:opacity-60"
+              className="h-12 w-10 rounded-xl border border-[var(--color-border)] bg-white text-center text-lg font-semibold transition-colors focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] disabled:opacity-60 sm:w-11"
               autoComplete="one-time-code"
             />
           ))}
@@ -171,12 +171,12 @@ export default function LoginPage() {
           type="button"
           onClick={() => handleVerifyOtp(otp.join(''))}
           disabled={loading || otp.join('').length !== 6}
-          className="flex h-12 w-full items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
+          className="flex h-12 w-full items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] text-sm font-medium text-white transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-50"
         >
-          {loading ? 'Verifying...' : 'Verify'}
+          {loading ? 'Verifying…' : 'Verify & Continue'}
         </button>
 
-        <div className="mt-4 flex items-center justify-between text-sm">
+        <div className="mt-5 flex items-center justify-between text-sm">
           <button
             type="button"
             onClick={() => {
@@ -184,9 +184,9 @@ export default function LoginPage() {
               setError('');
               setOtp(Array(6).fill(''));
             }}
-            className="text-[var(--color-muted)] hover:text-[var(--color-primary)]"
+            className="text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors"
           >
-            Change number
+            ← Change number
           </button>
           {resendTimer > 0 ? (
             <span className="text-[var(--color-muted)]">Resend in {resendTimer}s</span>
@@ -195,7 +195,7 @@ export default function LoginPage() {
               type="button"
               onClick={handleResend}
               disabled={loading}
-              className="text-[var(--color-primary)] hover:underline disabled:opacity-60"
+              className="font-medium text-[var(--color-primary)] hover:underline disabled:opacity-60"
             >
               Resend OTP
             </button>
@@ -218,23 +218,22 @@ export default function LoginPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-center text-xl font-bold uppercase tracking-wider">Log In</h1>
-      <p className="mb-6 text-center text-sm text-[var(--color-muted)]">
+      <h1 className="mb-1.5 text-center text-lg font-bold uppercase tracking-wider sm:text-xl">
+        Log In
+      </h1>
+      <p className="mb-7 text-center text-sm text-[var(--color-muted)]">
         Enter your phone number to continue.
       </p>
 
       {error && (
-        <div className="mb-4 rounded-[var(--button-radius)] bg-red-50 px-4 py-3 text-sm text-[var(--color-sale)]">
+        <div className="mb-4 rounded-[var(--button-radius)] bg-red-50 px-4 py-3 text-center text-sm text-[var(--color-sale)]">
           {error}
         </div>
       )}
 
-      <div className="mb-4">
-        <label htmlFor="phone" className="mb-1.5 block text-sm font-medium">
-          Phone Number
-        </label>
-        <div className="flex">
-          <span className="flex h-12 items-center rounded-l-[var(--button-radius)] border border-r-0 border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-muted)]">
+      <div className="mb-5">
+        <div className="flex overflow-hidden rounded-[var(--button-radius)] border border-[var(--color-border)] focus-within:border-[var(--color-primary)] focus-within:ring-1 focus-within:ring-[var(--color-primary)] transition-colors">
+          <span className="flex h-12 shrink-0 items-center border-r border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 text-sm text-[var(--color-muted)]">
             +91
           </span>
           <input
@@ -242,7 +241,8 @@ export default function LoginPage() {
             type="tel"
             inputMode="numeric"
             maxLength={10}
-            placeholder="98765 43210"
+            aria-label="Phone number"
+            placeholder="Enter mobile number"
             value={phone}
             onChange={(e) => {
               const v = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -253,7 +253,7 @@ export default function LoginPage() {
               if (e.key === 'Enter') handleSendOtp();
             }}
             disabled={loading}
-            className="h-12 w-full rounded-r-[var(--button-radius)] border border-[var(--color-border)] bg-white px-3 text-sm transition-colors focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] disabled:opacity-60"
+            className="h-12 w-full bg-white px-3 text-sm outline-none disabled:opacity-60"
             autoFocus
           />
         </div>
@@ -263,9 +263,9 @@ export default function LoginPage() {
         type="button"
         onClick={handleSendOtp}
         disabled={loading || phone.length !== 10}
-        className="flex h-12 w-full items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
+        className="flex h-12 w-full items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] text-sm font-medium text-white transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-50"
       >
-        {loading ? 'Sending OTP...' : 'Send OTP'}
+        {loading ? 'Sending…' : 'Send OTP via WhatsApp'}
       </button>
     </div>
   );
