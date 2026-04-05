@@ -48,3 +48,6 @@ vectors.db
 
 # Code review graph
 .code-review-graph/
+
+# Claude local settings (machine-specific permissions)
+.claude/settings.local.json
