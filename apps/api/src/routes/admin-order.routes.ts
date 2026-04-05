@@ -16,6 +16,7 @@ const router: IRouter = Router();
 router.use(authenticate);
 router.use(authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 
+router.post('/sync', asyncHandler(adminOrderController.syncOrders));
 router.get(
   '/',
   validate({ query: adminOrderQuerySchema }),

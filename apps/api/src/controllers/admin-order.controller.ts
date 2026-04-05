@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { adminOrderService } from '../services/admin-order.service';
+import { reconcileStaleCheckouts } from '../services/checkout.service';
 
 export const adminOrderController = {
   async listOrders(req: Request, res: Response) {
@@ -23,5 +24,10 @@ export const adminOrderController = {
     const orderNumber = req.params.orderNumber as string;
     const note = await adminOrderService.addNote(orderNumber, req.user!.id, req.body);
     res.json({ success: true, data: note });
+  },
+
+  async syncOrders(req: Request, res: Response) {
+    const result = await reconcileStaleCheckouts();
+    res.json({ success: true, data: result });
   },
 };

@@ -11,8 +11,8 @@ interface Order {
   id: string;
   orderNumber: string;
   status: string;
-  total: number;
-  itemCount: number;
+  totalAmount: number;
+  items: { id: string }[];
   createdAt: string;
 }
 
@@ -126,12 +126,12 @@ export default function OrdersPage() {
               <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-[var(--color-muted)]">
                 <span>{formatDate(order.createdAt)}</span>
                 <span>
-                  {order.itemCount} {order.itemCount === 1 ? 'item' : 'items'}
+                  {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold">{formatPrice(order.total)}</span>
+              <span className="text-sm font-bold">{formatPrice(order.totalAmount)}</span>
               <ChevronRight size={18} className="text-[var(--color-muted)]" />
             </div>
           </Link>

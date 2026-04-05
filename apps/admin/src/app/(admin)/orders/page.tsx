@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Eye } from 'lucide-react';
+import { Search, Eye, RefreshCw } from 'lucide-react';
 import { Button, Badge, Card, Select } from '@/components/ui';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrders } from '@/hooks/use-orders';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { toast } from '@/components/ui';
 
 const statusOptions = [
   { value: '', label: 'All Statuses' },
@@ -53,6 +56,8 @@ export default function OrdersPage() {
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
 
+  const qc = useQueryClient();
+
   const { data, isLoading, isError } = useOrders({
     page,
     limit: 20,
@@ -60,12 +65,39 @@ export default function OrdersPage() {
     search: search || undefined,
   });
 
+  const syncMutation = useMutation({
+    mutationFn: () =>
+      api.post<{ finalized: number; released: number; skipped: number; errors: number }>(
+        '/admin/orders/sync'
+      ),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ['admin-orders'] });
+      toast.success(
+        result.finalized > 0
+          ? `Synced ${result.finalized} order${result.finalized !== 1 ? 's' : ''}`
+          : 'All orders are up to date'
+      );
+    },
+    onError: () => toast.error('Sync failed — try again'),
+  });
+
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-charcoal">Orders</h1>
-        <p className="text-sm text-medium-gray mt-1">Manage and track customer orders</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-charcoal">Orders</h1>
+          <p className="text-sm text-medium-gray mt-1">Manage and track customer orders</p>
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => syncMutation.mutate()}
+          isLoading={syncMutation.isPending}
+        >
+          <RefreshCw size={14} />
+          Sync Orders
+        </Button>
       </div>
 
       {/* Filters */}
