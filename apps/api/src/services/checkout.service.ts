@@ -128,42 +128,50 @@ export const checkoutService = {
     const totalBeforeShipping = Math.max(lineItemsTotal - discountAmount - loyaltyDiscount, 0);
     const orderNumber = generateOrderNumber();
 
-    // Create Razorpay order with line_items for Magic Checkout.
-    // Set line_items_total to the DISCOUNTED total so the popup shows the correct price.
-    // The actual charge amount also reflects the discount.
+    // Run Razorpay order creation and user prefill query in parallel.
+    // The Razorpay API call (~200-800ms) is the main bottleneck — overlapping
+    // it with the prefill query saves a full DB round-trip.
     const effectiveTotal = Math.round(totalBeforeShipping * 100); // paise
-    const razorpayOrder = await getRazorpay().orders.create({
-      amount: effectiveTotal,
-      currency: 'INR',
-      receipt: orderNumber,
-      line_items_total: effectiveTotal, // match amount so popup shows discounted price
-      line_items: lineItems,
-      notes: {
-        userId: userId || 'guest',
-        guestEmail: guestEmail || '',
-        orderNumber,
-        discountCode: data.discountCode || '',
-        discountAmount: String(discountAmount),
-        loyaltyPointsToUse: String(isGuest ? 0 : data.loyaltyPointsToUse),
-        // Compact item summary so order details are recoverable from Razorpay dashboard
-        // even if DB finalization fails. Format: "name (size) x qty @ price"
-        items: data.items
-          .map((ci: { variantId: string; quantity: number }) => {
-            const v = variants.find((v) => v.id === ci.variantId)!;
-            const price = Number(v.price) || Number(v.product.price);
-            return `${v.product.name} (${v.size}) x${ci.quantity} @${price}`;
-          })
-          .join('; ')
-          .slice(0, 256),
-        subtotal: String(lineItemsTotal),
-        total: String(totalBeforeShipping),
-      },
-    } as any);
+
+    const prefillPromise = !isGuest
+      ? prisma.user.findUnique({
+          where: { id: userId! },
+          select: { email: true, firstName: true, lastName: true, phone: true },
+        })
+      : Promise.resolve(null);
+
+    const [razorpayOrder, prefillUser] = await Promise.all([
+      getRazorpay().orders.create({
+        amount: effectiveTotal,
+        currency: 'INR',
+        receipt: orderNumber,
+        line_items_total: effectiveTotal,
+        line_items: lineItems,
+        notes: {
+          userId: userId || 'guest',
+          guestEmail: guestEmail || '',
+          orderNumber,
+          discountCode: data.discountCode || '',
+          discountAmount: String(discountAmount),
+          loyaltyPointsToUse: String(isGuest ? 0 : data.loyaltyPointsToUse),
+          items: data.items
+            .map((ci: { variantId: string; quantity: number }) => {
+              const v = variants.find((v) => v.id === ci.variantId)!;
+              const price = Number(v.price) || Number(v.product.price);
+              return `${v.product.name} (${v.size}) x${ci.quantity} @${price}`;
+            })
+            .join('; ')
+            .slice(0, 256),
+          subtotal: String(lineItemsTotal),
+          total: String(totalBeforeShipping),
+        },
+      } as any),
+      prefillPromise,
+    ]);
 
     // Reserve inventory and store pending checkout atomically
     await prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
-        // Re-validate prices and reserve stock inside a Serializable transaction
         for (const reqItem of data.items) {
           const currentVariant = await tx.productVariant.findUnique({
             where: { id: reqItem.variantId },
@@ -187,7 +195,6 @@ export const checkoutService = {
             );
           }
 
-          // Decrement stock to reserve
           const result = await tx.productVariant.updateMany({
             where: { id: reqItem.variantId, stock: { gte: reqItem.quantity } },
             data: { stock: { decrement: reqItem.quantity } },
@@ -197,7 +204,6 @@ export const checkoutService = {
           }
         }
 
-        // Store pending order data so we can finalize after payment
         await tx.pendingCheckout.create({
           data: {
             orderNumber,
@@ -218,24 +224,16 @@ export const checkoutService = {
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
     );
 
-    // Get user info for prefill (or use guest email)
+    // Build prefill from the already-fetched user data
     let prefill = { name: '', email: guestEmail || '', contact: '' };
-    if (!isGuest) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { email: true, firstName: true, lastName: true, phone: true },
-      });
-      if (user) {
-        // Razorpay Magic Checkout needs +91 format to auto-recognize the user
-        // and skip re-asking for phone — avoids the "double login" experience
-        let phone = user.phone || '';
-        if (phone && !phone.startsWith('+')) phone = `+91${phone}`;
-        prefill = {
-          name: `${user.firstName} ${user.lastName}`.trim(),
-          email: user.email,
-          contact: phone,
-        };
-      }
+    if (prefillUser) {
+      let phone = prefillUser.phone || '';
+      if (phone && !phone.startsWith('+')) phone = `+91${phone}`;
+      prefill = {
+        name: `${prefillUser.firstName} ${prefillUser.lastName}`.trim(),
+        email: prefillUser.email,
+        contact: phone,
+      };
     }
 
     return {

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { CartItemRow } from './cart-item';
 import { LoginModal } from '@/components/auth/login-modal';
 import { api } from '@/lib/api-client';
-import { useRazorpay } from '@/hooks/use-razorpay';
+import { useRazorpay, preloadRazorpayScript } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
 
 // Free shipping on all orders — no threshold
@@ -48,6 +48,8 @@ export function CartDrawer() {
   useEffect(() => {
     if (isOpen) {
       lockBodyScroll();
+      // Preload Razorpay SDK as soon as cart opens so it's ready at checkout
+      preloadRazorpayScript();
       return () => unlockBodyScroll();
     }
   }, [isOpen]);

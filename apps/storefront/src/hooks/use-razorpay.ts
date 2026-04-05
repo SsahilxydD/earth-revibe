@@ -76,6 +76,27 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
+/**
+ * Preload the Razorpay script early (e.g. on cart open) so it's ready
+ * by the time the user clicks checkout. Safe to call multiple times.
+ */
+export function preloadRazorpayScript() {
+  if (typeof window === 'undefined') return;
+  if (window.Razorpay) return;
+  if (document.querySelector('script[src*="checkout.razorpay.com"]')) return;
+
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'script';
+  link.href = 'https://checkout.razorpay.com/v1/checkout.js';
+  document.head.appendChild(link);
+
+  const script = document.createElement('script');
+  script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+  script.async = true;
+  document.body.appendChild(script);
+}
+
 export function useRazorpay() {
   const [isLoading, setIsLoading] = useState(false);
   const razorpayRef = useRef<RazorpayInstance | null>(null);
