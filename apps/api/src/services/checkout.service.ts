@@ -17,6 +17,18 @@ import type {
   VerifyPaymentInput,
 } from '@earth-revibe/shared';
 
+/** Delete a record, silently ignoring P2025 ("record not found") from concurrent deletes. */
+async function idempotentDelete<T>(deleteOp: Promise<T>): Promise<T | null> {
+  try {
+    return await deleteOp;
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+      return null; // already deleted by another process
+    }
+    throw err;
+  }
+}
+
 export const checkoutService = {
   /**
    * Create a Razorpay order with line_items for Magic Checkout.
@@ -866,20 +878,23 @@ export async function finalizeOrderFromPending(
       const isExpectedRace = target.some((f) => expectedFields.includes(f));
       if (isExpectedRace) {
         // Verify the payment actually exists before assuming idempotent success.
-        // If it doesn't, this was a genuine collision — re-throw.
-        const confirmedPayment = await prisma.payment.findUnique({
-          where: { razorpayOrderId: paymentInfo.razorpayOrderId },
-        });
-        if (confirmedPayment) {
-          logger.info(
-            { razorpayOrderId: paymentInfo.razorpayOrderId, conflictField: target },
-            'Concurrent finalization race: unique constraint hit, order confirmed exists'
-          );
-          return null;
+        // The winning transaction may still be committing, so retry briefly.
+        for (let attempt = 0; attempt < 3; attempt++) {
+          if (attempt > 0) await new Promise((r) => setTimeout(r, 200 * attempt));
+          const confirmedPayment = await prisma.payment.findUnique({
+            where: { razorpayOrderId: paymentInfo.razorpayOrderId },
+          });
+          if (confirmedPayment) {
+            logger.info(
+              { razorpayOrderId: paymentInfo.razorpayOrderId, conflictField: target },
+              'Concurrent finalization race: unique constraint hit, order confirmed exists'
+            );
+            return null;
+          }
         }
         logger.error(
           { razorpayOrderId: paymentInfo.razorpayOrderId, conflictField: target },
-          'P2002 on expected field but no payment found — genuine collision, re-throwing'
+          'P2002 on expected field but no payment found after retries — genuine collision, re-throwing'
         );
       }
     }
@@ -978,7 +993,7 @@ export async function reconcileStaleCheckouts(): Promise<{
         // Order exists — just clean up the stale PendingCheckout
         if (checkout.stockReserved) {
           // Stock was already decremented by finalizeOrderFromPending, just delete
-          await prisma.pendingCheckout.delete({ where: { id: checkout.id } });
+          await idempotentDelete(prisma.pendingCheckout.delete({ where: { id: checkout.id } }));
         }
         skipped++;
         continue;
@@ -1043,10 +1058,10 @@ export async function reconcileStaleCheckouts(): Promise<{
                 data: { stock: { increment: item.quantity } },
               });
             }
-            await tx.pendingCheckout.delete({ where: { id: checkout.id } });
+            await idempotentDelete(tx.pendingCheckout.delete({ where: { id: checkout.id } }));
           });
         } else {
-          await prisma.pendingCheckout.delete({ where: { id: checkout.id } });
+          await idempotentDelete(prisma.pendingCheckout.delete({ where: { id: checkout.id } }));
         }
 
         released++;
