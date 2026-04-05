@@ -17,11 +17,11 @@ export const discountService = {
       throw ApiError.badRequest('Discount code has expired');
     }
 
-    if (discount.usageLimit && discount.usageCount >= discount.usageLimit) {
+    if (discount.usageLimit != null && discount.usageCount >= discount.usageLimit) {
       throw ApiError.badRequest('Discount code usage limit reached');
     }
 
-    // Per-user limit check
+    // Per-user limit check — also check by email for guest checkout users
     if (userId) {
       const userUsageCount = await prisma.order.count({
         where: { userId, discountCodeId: discount.id, status: { not: 'CANCELLED' } },

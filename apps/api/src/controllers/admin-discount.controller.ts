@@ -57,6 +57,7 @@ export const adminDiscountController = {
       minOrderValue,
       maxDiscountAmount,
       usageLimit,
+      perUserLimit,
       startsAt,
       expiresAt,
     } = req.body;
@@ -74,7 +75,8 @@ export const adminDiscountController = {
         value,
         minOrderValue: minOrderValue || null,
         maxDiscountAmount: maxDiscountAmount || null,
-        usageLimit: usageLimit || null,
+        usageLimit: usageLimit != null ? usageLimit : null,
+        perUserLimit: perUserLimit != null ? perUserLimit : 1,
         startsAt: new Date(startsAt),
         expiresAt: new Date(expiresAt),
       },
@@ -97,6 +99,7 @@ export const adminDiscountController = {
       minOrderValue,
       maxDiscountAmount,
       usageLimit,
+      perUserLimit,
       startsAt,
       expiresAt,
     } = req.body;
@@ -117,12 +120,15 @@ export const adminDiscountController = {
         ...(type !== undefined && { type }),
         ...(value !== undefined && { value }),
         ...(minOrderValue !== undefined && {
-          minOrderValue: minOrderValue || null,
+          minOrderValue: minOrderValue != null ? minOrderValue : null,
         }),
         ...(maxDiscountAmount !== undefined && {
-          maxDiscountAmount: maxDiscountAmount || null,
+          maxDiscountAmount: maxDiscountAmount != null ? maxDiscountAmount : null,
         }),
-        ...(usageLimit !== undefined && { usageLimit: usageLimit || null }),
+        ...(usageLimit !== undefined && { usageLimit: usageLimit != null ? usageLimit : null }),
+        ...(perUserLimit !== undefined && {
+          perUserLimit: perUserLimit != null ? perUserLimit : 1,
+        }),
         ...(startsAt !== undefined && { startsAt: new Date(startsAt) }),
         ...(expiresAt !== undefined && { expiresAt: new Date(expiresAt) }),
       },

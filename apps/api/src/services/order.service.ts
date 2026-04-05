@@ -90,7 +90,7 @@ export const orderService = {
         throw ApiError.badRequest('Discount code has expired');
       }
 
-      if (discount.usageLimit && discount.usageCount >= discount.usageLimit) {
+      if (discount.usageLimit != null && discount.usageCount >= discount.usageLimit) {
         throw ApiError.badRequest('Discount code usage limit reached');
       }
 
