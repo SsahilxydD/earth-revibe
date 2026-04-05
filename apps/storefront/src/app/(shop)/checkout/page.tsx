@@ -4,10 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, ShoppingBag, Loader2 } from 'lucide-react';
+import { ChevronLeft, ShoppingBag, Loader2, ShieldCheck, CreditCard, Check } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { formatPrice, getImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
@@ -20,18 +19,21 @@ export default function CheckoutPage() {
   const discountCode = useCartStore((s) => s.discountCode);
   const clearCart = useCartStore((s) => s.clearCart);
   const { addToast } = useToast();
-  const { initiatePayment, isLoading: isRazorpayLoading } = useRazorpay();
+  const { initiatePayment } = useRazorpay();
 
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [hasLaunched, setHasLaunched] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<'idle' | 'securing' | 'opening' | 'verifying'>(
+    'idle'
+  );
 
   const launchMagicCheckout = useCallback(async () => {
     if (hasLaunched || items.length === 0) return;
     setHasLaunched(true);
     setIsCreatingOrder(true);
+    setCheckoutStep('securing');
 
     try {
-      // Create Magic Checkout order via the API
       const result = await api.post<{
         razorpayOrderId: string;
         razorpayKeyId: string;
@@ -48,13 +50,13 @@ export default function CheckoutPage() {
       });
 
       setIsCreatingOrder(false);
+      setCheckoutStep('opening');
 
       trackCheckoutStarted({
         total: result.amount,
         itemCount: items.length,
       });
 
-      // Open Razorpay Magic Checkout — address, payment, coupons all handled by Razorpay
       const paymentResponse = await initiatePayment({
         orderId: result.orderNumber,
         razorpayOrderId: result.razorpayOrderId,
@@ -67,13 +69,14 @@ export default function CheckoutPage() {
       });
 
       if (!paymentResponse) {
-        // User dismissed the popup
         addToast('Payment was cancelled. You can try again.', 'info');
         setHasLaunched(false);
+        setCheckoutStep('idle');
         return;
       }
 
-      // Verify payment and create the final order
+      setCheckoutStep('verifying');
+
       const verification = await api.post<{
         orderNumber: string;
         pointsEarned: number;
@@ -99,6 +102,7 @@ export default function CheckoutPage() {
       addToast(error?.message || 'Something went wrong. Please try again.', 'error');
       setIsCreatingOrder(false);
       setHasLaunched(false);
+      setCheckoutStep('idle');
     }
   }, [hasLaunched, items, discountCode, initiatePayment, addToast, clearCart, router]);
 
@@ -143,19 +147,62 @@ export default function CheckoutPage() {
 
       {/* Order summary while Magic Checkout loads */}
       <div className="mt-8">
-        {(isCreatingOrder || isRazorpayLoading) && (
+        {checkoutStep !== 'idle' && (
           <div className="flex flex-col items-center justify-center py-16">
-            <Spinner className="h-8 w-8" />
-            <p className="mt-4 text-sm font-semibold uppercase tracking-wider">
-              {isCreatingOrder ? 'Preparing your order...' : 'Opening payment...'}
-            </p>
-            <p className="mt-1 text-xs text-[var(--color-muted)]">
-              Please wait, Razorpay checkout will open shortly.
+            {/* Step progress */}
+            <div className="flex w-full max-w-xs items-center justify-between">
+              {[
+                { key: 'securing', icon: ShieldCheck, label: 'Securing' },
+                { key: 'opening', icon: CreditCard, label: 'Payment' },
+                { key: 'verifying', icon: Check, label: 'Confirming' },
+              ].map((step, i) => {
+                const steps = ['securing', 'opening', 'verifying'];
+                const current = steps.indexOf(checkoutStep);
+                const isActive = i === current;
+                const isDone = i < current;
+                const Icon = step.icon;
+                return (
+                  <div key={step.key} className="flex flex-1 flex-col items-center gap-2">
+                    {i > 0 && (
+                      <div
+                        className={`absolute h-0.5 w-12 -translate-x-10 transition-all duration-500 ${
+                          isDone ? 'bg-[var(--color-text)]' : 'bg-[var(--color-border)]'
+                        }`}
+                      />
+                    )}
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-500 ${
+                        isActive
+                          ? 'animate-pulse border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]'
+                          : isDone
+                            ? 'border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]'
+                            : 'border-[var(--color-border)] text-[var(--color-border)]'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <span
+                      className={`text-[10px] uppercase tracking-wider ${
+                        isActive
+                          ? 'font-semibold text-[var(--color-text)]'
+                          : isDone
+                            ? 'text-[var(--color-muted)]'
+                            : 'text-[var(--color-border)]'
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-6 text-xs text-[var(--color-muted)]">
+              Please don&apos;t close this window
             </p>
           </div>
         )}
 
-        {!isCreatingOrder && !isRazorpayLoading && (
+        {checkoutStep === 'idle' && (
           <>
             {/* Order items summary */}
             <div className="rounded-[var(--button-radius)] border border-[var(--color-border)] p-4">

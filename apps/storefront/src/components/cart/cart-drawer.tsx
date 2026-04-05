@@ -32,13 +32,15 @@ export function CartDrawer() {
   const [discountInput, setDiscountInput] = useState('');
   const [discountError, setDiscountError] = useState('');
   const [applyingDiscount, setApplyingDiscount] = useState(false);
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<'idle' | 'securing' | 'opening' | 'verifying'>(
+    'idle'
+  );
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const router = useRouter();
   const clearCart = useCartStore((s) => s.clearCart);
-  const { initiatePayment, isLoading: isRazorpayLoading } = useRazorpay();
+  const { initiatePayment } = useRazorpay();
   const { addToast } = useToast();
 
   const subtotal = getSubtotal();
@@ -83,7 +85,7 @@ export function CartDrawer() {
   // Launch Razorpay Magic Checkout directly from the cart drawer — no page navigation
   const launchMagicCheckout = useCallback(async () => {
     if (items.length === 0) return;
-    setIsCheckingOut(true);
+    setCheckoutStep('securing');
 
     try {
       const result = await api.post<{
@@ -101,6 +103,8 @@ export function CartDrawer() {
         loyaltyPointsToUse: 0,
       });
 
+      setCheckoutStep('opening');
+
       const paymentResponse = await initiatePayment({
         orderId: result.orderNumber,
         razorpayOrderId: result.razorpayOrderId,
@@ -114,9 +118,11 @@ export function CartDrawer() {
 
       if (!paymentResponse) {
         addToast('Payment was cancelled. You can try again.', 'info');
-        setIsCheckingOut(false);
+        setCheckoutStep('idle');
         return;
       }
+
+      setCheckoutStep('verifying');
 
       const verification = await api.post<{
         orderNumber: string;
@@ -128,16 +134,14 @@ export function CartDrawer() {
         razorpaySignature: paymentResponse.razorpay_signature,
       });
 
-      // Don't clear cart here — the confirmation page handles it after mount.
-      // This prevents data loss if navigation fails.
       closeCart();
-      setIsCheckingOut(false);
+      setCheckoutStep('idle');
       const params = new URLSearchParams({ orderId: verification.orderNumber });
       if (verification.accountAutoCreated) params.set('newAccount', '1');
       router.push(`/checkout/confirmation?${params.toString()}`);
     } catch (error: any) {
       addToast(error?.message || 'Something went wrong. Please try again.', 'error');
-      setIsCheckingOut(false);
+      setCheckoutStep('idle');
     }
   }, [items, discountCode, initiatePayment, addToast, clearCart, closeCart, router]);
 
@@ -250,19 +254,59 @@ export function CartDrawer() {
                 </div>
               </div>
 
-              <Button
-                variant="primary"
-                fullWidth
-                size="lg"
-                onClick={isAuthenticated ? launchMagicCheckout : () => setShowLoginModal(true)}
-                loading={isCheckingOut || isRazorpayLoading}
-              >
-                {isCheckingOut
-                  ? 'Preparing...'
-                  : isRazorpayLoading
-                    ? 'Opening payment...'
-                    : 'Checkout'}
-              </Button>
+              {checkoutStep !== 'idle' ? (
+                <div className="space-y-3">
+                  {/* Progress steps */}
+                  <div className="flex items-center gap-3">
+                    {[
+                      { key: 'securing', label: 'Securing your order' },
+                      { key: 'opening', label: 'Opening payment' },
+                      { key: 'verifying', label: 'Confirming' },
+                    ].map((step) => {
+                      const steps = ['securing', 'opening', 'verifying'];
+                      const current = steps.indexOf(checkoutStep);
+                      const isActive = steps.indexOf(step.key) === current;
+                      const isDone = steps.indexOf(step.key) < current;
+                      return (
+                        <div key={step.key} className="flex flex-1 flex-col items-center gap-1">
+                          <div
+                            className={`h-1 w-full rounded-full transition-all duration-500 ${
+                              isDone
+                                ? 'bg-[var(--color-text)]'
+                                : isActive
+                                  ? 'animate-pulse bg-[var(--color-text)]'
+                                  : 'bg-[var(--color-border)]'
+                            }`}
+                          />
+                          <span
+                            className={`text-[10px] uppercase tracking-wider transition-colors duration-300 ${
+                              isActive
+                                ? 'font-semibold text-[var(--color-text)]'
+                                : isDone
+                                  ? 'text-[var(--color-muted)]'
+                                  : 'text-[var(--color-border)]'
+                            }`}
+                          >
+                            {step.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-center text-xs text-[var(--color-muted)]">
+                    Please don&apos;t close this window
+                  </p>
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  fullWidth
+                  size="lg"
+                  onClick={isAuthenticated ? launchMagicCheckout : () => setShowLoginModal(true)}
+                >
+                  Checkout
+                </Button>
+              )}
             </div>
           </>
         )}
