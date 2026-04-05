@@ -8,6 +8,7 @@ import { getPostHog } from '../config/posthog';
 import { sendMetaEvent } from '../utils/meta-conversions';
 import { webhookLimiter } from '../middleware/rate-limit';
 import { asyncHandler } from '../utils/async-handler';
+import { finalizeOrderFromPending } from '../services/checkout.service';
 
 const router: RouterType = Router();
 
@@ -52,6 +53,7 @@ router.post(
             where: { razorpayOrderId: paymentEntity.order_id },
           });
           if (payment) {
+            // Happy path: order already created by verifyMagicPayment — just update status
             await prisma.payment.update({
               where: { id: payment.id },
               data: {
@@ -96,6 +98,92 @@ router.post(
                   contentType: 'product',
                 }).catch(() => {});
               }
+            }
+          } else {
+            // Fallback: client-side verifyMagicPayment failed or timed out.
+            // Finalize the order from PendingCheckout so no paid order is lost.
+            const pending = await prisma.pendingCheckout.findUnique({
+              where: { razorpayOrderId: paymentEntity.order_id },
+            });
+            if (pending) {
+              logger.warn(
+                { razorpayOrderId: paymentEntity.order_id, orderNumber: pending.orderNumber },
+                'Webhook fallback: finalizing order from PendingCheckout (client verification likely failed)'
+              );
+              try {
+                const result = await finalizeOrderFromPending(pending, {
+                  razorpayOrderId: paymentEntity.order_id,
+                  razorpayPaymentId: paymentEntity.id,
+                  razorpaySignature: '',
+                  method: mapPaymentMethod(paymentEntity.method),
+                });
+
+                if (result) {
+                  logger.info(
+                    { orderNumber: pending.orderNumber },
+                    'Webhook fallback: order finalized successfully'
+                  );
+                } else {
+                  // Client won the race — update payment method + run analytics
+                  // since verifyMagicPayment doesn't have the payment method.
+                  const racedPayment = await prisma.payment.findUnique({
+                    where: { razorpayOrderId: paymentEntity.order_id },
+                    include: {
+                      order: {
+                        select: {
+                          id: true,
+                          orderNumber: true,
+                          userId: true,
+                          guestEmail: true,
+                          totalAmount: true,
+                        },
+                      },
+                    },
+                  });
+                  if (racedPayment) {
+                    await prisma.payment.update({
+                      where: { id: racedPayment.id },
+                      data: {
+                        method: mapPaymentMethod(paymentEntity.method) as any,
+                        status: 'CAPTURED',
+                        paidAt: racedPayment.paidAt || new Date(),
+                      },
+                    });
+
+                    const ph = getPostHog();
+                    if (ph && racedPayment.order) {
+                      ph.capture({
+                        distinctId:
+                          racedPayment.order.userId || racedPayment.order.guestEmail || 'anonymous',
+                        event: 'payment_captured_webhook',
+                        properties: {
+                          order_id: racedPayment.order.orderNumber,
+                          total: Number(racedPayment.order.totalAmount),
+                          payment_method: mapPaymentMethod(paymentEntity.method),
+                          razorpay_payment_id: paymentEntity.id,
+                        },
+                      });
+                    }
+                  }
+                  logger.info(
+                    { orderNumber: pending.orderNumber },
+                    'Webhook fallback: client won race, updated payment method'
+                  );
+                }
+              } catch (finalizeErr) {
+                logger.error(
+                  { err: finalizeErr, orderNumber: pending.orderNumber },
+                  'Webhook fallback: failed to finalize order from PendingCheckout'
+                );
+                // Return 500 so Razorpay retries this webhook instead of silently dropping the order
+                res.status(500).json({ success: false });
+                return;
+              }
+            } else {
+              logger.warn(
+                { razorpayOrderId: paymentEntity.order_id },
+                'Webhook: no payment or pending checkout found for captured payment'
+              );
             }
           }
           break;

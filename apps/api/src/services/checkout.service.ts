@@ -141,9 +141,22 @@ export const checkoutService = {
       notes: {
         userId: userId || 'guest',
         guestEmail: guestEmail || '',
+        orderNumber,
         discountCode: data.discountCode || '',
         discountAmount: String(discountAmount),
         loyaltyPointsToUse: String(isGuest ? 0 : data.loyaltyPointsToUse),
+        // Compact item summary so order details are recoverable from Razorpay dashboard
+        // even if DB finalization fails. Format: "name (size) x qty @ price"
+        items: data.items
+          .map((ci: { variantId: string; quantity: number }) => {
+            const v = variants.find((v) => v.id === ci.variantId)!;
+            const price = Number(v.price) || Number(v.product.price);
+            return `${v.product.name} (${v.size}) x${ci.quantity} @${price}`;
+          })
+          .join('; ')
+          .slice(0, 256),
+        subtotal: String(lineItemsTotal),
+        total: String(totalBeforeShipping),
       },
     } as any);
 
@@ -343,6 +356,9 @@ export const checkoutService = {
   /**
    * Verify Magic Checkout payment and create the final order.
    * Supports both authenticated users and guest checkout.
+   *
+   * Delegates to finalizeOrderFromPending() which is also called by the
+   * webhook handler as a safety net for orders that fail client-side verification.
    */
   async verifyMagicPayment(userId: string | null, data: VerifyPaymentInput) {
     // Verify HMAC signature
@@ -369,132 +385,292 @@ export const checkoutService = {
       where: { razorpayOrderId: data.razorpayOrderId },
     });
 
-    if (!pending) throw ApiError.notFound('Checkout session not found');
+    if (!pending) {
+      // Pending checkout may already have been finalized by webhook — check for existing order
+      const existingPayment = await prisma.payment.findUnique({
+        where: { razorpayOrderId: data.razorpayOrderId },
+        include: {
+          order: { select: { orderNumber: true, loyaltyPointsEarned: true, userId: true } },
+        },
+      });
+      if (existingPayment?.order) {
+        // Ownership: only reject when an authenticated user doesn't match a
+        // different authenticated owner. Guest callers with a valid HMAC
+        // signature (verified above) are allowed — the webhook may have
+        // auto-linked the order to an existing user by email/phone.
+        const orderUserId = existingPayment.order.userId;
+        if (userId && orderUserId && orderUserId !== userId) {
+          throw ApiError.forbidden('Checkout session does not belong to this user');
+        }
+        return {
+          orderNumber: existingPayment.order.orderNumber,
+          pointsEarned: existingPayment.order.loyaltyPointsEarned,
+          accountAutoCreated: false,
+        };
+      }
+      throw ApiError.notFound('Checkout session not found');
+    }
 
     // Security: if an authenticated user is verifying, ensure it matches the pending checkout's userId
     if (userId && pending.userId && pending.userId !== userId) {
       throw ApiError.forbidden('Checkout session does not belong to this user');
     }
 
-    let isGuest = !pending.userId;
-    let effectiveUserId = pending.userId;
-    let accountAutoCreated = false;
+    const result = await finalizeOrderFromPending(pending, {
+      razorpayOrderId: data.razorpayOrderId,
+      razorpayPaymentId: data.razorpayPaymentId,
+      razorpaySignature: data.razorpaySignature,
+    });
 
-    // Fetch the full Razorpay order — contains customer phone, email, address, shipping fee, promotions
-    const rzpOrder = (await getRazorpay().orders.fetch(data.razorpayOrderId)) as any;
-    const customerDetails = rzpOrder.customer_details || {};
-    const rzpAddress = customerDetails.shipping_address;
+    // If null, order was already created (e.g. by webhook racing ahead)
+    if (!result) {
+      const existingPayment = await prisma.payment.findUnique({
+        where: { razorpayOrderId: data.razorpayOrderId },
+        include: {
+          order: { select: { orderNumber: true, loyaltyPointsEarned: true, userId: true } },
+        },
+      });
+      // Ownership: same logic — only reject auth'd user vs different auth'd owner
+      const raceOrderUserId = existingPayment?.order?.userId ?? null;
+      if (userId && raceOrderUserId && raceOrderUserId !== userId) {
+        throw ApiError.forbidden('Checkout session does not belong to this user');
+      }
+      return {
+        orderNumber: existingPayment?.order?.orderNumber || pending.orderNumber,
+        pointsEarned: existingPayment?.order?.loyaltyPointsEarned || 0,
+        accountAutoCreated: false,
+      };
+    }
 
-    // ──────────────────────────────────────────────
-    // 1. Auto-create or link user from Razorpay data
-    //    Guest checkout provides phone, email, name — enough to create a user.
-    //    If a user with the same email/phone already exists, link to them.
-    // ──────────────────────────────────────────────
-    const customerEmail = customerDetails.email || pending.guestEmail || '';
-    const customerPhone = customerDetails.contact?.replace(/^\+91/, '') || '';
-    const customerName =
-      rzpAddress?.name || `${rzpAddress?.first_name || ''} ${rzpAddress?.last_name || ''}`.trim();
+    return result;
+  },
+};
 
-    if (isGuest && customerEmail) {
-      // Try to find existing user by email or phone
-      let existingUser = await prisma.user.findUnique({ where: { email: customerEmail } });
-      if (!existingUser && customerPhone) {
-        existingUser = await prisma.user.findFirst({ where: { phone: customerPhone } });
+/**
+ * Finalize an order from a PendingCheckout record.
+ * Used by both verifyMagicPayment (happy path) and the webhook fallback
+ * (when the client-side verification timed out or failed after payment).
+ *
+ * Returns null if the order was already finalized (idempotent).
+ */
+export async function finalizeOrderFromPending(
+  pending: {
+    id: string;
+    orderNumber: string;
+    userId: string | null;
+    guestEmail: string | null;
+    razorpayOrderId: string;
+    discountCode: string | null;
+    loyaltyPointsToUse: number;
+    subtotal: any;
+    discountAmount: any;
+    loyaltyDiscount: any;
+    itemsJson: string;
+    stockReserved: boolean;
+  },
+  paymentInfo: {
+    razorpayOrderId: string;
+    razorpayPaymentId: string;
+    razorpaySignature?: string;
+    method?: string;
+  }
+): Promise<{ orderNumber: string; pointsEarned: number; accountAutoCreated: boolean } | null> {
+  // Idempotency: if order already exists for this razorpayOrderId, skip
+  const existingPayment = await prisma.payment.findUnique({
+    where: { razorpayOrderId: paymentInfo.razorpayOrderId },
+  });
+  if (existingPayment) {
+    logger.info(
+      { razorpayOrderId: paymentInfo.razorpayOrderId },
+      'Order already finalized, skipping'
+    );
+    return null;
+  }
+
+  // Fetch the full Razorpay order for customer details (read-only, safe outside transaction)
+  const rzpOrder = (await getRazorpay().orders.fetch(paymentInfo.razorpayOrderId)) as any;
+  const customerDetails = rzpOrder.customer_details || {};
+  const rzpAddress = customerDetails.shipping_address;
+
+  // Pre-compute read-only data outside transaction for performance
+  const customerEmail = customerDetails.email || pending.guestEmail || '';
+  const customerPhone = customerDetails.contact?.replace(/^\+91/, '') || '';
+  const customerName =
+    rzpAddress?.name || `${rzpAddress?.first_name || ''} ${rzpAddress?.last_name || ''}`.trim();
+
+  const cartItems: { variantId: string; quantity: number }[] = JSON.parse(pending.itemsJson);
+  const variantIds = cartItems.map((i) => i.variantId);
+  const variants = await prisma.productVariant.findMany({
+    where: { id: { in: variantIds } },
+    include: {
+      product: {
+        select: { name: true, price: true, images: { where: { isPrimary: true }, take: 1 } },
+      },
+    },
+  });
+
+  let subtotal = 0;
+  const orderItems = cartItems.map((ci) => {
+    const variant = variants.find((v) => v.id === ci.variantId)!;
+    const unitPrice = Number(variant.price) || Number(variant.product.price);
+    const totalPrice = unitPrice * ci.quantity;
+    subtotal += totalPrice;
+    return {
+      variantId: ci.variantId,
+      quantity: ci.quantity,
+      unitPrice,
+      totalPrice,
+      productName: variant.product.name,
+      productImage: variant.product.images[0]?.url || null,
+      variantSize: variant.size,
+      variantColor: variant.color,
+    };
+  });
+
+  const discountAmount = Number(pending.discountAmount);
+  const loyaltyDiscount = Number(pending.loyaltyDiscount);
+  const shippingAmount = 0;
+  const totalAmount = Math.max(subtotal - discountAmount - loyaltyDiscount + shippingAmount, 0);
+
+  let discountCodeId: string | null = null;
+  if (pending.discountCode) {
+    const dc = await prisma.discountCode.findUnique({ where: { code: pending.discountCode } });
+    discountCodeId = dc?.id || null;
+  }
+
+  const guestEmail = pending.guestEmail || customerDetails.email || null;
+
+  // ── All writes (user, address, order) inside a single transaction ──
+  // This prevents orphaned user/address rows if a concurrent request wins the race.
+  // Wrapped in try/catch to handle the concurrent unique-constraint race (P2002):
+  // both webhook and client can enter the transaction before either inserts a row,
+  // and the loser hits a unique violation instead of the findUnique guard.
+  type TxResult = {
+    orderId: string;
+    orderNumber: string;
+    pointsEarned: number;
+    accountAutoCreated: boolean;
+    effectiveUserId: string | null;
+    isGuest: boolean;
+  };
+
+  let txResult: TxResult;
+  try {
+    txResult = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Idempotency guard inside transaction — catches most races
+      const existingPaymentInTx = await tx.payment.findUnique({
+        where: { razorpayOrderId: paymentInfo.razorpayOrderId },
+      });
+      if (existingPaymentInTx) {
+        return {
+          orderId: '',
+          orderNumber: pending.orderNumber,
+          pointsEarned: 0,
+          accountAutoCreated: false,
+          effectiveUserId: pending.userId,
+          isGuest: !pending.userId,
+        };
       }
 
-      if (existingUser) {
-        // Link to existing user
-        effectiveUserId = existingUser.id;
-        isGuest = false;
-        logger.info(
-          { userId: existingUser.id, email: customerEmail },
-          'Guest checkout linked to existing user'
-        );
+      // ── 1. Resolve user (inside transaction) ──
+      let isGuest = !pending.userId;
+      let effectiveUserId = pending.userId;
+      let accountAutoCreated = false;
 
-        // Update phone if missing
-        if (customerPhone && !existingUser.phone) {
-          await prisma.user.update({
-            where: { id: existingUser.id },
-            data: { phone: customerPhone },
-          });
+      if (isGuest && customerEmail) {
+        let existingUser = await tx.user.findUnique({ where: { email: customerEmail } });
+        if (!existingUser && customerPhone) {
+          existingUser = await tx.user.findFirst({ where: { phone: customerPhone } });
         }
-      } else {
-        // Auto-create full account from Razorpay data:
-        // Auto-create a Prisma user so they have order history.
-        // They can log in later via WhatsApp OTP using their phone number.
-        const nameParts = customerName.split(' ');
-        const firstName = nameParts[0] || 'Customer';
-        const lastName = nameParts.slice(1).join(' ') || '';
 
-        try {
-          const newUser = await prisma.user.create({
-            data: {
-              email: customerEmail,
-              phone: customerPhone ? `+91${customerPhone}` : undefined,
-              firstName,
-              lastName,
-              role: 'CUSTOMER',
-              emailVerified: true,
-              phoneVerified: !!customerPhone,
-              isActive: true,
-            },
-          });
-          effectiveUserId = newUser.id;
+        if (existingUser) {
+          effectiveUserId = existingUser.id;
           isGuest = false;
-          accountAutoCreated = true;
-          logger.info(
-            { userId: newUser.id, email: customerEmail },
-            'Auto-created user from Magic Checkout'
-          );
-        } catch (err) {
-          // Unique constraint race — another request may have created the user
-          logger.warn(
-            { err, email: customerEmail },
-            'Failed to auto-create user, continuing as guest'
-          );
+          if (customerPhone && !existingUser.phone) {
+            await tx.user.update({
+              where: { id: existingUser.id },
+              data: { phone: customerPhone },
+            });
+          }
+        } else {
+          const nameParts = customerName.split(' ');
+          try {
+            const newUser = await tx.user.create({
+              data: {
+                email: customerEmail,
+                phone: customerPhone ? `+91${customerPhone}` : undefined,
+                firstName: nameParts[0] || 'Customer',
+                lastName: nameParts.slice(1).join(' ') || '',
+                role: 'CUSTOMER',
+                emailVerified: true,
+                phoneVerified: !!customerPhone,
+                isActive: true,
+              },
+            });
+            effectiveUserId = newUser.id;
+            isGuest = false;
+            accountAutoCreated = true;
+            logger.info(
+              { userId: newUser.id, email: customerEmail },
+              'Auto-created user from checkout finalization'
+            );
+          } catch (err) {
+            logger.warn(
+              { err, email: customerEmail },
+              'Failed to auto-create user, continuing as guest'
+            );
+          }
         }
-      }
-    } else if (!isGuest && effectiveUserId) {
-      // Authenticated user — sync phone if missing
-      if (customerPhone) {
-        const user = await prisma.user.findUnique({
+      } else if (!isGuest && effectiveUserId && customerPhone) {
+        const user = await tx.user.findUnique({
           where: { id: effectiveUserId },
           select: { phone: true },
         });
         if (!user?.phone) {
-          await prisma.user.update({
+          await tx.user.update({
             where: { id: effectiveUserId },
             data: { phone: customerPhone },
           });
         }
       }
-    }
 
-    // ──────────────────────────────────────────────
-    // 2. Save shipping address
-    // ──────────────────────────────────────────────
-    let addressId: string;
+      // ── 2. Save shipping address (inside transaction) ──
+      let addressId: string;
 
-    if (rzpAddress) {
-      const pinCode = rzpAddress.zipcode || rzpAddress.zip_code || '';
-      const line1 = rzpAddress.line1 || rzpAddress.address || '';
-      const fullName =
-        rzpAddress.name || `${rzpAddress.first_name || ''} ${rzpAddress.last_name || ''}`.trim();
-      const phone = customerDetails.contact || '';
+      if (rzpAddress) {
+        const pinCode = rzpAddress.zipcode || rzpAddress.zip_code || '';
+        const line1 = rzpAddress.line1 || rzpAddress.address || '';
+        const fullName =
+          rzpAddress.name || `${rzpAddress.first_name || ''} ${rzpAddress.last_name || ''}`.trim();
+        const phone = customerDetails.contact || '';
 
-      if (!isGuest && effectiveUserId) {
-        // For authenticated users, check for existing address to avoid duplicates
-        const existingAddr = await prisma.address.findFirst({
-          where: { userId: effectiveUserId, pinCode, line1 },
-        });
-
-        if (existingAddr) {
-          addressId = existingAddr.id;
+        if (!isGuest && effectiveUserId) {
+          const existingAddr = await tx.address.findFirst({
+            where: { userId: effectiveUserId, pinCode, line1 },
+          });
+          if (existingAddr) {
+            addressId = existingAddr.id;
+          } else {
+            const addressCount = await tx.address.count({ where: { userId: effectiveUserId } });
+            const address = await tx.address.create({
+              data: {
+                userId: effectiveUserId,
+                label: rzpAddress.tag || 'Home',
+                fullName,
+                phone,
+                line1,
+                line2: rzpAddress.line2 || '',
+                city: rzpAddress.city || '',
+                state: rzpAddress.state || '',
+                pinCode,
+                isDefault: addressCount === 0,
+              },
+            });
+            addressId = address.id;
+          }
         } else {
-          const addressCount = await prisma.address.count({ where: { userId: effectiveUserId } });
-          const address = await prisma.address.create({
+          const address = await tx.address.create({
             data: {
-              userId: effectiveUserId,
               label: rzpAddress.tag || 'Home',
               fullName,
               phone,
@@ -503,100 +679,26 @@ export const checkoutService = {
               city: rzpAddress.city || '',
               state: rzpAddress.state || '',
               pinCode,
-              isDefault: addressCount === 0,
+              isDefault: false,
             },
           });
           addressId = address.id;
         }
       } else {
-        // For guest users, create an address without a user link
-        const address = await prisma.address.create({
-          data: {
-            label: rzpAddress.tag || 'Home',
-            fullName,
-            phone,
-            line1,
-            line2: rzpAddress.line2 || '',
-            city: rzpAddress.city || '',
-            state: rzpAddress.state || '',
-            pinCode,
-            isDefault: false,
-          },
-        });
-        addressId = address.id;
-      }
-    } else {
-      if (!isGuest && effectiveUserId) {
-        // Fallback: get user's default address
-        const defaultAddr = await prisma.address.findFirst({
-          where: { userId: effectiveUserId, isDefault: true },
-        });
-        if (!defaultAddr) {
-          throw ApiError.badRequest('No shipping address found');
+        if (!isGuest && effectiveUserId) {
+          const defaultAddr = await tx.address.findFirst({
+            where: { userId: effectiveUserId, isDefault: true },
+          });
+          if (!defaultAddr) {
+            throw ApiError.badRequest('No shipping address found');
+          }
+          addressId = defaultAddr.id;
+        } else {
+          throw ApiError.badRequest('No shipping address provided for guest checkout');
         }
-        addressId = defaultAddr.id;
-      } else {
-        throw ApiError.badRequest('No shipping address provided for guest checkout');
       }
-    }
 
-    // ──────────────────────────────────────────────
-    // 3. Build order items from stored cart data
-    // ──────────────────────────────────────────────
-    const cartItems: { variantId: string; quantity: number }[] = JSON.parse(pending.itemsJson);
-    const variantIds = cartItems.map((i) => i.variantId);
-    const variants = await prisma.productVariant.findMany({
-      where: { id: { in: variantIds } },
-      include: {
-        product: {
-          select: { name: true, price: true, images: { where: { isPrimary: true }, take: 1 } },
-        },
-      },
-    });
-
-    let subtotal = 0;
-    const orderItems = cartItems.map((ci) => {
-      const variant = variants.find((v) => v.id === ci.variantId)!;
-      const unitPrice = Number(variant.price) || Number(variant.product.price);
-      const totalPrice = unitPrice * ci.quantity;
-      subtotal += totalPrice;
-      return {
-        variantId: ci.variantId,
-        quantity: ci.quantity,
-        unitPrice,
-        totalPrice,
-        productName: variant.product.name,
-        productImage: variant.product.images[0]?.url || null,
-        variantSize: variant.size,
-        variantColor: variant.color,
-      };
-    });
-
-    // ──────────────────────────────────────────────
-    // 4. Calculate totals
-    // ──────────────────────────────────────────────
-    const discountAmount = Number(pending.discountAmount);
-    const loyaltyDiscount = Number(pending.loyaltyDiscount);
-    const shippingAmount = 0;
-    const totalAmount = Math.max(subtotal - discountAmount - loyaltyDiscount + shippingAmount, 0);
-
-    // Find discount code ID if applicable
-    let discountCodeId: string | null = null;
-    if (pending.discountCode) {
-      const dc = await prisma.discountCode.findUnique({ where: { code: pending.discountCode } });
-      discountCodeId = dc?.id || null;
-    }
-
-    // Resolve the guest email (from pending checkout or Razorpay customer details)
-    const guestEmail = pending.guestEmail || customerDetails.email || null;
-
-    // Wrap all DB writes in a transaction for data integrity
-    const {
-      orderId,
-      orderNumber: finalOrderNumber,
-      pointsEarned,
-    } = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Create order in DB
+      // ── 3. Create order ──
       const order = await tx.order.create({
         data: {
           orderNumber: pending.orderNumber,
@@ -613,11 +715,12 @@ export const checkoutService = {
           items: { create: orderItems },
           payment: {
             create: {
-              razorpayOrderId: data.razorpayOrderId,
-              razorpayPaymentId: data.razorpayPaymentId,
-              razorpaySignature: data.razorpaySignature,
+              razorpayOrderId: paymentInfo.razorpayOrderId,
+              razorpayPaymentId: paymentInfo.razorpayPaymentId,
+              razorpaySignature: paymentInfo.razorpaySignature || '',
               amount: totalAmount,
               status: 'CAPTURED',
+              method: paymentInfo.method as any,
               paidAt: new Date(),
             },
           },
@@ -633,7 +736,6 @@ export const checkoutService = {
         },
       });
 
-      // Update discount usage count
       if (discountCodeId) {
         await tx.discountCode.update({
           where: { id: discountCodeId },
@@ -641,8 +743,6 @@ export const checkoutService = {
         });
       }
 
-      // Stock was already reserved during createMagicOrder (Serializable transaction).
-      // If somehow stock was NOT reserved (legacy pending checkouts), deduct now.
       if (!pending.stockReserved) {
         for (const ci of cartItems) {
           const result = await tx.productVariant.updateMany({
@@ -655,10 +755,8 @@ export const checkoutService = {
         }
       }
 
-      // Loyalty points and referrals — only for authenticated users
       let pointsEarned = 0;
       if (!isGuest && effectiveUserId) {
-        // Deduct loyalty points
         if (pending.loyaltyPointsToUse > 0) {
           await tx.user.update({
             where: { id: effectiveUserId },
@@ -675,7 +773,6 @@ export const checkoutService = {
           });
         }
 
-        // Earn loyalty points (1 per 100)
         pointsEarned = Math.floor(totalAmount / 100);
         if (pointsEarned > 0) {
           await tx.user.update({
@@ -697,7 +794,6 @@ export const checkoutService = {
           });
         }
 
-        // Handle referral (first purchase)
         const orderCount = await tx.order.count({
           where: { userId: effectiveUserId, status: { not: 'CANCELLED' } },
         });
@@ -741,61 +837,108 @@ export const checkoutService = {
           }
         }
 
-        // Clear cart
         const cart = await tx.cart.findUnique({ where: { userId: effectiveUserId } });
         if (cart) {
           await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
         }
       }
 
-      // Clean up pending checkout
       await tx.pendingCheckout.delete({ where: { id: pending.id } });
 
-      return { orderId: order.id, orderNumber: pending.orderNumber, pointsEarned };
+      return {
+        orderId: order.id,
+        orderNumber: pending.orderNumber,
+        pointsEarned,
+        accountAutoCreated,
+        effectiveUserId,
+        isGuest,
+      };
     });
-
-    // Auto-create Shiprocket shipment (non-blocking, outside transaction)
-    shiprocketService.createShiprocketOrder(orderId).catch((err) => {
-      logger.error({ err, orderId }, 'Failed to create Shiprocket shipment');
-    });
-
-    // Server-side PostHog purchase tracking (guaranteed — doesn't depend on client JS)
-    const ph = getPostHog();
-    if (ph) {
-      const distinctId = effectiveUserId || guestEmail || 'anonymous';
-      ph.capture({
-        distinctId,
-        event: 'purchase_completed',
-        properties: {
-          order_id: finalOrderNumber,
-          total: totalAmount,
-          item_count: cartItems.length,
-          discount_amount: discountAmount,
-          payment_method: 'razorpay',
-          is_guest: isGuest,
-          loyalty_points_earned: pointsEarned,
-          account_auto_created: accountAutoCreated,
-          $set: guestEmail ? { email: guestEmail } : undefined,
-        },
-      });
+  } catch (err) {
+    // Handle the concurrent race: both webhook and client entered the
+    // transaction before either inserted a payment row. The loser hits a
+    // unique constraint violation (P2002) on razorpayOrderId/orderNumber.
+    // Treat this as idempotent success — the other caller already created the order.
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      // Only treat as idempotent if the conflict is on a field belonging to
+      // this payment (razorpayOrderId, orderNumber, razorpayPaymentId).
+      // Re-throw unexpected unique violations so they surface properly.
+      const target = (err.meta?.target as string[]) || [];
+      const expectedFields = ['razorpayOrderId', 'razorpayPaymentId', 'orderNumber'];
+      const isExpectedRace = target.some((f) => expectedFields.includes(f));
+      if (isExpectedRace) {
+        // Verify the payment actually exists before assuming idempotent success.
+        // If it doesn't, this was a genuine collision — re-throw.
+        const confirmedPayment = await prisma.payment.findUnique({
+          where: { razorpayOrderId: paymentInfo.razorpayOrderId },
+        });
+        if (confirmedPayment) {
+          logger.info(
+            { razorpayOrderId: paymentInfo.razorpayOrderId, conflictField: target },
+            'Concurrent finalization race: unique constraint hit, order confirmed exists'
+          );
+          return null;
+        }
+        logger.error(
+          { razorpayOrderId: paymentInfo.razorpayOrderId, conflictField: target },
+          'P2002 on expected field but no payment found — genuine collision, re-throwing'
+        );
+      }
     }
+    throw err;
+  }
 
-    // Meta Conversions API — server-side Purchase event (bypasses ad blockers)
-    sendMetaEvent({
-      eventName: 'Purchase',
-      email: guestEmail || undefined,
-      userId: effectiveUserId || undefined,
-      value: totalAmount,
-      currency: 'INR',
-      contentIds: cartItems.map((ci) => ci.variantId),
-      contentType: 'product',
-      numItems: cartItems.length,
-      orderId: finalOrderNumber,
-    }).catch(() => {});
+  const {
+    orderId,
+    orderNumber: finalOrderNumber,
+    pointsEarned,
+    accountAutoCreated,
+    effectiveUserId,
+    isGuest,
+  } = txResult;
 
-    return { orderNumber: finalOrderNumber, pointsEarned, accountAutoCreated };
-  },
-};
+  // Skip post-transaction work if this was a no-op (idempotency guard inside tx)
+  if (!orderId) return null;
+
+  // Fire-and-forget side effects
+  shiprocketService.createShiprocketOrder(orderId).catch((sErr) => {
+    logger.error({ err: sErr, orderId }, 'Failed to create Shiprocket shipment');
+  });
+
+  const ph = getPostHog();
+  if (ph) {
+    const distinctId = effectiveUserId || guestEmail || 'anonymous';
+    ph.capture({
+      distinctId,
+      event: 'purchase_completed',
+      properties: {
+        order_id: finalOrderNumber,
+        total: totalAmount,
+        item_count: cartItems.length,
+        discount_amount: discountAmount,
+        payment_method: 'razorpay',
+        is_guest: isGuest,
+        loyalty_points_earned: pointsEarned,
+        account_auto_created: accountAutoCreated,
+        $set: guestEmail ? { email: guestEmail } : undefined,
+      },
+    });
+  }
+
+  sendMetaEvent({
+    eventName: 'Purchase',
+    email: guestEmail || undefined,
+    userId: effectiveUserId || undefined,
+    value: totalAmount,
+    currency: 'INR',
+    contentIds: cartItems.map((ci) => ci.variantId),
+    contentType: 'product',
+    numItems: cartItems.length,
+    orderId: finalOrderNumber,
+  }).catch(() => {});
+
+  return { orderNumber: finalOrderNumber, pointsEarned, accountAutoCreated };
+}
 
 /**
  * Restore reserved stock for expired/failed pending checkouts.
