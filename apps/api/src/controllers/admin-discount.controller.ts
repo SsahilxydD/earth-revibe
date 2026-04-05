@@ -58,9 +58,15 @@ export const adminDiscountController = {
       maxDiscountAmount,
       usageLimit,
       perUserLimit,
+      applicableProducts,
+      applicableCategories,
       startsAt,
       expiresAt,
     } = req.body;
+
+    if (type === 'PERCENTAGE' && Number(value) > 100) {
+      throw ApiError.badRequest('Percentage discount cannot exceed 100%');
+    }
 
     const existing = await prisma.discountCode.findUnique({
       where: { code: code.toUpperCase() },
@@ -73,10 +79,12 @@ export const adminDiscountController = {
         description: description || null,
         type,
         value,
-        minOrderValue: minOrderValue || null,
-        maxDiscountAmount: maxDiscountAmount || null,
+        minOrderValue: minOrderValue != null ? minOrderValue : null,
+        maxDiscountAmount: maxDiscountAmount != null ? maxDiscountAmount : null,
         usageLimit: usageLimit != null ? usageLimit : null,
         perUserLimit: perUserLimit != null ? perUserLimit : 1,
+        applicableProducts: applicableProducts || [],
+        applicableCategories: applicableCategories || [],
         startsAt: new Date(startsAt),
         expiresAt: new Date(expiresAt),
       },
@@ -100,9 +108,17 @@ export const adminDiscountController = {
       maxDiscountAmount,
       usageLimit,
       perUserLimit,
+      applicableProducts,
+      applicableCategories,
       startsAt,
       expiresAt,
     } = req.body;
+
+    const effectiveType = type !== undefined ? type : existing.type;
+    const effectiveValue = value !== undefined ? value : existing.value;
+    if (effectiveType === 'PERCENTAGE' && Number(effectiveValue) > 100) {
+      throw ApiError.badRequest('Percentage discount cannot exceed 100%');
+    }
 
     // Check for code uniqueness if code is being changed
     if (code && code.toUpperCase() !== existing.code) {
@@ -129,6 +145,8 @@ export const adminDiscountController = {
         ...(perUserLimit !== undefined && {
           perUserLimit: perUserLimit != null ? perUserLimit : 1,
         }),
+        ...(applicableProducts !== undefined && { applicableProducts }),
+        ...(applicableCategories !== undefined && { applicableCategories }),
         ...(startsAt !== undefined && { startsAt: new Date(startsAt) }),
         ...(expiresAt !== undefined && { expiresAt: new Date(expiresAt) }),
       },
@@ -143,7 +161,16 @@ export const adminDiscountController = {
     const existing = await prisma.discountCode.findUnique({ where: { id } });
     if (!existing) throw ApiError.notFound('Discount code not found');
 
-    await prisma.discountCode.delete({ where: { id } });
+    try {
+      await prisma.discountCode.delete({ where: { id } });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
+        throw ApiError.conflict(
+          'Cannot delete this discount code — it has been used in orders. Deactivate it instead.'
+        );
+      }
+      throw err;
+    }
     res.json({ success: true, message: 'Discount code deleted' });
   },
 

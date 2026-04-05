@@ -63,6 +63,7 @@ interface DiscountFormData {
   maxDiscountAmount: string;
   usageLimit: string;
   perUserLimit: string;
+  startsAt: string;
   expiresAt: string;
 }
 
@@ -75,6 +76,7 @@ const emptyForm: DiscountFormData = {
   maxDiscountAmount: '',
   usageLimit: '',
   perUserLimit: '1',
+  startsAt: '',
   expiresAt: '',
 };
 
@@ -115,10 +117,12 @@ export default function DiscountsPage() {
       description: discount.description || '',
       type: discount.type,
       value: String(discount.value),
-      minOrderValue: discount.minOrderValue ? String(discount.minOrderValue) : '',
-      maxDiscountAmount: discount.maxDiscountAmount ? String(discount.maxDiscountAmount) : '',
-      usageLimit: discount.usageLimit ? String(discount.usageLimit) : '',
-      perUserLimit: discount.perUserLimit ? String(discount.perUserLimit) : '1',
+      minOrderValue: discount.minOrderValue != null ? String(discount.minOrderValue) : '',
+      maxDiscountAmount:
+        discount.maxDiscountAmount != null ? String(discount.maxDiscountAmount) : '',
+      usageLimit: discount.usageLimit != null ? String(discount.usageLimit) : '',
+      perUserLimit: discount.perUserLimit != null ? String(discount.perUserLimit) : '1',
+      startsAt: discount.startsAt ? formatDateTimeLocal(discount.startsAt) : '',
       expiresAt: formatDateTimeLocal(discount.expiresAt),
     });
     setIsModalOpen(true);
@@ -155,11 +159,11 @@ export default function DiscountsPage() {
       description: form.description.trim() || undefined,
       type: form.type,
       value: Number(form.value),
-      minOrderValue: form.minOrderValue ? Number(form.minOrderValue) : undefined,
-      maxDiscountAmount: form.maxDiscountAmount ? Number(form.maxDiscountAmount) : undefined,
-      usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
-      perUserLimit: form.perUserLimit ? Number(form.perUserLimit) : 1,
-      startsAt: new Date().toISOString(),
+      minOrderValue: form.minOrderValue !== '' ? Number(form.minOrderValue) : null,
+      maxDiscountAmount: form.maxDiscountAmount !== '' ? Number(form.maxDiscountAmount) : null,
+      usageLimit: form.usageLimit !== '' ? Number(form.usageLimit) : null,
+      perUserLimit: form.perUserLimit !== '' ? Number(form.perUserLimit) : 1,
+      startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : new Date().toISOString(),
       expiresAt: form.expiresAt,
     };
 
@@ -526,12 +530,22 @@ export default function DiscountsPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-charcoal">Expires At *</label>
-            <CalendarPicker
-              value={form.expiresAt}
-              onChange={(val) => setForm({ ...form, expiresAt: val })}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-charcoal">Starts At</label>
+              <CalendarPicker
+                value={form.startsAt}
+                onChange={(val) => setForm({ ...form, startsAt: val })}
+              />
+              <p className="text-xs text-medium-gray">Leave empty for immediate start</p>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-charcoal">Expires At *</label>
+              <CalendarPicker
+                value={form.expiresAt}
+                onChange={(val) => setForm({ ...form, expiresAt: val })}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
