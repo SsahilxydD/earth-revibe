@@ -149,30 +149,32 @@ app.get('/api/v1/health', async (_req, res) => {
   });
 });
 
-// Cleanup stale pending checkouts, restore reserved stock, and purge expired idempotency keys
-app.post('/api/v1/internal/cleanup', async (_req, res) => {
+// Cleanup stale pending checkouts, restore reserved stock, and purge expired idempotency keys.
+// Also reconciles paid orders where the webhook failed — checks Razorpay API before releasing stock.
+app.post('/api/v1/internal/cleanup', async (req, res) => {
+  // Protect with CRON_SECRET if configured
+  if (env.CRON_SECRET && req.headers['x-cron-secret'] !== env.CRON_SECRET) {
+    res
+      .status(401)
+      .json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid cron secret' } });
+    return;
+  }
+
   try {
     const { prisma } = await import('@earth-revibe/db');
-    const { restoreExpiredReservations } = await import('./services/checkout.service.js');
+    const { reconcileStaleCheckouts } = await import('./services/checkout.service.js');
 
-    // 1. Restore stock for expired reservations, then delete them
-    const restoredCount = await restoreExpiredReservations();
+    // 1. Reconcile stale checkouts — finalize paid ones, release unpaid ones
+    const reconciled = await reconcileStaleCheckouts();
 
-    // 2. Delete remaining non-reserved expired checkouts
-    const cutoff = new Date(Date.now() - APP_CONSTANTS.CHECKOUT_EXPIRY_MS);
-    const result = await prisma.pendingCheckout.deleteMany({
-      where: { createdAt: { lt: cutoff } },
-    });
-
-    // 3. Clean expired idempotency keys
+    // 2. Clean expired idempotency keys
     const idempotencyResult = await prisma.idempotencyKey.deleteMany({
       where: { expiresAt: { lt: new Date() } },
     });
 
     logger.info(
       {
-        restoredCount,
-        checkoutsDeleted: result.count,
+        reconciled,
         idempotencyKeysDeleted: idempotencyResult.count,
       },
       'Cleanup completed'
@@ -181,8 +183,7 @@ app.post('/api/v1/internal/cleanup', async (_req, res) => {
     res.json({
       success: true,
       data: {
-        reservationsRestored: restoredCount,
-        checkoutsDeleted: result.count,
+        reconciled,
         idempotencyKeysDeleted: idempotencyResult.count,
       },
     });

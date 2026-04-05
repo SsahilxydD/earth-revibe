@@ -28,23 +28,46 @@ router.post(
     // Verify signature using the raw request body — Razorpay signs the exact
     // bytes it sends, and JSON.stringify(req.body) may reorder keys or change
     // whitespace, causing a mismatch.
-    const body = (req as any).rawBody || JSON.stringify(req.body);
+    const rawBody = (req as any).rawBody;
+    const body = rawBody || JSON.stringify(req.body);
+
+    if (!rawBody) {
+      logger.warn('Webhook rawBody missing — falling back to JSON.stringify (signature may fail)');
+    }
+
     const expectedSignature = crypto.createHmac('sha256', webhookSecret).update(body).digest('hex');
 
-    const sigBuffer = Buffer.from(signature, 'utf8');
+    const sigBuffer = Buffer.from(signature || '', 'utf8');
     const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
     if (
+      !signature ||
       sigBuffer.length !== expectedBuffer.length ||
       !crypto.timingSafeEqual(sigBuffer, expectedBuffer)
     ) {
-      logger.warn('Invalid Razorpay webhook signature');
+      logger.warn(
+        { hasSignature: !!signature, hasRawBody: !!rawBody },
+        'Invalid Razorpay webhook signature'
+      );
       res.status(400).json({ success: false });
       return;
     }
 
     const event = req.body?.event;
     const payload = req.body?.payload;
-    logger.info({ event }, 'Razorpay webhook event');
+    const webhookId = req.headers['x-razorpay-event-id'] as string | undefined;
+
+    // Structured webhook log — searchable in Railway/log aggregator
+    logger.info(
+      {
+        webhookId,
+        event,
+        razorpayOrderId: payload?.payment?.entity?.order_id || payload?.refund?.entity?.payment_id,
+        razorpayPaymentId: payload?.payment?.entity?.id,
+        amount: payload?.payment?.entity?.amount,
+        method: payload?.payment?.entity?.method,
+      },
+      'Razorpay webhook received'
+    );
 
     try {
       switch (event) {
@@ -262,10 +285,13 @@ router.post(
           logger.info({ event }, 'Unhandled webhook event');
       }
     } catch (err) {
-      logger.error({ err, event }, 'Webhook processing error');
+      logger.error({ err, event, webhookId }, 'Webhook processing error');
+      // Return 500 for unexpected errors so Razorpay retries.
+      // The reconciliation cron is the ultimate safety net if retries also fail.
+      res.status(500).json({ success: false });
+      return;
     }
 
-    // Always return 200 to prevent Razorpay retries
     res.status(200).json({ success: true });
   })
 );

@@ -39,6 +39,8 @@ const envSchema = z.object({
   // Resend email service
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM_EMAIL: z.string().default('Earth Revibe <noreply@earthrevibe.com>'),
+  // Cron job secret — protects internal endpoints from public access
+  CRON_SECRET: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

@@ -939,41 +939,151 @@ export async function finalizeOrderFromPending(
 }
 
 /**
- * Restore reserved stock for expired/failed pending checkouts.
- * Called by the cleanup endpoint.
+ * Reconcile stale PendingCheckouts against the Razorpay API.
+ *
+ * For each checkout older than 30 minutes:
+ *  - If Razorpay shows a captured payment → finalize the order (webhook must have failed)
+ *  - If Razorpay shows failed/expired or checkout is older than 2h → restore stock and delete
+ *  - If payment is still pending and checkout is < 2h old → skip (user might still be paying)
+ *
+ * This is the ultimate safety net — even if the webhook never fires and the client
+ * never calls verifyMagicPayment, this cron ensures every paid order gets created
+ * and every abandoned reservation gets released.
  */
-export async function restoreExpiredReservations(): Promise<number> {
+export async function reconcileStaleCheckouts(): Promise<{
+  finalized: number;
+  released: number;
+  skipped: number;
+  errors: number;
+}> {
+  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
   const twoHoursAgo = new Date(Date.now() - APP_CONSTANTS.CHECKOUT_EXPIRY_MS);
 
-  const expiredCheckouts = await prisma.pendingCheckout.findMany({
-    where: {
-      createdAt: { lt: twoHoursAgo },
-      stockReserved: true,
-    },
+  const staleCheckouts = await prisma.pendingCheckout.findMany({
+    where: { createdAt: { lt: thirtyMinAgo } },
   });
 
-  let restoredCount = 0;
+  let finalized = 0;
+  let released = 0;
+  let skipped = 0;
+  let errors = 0;
 
-  for (const checkout of expiredCheckouts) {
-    const cartItems: { variantId: string; quantity: number }[] = JSON.parse(checkout.itemsJson);
-
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Restore stock for each reserved item
-      for (const item of cartItems) {
-        await tx.productVariant.update({
-          where: { id: item.variantId },
-          data: { stock: { increment: item.quantity } },
-        });
+  for (const checkout of staleCheckouts) {
+    try {
+      // Skip if order was already finalized (race with webhook)
+      const existingPayment = await prisma.payment.findUnique({
+        where: { razorpayOrderId: checkout.razorpayOrderId },
+      });
+      if (existingPayment) {
+        // Order exists — just clean up the stale PendingCheckout
+        if (checkout.stockReserved) {
+          // Stock was already decremented by finalizeOrderFromPending, just delete
+          await prisma.pendingCheckout.delete({ where: { id: checkout.id } });
+        }
+        skipped++;
+        continue;
       }
 
-      // Delete the expired pending checkout
-      await tx.pendingCheckout.delete({ where: { id: checkout.id } });
-    });
+      // Check Razorpay for payment status
+      let rzpPayments: any;
+      try {
+        rzpPayments = await getRazorpay().orders.fetchPayments(checkout.razorpayOrderId);
+      } catch (rzpErr: any) {
+        // Razorpay API error — skip this checkout, try next time
+        logger.warn(
+          { err: rzpErr, razorpayOrderId: checkout.razorpayOrderId },
+          'Reconciliation: failed to fetch Razorpay payments, skipping'
+        );
+        errors++;
+        continue;
+      }
 
-    restoredCount++;
+      const payments = (rzpPayments as any)?.items || rzpPayments || [];
+      const capturedPayment = payments.find?.((p: any) => p.status === 'captured');
+
+      if (capturedPayment) {
+        // Payment was captured but order never created — finalize now
+        logger.warn(
+          { razorpayOrderId: checkout.razorpayOrderId, orderNumber: checkout.orderNumber },
+          'Reconciliation: found captured payment with no order — finalizing'
+        );
+
+        const result = await finalizeOrderFromPending(checkout, {
+          razorpayOrderId: checkout.razorpayOrderId,
+          razorpayPaymentId: capturedPayment.id,
+          razorpaySignature: '',
+          method: mapPaymentMethod(capturedPayment.method),
+        });
+
+        if (result) {
+          logger.info(
+            { orderNumber: checkout.orderNumber },
+            'Reconciliation: order finalized successfully'
+          );
+          finalized++;
+        } else {
+          // Already finalized by another process
+          skipped++;
+        }
+      } else if (checkout.createdAt < twoHoursAgo) {
+        // No captured payment and checkout is old — release stock
+        logger.info(
+          { razorpayOrderId: checkout.razorpayOrderId, orderNumber: checkout.orderNumber },
+          'Reconciliation: no payment after 2h — releasing stock'
+        );
+
+        if (checkout.stockReserved) {
+          const cartItems: { variantId: string; quantity: number }[] = JSON.parse(
+            checkout.itemsJson
+          );
+          await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+            for (const item of cartItems) {
+              await tx.productVariant.update({
+                where: { id: item.variantId },
+                data: { stock: { increment: item.quantity } },
+              });
+            }
+            await tx.pendingCheckout.delete({ where: { id: checkout.id } });
+          });
+        } else {
+          await prisma.pendingCheckout.delete({ where: { id: checkout.id } });
+        }
+
+        released++;
+      } else {
+        // Payment still pending, checkout < 2h old — user might still be paying
+        skipped++;
+      }
+    } catch (err) {
+      logger.error(
+        { err, razorpayOrderId: checkout.razorpayOrderId, orderNumber: checkout.orderNumber },
+        'Reconciliation: unexpected error processing checkout'
+      );
+      errors++;
+    }
   }
 
-  return restoredCount;
+  return { finalized, released, skipped, errors };
+}
+
+/**
+ * @deprecated Use reconcileStaleCheckouts() instead — it checks Razorpay before releasing stock.
+ * Kept for backwards compatibility with existing test suite.
+ */
+export async function restoreExpiredReservations(): Promise<number> {
+  const result = await reconcileStaleCheckouts();
+  return result.released + result.finalized;
+}
+
+function mapPaymentMethod(method: string): string | undefined {
+  const map: Record<string, string> = {
+    upi: 'UPI',
+    card: 'CARD',
+    netbanking: 'NETBANKING',
+    wallet: 'WALLET',
+    emi: 'EMI',
+  };
+  return map[method];
 }
 
 /** Helper: calculate discount amount for a given code and subtotal */
