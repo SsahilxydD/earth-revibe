@@ -26,7 +26,7 @@ export const adminOrderController = {
     res.json({ success: true, data: note });
   },
 
-  async syncOrders(req: Request, res: Response) {
+  async syncOrders(_req: Request, res: Response) {
     const result = await reconcileStaleCheckouts();
     res.json({ success: true, data: result });
   },
