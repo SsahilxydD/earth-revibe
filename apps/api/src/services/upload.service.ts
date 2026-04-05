@@ -33,7 +33,11 @@ async function compressImage(
     .toBuffer();
 
   logger.info(
-    { originalSize: buffer.length, compressedSize: compressed.length, ratio: `${((1 - compressed.length / buffer.length) * 100).toFixed(1)}%` },
+    {
+      originalSize: buffer.length,
+      compressedSize: compressed.length,
+      ratio: `${((1 - compressed.length / buffer.length) * 100).toFixed(1)}%`,
+    },
     'Image compressed'
   );
 
@@ -93,7 +97,7 @@ interface InternalUploadResult {
 
 async function _uploadToSupabase(
   buffer: Buffer,
-  filename: string,
+  _filename: string,
   mimeType: string
 ): Promise<InternalUploadResult> {
   await ensureBucket();
