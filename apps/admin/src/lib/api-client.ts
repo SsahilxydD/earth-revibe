@@ -75,8 +75,19 @@ class ApiClient {
       if (refreshed) {
         return this.request<T>(path, options, signal, true);
       }
-      // Refresh failed — redirect to login
-      window.location.href = '/login';
+      // Refresh failed — another tab may have already refreshed.
+      // Retry once with current cookies before giving up.
+      try {
+        return await this.request<T>(path, options, signal, true);
+      } catch {
+        // Truly dead session — clear httpOnly cookies via the logout
+        // endpoint so the proxy middleware doesn't trap a redirect loop.
+        await fetch(`${API_BASE}/auth/logout`, {
+          method: 'POST',
+          credentials: 'include',
+        }).catch(() => {});
+        window.location.href = '/login';
+      }
     }
 
     let json: ApiResponse<T>;
