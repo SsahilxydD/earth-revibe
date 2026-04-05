@@ -25,8 +25,10 @@ router.post(
       return;
     }
 
-    // Verify signature
-    const body = JSON.stringify(req.body);
+    // Verify signature using the raw request body — Razorpay signs the exact
+    // bytes it sends, and JSON.stringify(req.body) may reorder keys or change
+    // whitespace, causing a mismatch.
+    const body = (req as any).rawBody || JSON.stringify(req.body);
     const expectedSignature = crypto.createHmac('sha256', webhookSecret).update(body).digest('hex');
 
     const sigBuffer = Buffer.from(signature, 'utf8');
@@ -35,8 +37,8 @@ router.post(
       sigBuffer.length !== expectedBuffer.length ||
       !crypto.timingSafeEqual(sigBuffer, expectedBuffer)
     ) {
-      logger.warn('Invalid Razorpay signature');
-      res.status(200).json({ success: false });
+      logger.warn('Invalid Razorpay webhook signature');
+      res.status(400).json({ success: false });
       return;
     }
 

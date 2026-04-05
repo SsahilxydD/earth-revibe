@@ -93,7 +93,18 @@ app.use(
 app.use(cookieParser());
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
+// Preserve raw body for webhook signature verification — Razorpay signs
+// the exact bytes it sends, so we need the untouched body to compare.
+app.use(
+  express.json({
+    limit: '10mb',
+    verify: (req, _res, buf) => {
+      if ((req as any).originalUrl?.startsWith('/api/v1/webhooks')) {
+        (req as any).rawBody = buf.toString('utf8');
+      }
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true }));
 
 // Input sanitization
@@ -445,7 +456,10 @@ app.post('/api/v1/internal/abandoned-carts', async (_req, res) => {
 
     if (ph) await ph.flush();
 
-    logger.info({ tracked, emailed, whatsapped, guestEmailed }, 'Abandoned cart detection completed');
+    logger.info(
+      { tracked, emailed, whatsapped, guestEmailed },
+      'Abandoned cart detection completed'
+    );
     res.json({ success: true, data: { tracked, emailed, whatsapped, guestEmailed } });
   } catch (err) {
     logger.error({ err }, 'Abandoned cart detection failed');
