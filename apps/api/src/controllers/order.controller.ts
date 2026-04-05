@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { orderService } from '../services/order.service';
+import { syncUserOrders } from '../services/checkout.service';
 
 export const orderController = {
   async createOrder(req: Request, res: Response) {
@@ -31,6 +32,11 @@ export const orderController = {
       req.params.orderNumber as string,
       req.body
     );
+    res.json({ success: true, data: result });
+  },
+
+  async syncOrders(req: Request, res: Response) {
+    const result = await syncUserOrders(req.user!.id);
     res.json({ success: true, data: result });
   },
 };

@@ -1082,6 +1082,57 @@ export async function reconcileStaleCheckouts(): Promise<{
 }
 
 /**
+ * User-triggered sync: find any captured-but-unfinalized payments for this user and create the orders.
+ * Called when a user visits the orders page and clicks "Sync Orders" — handles the case where they
+ * closed the tab right after payment before the success page or webhook could finalize the order.
+ */
+export async function syncUserOrders(userId: string): Promise<{ synced: number }> {
+  const pendingCheckouts = await prisma.pendingCheckout.findMany({
+    where: { userId },
+  });
+
+  let synced = 0;
+
+  for (const checkout of pendingCheckouts) {
+    try {
+      // Skip if already finalized
+      const existingPayment = await prisma.payment.findUnique({
+        where: { razorpayOrderId: checkout.razorpayOrderId },
+      });
+      if (existingPayment) {
+        await idempotentDelete(prisma.pendingCheckout.delete({ where: { id: checkout.id } }));
+        continue;
+      }
+
+      // Check Razorpay for a captured payment
+      let rzpPayments: any;
+      try {
+        rzpPayments = await getRazorpay().orders.fetchPayments(checkout.razorpayOrderId);
+      } catch {
+        continue; // Razorpay API error — skip silently, cron will retry
+      }
+
+      const payments = (rzpPayments as any)?.items || rzpPayments || [];
+      const capturedPayment = payments.find?.((p: any) => p.status === 'captured');
+
+      if (capturedPayment) {
+        const result = await finalizeOrderFromPending(checkout, {
+          razorpayOrderId: checkout.razorpayOrderId,
+          razorpayPaymentId: capturedPayment.id,
+          razorpaySignature: '',
+          method: mapPaymentMethod(capturedPayment.method),
+        });
+        if (result) synced++;
+      }
+    } catch (err) {
+      logger.warn({ err, razorpayOrderId: checkout.razorpayOrderId }, 'syncUserOrders: error');
+    }
+  }
+
+  return { synced };
+}
+
+/**
  * @deprecated Use reconcileStaleCheckouts() instead — it checks Razorpay before releasing stock.
  * Kept for backwards compatibility with existing test suite.
  */

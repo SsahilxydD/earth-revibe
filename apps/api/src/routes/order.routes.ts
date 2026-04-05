@@ -28,6 +28,7 @@ router.post(
   asyncHandler(orderController.verifyPayment)
 );
 router.get('/', validate({ query: orderQuerySchema }), asyncHandler(orderController.listOrders));
+router.post('/sync', asyncHandler(orderController.syncOrders));
 router.get('/:orderNumber', asyncHandler(orderController.getOrder));
 router.post(
   '/:orderNumber/cancel',
