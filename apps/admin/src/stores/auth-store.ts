@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api-client';
+import { startProactiveRefresh, stopProactiveRefresh } from '@/lib/api-client';
 
 interface AdminUser {
   id: string;
@@ -34,10 +35,12 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: (user) => {
     // Tokens are in httpOnly cookies — no localStorage needed
+    startProactiveRefresh();
     set({ user, isAuthenticated: true, isLoading: false });
   },
 
   logout: async () => {
+    stopProactiveRefresh();
     try {
       await api.post('/auth/logout');
     } catch {
@@ -50,8 +53,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true });
     try {
       const user = await api.get<AdminUser>('/auth/me');
+      startProactiveRefresh();
       set({ user, isAuthenticated: true, isLoading: false });
     } catch {
+      stopProactiveRefresh();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },

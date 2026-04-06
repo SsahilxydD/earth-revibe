@@ -10,6 +10,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
   const checkedRef = useRef(false);
 
+  // Initial auth check on mount (shows spinner).
+  // Tab-resume refreshes are handled by startProactiveRefresh()'s own
+  // visibilitychange listener in api-client.ts — no duplicate here to
+  // avoid racing the single-use refresh token rotation.
   useEffect(() => {
     if (checkedRef.current) return;
     checkedRef.current = true;

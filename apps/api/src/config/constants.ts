@@ -23,8 +23,8 @@ export const APP_CONSTANTS = {
   /** Shiprocket token cache duration (9 days; tokens last 10 days) */
   SHIPROCKET_TOKEN_CACHE_MS: 9 * 24 * 60 * 60 * 1000,
 
-  /** Refresh token expiry duration (7 days) */
-  REFRESH_TOKEN_EXPIRY_MS: 7 * 24 * 60 * 60 * 1000,
+  /** Refresh token expiry duration (30 days) */
+  REFRESH_TOKEN_EXPIRY_MS: 30 * 24 * 60 * 60 * 1000,
 
   /** Loyalty points earned per currency unit spent (1 point per 100 INR) */
   LOYALTY_POINTS_PER_HUNDRED: 1,

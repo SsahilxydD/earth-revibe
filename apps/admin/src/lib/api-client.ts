@@ -30,6 +30,49 @@ async function refreshAccessToken(): Promise<boolean> {
   }
 }
 
+// ---------- Proactive refresh ----------
+// Silently refresh the access token every 13 minutes (before the 15-min JWT
+// expiry) so users never hit a 401 during normal usage. The interval skips
+// ticks while the tab is hidden. The visibility listener is managed here so
+// it can be properly cleaned up — callers use start/stop to tie the lifecycle
+// to authenticated state (not module load).
+const REFRESH_INTERVAL_MS = 13 * 60 * 1000; // 13 minutes
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+let visibilityHandler: (() => void) | null = null;
+
+function startProactiveRefresh() {
+  if (typeof window === 'undefined') return;
+  stopProactiveRefresh();
+
+  refreshTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      refreshAccessToken();
+    }
+  }, REFRESH_INTERVAL_MS);
+
+  // When the user returns to the tab after being away, refresh immediately
+  // so a stale access token doesn't cause a flash of 401.
+  visibilityHandler = () => {
+    if (document.visibilityState === 'visible') {
+      refreshAccessToken();
+    }
+  };
+  document.addEventListener('visibilitychange', visibilityHandler);
+}
+
+function stopProactiveRefresh() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+  if (visibilityHandler) {
+    document.removeEventListener('visibilitychange', visibilityHandler);
+    visibilityHandler = null;
+  }
+}
+
+export { startProactiveRefresh, stopProactiveRefresh };
+
 class ApiClient {
   async request<T = any>(
     path: string,

@@ -9,21 +9,21 @@ const REFRESH_COOKIE = 'refresh_token';
 const baseCookieOptions: CookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: isProduction ? 'none' : 'strict',
+  sameSite: 'lax',
 };
 
 export function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
-  // Cookie maxAge matches refresh token (7 days) so the browser keeps it around.
-  // The JWT inside still expires in 15 min — the client auto-refreshes on 401.
+  // Cookie maxAge matches refresh token (30 days) so the browser keeps it around.
+  // The JWT inside still expires in 15 min — the client auto-refreshes proactively.
   res.cookie(ACCESS_COOKIE, accessToken, {
     ...baseCookieOptions,
     path: '/',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
   res.cookie(REFRESH_COOKIE, refreshToken, {
     ...baseCookieOptions,
     path: '/api/v1/auth', // only sent to auth endpoints — reduces exposure
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 }
 
