@@ -11,6 +11,7 @@ const envSchema = z.object({
   WHATSAPP_PHONE_NUMBER_ID: z.string().min(1),
   WHATSAPP_ACCESS_TOKEN: z.string().min(1),
   WHATSAPP_TEMPLATE_NAME: z.string().default('earth_revibe_login_otp'),
+  WHATSAPP_ORDER_UPDATE_TEMPLATE: z.string().default('earth_revibe_order_update'),
   // Supabase Storage (image uploads only — auth is handled by JWT)
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),

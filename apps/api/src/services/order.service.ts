@@ -7,6 +7,7 @@ import { logger } from '../config/logger';
 import { APP_CONSTANTS } from '../config/constants';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
+import { sendWhatsAppOrderUpdate } from './whatsapp.service';
 import type {
   CreateOrderInput,
   VerifyPaymentInput,
@@ -503,7 +504,7 @@ export const orderService = {
       throw ApiError.badRequest('Order cannot be cancelled at this stage');
     }
 
-    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.order.update({
         where: { id: order.id },
         data: { status: 'CANCELLED' },
@@ -640,5 +641,18 @@ export const orderService = {
 
       return { orderNumber: order.orderNumber };
     });
+
+    // Fire-and-forget WhatsApp cancellation notification
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { phone: true, firstName: true },
+    });
+    if (user?.phone) {
+      sendWhatsAppOrderUpdate(user.phone, user.firstName, orderNumber, 'CANCELLED').catch((err) => {
+        logger.error({ err, orderNumber }, 'Failed to send WhatsApp cancel notification');
+      });
+    }
+
+    return result;
   },
 };

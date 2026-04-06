@@ -1,5 +1,7 @@
 import { prisma, Prisma } from '@earth-revibe/db';
 import { ApiError } from '../utils/api-error';
+import { sendWhatsAppOrderUpdate } from './whatsapp.service';
+import { logger } from '../config/logger';
 import type {
   AdminOrderQuery,
   UpdateOrderStatusInput,
@@ -81,7 +83,13 @@ export const adminOrderService = {
   },
 
   async updateStatus(orderNumber: string, adminId: string, data: UpdateOrderStatusInput) {
-    const order = await prisma.order.findUnique({ where: { orderNumber } });
+    const order = await prisma.order.findUnique({
+      where: { orderNumber },
+      include: {
+        user: { select: { phone: true, firstName: true } },
+        address: { select: { phone: true, fullName: true } },
+      },
+    });
     if (!order) throw ApiError.notFound('Order not found');
 
     // Enforce valid status transitions
@@ -105,6 +113,15 @@ export const adminOrderService = {
         changedBy: adminId,
       },
     });
+
+    // Fire-and-forget WhatsApp notification to customer (registered or guest)
+    const phone = order.user?.phone || order.address?.phone;
+    const name = order.user?.firstName || order.address?.fullName?.split(' ')[0] || '';
+    if (phone) {
+      sendWhatsAppOrderUpdate(phone, name, order.orderNumber, data.status).catch((err) => {
+        logger.error({ err, orderNumber }, 'Failed to send WhatsApp order update');
+      });
+    }
 
     return { orderNumber: order.orderNumber, status: data.status };
   },

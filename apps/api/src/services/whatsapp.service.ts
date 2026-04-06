@@ -57,6 +57,88 @@ export async function sendWhatsAppOtp(phone: string, code: string): Promise<void
   }
 }
 
+/** Human-friendly status labels for WhatsApp messages. */
+const STATUS_LABELS: Record<string, string> = {
+  PLACED: 'Order Placed',
+  CONFIRMED: 'Order Confirmed',
+  PROCESSING: 'Being Prepared',
+  SHIPPED: 'Shipped',
+  OUT_FOR_DELIVERY: 'Out for Delivery',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Cancelled',
+  RETURNED: 'Return Received',
+  REFUNDED: 'Refunded',
+};
+
+/**
+ * Send an order status update via WhatsApp Cloud API.
+ * Uses the pre-approved template configured in WHATSAPP_ORDER_UPDATE_TEMPLATE.
+ *
+ * Template parameters:
+ *   {{1}} = customer first name
+ *   {{2}} = order number
+ *   {{3}} = status label (e.g. "Shipped")
+ *
+ * Soft-fail: returns boolean, never throws — order processing must not be blocked.
+ */
+export async function sendWhatsAppOrderUpdate(
+  phone: string,
+  firstName: string,
+  orderNumber: string,
+  status: string
+): Promise<boolean> {
+  // Normalize to E.164 without '+': handles +919876543210, 919876543210, and 9876543210
+  const digits = phone.replace(/\D/g, '');
+  const to = /^\d{10}$/.test(digits) ? `91${digits}` : digits;
+  const statusLabel = STATUS_LABELS[status] || status;
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: env.WHATSAPP_ORDER_UPDATE_TEMPLATE,
+      language: { code: 'en' },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: firstName || 'there' },
+            { type: 'text', text: orderNumber },
+            { type: 'text', text: statusLabel },
+          ],
+        },
+      ],
+    },
+  };
+
+  try {
+    const res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      logger.error(
+        { status: res.status, body: text, orderNumber },
+        'WhatsApp order update API error'
+      );
+      return false;
+    }
+
+    logger.info({ orderNumber, status: statusLabel }, 'WhatsApp order update sent');
+    return true;
+  } catch (err) {
+    logger.error({ err, orderNumber }, 'WhatsApp order update network error');
+    return false;
+  }
+}
+
 /**
  * Send an abandoned cart recovery message via WhatsApp Cloud API.
  * Uses the pre-approved "earth_revibe_abandoned_cart" template.
@@ -102,14 +184,20 @@ export async function sendWhatsAppAbandonedCart(
 
     if (!res.ok) {
       const text = await res.text();
-      logger.error({ status: res.status, body: text, phone: phone.slice(0, 6) + '****' }, 'WhatsApp abandoned cart API error');
+      logger.error(
+        { status: res.status, body: text, phone: phone.slice(0, 6) + '****' },
+        'WhatsApp abandoned cart API error'
+      );
       return false;
     }
 
     logger.info({ phone: phone.slice(0, 6) + '****' }, 'WhatsApp abandoned cart message sent');
     return true;
   } catch (err) {
-    logger.error({ err, phone: phone.slice(0, 6) + '****' }, 'WhatsApp abandoned cart network error');
+    logger.error(
+      { err, phone: phone.slice(0, 6) + '****' },
+      'WhatsApp abandoned cart network error'
+    );
     return false;
   }
 }

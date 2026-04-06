@@ -301,12 +301,14 @@ export const authService = {
   },
 
   async updateProfile(userId: string, data: UpdateProfileInput) {
+    // Normalize phone to E.164 — schema accepts bare 10-digit Indian numbers
+    const phone = data.phone && !data.phone.startsWith('+') ? `+91${data.phone}` : data.phone;
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
-        phone: data.phone,
+        phone,
         avatar: data.avatar,
       },
       select: {

@@ -7,6 +7,7 @@ import { logger } from '../config/logger';
 import { APP_CONSTANTS } from '../config/constants';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
+import { sendWhatsAppOrderUpdate } from './whatsapp.service';
 import { getPostHog } from '../config/posthog';
 import { sendMetaEvent } from '../utils/meta-conversions';
 import type {
@@ -599,7 +600,7 @@ export async function finalizeOrderFromPending(
           if (customerPhone && !existingUser.phone) {
             await tx.user.update({
               where: { id: existingUser.id },
-              data: { phone: customerPhone },
+              data: { phone: `+91${customerPhone}` },
             });
           }
         } else {
@@ -917,6 +918,19 @@ export async function finalizeOrderFromPending(
   shiprocketService.createShiprocketOrder(orderId).catch((sErr) => {
     logger.error({ err: sErr, orderId }, 'Failed to create Shiprocket shipment');
   });
+
+  // WhatsApp order confirmation to customer
+  if (customerPhone) {
+    const firstName = customerName.split(' ')[0] || '';
+    sendWhatsAppOrderUpdate(customerPhone, firstName, finalOrderNumber, 'CONFIRMED').catch(
+      (err) => {
+        logger.error(
+          { err, orderNumber: finalOrderNumber },
+          'Failed to send WhatsApp order confirmation'
+        );
+      }
+    );
+  }
 
   const ph = getPostHog();
   if (ph) {
