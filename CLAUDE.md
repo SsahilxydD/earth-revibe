@@ -51,6 +51,6 @@ This is mandatory — never skip sequential thinking, even for small tasks.
 - All Zod schemas live in `packages/shared/src/schemas/` — never duplicate in apps
 - All enums live in `packages/shared/src/enums/` — import from `@earth-revibe/shared`
 - API response format: `{ success: boolean, data?: T, error?: { code, message } }`
-- JWT: access token 15m, refresh token 7d, rotation on every refresh
+- JWT: access token 15m, refresh token 30d, rotation on every refresh
 - Images: always upload via Cloudinary, never serve from local disk
 - Never commit `.env` files — use `.env.example` as reference

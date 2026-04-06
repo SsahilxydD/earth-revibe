@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthStore } from '@/stores/auth-store';
 import {
   Menu,
   LogOut,
@@ -15,6 +16,7 @@ import {
   Headset,
   AlertTriangle,
 } from 'lucide-react';
+
 import { api } from '@/lib/api-client';
 import { useUIStore } from '@/stores/ui-store';
 import {
@@ -90,10 +92,9 @@ export function Topbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const { logout } = useAuthStore();
   const handleLogout = async () => {
-    try {
-      await api.post('/auth/logout');
-    } catch {}
+    await logout();
     router.push('/login');
   };
 

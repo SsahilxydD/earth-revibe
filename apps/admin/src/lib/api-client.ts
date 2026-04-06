@@ -32,31 +32,33 @@ async function refreshAccessToken(): Promise<boolean> {
 
 // ---------- Proactive refresh ----------
 // Silently refresh the access token every 13 minutes (before the 15-min JWT
-// expiry) so users never hit a 401 during normal usage. The interval skips
-// ticks while the tab is hidden. The visibility listener is managed here so
-// it can be properly cleaned up — callers use start/stop to tie the lifecycle
-// to authenticated state (not module load).
-const REFRESH_INTERVAL_MS = 13 * 60 * 1000; // 13 minutes
+// expiry) so users never hit a 401 during normal usage. Callers use
+// start/stop to tie the lifecycle to authenticated state (not module load).
+const REFRESH_INTERVAL_MS = 13 * 60 * 1000;
+const REFRESH_THROTTLE_MS = 2 * 60 * 1000; // skip if refreshed < 2 min ago
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
 let visibilityHandler: (() => void) | null = null;
+let lastRefreshAt = 0;
+
+/** Deduped + throttled refresh — safe to call from interval and visibility. */
+function refreshIfVisible() {
+  if (document.visibilityState !== 'visible') return;
+  if (Date.now() - lastRefreshAt < REFRESH_THROTTLE_MS) return;
+  lastRefreshAt = Date.now();
+  // Reuse the shared dedup lock so concurrent calls collapse into one request
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => {
+      refreshPromise = null;
+    });
+  }
+}
 
 function startProactiveRefresh() {
   if (typeof window === 'undefined') return;
   stopProactiveRefresh();
 
-  refreshTimer = setInterval(() => {
-    if (document.visibilityState === 'visible') {
-      refreshAccessToken();
-    }
-  }, REFRESH_INTERVAL_MS);
-
-  // When the user returns to the tab after being away, refresh immediately
-  // so a stale access token doesn't cause a flash of 401.
-  visibilityHandler = () => {
-    if (document.visibilityState === 'visible') {
-      refreshAccessToken();
-    }
-  };
+  refreshTimer = setInterval(refreshIfVisible, REFRESH_INTERVAL_MS);
+  visibilityHandler = refreshIfVisible;
   document.addEventListener('visibilitychange', visibilityHandler);
 }
 
@@ -69,6 +71,7 @@ function stopProactiveRefresh() {
     document.removeEventListener('visibilitychange', visibilityHandler);
     visibilityHandler = null;
   }
+  lastRefreshAt = 0;
 }
 
 export { startProactiveRefresh, stopProactiveRefresh };
@@ -110,6 +113,7 @@ class ApiClient {
       typeof window !== 'undefined'
     ) {
       if (!refreshPromise) {
+        lastRefreshAt = Date.now();
         refreshPromise = refreshAccessToken().finally(() => {
           refreshPromise = null;
         });

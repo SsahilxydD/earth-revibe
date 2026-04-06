@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { api } from '@/lib/api-client';
-import { startProactiveRefresh, stopProactiveRefresh } from '@/lib/api-client';
+import { api, startProactiveRefresh, stopProactiveRefresh } from '@/lib/api-client';
 
 interface AdminUser {
   id: string;

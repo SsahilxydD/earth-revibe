@@ -1,5 +1,6 @@
 import type { Response, CookieOptions } from 'express';
 import { env } from '../config/env';
+import { APP_CONSTANTS } from '../config/constants';
 
 const isProduction = env.NODE_ENV === 'production';
 
@@ -18,12 +19,12 @@ export function setAuthCookies(res: Response, accessToken: string, refreshToken:
   res.cookie(ACCESS_COOKIE, accessToken, {
     ...baseCookieOptions,
     path: '/',
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    maxAge: APP_CONSTANTS.REFRESH_TOKEN_EXPIRY_MS,
   });
   res.cookie(REFRESH_COOKIE, refreshToken, {
     ...baseCookieOptions,
     path: '/api/v1/auth', // only sent to auth endpoints — reduces exposure
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    maxAge: APP_CONSTANTS.REFRESH_TOKEN_EXPIRY_MS,
   });
 }
 

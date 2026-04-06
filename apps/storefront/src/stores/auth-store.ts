@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { api } from '@/lib/api-client';
+import { api, startProactiveRefresh, stopProactiveRefresh } from '@/lib/api-client';
 import { identifyUser, resetUser } from '@/lib/analytics';
 
 export interface AuthUser {
@@ -31,6 +31,9 @@ export const useAuthStore = create<AuthState>()((set) => ({
   setUser: (user) => {
     if (user) {
       identifyUser(user.id, { email: user.email, name: `${user.firstName} ${user.lastName}` });
+      startProactiveRefresh();
+    } else {
+      stopProactiveRefresh();
     }
     set({
       user,
@@ -40,6 +43,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
   },
 
   logout: async () => {
+    stopProactiveRefresh();
     try {
       await api.post('/auth/logout');
     } catch {
@@ -54,8 +58,10 @@ export const useAuthStore = create<AuthState>()((set) => ({
     try {
       const user = await api.get<AuthUser>('/auth/me');
       identifyUser(user.id, { email: user.email, name: `${user.firstName} ${user.lastName}` });
+      startProactiveRefresh();
       set({ user, isAuthenticated: true, isLoading: false });
     } catch {
+      stopProactiveRefresh();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
