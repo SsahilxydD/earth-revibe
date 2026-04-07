@@ -45,12 +45,16 @@ function TapePanel({
   tapeOffset,
   vw,
   isCenter,
+  onDragStart,
+  onDragEnd,
 }: {
   slug: string;
   slotIndex: number;
   tapeOffset: ReturnType<typeof useMotionValue<number>>;
   vw: number;
   isCenter: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: (e: unknown, info: { offset: { x: number }; velocity: { x: number } }) => void;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const x = useTransform(tapeOffset, (offset) => (slotIndex - 2) * vw + offset);
@@ -82,7 +86,17 @@ function TapePanel({
   }
 
   return (
-    <motion.div ref={panelRef} className="absolute inset-0 overflow-y-auto bg-white" style={{ x }}>
+    <motion.div
+      ref={panelRef}
+      className="absolute inset-0 overflow-y-auto bg-white"
+      style={{ x, touchAction: isCenter ? 'pan-y' : undefined }}
+      drag={isCenter ? 'x' : false}
+      dragSnapToOrigin={false}
+      dragMomentum={false}
+      dragElastic={0}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+    >
       <ProductDetail product={product} isPreview={!isCenter} />
     </motion.div>
   );
@@ -121,8 +135,11 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
   const tapeOffset = useMotionValue(0);
   const lockRef = useRef(false);
 
+  // Track the actual center slug (changes after swipes, not just initialSlug)
+  const [centerSlug, setCenterSlug] = useState(initialSlug);
+
   const { canSwipe, completeSwipe, prefetchAdjacent, getCachedProduct, getAdjacentSlugs } =
-    useSwipeNavigation({ currentSlug: initialSlug });
+    useSwipeNavigation({ currentSlug: centerSlug });
 
   // Build the 5-slug window
   const [windowSlugs, setWindowSlugs] = useState<string[]>(() =>
@@ -153,6 +170,7 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
   useEffect(() => {
     if (initialSlug !== windowSlugs[2]) {
       setWindowSlugs(buildWindow(initialSlug, getAdjacentSlugs));
+      setCenterSlug(initialSlug);
       tapeOffset.set(0);
     }
   }, [initialSlug]);
@@ -242,6 +260,7 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
           // Atomic: reset offset + swap window in same paint
           flushSync(() => {
             setWindowSlugs(newWindow);
+            setCenterSlug(newCenterSlug);
           });
           tapeOffset.set(0);
 
@@ -249,7 +268,6 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
           if (newProduct) {
             completeSwipe(newCenterSlug, newProduct);
           }
-          window.scrollTo(0, 0);
 
           setTimeout(() => {
             lockRef.current = false;
@@ -275,22 +293,16 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
           tapeOffset={tapeOffset}
           vw={vw}
           isCenter={i === 2}
+          onDragStart={
+            i === 2
+              ? () => {
+                  isDraggingRef.current = true;
+                }
+              : undefined
+          }
+          onDragEnd={i === 2 ? onDragEnd : undefined}
         />
       ))}
-
-      {/* Invisible drag surface over center panel */}
-      <motion.div
-        className="absolute inset-0 z-10"
-        style={{ x: tapeOffset, touchAction: 'pan-y' }}
-        drag="x"
-        dragSnapToOrigin={false}
-        dragMomentum={false}
-        dragElastic={0}
-        onDragStart={() => {
-          isDraggingRef.current = true;
-        }}
-        onDragEnd={onDragEnd}
-      />
     </div>
   );
 }
