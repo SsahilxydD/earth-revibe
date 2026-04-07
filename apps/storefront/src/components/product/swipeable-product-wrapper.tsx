@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { productKeys } from '@/hooks/use-products';
-import { ProductDetail } from './product-detail';
+import { SwipePanelContainer } from './swipe-panel-container';
 import type { Product } from '@/types';
 
 interface Props {
@@ -13,18 +13,10 @@ interface Props {
 
 export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) {
   const queryClient = useQueryClient();
-  const [currentSlug, setCurrentSlug] = useState(initialSlug);
-  const [currentProduct, setCurrentProduct] = useState<Product>(initialProduct);
   const didMount = useRef(false);
 
-  // Sync when navigating to a different product via client-side routing
+  // Seed the query cache so useProduct() and prefetch have data immediately
   useEffect(() => {
-    if (initialSlug !== currentSlug) {
-      setCurrentSlug(initialSlug);
-      setCurrentProduct(initialProduct);
-      window.scrollTo(0, 0);
-    }
-    // Seed the query cache so useProduct() has data immediately
     queryClient.setQueryData(productKeys.detail(initialSlug), initialProduct);
   }, [initialSlug, initialProduct, queryClient]);
 
@@ -36,5 +28,5 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
     }
   }, []);
 
-  return <ProductDetail key={currentSlug} product={currentProduct} />;
+  return <SwipePanelContainer initialProduct={initialProduct} initialSlug={initialSlug} />;
 }
