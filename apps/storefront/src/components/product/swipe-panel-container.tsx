@@ -257,12 +257,14 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
               ? [...windowSlugs.slice(1), newEdge]
               : [newEdge, ...windowSlugs.slice(0, 4)];
 
-          // Atomic: reset offset + swap window in same paint
+          // Reset offset FIRST (synchronous MotionValue update), THEN
+          // flush React state — so React renders with offset=0 and new slugs
+          // in the same paint, preventing the one-frame flash.
+          tapeOffset.set(0);
           flushSync(() => {
             setWindowSlugs(newWindow);
             setCenterSlug(newCenterSlug);
           });
-          tapeOffset.set(0);
 
           const newProduct = getCachedProduct(newCenterSlug);
           if (newProduct) {
