@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { productKeys } from '@/hooks/use-products';
@@ -44,15 +45,10 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
   const [current, setCurrent] = useState<PanelData>({ slug: initialSlug, product: initialProduct });
   const [isDragging, setIsDragging] = useState(false);
 
-  const currentPanelRef = useRef<HTMLDivElement>(null);
   const lockRef = useRef(false);
 
   const dragX = useMotionValue(0);
   const vw = useViewportWidth();
-
-  const handleSwipeComplete = useCallback((newSlug: string, newProduct: Product) => {
-    setCurrent({ slug: newSlug, product: newProduct });
-  }, []);
 
   const {
     canSwipe,
@@ -153,13 +149,14 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
       animate(dragX, targetX, {
         ...SPRING_CONFIG,
         onComplete: () => {
-          handleSwipeComplete(targetPanel.slug, targetPanel.product);
-          completeSwipe(targetPanel.slug, targetPanel.product);
+          // Reset position and swap state in a single synchronous paint
+          // to prevent the blink between frames.
           dragX.set(0);
-
-          if (currentPanelRef.current) {
-            currentPanelRef.current.scrollTop = 0;
-          }
+          flushSync(() => {
+            setCurrent({ slug: targetPanel.slug, product: targetPanel.product });
+          });
+          completeSwipe(targetPanel.slug, targetPanel.product);
+          window.scrollTo(0, 0);
 
           setTimeout(() => {
             lockRef.current = false;
@@ -173,7 +170,6 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
       current.slug,
       dragX,
       getAdjacentSlugs,
-      handleSwipeComplete,
       completeSwipe,
       nextPanel,
       prevPanel,
@@ -224,7 +220,6 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
 
       {/* Current panel */}
       <motion.div
-        ref={currentPanelRef}
         className="absolute inset-0 overflow-y-auto"
         style={{ x: dragX }}
         drag={canSwipe ? 'x' : false}
