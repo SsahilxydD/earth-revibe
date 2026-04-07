@@ -138,7 +138,10 @@ export const checkoutService = {
       loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
     }
 
-    const totalBeforeShipping = Math.max(lineItemsTotal - discountAmount - loyaltyDiscount, 0);
+    // Cap total discount so the order is at least ₹1 (Razorpay minimum)
+    const maxDiscount = lineItemsTotal - 1;
+    if (discountAmount > maxDiscount) discountAmount = Math.max(maxDiscount, 0);
+    const totalBeforeShipping = Math.max(lineItemsTotal - discountAmount - loyaltyDiscount, 1);
     const orderNumber = generateOrderNumber();
 
     // Run Razorpay order creation and user prefill query in parallel.
@@ -159,8 +162,6 @@ export const checkoutService = {
         currency: 'INR',
         receipt: orderNumber,
         line_items_total: effectiveTotal,
-        shipping_fee: 0,
-        cod_fee: 15000,
         line_items: lineItems,
         notes: {
           userId: userId || 'guest',
