@@ -13,9 +13,11 @@ interface LoginModalProps {
   onClose: () => void;
   /** Called after successful login */
   onSuccess?: () => void;
+  /** Called when user opts to continue as guest (skip login) */
+  onGuest?: () => void;
 }
 
-export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
+export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalProps) {
   const checkAuth = useAuthStore((s) => s.checkAuth);
 
   const [step, setStep] = useState<Step>('phone');
@@ -297,6 +299,16 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
             >
               {loading ? 'Sending OTP...' : 'Send OTP via WhatsApp'}
             </button>
+
+            {onGuest && (
+              <button
+                type="button"
+                onClick={onGuest}
+                className="mt-3 w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors"
+              >
+                Continue as guest
+              </button>
+            )}
           </>
         )}
       </div>
