@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { flushSync } from 'react-dom';
+import { useState, useEffect, useRef, useCallback, useReducer } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { productKeys } from '@/hooks/use-products';
@@ -20,7 +19,6 @@ const COMMIT_DISTANCE_RATIO = 0.3;
 const COMMIT_VELOCITY = 500;
 const LOCK_DURATION = 350;
 const SPRING_CONFIG = { type: 'spring' as const, stiffness: 300, damping: 30 };
-/** Minimum horizontal px before we claim the gesture as a swipe (vs vertical scroll) */
 const SWIPE_THRESHOLD = 10;
 
 /* ------------------------------------------------------------------ */
@@ -64,7 +62,6 @@ function TapePanel({
     staleTime: 5 * 60 * 1000,
   });
 
-  // Reset scroll when this slot receives a new slug
   const prevSlugRef = useRef(slug);
   useEffect(() => {
     if (slug !== prevSlugRef.current) {
@@ -122,53 +119,55 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
   const { canSwipe, completeSwipe, prefetchAdjacent, getCachedProduct, getAdjacentSlugs } =
     useSwipeNavigation({ currentSlug: centerSlug });
 
-  const [windowSlugs, setWindowSlugs] = useState<string[]>(() =>
-    buildWindow(initialSlug, getAdjacentSlugs)
-  );
+  // Window in a ref — updated synchronously with MotionValue, no blink
+  const windowRef = useRef<string[]>(buildWindow(initialSlug, getAdjacentSlugs));
+  // Counter to trigger re-render after ref update
+  const [, forceRender] = useReducer((c: number) => c + 1, 0);
 
   // Rebuild window when store populates
   const allSlugs = useProductNavStore((s) => s.allSlugs);
   const ctxSlugs = useProductNavStore((s) => s.slugs);
   useEffect(() => {
     if (allSlugs.length > 1 || ctxSlugs.length > 1) {
-      const rebuilt = buildWindow(windowSlugs[2], getAdjacentSlugs);
-      if (rebuilt.join(',') !== windowSlugs.join(',')) {
-        setWindowSlugs(rebuilt);
+      const rebuilt = buildWindow(windowRef.current[2], getAdjacentSlugs);
+      if (rebuilt.join(',') !== windowRef.current.join(',')) {
+        windowRef.current = rebuilt;
+        forceRender();
       }
     }
   }, [allSlugs.length, ctxSlugs.length]);
 
   // Prefetch
   useEffect(() => {
-    prefetchAdjacent(windowSlugs[2]);
-    prefetchAdjacent(windowSlugs[0]);
-    prefetchAdjacent(windowSlugs[4]);
-  }, [windowSlugs[0], windowSlugs[2], windowSlugs[4], prefetchAdjacent]);
+    const w = windowRef.current;
+    prefetchAdjacent(w[2]);
+    prefetchAdjacent(w[0]);
+    prefetchAdjacent(w[4]);
+  }, [windowRef.current[2], prefetchAdjacent]);
 
   // Sync on server navigation
   useEffect(() => {
-    if (initialSlug !== windowSlugs[2]) {
-      setWindowSlugs(buildWindow(initialSlug, getAdjacentSlugs));
+    if (initialSlug !== windowRef.current[2]) {
+      windowRef.current = buildWindow(initialSlug, getAdjacentSlugs);
       setCenterSlug(initialSlug);
       tapeOffset.set(0);
+      forceRender();
     }
   }, [initialSlug]);
 
-  // Cancel drag on resize
+  // Reset on resize
   useEffect(() => {
-    const h = () => {
-      tapeOffset.set(0);
-    };
+    const h = () => tapeOffset.set(0);
     window.addEventListener('resize', h);
     return () => window.removeEventListener('resize', h);
   }, [tapeOffset]);
 
   /* ---------------------------------------------------------------- */
-  /*  Manual touch handling — updates tapeOffset directly              */
+  /*  Touch handling                                                   */
   /* ---------------------------------------------------------------- */
 
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
-  const swipingRef = useRef<boolean | null>(null); // null = undecided, true = horizontal swipe, false = vertical scroll
+  const swipingRef = useRef<boolean | null>(null);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (lockRef.current) return;
@@ -184,7 +183,6 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
       const dx = touch.clientX - touchStartRef.current.x;
       const dy = touch.clientY - touchStartRef.current.y;
 
-      // Decide direction on first significant movement
       if (swipingRef.current === null) {
         if (Math.abs(dx) > SWIPE_THRESHOLD || Math.abs(dy) > SWIPE_THRESHOLD) {
           swipingRef.current = Math.abs(dx) > Math.abs(dy);
@@ -192,14 +190,61 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
         return;
       }
 
-      // If vertical scroll, let browser handle it
       if (!swipingRef.current) return;
 
-      // Horizontal swipe — prevent scroll and update tape offset
       e.preventDefault();
       tapeOffset.set(dx);
     },
     [tapeOffset]
+  );
+
+  const commitSwipe = useCallback(
+    (direction: 'left' | 'right') => {
+      const w = windowRef.current;
+      const targetSlug = direction === 'left' ? w[3] : w[1];
+
+      if (!targetSlug || targetSlug === w[2]) {
+        animate(tapeOffset, 0, SPRING_CONFIG);
+        return;
+      }
+
+      if ('vibrate' in navigator) navigator.vibrate(10);
+      lockRef.current = true;
+
+      const targetX = direction === 'left' ? -vw : vw;
+
+      animate(tapeOffset, targetX, {
+        ...SPRING_CONFIG,
+        onComplete: () => {
+          const newCenterSlug = direction === 'left' ? w[3] : w[1];
+          const newEdge =
+            direction === 'left'
+              ? getAdjacentSlugs(w[4]).next || w[4]
+              : getAdjacentSlugs(w[0]).prev || w[0];
+
+          const newWindow =
+            direction === 'left' ? [...w.slice(1), newEdge] : [newEdge, ...w.slice(0, 4)];
+
+          // BOTH updates happen synchronously before React renders.
+          // The ref update is instant. tapeOffset.set is instant.
+          // Then forceRender triggers ONE render with both already applied.
+          windowRef.current = newWindow;
+          tapeOffset.set(0);
+          setCenterSlug(newCenterSlug);
+          forceRender();
+
+          const newProduct = getCachedProduct(newCenterSlug);
+          if (newProduct) {
+            completeSwipe(newCenterSlug, newProduct);
+          }
+
+          setTimeout(() => {
+            lockRef.current = false;
+          }, LOCK_DURATION);
+        },
+      });
+    },
+    [vw, getAdjacentSlugs, getCachedProduct, completeSwipe, tapeOffset]
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -212,7 +257,7 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
     const startTime = touchStartRef.current.time;
     const currentOffset = tapeOffset.get();
     const elapsed = Math.max(Date.now() - startTime, 1);
-    const velocity = (currentOffset / elapsed) * 1000; // px/s
+    const velocity = (currentOffset / elapsed) * 1000;
 
     touchStartRef.current = null;
     swipingRef.current = null;
@@ -226,65 +271,21 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
       return;
     }
 
-    const goingLeft = currentOffset < 0;
-    const direction: 'left' | 'right' = goingLeft ? 'left' : 'right';
-    const targetSlug = direction === 'left' ? windowSlugs[3] : windowSlugs[1];
+    commitSwipe(currentOffset < 0 ? 'left' : 'right');
+  }, [vw, tapeOffset, commitSwipe]);
 
-    if (!targetSlug || targetSlug === windowSlugs[2]) {
-      animate(tapeOffset, 0, SPRING_CONFIG);
-      return;
-    }
-
-    if ('vibrate' in navigator) navigator.vibrate(10);
-
-    lockRef.current = true;
-    const targetX = direction === 'left' ? -vw : vw;
-
-    animate(tapeOffset, targetX, {
-      ...SPRING_CONFIG,
-      onComplete: () => {
-        const newCenterSlug = direction === 'left' ? windowSlugs[3] : windowSlugs[1];
-        const newEdge =
-          direction === 'left'
-            ? getAdjacentSlugs(windowSlugs[4]).next || windowSlugs[4]
-            : getAdjacentSlugs(windowSlugs[0]).prev || windowSlugs[0];
-
-        const newWindow =
-          direction === 'left'
-            ? [...windowSlugs.slice(1), newEdge]
-            : [newEdge, ...windowSlugs.slice(0, 4)];
-
-        tapeOffset.set(0);
-        flushSync(() => {
-          setWindowSlugs(newWindow);
-          setCenterSlug(newCenterSlug);
-        });
-
-        const newProduct = getCachedProduct(newCenterSlug);
-        if (newProduct) {
-          completeSwipe(newCenterSlug, newProduct);
-        }
-
-        setTimeout(() => {
-          lockRef.current = false;
-        }, LOCK_DURATION);
-      },
-    });
-  }, [vw, windowSlugs, getAdjacentSlugs, getCachedProduct, completeSwipe, tapeOffset]);
-
-  // Popstate for back/forward
+  // Popstate
   useEffect(() => {
     const handlePopState = () => {
       const match = window.location.pathname.match(/\/products\/(.+)/);
-      if (match && match[1] !== windowSlugs[2]) {
+      if (match && match[1] !== windowRef.current[2]) {
         const slug = match[1];
         const cached = getCachedProduct(slug);
         if (cached) {
+          windowRef.current = buildWindow(slug, getAdjacentSlugs);
           tapeOffset.set(0);
-          flushSync(() => {
-            setWindowSlugs(buildWindow(slug, getAdjacentSlugs));
-            setCenterSlug(slug);
-          });
+          setCenterSlug(slug);
+          forceRender();
         } else {
           window.location.reload();
         }
@@ -292,12 +293,13 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [windowSlugs, getCachedProduct, getAdjacentSlugs, tapeOffset]);
+  }, [getCachedProduct, getAdjacentSlugs, tapeOffset]);
 
-  // Non-swipe fallback
   if (!canSwipe || !isTouchDevice) {
     return <ProductDetail product={initialProduct} />;
   }
+
+  const currentWindow = windowRef.current;
 
   return (
     <div
@@ -307,7 +309,7 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {windowSlugs.map((slug, i) => (
+      {currentWindow.map((slug, i) => (
         <TapePanel
           key={i}
           slug={slug}
