@@ -257,8 +257,9 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
         className="absolute inset-0 overflow-y-auto"
         style={{ x: dragX, scale: currentScale, opacity: currentOpacity }}
         drag={canSwipe ? 'x' : false}
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.2}
+        dragSnapToOrigin={false}
+        dragMomentum={false}
+        dragElastic={0}
         onDragStart={() => setIsDragging(true)}
         onDragEnd={onDragEnd}
       >
