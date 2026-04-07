@@ -159,8 +159,8 @@ export const checkoutService = {
         currency: 'INR',
         receipt: orderNumber,
         line_items_total: effectiveTotal,
-        shipping_fee: 15000,
-        cod_fee: 0,
+        shipping_fee: 0,
+        cod_fee: 15000,
         line_items: lineItems,
         notes: {
           userId: userId || 'guest',
@@ -272,12 +272,12 @@ export const checkoutService = {
         shipping_methods: [
           {
             id: 'standard',
-            name: 'Standard Delivery',
+            name: 'Free Delivery',
             description: '5-7 business days',
             serviceable: addr.country === 'IN',
-            shipping_fee: 15000,
+            shipping_fee: 0,
             cod: true,
-            cod_fee: 0,
+            cod_fee: 15000,
           },
         ],
       })
