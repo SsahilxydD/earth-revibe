@@ -8,6 +8,7 @@ import { Heart } from 'lucide-react';
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { trackWishlistToggle } from '@/lib/analytics';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/use-wishlist';
+import { useAuthStore } from '@/stores/auth-store';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -21,7 +22,8 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const prefetched = useRef(false);
 
   // Wishlist — real API state
-  const { data: wishlistItems } = useWishlist({ enabled: typeof window !== 'undefined' });
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { data: wishlistItems } = useWishlist({ enabled: isAuthenticated });
   const addToWishlist = useAddToWishlist();
   const removeFromWishlist = useRemoveFromWishlist();
 

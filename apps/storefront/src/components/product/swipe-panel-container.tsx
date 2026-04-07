@@ -36,7 +36,25 @@ function useViewportWidth() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  TapePanel                                                          */
+/*  Preload hero image for a product                                   */
+/* ------------------------------------------------------------------ */
+
+const preloadedImages = new Set<string>();
+
+function preloadHeroImage(product: Product | undefined) {
+  if (!product) return;
+  const img = product.images.find((i) => i.isPrimary) || product.images[0];
+  if (!img || preloadedImages.has(img.url)) return;
+  preloadedImages.add(img.url);
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'image';
+  link.href = img.url;
+  document.head.appendChild(link);
+}
+
+/* ------------------------------------------------------------------ */
+/*  TapePanel — 3 slots: prev (0), center (1), next (2)               */
 /* ------------------------------------------------------------------ */
 
 function TapePanel({
@@ -53,7 +71,8 @@ function TapePanel({
   isCenter: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const x = useTransform(tapeOffset, (offset) => (slotIndex - 2) * vw + offset);
+  // 3 panels: center is slot 1, so offset = (slotIndex - 1) * vw
+  const x = useTransform(tapeOffset, (offset) => (slotIndex - 1) * vw + offset);
 
   const { data: product } = useQuery({
     queryKey: productKeys.detail(slug),
@@ -62,6 +81,12 @@ function TapePanel({
     staleTime: 5 * 60 * 1000,
   });
 
+  // Preload hero image as soon as data arrives
+  useEffect(() => {
+    if (product && !isCenter) preloadHeroImage(product);
+  }, [product, isCenter]);
+
+  // Reset scroll when slug changes
   const prevSlugRef = useRef(slug);
   useEffect(() => {
     if (slug !== prevSlugRef.current) {
@@ -71,32 +96,40 @@ function TapePanel({
   }, [slug]);
 
   if (!product) {
-    return <motion.div ref={panelRef} className="absolute inset-0 bg-white" style={{ x }} />;
+    return (
+      <motion.div
+        ref={panelRef}
+        className="absolute inset-0 bg-white"
+        style={{ x, willChange: 'transform' }}
+      />
+    );
   }
 
   return (
-    <motion.div ref={panelRef} className="absolute inset-0 overflow-y-auto bg-white" style={{ x }}>
+    <motion.div
+      ref={panelRef}
+      className="absolute inset-0 overflow-y-auto bg-white"
+      style={{
+        x,
+        willChange: 'transform',
+        contentVisibility: isCenter ? 'visible' : 'auto',
+      }}
+    >
       <ProductDetail product={product} isPreview={!isCenter} />
     </motion.div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  buildWindow                                                        */
+/*  buildWindow — 3 slugs: [prev, center, next]                       */
 /* ------------------------------------------------------------------ */
 
 function buildWindow(
   centerSlug: string,
   getAdjacentSlugs: (slug: string) => { prev: string | null; next: string | null }
 ): string[] {
-  const { prev: p1, next: n1 } = getAdjacentSlugs(centerSlug);
-  const prev1 = p1 || centerSlug;
-  const next1 = n1 || centerSlug;
-  const { prev: p2 } = getAdjacentSlugs(prev1);
-  const { next: n2 } = getAdjacentSlugs(next1);
-  const prev2 = p2 || prev1;
-  const next2 = n2 || next1;
-  return [prev2, prev1, centerSlug, next1, next2];
+  const { prev, next } = getAdjacentSlugs(centerSlug);
+  return [prev || centerSlug, centerSlug, next || centerSlug];
 }
 
 /* ------------------------------------------------------------------ */
@@ -119,17 +152,25 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
   const { canSwipe, completeSwipe, prefetchAdjacent, getCachedProduct, getAdjacentSlugs } =
     useSwipeNavigation({ currentSlug: centerSlug });
 
-  // Window in a ref — updated synchronously with MotionValue, no blink
+  // Window in a ref for synchronous updates (no blink)
   const windowRef = useRef<string[]>(buildWindow(initialSlug, getAdjacentSlugs));
-  // Counter to trigger re-render after ref update
   const [, forceRender] = useReducer((c: number) => c + 1, 0);
+
+  // Lock body scroll when swipe container is active — prevents footer from showing
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
 
   // Rebuild window when store populates
   const allSlugs = useProductNavStore((s) => s.allSlugs);
   const ctxSlugs = useProductNavStore((s) => s.slugs);
   useEffect(() => {
     if (allSlugs.length > 1 || ctxSlugs.length > 1) {
-      const rebuilt = buildWindow(windowRef.current[2], getAdjacentSlugs);
+      const rebuilt = buildWindow(windowRef.current[1], getAdjacentSlugs);
       if (rebuilt.join(',') !== windowRef.current.join(',')) {
         windowRef.current = rebuilt;
         forceRender();
@@ -137,17 +178,14 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
     }
   }, [allSlugs.length, ctxSlugs.length]);
 
-  // Prefetch
+  // Prefetch adjacent products
   useEffect(() => {
-    const w = windowRef.current;
-    prefetchAdjacent(w[2]);
-    prefetchAdjacent(w[0]);
-    prefetchAdjacent(w[4]);
-  }, [windowRef.current[2], prefetchAdjacent]);
+    prefetchAdjacent(windowRef.current[1]);
+  }, [windowRef.current[1], prefetchAdjacent]);
 
   // Sync on server navigation
   useEffect(() => {
-    if (initialSlug !== windowRef.current[2]) {
+    if (initialSlug !== windowRef.current[1]) {
       windowRef.current = buildWindow(initialSlug, getAdjacentSlugs);
       setCenterSlug(initialSlug);
       tapeOffset.set(0);
@@ -201,9 +239,10 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
   const commitSwipe = useCallback(
     (direction: 'left' | 'right') => {
       const w = windowRef.current;
-      const targetSlug = direction === 'left' ? w[3] : w[1];
+      // 3-panel: center is index 1, next is 2, prev is 0
+      const targetSlug = direction === 'left' ? w[2] : w[0];
 
-      if (!targetSlug || targetSlug === w[2]) {
+      if (!targetSlug || targetSlug === w[1]) {
         animate(tapeOffset, 0, SPRING_CONFIG);
         return;
       }
@@ -216,18 +255,12 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
       animate(tapeOffset, targetX, {
         ...SPRING_CONFIG,
         onComplete: () => {
-          const newCenterSlug = direction === 'left' ? w[3] : w[1];
-          const newEdge =
-            direction === 'left'
-              ? getAdjacentSlugs(w[4]).next || w[4]
-              : getAdjacentSlugs(w[0]).prev || w[0];
+          const newCenterSlug = targetSlug;
 
-          const newWindow =
-            direction === 'left' ? [...w.slice(1), newEdge] : [newEdge, ...w.slice(0, 4)];
+          // Rebuild 3-panel window around new center
+          const newWindow = buildWindow(newCenterSlug, getAdjacentSlugs);
 
-          // BOTH updates happen synchronously before React renders.
-          // The ref update is instant. tapeOffset.set is instant.
-          // Then forceRender triggers ONE render with both already applied.
+          // Synchronous: ref + MotionValue before React renders
           windowRef.current = newWindow;
           tapeOffset.set(0);
           setCenterSlug(newCenterSlug);
@@ -238,13 +271,16 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
             completeSwipe(newCenterSlug, newProduct);
           }
 
+          // Prefetch the new edges
+          prefetchAdjacent(newCenterSlug);
+
           setTimeout(() => {
             lockRef.current = false;
           }, LOCK_DURATION);
         },
       });
     },
-    [vw, getAdjacentSlugs, getCachedProduct, completeSwipe, tapeOffset]
+    [vw, getAdjacentSlugs, getCachedProduct, completeSwipe, prefetchAdjacent, tapeOffset]
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -278,7 +314,7 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
   useEffect(() => {
     const handlePopState = () => {
       const match = window.location.pathname.match(/\/products\/(.+)/);
-      if (match && match[1] !== windowRef.current[2]) {
+      if (match && match[1] !== windowRef.current[1]) {
         const slug = match[1];
         const cached = getCachedProduct(slug);
         if (cached) {
@@ -295,6 +331,7 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
     return () => window.removeEventListener('popstate', handlePopState);
   }, [getCachedProduct, getAdjacentSlugs, tapeOffset]);
 
+  // Non-swipe fallback
   if (!canSwipe || !isTouchDevice) {
     return <ProductDetail product={initialProduct} />;
   }
@@ -303,8 +340,7 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
 
   return (
     <div
-      className="relative w-screen overflow-hidden"
-      style={{ height: '100dvh' }}
+      className="fixed inset-0 z-30 overflow-hidden bg-white"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -316,7 +352,7 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
           slotIndex={i}
           tapeOffset={tapeOffset}
           vw={vw}
-          isCenter={i === 2}
+          isCenter={i === 1}
         />
       ))}
     </div>
