@@ -20,6 +20,8 @@ const COMMIT_DISTANCE_RATIO = 0.3;
 const COMMIT_VELOCITY = 500;
 const LOCK_DURATION = 350;
 const SPRING_CONFIG = { type: 'spring' as const, stiffness: 300, damping: 30 };
+/** Minimum horizontal px before we claim the gesture as a swipe (vs vertical scroll) */
+const SWIPE_THRESHOLD = 10;
 
 /* ------------------------------------------------------------------ */
 /*  useViewportWidth                                                   */
@@ -36,7 +38,7 @@ function useViewportWidth() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  TapePanel — a single slot in the tape, owns its own data query     */
+/*  TapePanel                                                          */
 /* ------------------------------------------------------------------ */
 
 function TapePanel({
@@ -45,16 +47,12 @@ function TapePanel({
   tapeOffset,
   vw,
   isCenter,
-  onDragStart,
-  onDragEnd,
 }: {
   slug: string;
   slotIndex: number;
   tapeOffset: ReturnType<typeof useMotionValue<number>>;
   vw: number;
   isCenter: boolean;
-  onDragStart?: () => void;
-  onDragEnd?: (e: unknown, info: { offset: { x: number }; velocity: { x: number } }) => void;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const x = useTransform(tapeOffset, (offset) => (slotIndex - 2) * vw + offset);
@@ -66,7 +64,7 @@ function TapePanel({
     staleTime: 5 * 60 * 1000,
   });
 
-  // Reset scroll when this slot receives a new slug (window shifted)
+  // Reset scroll when this slot receives a new slug
   const prevSlugRef = useRef(slug);
   useEffect(() => {
     if (slug !== prevSlugRef.current) {
@@ -76,34 +74,18 @@ function TapePanel({
   }, [slug]);
 
   if (!product) {
-    return (
-      <motion.div
-        ref={panelRef}
-        className="absolute inset-0 flex items-center justify-center bg-white"
-        style={{ x }}
-      />
-    );
+    return <motion.div ref={panelRef} className="absolute inset-0 bg-white" style={{ x }} />;
   }
 
   return (
-    <motion.div
-      ref={panelRef}
-      className="absolute inset-0 overflow-y-auto bg-white"
-      style={{ x, touchAction: isCenter ? 'pan-y' : undefined }}
-      drag={isCenter ? 'x' : false}
-      dragSnapToOrigin={false}
-      dragMomentum={false}
-      dragElastic={0}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-    >
+    <motion.div ref={panelRef} className="absolute inset-0 overflow-y-auto bg-white" style={{ x }}>
       <ProductDetail product={product} isPreview={!isCenter} />
     </motion.div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  buildWindow — compute 5-slug window centered on a slug             */
+/*  buildWindow                                                        */
 /* ------------------------------------------------------------------ */
 
 function buildWindow(
@@ -135,38 +117,35 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
   const tapeOffset = useMotionValue(0);
   const lockRef = useRef(false);
 
-  // Track the actual center slug (changes after swipes, not just initialSlug)
   const [centerSlug, setCenterSlug] = useState(initialSlug);
 
   const { canSwipe, completeSwipe, prefetchAdjacent, getCachedProduct, getAdjacentSlugs } =
     useSwipeNavigation({ currentSlug: centerSlug });
 
-  // Build the 5-slug window
   const [windowSlugs, setWindowSlugs] = useState<string[]>(() =>
     buildWindow(initialSlug, getAdjacentSlugs)
   );
 
-  // Rebuild window when store populates (slug list arrives async)
+  // Rebuild window when store populates
   const allSlugs = useProductNavStore((s) => s.allSlugs);
   const ctxSlugs = useProductNavStore((s) => s.slugs);
   useEffect(() => {
     if (allSlugs.length > 1 || ctxSlugs.length > 1) {
       const rebuilt = buildWindow(windowSlugs[2], getAdjacentSlugs);
-      // Only update if the window actually changed
       if (rebuilt.join(',') !== windowSlugs.join(',')) {
         setWindowSlugs(rebuilt);
       }
     }
   }, [allSlugs.length, ctxSlugs.length]);
 
-  // Prefetch outer-edge products for depth +2
+  // Prefetch
   useEffect(() => {
     prefetchAdjacent(windowSlugs[2]);
     prefetchAdjacent(windowSlugs[0]);
     prefetchAdjacent(windowSlugs[4]);
   }, [windowSlugs[0], windowSlugs[2], windowSlugs[4], prefetchAdjacent]);
 
-  // Sync window when initial slug changes (server navigation)
+  // Sync on server navigation
   useEffect(() => {
     if (initialSlug !== windowSlugs[2]) {
       setWindowSlugs(buildWindow(initialSlug, getAdjacentSlugs));
@@ -176,19 +155,124 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
   }, [initialSlug]);
 
   // Cancel drag on resize
-  const isDraggingRef = useRef(false);
   useEffect(() => {
     const h = () => {
-      if (isDraggingRef.current) {
-        animate(tapeOffset, 0, SPRING_CONFIG);
-        isDraggingRef.current = false;
-      }
+      tapeOffset.set(0);
     };
     window.addEventListener('resize', h);
     return () => window.removeEventListener('resize', h);
   }, [tapeOffset]);
 
-  // Popstate for browser back/forward
+  /* ---------------------------------------------------------------- */
+  /*  Manual touch handling — updates tapeOffset directly              */
+  /* ---------------------------------------------------------------- */
+
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const swipingRef = useRef<boolean | null>(null); // null = undecided, true = horizontal swipe, false = vertical scroll
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (lockRef.current) return;
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+    swipingRef.current = null;
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchStartRef.current || lockRef.current) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - touchStartRef.current.x;
+      const dy = touch.clientY - touchStartRef.current.y;
+
+      // Decide direction on first significant movement
+      if (swipingRef.current === null) {
+        if (Math.abs(dx) > SWIPE_THRESHOLD || Math.abs(dy) > SWIPE_THRESHOLD) {
+          swipingRef.current = Math.abs(dx) > Math.abs(dy);
+        }
+        return;
+      }
+
+      // If vertical scroll, let browser handle it
+      if (!swipingRef.current) return;
+
+      // Horizontal swipe — prevent scroll and update tape offset
+      e.preventDefault();
+      tapeOffset.set(dx);
+    },
+    [tapeOffset]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStartRef.current || !swipingRef.current || lockRef.current) {
+      touchStartRef.current = null;
+      swipingRef.current = null;
+      return;
+    }
+
+    const startTime = touchStartRef.current.time;
+    const currentOffset = tapeOffset.get();
+    const elapsed = Math.max(Date.now() - startTime, 1);
+    const velocity = (currentOffset / elapsed) * 1000; // px/s
+
+    touchStartRef.current = null;
+    swipingRef.current = null;
+
+    const distance = Math.abs(currentOffset);
+    const speed = Math.abs(velocity);
+    const committed = distance > vw * COMMIT_DISTANCE_RATIO || speed > COMMIT_VELOCITY;
+
+    if (!committed) {
+      animate(tapeOffset, 0, SPRING_CONFIG);
+      return;
+    }
+
+    const goingLeft = currentOffset < 0;
+    const direction: 'left' | 'right' = goingLeft ? 'left' : 'right';
+    const targetSlug = direction === 'left' ? windowSlugs[3] : windowSlugs[1];
+
+    if (!targetSlug || targetSlug === windowSlugs[2]) {
+      animate(tapeOffset, 0, SPRING_CONFIG);
+      return;
+    }
+
+    if ('vibrate' in navigator) navigator.vibrate(10);
+
+    lockRef.current = true;
+    const targetX = direction === 'left' ? -vw : vw;
+
+    animate(tapeOffset, targetX, {
+      ...SPRING_CONFIG,
+      onComplete: () => {
+        const newCenterSlug = direction === 'left' ? windowSlugs[3] : windowSlugs[1];
+        const newEdge =
+          direction === 'left'
+            ? getAdjacentSlugs(windowSlugs[4]).next || windowSlugs[4]
+            : getAdjacentSlugs(windowSlugs[0]).prev || windowSlugs[0];
+
+        const newWindow =
+          direction === 'left'
+            ? [...windowSlugs.slice(1), newEdge]
+            : [newEdge, ...windowSlugs.slice(0, 4)];
+
+        tapeOffset.set(0);
+        flushSync(() => {
+          setWindowSlugs(newWindow);
+          setCenterSlug(newCenterSlug);
+        });
+
+        const newProduct = getCachedProduct(newCenterSlug);
+        if (newProduct) {
+          completeSwipe(newCenterSlug, newProduct);
+        }
+
+        setTimeout(() => {
+          lockRef.current = false;
+        }, LOCK_DURATION);
+      },
+    });
+  }, [vw, windowSlugs, getAdjacentSlugs, getCachedProduct, completeSwipe, tapeOffset]);
+
+  // Popstate for back/forward
   useEffect(() => {
     const handlePopState = () => {
       const match = window.location.pathname.match(/\/products\/(.+)/);
@@ -196,9 +280,10 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
         const slug = match[1];
         const cached = getCachedProduct(slug);
         if (cached) {
+          tapeOffset.set(0);
           flushSync(() => {
             setWindowSlugs(buildWindow(slug, getAdjacentSlugs));
-            tapeOffset.set(0);
+            setCenterSlug(slug);
           });
         } else {
           window.location.reload();
@@ -209,84 +294,19 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
     return () => window.removeEventListener('popstate', handlePopState);
   }, [windowSlugs, getCachedProduct, getAdjacentSlugs, tapeOffset]);
 
-  const onDragEnd = useCallback(
-    (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
-      isDraggingRef.current = false;
-
-      if (lockRef.current) {
-        animate(tapeOffset, 0, SPRING_CONFIG);
-        return;
-      }
-
-      const { offset, velocity } = info;
-      const distance = Math.abs(offset.x);
-      const speed = Math.abs(velocity.x);
-      const committed = distance > vw * COMMIT_DISTANCE_RATIO || speed > COMMIT_VELOCITY;
-
-      if (!committed) {
-        animate(tapeOffset, 0, SPRING_CONFIG);
-        return;
-      }
-
-      const goingLeft = offset.x < 0;
-      const direction: 'left' | 'right' = goingLeft ? 'left' : 'right';
-
-      // Check bounds
-      const targetSlug = direction === 'left' ? windowSlugs[3] : windowSlugs[1];
-      if (!targetSlug || targetSlug === windowSlugs[2]) {
-        animate(tapeOffset, 0, SPRING_CONFIG);
-        return;
-      }
-
-      if ('vibrate' in navigator) navigator.vibrate(10);
-
-      lockRef.current = true;
-      const targetX = direction === 'left' ? -vw : vw;
-
-      animate(tapeOffset, targetX, {
-        ...SPRING_CONFIG,
-        onComplete: () => {
-          const newCenterSlug = direction === 'left' ? windowSlugs[3] : windowSlugs[1];
-          const newEdge =
-            direction === 'left'
-              ? getAdjacentSlugs(windowSlugs[4]).next || windowSlugs[4]
-              : getAdjacentSlugs(windowSlugs[0]).prev || windowSlugs[0];
-
-          const newWindow =
-            direction === 'left'
-              ? [...windowSlugs.slice(1), newEdge]
-              : [newEdge, ...windowSlugs.slice(0, 4)];
-
-          // Reset offset FIRST (synchronous MotionValue update), THEN
-          // flush React state — so React renders with offset=0 and new slugs
-          // in the same paint, preventing the one-frame flash.
-          tapeOffset.set(0);
-          flushSync(() => {
-            setWindowSlugs(newWindow);
-            setCenterSlug(newCenterSlug);
-          });
-
-          const newProduct = getCachedProduct(newCenterSlug);
-          if (newProduct) {
-            completeSwipe(newCenterSlug, newProduct);
-          }
-
-          setTimeout(() => {
-            lockRef.current = false;
-          }, LOCK_DURATION);
-        },
-      });
-    },
-    [vw, windowSlugs, getAdjacentSlugs, getCachedProduct, completeSwipe, tapeOffset]
-  );
-
-  // Non-swipe fallback for desktop
+  // Non-swipe fallback
   if (!canSwipe || !isTouchDevice) {
     return <ProductDetail product={initialProduct} />;
   }
 
   return (
-    <div className="relative w-screen overflow-hidden" style={{ height: '100dvh' }}>
+    <div
+      className="relative w-screen overflow-hidden"
+      style={{ height: '100dvh' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {windowSlugs.map((slug, i) => (
         <TapePanel
           key={i}
@@ -295,14 +315,6 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
           tapeOffset={tapeOffset}
           vw={vw}
           isCenter={i === 2}
-          onDragStart={
-            i === 2
-              ? () => {
-                  isDraggingRef.current = true;
-                }
-              : undefined
-          }
-          onDragEnd={i === 2 ? onDragEnd : undefined}
         />
       ))}
     </div>
