@@ -270,10 +270,10 @@ export const checkoutService = {
         shipping_methods: [
           {
             id: 'standard',
-            name: 'Free Delivery',
+            name: 'Standard Delivery',
             description: '5-7 business days',
             serviceable: addr.country === 'IN',
-            shipping_fee: 0,
+            shipping_fee: 15000,
             cod: true,
             cod_fee: 0,
           },
