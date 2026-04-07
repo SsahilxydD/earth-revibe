@@ -159,6 +159,8 @@ export const checkoutService = {
         currency: 'INR',
         receipt: orderNumber,
         line_items_total: effectiveTotal,
+        shipping_fee: 15000,
+        cod_fee: 0,
         line_items: lineItems,
         notes: {
           userId: userId || 'guest',
