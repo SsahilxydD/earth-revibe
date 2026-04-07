@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { productKeys } from '@/hooks/use-products';
+import { api } from '@/lib/api-client';
 import { ProductDetail } from './product-detail';
 import { EdgePeek } from './edge-peek';
 import { useSwipeNavigation } from '@/hooks/use-swipe-navigation';
@@ -40,8 +43,6 @@ function useViewportWidth() {
 
 export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelContainerProps) {
   const [current, setCurrent] = useState<PanelData>({ slug: initialSlug, product: initialProduct });
-  const [prevPanel, setPrevPanel] = useState<PanelData | null>(null);
-  const [nextPanel, setNextPanel] = useState<PanelData | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -73,34 +74,30 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
     getAdjacentSlugs,
   } = useSwipeNavigation({ currentSlug: current.slug });
 
-  // Load adjacent panels from cache
-  const refreshPanels = useCallback(() => {
-    const { prev, next } = getAdjacentSlugs(current.slug);
+  // Reactively fetch adjacent products — panels render automatically when data arrives
+  const { prev: prevSlug, next: nextSlug } = getAdjacentSlugs(current.slug);
 
-    if (prev) {
-      const product = getCachedProduct(prev);
-      setPrevPanel(product ? { slug: prev, product } : null);
-    } else {
-      setPrevPanel(null);
-    }
+  const { data: prevProduct } = useQuery({
+    queryKey: productKeys.detail(prevSlug || ''),
+    queryFn: ({ signal }) => api.get<Product>(`/products/${prevSlug}`, signal),
+    enabled: !!prevSlug,
+    staleTime: 5 * 60 * 1000,
+  });
 
-    if (next) {
-      const product = getCachedProduct(next);
-      setNextPanel(product ? { slug: next, product } : null);
-    } else {
-      setNextPanel(null);
-    }
-  }, [current.slug, getAdjacentSlugs, getCachedProduct]);
+  const { data: nextProduct } = useQuery({
+    queryKey: productKeys.detail(nextSlug || ''),
+    queryFn: ({ signal }) => api.get<Product>(`/products/${nextSlug}`, signal),
+    enabled: !!nextSlug,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  // Prefetch on mount and when current changes
+  const prevPanel = prevSlug && prevProduct ? { slug: prevSlug, product: prevProduct } : null;
+  const nextPanel = nextSlug && nextProduct ? { slug: nextSlug, product: nextProduct } : null;
+
+  // Also prefetch the next-next products for smoother chaining
   useEffect(() => {
     prefetchAdjacent(current.slug);
-    refreshPanels();
-
-    // Re-check after prefetch settles
-    const timer = setTimeout(refreshPanels, 500);
-    return () => clearTimeout(timer);
-  }, [current.slug, prefetchAdjacent, refreshPanels]);
+  }, [current.slug, prefetchAdjacent]);
 
   // Sync when initialProduct changes (e.g. server-side navigation)
   useEffect(() => {
