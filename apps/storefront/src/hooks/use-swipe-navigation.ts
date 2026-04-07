@@ -15,6 +15,9 @@ interface UseSwipeNavigationOptions {
 export function useSwipeNavigation({ currentSlug }: UseSwipeNavigationOptions) {
   const queryClient = useQueryClient();
   const getAdjacentSlugs = useProductNavStore((s) => s.getAdjacentSlugs);
+  // Subscribe to slug arrays so we re-render when the nav store is populated
+  const allSlugs = useProductNavStore((s) => s.allSlugs);
+  const ctxSlugs = useProductNavStore((s) => s.slugs);
 
   /** Prefetch adjacent products into React Query cache */
   const prefetchAdjacent = useCallback(
@@ -59,11 +62,13 @@ export function useSwipeNavigation({ currentSlug }: UseSwipeNavigationOptions) {
     [prefetchAdjacent]
   );
 
-  /** Whether swipe is available (has adjacent products) */
+  /** Whether swipe is available — derived from subscribed slug arrays for reactivity */
+  const slugList = ctxSlugs.length > 1 ? ctxSlugs : allSlugs;
+  const hasSiblings = slugList.length > 1;
   const { prev, next } = getAdjacentSlugs(currentSlug);
-  const canSwipe = prev !== null || next !== null;
-  const canSwipeLeft = next !== null;
-  const canSwipeRight = prev !== null;
+  const canSwipe = hasSiblings && (prev !== null || next !== null);
+  const canSwipeLeft = hasSiblings && next !== null;
+  const canSwipeRight = hasSiblings && prev !== null;
 
   return {
     canSwipe,
