@@ -158,8 +158,6 @@ export const checkoutService = {
         amount: effectiveTotal,
         currency: 'INR',
         receipt: orderNumber,
-        one_click_checkout: true,
-        cod: true,
         line_items_total: effectiveTotal,
         line_items: lineItems,
         notes: {
