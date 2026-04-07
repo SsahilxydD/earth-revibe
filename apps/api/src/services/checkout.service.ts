@@ -274,7 +274,7 @@ export const checkoutService = {
             description: '5-7 business days',
             serviceable: addr.country === 'IN',
             shipping_fee: 0,
-            cod: false,
+            cod: true,
             cod_fee: 0,
           },
         ],
