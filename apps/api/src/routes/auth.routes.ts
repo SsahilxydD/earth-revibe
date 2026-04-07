@@ -9,6 +9,7 @@ import {
   sendOtpSchema,
   verifyOtpSchema,
   updateProfileSchema,
+  changePasswordSchema,
 } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
@@ -33,6 +34,12 @@ router.put(
   authenticate,
   validate({ body: updateProfileSchema }),
   asyncHandler(authController.updateProfile)
+);
+router.put(
+  '/password',
+  authenticate,
+  validate({ body: changePasswordSchema }),
+  asyncHandler(authController.changePassword)
 );
 
 export { router as authRouter };

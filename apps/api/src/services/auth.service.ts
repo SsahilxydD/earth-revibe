@@ -11,6 +11,7 @@ import type {
   VerifyOtpInput,
   LoginInput,
   UpdateProfileInput,
+  ChangePasswordInput,
 } from '@earth-revibe/shared';
 
 const JWT_SECRET_KEY = new TextEncoder().encode(env.JWT_SECRET);
@@ -325,6 +326,27 @@ export const authService = {
       },
     });
     return user;
+  },
+
+  async changePassword(userId: string, data: ChangePasswordInput) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+    if (!user?.passwordHash) {
+      throw ApiError.badRequest('Password login is not enabled for this account');
+    }
+
+    const { valid } = await verifyPassword(data.currentPassword, user.passwordHash);
+    if (!valid) {
+      throw ApiError.badRequest('Current password is incorrect');
+    }
+
+    const hashed = await hashPassword(data.newPassword);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: hashed },
+    });
   },
 
   /**

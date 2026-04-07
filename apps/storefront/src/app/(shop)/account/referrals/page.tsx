@@ -7,15 +7,20 @@ import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
 
-interface ReferralData {
+interface ReferralCodeData {
   referralCode: string;
-  referralLink: string;
-  stats: {
-    invitesSent: number;
-    signedUp: number;
-    converted: number;
-  };
-  rewardsEarned: number;
+}
+
+interface ReferralStats {
+  total: number;
+  signedUp: number;
+  converted: number;
+  totalRewardsEarned: number;
+}
+
+interface ReferralsData {
+  referrals: unknown[];
+  stats: ReferralStats;
 }
 
 export default function ReferralsPage() {
@@ -23,10 +28,27 @@ export default function ReferralsPage() {
   const [codeCopied, setCodeCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const { data: referral, isLoading } = useQuery({
-    queryKey: ['referrals'],
-    queryFn: () => api.get<ReferralData>('/referrals'),
+  const { data: codeData, isLoading: codeLoading } = useQuery({
+    queryKey: ['referral-code'],
+    queryFn: () => api.get<ReferralCodeData>('/referrals/code'),
   });
+
+  const { data: referralsData, isLoading: referralsLoading } = useQuery({
+    queryKey: ['my-referrals'],
+    queryFn: () => api.get<ReferralsData>('/referrals/my-referrals'),
+  });
+
+  const isLoading = codeLoading || referralsLoading;
+
+  const code = codeData?.referralCode ?? '---';
+  const referralLink =
+    typeof window !== 'undefined' && code !== '---' ? `${window.location.origin}?ref=${code}` : '';
+  const stats = referralsData?.stats ?? {
+    total: 0,
+    signedUp: 0,
+    converted: 0,
+    totalRewardsEarned: 0,
+  };
 
   const copyToClipboard = async (text: string, type: 'code' | 'link') => {
     try {
@@ -46,7 +68,7 @@ export default function ReferralsPage() {
 
   const shareWhatsApp = () => {
     const message = encodeURIComponent(
-      `Hey! Use my referral code ${referral?.referralCode} to get a discount on Earth Revibe! ${referral?.referralLink}`
+      `Hey! Use my referral code ${code} to get a discount on Earth Revibe! ${referralLink}`
     );
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
@@ -58,11 +80,6 @@ export default function ReferralsPage() {
       </div>
     );
   }
-
-  const code = referral?.referralCode ?? '---';
-  const link = referral?.referralLink ?? '';
-  const stats = referral?.stats ?? { invitesSent: 0, signedUp: 0, converted: 0 };
-  const rewardsEarned = referral?.rewardsEarned ?? 0;
 
   return (
     <div className="space-y-8 md:space-y-10">
@@ -99,7 +116,7 @@ export default function ReferralsPage() {
             WhatsApp
           </button>
           <button
-            onClick={() => copyToClipboard(link, 'link')}
+            onClick={() => copyToClipboard(referralLink, 'link')}
             className="flex items-center gap-2 rounded-[var(--button-radius)] border border-[var(--color-border)] px-5 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface)]"
           >
             {linkCopied ? (
@@ -125,9 +142,9 @@ export default function ReferralsPage() {
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">
               <Share2 size={18} className="text-[var(--color-primary)]" />
             </div>
-            <p className="text-2xl font-bold">{stats.invitesSent}</p>
+            <p className="text-2xl font-bold">{stats.total}</p>
             <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
-              Invites Sent
+              Referrals
             </p>
           </div>
           <div className="rounded-xl border border-[var(--color-border)] p-4 text-center">
@@ -152,7 +169,7 @@ export default function ReferralsPage() {
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">
               <Gift size={18} className="text-[var(--color-primary)]" />
             </div>
-            <p className="text-2xl font-bold">{rewardsEarned}</p>
+            <p className="text-2xl font-bold">{stats.totalRewardsEarned}</p>
             <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
               Points Earned
             </p>

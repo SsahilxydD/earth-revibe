@@ -86,6 +86,6 @@ export function useUpdateProfile() {
 
 export function useChangePassword() {
   return useMutation<void, ApiError, ChangePasswordPayload>({
-    mutationFn: (payload) => api.put('/auth/change-password', payload),
+    mutationFn: (payload) => api.put('/auth/password', payload),
   });
 }

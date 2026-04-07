@@ -453,6 +453,7 @@ enum PaymentMethod {
   NETBANKING
   WALLET
   EMI
+  COD
 }
 
 // ==========================================

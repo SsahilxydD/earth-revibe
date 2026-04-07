@@ -31,6 +31,11 @@ export function formatDate(date: string): string {
   return `${day} ${month} ${year}`;
 }
 
+/** Format an UPPERCASE_SNAKE enum value for display (e.g. "IN_PROGRESS" → "IN PROGRESS"). */
+export function formatStatus(status: string): string {
+  return status.replace(/_/g, ' ');
+}
+
 /**
  * Get the best image URL for a given width.
  * - For thumbnails/listings (width <= 600), prefer thumbnailUrl (Cloudflare) when available.

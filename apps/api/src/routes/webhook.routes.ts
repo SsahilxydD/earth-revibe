@@ -303,6 +303,7 @@ function mapPaymentMethod(method: string): string | undefined {
     netbanking: 'NETBANKING',
     wallet: 'WALLET',
     emi: 'EMI',
+    cod: 'COD',
   };
   return map[method];
 }

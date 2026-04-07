@@ -17,22 +17,24 @@ interface Order {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  pending: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-  confirmed: { bg: 'bg-blue-100', text: 'text-blue-800' },
-  processing: { bg: 'bg-blue-100', text: 'text-blue-800' },
-  shipped: { bg: 'bg-purple-100', text: 'text-purple-800' },
-  delivered: { bg: 'bg-green-100', text: 'text-green-800' },
-  cancelled: { bg: 'bg-red-100', text: 'text-red-800' },
-  returned: { bg: 'bg-gray-100', text: 'text-gray-800' },
+  PLACED: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+  CONFIRMED: { bg: 'bg-blue-100', text: 'text-blue-800' },
+  PROCESSING: { bg: 'bg-blue-100', text: 'text-blue-800' },
+  SHIPPED: { bg: 'bg-purple-100', text: 'text-purple-800' },
+  OUT_FOR_DELIVERY: { bg: 'bg-purple-100', text: 'text-purple-800' },
+  DELIVERED: { bg: 'bg-green-100', text: 'text-green-800' },
+  CANCELLED: { bg: 'bg-red-100', text: 'text-red-800' },
+  RETURNED: { bg: 'bg-gray-100', text: 'text-gray-800' },
+  REFUNDED: { bg: 'bg-gray-100', text: 'text-gray-800' },
 };
 
 function OrderStatusBadge({ status }: { status: string }) {
-  const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
+  const style = STATUS_STYLES[status] || STATUS_STYLES.PLACED;
   return (
     <span
       className={`inline-block rounded-[var(--badge-radius)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${style.bg} ${style.text}`}
     >
-      {status}
+      {status.replace(/_/g, ' ')}
     </span>
   );
 }

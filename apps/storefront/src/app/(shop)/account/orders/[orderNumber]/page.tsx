@@ -10,13 +10,13 @@ import { formatPrice, formatDate, getImageUrl } from '@/lib/utils';
 
 interface OrderItem {
   id: string;
-  name: string;
-  image: string;
-  variant: string;
-  size: string;
-  color: string;
+  productName: string;
+  productImage: string | null;
+  variantSize: string;
+  variantColor: string;
   quantity: number;
-  price: number;
+  unitPrice: number;
+  totalPrice: number;
 }
 
 interface OrderDetail {
@@ -26,40 +26,40 @@ interface OrderDetail {
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
-  shippingAddress: {
+  address: {
     fullName: string;
     line1: string;
-    line2: string;
+    line2: string | null;
     city: string;
     state: string;
     pinCode: string;
     phone: string;
   };
   payment: {
-    method: string;
-    last4: string;
+    method: string | null;
     status: string;
-  };
+  } | null;
   subtotal: number;
-  discount: number;
-  shipping: number;
-  tax: number;
-  total: number;
+  discountAmount: number;
+  shippingAmount: number;
+  taxAmount: number;
+  totalAmount: number;
 }
 
 const TIMELINE_STEPS = [
-  { key: 'confirmed', label: 'Confirmed', icon: CheckCircle },
-  { key: 'processing', label: 'Processing', icon: Package },
-  { key: 'shipped', label: 'Shipped', icon: Truck },
-  { key: 'delivered', label: 'Delivered', icon: CheckCircle },
+  { key: 'CONFIRMED', label: 'Confirmed', icon: CheckCircle },
+  { key: 'PROCESSING', label: 'Processing', icon: Package },
+  { key: 'SHIPPED', label: 'Shipped', icon: Truck },
+  { key: 'DELIVERED', label: 'Delivered', icon: CheckCircle },
 ] as const;
 
 const STATUS_ORDER: Record<string, number> = {
-  pending: 0,
-  confirmed: 1,
-  processing: 2,
-  shipped: 3,
-  delivered: 4,
+  PLACED: 0,
+  CONFIRMED: 1,
+  PROCESSING: 2,
+  SHIPPED: 3,
+  OUT_FOR_DELIVERY: 3,
+  DELIVERED: 4,
 };
 
 export default function OrderDetailPage({ params }: { params: Promise<{ orderNumber: string }> }) {
@@ -91,7 +91,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   }
 
   const currentStep = STATUS_ORDER[order.status] ?? 0;
-  const isCancelled = order.status === 'cancelled';
+  const isCancelled = order.status === 'CANCELLED';
 
   return (
     <div>
@@ -172,24 +172,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               className="flex gap-4 rounded-xl border border-[var(--color-border)] p-4"
             >
               <div className="h-20 w-16 shrink-0 overflow-hidden rounded-lg bg-[var(--color-surface)]">
-                {item.image && (
+                {item.productImage && (
                   <img
-                    src={getImageUrl(item.image, 160)}
-                    alt={item.name}
+                    src={getImageUrl(item.productImage, 160)}
+                    alt={item.productName}
                     className="h-full w-full object-cover"
                   />
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold">{item.name}</p>
+                <p className="text-sm font-bold">{item.productName}</p>
                 <p className="text-xs text-[var(--color-muted)]">
-                  {[item.size, item.color].filter(Boolean).join(' / ')}
+                  {[item.variantSize, item.variantColor].filter(Boolean).join(' / ')}
                 </p>
                 <p className="text-xs text-[var(--color-muted)]">Qty: {item.quantity}</p>
               </div>
-              <p className="shrink-0 text-sm font-bold">
-                {formatPrice(item.price * item.quantity)}
-              </p>
+              <p className="shrink-0 text-sm font-bold">{formatPrice(item.totalPrice)}</p>
             </div>
           ))}
         </div>
@@ -200,14 +198,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         <div className="rounded-xl border border-[var(--color-border)] p-5">
           <h3 className="mb-3 text-sm font-bold uppercase tracking-wider">Shipping Address</h3>
           <div className="space-y-1 text-sm text-[var(--color-muted)]">
-            <p className="font-medium text-[var(--color-text)]">{order.shippingAddress.fullName}</p>
-            <p>{order.shippingAddress.line1}</p>
-            {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
+            <p className="font-medium text-[var(--color-text)]">{order.address.fullName}</p>
+            <p>{order.address.line1}</p>
+            {order.address.line2 && <p>{order.address.line2}</p>}
             <p>
-              {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
-              {order.shippingAddress.pinCode}
+              {order.address.city}, {order.address.state} {order.address.pinCode}
             </p>
-            <p>Phone: {order.shippingAddress.phone}</p>
+            <p>Phone: {order.address.phone}</p>
           </div>
         </div>
 
@@ -216,8 +213,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           <h3 className="mb-3 text-sm font-bold uppercase tracking-wider">Payment Summary</h3>
           {order.payment && (
             <p className="mb-3 text-sm text-[var(--color-muted)]">
-              {order.payment.method}
-              {order.payment.last4 && ` ending in ${order.payment.last4}`}
+              {order.payment.method || 'Online Payment'}
             </p>
           )}
           <div className="space-y-2 text-sm">
@@ -225,23 +221,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <span className="text-[var(--color-muted)]">Subtotal</span>
               <span>{formatPrice(order.subtotal)}</span>
             </div>
-            {order.discount > 0 && (
+            {Number(order.discountAmount) > 0 && (
               <div className="flex justify-between">
                 <span className="text-[var(--color-muted)]">Discount</span>
-                <span className="text-green-600">-{formatPrice(order.discount)}</span>
+                <span className="text-green-600">-{formatPrice(order.discountAmount)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span className="text-[var(--color-muted)]">Shipping</span>
-              <span>{order.shipping === 0 ? 'Free' : formatPrice(order.shipping)}</span>
+              <span>
+                {Number(order.shippingAmount) === 0 ? 'Free' : formatPrice(order.shippingAmount)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-[var(--color-muted)]">Tax</span>
-              <span>{formatPrice(order.tax)}</span>
+              <span>{formatPrice(order.taxAmount)}</span>
             </div>
             <div className="flex justify-between border-t border-[var(--color-border)] pt-2 font-bold">
               <span>Total</span>
-              <span>{formatPrice(order.total)}</span>
+              <span>{formatPrice(order.totalAmount)}</span>
             </div>
           </div>
         </div>

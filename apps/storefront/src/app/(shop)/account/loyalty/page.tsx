@@ -6,27 +6,32 @@ import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
 
-interface LoyaltyData {
-  balance: number;
-  tier: string;
+interface LoyaltySummary {
+  currentBalance: number;
   totalEarned: number;
   totalRedeemed: number;
-  transactions: LoyaltyTransaction[];
+  pointValue: number;
 }
 
 interface LoyaltyTransaction {
   id: string;
-  type: 'earn' | 'redeem' | 'expire' | 'bonus';
+  type: string;
   points: number;
   description: string;
   createdAt: string;
 }
 
+interface LoyaltyHistory {
+  transactions: LoyaltyTransaction[];
+  total: number;
+}
+
 const TYPE_STYLES: Record<string, { color: string; prefix: string }> = {
-  earn: { color: 'text-green-600', prefix: '+' },
-  bonus: { color: 'text-green-600', prefix: '+' },
-  redeem: { color: 'text-[var(--color-sale)]', prefix: '-' },
-  expire: { color: 'text-[var(--color-muted)]', prefix: '-' },
+  EARNED: { color: 'text-green-600', prefix: '+' },
+  BONUS: { color: 'text-green-600', prefix: '+' },
+  REDEEMED: { color: 'text-[var(--color-sale)]', prefix: '-' },
+  EXPIRED: { color: 'text-[var(--color-muted)]', prefix: '-' },
+  ADJUSTED: { color: 'text-blue-600', prefix: '' },
 };
 
 const HOW_IT_WORKS = [
@@ -48,10 +53,17 @@ const HOW_IT_WORKS = [
 ] as const;
 
 export default function LoyaltyPage() {
-  const { data: loyalty, isLoading } = useQuery({
-    queryKey: ['loyalty'],
-    queryFn: () => api.get<LoyaltyData>('/loyalty'),
+  const { data: summary, isLoading: summaryLoading } = useQuery({
+    queryKey: ['loyalty-summary'],
+    queryFn: () => api.get<LoyaltySummary>('/loyalty/summary'),
   });
+
+  const { data: history, isLoading: historyLoading } = useQuery({
+    queryKey: ['loyalty-history'],
+    queryFn: () => api.get<LoyaltyHistory>('/loyalty/history'),
+  });
+
+  const isLoading = summaryLoading || historyLoading;
 
   if (isLoading) {
     return (
@@ -61,9 +73,8 @@ export default function LoyaltyPage() {
     );
   }
 
-  const balance = loyalty?.balance ?? 0;
-  const tier = loyalty?.tier ?? 'Bronze';
-  const transactions = loyalty?.transactions ?? [];
+  const balance = summary?.currentBalance ?? 0;
+  const transactions = history?.transactions ?? [];
 
   return (
     <div className="space-y-8 md:space-y-10">
@@ -84,19 +95,15 @@ export default function LoyaltyPage() {
         </div>
         <div className="mt-4 flex items-center gap-4 border-t border-white/20 pt-4">
           <div>
-            <p className="text-[10px] uppercase tracking-wider opacity-70">Tier</p>
-            <p className="text-sm font-bold">{tier}</p>
-          </div>
-          <div>
             <p className="text-[10px] uppercase tracking-wider opacity-70">Total Earned</p>
             <p className="text-sm font-bold">
-              {(loyalty?.totalEarned ?? 0).toLocaleString('en-IN')}
+              {(summary?.totalEarned ?? 0).toLocaleString('en-IN')}
             </p>
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wider opacity-70">Total Redeemed</p>
             <p className="text-sm font-bold">
-              {(loyalty?.totalRedeemed ?? 0).toLocaleString('en-IN')}
+              {(summary?.totalRedeemed ?? 0).toLocaleString('en-IN')}
             </p>
           </div>
         </div>
@@ -149,7 +156,7 @@ export default function LoyaltyPage() {
               </thead>
               <tbody>
                 {transactions.map((tx) => {
-                  const style = TYPE_STYLES[tx.type] || TYPE_STYLES.earn;
+                  const style = TYPE_STYLES[tx.type] || TYPE_STYLES.EARNED;
                   return (
                     <tr
                       key={tx.id}
@@ -164,7 +171,7 @@ export default function LoyaltyPage() {
                       <td className="py-3">{tx.description}</td>
                       <td className={`py-3 text-right font-bold ${style.color}`}>
                         {style.prefix}
-                        {tx.points.toLocaleString('en-IN')}
+                        {Math.abs(tx.points).toLocaleString('en-IN')}
                       </td>
                     </tr>
                   );

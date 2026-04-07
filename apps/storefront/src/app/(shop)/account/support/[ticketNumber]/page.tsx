@@ -8,15 +8,20 @@ import { ArrowLeft, Send, User, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatStatus } from '@/lib/utils';
 import { useToast } from '@/providers';
 
-interface Message {
+interface TicketMessage {
   id: string;
-  sender: 'customer' | 'agent';
-  senderName: string;
-  body: string;
+  content: string;
+  attachment: string | null;
   createdAt: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+  };
 }
 
 interface TicketDetail {
@@ -26,19 +31,18 @@ interface TicketDetail {
   category: string;
   status: string;
   createdAt: string;
-  messages: Message[];
+  messages: TicketMessage[];
 }
 
 interface ReplyForm {
-  message: string;
+  content: string;
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  open: { bg: 'bg-blue-100', text: 'text-blue-800' },
-  'in-progress': { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-  waiting: { bg: 'bg-purple-100', text: 'text-purple-800' },
-  resolved: { bg: 'bg-green-100', text: 'text-green-800' },
-  closed: { bg: 'bg-gray-100', text: 'text-gray-800' },
+  OPEN: { bg: 'bg-blue-100', text: 'text-blue-800' },
+  IN_PROGRESS: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+  RESOLVED: { bg: 'bg-green-100', text: 'text-green-800' },
+  CLOSED: { bg: 'bg-gray-100', text: 'text-gray-800' },
 };
 
 export default function TicketDetailPage({
@@ -52,12 +56,12 @@ export default function TicketDetailPage({
 
   const { data: ticket, isLoading } = useQuery({
     queryKey: ['support-ticket', ticketNumber],
-    queryFn: () => api.get<TicketDetail>(`/support/tickets/${ticketNumber}`),
+    queryFn: () => api.get<TicketDetail>(`/support/${ticketNumber}`),
     enabled: !!ticketNumber,
   });
 
   const replyMutation = useMutation({
-    mutationFn: (data: ReplyForm) => api.post(`/support/tickets/${ticketNumber}/reply`, data),
+    mutationFn: (data: ReplyForm) => api.post(`/support/${ticketNumber}/messages`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['support-ticket', ticketNumber],
@@ -76,7 +80,7 @@ export default function TicketDetailPage({
     reset,
     formState: { errors },
   } = useForm<ReplyForm>({
-    defaultValues: { message: '' },
+    defaultValues: { content: '' },
   });
 
   if (isLoading) {
@@ -98,8 +102,8 @@ export default function TicketDetailPage({
     );
   }
 
-  const statusStyle = STATUS_STYLES[ticket.status] || STATUS_STYLES.open;
-  const isClosed = ticket.status === 'closed' || ticket.status === 'resolved';
+  const statusStyle = STATUS_STYLES[ticket.status] || STATUS_STYLES.OPEN;
+  const isClosed = ticket.status === 'CLOSED' || ticket.status === 'RESOLVED';
 
   return (
     <div>
@@ -125,7 +129,7 @@ export default function TicketDetailPage({
           <span
             className={`shrink-0 rounded-[var(--badge-radius)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusStyle.bg} ${statusStyle.text}`}
           >
-            {ticket.status}
+            {formatStatus(ticket.status)}
           </span>
         </div>
       </div>
@@ -133,7 +137,8 @@ export default function TicketDetailPage({
       {/* Messages */}
       <div className="mb-6 space-y-4">
         {ticket.messages.map((msg) => {
-          const isCustomer = msg.sender === 'customer';
+          const isCustomer = msg.user.role === 'CUSTOMER';
+          const senderName = `${msg.user.firstName} ${msg.user.lastName}`.trim();
           return (
             <div key={msg.id} className={`flex gap-3 ${isCustomer ? 'flex-row-reverse' : ''}`}>
               <div
@@ -158,7 +163,7 @@ export default function TicketDetailPage({
                       isCustomer ? 'text-white/80' : 'text-[var(--color-muted)]'
                     }`}
                   >
-                    {msg.senderName}
+                    {senderName}
                   </span>
                   <span
                     className={`text-[10px] ${
@@ -168,7 +173,7 @@ export default function TicketDetailPage({
                     {formatDate(msg.createdAt)}
                   </span>
                 </div>
-                <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
               </div>
             </div>
           );
@@ -183,12 +188,12 @@ export default function TicketDetailPage({
               className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
               rows={3}
               placeholder="Type your reply..."
-              {...register('message', {
+              {...register('content', {
                 required: 'Message is required',
               })}
             />
-            {errors.message && (
-              <p className="mt-1 text-xs text-[var(--color-sale)]">{errors.message.message}</p>
+            {errors.content && (
+              <p className="mt-1 text-xs text-[var(--color-sale)]">{errors.content.message}</p>
             )}
           </div>
           <Button type="submit" loading={replyMutation.isPending} className="shrink-0 self-end">
@@ -198,7 +203,8 @@ export default function TicketDetailPage({
         </form>
       ) : (
         <div className="rounded-xl bg-[var(--color-surface)] px-4 py-3 text-center text-sm text-[var(--color-muted)]">
-          This ticket is {ticket.status}. Create a new ticket if you need further assistance.
+          This ticket is {formatStatus(ticket.status).toLowerCase()}. Create a new ticket if you
+          need further assistance.
         </div>
       )}
     </div>

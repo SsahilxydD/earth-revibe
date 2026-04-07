@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatStatus } from '@/lib/utils';
 import { useToast } from '@/providers';
 
 interface Ticket {
@@ -25,7 +25,7 @@ interface Ticket {
 interface NewTicketForm {
   subject: string;
   category: string;
-  message: string;
+  description: string;
 }
 
 const CATEGORIES = [
@@ -39,11 +39,10 @@ const CATEGORIES = [
 ] as const;
 
 const TICKET_STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  open: { bg: 'bg-blue-100', text: 'text-blue-800' },
-  'in-progress': { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-  waiting: { bg: 'bg-purple-100', text: 'text-purple-800' },
-  resolved: { bg: 'bg-green-100', text: 'text-green-800' },
-  closed: { bg: 'bg-gray-100', text: 'text-gray-800' },
+  OPEN: { bg: 'bg-blue-100', text: 'text-blue-800' },
+  IN_PROGRESS: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+  RESOLVED: { bg: 'bg-green-100', text: 'text-green-800' },
+  CLOSED: { bg: 'bg-gray-100', text: 'text-gray-800' },
 };
 
 export default function SupportPage() {
@@ -53,13 +52,13 @@ export default function SupportPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['support-tickets'],
-    queryFn: () => api.get<{ tickets: Ticket[]; total: number }>('/support/tickets'),
+    queryFn: () => api.get<{ tickets: Ticket[]; total: number }>('/support'),
   });
 
   const tickets = data?.tickets;
 
   const createMutation = useMutation({
-    mutationFn: (data: NewTicketForm) => api.post('/support/tickets', data),
+    mutationFn: (data: NewTicketForm) => api.post('/support', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-tickets'] });
       setShowForm(false);
@@ -77,7 +76,7 @@ export default function SupportPage() {
     reset,
     formState: { errors },
   } = useForm<NewTicketForm>({
-    defaultValues: { subject: '', category: '', message: '' },
+    defaultValues: { subject: '', category: '', description: '' },
   });
 
   if (isLoading) {
@@ -162,13 +161,15 @@ export default function SupportPage() {
                 className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
                 rows={5}
                 placeholder="Describe your issue in detail..."
-                {...register('message', {
+                {...register('description', {
                   required: 'Message is required',
                   minLength: { value: 20, message: 'Please provide more detail' },
                 })}
               />
-              {errors.message && (
-                <p className="mt-1 text-xs text-[var(--color-sale)]">{errors.message.message}</p>
+              {errors.description && (
+                <p className="mt-1 text-xs text-[var(--color-sale)]">
+                  {errors.description.message}
+                </p>
               )}
             </div>
             <div className="flex gap-3">
@@ -210,7 +211,7 @@ export default function SupportPage() {
       ) : (
         <div className="space-y-3">
           {tickets?.map((ticket) => {
-            const statusStyle = TICKET_STATUS_STYLES[ticket.status] || TICKET_STATUS_STYLES.open;
+            const statusStyle = TICKET_STATUS_STYLES[ticket.status] || TICKET_STATUS_STYLES.OPEN;
             return (
               <Link
                 key={ticket.id}
@@ -224,7 +225,7 @@ export default function SupportPage() {
                     <span
                       className={`rounded-[var(--badge-radius)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusStyle.bg} ${statusStyle.text}`}
                     >
-                      {ticket.status}
+                      {formatStatus(ticket.status)}
                     </span>
                   </div>
                   <p className="mt-1 truncate text-sm">{ticket.subject}</p>
