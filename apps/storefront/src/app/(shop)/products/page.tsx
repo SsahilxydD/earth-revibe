@@ -1,8 +1,8 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { X, ShieldCheck, RefreshCw, Truck, Headphones } from 'lucide-react';
+import { X, Wind, Luggage, Sun, ShieldCheck, RefreshCw, Truck, Headphones } from 'lucide-react';
 import { ProductCard } from '@/components/product/product-card';
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
 import { FilterSidebar, type FilterState } from '@/components/product/filter-sidebar';
@@ -43,6 +43,55 @@ function ProductsContent() {
   const size = searchParams.get('size') || '';
   const color = searchParams.get('color') || '';
   const search = searchParams.get('search') || '';
+
+  const [activeMood, setActiveMood] = useState<string>('');
+
+  const MOOD_KEYWORDS: Record<string, string[]> = {
+    beach: ['Aqua', 'Coastal', 'Marine', 'Tidewater', 'Shoreline', 'Water', 'Blu ', 'Alpine Ivory'],
+    brunch: [
+      'Polo',
+      'polo',
+      'Cream',
+      'Formal',
+      'Herbal White',
+      'Minimal',
+      'Two-Panel',
+      'Skin-Conscious',
+      'Countryside',
+    ],
+    sunset: [
+      'Ember',
+      'Fireside',
+      'Solstice',
+      'Dustroad',
+      'Mocha',
+      'Desert',
+      'Maroon',
+      'Khakhi',
+      'Earthstone',
+      'Golden',
+    ],
+    poolside: [
+      'Cloudweave',
+      'Windpath',
+      'Garden Sage',
+      'Tropical',
+      'Plain Blue',
+      'Alpine',
+      'Coastal',
+    ],
+    island: [
+      'Terra',
+      'Void',
+      'Ether',
+      'Vintage',
+      'Cargo',
+      'Utility',
+      'Olive',
+      'Wildflower',
+      'Trail',
+    ],
+  };
 
   const { sortBy, sortOrder } = parseSort(sort);
   const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
@@ -110,10 +159,16 @@ function ProductsContent() {
     [updateParams]
   );
 
-  const allProducts = useMemo(() => {
+  const rawProducts = useMemo(() => {
     if (!data?.pages) return [];
     return data.pages.flatMap((page) => page.products ?? []);
   }, [data]);
+
+  const allProducts = useMemo(() => {
+    if (!activeMood || !MOOD_KEYWORDS[activeMood]) return rawProducts;
+    const keywords = MOOD_KEYWORDS[activeMood];
+    return rawProducts.filter((p) => keywords.some((kw) => p.name.includes(kw)));
+  }, [rawProducts, activeMood]);
 
   const totalCount = data?.pages?.[0]?.total ?? allProducts.length;
 
@@ -126,9 +181,10 @@ function ProductsContent() {
   }, [allProducts, searchParams, setNavContext]);
 
   const currentFilters: FilterState = { category, minPrice, maxPrice, size, color };
-  const hasActiveFilters = !!(minPrice || maxPrice || size || color || category);
+  const hasActiveFilters = !!(minPrice || maxPrice || size || color || category || activeMood);
 
   const clearAllFilters = () => {
+    setActiveMood('');
     router.push('/products', { scroll: false });
   };
 
@@ -162,8 +218,112 @@ function ProductsContent() {
         </span>
       </div>
 
+      {/* Hero banner — vacation tagline */}
+      {!search && (
+        <div
+          style={{
+            height: 220,
+            backgroundColor: '#EDE8DF',
+            padding: '0 28px 24px 28px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            gap: 8,
+          }}
+        >
+          <p
+            style={{
+              fontSize: 20,
+              fontWeight: 300,
+              color: '#000',
+              letterSpacing: -0.3,
+              lineHeight: 1.35,
+            }}
+          >
+            {'Pack light, look effortless.\nMade for warm days ahead.'}
+          </p>
+          <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Wind size={11} color="#999" />
+              <span style={{ fontSize: 9, fontWeight: 300, color: '#999', letterSpacing: 0.3 }}>
+                Breathable
+              </span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Luggage size={11} color="#999" />
+              <span style={{ fontSize: 9, fontWeight: 300, color: '#999', letterSpacing: 0.3 }}>
+                Travel-ready
+              </span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Sun size={11} color="#999" />
+              <span style={{ fontSize: 9, fontWeight: 300, color: '#999', letterSpacing: 0.3 }}>
+                Sun-washed tones
+              </span>
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Divider */}
       <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+
+      {/* Mood circles — instant client-side filter */}
+      {!search && (
+        <div
+          style={{
+            height: 100,
+            padding: '16px 8px 10px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            gap: 0,
+          }}
+        >
+          {[
+            { label: 'Beach', value: 'beach', img: '/moods/beach.webp' },
+            { label: 'Brunch', value: 'brunch', img: '/moods/brunch.webp' },
+            { label: 'Sunset', value: 'sunset', img: '/moods/sunset.webp' },
+            { label: 'Poolside', value: 'poolside', img: '/moods/poolside.webp' },
+            { label: 'Island', value: 'island', img: '/moods/island.webp' },
+          ].map((m) => {
+            const isActive = activeMood === m.value;
+            return (
+              <button
+                key={m.label}
+                onClick={() => setActiveMood(isActive ? '' : m.value)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 6,
+                  flexShrink: 0,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 9999,
+                    backgroundImage: `url(${m.img})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    outline: isActive ? '2px solid #000' : 'none',
+                    outlineOffset: 2,
+                  }}
+                />
+                <span style={{ fontSize: 9, fontWeight: isActive ? 400 : 300, color: '#000' }}>
+                  {m.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Filter bar — 44px */}
       <div
@@ -193,6 +353,34 @@ function ProductsContent() {
             flexWrap: 'wrap',
           }}
         >
+          {activeMood && (
+            <button
+              onClick={() => setActiveMood('')}
+              style={{
+                display: 'inline-flex',
+                height: 28,
+                padding: '0 12px',
+                gap: 6,
+                alignItems: 'center',
+                backgroundColor: '#F5F5F5',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 400,
+                  color: '#000',
+                  letterSpacing: 0.5,
+                  textTransform: 'capitalize',
+                }}
+              >
+                {activeMood}
+              </span>
+              <X size={10} color="#999" />
+            </button>
+          )}
           {category && (
             <button
               onClick={() => updateParams({ category: undefined })}
@@ -323,9 +511,41 @@ function ProductsContent() {
       ) : (
         <div style={{ padding: '14px 28px 28px 28px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 14px' }}>
-            {allProducts.map((product, i) => (
-              <ProductCard key={product.id} product={product} index={i} />
-            ))}
+            {allProducts.map((product, i) => {
+              const items = [];
+              items.push(<ProductCard key={product.id} product={product} index={i} />);
+              if (i === 1) {
+                items.push(
+                  <div
+                    key="vacation-quote"
+                    style={{
+                      gridColumn: '1 / -1',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      height: 80,
+                    }}
+                  >
+                    <div style={{ width: 24, height: 1, backgroundColor: '#CCC' }} />
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 300,
+                        color: '#999',
+                        fontStyle: 'italic',
+                        textAlign: 'center',
+                      }}
+                    >
+                      &ldquo;Wear it like you&apos;re already there.&rdquo;
+                    </p>
+                    <div style={{ width: 24, height: 1, backgroundColor: '#CCC' }} />
+                  </div>
+                );
+              }
+              return items;
+            })}
           </div>
 
           {/* Trust strip */}
