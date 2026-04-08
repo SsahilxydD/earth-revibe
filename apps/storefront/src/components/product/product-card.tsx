@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -8,8 +8,7 @@ import { Heart, Plus } from 'lucide-react';
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { trackWishlistToggle } from '@/lib/analytics';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/use-wishlist';
-import { useCartStore } from '@/stores/cart-store';
-import { useToast } from '@/providers';
+import { QuickAddModal } from './quick-add-modal';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -20,8 +19,7 @@ interface ProductCardProps {
 export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const router = useRouter();
   const prefetched = useRef(false);
-  const addItem = useCartStore((s) => s.addItem);
-  const { addToast } = useToast();
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   const { data: wishlistItems } = useWishlist({ enabled: typeof window !== 'undefined' });
   const addToWishlist = useAddToWishlist();
@@ -108,22 +106,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     if (isOutOfStock) return;
-    const defaultVariant = variants.find((v) => v.stock > 0) || variants[0];
-    // If no variants available, create a fallback entry from the product itself
-    const variantId = defaultVariant?.id || `${product.id}-default`;
-    addItem({
-      id: variantId,
-      productId: product.id,
-      name: product.name,
-      slug: product.slug,
-      image: primaryImage?.url || '',
-      price: product.price,
-      compareAtPrice: product.compareAtPrice || undefined,
-      size: defaultVariant?.size || 'M',
-      color: defaultVariant?.color || 'Default',
-      maxQuantity: defaultVariant?.stock && defaultVariant.stock > 0 ? defaultVariant.stock : 10,
-    });
-    addToast('Added to bag', 'success');
+    setShowQuickAdd(true);
   };
 
   return (
@@ -430,6 +413,9 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
           QUICK ADD
         </button>
       )}
+
+      {/* Quick Add Modal */}
+      {showQuickAdd && <QuickAddModal product={product} onClose={() => setShowQuickAdd(false)} />}
     </div>
   );
 }
