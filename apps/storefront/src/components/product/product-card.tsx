@@ -11,82 +11,18 @@ import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/us
 import { QuickAddModal } from './quick-add-modal';
 import type { Product } from '@/types';
 
-// Map common color names to hex for swatches
-const COLOR_HEX: Record<string, string> = {
-  black: '#1C1C1C',
-  white: '#FFFFFF',
-  red: '#DC2626',
-  blue: '#2563EB',
-  green: '#16A34A',
-  yellow: '#EAB308',
-  pink: '#EC4899',
-  orange: '#F97316',
-  purple: '#9333EA',
-  brown: '#92400E',
-  gray: '#78716C',
-  grey: '#78716C',
-  navy: '#1E3A5F',
-  beige: '#D2B48C',
-  sand: '#D2B48C',
-  olive: '#556B2F',
-  cream: '#FFFDD0',
-  khaki: '#BDB76B',
-  tan: '#D2B48C',
-  maroon: '#800000',
-  teal: '#0D9488',
-  coral: '#F97171',
-  lavender: '#C084FC',
-  mint: '#86EFAC',
-  charcoal: '#374151',
-  sky: '#87CEEB',
-  rust: '#B7410E',
-  ivory: '#FFFFF0',
-  sage: '#9CAF88',
-  stone: '#A8A29E',
-  slate: '#64748B',
-  indigo: '#4F46E5',
-  mocha: '#7B5B3A',
-  taupe: '#8B7D6B',
-  coffee: '#6F4E37',
-  camel: '#C19A6B',
-  mustard: '#CEAB07',
-  wine: '#722F37',
-  burgundy: '#800020',
-  peach: '#FFDAB9',
-  lilac: '#C8A2C8',
-  aqua: '#00CED1',
-  denim: '#1560BD',
-  ash: '#B2BEB5',
-};
-
-function getColorHex(name: string): string {
-  const lower = name.toLowerCase().trim();
-  // Exact match
-  if (COLOR_HEX[lower]) return COLOR_HEX[lower];
-  // Try last word: "Heritage Mocha" → "mocha"
-  const words = lower.split(/\s+/);
-  for (let i = words.length - 1; i >= 0; i--) {
-    if (COLOR_HEX[words[i]]) return COLOR_HEX[words[i]];
-  }
-  // Fallback — might be a hex already or unknown
-  return '#A8A29E'; // neutral stone gray for unmapped colors
-}
-
 interface ProductCardProps {
   product: Product;
   index?: number;
-  /** Sibling color variants from related products (same base name, different colors) */
-  siblingColors?: { color: string; slug: string }[];
 }
 
-export function ProductCard({ product, index = 99, siblingColors }: ProductCardProps) {
+export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const router = useRouter();
   const prefetched = useRef(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [heartBounce, setHeartBounce] = useState(false);
 
-  const isAuthenticated = typeof window !== 'undefined';
-  const { data: wishlistItems } = useWishlist({ enabled: isAuthenticated });
+  const { data: wishlistItems } = useWishlist({ enabled: typeof window !== 'undefined' });
   const addToWishlist = useAddToWishlist();
   const removeFromWishlist = useRemoveFromWishlist();
 
@@ -99,24 +35,14 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      // Trigger bounce animation
       setHeartBounce(true);
       setTimeout(() => setHeartBounce(false), 300);
       if (isWishlisted) {
         trackWishlistToggle({ id: product.id, name: product.name, added: false });
-        removeFromWishlist.mutate(product.id, {
-          onError: () => {
-            // If 401, redirect to login
-            router.push('/auth/login');
-          },
-        });
+        removeFromWishlist.mutate(product.id, { onError: () => router.push('/auth/login') });
       } else {
         trackWishlistToggle({ id: product.id, name: product.name, added: true });
-        addToWishlist.mutate(product.id, {
-          onError: () => {
-            router.push('/auth/login');
-          },
-        });
+        addToWishlist.mutate(product.id, { onError: () => router.push('/auth/login') });
       }
     },
     [isWishlisted, product.id, product.name, addToWishlist, removeFromWishlist, router]
@@ -162,25 +88,10 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
   const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
   const isLowStock = !isOutOfStock && totalStock > 0 && totalStock <= 5;
 
-  // Color swatches — from variants if they have color data, otherwise skip
-  const colorSwatches = useMemo(() => {
-    const seen = new Map<string, string>();
-    variants.forEach((v) => {
-      if (v.color && v.color.trim() && !seen.has(v.color)) {
-        seen.set(v.color, v.colorHex || getColorHex(v.color));
-      }
-    });
-    return Array.from(seen.entries())
-      .slice(0, 4)
-      .map(([name, hex]) => ({ name, hex }));
-  }, [variants]);
-
-  // Discount percentage
   const discountPct = isOnSale
     ? Math.round(((product.compareAtPrice! - product.price) / product.compareAtPrice!) * 100)
     : 0;
 
-  // Savings amount
   const savings = isOnSale ? product.compareAtPrice! - product.price : 0;
 
   const handleQuickAdd = (e: React.MouseEvent) => {
@@ -197,7 +108,7 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
       onMouseEnter={handlePrefetch}
       onTouchStart={handlePrefetch}
     >
-      {/* Image container — heart button is OUTSIDE Link so it works */}
+      {/* Image container */}
       <div
         style={{
           position: 'relative',
@@ -348,7 +259,7 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
           )}
         </Link>
 
-        {/* Wishlist heart — OUTSIDE Link so onClick works */}
+        {/* Wishlist heart — outside Link */}
         <button
           onClick={toggleWishlist}
           style={{
@@ -374,19 +285,18 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
         </button>
       </div>
 
-      {/* Info section — fixed minHeight so QUICK ADD aligns across cards */}
+      {/* Info section — fixed minHeight for consistent card height */}
       <Link
         href={`/products/${product.slug}`}
         style={{
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
-          minHeight: 80,
+          minHeight: 58,
           paddingTop: 8,
           textDecoration: 'none',
         }}
       >
-        {/* Name — clamped to 2 lines with fixed line-height = consistent height */}
         <p
           style={{
             fontSize: 12,
@@ -402,8 +312,6 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
         >
           {product.name}
         </p>
-
-        {/* Price + savings on same row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 12, fontWeight: 300, color: isOutOfStock ? '#999' : '#000' }}>
             {formatPrice(product.price)}
@@ -426,47 +334,15 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
             </span>
           )}
         </div>
-
-        {/* Color swatches — only if variant or sibling colors exist */}
-        {(siblingColors && siblingColors.length > 1) || colorSwatches.length > 0 ? (
-          <div style={{ display: 'flex', gap: 4, minHeight: 10, alignItems: 'center' }}>
-            {(siblingColors && siblingColors.length > 1
-              ? siblingColors.map((s) => ({
-                  name: s.color,
-                  hex: getColorHex(s.color),
-                  isCurrent: s.slug === product.slug,
-                }))
-              : colorSwatches.map((c) => ({ name: c.name, hex: c.hex, isCurrent: false }))
-            ).map(({ name, hex, isCurrent }) => {
-              const isLight = ['#FFFFFF', '#FFFFF0', '#FFFDD0', '#FFDAB9'].includes(
-                hex.toUpperCase()
-              );
-              return (
-                <span
-                  key={name}
-                  title={name}
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: 9999,
-                    backgroundColor: hex,
-                    border: isLight ? '1px solid #E5E5E5' : isCurrent ? '1px solid #000' : 'none',
-                    outline: isCurrent && !isLight ? '1px solid #000' : 'none',
-                    outlineOffset: 1,
-                  }}
-                />
-              );
-            })}
-          </div>
-        ) : null}
       </Link>
 
-      {/* Quick Add / Notify Me button — 34px height */}
+      {/* Quick Add / Notify Me */}
       {isOutOfStock ? (
         <button
           style={{
             width: '100%',
             height: 34,
+            marginTop: 8,
             border: '1px solid #E5E5E5',
             backgroundColor: 'transparent',
             fontSize: 9,
@@ -488,6 +364,7 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
           style={{
             width: '100%',
             height: 34,
+            marginTop: 8,
             border: '1px solid #000',
             backgroundColor: 'transparent',
             fontSize: 9,
@@ -506,7 +383,6 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
         </button>
       )}
 
-      {/* Quick Add Modal */}
       {showQuickAdd && <QuickAddModal product={product} onClose={() => setShowQuickAdd(false)} />}
     </div>
   );
