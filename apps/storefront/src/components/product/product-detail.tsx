@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -255,12 +255,25 @@ function DetailTabs({ product }: { product: Product }) {
   if (product.returnsInfo) shipRows.push({ label: 'Returns', value: product.returnsInfo });
 
   return (
-    <div style={{ paddingTop: 24 }}>
-      {/* zgrsv — tabBar h44 */}
+    /* Mzs7t — rounded card, 359px centered, padding 20 20 24 20,
+       #F5F5F5 bg, 1px #F0F0F0 border, rounded 20, fixed minHeight */
+    <div
+      style={{
+        margin: '20px auto 0 auto',
+        width: 'calc(100% - 34px)',
+        maxWidth: 359,
+        padding: '20px 20px 24px 20px',
+        borderRadius: 20,
+        border: '1px solid #F0F0F0',
+        backgroundColor: '#F5F5F5',
+        minHeight: 383,
+      }}
+    >
+      {/* zgrsv — tabBar h44, padding 0 4 */}
       <div
         style={{
           height: 44,
-          padding: '0 20px',
+          padding: '0 4px',
           display: 'flex',
           alignItems: 'center',
           gap: 24,
@@ -305,11 +318,8 @@ function DetailTabs({ product }: { product: Product }) {
           );
         })}
       </div>
-      {/* pJGrN — divider */}
-      <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
-
-      {/* csm3f — tabContent padding 20 20 24 20, gap 16 */}
-      <div style={{ padding: '20px 20px 24px 20px' }}>
+      {/* csm3f — tabContent, padding 16 4 20 4 */}
+      <div style={{ padding: '16px 4px 20px 4px' }}>
         {tab === 'details' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {detailRows.length > 0 && (
@@ -485,6 +495,43 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Image carousel state
+  const [activeImg, setActiveImg] = useState(0);
+  const [swipeX, setSwipeX] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const touchStartX = useRef(0);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  const images = useMemo(
+    () => [...product.images].sort((a, b) => a.sortOrder - b.sortOrder),
+    [product.images]
+  );
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    setSwiping(true);
+  }, []);
+
+  const onTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!swiping) return;
+      const dx = e.touches[0].clientX - touchStartX.current;
+      setSwipeX(dx);
+    },
+    [swiping]
+  );
+
+  const onTouchEnd = useCallback(() => {
+    setSwiping(false);
+    const threshold = 50;
+    if (swipeX < -threshold && activeImg < images.length - 1) {
+      setActiveImg((i) => i + 1);
+    } else if (swipeX > threshold && activeImg > 0) {
+      setActiveImg((i) => i - 1);
+    }
+    setSwipeX(0);
+  }, [swipeX, activeImg, images.length]);
+
   useEffect(() => {
     setMounted(true);
     trackProductViewed({
@@ -505,11 +552,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
   );
   const price = variant?.price ?? product.price;
   const onSale = product.compareAtPrice !== null && product.compareAtPrice > price;
-
-  const hero = useMemo(() => {
-    const sorted = [...product.images].sort((a, b) => a.sortOrder - b.sortOrder);
-    return sorted[0] || null;
-  }, [product.images]);
 
   const addToBag = async () => {
     if (sizes.length > 0 && !selectedSize) {
@@ -614,45 +656,68 @@ export function ProductDetail({ product }: ProductDetailProps) {
       className="font-[family-name:var(--font-inter)]"
       style={{ backgroundColor: '#FFF', display: 'flex', flexDirection: 'column' }}
     >
-      {/* ===== JDMjn — Hero Image, h500, #E8E4DF, layout:none ===== */}
-      {hero && (
+      {/* ===== JDMjn — Hero Image carousel, h500, #E8E4DF, swipeable ===== */}
+      {images.length > 0 && (
         <div
+          ref={heroRef}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
           style={{
             position: 'relative',
             height: 500,
             backgroundColor: '#E8E4DF',
             overflow: 'hidden',
+            touchAction: 'pan-y',
           }}
         >
-          <Image
-            src={getImageUrl(hero.url, 800)}
-            alt={hero.altText || product.name}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority
-            placeholder="blur"
-            blurDataURL={BLUR_DATA_URL}
-          />
-          {/* uIyUd — imgCounter, x:16 y:476, 10px/300/white */}
+          {/* Sliding tape of all images */}
+          <div
+            style={{
+              display: 'flex',
+              width: `${images.length * 100}%`,
+              height: '100%',
+              transform: `translateX(calc(-${activeImg * (100 / images.length)}% + ${swipeX}px))`,
+              transition: swiping ? 'none' : 'transform 300ms ease-out',
+            }}
+          >
+            {images.map((img, i) => (
+              <div
+                key={img.id}
+                style={{ position: 'relative', width: '100%', height: '100%', flexShrink: 0 }}
+              >
+                <Image
+                  src={getImageUrl(img.url, 800)}
+                  alt={img.altText || product.name}
+                  fill
+                  sizes="100vw"
+                  className="object-cover"
+                  priority={i === 0}
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
+                />
+              </div>
+            ))}
+          </div>
+          {/* uIyUd — imgCounter, bottom-left, 10px/300/white */}
           <span
             style={{
               position: 'absolute',
               left: 16,
-              top: 476,
+              bottom: 24,
               fontSize: 10,
               fontWeight: 300,
               color: '#FFF',
             }}
           >
-            1 / {product.images.length}
+            {activeImg + 1} / {images.length}
           </span>
-          {/* sP1wX — wishBtn bookmark, x:345 y:16, 20px white */}
+          {/* sP1wX — wishBtn bookmark, top-right */}
           <button
             onClick={() => setWishlisted((v) => !v)}
             style={{
               position: 'absolute',
-              left: 345,
+              right: 28,
               top: 16,
               background: 'none',
               border: 'none',
@@ -662,7 +727,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
           >
             <Bookmark size={20} color="#FFF" fill={wishlisted ? '#FFF' : 'none'} />
           </button>
-          {/* 6LGs4 — shareBtn, x:370 y:17, 18px white */}
+          {/* 6LGs4 — shareBtn, top-right offset */}
           <button
             onClick={() => {
               if (navigator.share)
@@ -670,7 +735,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
             }}
             style={{
               position: 'absolute',
-              left: 370,
+              right: 3,
               top: 17,
               background: 'none',
               border: 'none',
@@ -786,10 +851,10 @@ export function ProductDetail({ product }: ProductDetailProps) {
         </div>
       )}
 
-      {/* ===== ByiXm — btnSec, padding 20 20 0 20, gap 10, vertical ===== */}
+      {/* ===== ByiXm — btnSec, padding 20 all sides, gap 10, vertical ===== */}
       <div
         style={{
-          padding: '20px 20px 0 20px',
+          padding: 20,
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
