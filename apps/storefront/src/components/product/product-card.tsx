@@ -109,18 +109,19 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
     e.stopPropagation();
     if (isOutOfStock) return;
     const defaultVariant = variants.find((v) => v.stock > 0) || variants[0];
-    if (!defaultVariant) return;
+    // If no variants available, create a fallback entry from the product itself
+    const variantId = defaultVariant?.id || `${product.id}-default`;
     addItem({
-      id: defaultVariant.id,
+      id: variantId,
       productId: product.id,
       name: product.name,
       slug: product.slug,
       image: primaryImage?.url || '',
       price: product.price,
       compareAtPrice: product.compareAtPrice || undefined,
-      size: defaultVariant.size || 'M',
-      color: defaultVariant.color || 'Default',
-      maxQuantity: defaultVariant.stock > 0 ? defaultVariant.stock : 10,
+      size: defaultVariant?.size || 'M',
+      color: defaultVariant?.color || 'Default',
+      maxQuantity: defaultVariant?.stock && defaultVariant.stock > 0 ? defaultVariant.stock : 10,
     });
     addToast('Added to bag', 'success');
   };
@@ -128,20 +129,23 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
   return (
     <div
       className="group"
-      style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+      style={{ display: 'flex', flexDirection: 'column' }}
       onMouseEnter={handlePrefetch}
       onTouchStart={handlePrefetch}
     >
-      <Link href={`/products/${product.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
-        {/* Image — 210px height equivalent via aspect ratio */}
-        <div
-          style={{
-            position: 'relative',
-            width: '100%',
-            aspectRatio: '3/4',
-            overflow: 'hidden',
-            backgroundColor: '#F5F5F5',
-          }}
+      {/* Image container — heart button is OUTSIDE Link so it works */}
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          aspectRatio: '3/4',
+          overflow: 'hidden',
+          backgroundColor: '#F5F5F5',
+        }}
+      >
+        <Link
+          href={`/products/${product.slug}`}
+          style={{ display: 'block', width: '100%', height: '100%' }}
         >
           {primaryImage && (
             <Image
@@ -278,32 +282,46 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               </span>
             </div>
           )}
+        </Link>
 
-          {/* Wishlist heart — top right */}
-          <button
-            onClick={toggleWishlist}
-            style={{
-              position: 'absolute',
-              top: 10,
-              right: 10,
-              zIndex: 10,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          >
-            <Heart
-              size={16}
-              className={cn(
-                'transition-colors',
-                isWishlisted ? 'fill-[#EF4444] text-[#EF4444]' : 'text-[#CCC]'
-              )}
-            />
-          </button>
-        </div>
+        {/* Wishlist heart — OUTSIDE Link so onClick works */}
+        <button
+          onClick={toggleWishlist}
+          style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            zIndex: 10,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 4,
+          }}
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          <Heart
+            size={16}
+            className={cn(
+              'transition-colors',
+              isWishlisted ? 'fill-[#EF4444] text-[#EF4444]' : 'text-[#CCC]'
+            )}
+          />
+        </button>
+      </div>
 
-        {/* Name */}
+      {/* Info section — fixed minHeight so QUICK ADD aligns across cards */}
+      <Link
+        href={`/products/${product.slug}`}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+          minHeight: 80,
+          paddingTop: 8,
+          textDecoration: 'none',
+        }}
+      >
+        {/* Name — clamped to 2 lines with fixed line-height = consistent height */}
         <p
           style={{
             fontSize: 12,
@@ -313,20 +331,15 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
+            lineHeight: 1.4,
+            minHeight: 34,
           }}
         >
           {product.name}
         </p>
 
-        {/* Material line */}
-        {product.materialDescription && (
-          <p style={{ fontSize: 9, fontWeight: 300, color: '#CCC', letterSpacing: 0.3 }}>
-            {product.materialDescription}
-          </p>
-        )}
-
-        {/* Price */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {/* Price + savings on same row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 12, fontWeight: 300, color: isOutOfStock ? '#999' : '#000' }}>
             {formatPrice(product.price)}
           </span>
@@ -342,27 +355,12 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               {formatPrice(product.compareAtPrice!)}
             </span>
           )}
+          {isOnSale && savings > 0 && !isOutOfStock && (
+            <span style={{ fontSize: 9, fontWeight: 400, color: '#22C55E' }}>
+              Save {formatPrice(savings)}
+            </span>
+          )}
         </div>
-
-        {/* Savings */}
-        {isOnSale && savings > 0 && !isOutOfStock && (
-          <span style={{ fontSize: 9, fontWeight: 400, color: '#22C55E', letterSpacing: 0.3 }}>
-            You save {formatPrice(savings)}
-          </span>
-        )}
-
-        {/* Stars placeholder — TODO: wire to real reviews */}
-        {product.reviewCount && product.reviewCount > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 9, fontWeight: 400, color: '#000' }}>
-              {'★'.repeat(Math.round(product.averageRating || 0))}
-              {'☆'.repeat(5 - Math.round(product.averageRating || 0))}
-            </span>
-            <span style={{ fontSize: 9, fontWeight: 300, color: '#999' }}>
-              ({product.reviewCount})
-            </span>
-          </div>
-        )}
 
         {/* Color swatches */}
         {colorSwatches.length > 1 && (
