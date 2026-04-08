@@ -255,11 +255,11 @@ function DetailTabs({ product }: { product: Product }) {
   if (product.returnsInfo) shipRows.push({ label: 'Returns', value: product.returnsInfo });
 
   return (
-    /* Mzs7t — rounded card, 359px centered, padding 20 20 24 20,
-       #F5F5F5 bg, 1px #F0F0F0 border, rounded 20, fixed minHeight */
+    /* Mzs7t — rounded card, centered, w:359 h:383, padding 20 20 24 20,
+       #F5F5F5 bg, 1px #F0F0F0 border, rounded 20 */
     <div
       style={{
-        margin: '20px auto 0 auto',
+        margin: '0 auto',
         width: 'calc(100% - 34px)',
         maxWidth: 359,
         padding: '20px 20px 24px 20px',
@@ -413,8 +413,10 @@ function RelatedSection({ categorySlug, excludeId }: { categorySlug?: string; ex
   if (products.length === 0) return null;
 
   return (
-    /* dPB6i — padding 0 20 28 20, gap 16 */
-    <div style={{ padding: '0 20px 28px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    /* dPB6i — padding 20 20 28 20, gap 16 */
+    <div
+      style={{ padding: '20px 20px 28px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}
+    >
       {/* jUVqS — relGrid, 2 cols, gap 10 */}
       <div style={{ display: 'flex', gap: 10 }}>
         {products.map((p: Product) => {
@@ -671,20 +673,25 @@ export function ProductDetail({ product }: ProductDetailProps) {
             touchAction: 'pan-y',
           }}
         >
-          {/* Sliding tape of all images */}
+          {/* Sliding tape — each slide is exactly the container width */}
           <div
             style={{
               display: 'flex',
-              width: `${images.length * 100}%`,
               height: '100%',
-              transform: `translateX(calc(-${activeImg * (100 / images.length)}% + ${swipeX}px))`,
+              transform: `translateX(calc(-${activeImg * 100}% + ${swipeX}px))`,
               transition: swiping ? 'none' : 'transform 300ms ease-out',
+              willChange: 'transform',
             }}
           >
             {images.map((img, i) => (
               <div
                 key={img.id}
-                style={{ position: 'relative', width: '100%', height: '100%', flexShrink: 0 }}
+                style={{
+                  position: 'relative',
+                  minWidth: '100%',
+                  height: '100%',
+                  flexShrink: 0,
+                }}
               >
                 <Image
                   src={getImageUrl(img.url, 800)}
