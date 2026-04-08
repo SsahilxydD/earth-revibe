@@ -1,116 +1,314 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ChevronDown, Instagram, Facebook, Youtube } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const SHOP_LINKS = [
-  { label: 'New Arrivals', href: '/categories/new-arrivals' },
-  { label: 'Bestsellers', href: '/categories/bestsellers' },
-  { label: 'All Products', href: '/products' },
-  { label: 'T-Shirts', href: '/categories/t-shirts' },
-  { label: 'Shirts', href: '/categories/shirts' },
-  { label: 'Polos', href: '/categories/polos' },
-  { label: 'Bottomwear', href: '/categories/bottomwear' },
-];
+const SECTIONS = [
+  {
+    title: 'SHOP',
+    links: [
+      { label: 'New Arrivals', href: '/categories/new-arrivals' },
+      { label: 'Bestsellers', href: '/categories/bestsellers' },
+      { label: 'All Products', href: '/products' },
+      { label: 'T-Shirts', href: '/categories/t-shirts' },
+      { label: 'Shirts', href: '/categories/shirts' },
+      { label: 'Polos', href: '/categories/polos' },
+      { label: 'Bottomwear', href: '/categories/bottomwear' },
+    ],
+  },
+  {
+    title: 'SUPPORT',
+    links: [
+      { label: 'Track Order', href: '/track-order' },
+      { label: 'Returns & Exchanges', href: '/policies/returns' },
+      { label: 'Shipping Policy', href: '/policies/shipping' },
+      { label: 'FAQs', href: '/faq' },
+      { label: 'Contact Us', href: '/contact' },
+    ],
+  },
+  {
+    title: 'ABOUT US',
+    links: [{ label: 'Our Story', href: '/about' }],
+  },
+  {
+    title: 'LEGAL',
+    links: [
+      { label: 'Privacy Policy', href: '/policies/privacy' },
+      { label: 'Terms of Service', href: '/policies/terms' },
+    ],
+  },
+] as const;
 
-const CUSTOMER_LINKS = [
-  { label: 'Track Order', href: '/track-order' },
-  { label: 'Returns & Exchanges', href: '/policies/returns' },
-  { label: 'Shipping Policy', href: '/policies/shipping' },
-  { label: 'FAQs', href: '/faq' },
-  { label: 'Contact Us', href: '/contact' },
-];
+function PalmLeaves() {
+  return (
+    <div
+      style={{ position: 'relative', width: '100%', height: 90, overflow: 'hidden', opacity: 0.07 }}
+    >
+      {/* Left palm frond */}
+      <svg
+        viewBox="0 0 200 200"
+        style={{
+          position: 'absolute',
+          left: -30,
+          bottom: -40,
+          width: 180,
+          height: 180,
+          transform: 'rotate(-15deg)',
+        }}
+      >
+        <g fill="#000">
+          {/* Central stem */}
+          <path
+            d="M100 200 C98 160 95 120 90 80 C87 60 85 40 88 20"
+            stroke="#000"
+            strokeWidth="1.5"
+            fill="none"
+          />
+          {/* Left leaflets */}
+          <path d="M90 80 C70 65 45 55 20 50 C45 60 65 70 85 78" />
+          <path d="M92 100 C68 88 40 82 10 80 C40 88 65 95 88 98" />
+          <path d="M94 120 C72 112 48 108 20 108 C48 114 70 118 90 118" />
+          <path d="M95 140 C78 135 58 132 35 132 C58 137 76 140 92 139" />
+          <path d="M96 155 C82 152 66 150 48 150 C66 154 80 156 93 154" />
+          {/* Right leaflets */}
+          <path d="M90 80 C108 62 130 50 160 45 C132 55 112 68 95 78" />
+          <path d="M92 100 C112 85 138 76 170 72 C140 82 115 92 96 98" />
+          <path d="M94 120 C112 110 135 104 162 102 C136 109 114 116 97 118" />
+          <path d="M95 140 C110 134 128 130 150 128 C130 134 112 138 98 139" />
+          <path d="M96 155 C108 150 122 148 140 147 C124 152 110 154 99 154" />
+          {/* Tip leaflets */}
+          <path d="M88 20 C78 10 65 2 48 0 C62 8 75 16 86 24" />
+          <path d="M88 20 C95 8 108 0 125 0 C110 8 98 16 90 24" />
+          <path d="M89 40 C75 30 58 24 38 22 C56 30 72 36 87 42" />
+          <path d="M89 40 C102 28 120 22 142 20 C122 28 106 36 92 42" />
+          <path d="M90 60 C76 50 58 44 38 42 C56 50 74 56 88 60" />
+          <path d="M90 60 C104 48 124 42 148 40 C126 48 108 56 93 60" />
+        </g>
+      </svg>
+      {/* Right palm frond */}
+      <svg
+        viewBox="0 0 200 200"
+        style={{
+          position: 'absolute',
+          right: -30,
+          bottom: -50,
+          width: 170,
+          height: 170,
+          transform: 'rotate(20deg) scaleX(-1)',
+        }}
+      >
+        <g fill="#000">
+          <path
+            d="M100 200 C98 160 95 120 90 80 C87 60 85 40 88 20"
+            stroke="#000"
+            strokeWidth="1.5"
+            fill="none"
+          />
+          <path d="M90 80 C70 65 45 55 20 50 C45 60 65 70 85 78" />
+          <path d="M92 100 C68 88 40 82 10 80 C40 88 65 95 88 98" />
+          <path d="M94 120 C72 112 48 108 20 108 C48 114 70 118 90 118" />
+          <path d="M95 140 C78 135 58 132 35 132 C58 137 76 140 92 139" />
+          <path d="M90 80 C108 62 130 50 160 45 C132 55 112 68 95 78" />
+          <path d="M92 100 C112 85 138 76 170 72 C140 82 115 92 96 98" />
+          <path d="M94 120 C112 110 135 104 162 102 C136 109 114 116 97 118" />
+          <path d="M95 140 C110 134 128 130 150 128 C130 134 112 138 98 139" />
+          <path d="M88 20 C78 10 65 2 48 0 C62 8 75 16 86 24" />
+          <path d="M88 20 C95 8 108 0 125 0 C110 8 98 16 90 24" />
+          <path d="M89 40 C75 30 58 24 38 22 C56 30 72 36 87 42" />
+          <path d="M89 40 C102 28 120 22 142 20 C122 28 106 36 92 42" />
+          <path d="M90 60 C76 50 58 44 38 42 C56 50 74 56 88 60" />
+          <path d="M90 60 C104 48 124 42 148 40 C126 48 108 56 93 60" />
+        </g>
+      </svg>
+      {/* Small center leaf */}
+      <svg
+        viewBox="0 0 100 100"
+        style={{
+          position: 'absolute',
+          left: '50%',
+          bottom: -20,
+          width: 80,
+          height: 80,
+          transform: 'translateX(-50%)',
+          opacity: 0.5,
+        }}
+      >
+        <g fill="#000">
+          <path
+            d="M50 100 C49 80 48 60 46 40 C45 30 44 20 46 10"
+            stroke="#000"
+            strokeWidth="1"
+            fill="none"
+          />
+          <path d="M46 40 C36 32 24 26 10 24 C24 30 34 36 44 40" />
+          <path d="M46 40 C56 30 68 24 84 22 C70 30 58 36 48 40" />
+          <path d="M47 55 C38 48 26 44 12 42 C26 48 36 52 45 54" />
+          <path d="M47 55 C56 46 70 42 86 40 C72 46 58 52 49 54" />
+          <path d="M46 10 C40 4 30 0 18 0 C28 6 38 10 45 14" />
+          <path d="M46 10 C52 2 64 0 78 0 C66 6 56 10 48 14" />
+          <path d="M47 25 C38 18 26 14 12 12 C26 18 36 22 45 26" />
+          <path d="M47 25 C56 16 70 12 86 10 C72 16 58 22 49 26" />
+        </g>
+      </svg>
+    </div>
+  );
+}
 
-const ABOUT_LINKS = [
-  { label: 'Our Story', href: '/about' },
-  { label: 'Privacy Policy', href: '/policies/privacy' },
-  { label: 'Terms of Service', href: '/policies/terms' },
-];
-
-function FooterColumn({
+function AccordionSection({
   title,
   links,
 }: {
   title: string;
-  links: { label: string; href: string }[];
+  links: readonly { label: string; href: string }[];
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div>
-      <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-black">{title}</h3>
-      <ul className="space-y-1.5">
-        {links.map((link) => (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className="text-sm text-black/60 transition-colors hover:text-black"
+    <>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: '100%',
+          height: 46,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
+        }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 400, color: '#000', letterSpacing: 2 }}>
+          {title}
+        </span>
+        <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown size={14} color="#CCC" />
+        </motion.span>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden', width: '100%' }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 12,
+                paddingBottom: 16,
+              }}
             >
-              {link.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  style={{ fontSize: 12, fontWeight: 300, color: '#999', textDecoration: 'none' }}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div style={{ height: 1, backgroundColor: '#EEE', width: '100%' }} />
+    </>
   );
 }
 
 export function Footer() {
   return (
-    <footer className="bg-white pb-[calc(4rem+env(safe-area-inset-bottom,0px))] text-black md:pb-0">
-      {/* Logo */}
-      <div className="flex justify-center px-4 pt-8 pb-4">
+    <footer
+      className="font-[family-name:var(--font-inter)]"
+      style={{
+        backgroundColor: '#F5F5F5',
+        paddingBottom: 'calc(0px + env(safe-area-inset-bottom, 0px))',
+      }}
+    >
+      {/* Palm leaves decoration */}
+      <PalmLeaves />
+
+      {/* Logo + brand name — centered, 36px logo */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 8,
+          padding: '12px 28px 20px 28px',
+        }}
+      >
         <Link href="/">
           <Image
             src="/Earth Revibe Logo Black.png"
             alt="Earth Revibe"
-            width={80}
-            height={20}
-            className="h-auto w-14"
+            width={36}
+            height={36}
+            className="h-9 w-auto"
           />
         </Link>
+        <span style={{ fontSize: 11, fontWeight: 400, color: '#000', letterSpacing: 3 }}>
+          EARTH REVIBE
+        </span>
       </div>
 
-      {/* Columns — Shop left, then Customer Service, About Us, Connect pushed right */}
-      <div className="mx-auto max-w-5xl px-8 py-6 md:px-12 lg:px-16">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 md:gap-x-8">
-          <FooterColumn title="Shop" links={SHOP_LINKS} />
-          <div className="text-right">
-            <FooterColumn title="About Us" links={ABOUT_LINKS} />
-          </div>
-          <FooterColumn title="Customer Service" links={CUSTOMER_LINKS} />
-          <div className="flex flex-col items-end gap-4 text-right">
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-black">Connect</h3>
-            <div className="flex gap-3">
-              <a
-                href="https://www.instagram.com/earthrevibe.co/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
-                aria-label="Instagram"
-              >
-                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-                </svg>
-              </a>
-              <a
-                href="https://www.facebook.com/profile.php?id=61578133014979"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-black/20 text-black/60 transition-colors hover:border-black hover:text-black"
-                aria-label="Facebook"
-              >
-                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
+      {/* Accordion sections — 46px each, centered */}
+      <div style={{ padding: '0 28px' }}>
+        {SECTIONS.map((section) => (
+          <AccordionSection key={section.title} title={section.title} links={section.links} />
+        ))}
+      </div>
+
+      {/* Social icons — centered, 20px gap */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 20, padding: '20px 0 0 0' }}>
+        <motion.a
+          href="https://www.instagram.com/earthrevibe.co/"
+          target="_blank"
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label="Instagram"
+        >
+          <Instagram size={18} color="#000" />
+        </motion.a>
+        <motion.a
+          href="https://www.facebook.com/profile.php?id=61578133014979"
+          target="_blank"
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label="Facebook"
+        >
+          <Facebook size={18} color="#000" />
+        </motion.a>
+        <motion.a
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label="YouTube"
+        >
+          <Youtube size={18} color="#000" />
+        </motion.a>
       </div>
 
       {/* Copyright */}
-      <p className="px-4 pb-6 text-xs text-black/30 md:px-8 lg:px-12 xl:px-20">
-        &copy; {new Date().getFullYear()} Earth Revibe. All rights reserved.
-      </p>
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 28px 24px 28px' }}>
+        <span style={{ fontSize: 9, fontWeight: 300, color: '#999' }}>
+          &copy; {new Date().getFullYear()} Earth Revibe &middot; Made in India
+        </span>
+      </div>
     </footer>
   );
 }
