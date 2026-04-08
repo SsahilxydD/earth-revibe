@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Minus, Plus, Loader2, ChevronRight, Heart, ShoppingCart, Zap } from 'lucide-react';
+import { Star, Minus, Plus, Loader2, ChevronRight, Heart } from 'lucide-react';
 // Lazy-load DOMPurify to avoid jsdom SSR crash (ENOENT default-stylesheet.css).
 // sanitize() is a no-op during SSR — the HTML re-renders correctly on hydration.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -390,46 +390,85 @@ function DetailTabs({
   const [activeTab, setActiveTab] = useState<TabKey>('description');
 
   const tabs: { key: TabKey; label: string }[] = [
-    { key: 'description', label: 'DESCRIPTION' },
-    { key: 'composition', label: 'COMPOSITION' },
-    { key: 'sizechart', label: 'SIZE CHART' },
+    { key: 'description', label: 'Details & Description' },
+    { key: 'composition', label: 'Washcare' },
+    { key: 'sizechart', label: 'Shipping' },
   ];
 
   return (
-    <div>
-      {/* Tab headers */}
-      <div className="flex gap-6 px-4">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              'pb-3 text-xs font-bold tracking-wider transition-colors',
-              activeTab === tab.key ? 'text-[var(--color-text)]' : 'text-[var(--color-muted)]'
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div style={{ paddingTop: 24 }}>
+      {/* Tab bar */}
+      <div
+        style={{ height: 44, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 24 }}
+      >
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                height: 44,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                position: 'relative',
+                fontSize: 11,
+                fontWeight: isActive ? 400 : 300,
+                letterSpacing: 0.5,
+                color: isActive ? '#000' : '#999',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                flexShrink: 0,
+              }}
+            >
+              {tab.label}
+              {isActive && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    backgroundColor: '#000',
+                  }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
+      <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
       {/* Tab content */}
-      <div
-        className="px-4 pb-5 text-[13px] leading-[1.6] tracking-normal text-[#666666]"
-        style={{ paddingTop: 0, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}
-      >
-        {activeTab === 'description' && description && (
-          <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(description) }} />
-        )}
-        {activeTab === 'description' && !description && (
-          <p className="text-[var(--color-muted)]">No description available.</p>
-        )}
-        {activeTab === 'composition' && compositionRows.length > 0 && (
-          <MetafieldSection rows={compositionRows} />
-        )}
-        {activeTab === 'composition' && compositionRows.length === 0 && (
-          <p className="text-[var(--color-muted)]">No composition info available.</p>
-        )}
+      <div style={{ padding: '20px 20px 24px 20px' }}>
+        {activeTab === 'description' &&
+          (description ? (
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 500, color: '#000', marginBottom: 12 }}>
+                Details
+              </p>
+              <div
+                style={{ fontSize: 12, fontWeight: 300, color: '#666', lineHeight: 1.7 }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHTML(description) }}
+              />
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>
+              No description available.
+            </p>
+          ))}
+        {activeTab === 'composition' &&
+          (compositionRows.length > 0 ? (
+            <MetafieldSection rows={compositionRows} />
+          ) : (
+            <p style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>
+              No washcare info available.
+            </p>
+          ))}
         {activeTab === 'sizechart' && <SizeChartTable />}
       </div>
     </div>
@@ -989,39 +1028,201 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         <RelatedProducts categorySlug={product.category?.slug} excludeProductId={product.id} />
       </div>
 
-      {/* ===== MOBILE LAYOUT (Zara-style) ===== */}
-      <div className="pb-[env(safe-area-inset-bottom,0px)] lg:hidden">
-        {/* First image — full-bleed */}
+      {/* ===== MOBILE LAYOUT (Bluorng-inspired) ===== */}
+      <div className="pb-[env(safe-area-inset-bottom,0px)] lg:hidden font-[family-name:var(--font-inter)]">
+        {/* 1. Hero image — full-bleed with counter + wishlist */}
         {firstImage && (
-          <Image
-            src={getImageUrl(firstImage.url, 800)}
-            alt={firstImage.altText || product.name}
-            width={800}
-            height={1200}
-            quality={75}
-            sizes="100vw"
-            className="h-auto w-full"
-            priority
-            placeholder="blur"
-            blurDataURL={BLUR_DATA_URL}
-          />
-        )}
-
-        {/* Detail tabs — after 1st image */}
-        <div style={{ marginTop: '16px' }}>
-          <DetailTabs description={product.description} compositionRows={compositionCareRows} />
-        </div>
-
-        {/* Color code / SKU reference */}
-        {selectedColor && (
-          <div className="mt-2 px-4 text-xs text-[var(--color-muted)] uppercase tracking-wide">
-            {selectedColor} | {product.slug}
+          <div style={{ position: 'relative' }}>
+            <Image
+              src={getImageUrl(firstImage.url, 800)}
+              alt={firstImage.altText || product.name}
+              width={800}
+              height={1200}
+              quality={75}
+              sizes="100vw"
+              className="h-auto w-full"
+              priority
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
+            />
+            <span
+              style={{
+                position: 'absolute',
+                bottom: 16,
+                left: 16,
+                fontSize: 10,
+                fontWeight: 300,
+                color: '#FFF',
+              }}
+            >
+              1 / {sortedImages.length}
+            </span>
+            <button
+              onClick={() => setIsWishlisted((v) => !v)}
+              style={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <Heart
+                size={20}
+                className={cn(isWishlisted ? 'fill-[#EF4444] text-[#EF4444]' : 'text-white')}
+              />
+            </button>
           </div>
         )}
 
-        {/* Remaining images — after tabs */}
+        {/* 2. Name + Size Guide + Price */}
+        <div
+          style={{ padding: '20px 20px 0 20px', display: 'flex', flexDirection: 'column', gap: 6 }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 16, fontWeight: 500, color: '#000' }}>{product.name}</span>
+            <button
+              onClick={() => setShowSizeSheet(true)}
+              style={{
+                height: 28,
+                padding: '0 12px',
+                border: '1px solid #E5E5E5',
+                borderRadius: 4,
+                background: 'none',
+                cursor: 'pointer',
+                fontSize: 10,
+                fontWeight: 300,
+                color: '#000',
+                flexShrink: 0,
+                marginLeft: 12,
+              }}
+            >
+              Size Guide
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 300, color: '#000' }}>
+              {formatPrice(displayPrice)}
+            </span>
+            {isOnSale && (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 300,
+                  color: '#CCC',
+                  textDecoration: 'line-through',
+                }}
+              >
+                {formatPrice(product.compareAtPrice!)}
+              </span>
+            )}
+          </div>
+          <span style={{ fontSize: 9, fontWeight: 300, color: '#CCC' }}>
+            MRP incl. of all taxes
+          </span>
+        </div>
+
+        {/* 3. Size pills — rounded capsules */}
+        {sizes.length > 0 && (
+          <div style={{ padding: '16px 20px 0 20px' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {sizes.map((s) => {
+                const isSelected = s === selectedSize;
+                const stock = getVariantStock(product.variants, selectedColor, s);
+                const oos = product.variants.length > 0 && stock <= 0;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => !oos && setSelectedSize(s)}
+                    disabled={oos}
+                    style={{
+                      flex: 1,
+                      minWidth: 56,
+                      height: 40,
+                      borderRadius: 9999,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: isSelected ? 400 : 300,
+                      color: oos ? '#CCC' : isSelected ? '#FFF' : '#000',
+                      backgroundColor: isSelected ? '#000' : 'transparent',
+                      border: isSelected ? 'none' : `1px solid ${oos ? '#F0F0F0' : '#E5E5E5'}`,
+                      cursor: oos ? 'default' : 'pointer',
+                      opacity: oos ? 0.5 : 1,
+                    }}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 4. ADD TO BAG + BUY NOW — rounded full-width */}
+        <div
+          style={{ padding: '20px 20px 0 20px', display: 'flex', flexDirection: 'column', gap: 10 }}
+        >
+          <button
+            type="button"
+            onClick={handleMobileAddToCart}
+            disabled={isAdding}
+            style={{
+              width: '100%',
+              height: 50,
+              borderRadius: 9999,
+              border: '1px solid #E5E5E5',
+              backgroundColor: 'transparent',
+              fontSize: 12,
+              fontWeight: 400,
+              letterSpacing: 1.5,
+              color: '#000',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: isAdding && !isBuyingNow ? 0.5 : 1,
+            }}
+          >
+            {isAdding && !isBuyingNow ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              'ADD TO BAG'
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleMobileBuyNow}
+            disabled={isAdding || isBuyingNow}
+            style={{
+              width: '100%',
+              height: 50,
+              borderRadius: 9999,
+              border: 'none',
+              backgroundColor: '#000',
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: 1.5,
+              color: '#FFF',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: isBuyingNow ? 0.5 : 1,
+            }}
+          >
+            {isBuyingNow ? <Loader2 size={16} className="animate-spin" /> : 'BUY NOW'}
+          </button>
+        </div>
+
+        {/* 5. Detail tabs — after buttons */}
+        <DetailTabs description={product.description} compositionRows={compositionCareRows} />
+
+        {/* 6. Remaining images — stacked */}
         {sortedImages.length > 1 && (
-          <div className="mt-4 flex flex-col" style={{ gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             {sortedImages.slice(1).map((img) => (
               <Image
                 key={img.id}
@@ -1039,16 +1240,11 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </div>
         )}
 
-        {/* Color selector (size is handled by bottom sheet on add-to-cart) */}
-        {colors.length > 0 && <div className="px-4">{colorSelector}</div>}
-
-        {/* Accordions — measurements, shipping, additional info */}
-        {(detailsFitRows.length > 0 ||
-          shippingReturnsRows.length > 0 ||
-          additionalInfoRows.length > 0) && (
-          <div className="mt-4 px-4">
+        {/* 7. Accordions */}
+        {hasDetails && (
+          <div style={{ padding: '8px 20px 0 20px' }}>
             {detailsFitRows.length > 0 && (
-              <Accordion title="Measurements">
+              <Accordion title="Material & Fit">
                 <MetafieldSection rows={detailsFitRows} />
               </Accordion>
             )}
@@ -1058,55 +1254,21 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
               </Accordion>
             )}
             {additionalInfoRows.length > 0 && (
-              <Accordion title="Additional Info">
+              <Accordion title="Care Instructions">
                 <MetafieldSection rows={additionalInfoRows} />
               </Accordion>
             )}
           </div>
         )}
 
-        {/* Add to Cart + Buy Now buttons — below accordions */}
-        <div className="mt-6 px-4 flex gap-3">
-          <button
-            type="button"
-            onClick={handleMobileAddToCart}
-            disabled={isAdding}
-            className="flex h-12 flex-1 items-center justify-center gap-2 border border-[var(--color-primary)] text-sm font-bold uppercase tracking-[0.15em] text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white"
-          >
-            {isAdding && !isBuyingNow ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <>
-                <ShoppingCart size={16} />
-                Add to Cart
-              </>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={handleMobileBuyNow}
-            disabled={isAdding || isBuyingNow}
-            className="flex h-12 flex-1 items-center justify-center gap-2 bg-[var(--color-primary)] text-sm font-bold uppercase tracking-[0.15em] text-white transition-opacity hover:opacity-90"
-          >
-            {isBuyingNow ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <>
-                <Zap size={16} />
-                Buy Now
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Spacer for the fixed dock at the bottom */}
+        {/* Spacer for dock */}
         <div className="h-16" />
 
-        {/* Sentinel — marks where the dock should collapse */}
+        {/* Sentinel */}
         <div ref={sentinelRef} data-dock-hide aria-hidden="true" />
 
-        {/* Related products — shown after dock collapses */}
-        <div className="px-4 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
+        {/* 8. Related products */}
+        <div style={{ padding: '0 20px calc(2rem + env(safe-area-inset-bottom, 0px)) 20px' }}>
           <RelatedProducts categorySlug={product.category?.slug} excludeProductId={product.id} />
         </div>
       </div>
