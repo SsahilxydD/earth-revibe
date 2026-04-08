@@ -5,9 +5,8 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Minus, Plus, Loader2, ChevronRight, Heart } from 'lucide-react';
-// Lazy-load DOMPurify to avoid jsdom SSR crash (ENOENT default-stylesheet.css).
-// sanitize() is a no-op during SSR — the HTML re-renders correctly on hydration.
+import { Bookmark, Share2, Loader2, ChevronRight, Star } from 'lucide-react';
+// Lazy-load DOMPurify to avoid jsdom SSR crash
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _purify: any = null;
 function sanitizeHTML(dirty: string): string {
@@ -29,29 +28,17 @@ import { api } from '@/lib/api-client';
 import { useCartStore } from '@/stores/cart-store';
 import { useRazorpay } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
-import { Accordion } from './accordion';
 import { RelatedProducts } from './related-products';
 import type { Product, ProductVariant } from '@/types';
 
 interface ProductDetailProps {
   product: Product;
-  /** When true, hides fixed elements (dock, size sheet) — used for swipe preview panels */
   isPreview?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
 /*  Variant helpers                                                    */
 /* ------------------------------------------------------------------ */
-
-function getUniqueColors(variants: ProductVariant[]) {
-  const seen = new Map<string, string | null>();
-  for (const v of variants) {
-    if (v.color && !seen.has(v.color)) {
-      seen.set(v.color, v.colorHex);
-    }
-  }
-  return Array.from(seen.entries()).map(([name, hex]) => ({ name, hex: hex || '#ccc' }));
-}
 
 function getUniqueSizes(variants: ProductVariant[]) {
   const seen = new Set<string>();
@@ -65,32 +52,16 @@ function getUniqueSizes(variants: ProductVariant[]) {
   return result;
 }
 
-function getVariantStock(
-  variants: ProductVariant[],
-  color: string | null,
-  size: string | null
-): number {
-  const match = variants.find(
-    (v) => (color === null || v.color === color) && (size === null || v.size === size)
-  );
+function getVariantStock(variants: ProductVariant[], size: string | null): number {
+  const match = variants.find((v) => size === null || v.size === size);
   return match?.stock ?? 0;
-}
-
-function stockIndicator(stock: number): { label: string; className: string } | null {
-  if (stock <= 0) return null;
-  if (stock >= 20) return { label: `${stock} in stock`, className: 'text-green-600' };
-  if (stock >= 10) return { label: `${stock} left`, className: 'text-amber-500' };
-  return { label: `Only ${stock} left`, className: 'text-[var(--color-sale)]' };
 }
 
 function getSelectedVariant(
   variants: ProductVariant[],
-  color: string | null,
   size: string | null
 ): ProductVariant | undefined {
-  return variants.find(
-    (v) => (color === null || v.color === color) && (size === null || v.size === size)
-  );
+  return variants.find((v) => size === null || v.size === size);
 }
 
 /* ------------------------------------------------------------------ */
@@ -128,19 +99,358 @@ function buildShippingReturns(p: Product): MetafieldRow[] {
   return rows;
 }
 
-function buildAdditionalInfo(_p: Product): MetafieldRow[] {
-  return [];
+/* ------------------------------------------------------------------ */
+/*  Size Guide Bottom Sheet (Bluorng — from Pencil node ChbrV)         */
+/* ------------------------------------------------------------------ */
+
+function SizeGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [unit, setUnit] = useState<'IN' | 'CM'>('CM');
+
+  const dataIN = [
+    { size: 'S', chest: '39', shoulder: '19.5', length: '26.5' },
+    { size: 'M', chest: '42', shoulder: '20', length: '28' },
+    { size: 'L', chest: '45', shoulder: '21', length: '29' },
+    { size: 'XL', chest: '48', shoulder: '21.5', length: '29.5' },
+    { size: 'XXL', chest: '51', shoulder: '22', length: '30' },
+  ];
+
+  const dataCM = dataIN.map((row) => ({
+    size: row.size,
+    chest: (parseFloat(row.chest) * 2.54).toFixed(1),
+    shoulder: (parseFloat(row.shoulder) * 2.54).toFixed(1),
+    length: (parseFloat(row.length) * 2.54).toFixed(1),
+  }));
+
+  const data = unit === 'IN' ? dataIN : dataCM;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 70,
+          backgroundColor: 'rgba(0,0,0,0.4)',
+          transition: 'opacity 300ms',
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? 'auto' : 'none',
+        }}
+      />
+      {/* Sheet */}
+      <div
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 71,
+          backgroundColor: '#FFF',
+          borderRadius: '16px 16px 0 0',
+          transition: 'transform 300ms ease-out',
+          transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
+      >
+        {/* Drag handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px 0' }}>
+          <div style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#E5E5E5' }} />
+        </div>
+
+        {/* Header: title + IN/CM toggle */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '8px 20px 16px 20px',
+          }}
+        >
+          <span style={{ fontSize: 15, fontWeight: 500, color: '#000' }}>Size guide</span>
+          <div style={{ display: 'flex', height: 32 }}>
+            <button
+              onClick={() => setUnit('IN')}
+              style={{
+                width: 40,
+                height: 32,
+                borderRadius: '8px 0 0 8px',
+                border: unit === 'IN' ? 'none' : '1px solid #E5E5E5',
+                backgroundColor: unit === 'IN' ? '#000' : 'transparent',
+                color: unit === 'IN' ? '#FFF' : '#999',
+                fontSize: 10,
+                letterSpacing: 0.5,
+                fontWeight: unit === 'IN' ? 400 : 300,
+                cursor: 'pointer',
+              }}
+            >
+              IN
+            </button>
+            <button
+              onClick={() => setUnit('CM')}
+              style={{
+                width: 40,
+                height: 32,
+                borderRadius: '0 8px 8px 0',
+                border: unit === 'CM' ? 'none' : '1px solid #E5E5E5',
+                backgroundColor: unit === 'CM' ? '#000' : 'transparent',
+                color: unit === 'CM' ? '#FFF' : '#999',
+                fontSize: 10,
+                letterSpacing: 0.5,
+                fontWeight: unit === 'CM' ? 400 : 300,
+                cursor: 'pointer',
+              }}
+            >
+              CM
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div style={{ padding: '0 16px 24px 16px' }}>
+          <div
+            style={{
+              border: '1px solid #F0F0F0',
+              borderRadius: 12,
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header row */}
+            <div
+              style={{
+                display: 'flex',
+                height: 44,
+                alignItems: 'center',
+                backgroundColor: '#F8F8F8',
+              }}
+            >
+              {['Size', 'Chest', 'Shoulder', 'Length'].map((h) => (
+                <span
+                  key={h}
+                  style={{
+                    flex: 1,
+                    textAlign: 'center',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: '#000',
+                  }}
+                >
+                  {h}
+                </span>
+              ))}
+            </div>
+            <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+
+            {/* Data rows */}
+            {data.map((row, i) => (
+              <div key={row.size}>
+                <div
+                  style={{
+                    display: 'flex',
+                    height: 40,
+                    alignItems: 'center',
+                    backgroundColor: i % 2 === 1 ? '#FAFAFA' : 'transparent',
+                  }}
+                >
+                  <span
+                    style={{
+                      flex: 1,
+                      textAlign: 'center',
+                      fontSize: 11,
+                      fontWeight: 400,
+                      color: '#000',
+                    }}
+                  >
+                    {row.size}
+                  </span>
+                  <span
+                    style={{
+                      flex: 1,
+                      textAlign: 'center',
+                      fontSize: 11,
+                      fontWeight: 300,
+                      color: '#666',
+                    }}
+                  >
+                    {row.chest}
+                  </span>
+                  <span
+                    style={{
+                      flex: 1,
+                      textAlign: 'center',
+                      fontSize: 11,
+                      fontWeight: 300,
+                      color: '#666',
+                    }}
+                  >
+                    {row.shoulder}
+                  </span>
+                  <span
+                    style={{
+                      flex: 1,
+                      textAlign: 'center',
+                      fontSize: 11,
+                      fontWeight: 300,
+                      color: '#666',
+                    }}
+                  >
+                    {row.length}
+                  </span>
+                </div>
+                {i < data.length - 1 && <div style={{ height: 1, backgroundColor: '#F5F5F5' }} />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }
 
-function MetafieldSection({ rows }: { rows: MetafieldRow[] }) {
+/* ------------------------------------------------------------------ */
+/*  Detail Tabs (from Pencil — tabSec)                                 */
+/* ------------------------------------------------------------------ */
+
+type TabKey = 'details' | 'washcare' | 'shipping';
+
+function DetailTabs({
+  description,
+  compositionRows,
+  shippingRows,
+  detailRows,
+}: {
+  description: string | null;
+  compositionRows: MetafieldRow[];
+  shippingRows: MetafieldRow[];
+  detailRows: MetafieldRow[];
+}) {
+  const [activeTab, setActiveTab] = useState<TabKey>('details');
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: 'details', label: 'Details & Description' },
+    { key: 'washcare', label: 'Washcare' },
+    { key: 'shipping', label: 'Shipping' },
+  ];
+
   return (
-    <div className="space-y-2.5 text-[13px] leading-[1.6]">
-      {rows.map((row) => (
-        <div key={row.label} className="flex gap-2">
-          <span className="shrink-0 text-[#999999]">{row.label}:</span>
-          <span className="text-[#666666]">{row.value}</span>
-        </div>
-      ))}
+    <div style={{ paddingTop: 24 }}>
+      {/* Tab bar — 44px height, 20px horizontal padding */}
+      <div
+        style={{ height: 44, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 24 }}
+      >
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                height: 44,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                position: 'relative',
+                fontSize: 11,
+                fontWeight: isActive ? 400 : 300,
+                color: isActive ? '#000' : '#999',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                flexShrink: 0,
+              }}
+            >
+              {tab.label}
+              {isActive && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    backgroundColor: '#000',
+                  }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {/* Divider */}
+      <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+
+      {/* Tab content — padding: 20px 20px 24px 20px */}
+      <div style={{ padding: '20px 20px 24px 20px' }}>
+        {activeTab === 'details' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Details label + bullet list */}
+            {detailRows.length > 0 && (
+              <>
+                <span style={{ fontSize: 13, fontWeight: 500, color: '#000' }}>Details</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {detailRows.map((row) => (
+                    <span key={row.label} style={{ fontSize: 12, fontWeight: 300, color: '#666' }}>
+                      {row.value}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+            {/* Description */}
+            {description && (
+              <>
+                <span style={{ fontSize: 13, fontWeight: 500, color: '#000' }}>Description</span>
+                <div
+                  style={{ fontSize: 12, fontWeight: 300, color: '#666', lineHeight: 1.7 }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(description) }}
+                />
+              </>
+            )}
+            {detailRows.length === 0 && !description && (
+              <span style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>
+                No details available.
+              </span>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'washcare' &&
+          (compositionRows.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {compositionRows.map((row) => (
+                <div key={row.label} style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 300, color: '#999', flexShrink: 0 }}>
+                    {row.label}:
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 300, color: '#666' }}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>
+              No washcare info available.
+            </span>
+          ))}
+
+        {activeTab === 'shipping' &&
+          (shippingRows.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {shippingRows.map((row) => (
+                <div key={row.label} style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 300, color: '#999', flexShrink: 0 }}>
+                    {row.label}:
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 300, color: '#666' }}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>
+              No shipping info available.
+            </span>
+          ))}
+      </div>
     </div>
   );
 }
@@ -173,326 +483,22 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Detail Tabs (Mobile — Zara-style)                                  */
-/* ------------------------------------------------------------------ */
-
-type TabKey = 'description' | 'composition' | 'sizechart';
-
-function MeasureGuideSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const measurements = [
-    { name: 'CHEST', desc: 'Measure from one side to the other at the height of the armhole.' },
-    { name: 'FRONT LENGTH', desc: 'Measure from the shoulder seam to the hem of the garment.' },
-    { name: 'SLEEVE LENGTH', desc: 'Measure from the shoulder seam to the bottom of the sleeve.' },
-    { name: 'BACK WIDTH', desc: 'Measure from one shoulder seam to the other.' },
-    { name: 'ARM WIDTH', desc: 'Tape perpendicular to the sleeve up to the armhole.' },
-  ];
-
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 z-[60] bg-black transition-opacity duration-300 ${
-          isOpen ? 'opacity-50 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={onClose}
-      />
-
-      {/* Sheet */}
-      <div
-        className={`fixed inset-x-0 bottom-0 z-[61] bg-white transition-transform duration-300 ease-out ${
-          isOpen ? 'translate-y-0' : 'translate-y-full'
-        }`}
-        style={{
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-        }}
-      >
-        {/* Drag handle */}
-        <div className="sticky top-0 z-10 bg-white pt-5 pb-3 flex justify-center">
-          <div className="w-10 h-[3px] rounded-full bg-[#d0d0d0]" />
-        </div>
-
-        <div className="px-7 pb-8">
-          <h3
-            className="text-[15px] tracking-[0.15em] text-[var(--color-text)] mt-4"
-            style={{ fontWeight: 300 }}
-          >
-            HOW WE MEASURE THE GARMENT
-          </h3>
-
-          <div style={{ marginTop: '32px' }}>
-            {measurements.map((m, i) => (
-              <div key={m.name} style={{ paddingTop: i === 0 ? 0 : '16px' }}>
-                <p
-                  className="text-[13px] tracking-wide text-[var(--color-text)]"
-                  style={{ lineHeight: 1, fontWeight: 400 }}
-                >
-                  {m.name}
-                </p>
-                <p
-                  className="text-[13px] text-[#666666]"
-                  style={{ marginTop: '8px', lineHeight: 1.5, fontWeight: 300 }}
-                >
-                  {m.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function SizeChartTable() {
-  const [unit, setUnit] = useState<'CM' | 'IN'>('IN');
-  const [showGuide, setShowGuide] = useState(false);
-
-  const dataIN = [
-    { area: 'Chest', xs: '36', s: '39', m: '42', l: '45', xl: '48', xxl: '51' },
-    { area: 'Front length', xs: '24', s: '25', m: '26', l: '27', xl: '28', xxl: '29' },
-    { area: 'Sleeve length', xs: '10.5', s: '10.5', m: '10.5', l: '10.5', xl: '10.5', xxl: '10.5' },
-    { area: 'Shoulder', xs: '20', s: '21', m: '22', l: '23', xl: '24', xxl: '25' },
-  ];
-
-  const dataCM = dataIN.map((row) => ({
-    area: row.area,
-    xs: (parseFloat(row.xs) * 2.54).toFixed(1),
-    s: (parseFloat(row.s) * 2.54).toFixed(1),
-    m: (parseFloat(row.m) * 2.54).toFixed(1),
-    l: (parseFloat(row.l) * 2.54).toFixed(1),
-    xl: (parseFloat(row.xl) * 2.54).toFixed(1),
-    xxl: (parseFloat(row.xxl) * 2.54).toFixed(1),
-  }));
-
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-
-  return (
-    <div>
-      {/* Disclaimer */}
-      <p className="text-[13px] leading-[1.8] text-[#666666]">
-        The measurements may vary slightly due to the production process.
-      </p>
-      <p className="mt-4 text-[13px] leading-[1.8] text-[#666666]">
-        The garment is measured on a flat surface
-      </p>
-      <button
-        type="button"
-        onClick={() => setShowGuide((v) => !v)}
-        className="text-[13px] text-[#666666]"
-        style={{ marginTop: '16px' }}
-      >
-        See <span className="underline underline-offset-2">how we measure the garment</span>
-      </button>
-
-      {/* CM / IN toggle */}
-      <div className="flex items-center gap-4" style={{ marginTop: '16px' }}>
-        <button
-          type="button"
-          onClick={() => setUnit('CM')}
-          className={`text-[13px] transition-colors ${
-            unit === 'CM' ? 'text-[var(--color-text)] font-medium' : 'text-[#999999]'
-          }`}
-        >
-          CM
-        </button>
-        <button
-          type="button"
-          onClick={() => setUnit('IN')}
-          className={`text-[13px] transition-colors ${
-            unit === 'IN' ? 'text-[var(--color-text)] font-medium' : 'text-[#999999]'
-          }`}
-        >
-          IN
-        </button>
-      </div>
-
-      {/* Size chart table — CM values are always rendered (invisible) to reserve wider column widths */}
-      <table
-        className="w-full"
-        style={{ marginTop: '8px', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
-      >
-        <thead>
-          <tr>
-            <th
-              className="text-left text-[13px] font-bold text-[var(--color-text)]"
-              style={{ paddingBottom: '8px' }}
-            >
-              AREA
-            </th>
-            {sizes.map((s) => (
-              <th
-                key={s}
-                className="text-left text-[13px] font-bold text-[var(--color-text)]"
-                style={{ paddingBottom: '8px' }}
-              >
-                {s}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {dataIN.map((rowIN, i) => {
-            const rowCM = dataCM[i];
-            const active = unit === 'IN' ? rowIN : rowCM;
-            const ghost = unit === 'IN' ? rowCM : rowIN;
-            return (
-              <tr key={rowIN.area}>
-                <td
-                  className="text-[13px] text-[#666666]"
-                  style={{ paddingTop: '8px', paddingBottom: '8px' }}
-                >
-                  {rowIN.area}
-                </td>
-                {(['xs', 's', 'm', 'l', 'xl', 'xxl'] as const).map((col) => (
-                  <td
-                    key={col}
-                    className="text-[13px] text-[#666666]"
-                    style={{ paddingTop: '8px', paddingBottom: '8px', position: 'relative' }}
-                  >
-                    {/* ghost value — invisible but holds column width */}
-                    <span
-                      aria-hidden
-                      style={{
-                        visibility: 'hidden',
-                        display: 'block',
-                        height: 0,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {ghost[col]}
-                    </span>
-                    {/* visible value */}
-                    <span style={{ position: 'absolute', top: '8px', left: 0 }}>{active[col]}</span>
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
-      {/* Bottom sheet for measurement guide */}
-      <MeasureGuideSheet isOpen={showGuide} onClose={() => setShowGuide(false)} />
-    </div>
-  );
-}
-
-function DetailTabs({
-  description,
-  compositionRows,
-}: {
-  description: string | null;
-  compositionRows: MetafieldRow[];
-}) {
-  const [activeTab, setActiveTab] = useState<TabKey>('description');
-
-  const tabs: { key: TabKey; label: string }[] = [
-    { key: 'description', label: 'Details & Description' },
-    { key: 'composition', label: 'Washcare' },
-    { key: 'sizechart', label: 'Shipping' },
-  ];
-
-  return (
-    <div style={{ paddingTop: 24 }}>
-      {/* Tab bar */}
-      <div
-        style={{ height: 44, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 24 }}
-      >
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              style={{
-                height: 44,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                position: 'relative',
-                fontSize: 11,
-                fontWeight: isActive ? 400 : 300,
-                letterSpacing: 0.5,
-                color: isActive ? '#000' : '#999',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-                flexShrink: 0,
-              }}
-            >
-              {tab.label}
-              {isActive && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: 2,
-                    backgroundColor: '#000',
-                  }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
-
-      {/* Tab content */}
-      <div style={{ padding: '20px 20px 24px 20px' }}>
-        {activeTab === 'description' &&
-          (description ? (
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 500, color: '#000', marginBottom: 12 }}>
-                Details
-              </p>
-              <div
-                style={{ fontSize: 12, fontWeight: 300, color: '#666', lineHeight: 1.7 }}
-                dangerouslySetInnerHTML={{ __html: sanitizeHTML(description) }}
-              />
-            </div>
-          ) : (
-            <p style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>
-              No description available.
-            </p>
-          ))}
-        {activeTab === 'composition' &&
-          (compositionRows.length > 0 ? (
-            <MetafieldSection rows={compositionRows} />
-          ) : (
-            <p style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>
-              No washcare info available.
-            </p>
-          ))}
-        {activeTab === 'sizechart' && <SizeChartTable />}
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  Main Component                                                     */
 /* ------------------------------------------------------------------ */
 
 export function ProductDetail({ product, isPreview = false }: ProductDetailProps) {
-  const colors = useMemo(() => getUniqueColors(product.variants), [product.variants]);
   const sizes = useMemo(() => getUniqueSizes(product.variants), [product.variants]);
 
-  const [selectedColor, setSelectedColor] = useState<string | null>(
-    colors.length > 0 ? colors[0].name : null
-  );
   const router = useRouter();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
   const buyNowRef = useRef(false);
   const [mounted, setMounted] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     trackProductViewed({
@@ -503,58 +509,24 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
     });
   }, [product.id, product.name, product.price, product.category?.name]);
 
-  // Auto-hide the mobile dock when the sentinel (before "You May Also Like") enters the viewport
-  useEffect(() => {
-    if (isPreview || !sentinelRef.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting || entry.boundingClientRect.top < 0) {
-          setShowDock(false);
-        } else {
-          setShowDock(true);
-        }
-      },
-      { threshold: 0 }
-    );
-    observer.observe(sentinelRef.current);
-    return () => observer.disconnect();
-  }, [isPreview]);
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [showSizeSheet, setShowSizeSheet] = useState(false);
-  const [showDock, setShowDock] = useState(true);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
   const addItem = useCartStore((s) => s.addItem);
-  const isCartOpen = useCartStore((s) => s.isOpen);
   const { addToast } = useToast();
 
   const selectedVariant = useMemo(
-    () => getSelectedVariant(product.variants, selectedColor, selectedSize),
-    [product.variants, selectedColor, selectedSize]
+    () => getSelectedVariant(product.variants, selectedSize),
+    [product.variants, selectedSize]
   );
 
   const displayPrice = selectedVariant?.price ?? product.price;
   const isOnSale = product.compareAtPrice !== null && product.compareAtPrice > displayPrice;
 
-  const canAddToCart =
-    (colors.length === 0 || selectedColor !== null) &&
-    (sizes.length === 0 || selectedSize !== null) &&
-    (selectedVariant ? selectedVariant.stock > 0 : true);
+  /* ---- Add to cart ---- */
+  const handleAddToCart = async (size?: string) => {
+    const sz = size || selectedSize;
+    if (sizes.length > 0 && !sz) return;
 
-  const handleMobileAddToCart = () => {
-    if (sizes.length > 0) {
-      setShowSizeSheet(true);
-      return;
-    }
-    handleAddToCart();
-  };
-
-  const handleAddToCart = async () => {
-    if (sizes.length > 0 && !selectedSize) {
-      setShowSizeSheet(true);
-      return;
-    }
-    if (!canAddToCart) return;
+    const variant = getSelectedVariant(product.variants, sz);
+    if (sizes.length > 0 && (!variant || variant.stock <= 0)) return;
 
     setIsAdding(true);
     await new Promise((r) => setTimeout(r, 300));
@@ -562,82 +534,39 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
     const primaryImage = product.images.find((img) => img.isPrimary) || product.images[0];
 
     addItem({
-      id: selectedVariant?.id || product.id,
+      id: variant?.id || product.id,
       productId: product.id,
       name: product.name,
       slug: product.slug,
       image: primaryImage?.url || '',
-      price: displayPrice,
+      price: variant?.price ?? product.price,
       compareAtPrice: product.compareAtPrice ?? undefined,
-      size: selectedSize || '',
-      color: selectedColor || '',
-      maxQuantity: selectedVariant?.stock ?? 99,
+      size: sz || '',
+      color: '',
+      maxQuantity: variant?.stock ?? 99,
       quantity,
     });
 
     trackAddToCart({
       id: product.id,
       name: product.name,
-      price: displayPrice,
+      price: variant?.price ?? product.price,
       quantity,
-      variant: selectedSize || selectedColor || undefined,
+      variant: sz || undefined,
     });
     addToast('Added to cart', 'success');
     setIsAdding(false);
   };
 
-  const handleSizeSheetSelect = async (size: string) => {
-    setSelectedSize(size);
-    setShowSizeSheet(false);
-
-    // If Buy Now triggered the size sheet, go straight to checkout — no cart
-    if (buyNowRef.current) {
-      buyNowRef.current = false;
-      executeBuyNow(size);
-      return;
-    }
-
-    const variant = getSelectedVariant(product.variants, selectedColor, size);
-    if (!variant || variant.stock <= 0) return;
-
-    setIsAdding(true);
-    await new Promise((r) => setTimeout(r, 300));
-
-    const primaryImage = product.images.find((img) => img.isPrimary) || product.images[0];
-    addItem({
-      id: variant.id,
-      productId: product.id,
-      name: product.name,
-      slug: product.slug,
-      image: primaryImage?.url || '',
-      price: variant.price ?? product.price,
-      compareAtPrice: product.compareAtPrice ?? undefined,
-      size,
-      color: selectedColor || '',
-      maxQuantity: variant.stock,
-      quantity,
-    });
-
-    trackAddToCart({
-      id: product.id,
-      name: product.name,
-      price: variant.price ?? product.price,
-      quantity,
-      variant: size || selectedColor || undefined,
-    });
-    addToast('Added to cart', 'success');
-    setIsAdding(false);
-  };
-
+  /* ---- Buy now ---- */
   const { initiatePayment } = useRazorpay();
 
   const executeBuyNow = async (size?: string) => {
-    const variant = getSelectedVariant(product.variants, selectedColor, size || selectedSize);
+    const variant = getSelectedVariant(product.variants, size || selectedSize);
     if (!variant || variant.stock <= 0) return;
 
     setIsBuyingNow(true);
     try {
-      // Create order directly — no cart involved
       const result = await api.post<{
         razorpayOrderId: string;
         razorpayKeyId: string;
@@ -649,12 +578,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         loyaltyPointsToUse: 0,
       });
 
-      trackCheckoutStarted({
-        total: result.amount,
-        itemCount: quantity,
-      });
+      trackCheckoutStarted({ total: result.amount, itemCount: quantity });
 
-      // Open Razorpay Magic Checkout directly
       const paymentResponse = await initiatePayment({
         orderId: result.orderNumber,
         razorpayOrderId: result.razorpayOrderId,
@@ -672,7 +597,6 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
         return;
       }
 
-      // Verify payment
       await api.post('/checkout/verify-payment', {
         razorpayOrderId: paymentResponse.razorpay_order_id,
         razorpayPaymentId: paymentResponse.razorpay_payment_id,
@@ -695,20 +619,21 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
     }
   };
 
-  const handleBuyNow = async () => {
+  const handleMobileAddToCart = () => {
     if (sizes.length > 0 && !selectedSize) {
-      buyNowRef.current = true;
-      setShowSizeSheet(true);
+      addToast('Please select a size', 'info');
       return;
     }
-    executeBuyNow();
+    handleAddToCart();
   };
 
   const handleMobileBuyNow = () => {
+    if (sizes.length > 0 && !selectedSize) {
+      addToast('Please select a size', 'info');
+      return;
+    }
     if (sizes.length > 0) {
       buyNowRef.current = true;
-      setShowSizeSheet(true);
-      return;
     }
     executeBuyNow();
   };
@@ -716,202 +641,15 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
   const detailsFitRows = buildDetailsFit(product);
   const compositionCareRows = buildCompositionCare(product);
   const shippingReturnsRows = buildShippingReturns(product);
-  const additionalInfoRows = buildAdditionalInfo(product);
 
-  const hasDetails =
-    detailsFitRows.length > 0 ||
-    compositionCareRows.length > 0 ||
-    shippingReturnsRows.length > 0 ||
-    additionalInfoRows.length > 0;
-
-  /* Sort and split images for the editorial layout */
   const sortedImages = useMemo(
     () => [...product.images].sort((a, b) => a.sortOrder - b.sortOrder),
     [product.images]
   );
   const firstImage = sortedImages[0] || null;
 
-  /* ---- shared UI fragments ---- */
-
-  const colorSelector = colors.length > 0 && (
-    <div className="mt-6">
-      <div className="mb-2 text-xs font-bold uppercase tracking-wider">
-        Color:{' '}
-        <span className="font-normal normal-case text-[var(--color-muted)]">{selectedColor}</span>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {colors.map((color) => (
-          <button
-            key={color.name}
-            onClick={() => setSelectedColor(color.name)}
-            title={color.name}
-            className={cn(
-              'h-9 w-9 rounded-full border-2 transition-all',
-              selectedColor === color.name
-                ? 'ring-2 ring-[var(--color-primary)] ring-offset-2'
-                : 'border-[var(--color-border)] hover:scale-110',
-              color.name.toLowerCase() === 'white' && 'border-gray-300'
-            )}
-            style={{ backgroundColor: color.hex }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-
-  const sizeSelector = sizes.length > 0 && (
-    <div className="mt-6 text-center">
-      <div className="mb-2 flex items-center justify-center gap-4">
-        <span className="text-xs font-bold uppercase tracking-wider">
-          Size:{' '}
-          <span className="font-normal normal-case text-[var(--color-muted)]">
-            {selectedSize || 'Select a size'}
-          </span>
-        </span>
-        <button className="text-xs font-medium text-[var(--color-muted)] underline underline-offset-2 transition-colors hover:text-[var(--color-text)]">
-          Size Guide
-        </button>
-      </div>
-      <div className="flex flex-wrap justify-center gap-2">
-        {sizes.map((size) => {
-          const stock = getVariantStock(product.variants, selectedColor, size);
-          const isOutOfStock = stock <= 0;
-          const isSelected = selectedSize === size;
-          const indicator = stockIndicator(stock);
-          return (
-            <button
-              key={size}
-              onClick={() => {
-                if (!isOutOfStock) setSelectedSize(size);
-              }}
-              disabled={isOutOfStock}
-              className={cn(
-                'flex min-w-[3.5rem] flex-col items-center justify-center border px-4 py-2 transition-colors',
-                isSelected
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
-                  : isOutOfStock
-                    ? 'cursor-not-allowed border-[var(--color-border)] text-[var(--color-sold-out)] line-through'
-                    : 'border-[var(--color-primary)] hover:bg-[var(--color-surface)]'
-              )}
-            >
-              <span className="text-sm font-semibold">{size}</span>
-              {indicator && !isSelected && (
-                <span className={cn('text-[9px] mt-0.5', indicator.className)}>
-                  {indicator.label}
-                </span>
-              )}
-              {indicator && isSelected && (
-                <span className="text-[9px] mt-0.5 text-white/70">{indicator.label}</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const quantitySelector = (
-    <div className="mt-6">
-      <div className="mb-2 text-xs font-bold uppercase tracking-wider">Quantity</div>
-      <div className="inline-flex items-center border border-[var(--color-border)]">
-        <button
-          onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-          className="flex h-10 w-10 items-center justify-center transition-colors hover:bg-[var(--color-surface)]"
-          aria-label="Decrease quantity"
-        >
-          <Minus size={14} />
-        </button>
-        <span className="flex h-10 w-12 items-center justify-center border-x border-[var(--color-border)] text-sm font-semibold">
-          {quantity}
-        </span>
-        <button
-          onClick={() => setQuantity((q) => Math.min(selectedVariant?.stock ?? 99, q + 1))}
-          className="flex h-10 w-10 items-center justify-center transition-colors hover:bg-[var(--color-surface)]"
-          aria-label="Increase quantity"
-        >
-          <Plus size={14} />
-        </button>
-      </div>
-    </div>
-  );
-
-  const lowStockWarning = selectedVariant &&
-    selectedVariant.lowStockThreshold &&
-    selectedVariant.stock > 0 &&
-    selectedVariant.stock <= selectedVariant.lowStockThreshold && (
-      <p className="mt-2 text-xs font-medium text-[var(--color-sale)]">
-        Only {selectedVariant.stock} left in stock!
-      </p>
-    );
-
-  const renderActions = () => (
-    <div className="mt-6 flex flex-col gap-3">
-      <button
-        onClick={handleAddToCart}
-        disabled={!canAddToCart || isAdding}
-        className={cn(
-          'flex h-[45px] w-full items-center justify-center gap-2 text-sm font-bold uppercase tracking-wider transition-opacity',
-          canAddToCart
-            ? 'bg-[var(--color-primary)] text-white hover:opacity-90'
-            : 'cursor-not-allowed bg-[var(--color-sold-out)] text-white'
-        )}
-      >
-        {isAdding ? <Loader2 size={18} className="animate-spin" /> : 'Add to Cart'}
-      </button>
-
-      <button
-        onClick={handleBuyNow}
-        disabled={!canAddToCart || isAdding}
-        className={cn(
-          'flex h-[45px] w-full items-center justify-center border-2 text-sm font-bold uppercase tracking-wider transition-colors',
-          canAddToCart
-            ? 'border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-surface)]'
-            : 'cursor-not-allowed border-[var(--color-sold-out)] text-[var(--color-sold-out)]'
-        )}
-      >
-        Buy Now
-      </button>
-
-      <button
-        onClick={() => setIsWishlisted((prev) => !prev)}
-        className="flex items-center justify-center gap-2 py-2 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-      >
-        <Heart
-          size={14}
-          className={cn(isWishlisted && 'fill-[var(--color-sale)] text-[var(--color-sale)]')}
-        />
-        {isWishlisted ? 'Added to Wishlist' : 'Add to Wishlist'}
-      </button>
-    </div>
-  );
-
-  const renderAccordions = () => (
-    <div className="border-t border-[var(--color-border)] border-opacity-0">
-      {detailsFitRows.length > 0 && (
-        <Accordion title="Details & Fit" defaultOpen>
-          <MetafieldSection rows={detailsFitRows} />
-        </Accordion>
-      )}
-      {compositionCareRows.length > 0 && (
-        <Accordion title="Composition & Care">
-          <MetafieldSection rows={compositionCareRows} />
-        </Accordion>
-      )}
-      {shippingReturnsRows.length > 0 && (
-        <Accordion title="Shipping & Returns">
-          <MetafieldSection rows={shippingReturnsRows} />
-        </Accordion>
-      )}
-      {additionalInfoRows.length > 0 && (
-        <Accordion title="Additional Info">
-          <MetafieldSection rows={additionalInfoRows} />
-        </Accordion>
-      )}
-    </div>
-  );
-
   return (
-    <div>
+    <div className="font-[family-name:var(--font-inter)]">
       {/* ===== DESKTOP LAYOUT (lg+) ===== */}
       <div className="hidden lg:block px-4 py-6 md:px-8 lg:px-12 xl:px-20">
         {/* Breadcrumb */}
@@ -934,7 +672,6 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           <span className="text-[var(--color-text)]">{product.name}</span>
         </nav>
 
-        {/* Section 1: First image LEFT + Product info RIGHT */}
         <div className="grid grid-cols-2 items-start gap-10">
           <div>
             {firstImage && (
@@ -953,7 +690,6 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
             )}
           </div>
 
-          {/* Product info panel — sticky */}
           <div className="sticky top-24">
             <h1 className="text-2xl font-semibold uppercase leading-tight tracking-wide">
               {product.name}
@@ -984,13 +720,72 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
               </p>
             )}
 
-            {colorSelector}
-            {sizeSelector}
-            {quantitySelector}
-            {lowStockWarning}
-            {renderActions()}
+            {/* Desktop size selector */}
+            {sizes.length > 0 && (
+              <div className="mt-6 text-center">
+                <div className="mb-2 flex items-center justify-center gap-4">
+                  <span className="text-xs font-bold uppercase tracking-wider">
+                    Size:{' '}
+                    <span className="font-normal normal-case text-[var(--color-muted)]">
+                      {selectedSize || 'Select'}
+                    </span>
+                  </span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {sizes.map((size) => {
+                    const stock = getVariantStock(product.variants, size);
+                    const oos = stock <= 0;
+                    const isSelected = selectedSize === size;
+                    return (
+                      <button
+                        key={size}
+                        onClick={() => !oos && setSelectedSize(size)}
+                        disabled={oos}
+                        className={cn(
+                          'flex min-w-[3.5rem] items-center justify-center border px-4 py-2 transition-colors',
+                          isSelected
+                            ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
+                            : oos
+                              ? 'cursor-not-allowed border-[var(--color-border)] text-[var(--color-sold-out)] line-through'
+                              : 'border-[var(--color-primary)] hover:bg-[var(--color-surface)]'
+                        )}
+                      >
+                        <span className="text-sm font-semibold">{size}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-            {/* Description */}
+            {/* Desktop actions */}
+            <div className="mt-6 flex flex-col gap-3">
+              <button
+                onClick={() => handleAddToCart()}
+                disabled={isAdding || (sizes.length > 0 && !selectedSize)}
+                className={cn(
+                  'flex h-[45px] w-full items-center justify-center gap-2 text-sm font-bold uppercase tracking-wider transition-opacity',
+                  sizes.length > 0 && !selectedSize
+                    ? 'cursor-not-allowed bg-[var(--color-sold-out)] text-white'
+                    : 'bg-[var(--color-primary)] text-white hover:opacity-90'
+                )}
+              >
+                {isAdding ? <Loader2 size={18} className="animate-spin" /> : 'Add to Cart'}
+              </button>
+              <button
+                onClick={() => executeBuyNow()}
+                disabled={isAdding || (sizes.length > 0 && !selectedSize)}
+                className={cn(
+                  'flex h-[45px] w-full items-center justify-center border-2 text-sm font-bold uppercase tracking-wider transition-colors',
+                  sizes.length > 0 && !selectedSize
+                    ? 'cursor-not-allowed border-[var(--color-sold-out)] text-[var(--color-sold-out)]'
+                    : 'border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-surface)]'
+                )}
+              >
+                Buy Now
+              </button>
+            </div>
+
             {product.description && (
               <div className="mt-8 border-t border-[var(--color-border)] border-opacity-0 pt-6">
                 <div
@@ -1002,10 +797,8 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </div>
         </div>
 
-        {/* All remaining images + accordions */}
-        {(sortedImages.length > 1 || hasDetails) && (
+        {sortedImages.length > 1 && (
           <div className="mt-4 grid grid-cols-2 gap-4">
-            {hasDetails && <div>{renderAccordions()}</div>}
             {sortedImages.slice(1).map((img) => (
               <div key={img.id}>
                 <Image
@@ -1024,15 +817,14 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </div>
         )}
 
-        {/* Related products */}
         <RelatedProducts categorySlug={product.category?.slug} excludeProductId={product.id} />
       </div>
 
-      {/* ===== MOBILE LAYOUT (Bluorng-inspired) ===== */}
-      <div className="pb-[env(safe-area-inset-bottom,0px)] lg:hidden font-[family-name:var(--font-inter)]">
-        {/* 1. Hero image — full-bleed with counter + wishlist */}
+      {/* ===== MOBILE LAYOUT — Bluorng style (from Pencil node ALtU6) ===== */}
+      <div className="lg:hidden" style={{ backgroundColor: '#FFF' }}>
+        {/* 1. Hero Image — 500px, full bleed, counter bottom-left, wishlist+share top-right */}
         {firstImage && (
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', backgroundColor: '#E8E4DF' }}>
             <Image
               src={getImageUrl(firstImage.url, 800)}
               alt={firstImage.altText || product.name}
@@ -1045,6 +837,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
               placeholder="blur"
               blurDataURL={BLUR_DATA_URL}
             />
+            {/* Image counter — bottom left */}
             <span
               style={{
                 position: 'absolute',
@@ -1057,6 +850,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
             >
               1 / {sortedImages.length}
             </span>
+            {/* Wishlist — top right */}
             <button
               onClick={() => setIsWishlisted((v) => !v)}
               style={{
@@ -1068,22 +862,55 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                 cursor: 'pointer',
               }}
             >
-              <Heart
+              <Bookmark
                 size={20}
-                className={cn(isWishlisted ? 'fill-[#EF4444] text-[#EF4444]' : 'text-white')}
+                className={cn(isWishlisted ? 'fill-white text-white' : 'text-white')}
               />
+            </button>
+            {/* Share — top right, next to wishlist */}
+            <button
+              style={{
+                position: 'absolute',
+                top: 17,
+                right: 48,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: product.name,
+                    url: window.location.href,
+                  });
+                }
+              }}
+            >
+              <Share2 size={18} color="#FFF" />
             </button>
           </div>
         )}
 
-        {/* 2. Name + Size Guide + Price */}
+        {/* 2. infoSec — Name + bookmark, Size Guide btn, Price */}
         <div
           style={{ padding: '20px 20px 0 20px', display: 'flex', flexDirection: 'column', gap: 6 }}
         >
+          {/* nameRow: name+bookmark left, Size Guide right */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 16, fontWeight: 500, color: '#000' }}>{product.name}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16, fontWeight: 500, color: '#000' }}>{product.name}</span>
+              <button
+                onClick={() => setIsWishlisted((v) => !v)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                <Bookmark
+                  size={16}
+                  className={cn(isWishlisted ? 'fill-black text-black' : 'text-black')}
+                />
+              </button>
+            </div>
             <button
-              onClick={() => setShowSizeSheet(true)}
+              onClick={() => setShowSizeGuide(true)}
               style={{
                 height: 28,
                 padding: '0 12px',
@@ -1095,12 +922,12 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                 fontWeight: 300,
                 color: '#000',
                 flexShrink: 0,
-                marginLeft: 12,
               }}
             >
               Size Guide
             </button>
           </div>
+          {/* Price */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 14, fontWeight: 300, color: '#000' }}>
               {formatPrice(displayPrice)}
@@ -1118,18 +945,15 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
               </span>
             )}
           </div>
-          <span style={{ fontSize: 9, fontWeight: 300, color: '#CCC' }}>
-            MRP incl. of all taxes
-          </span>
         </div>
 
-        {/* 3. Size pills — rounded capsules */}
+        {/* 3. sizeSec — Rounded pill size buttons */}
         {sizes.length > 0 && (
           <div style={{ padding: '16px 20px 0 20px' }}>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8 }}>
               {sizes.map((s) => {
                 const isSelected = s === selectedSize;
-                const stock = getVariantStock(product.variants, selectedColor, s);
+                const stock = getVariantStock(product.variants, s);
                 const oos = product.variants.length > 0 && stock <= 0;
                 return (
                   <button
@@ -1138,7 +962,6 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                     disabled={oos}
                     style={{
                       flex: 1,
-                      minWidth: 56,
                       height: 40,
                       borderRadius: 9999,
                       display: 'flex',
@@ -1150,7 +973,6 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
                       backgroundColor: isSelected ? '#000' : 'transparent',
                       border: isSelected ? 'none' : `1px solid ${oos ? '#F0F0F0' : '#E5E5E5'}`,
                       cursor: oos ? 'default' : 'pointer',
-                      opacity: oos ? 0.5 : 1,
                     }}
                   >
                     {s}
@@ -1161,7 +983,7 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </div>
         )}
 
-        {/* 4. ADD TO BAG + BUY NOW — rounded full-width */}
+        {/* 4. btnSec — ADD TO BAG + BUY NOW rounded full-width */}
         <div
           style={{ padding: '20px 20px 0 20px', display: 'flex', flexDirection: 'column', gap: 10 }}
         >
@@ -1217,10 +1039,15 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </button>
         </div>
 
-        {/* 5. Detail tabs — after buttons */}
-        <DetailTabs description={product.description} compositionRows={compositionCareRows} />
+        {/* 5. tabSec — Detail Tabs */}
+        <DetailTabs
+          description={product.description}
+          compositionRows={compositionCareRows}
+          shippingRows={shippingReturnsRows}
+          detailRows={detailsFitRows}
+        />
 
-        {/* 6. Remaining images — stacked */}
+        {/* 6. Remaining images — stacked full bleed */}
         {sortedImages.length > 1 && (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {sortedImages.slice(1).map((img) => (
@@ -1240,162 +1067,17 @@ export function ProductDetail({ product, isPreview = false }: ProductDetailProps
           </div>
         )}
 
-        {/* 7. Accordions */}
-        {hasDetails && (
-          <div style={{ padding: '8px 20px 0 20px' }}>
-            {detailsFitRows.length > 0 && (
-              <Accordion title="Material & Fit">
-                <MetafieldSection rows={detailsFitRows} />
-              </Accordion>
-            )}
-            {shippingReturnsRows.length > 0 && (
-              <Accordion title="Shipping & Returns">
-                <MetafieldSection rows={shippingReturnsRows} />
-              </Accordion>
-            )}
-            {additionalInfoRows.length > 0 && (
-              <Accordion title="Care Instructions">
-                <MetafieldSection rows={additionalInfoRows} />
-              </Accordion>
-            )}
-          </div>
-        )}
-
-        {/* Spacer for dock */}
-        <div className="h-16" />
-
-        {/* Sentinel */}
-        <div ref={sentinelRef} data-dock-hide aria-hidden="true" />
-
-        {/* 8. Related products */}
-        <div style={{ padding: '0 20px calc(2rem + env(safe-area-inset-bottom, 0px)) 20px' }}>
+        {/* 7. relSec — Related products */}
+        <div style={{ padding: '0 20px 28px 20px' }}>
           <RelatedProducts categorySlug={product.category?.slug} excludeProductId={product.id} />
         </div>
       </div>
 
-      {/* Mobile bottom dock — portaled to body so it works inside overflow containers. */}
-      {!isPreview &&
-        mounted &&
-        !isCartOpen &&
-        showDock &&
-        createPortal(
-          <div
-            className="fixed inset-x-0 bottom-0 z-50 bg-white lg:hidden"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-          >
-            {/* Product name + price */}
-            <div className="px-4 pt-3">
-              <p className="text-sm font-semibold uppercase tracking-wide">{product.name}</p>
-              <div className="flex items-baseline gap-2">
-                <span className={cn('text-sm', isOnSale && 'text-[var(--color-sale)]')}>
-                  {formatPrice(displayPrice)}
-                </span>
-                {isOnSale && (
-                  <span className="text-xs text-[var(--color-muted)] line-through">
-                    {formatPrice(product.compareAtPrice!)}
-                  </span>
-                )}
-              </div>
-              <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
-                MRP incl. of all taxes
-              </p>
-            </div>
-
-            {/* ADD button — always opens size sheet on mobile when sizes exist */}
-            <div className="px-4 py-3">
-              <button
-                type="button"
-                onClick={handleMobileAddToCart}
-                disabled={isAdding}
-                className="flex h-12 w-full items-center justify-center border text-sm font-bold uppercase tracking-[0.2em] transition-colors border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
-              >
-                {isAdding ? <Loader2 size={16} className="animate-spin" /> : 'ADD TO CART'}
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {/* ===== SIZE SELECTION SHEET (portaled to body so it works inside overflow containers) ===== */}
+      {/* Size Guide bottom sheet — portaled */}
       {!isPreview &&
         mounted &&
         createPortal(
-          <>
-            {/* Backdrop */}
-            <div
-              className={`fixed inset-0 z-[70] bg-black transition-opacity duration-300 ${
-                showSizeSheet ? 'opacity-50 pointer-events-auto' : 'opacity-0 pointer-events-none'
-              }`}
-              onClick={() => setShowSizeSheet(false)}
-            />
-
-            {/* Sheet */}
-            <div
-              className={`fixed inset-x-0 bottom-0 z-[71] bg-white transition-transform duration-300 ease-out ${
-                showSizeSheet ? 'translate-y-0' : 'translate-y-full'
-              }`}
-              style={{
-                maxHeight: '70vh',
-                overflowY: 'auto',
-                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-              }}
-            >
-              {/* Drag handle */}
-              <div className="sticky top-0 z-10 bg-white pt-5 pb-3 flex justify-center">
-                <div className="w-10 h-[3px] rounded-full bg-[#d0d0d0]" />
-              </div>
-
-              <div className="px-6 pb-8">
-                <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-center text-[var(--color-text)]">
-                  Select Size
-                </h3>
-
-                <div className="mt-6 flex flex-col">
-                  {sizes.map((size) => {
-                    const stock = getVariantStock(product.variants, selectedColor, size);
-                    const isOutOfStock = stock <= 0;
-                    const indicator = stockIndicator(stock);
-                    return (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => {
-                          if (!isOutOfStock) handleSizeSheetSelect(size);
-                        }}
-                        disabled={isOutOfStock}
-                        className={cn(
-                          'grid grid-cols-[1fr_auto_1fr] items-center py-4 text-sm uppercase tracking-wider border-b border-[var(--color-border)]/10 transition-colors',
-                          isOutOfStock
-                            ? 'text-[var(--color-sold-out)] cursor-not-allowed'
-                            : 'text-[var(--color-text)] hover:bg-[var(--color-surface)]'
-                        )}
-                      >
-                        <span />
-                        <span>{size}</span>
-                        <span className="flex justify-end pr-2">
-                          {indicator && (
-                            <span
-                              className={cn(
-                                'text-[10px] normal-case tracking-normal',
-                                indicator.className
-                              )}
-                            >
-                              {indicator.label}
-                            </span>
-                          )}
-                          {isOutOfStock && (
-                            <span className="text-[10px] normal-case tracking-normal text-[var(--color-sold-out)]">
-                              Sold out
-                            </span>
-                          )}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </>,
+          <SizeGuideSheet isOpen={showSizeGuide} onClose={() => setShowSizeGuide(false)} />,
           document.body
         )}
     </div>
