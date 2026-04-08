@@ -43,8 +43,9 @@ const envSchema = z.object({
   // Razorpay COD review API — Basic Auth credentials
   RAZORPAY_COD_REVIEW_USERNAME: z.string().optional(),
   RAZORPAY_COD_REVIEW_PASSWORD: z.string().optional(),
-  // Mappls (MapmyIndia) address autosuggest
-  MAPPLS_API_KEY: z.string().optional(),
+  // Mappls (MapmyIndia) address autosuggest — OAuth2 credentials
+  MAPPLS_CLIENT_ID: z.string().optional(),
+  MAPPLS_CLIENT_SECRET: z.string().optional(),
   // COD surcharge in rupees (0 = free COD)
   COD_FEE: z.coerce.number().default(0),
   // Cron job secret — protects internal endpoints from public access
