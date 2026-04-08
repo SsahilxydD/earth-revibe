@@ -260,11 +260,11 @@ function CategoryContent() {
         }}
       >
         {[
-          { label: 'Beach', value: 'beach', bg: '#E8E4DF', count: 8 },
-          { label: 'Brunch', value: 'brunch', bg: '#D8D4CF', count: 21 },
-          { label: 'Sunset', value: 'sunset', bg: '#C8C4BF', count: 9 },
-          { label: 'Poolside', value: 'poolside', bg: '#B8B4AF', count: 8 },
-          { label: 'Island', value: 'island', bg: '#D0CCC7', count: 12 },
+          { label: 'Beach', value: 'beach', img: '/moods/beach.webp' },
+          { label: 'Brunch', value: 'brunch', img: '/moods/brunch.webp' },
+          { label: 'Sunset', value: 'sunset', img: '/moods/sunset.webp' },
+          { label: 'Poolside', value: 'poolside', img: '/moods/poolside.webp' },
+          { label: 'Island', value: 'island', img: '/moods/island.webp' },
         ].map((m) => {
           const isActive = mood === m.value;
           return (
@@ -288,7 +288,9 @@ function CategoryContent() {
                   width: 46,
                   height: 46,
                   borderRadius: 9999,
-                  backgroundColor: m.bg,
+                  backgroundImage: `url(${m.img})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
                   outline: isActive ? '2px solid #000' : 'none',
                   outlineOffset: 2,
                 }}
