@@ -162,13 +162,17 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
   const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
   const isLowStock = !isOutOfStock && totalStock > 0 && totalStock <= 5;
 
-  // Color swatches from variants
+  // Color swatches — from variants if they have color data, otherwise skip
   const colorSwatches = useMemo(() => {
-    const colors = new Set<string>();
+    const seen = new Map<string, string>();
     variants.forEach((v) => {
-      if (v.color) colors.add(v.color);
+      if (v.color && v.color.trim() && !seen.has(v.color)) {
+        seen.set(v.color, v.colorHex || getColorHex(v.color));
+      }
     });
-    return Array.from(colors).slice(0, 4);
+    return Array.from(seen.entries())
+      .slice(0, 4)
+      .map(([name, hex]) => ({ name, hex }));
   }, [variants]);
 
   // Discount percentage
@@ -423,35 +427,38 @@ export function ProductCard({ product, index = 99, siblingColors }: ProductCardP
           )}
         </div>
 
-        {/* Color swatches — show sibling product colors or variant colors */}
-        <div style={{ display: 'flex', gap: 4, minHeight: 10, alignItems: 'center' }}>
-          {(siblingColors && siblingColors.length > 1
-            ? siblingColors
-            : colorSwatches.map((c) => ({ color: c, slug: product.slug }))
-          ).map(({ color, slug }) => {
-            const hex = getColorHex(color);
-            const isWhite =
-              hex.toUpperCase() === '#FFFFFF' ||
-              hex.toUpperCase() === '#FFFFF0' ||
-              hex.toUpperCase() === '#FFFDD0';
-            const isCurrent = slug === product.slug;
-            return (
-              <span
-                key={color}
-                title={color}
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 9999,
-                  backgroundColor: hex,
-                  border: isWhite ? '1px solid #E5E5E5' : isCurrent ? '1px solid #000' : 'none',
-                  outline: isCurrent && !isWhite ? '1px solid #000' : 'none',
-                  outlineOffset: 1,
-                }}
-              />
-            );
-          })}
-        </div>
+        {/* Color swatches — only if variant or sibling colors exist */}
+        {(siblingColors && siblingColors.length > 1) || colorSwatches.length > 0 ? (
+          <div style={{ display: 'flex', gap: 4, minHeight: 10, alignItems: 'center' }}>
+            {(siblingColors && siblingColors.length > 1
+              ? siblingColors.map((s) => ({
+                  name: s.color,
+                  hex: getColorHex(s.color),
+                  isCurrent: s.slug === product.slug,
+                }))
+              : colorSwatches.map((c) => ({ name: c.name, hex: c.hex, isCurrent: false }))
+            ).map(({ name, hex, isCurrent }) => {
+              const isLight = ['#FFFFFF', '#FFFFF0', '#FFFDD0', '#FFDAB9'].includes(
+                hex.toUpperCase()
+              );
+              return (
+                <span
+                  key={name}
+                  title={name}
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 9999,
+                    backgroundColor: hex,
+                    border: isLight ? '1px solid #E5E5E5' : isCurrent ? '1px solid #000' : 'none',
+                    outline: isCurrent && !isLight ? '1px solid #000' : 'none',
+                    outlineOffset: 1,
+                  }}
+                />
+              );
+            })}
+          </div>
+        ) : null}
       </Link>
 
       {/* Quick Add / Notify Me button — 34px height */}

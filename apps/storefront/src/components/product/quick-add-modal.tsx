@@ -113,14 +113,17 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
   }, [variants]);
 
   const colors = useMemo(() => {
-    const c = new Map<string, boolean>();
+    const c = new Map<string, { inStock: boolean; hex: string }>();
     variants.forEach((v) => {
       if (v.color) {
         const existing = c.get(v.color);
-        c.set(v.color, existing || v.stock > 0);
+        c.set(v.color, {
+          inStock: existing?.inStock || v.stock > 0,
+          hex: v.colorHex || getColorHex(v.color),
+        });
       }
     });
-    return Array.from(c.entries()).map(([color, inStock]) => ({ color, inStock }));
+    return Array.from(c.entries()).map(([color, { inStock, hex }]) => ({ color, inStock, hex }));
   }, [variants]);
 
   // Auto-select first available size/color
@@ -322,13 +325,11 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
               COLOR{selectedColor ? ` — ${selectedColor}` : ''}
             </span>
             <div style={{ display: 'flex', gap: 10 }}>
-              {colors.map(({ color, inStock }) => {
+              {colors.map(({ color, inStock, hex }) => {
                 const isSelected = selectedColor === color;
-                const hex = getColorHex(color);
-                const isWhite =
-                  hex.toUpperCase() === '#FFFFFF' ||
-                  hex.toUpperCase() === '#FFFFF0' ||
-                  hex.toUpperCase() === '#FFFDD0';
+                const isWhite = ['#FFFFFF', '#FFFFF0', '#FFFDD0', '#FFDAB9'].includes(
+                  hex.toUpperCase()
+                );
                 const bg = hex;
                 return (
                   <button

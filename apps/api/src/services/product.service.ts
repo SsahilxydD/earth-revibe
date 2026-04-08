@@ -102,7 +102,7 @@ export const productService = {
           },
           variants: {
             where: { isActive: true },
-            select: { id: true, size: true, color: true, stock: true },
+            select: { id: true, size: true, color: true, colorHex: true, stock: true },
             orderBy: { createdAt: 'asc' },
           },
           category: {
