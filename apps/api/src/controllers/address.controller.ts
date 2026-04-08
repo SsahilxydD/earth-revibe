@@ -45,14 +45,9 @@ export const addressController = {
       return;
     }
     try {
-      const url = `https://apis.mappls.com/advancedmaps/v1/${token}/autosuggest?query=${encodeURIComponent(query)}&tokenizeAddress=true`;
+      const url = `https://search.mappls.com/search/places/autosuggest/json?access_token=${token}&query=${encodeURIComponent(query)}&tokenizeAddress=true`;
       logger.info({ url: url.replace(token, '***') }, 'Mappls autosuggest request');
-      const resp = await fetch(url, {
-        signal: AbortSignal.timeout(5000),
-        headers: {
-          Referer: 'https://www.earthrevibe.com/',
-        },
-      });
+      const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
       const raw = await resp.text();
       logger.info({ status: resp.status, body: raw.slice(0, 500) }, 'Mappls autosuggest response');
       const data = JSON.parse(raw);
