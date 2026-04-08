@@ -45,18 +45,25 @@ const SECTIONS = [
 function PalmLeaves() {
   return (
     <div
-      style={{ position: 'relative', width: '100%', height: 90, overflow: 'hidden', opacity: 0.07 }}
+      aria-hidden
+      style={{
+        position: 'absolute',
+        inset: 0,
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        opacity: 0.06,
+      }}
     >
-      {/* Left palm frond */}
+      {/* Top-left: frond growing in from left edge */}
       <svg
         viewBox="0 0 200 200"
         style={{
           position: 'absolute',
-          left: -30,
-          bottom: -40,
-          width: 180,
-          height: 180,
-          transform: 'rotate(-15deg)',
+          left: -60,
+          top: -30,
+          width: 220,
+          height: 220,
+          transform: 'rotate(35deg)',
         }}
       >
         <g fill="#000">
@@ -88,16 +95,16 @@ function PalmLeaves() {
           <path d="M90 60 C104 48 124 42 148 40 C126 48 108 56 93 60" />
         </g>
       </svg>
-      {/* Right palm frond */}
+      {/* Top-right: frond growing in from right edge */}
       <svg
         viewBox="0 0 200 200"
         style={{
           position: 'absolute',
-          right: -30,
-          bottom: -50,
-          width: 170,
-          height: 170,
-          transform: 'rotate(20deg) scaleX(-1)',
+          right: -60,
+          top: -20,
+          width: 200,
+          height: 200,
+          transform: 'rotate(-30deg) scaleX(-1)',
         }}
       >
         <g fill="#000">
@@ -123,17 +130,17 @@ function PalmLeaves() {
           <path d="M90 60 C104 48 124 42 148 40 C126 48 108 56 93 60" />
         </g>
       </svg>
-      {/* Small center leaf */}
+      {/* Bottom-right: smaller frond from bottom-right corner */}
       <svg
         viewBox="0 0 100 100"
         style={{
           position: 'absolute',
-          left: '50%',
-          bottom: -20,
-          width: 80,
-          height: 80,
-          transform: 'translateX(-50%)',
-          opacity: 0.5,
+          right: -15,
+          bottom: -25,
+          width: 120,
+          height: 120,
+          transform: 'rotate(-50deg) scaleX(-1)',
+          opacity: 0.7,
         }}
       >
         <g fill="#000">
@@ -233,9 +240,10 @@ export function Footer() {
       style={{
         backgroundColor: '#F5F5F5',
         paddingBottom: 'calc(0px + env(safe-area-inset-bottom, 0px))',
+        position: 'relative',
       }}
     >
-      {/* Palm leaves decoration */}
+      {/* Palm leaves anchored to corners */}
       <PalmLeaves />
 
       {/* Logo + brand name — centered, 36px logo */}
@@ -245,7 +253,7 @@ export function Footer() {
           flexDirection: 'column',
           alignItems: 'center',
           gap: 8,
-          padding: '12px 28px 20px 28px',
+          padding: '40px 28px 20px 28px',
         }}
       >
         <Link href="/">
