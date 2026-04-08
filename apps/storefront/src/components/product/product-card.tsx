@@ -20,8 +20,10 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const router = useRouter();
   const prefetched = useRef(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [heartBounce, setHeartBounce] = useState(false);
 
-  const { data: wishlistItems } = useWishlist({ enabled: typeof window !== 'undefined' });
+  const isAuthenticated = typeof window !== 'undefined';
+  const { data: wishlistItems } = useWishlist({ enabled: isAuthenticated });
   const addToWishlist = useAddToWishlist();
   const removeFromWishlist = useRemoveFromWishlist();
 
@@ -34,15 +36,27 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      // Trigger bounce animation
+      setHeartBounce(true);
+      setTimeout(() => setHeartBounce(false), 300);
       if (isWishlisted) {
         trackWishlistToggle({ id: product.id, name: product.name, added: false });
-        removeFromWishlist.mutate(product.id);
+        removeFromWishlist.mutate(product.id, {
+          onError: () => {
+            // If 401, redirect to login
+            router.push('/auth/login');
+          },
+        });
       } else {
         trackWishlistToggle({ id: product.id, name: product.name, added: true });
-        addToWishlist.mutate(product.id);
+        addToWishlist.mutate(product.id, {
+          onError: () => {
+            router.push('/auth/login');
+          },
+        });
       }
     },
-    [isWishlisted, product.id, product.name, addToWishlist, removeFromWishlist]
+    [isWishlisted, product.id, product.name, addToWishlist, removeFromWishlist, router]
   );
 
   const isAboveFold = index < 4;
@@ -284,10 +298,11 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
         >
           <Heart
             size={16}
-            className={cn(
-              'transition-colors',
-              isWishlisted ? 'fill-[#EF4444] text-[#EF4444]' : 'text-[#CCC]'
-            )}
+            style={{
+              transition: 'transform 0.2s ease, color 0.15s ease',
+              transform: heartBounce ? 'scale(1.4)' : 'scale(1)',
+            }}
+            className={cn(isWishlisted ? 'fill-[#EF4444] text-[#EF4444]' : 'text-[#CCC]')}
           />
         </button>
       </div>
