@@ -10,6 +10,8 @@ import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { CartItemRow } from './cart-item';
 import { LoginModal } from '@/components/auth/login-modal';
+import { PaymentMethodModal } from '@/components/checkout/payment-method-modal';
+import { CODCheckoutModal } from '@/components/checkout/cod-checkout-modal';
 import { api } from '@/lib/api-client';
 import { useRazorpay, preloadRazorpayScript } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
@@ -36,6 +38,9 @@ export function CartDrawer() {
     'idle'
   );
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [showCODCheckout, setShowCODCheckout] = useState(false);
+  const [pendingCOD, setPendingCOD] = useState(false);
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const router = useRouter();
@@ -302,7 +307,7 @@ export function CartDrawer() {
                   variant="primary"
                   fullWidth
                   size="lg"
-                  onClick={isAuthenticated ? launchMagicCheckout : () => setShowLoginModal(true)}
+                  onClick={() => setShowPaymentMethodModal(true)}
                 >
                   Checkout
                 </Button>
@@ -312,16 +317,56 @@ export function CartDrawer() {
         )}
       </div>
 
+      {/* Payment method selection */}
+      <PaymentMethodModal
+        isOpen={showPaymentMethodModal}
+        onClose={() => setShowPaymentMethodModal(false)}
+        onSelectPrepaid={() => {
+          if (isAuthenticated) {
+            launchMagicCheckout();
+          } else {
+            setPendingCOD(false);
+            setShowLoginModal(true);
+          }
+        }}
+        onSelectCOD={() => {
+          if (isAuthenticated) {
+            setShowCODCheckout(true);
+          } else {
+            setPendingCOD(true);
+            setShowLoginModal(true);
+          }
+        }}
+      />
+
       {/* Login modal — log in so orders are saved to account, or continue as guest */}
       <LoginModal
         isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onSuccess={launchMagicCheckout}
-        onGuest={() => {
+        onClose={() => {
           setShowLoginModal(false);
-          launchMagicCheckout();
+          setPendingCOD(false);
         }}
+        onSuccess={() => {
+          setShowLoginModal(false);
+          if (pendingCOD) {
+            setPendingCOD(false);
+            setShowCODCheckout(true);
+          } else {
+            launchMagicCheckout();
+          }
+        }}
+        onGuest={
+          pendingCOD
+            ? undefined
+            : () => {
+                setShowLoginModal(false);
+                launchMagicCheckout();
+              }
+        }
       />
+
+      {/* COD checkout flow */}
+      <CODCheckoutModal isOpen={showCODCheckout} onClose={() => setShowCODCheckout(false)} />
     </div>
   );
 }

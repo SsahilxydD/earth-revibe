@@ -56,7 +56,16 @@ export const applyPromotionRequestSchema = z
   })
   .passthrough();
 
+// COD checkout — requires auth, address ID, no Razorpay
+export const createCodOrderSchema = z.object({
+  items: z.array(magicCheckoutLineItemSchema).min(1),
+  addressId: z.string().min(1),
+  discountCode: z.string().optional(),
+  loyaltyPointsToUse: z.coerce.number().int().min(0).default(0),
+});
+
 export type CreateMagicCheckoutInput = z.infer<typeof createMagicCheckoutSchema>;
+export type CreateCodOrderInput = z.infer<typeof createCodOrderSchema>;
 export type ShippingInfoRequest = z.infer<typeof shippingInfoRequestSchema>;
 export type GetPromotionsRequest = z.infer<typeof getPromotionsRequestSchema>;
 export type ApplyPromotionRequest = z.infer<typeof applyPromotionRequestSchema>;

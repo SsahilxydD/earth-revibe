@@ -1,12 +1,13 @@
 import { Router, type IRouter } from 'express';
 import { checkoutController } from '../controllers/checkout.controller';
-import { optionalAuthenticate } from '../middleware/auth';
+import { authenticate, optionalAuthenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { verifyRazorpayCallback } from '../middleware/razorpay-verify';
 import { idempotency } from '../middleware/idempotency';
 import { asyncHandler } from '../utils/async-handler';
 import {
   createMagicCheckoutSchema,
+  createCodOrderSchema,
   verifyPaymentSchema,
   shippingInfoRequestSchema,
   getPromotionsRequestSchema,
@@ -66,6 +67,15 @@ router.post(
   verifyRazorpayCallback,
   validate({ body: applyPromotionRequestSchema }),
   asyncHandler(checkoutController.applyPromotion)
+);
+
+// COD order creation — requires auth, no Razorpay
+router.post(
+  '/create-cod-order',
+  authenticate,
+  idempotency('checkout/create-cod-order'),
+  validate({ body: createCodOrderSchema }),
+  asyncHandler(checkoutController.createCodOrderHandler)
 );
 
 // Razorpay COD review callback — Basic Auth, no JWT

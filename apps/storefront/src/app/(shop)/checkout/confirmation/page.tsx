@@ -11,6 +11,7 @@ import { useCartStore } from '@/stores/cart-store';
 function ConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
+  const isCOD = searchParams.get('method') === 'cod';
   const isNewAccount = searchParams.get('newAccount') === '1';
   const clearCart = useCartStore((s) => s.clearCart);
   const clearedRef = useRef(false);
@@ -36,8 +37,9 @@ function ConfirmationContent() {
         <h1 className="mt-5 text-xl font-bold uppercase tracking-wider">Order Confirmed!</h1>
 
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-          Thank you for your order. We&apos;ve received your payment and are preparing your items
-          for shipment.
+          {isCOD
+            ? 'Your order has been confirmed. Please keep the exact amount ready for delivery.'
+            : 'Thank you for your order. We\u2019ve received your payment and are preparing your items for shipment.'}
         </p>
 
         {/* Order number + delivery in a compact stack */}

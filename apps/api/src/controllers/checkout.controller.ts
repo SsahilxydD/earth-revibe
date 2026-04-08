@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { checkoutService } from '../services/checkout.service';
+import { checkoutService, createCodOrder } from '../services/checkout.service';
 import { getRazorpay } from '../config/razorpay';
 import { env } from '../config/env';
 
@@ -114,6 +114,11 @@ export const checkoutController = {
     const userId = req.user?.id ?? null;
     const result = await checkoutService.verifyMagicPayment(userId, req.body);
     res.json({ success: true, data: result });
+  },
+
+  async createCodOrderHandler(req: Request, res: Response) {
+    const result = await createCodOrder(req.user!.id, req.body);
+    res.status(201).json({ success: true, data: result });
   },
 
   /**

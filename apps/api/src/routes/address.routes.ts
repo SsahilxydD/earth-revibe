@@ -18,4 +18,8 @@ router.put(
 );
 router.delete('/:id', asyncHandler(addressController.deleteAddress));
 
+// Mappls address autosuggest proxy (keeps API key server-side)
+router.get('/autosuggest', asyncHandler(addressController.autosuggest));
+router.get('/reverse-geocode', asyncHandler(addressController.reverseGeocode));
+
 export { router as addressRouter };

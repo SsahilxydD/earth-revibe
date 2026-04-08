@@ -12,6 +12,7 @@ import { getPostHog } from '../config/posthog';
 import { sendMetaEvent } from '../utils/meta-conversions';
 import type {
   CreateMagicCheckoutInput,
+  CreateCodOrderInput,
   ShippingInfoRequest,
   GetPromotionsRequest,
   ApplyPromotionRequest,
@@ -970,6 +971,307 @@ export async function finalizeOrderFromPending(
   }).catch(() => {});
 
   return { orderNumber: finalOrderNumber, pointsEarned, accountAutoCreated };
+}
+
+/**
+ * Create a COD (Cash on Delivery) order directly without Razorpay.
+ * Requires authenticated user. Reserves stock, creates order + payment atomically.
+ */
+export async function createCodOrder(
+  userId: string,
+  data: CreateCodOrderInput
+): Promise<{ orderNumber: string; total: number; pointsEarned: number }> {
+  // Validate address belongs to user
+  const address = await prisma.address.findFirst({
+    where: { id: data.addressId, userId },
+  });
+  if (!address) throw ApiError.badRequest('Address not found');
+
+  // Fetch variants with product data
+  const variantIds = data.items.map((i) => i.variantId);
+  const variants = await prisma.productVariant.findMany({
+    where: { id: { in: variantIds } },
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          images: { where: { isPrimary: true }, take: 1 },
+        },
+      },
+    },
+  });
+
+  if (variants.length !== variantIds.length) {
+    throw ApiError.badRequest('One or more items are no longer available');
+  }
+
+  // Check stock and calculate totals
+  let subtotal = 0;
+  const orderItems: Array<{
+    variantId: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    productName: string;
+    productImage: string | null;
+    variantSize: string;
+    variantColor: string;
+  }> = [];
+
+  for (const reqItem of data.items) {
+    const variant = variants.find((v) => v.id === reqItem.variantId);
+    if (!variant) throw ApiError.badRequest(`Variant ${reqItem.variantId} not found`);
+    if (variant.stock < reqItem.quantity) {
+      throw ApiError.badRequest(
+        `${variant.product.name} (${variant.size}) only has ${variant.stock} in stock`
+      );
+    }
+    const unitPrice = Number(variant.price) || Number(variant.product.price);
+    const totalPrice = unitPrice * reqItem.quantity;
+    subtotal += totalPrice;
+    orderItems.push({
+      variantId: variant.id,
+      quantity: reqItem.quantity,
+      unitPrice,
+      totalPrice,
+      productName: variant.product.name,
+      productImage: variant.product.images[0]?.url || null,
+      variantSize: variant.size,
+      variantColor: variant.color,
+    });
+  }
+
+  // Discount
+  const cartProductIds = variants.map((v) => v.product.id);
+  let discountAmount = 0;
+  let discountCodeId: string | null = null;
+  if (data.discountCode) {
+    const productsWithCat = await prisma.product.findMany({
+      where: { id: { in: cartProductIds } },
+      select: { id: true, categoryId: true },
+    });
+    const cartCategoryIds = productsWithCat.map((p) => p.categoryId);
+    discountAmount = await calculateDiscount(
+      data.discountCode,
+      subtotal,
+      userId,
+      cartProductIds,
+      cartCategoryIds
+    );
+    const dc = await prisma.discountCode.findUnique({ where: { code: data.discountCode } });
+    if (dc) discountCodeId = dc.id;
+  }
+
+  // Loyalty points
+  let loyaltyDiscount = 0;
+  if (data.loyaltyPointsToUse > 0) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.loyaltyPoints < data.loyaltyPointsToUse) {
+      throw ApiError.badRequest('Insufficient loyalty points');
+    }
+    const maxLoyaltyDiscount = Math.max(subtotal - discountAmount, 0);
+    loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
+  }
+
+  const codFee = env.COD_FEE || 0;
+  const totalAmount = Math.max(subtotal - discountAmount - loyaltyDiscount + codFee, 0);
+  const orderNumber = generateOrderNumber();
+
+  // Atomic transaction: reserve stock + create order + payment
+  const txResult = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      // Decrement stock
+      for (const item of data.items) {
+        const result = await tx.productVariant.updateMany({
+          where: { id: item.variantId, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
+        });
+        if (result.count === 0) {
+          throw ApiError.conflict('Insufficient stock — please refresh your cart');
+        }
+      }
+
+      // Create order
+      const order = await tx.order.create({
+        data: {
+          orderNumber,
+          userId,
+          addressId: data.addressId,
+          subtotal,
+          discountAmount,
+          shippingAmount: 0,
+          taxAmount: 0,
+          totalAmount,
+          loyaltyPointsUsed: data.loyaltyPointsToUse,
+          discountCodeId,
+          items: { create: orderItems },
+          payment: {
+            create: {
+              razorpayOrderId: `cod_${orderNumber}`,
+              razorpayPaymentId: null,
+              razorpaySignature: '',
+              amount: totalAmount,
+              status: 'PENDING',
+              method: 'COD' as any,
+              paidAt: null,
+            },
+          },
+          status: 'CONFIRMED',
+          statusHistory: {
+            create: { status: 'CONFIRMED', note: 'COD order placed' },
+          },
+        },
+      });
+
+      // Increment discount usage
+      if (discountCodeId) {
+        await tx.discountCode.update({
+          where: { id: discountCodeId },
+          data: { usageCount: { increment: 1 } },
+        });
+      }
+
+      // Loyalty points
+      let pointsEarned = 0;
+      if (data.loyaltyPointsToUse > 0) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { loyaltyPoints: { decrement: data.loyaltyPointsToUse } },
+        });
+        await tx.loyaltyTransaction.create({
+          data: {
+            userId,
+            type: 'REDEEMED',
+            points: -data.loyaltyPointsToUse,
+            description: `Redeemed for COD order #${orderNumber}`,
+            orderId: order.id,
+          },
+        });
+      }
+
+      pointsEarned = Math.floor(totalAmount / 100);
+      if (pointsEarned > 0) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { loyaltyPoints: { increment: pointsEarned } },
+        });
+        await tx.order.update({
+          where: { id: order.id },
+          data: { loyaltyPointsEarned: pointsEarned },
+        });
+        await tx.loyaltyTransaction.create({
+          data: {
+            userId,
+            type: 'EARNED',
+            points: pointsEarned,
+            description: `Earned from COD order #${orderNumber}`,
+            orderId: order.id,
+          },
+        });
+      }
+
+      // Referral reward on first order
+      const orderCount = await tx.order.count({
+        where: { userId, status: { not: 'CANCELLED' } },
+      });
+      if (orderCount === 1) {
+        const referral = await tx.referral.findUnique({ where: { refereeId: userId } });
+        if (referral && referral.status === 'SIGNED_UP') {
+          const REFERRER_REWARD = APP_CONSTANTS.REFERRER_REWARD_POINTS;
+          const REFEREE_REWARD = APP_CONSTANTS.REFEREE_REWARD_POINTS;
+          await tx.referral.update({
+            where: { id: referral.id },
+            data: {
+              status: 'CONVERTED',
+              referrerReward: REFERRER_REWARD,
+              refereeReward: REFEREE_REWARD,
+            },
+          });
+          await tx.user.update({
+            where: { id: referral.referrerId },
+            data: { loyaltyPoints: { increment: REFERRER_REWARD } },
+          });
+          await tx.loyaltyTransaction.create({
+            data: {
+              userId: referral.referrerId,
+              type: 'BONUS',
+              points: REFERRER_REWARD,
+              description: 'Referral reward - friend made first purchase',
+            },
+          });
+          await tx.user.update({
+            where: { id: userId },
+            data: { loyaltyPoints: { increment: REFEREE_REWARD } },
+          });
+          await tx.loyaltyTransaction.create({
+            data: {
+              userId,
+              type: 'BONUS',
+              points: REFEREE_REWARD,
+              description: 'Welcome bonus - first purchase reward',
+            },
+          });
+        }
+      }
+
+      // Clear server-side cart
+      const cart = await tx.cart.findUnique({ where: { userId } });
+      if (cart) {
+        await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+      }
+
+      return { orderId: order.id, pointsEarned };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+  );
+
+  // Fire-and-forget side effects
+  shiprocketService.createShiprocketOrder(txResult.orderId).catch((err) => {
+    logger.error({ err, orderId: txResult.orderId }, 'COD: Failed to create Shiprocket shipment');
+  });
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { phone: true, firstName: true },
+  });
+  if (user?.phone) {
+    sendWhatsAppOrderUpdate(user.phone, user.firstName || '', orderNumber, 'CONFIRMED').catch(
+      (err) => logger.error({ err, orderNumber }, 'COD: Failed to send WhatsApp confirmation')
+    );
+  }
+
+  const ph = getPostHog();
+  if (ph) {
+    ph.capture({
+      distinctId: userId,
+      event: 'purchase_completed',
+      properties: {
+        order_id: orderNumber,
+        total: totalAmount,
+        item_count: data.items.length,
+        discount_amount: discountAmount,
+        payment_method: 'COD',
+        is_guest: false,
+        loyalty_points_earned: txResult.pointsEarned,
+      },
+    });
+  }
+
+  sendMetaEvent({
+    eventName: 'Purchase',
+    userId,
+    value: totalAmount,
+    currency: 'INR',
+    contentIds: variantIds,
+    contentType: 'product',
+    numItems: data.items.length,
+    orderId: orderNumber,
+  }).catch(() => {});
+
+  return { orderNumber, total: totalAmount, pointsEarned: txResult.pointsEarned };
 }
 
 /**
