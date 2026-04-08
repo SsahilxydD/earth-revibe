@@ -47,7 +47,12 @@ export const addressController = {
     try {
       const url = `https://apis.mappls.com/advancedmaps/v1/${token}/autosuggest?query=${encodeURIComponent(query)}&tokenizeAddress=true`;
       logger.info({ url: url.replace(token, '***') }, 'Mappls autosuggest request');
-      const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      const resp = await fetch(url, {
+        signal: AbortSignal.timeout(5000),
+        headers: {
+          Referer: 'https://www.earthrevibe.com/',
+        },
+      });
       const raw = await resp.text();
       logger.info({ status: resp.status, body: raw.slice(0, 500) }, 'Mappls autosuggest response');
       const data = JSON.parse(raw);
