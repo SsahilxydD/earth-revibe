@@ -46,23 +46,26 @@ function CategoryContent() {
   const maxPriceRaw = searchParams.get('maxPrice');
   const size = searchParams.get('size') || '';
   const color = searchParams.get('color') || '';
+  const mood = searchParams.get('mood') || '';
 
   const { sortBy, sortOrder } = parseSort(sort);
   const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
   const maxPrice = maxPriceRaw ? Number(maxPriceRaw) : undefined;
 
   const queryParams = useMemo(
-    () => ({
-      category: slug,
-      sortBy,
-      sortOrder,
-      minPrice,
-      maxPrice,
-      sizes: size ? [size] : undefined,
-      colors: color ? [color] : undefined,
-      limit: 12,
-    }),
-    [slug, sortBy, sortOrder, minPrice, maxPrice, size, color]
+    () =>
+      ({
+        category: slug,
+        sortBy,
+        sortOrder,
+        minPrice,
+        maxPrice,
+        sizes: size ? [size] : undefined,
+        colors: color ? [color] : undefined,
+        tag: mood ? `mood-${mood}` : undefined,
+        limit: 12,
+      }) as any,
+    [slug, sortBy, sortOrder, minPrice, maxPrice, size, color, mood]
   );
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
@@ -154,13 +157,19 @@ function CategoryContent() {
   }, [allProducts, categoryName, slug, setNavContext]);
 
   const currentFilters: FilterState = { category: slug, minPrice, maxPrice, size, color };
-  const hasActiveFilters = !!(minPrice || maxPrice || size || color);
+  const hasActiveFilters = !!(minPrice || maxPrice || size || color || mood);
   const clearFilter = (key: string) => {
     updateParams({ [key]: undefined });
   };
 
   const clearAllFilters = () => {
-    updateParams({ minPrice: undefined, maxPrice: undefined, size: undefined, color: undefined });
+    updateParams({
+      minPrice: undefined,
+      maxPrice: undefined,
+      size: undefined,
+      color: undefined,
+      mood: undefined,
+    });
   };
 
   return (
@@ -251,26 +260,45 @@ function CategoryContent() {
         }}
       >
         {[
-          { label: 'Beach', bg: '#E8E4DF' },
-          { label: 'Brunch', bg: '#D8D4CF' },
-          { label: 'Sunset', bg: '#C8C4BF' },
-          { label: 'Poolside', bg: '#B8B4AF' },
-          { label: 'Island', bg: '#D0CCC7' },
-        ].map((mood) => (
-          <div
-            key={mood.label}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 6,
-              flexShrink: 0,
-            }}
-          >
-            <div style={{ width: 52, height: 52, borderRadius: 9999, backgroundColor: mood.bg }} />
-            <span style={{ fontSize: 9, fontWeight: 300, color: '#000' }}>{mood.label}</span>
-          </div>
-        ))}
+          { label: 'Beach', value: 'beach', bg: '#E8E4DF', count: 8 },
+          { label: 'Brunch', value: 'brunch', bg: '#D8D4CF', count: 21 },
+          { label: 'Sunset', value: 'sunset', bg: '#C8C4BF', count: 9 },
+          { label: 'Poolside', value: 'poolside', bg: '#B8B4AF', count: 8 },
+          { label: 'Island', value: 'island', bg: '#D0CCC7', count: 12 },
+        ].map((m) => {
+          const isActive = mood === m.value;
+          return (
+            <button
+              key={m.label}
+              onClick={() => updateParams({ mood: isActive ? undefined : m.value })}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                flexShrink: 0,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 9999,
+                  backgroundColor: m.bg,
+                  outline: isActive ? '2px solid #000' : 'none',
+                  outlineOffset: 2,
+                }}
+              />
+              <span style={{ fontSize: 9, fontWeight: isActive ? 400 : 300, color: '#000' }}>
+                {m.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Filter bar — 44px */}
@@ -301,6 +329,34 @@ function CategoryContent() {
             flexWrap: 'wrap',
           }}
         >
+          {mood && (
+            <button
+              onClick={() => clearFilter('mood')}
+              style={{
+                display: 'inline-flex',
+                height: 28,
+                padding: '0 12px',
+                gap: 6,
+                alignItems: 'center',
+                backgroundColor: '#F5F5F5',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 400,
+                  color: '#000',
+                  letterSpacing: 0.5,
+                  textTransform: 'capitalize',
+                }}
+              >
+                {mood}
+              </span>
+              <X size={10} color="#999" />
+            </button>
+          )}
           {size && (
             <button
               onClick={() => clearFilter('size')}

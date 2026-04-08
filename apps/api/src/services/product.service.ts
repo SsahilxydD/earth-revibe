@@ -75,6 +75,11 @@ export const productService = {
       ];
     }
 
+    // Filter by tag (e.g., mood-beach, mood-sunset)
+    if ((query as any).tag) {
+      where.tags = { some: { tag: { slug: (query as any).tag } } };
+    }
+
     // Filter by variant attributes
     if (size || color) {
       const variantFilter: Record<string, unknown> = {};
