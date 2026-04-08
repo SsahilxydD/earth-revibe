@@ -3,10 +3,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { X } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useCartStore } from '@/stores/cart-store';
 import { useToast } from '@/providers';
 import { formatPrice, getImageUrl } from '@/lib/utils';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
+import { api } from '@/lib/api-client';
+import { Spinner } from '@/components/ui/spinner';
 import type { Product } from '@/types';
 
 interface QuickAddModalProps {
@@ -22,8 +25,17 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
 
-  const variants = product?.variants ?? [];
-  const images = product?.images ?? [];
+  // Fetch full product with variants when modal opens
+  const { data: fullProduct, isLoading: loadingVariants } = useQuery({
+    queryKey: ['product-detail', product?.slug],
+    queryFn: () => api.get<Product>(`/products/${product!.slug}`),
+    enabled: !!product?.slug,
+    staleTime: 5 * 60 * 1000, // cache for 5 min
+  });
+
+  // Use full product variants if available, fallback to whatever the listing gave us
+  const variants = fullProduct?.variants ?? product?.variants ?? [];
+  const images = fullProduct?.images ?? product?.images ?? [];
 
   const primaryImage = useMemo(() => {
     if (!images.length) return null;
@@ -195,8 +207,22 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
         {/* Divider */}
         <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
+        {/* Loading state while fetching variants */}
+        {loadingVariants && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px 0',
+            }}
+          >
+            <Spinner className="h-5 w-5" />
+          </div>
+        )}
+
         {/* Size selector — label + full-width buttons, gap=8, h=40 */}
-        {sizes.length > 0 && (
+        {!loadingVariants && sizes.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
               SIZE
@@ -233,7 +259,7 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
         )}
 
         {/* Color selector — label + circles, gap=10, 28px */}
-        {colors.length > 0 && (
+        {!loadingVariants && colors.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
               COLOR{selectedColor ? ` — ${selectedColor}` : ''}
