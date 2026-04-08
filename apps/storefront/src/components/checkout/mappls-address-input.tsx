@@ -34,7 +34,7 @@ export function MapplsAddressInput({ onSelect }: MapplsAddressInputProps) {
     setIsLoading(true);
     try {
       const resp = await fetch(
-        `https://atlas.mappls.com/api/places/search/json?query=${encodeURIComponent(q)}&region=IND&tokenizeAddress=true&access_token=${MAPPLS_KEY}`
+        `https://apis.mappls.com/advancedmaps/v1/${MAPPLS_KEY}/autosuggest?query=${encodeURIComponent(q)}&tokenizeAddress=true`
       );
       const data = await resp.json();
       const results = (data.suggestedLocations || []).map((s: any) => ({
