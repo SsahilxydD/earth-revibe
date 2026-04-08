@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { formatPrice, getImageUrl } from '@/lib/utils';
@@ -43,7 +42,7 @@ function normalizeWishlistItems(raw: RawWishlistItem[]): WishlistItem[] {
     image: item.product.images?.[0]?.url || '',
     price: item.product.price,
     compareAtPrice: item.product.compareAtPrice,
-    inStock: true, // If it's in the DB, the product exists
+    inStock: true,
   }));
 }
 
@@ -72,7 +71,14 @@ export default function WishlistPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
+      <div
+        style={{
+          display: 'flex',
+          minHeight: '40vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Spinner className="h-6 w-6" />
       </div>
     );
@@ -81,116 +87,192 @@ export default function WishlistPage() {
   if (!items || items.length === 0) {
     return (
       <div
-        style={{ paddingTop: 80, paddingBottom: 80 }}
-        className="flex flex-col items-center text-center"
+        style={{
+          padding: '80px 28px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+        }}
       >
-        <Heart size={40} strokeWidth={1} className="text-[#c0c0c0]" />
-        <h2 style={{ marginTop: 24 }} className="text-xs font-bold uppercase tracking-[0.2em]">
-          Nothing saved yet
-        </h2>
-        <p style={{ marginTop: 10, maxWidth: 240 }} className="text-xs leading-relaxed text-[#999]">
-          Tap the heart on any product to save it for later.
-        </p>
+        <p style={{ fontSize: 13, fontWeight: 300, color: '#999' }}>Your wishlist is empty</p>
         <Link
           href="/categories/new-arrivals"
-          style={{ marginTop: 28 }}
-          className="inline-flex items-center justify-center border border-[var(--color-primary)] px-8 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white"
+          style={{
+            marginTop: 28,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 46,
+            padding: '0 32px',
+            border: '1px solid #000',
+            fontSize: 12,
+            fontWeight: 400,
+            letterSpacing: 2,
+            color: '#000',
+            textDecoration: 'none',
+          }}
         >
-          Browse Collections
+          BROWSE COLLECTIONS
         </Link>
       </div>
     );
   }
 
   return (
-    <div>
-      <h2 className="text-sm font-bold uppercase tracking-wider">Wishlist</h2>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">
-        {items.length} {items.length === 1 ? 'item' : 'items'} saved
-      </p>
+    <div style={{ padding: '24px 28px 28px 28px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+          SAVED ITEMS
+        </span>
+        <span style={{ fontSize: 11, fontWeight: 300, color: '#999' }}>
+          {items.length} {items.length === 1 ? 'item' : 'items'}
+        </span>
+      </div>
 
-      <hr
-        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
-      />
-
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 md:gap-4">
+      {/* 2-column grid — gap=14, starts 20px after header */}
+      <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         {items.map((item) => (
-          <div
-            key={item.id}
-            className="group relative rounded-xl border border-[var(--color-border)] overflow-hidden"
-          >
-            <Link href={`/products/${item.slug}`}>
-              <div className="aspect-[2/3] bg-[var(--color-surface)] relative overflow-hidden">
-                {item.image ? (
-                  <Image
-                    src={getImageUrl(item.image, 400)}
-                    alt={item.name}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <ShoppingBag size={32} className="text-[var(--color-muted)]" />
-                  </div>
-                )}
-                {!item.inStock && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                    <span className="rounded-[var(--badge-radius)] bg-white px-3 py-1 text-xs font-bold uppercase">
-                      Sold Out
-                    </span>
-                  </div>
-                )}
-              </div>
-            </Link>
-
-            <div className="p-3">
-              <Link href={`/products/${item.slug}`}>
-                <h3 className="text-xs font-semibold leading-tight line-clamp-2">{item.name}</h3>
-              </Link>
-              <div className="mt-1.5 flex items-center gap-2">
-                <span className="text-sm font-bold">{formatPrice(item.price)}</span>
-                {item.compareAtPrice && item.compareAtPrice > item.price && (
-                  <span className="text-xs text-[var(--color-muted)] line-through">
-                    {formatPrice(item.compareAtPrice)}
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => removeMutation.mutate(item.productId)}
-                  disabled={removeMutation.isPending}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--button-radius)] border border-[var(--color-border)] text-[var(--color-muted)] transition-colors hover:border-[var(--color-sale)] hover:text-[var(--color-sale)]"
-                  aria-label="Remove from wishlist"
+          <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Image — 220px height */}
+            <Link
+              href={`/products/${item.slug}`}
+              style={{
+                display: 'block',
+                position: 'relative',
+                width: '100%',
+                height: 220,
+                backgroundColor: '#F5F5F5',
+                overflow: 'hidden',
+              }}
+            >
+              {item.image ? (
+                <Image
+                  src={getImageUrl(item.image, 400)}
+                  alt={item.name}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  sizes="50vw"
+                />
+              ) : null}
+              {!item.inStock && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                  }}
                 >
-                  <Trash2 size={14} />
-                </button>
-                {item.inStock && (
-                  <button
-                    onClick={() => {
-                      addItem({
-                        id: `${item.productId}-default`,
-                        productId: item.productId,
-                        name: item.name,
-                        slug: item.slug,
-                        image: item.image,
-                        price: item.price,
-                        compareAtPrice: item.compareAtPrice || undefined,
-                        size: 'M',
-                        color: 'Default',
-                        maxQuantity: 10,
-                      });
-                      addToast('Added to cart', 'success');
-                    }}
-                    className="flex h-8 flex-1 items-center justify-center gap-1 rounded-[var(--button-radius)] bg-[var(--color-primary)] text-[10px] font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#2a2a2a]"
+                  <span
+                    style={{ fontSize: 10, fontWeight: 400, color: '#FFF', letterSpacing: 1.5 }}
                   >
-                    <ShoppingBag size={12} />
-                    Add to Cart
-                  </button>
-                )}
-              </div>
+                    SOLD OUT
+                  </span>
+                </div>
+              )}
+            </Link>
+            {/* Name — 12px, clamp 2 lines */}
+            <Link
+              href={`/products/${item.slug}`}
+              style={{
+                fontSize: 12,
+                fontWeight: 400,
+                color: '#000',
+                textDecoration: 'none',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {item.name}
+            </Link>
+            {/* Price */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 300, color: '#000' }}>
+                {formatPrice(item.price)}
+              </span>
+              {item.compareAtPrice && item.compareAtPrice > item.price && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 300,
+                    color: '#CCC',
+                    textDecoration: 'line-through',
+                  }}
+                >
+                  {formatPrice(item.compareAtPrice)}
+                </span>
+              )}
             </div>
+            {/* ADD TO BAG button — 36px height */}
+            {item.inStock ? (
+              <button
+                onClick={() => {
+                  addItem({
+                    id: `${item.productId}-default`,
+                    productId: item.productId,
+                    name: item.name,
+                    slug: item.slug,
+                    image: item.image,
+                    price: item.price,
+                    compareAtPrice: item.compareAtPrice || undefined,
+                    size: 'M',
+                    color: 'Default',
+                    maxQuantity: 10,
+                  });
+                  addToast('Added to cart', 'success');
+                }}
+                style={{
+                  width: '100%',
+                  height: 36,
+                  border: '1px solid #E5E5E5',
+                  backgroundColor: 'transparent',
+                  fontSize: 9,
+                  fontWeight: 400,
+                  letterSpacing: 1.5,
+                  color: '#000',
+                  cursor: 'pointer',
+                }}
+              >
+                ADD TO BAG
+              </button>
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: 36,
+                  backgroundColor: '#000',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: 1.5, color: '#999' }}>
+                  SOLD OUT
+                </span>
+              </div>
+            )}
+            {/* Remove link */}
+            <button
+              onClick={() => removeMutation.mutate(item.productId)}
+              disabled={removeMutation.isPending}
+              style={{
+                fontSize: 10,
+                fontWeight: 300,
+                color: '#999',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              Remove
+            </button>
           </div>
         ))}
       </div>

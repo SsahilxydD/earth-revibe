@@ -4,11 +4,9 @@ import { use } from 'react';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Send, User, Headphones } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
-import { formatDate, formatStatus } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { useToast } from '@/providers';
 
 interface TicketMessage {
@@ -16,12 +14,7 @@ interface TicketMessage {
   content: string;
   attachment: string | null;
   createdAt: string;
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-  };
+  user: { id: string; firstName: string; lastName: string; role: string };
 }
 
 interface TicketDetail {
@@ -38,12 +31,19 @@ interface ReplyForm {
   content: string;
 }
 
-const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  OPEN: { bg: 'bg-blue-100', text: 'text-blue-800' },
-  IN_PROGRESS: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-  RESOLVED: { bg: 'bg-green-100', text: 'text-green-800' },
-  CLOSED: { bg: 'bg-gray-100', text: 'text-gray-800' },
+const STATUS_COLOR: Record<string, string> = {
+  OPEN: '#3B82F6',
+  IN_PROGRESS: '#EAB308',
+  RESOLVED: '#22C55E',
+  CLOSED: '#999',
 };
+
+function formatTicketStatus(status: string) {
+  return status
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .replace(/\b(\w)(\w*)/g, (_, f, r) => f + r.toLowerCase());
+}
 
 export default function TicketDetailPage({
   params,
@@ -63,9 +63,7 @@ export default function TicketDetailPage({
   const replyMutation = useMutation({
     mutationFn: (data: ReplyForm) => api.post(`/support/${ticketNumber}/messages`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['support-ticket', ticketNumber],
-      });
+      queryClient.invalidateQueries({ queryKey: ['support-ticket', ticketNumber] });
       reset();
       addToast('Reply sent', 'success');
     },
@@ -85,7 +83,14 @@ export default function TicketDetailPage({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
+      <div
+        style={{
+          display: 'flex',
+          minHeight: '40vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Spinner className="h-6 w-6" />
       </div>
     );
@@ -93,119 +98,159 @@ export default function TicketDetailPage({
 
   if (!ticket) {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-        <h2 className="mb-2 text-lg font-bold">Ticket Not Found</h2>
-        <Link href="/account/support" className="text-sm text-[var(--color-muted)] hover:underline">
-          Back to Support
+      <div
+        style={{
+          display: 'flex',
+          minHeight: '40vh',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <p style={{ fontSize: 13, fontWeight: 300, color: '#999' }}>Ticket not found</p>
+        <Link
+          href="/account/support"
+          style={{
+            marginTop: 16,
+            fontSize: 12,
+            fontWeight: 300,
+            color: '#999',
+            textDecoration: 'none',
+          }}
+        >
+          ← Back to support
         </Link>
       </div>
     );
   }
 
-  const statusStyle = STATUS_STYLES[ticket.status] || STATUS_STYLES.OPEN;
   const isClosed = ticket.status === 'CLOSED' || ticket.status === 'RESOLVED';
 
   return (
-    <div>
+    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Back link */}
       <Link
         href="/account/support"
-        className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-text)]"
+        style={{ fontSize: 12, fontWeight: 300, color: '#999', textDecoration: 'none' }}
       >
-        <ArrowLeft size={16} />
-        Back to Support
+        ← Back to support
       </Link>
 
-      {/* Ticket Info */}
-      <div className="mb-6 rounded-xl border border-[var(--color-border)] p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold">{ticket.subject}</h2>
-            <div className="mt-1 flex flex-wrap gap-3 text-xs text-[var(--color-muted)]">
-              <span>#{ticket.ticketNumber}</span>
-              <span>{ticket.category}</span>
-              <span>{formatDate(ticket.createdAt)}</span>
-            </div>
-          </div>
+      {/* Ticket info header */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <span style={{ fontSize: 14, fontWeight: 400, color: '#000' }}>{ticket.subject}</span>
           <span
-            className={`shrink-0 rounded-[var(--badge-radius)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusStyle.bg} ${statusStyle.text}`}
+            style={{
+              fontSize: 10,
+              fontWeight: 400,
+              color: STATUS_COLOR[ticket.status] || '#999',
+              letterSpacing: 0.5,
+              flexShrink: 0,
+              marginLeft: 12,
+            }}
           >
-            {formatStatus(ticket.status)}
+            {formatTicketStatus(ticket.status)}
           </span>
         </div>
+        <p style={{ fontSize: 10, fontWeight: 300, color: '#999' }}>
+          #{ticket.ticketNumber} · {ticket.category} · {formatDate(ticket.createdAt)}
+        </p>
       </div>
 
-      {/* Messages */}
-      <div className="mb-6 space-y-4">
+      <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+
+      {/* Messages thread */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {ticket.messages.map((msg) => {
           const isCustomer = msg.user.role === 'CUSTOMER';
           const senderName = `${msg.user.firstName} ${msg.user.lastName}`.trim();
           return (
-            <div key={msg.id} className={`flex gap-3 ${isCustomer ? 'flex-row-reverse' : ''}`}>
+            <div
+              key={msg.id}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: isCustomer ? 'flex-end' : 'flex-start',
+              }}
+            >
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                  isCustomer
-                    ? 'bg-[var(--color-primary)] text-white'
-                    : 'bg-[var(--color-surface)] text-[var(--color-muted)]'
-                }`}
+                style={{
+                  maxWidth: '80%',
+                  padding: 16,
+                  backgroundColor: isCustomer ? '#F5F5F5' : 'transparent',
+                  border: isCustomer ? 'none' : '1px solid #F0F0F0',
+                }}
               >
-                {isCustomer ? <User size={14} /> : <Headphones size={14} />}
+                <p style={{ fontSize: 13, fontWeight: 300, color: '#000', whiteSpace: 'pre-wrap' }}>
+                  {msg.content}
+                </p>
               </div>
-              <div
-                className={`max-w-[80%] rounded-xl px-4 py-3 ${
-                  isCustomer
-                    ? 'bg-[var(--color-primary)] text-white'
-                    : 'border border-[var(--color-border)] bg-[var(--color-surface)]'
-                }`}
-              >
-                <div className="mb-1 flex items-center gap-2">
-                  <span
-                    className={`text-xs font-semibold ${
-                      isCustomer ? 'text-white/80' : 'text-[var(--color-muted)]'
-                    }`}
-                  >
-                    {senderName}
-                  </span>
-                  <span
-                    className={`text-[10px] ${
-                      isCustomer ? 'text-white/60' : 'text-[var(--color-muted)]'
-                    }`}
-                  >
-                    {formatDate(msg.createdAt)}
-                  </span>
-                </div>
-                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-              </div>
+              <p style={{ marginTop: 4, fontSize: 10, fontWeight: 300, color: '#999' }}>
+                {senderName} · {formatDate(msg.createdAt)}
+              </p>
             </div>
           );
         })}
       </div>
 
-      {/* Reply Form */}
+      {/* Reply form or closed notice */}
       {!isClosed ? (
-        <form onSubmit={handleSubmit((data) => replyMutation.mutate(data))} className="flex gap-3">
-          <div className="flex-1">
-            <textarea
-              className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
-              rows={3}
-              placeholder="Type your reply..."
-              {...register('content', {
-                required: 'Message is required',
-              })}
-            />
-            {errors.content && (
-              <p className="mt-1 text-xs text-[var(--color-sale)]">{errors.content.message}</p>
-            )}
-          </div>
-          <Button type="submit" loading={replyMutation.isPending} className="shrink-0 self-end">
-            <Send size={16} />
-            Send
-          </Button>
+        <form
+          onSubmit={handleSubmit((data) => replyMutation.mutate(data))}
+          style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+        >
+          <textarea
+            {...register('content', { required: 'Message is required' })}
+            rows={3}
+            placeholder="Type your reply..."
+            style={{
+              width: '100%',
+              fontSize: 14,
+              fontWeight: 300,
+              color: '#000',
+              border: '1px solid #E5E5E5',
+              outline: 'none',
+              padding: 12,
+              background: 'transparent',
+              resize: 'vertical',
+            }}
+          />
+          {errors.content && (
+            <p style={{ fontSize: 11, color: '#cf2929' }}>{errors.content.message}</p>
+          )}
+          <button
+            type="submit"
+            disabled={replyMutation.isPending}
+            style={{
+              width: '100%',
+              height: 46,
+              backgroundColor: '#000',
+              color: '#FFF',
+              fontSize: 12,
+              fontWeight: 400,
+              letterSpacing: 2,
+              border: 'none',
+              cursor: 'pointer',
+              opacity: replyMutation.isPending ? 0.5 : 1,
+            }}
+          >
+            {replyMutation.isPending ? 'SENDING...' : 'SEND'}
+          </button>
         </form>
       ) : (
-        <div className="rounded-xl bg-[var(--color-surface)] px-4 py-3 text-center text-sm text-[var(--color-muted)]">
-          This ticket is {formatStatus(ticket.status).toLowerCase()}. Create a new ticket if you
-          need further assistance.
-        </div>
+        <p
+          style={{
+            fontSize: 12,
+            fontWeight: 300,
+            color: '#999',
+            textAlign: 'center',
+            padding: '16px 0',
+          }}
+        >
+          This ticket is {formatTicketStatus(ticket.status).toLowerCase()}. Create a new ticket if
+          you need further help.
+        </p>
       )}
     </div>
   );

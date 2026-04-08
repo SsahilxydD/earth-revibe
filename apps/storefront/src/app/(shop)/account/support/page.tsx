@@ -4,12 +4,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { HelpCircle, Plus, ChevronRight, X, MessageSquare } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
-import { formatDate, formatStatus } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { useToast } from '@/providers';
 
 interface Ticket {
@@ -38,12 +35,19 @@ const CATEGORIES = [
   'Other',
 ] as const;
 
-const TICKET_STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  OPEN: { bg: 'bg-blue-100', text: 'text-blue-800' },
-  IN_PROGRESS: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-  RESOLVED: { bg: 'bg-green-100', text: 'text-green-800' },
-  CLOSED: { bg: 'bg-gray-100', text: 'text-gray-800' },
+const STATUS_COLOR: Record<string, string> = {
+  OPEN: '#3B82F6',
+  IN_PROGRESS: '#EAB308',
+  RESOLVED: '#22C55E',
+  CLOSED: '#999',
 };
+
+function formatTicketStatus(status: string) {
+  return status
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .replace(/\b(\w)(\w*)/g, (_, f, r) => f + r.toLowerCase());
+}
 
 export default function SupportPage() {
   const queryClient = useQueryClient();
@@ -81,163 +85,266 @@ export default function SupportPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
+      <div
+        style={{
+          display: 'flex',
+          minHeight: '40vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Spinner className="h-6 w-6" />
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold uppercase tracking-wider">Support Tickets</h2>
+    <div style={{ padding: '24px 28px 28px 28px' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+          TICKETS
+        </span>
         {!showForm && (
-          <Button size="sm" onClick={() => setShowForm(true)}>
-            <Plus size={16} />
-            New Ticket
-          </Button>
+          <button
+            onClick={() => setShowForm(true)}
+            style={{
+              fontSize: 11,
+              fontWeight: 400,
+              color: '#000',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            + New ticket
+          </button>
         )}
       </div>
 
-      <hr
-        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
-      />
-
       {/* New Ticket Form */}
       {showForm && (
-        <div className="rounded-xl border border-[var(--color-border)] p-4 md:p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider">New Ticket</h3>
+        <div style={{ marginTop: 20, padding: 20, border: '1px solid #E5E5E5' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 20,
+            }}
+          >
+            <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+              NEW TICKET
+            </span>
             <button
               onClick={() => {
                 setShowForm(false);
                 reset();
               }}
-              className="text-[var(--color-muted)] hover:text-[var(--color-text)]"
-              aria-label="Close form"
+              style={{
+                fontSize: 12,
+                fontWeight: 300,
+                color: '#999',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
-              <X size={20} />
+              Cancel
             </button>
           </div>
           <form
             onSubmit={handleSubmit((data) => createMutation.mutate(data))}
-            className="space-y-4"
+            style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
           >
-            <Input
-              label="Subject"
-              placeholder="Brief description of your issue"
-              error={errors.subject?.message}
-              {...register('subject', {
-                required: 'Subject is required',
-                minLength: { value: 5, message: 'Too short' },
-              })}
-            />
-            <div className="w-full">
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                Category
+            {/* Subject */}
+            <div>
+              <label style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+                SUBJECT
               </label>
-              <select
-                className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
-                {...register('category', {
-                  required: 'Please select a category',
+              <div style={{ height: 10 }} />
+              <input
+                {...register('subject', {
+                  required: 'Subject is required',
+                  minLength: { value: 5, message: 'Too short' },
                 })}
+                placeholder="Brief description"
+                style={{
+                  width: '100%',
+                  fontSize: 14,
+                  fontWeight: 300,
+                  color: '#000',
+                  border: 'none',
+                  outline: 'none',
+                  padding: 0,
+                  background: 'transparent',
+                }}
+              />
+              <div style={{ height: 10 }} />
+              <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+              {errors.subject && (
+                <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                  {errors.subject.message}
+                </p>
+              )}
+            </div>
+            {/* Category */}
+            <div>
+              <label style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+                CATEGORY
+              </label>
+              <div style={{ height: 10 }} />
+              <select
+                {...register('category', { required: 'Select a category' })}
+                style={{
+                  width: '100%',
+                  fontSize: 14,
+                  fontWeight: 300,
+                  color: '#000',
+                  border: 'none',
+                  outline: 'none',
+                  padding: 0,
+                  background: 'transparent',
+                  appearance: 'none' as const,
+                  cursor: 'pointer',
+                }}
               >
-                <option value="">Select a category</option>
+                <option value="">Select category</option>
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>
                 ))}
               </select>
+              <div style={{ height: 10 }} />
+              <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
               {errors.category && (
-                <p className="mt-1 text-xs text-[var(--color-sale)]">{errors.category.message}</p>
+                <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                  {errors.category.message}
+                </p>
               )}
             </div>
-            <div className="w-full">
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                Message
+            {/* Message */}
+            <div>
+              <label style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+                MESSAGE
               </label>
+              <div style={{ height: 10 }} />
               <textarea
-                className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
-                rows={5}
-                placeholder="Describe your issue in detail..."
                 {...register('description', {
                   required: 'Message is required',
                   minLength: { value: 20, message: 'Please provide more detail' },
                 })}
+                rows={4}
+                placeholder="Describe your issue..."
+                style={{
+                  width: '100%',
+                  fontSize: 14,
+                  fontWeight: 300,
+                  color: '#000',
+                  border: '1px solid #E5E5E5',
+                  outline: 'none',
+                  padding: 12,
+                  background: 'transparent',
+                  resize: 'vertical',
+                }}
               />
               {errors.description && (
-                <p className="mt-1 text-xs text-[var(--color-sale)]">
+                <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
                   {errors.description.message}
                 </p>
               )}
             </div>
-            <div className="flex gap-3">
-              <Button type="submit" loading={createMutation.isPending}>
-                Submit Ticket
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setShowForm(false);
-                  reset();
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={createMutation.isPending}
+              style={{
+                width: '100%',
+                height: 50,
+                backgroundColor: '#000',
+                color: '#FFF',
+                fontSize: 12,
+                fontWeight: 400,
+                letterSpacing: 2,
+                border: 'none',
+                cursor: 'pointer',
+                opacity: createMutation.isPending ? 0.5 : 1,
+              }}
+            >
+              {createMutation.isPending ? 'SUBMITTING...' : 'SUBMIT TICKET'}
+            </button>
           </form>
         </div>
       )}
 
-      {/* Tickets List */}
-      {(!tickets || tickets.length === 0) && !showForm ? (
-        <div
-          style={{ paddingTop: 60, paddingBottom: 60 }}
-          className="flex flex-col items-center text-center"
-        >
-          <HelpCircle size={40} strokeWidth={1} className="text-[#c0c0c0]" />
-          <h3 style={{ marginTop: 24 }} className="text-xs font-bold uppercase tracking-[0.2em]">
-            No support tickets
-          </h3>
-          <p
-            style={{ marginTop: 10, maxWidth: 240 }}
-            className="text-xs leading-relaxed text-[#999]"
-          >
-            Need help? Create a ticket and we&apos;ll get back to you.
+      {/* Empty state */}
+      {(!tickets || tickets.length === 0) && !showForm && (
+        <div style={{ padding: '60px 0', textAlign: 'center' }}>
+          <p style={{ fontSize: 13, fontWeight: 300, color: '#999' }}>No tickets yet</p>
+          <p style={{ fontSize: 11, fontWeight: 300, color: '#CCC', marginTop: 8 }}>
+            Need help? Create a ticket
           </p>
         </div>
-      ) : (
-        <div className="space-y-3">
-          {tickets?.map((ticket) => {
-            const statusStyle = TICKET_STATUS_STYLES[ticket.status] || TICKET_STATUS_STYLES.OPEN;
-            return (
+      )}
+
+      {/* Ticket list — 16px padding per ticket, 6px gap, 1px dividers, each ~88px */}
+      {tickets && tickets.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          {tickets.map((ticket, i) => (
+            <div key={ticket.id}>
               <Link
-                key={ticket.id}
                 href={`/account/support/${ticket.ticketNumber}`}
-                className="flex items-center justify-between rounded-xl border border-[var(--color-border)] p-4 transition-colors hover:bg-[var(--color-surface)]"
+                style={{ display: 'block', padding: '16px 0', textDecoration: 'none' }}
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <MessageSquare size={14} className="text-[var(--color-muted)]" />
-                    <span className="text-sm font-bold">#{ticket.ticketNumber}</span>
-                    <span
-                      className={`rounded-[var(--badge-radius)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusStyle.bg} ${statusStyle.text}`}
-                    >
-                      {formatStatus(ticket.status)}
-                    </span>
-                  </div>
-                  <p className="mt-1 truncate text-sm">{ticket.subject}</p>
-                  <div className="mt-1 flex gap-3 text-xs text-[var(--color-muted)]">
-                    <span>{ticket.category}</span>
-                    <span>{formatDate(ticket.createdAt)}</span>
-                  </div>
+                {/* Top: ticket number + status */}
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
+                      fontSize: 12,
+                      fontWeight: 400,
+                      color: '#000',
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    #{ticket.ticketNumber}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 400,
+                      color: STATUS_COLOR[ticket.status] || '#999',
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {formatTicketStatus(ticket.status)}
+                  </span>
                 </div>
-                <ChevronRight size={18} className="shrink-0 text-[var(--color-muted)]" />
+                {/* Subject */}
+                <p
+                  style={{
+                    marginTop: 6,
+                    fontSize: 13,
+                    fontWeight: 400,
+                    color: '#000',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {ticket.subject}
+                </p>
+                {/* Meta: category · date */}
+                <p style={{ marginTop: 6, fontSize: 10, fontWeight: 300, color: '#999' }}>
+                  {ticket.category} · {formatDate(ticket.createdAt)}
+                </p>
               </Link>
-            );
-          })}
+              {i < tickets.length - 1 && <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />}
+            </div>
+          ))}
         </div>
       )}
     </div>

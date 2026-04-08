@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Star, TrendingUp, ShoppingBag, Gift } from 'lucide-react';
+import { ShoppingBag, Gift, TrendingUp } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
@@ -26,30 +26,10 @@ interface LoyaltyHistory {
   total: number;
 }
 
-const TYPE_STYLES: Record<string, { color: string; prefix: string }> = {
-  EARNED: { color: 'text-green-600', prefix: '+' },
-  BONUS: { color: 'text-green-600', prefix: '+' },
-  REDEEMED: { color: 'text-[var(--color-sale)]', prefix: '-' },
-  EXPIRED: { color: 'text-[var(--color-muted)]', prefix: '-' },
-  ADJUSTED: { color: 'text-blue-600', prefix: '' },
-};
-
 const HOW_IT_WORKS = [
-  {
-    icon: ShoppingBag,
-    title: 'Shop & Earn',
-    description: 'Earn 1 point for every Rs.10 spent on eligible purchases.',
-  },
-  {
-    icon: Gift,
-    title: 'Redeem Rewards',
-    description: 'Use your points at checkout. 100 points = Rs.10 discount.',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Level Up',
-    description: 'Higher tiers unlock bonus multipliers and exclusive perks.',
-  },
+  { icon: ShoppingBag, title: 'Shop', desc: '1 pt per ₹10 spent' },
+  { icon: Gift, title: 'Redeem', desc: '100 pts = ₹10 off' },
+  { icon: TrendingUp, title: 'Level Up', desc: 'Tier bonuses unlock' },
 ] as const;
 
 export default function LoyaltyPage() {
@@ -63,124 +43,163 @@ export default function LoyaltyPage() {
     queryFn: () => api.get<LoyaltyHistory>('/loyalty/history'),
   });
 
-  const isLoading = summaryLoading || historyLoading;
-
-  if (isLoading) {
+  if (summaryLoading || historyLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
+      <div
+        style={{
+          display: 'flex',
+          minHeight: '40vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Spinner className="h-6 w-6" />
       </div>
     );
   }
 
   const balance = summary?.currentBalance ?? 0;
+  const totalEarned = summary?.totalEarned ?? 0;
+  const totalRedeemed = summary?.totalRedeemed ?? 0;
   const transactions = history?.transactions ?? [];
 
   return (
-    <div className="space-y-8 md:space-y-10">
-      {/* Balance Card */}
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-primary)] p-4 text-white md:p-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider opacity-70">
-              Available Points
-            </p>
-            <p className="mt-1 text-4xl font-bold tracking-tight">
-              {balance.toLocaleString('en-IN')}
-            </p>
-          </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
-            <Star size={20} className="text-[var(--color-star)]" />
-          </div>
-        </div>
-        <div className="mt-4 flex items-center gap-4 border-t border-white/20 pt-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-wider opacity-70">Total Earned</p>
-            <p className="text-sm font-bold">
-              {(summary?.totalEarned ?? 0).toLocaleString('en-IN')}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-wider opacity-70">Total Redeemed</p>
-            <p className="text-sm font-bold">
-              {(summary?.totalRedeemed ?? 0).toLocaleString('en-IN')}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* How It Works */}
-      <div>
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">How It Works</h3>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {HOW_IT_WORKS.map((item) => (
-            <div
-              key={item.title}
-              className="rounded-xl border border-[var(--color-border)] p-4 md:p-5"
+    <div
+      style={{ padding: '32px 28px 28px 28px', display: 'flex', flexDirection: 'column', gap: 32 }}
+    >
+      {/* Balance card — black bg, 24px padding */}
+      <div
+        style={{
+          backgroundColor: '#000',
+          padding: 24,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
+        }}
+      >
+        <span style={{ fontSize: 10, fontWeight: 400, color: '#666', letterSpacing: 1.5 }}>
+          AVAILABLE POINTS
+        </span>
+        <span
+          style={{
+            fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
+            fontSize: 40,
+            fontWeight: 400,
+            color: '#FFF',
+            letterSpacing: -1,
+          }}
+        >
+          {balance.toLocaleString('en-IN')}
+        </span>
+        <div style={{ height: 1, backgroundColor: '#333' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
+                fontSize: 16,
+                fontWeight: 400,
+                color: '#FFF',
+              }}
             >
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">
-                <item.icon size={20} className="text-[var(--color-primary)]" />
-              </div>
-              <h4 className="text-sm font-bold">{item.title}</h4>
-              <p className="mt-1 text-xs text-[var(--color-muted)]">{item.description}</p>
-            </div>
-          ))}
+              {totalEarned.toLocaleString('en-IN')}
+            </span>
+            <span style={{ fontSize: 10, fontWeight: 300, color: '#666' }}>Total Earned</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
+                fontSize: 16,
+                fontWeight: 400,
+                color: '#FFF',
+              }}
+            >
+              {totalRedeemed.toLocaleString('en-IN')}
+            </span>
+            <span style={{ fontSize: 10, fontWeight: 300, color: '#666' }}>Redeemed</span>
+          </div>
         </div>
       </div>
 
-      {/* Transaction History */}
-      <div>
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">Transaction History</h3>
-        {transactions.length === 0 ? (
-          <p className="text-sm text-[var(--color-muted)]">
-            No transactions yet. Start shopping to earn points.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[var(--color-border)]">
-                  <th className="pb-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                    Date
-                  </th>
-                  <th className="pb-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                    Type
-                  </th>
-                  <th className="pb-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                    Description
-                  </th>
-                  <th className="pb-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                    Points
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((tx) => {
-                  const style = TYPE_STYLES[tx.type] || TYPE_STYLES.EARNED;
-                  return (
-                    <tr
-                      key={tx.id}
-                      className="border-b border-[var(--color-border)] last:border-b-0"
-                    >
-                      <td className="py-3 text-[var(--color-muted)]">{formatDate(tx.createdAt)}</td>
-                      <td className="py-3">
-                        <span className="rounded-[var(--badge-radius)] bg-[var(--color-surface)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                          {tx.type}
-                        </span>
-                      </td>
-                      <td className="py-3">{tx.description}</td>
-                      <td className={`py-3 text-right font-bold ${style.color}`}>
-                        {style.prefix}
-                        {Math.abs(tx.points).toLocaleString('en-IN')}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      {/* HOW IT WORKS label */}
+      <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+        HOW IT WORKS
+      </span>
+
+      {/* 3-column grid — gap=12, 1px border, 16px padding */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+        {HOW_IT_WORKS.map((item) => (
+          <div
+            key={item.title}
+            style={{
+              border: '1px solid #F0F0F0',
+              padding: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            <item.icon size={18} color="#000" strokeWidth={1.5} />
+            <span style={{ fontSize: 11, fontWeight: 400, color: '#000' }}>{item.title}</span>
+            <span style={{ fontSize: 10, fontWeight: 300, color: '#999', lineHeight: 1.4 }}>
+              {item.desc}
+            </span>
           </div>
-        )}
+        ))}
       </div>
+
+      {/* RECENT ACTIVITY label */}
+      <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+        RECENT ACTIVITY
+      </span>
+
+      {/* Transaction list — 14px padding per row, 1px dividers */}
+      {transactions.length === 0 ? (
+        <p style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>No transactions yet</p>
+      ) : (
+        <div>
+          {transactions.map((tx, i) => {
+            const isPositive =
+              tx.type === 'EARNED' || tx.type === 'BONUS' || tx.type === 'ADJUSTED';
+            return (
+              <div key={tx.id}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '14px 0',
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 12, fontWeight: 400, color: '#000' }}>
+                      {tx.description}
+                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 300, color: '#999' }}>
+                      {formatDate(tx.createdAt)}
+                    </span>
+                  </div>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
+                      fontSize: 13,
+                      fontWeight: 400,
+                      color: isPositive ? '#22C55E' : '#EF4444',
+                    }}
+                  >
+                    {isPositive ? '+' : '-'}
+                    {Math.abs(tx.points).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                {i < transactions.length - 1 && (
+                  <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

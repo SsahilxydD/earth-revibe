@@ -3,9 +3,6 @@
 import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Plus, Pencil, Trash2, X, Star, Zap } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
@@ -72,6 +69,19 @@ const INDIAN_STATES = [
   'Puducherry',
 ] as const;
 
+/* underline field style reuse */
+const labelStyle = { fontSize: 10, fontWeight: 400 as const, color: '#999', letterSpacing: 1.5 };
+const inputStyle = {
+  width: '100%',
+  fontSize: 14,
+  fontWeight: 300 as const,
+  color: '#000',
+  border: 'none' as const,
+  outline: 'none' as const,
+  padding: 0,
+  background: 'transparent',
+};
+
 export default function AddressesPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
@@ -84,19 +94,15 @@ export default function AddressesPage() {
     queryFn: () => api.get<Address[]>('/addresses'),
   });
 
-  // Import address from Razorpay: opens Magic Checkout (phone → OTP → address).
-  // When the user selects an address and dismisses before paying, we capture it.
   const importFromRazorpay = useCallback(async () => {
     setIsImporting(true);
     try {
-      // Create a temporary ₹1 order for address collection
       const order = await api.post<{
         razorpayOrderId: string;
         razorpayKeyId: string;
         amount: number;
       }>('/checkout/address-collection');
 
-      // Dynamically load Razorpay script
       if (!window.Razorpay) {
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -108,7 +114,6 @@ export default function AddressesPage() {
         });
       }
 
-      // Open Magic Checkout — Razorpay handles phone → OTP → address
       const rzp = new window.Razorpay({
         key: order.razorpayKeyId,
         amount: order.amount,
@@ -117,7 +122,6 @@ export default function AddressesPage() {
         description: 'Import your saved address',
         order_id: order.razorpayOrderId,
         handler: async (response: any) => {
-          // Payment completed for ₹1 — fetch the shipping address from Razorpay order
           try {
             const result = await api.get<{ address: any }>(
               `/checkout/order-address/${response.razorpay_order_id}`
@@ -147,8 +151,6 @@ export default function AddressesPage() {
         modal: {
           ondismiss: () => {
             setIsImporting(false);
-            // Even if dismissed, Razorpay's shipping-info callback may have
-            // already sent the address to our server. Refetch to check.
             queryClient.invalidateQueries({ queryKey: ['addresses'] });
           },
         },
@@ -197,6 +199,17 @@ export default function AddressesPage() {
     },
   });
 
+  const defaultMutation = useMutation({
+    mutationFn: (id: string) => api.put(`/addresses/${id}`, { isDefault: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['addresses'] });
+      addToast('Default address updated', 'success');
+    },
+    onError: (err: any) => {
+      addToast(err?.message || 'Failed to set default', 'error');
+    },
+  });
+
   const editingAddress = editingId ? addresses?.find((a) => a.id === editingId) : null;
 
   const {
@@ -233,230 +246,361 @@ export default function AddressesPage() {
     setEditingId(null);
     reset();
   };
-
   const openEdit = (id: string) => {
     setEditingId(id);
     setShowForm(true);
   };
-
   const onSubmit = (data: AddressForm) => {
-    if (editingId) {
-      updateMutation.mutate({ id: editingId, data });
-    } else {
-      createMutation.mutate(data);
-    }
+    editingId ? updateMutation.mutate({ id: editingId, data }) : createMutation.mutate(data);
   };
-
   const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this address?')) {
-      deleteMutation.mutate(id);
-    }
+    if (window.confirm('Delete this address?')) deleteMutation.mutate(id);
   };
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
+      <div
+        style={{
+          display: 'flex',
+          minHeight: '40vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Spinner className="h-6 w-6" />
       </div>
     );
   }
 
   return (
-    <div>
-      {/* Header */}
-      <h2 className="text-sm font-bold uppercase tracking-wider">Saved Addresses</h2>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">
-        Manage your delivery addresses for faster checkout.
-      </p>
-
-      {/* Action buttons */}
-      {!showForm && (
-        <div style={{ marginTop: 24 }} className="flex gap-3">
-          <button
-            onClick={importFromRazorpay}
-            disabled={isImporting}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-3 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60 md:flex-none"
-          >
-            <Zap size={14} />
-            {isImporting ? 'Importing...' : 'Import via Razorpay'}
-          </button>
-          <Button
-            size="sm"
-            className="flex-1 py-3 md:flex-none"
-            onClick={() => {
-              setEditingId(null);
-              reset();
-              setShowForm(true);
-            }}
-          >
-            <Plus size={16} />
-            Add Address
-          </Button>
+    <div style={{ padding: '24px 28px 28px 28px' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+          SAVED ADDRESSES
+        </span>
+        <div style={{ display: 'flex', gap: 16 }}>
+          {!showForm && (
+            <>
+              <button
+                onClick={importFromRazorpay}
+                disabled={isImporting}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 300,
+                  color: '#999',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  opacity: isImporting ? 0.5 : 1,
+                }}
+              >
+                {isImporting ? 'Importing…' : 'Import'}
+              </button>
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  reset();
+                  setShowForm(true);
+                }}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 400,
+                  color: '#000',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                + Add new
+              </button>
+            </>
+          )}
         </div>
-      )}
-
-      {/* Divider */}
-      <hr
-        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
-      />
+      </div>
 
       {/* Address Form */}
       {showForm && (
-        <div className="rounded-xl border border-[var(--color-border)] p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider">
-              {editingId ? 'Edit Address' : 'New Address'}
-            </h3>
+        <div style={{ marginTop: 20, padding: 20, border: '1px solid #E5E5E5' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 20,
+            }}
+          >
+            <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+              {editingId ? 'EDIT ADDRESS' : 'NEW ADDRESS'}
+            </span>
             <button
               onClick={closeForm}
-              className="text-[var(--color-muted)] hover:text-[var(--color-text)]"
-              aria-label="Close form"
+              style={{
+                fontSize: 12,
+                fontWeight: 300,
+                color: '#999',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
-              <X size={20} />
+              Cancel
             </button>
           </div>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input
-                label="Full Name"
-                error={errors.fullName?.message}
-                {...register('fullName', {
-                  required: 'Full name is required',
-                })}
-              />
-              <Input
-                label="Phone"
-                type="tel"
-                error={errors.phone?.message}
-                {...register('phone', {
-                  required: 'Phone is required',
-                  pattern: {
-                    value: /^[6-9]\d{9}$/,
-                    message: 'Enter a valid 10-digit number',
-                  },
-                })}
-              />
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+          >
+            {/* Full Name */}
+            <div>
+              <label style={labelStyle}>FULL NAME</label>
+              <div style={{ height: 10 }} />
+              <input {...register('fullName', { required: 'Required' })} style={inputStyle} />
+              <div style={{ height: 10 }} />
+              <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+              {errors.fullName && (
+                <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                  {errors.fullName.message}
+                </p>
+              )}
             </div>
-            <Input
-              label="Address Line 1"
-              error={errors.line1?.message}
-              {...register('line1', {
-                required: 'Address is required',
-              })}
-            />
-            <Input label="Address Line 2 (Optional)" {...register('line2')} />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Input
-                label="City"
-                error={errors.city?.message}
-                {...register('city', { required: 'City is required' })}
-              />
-              <div className="w-full">
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                  State
-                </label>
-                <select
-                  className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
-                  {...register('state', { required: 'State is required' })}
-                >
-                  <option value="">Select state</option>
-                  {INDIAN_STATES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                {errors.state && (
-                  <p className="mt-1 text-xs text-[var(--color-sale)]">{errors.state.message}</p>
-                )}
-              </div>
-              <Input
-                label="Pin Code"
-                error={errors.pinCode?.message}
-                {...register('pinCode', {
-                  required: 'Pin code is required',
-                  pattern: {
-                    value: /^\d{6}$/,
-                    message: 'Enter a valid 6-digit pin code',
-                  },
-                })}
-              />
-            </div>
-            <label className="flex items-center gap-2 text-sm">
+            {/* Phone */}
+            <div>
+              <label style={labelStyle}>PHONE</label>
+              <div style={{ height: 10 }} />
               <input
-                type="checkbox"
-                className="h-4 w-4 accent-[var(--color-primary)]"
-                {...register('isDefault')}
+                {...register('phone', {
+                  required: 'Required',
+                  pattern: { value: /^[6-9]\d{9}$/, message: 'Valid 10-digit number' },
+                })}
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
+                style={inputStyle}
               />
-              <span className="text-[var(--color-muted)]">Set as default address</span>
-            </label>
-            <div className="flex gap-3">
-              <Button type="submit" loading={createMutation.isPending || updateMutation.isPending}>
-                {editingId ? 'Update Address' : 'Save Address'}
-              </Button>
-              <Button type="button" variant="ghost" onClick={closeForm}>
-                Cancel
-              </Button>
+              <div style={{ height: 10 }} />
+              <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+              {errors.phone && (
+                <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                  {errors.phone.message}
+                </p>
+              )}
             </div>
+            {/* Address Line 1 */}
+            <div>
+              <label style={labelStyle}>ADDRESS LINE 1</label>
+              <div style={{ height: 10 }} />
+              <input {...register('line1', { required: 'Required' })} style={inputStyle} />
+              <div style={{ height: 10 }} />
+              <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+              {errors.line1 && (
+                <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                  {errors.line1.message}
+                </p>
+              )}
+            </div>
+            {/* Address Line 2 */}
+            <div>
+              <label style={labelStyle}>ADDRESS LINE 2</label>
+              <div style={{ height: 10 }} />
+              <input
+                {...register('line2')}
+                placeholder="Optional"
+                style={{ ...inputStyle, color: '#000' }}
+              />
+              <div style={{ height: 10 }} />
+              <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+            </div>
+            {/* City */}
+            <div>
+              <label style={labelStyle}>CITY</label>
+              <div style={{ height: 10 }} />
+              <input {...register('city', { required: 'Required' })} style={inputStyle} />
+              <div style={{ height: 10 }} />
+              <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+              {errors.city && (
+                <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                  {errors.city.message}
+                </p>
+              )}
+            </div>
+            {/* State */}
+            <div>
+              <label style={labelStyle}>STATE</label>
+              <div style={{ height: 10 }} />
+              <select
+                {...register('state', { required: 'Required' })}
+                style={{ ...inputStyle, appearance: 'none' as const, cursor: 'pointer' }}
+              >
+                <option value="">Select state</option>
+                {INDIAN_STATES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <div style={{ height: 10 }} />
+              <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+              {errors.state && (
+                <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                  {errors.state.message}
+                </p>
+              )}
+            </div>
+            {/* Pin Code */}
+            <div>
+              <label style={labelStyle}>PIN CODE</label>
+              <div style={{ height: 10 }} />
+              <input
+                {...register('pinCode', {
+                  required: 'Required',
+                  pattern: { value: /^\d{6}$/, message: '6-digit pin' },
+                })}
+                inputMode="numeric"
+                maxLength={6}
+                style={inputStyle}
+              />
+              <div style={{ height: 10 }} />
+              <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+              {errors.pinCode && (
+                <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                  {errors.pinCode.message}
+                </p>
+              )}
+            </div>
+            {/* Default checkbox */}
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 12,
+                fontWeight: 300,
+                color: '#999',
+              }}
+            >
+              <input type="checkbox" {...register('isDefault')} style={{ accentColor: '#000' }} />
+              Set as default address
+            </label>
+            {/* Save button */}
+            <button
+              type="submit"
+              disabled={createMutation.isPending || updateMutation.isPending}
+              style={{
+                width: '100%',
+                height: 50,
+                backgroundColor: '#000',
+                color: '#FFF',
+                fontSize: 12,
+                fontWeight: 400,
+                letterSpacing: 2,
+                border: 'none',
+                cursor: 'pointer',
+                opacity: createMutation.isPending || updateMutation.isPending ? 0.5 : 1,
+              }}
+            >
+              {createMutation.isPending || updateMutation.isPending ? 'SAVING...' : 'SAVE ADDRESS'}
+            </button>
           </form>
         </div>
       )}
 
-      {/* Address Cards */}
-      {(!addresses || addresses.length === 0) && !showForm ? (
-        <div
-          style={{ paddingTop: 60, paddingBottom: 60 }}
-          className="flex flex-col items-center text-center"
-        >
-          <MapPin size={40} strokeWidth={1} className="text-[#c0c0c0]" />
-          <h3 style={{ marginTop: 24 }} className="text-xs font-bold uppercase tracking-[0.2em]">
-            No saved addresses
-          </h3>
-          <p
-            style={{ marginTop: 10, maxWidth: 240 }}
-            className="text-xs leading-relaxed text-[#999]"
-          >
-            Add a delivery address to speed up checkout.
-          </p>
+      {/* Empty state */}
+      {(!addresses || addresses.length === 0) && !showForm && (
+        <div style={{ padding: '60px 0', textAlign: 'center' }}>
+          <p style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>No saved addresses</p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {addresses?.map((address) => (
+      )}
+
+      {/* Address Cards — 20px gap, 1px border, 20px padding */}
+      {addresses && addresses.length > 0 && (
+        <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {addresses.map((addr) => (
             <div
-              key={address.id}
-              className="relative rounded-xl border border-[var(--color-border)] p-5"
+              key={addr.id}
+              style={{ border: `1px solid ${addr.isDefault ? '#E5E5E5' : '#F0F0F0'}`, padding: 20 }}
             >
-              {address.isDefault && (
-                <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-[var(--color-primary)]">
-                  <Star size={12} className="fill-current" />
-                  Default Address
-                </div>
-              )}
-              <p className="text-sm font-bold">{address.fullName}</p>
-              <div className="mt-2 space-y-1 text-sm leading-relaxed text-[var(--color-muted)]">
-                <p>{address.line1}</p>
-                {address.line2 && <p>{address.line2}</p>}
-                <p>
-                  {address.city}, {address.state} {address.pinCode}
-                </p>
+              {/* Name row + DEFAULT badge */}
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <span style={{ fontSize: 14, fontWeight: 400, color: '#000' }}>
+                  {addr.fullName}
+                </span>
+                {addr.isDefault && (
+                  <span style={{ fontSize: 9, fontWeight: 400, color: '#000', letterSpacing: 1.5 }}>
+                    DEFAULT
+                  </span>
+                )}
               </div>
-              <p className="mt-3 text-xs text-[var(--color-muted)]">Phone: {address.phone}</p>
-              <div className="mt-4 flex gap-4 border-t border-[var(--color-border)] pt-4">
+              {/* Address text */}
+              <p
+                style={{
+                  marginTop: 10,
+                  fontSize: 12,
+                  fontWeight: 300,
+                  color: '#999',
+                  lineHeight: 1.6,
+                }}
+              >
+                {addr.line1}
+                {addr.line2 && (
+                  <>
+                    <br />
+                    {addr.line2}
+                  </>
+                )}
+                <br />
+                {addr.city}, {addr.state} — {addr.pinCode}
+              </p>
+              {/* Phone */}
+              <p style={{ marginTop: 10, fontSize: 12, fontWeight: 300, color: '#999' }}>
+                +91 {addr.phone.replace(/^\+91/, '')}
+              </p>
+              {/* Actions — 6px top padding, 16px gap */}
+              <div style={{ marginTop: 10, paddingTop: 6, display: 'flex', gap: 16 }}>
                 <button
-                  onClick={() => openEdit(address.id)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-primary)] hover:underline"
+                  onClick={() => openEdit(addr.id)}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 400,
+                    color: '#000',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
-                  <Pencil size={12} />
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(address.id)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-sale)] hover:underline"
+                  onClick={() => handleDelete(addr.id)}
                   disabled={deleteMutation.isPending}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 300,
+                    color: '#999',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
-                  <Trash2 size={12} />
-                  Delete
+                  Remove
                 </button>
+                {!addr.isDefault && (
+                  <button
+                    onClick={() => defaultMutation.mutate(addr.id)}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 300,
+                      color: '#999',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Set as default
+                  </button>
+                )}
               </div>
             </div>
           ))}
