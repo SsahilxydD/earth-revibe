@@ -2,12 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, ShoppingBag } from 'lucide-react';
+import { X, ShoppingBag, Lock } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 import { formatPrice } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { CartItemRow } from './cart-item';
 import { LoginModal } from '@/components/auth/login-modal';
 import { PaymentMethodModal } from '@/components/checkout/payment-method-modal';
@@ -15,8 +14,7 @@ import { CODCheckoutModal } from '@/components/checkout/cod-checkout-modal';
 import { api } from '@/lib/api-client';
 import { useRazorpay, preloadRazorpayScript } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
-
-// Free shipping on all orders — no threshold
+import { Spinner } from '@/components/ui/spinner';
 
 export function CartDrawer() {
   const {
@@ -50,12 +48,10 @@ export function CartDrawer() {
 
   const subtotal = getSubtotal();
   const total = getTotal();
-  // Always free shipping
 
   useEffect(() => {
     if (isOpen) {
       lockBodyScroll();
-      // Preload Razorpay SDK as soon as cart opens so it's ready at checkout
       preloadRazorpayScript();
       return () => unlockBodyScroll();
     }
@@ -87,7 +83,6 @@ export function CartDrawer() {
     }
   };
 
-  // Launch Razorpay Magic Checkout directly from the cart drawer — no page navigation
   const launchMagicCheckout = useCallback(async () => {
     if (items.length === 0) return;
     setCheckoutStep('securing');
@@ -153,88 +148,252 @@ export function CartDrawer() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={closeCart} />
+      <div
+        className="animate-fade-in"
+        style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)' }}
+        onClick={closeCart}
+      />
 
       {/* Drawer */}
-      <div className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl animate-slide-in-right">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
-          <h2 className="text-sm font-bold uppercase tracking-[0.2em]">Your Cart</h2>
-          <button
-            onClick={closeCart}
-            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-[var(--color-surface)]"
-            aria-label="Close cart"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
+      <div
+        className="animate-slide-in-right font-[family-name:var(--font-inter)]"
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          height: '100%',
+          width: '100%',
+          maxWidth: 393,
+          backgroundColor: '#FFF',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
+      >
         {items.length === 0 ? (
-          /* Empty state */
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 px-5">
-            <ShoppingBag className="h-16 w-16 text-[var(--color-border)]" />
-            <p className="text-sm font-medium text-[var(--color-muted)]">Your cart is empty</p>
-            <Button onClick={closeCart} variant="primary" size="md">
-              Continue Shopping
-            </Button>
-          </div>
-        ) : (
+          /* ───── Empty state ───── */
           <>
-            {/* Free shipping banner */}
-            <div className="border-b border-[var(--color-border)] px-5 py-3">
-              <p className="text-center text-xs font-semibold text-green-600">
-                Free shipping on all orders
+            {/* Header */}
+            <div
+              style={{
+                height: 56,
+                paddingLeft: 28,
+                paddingRight: 28,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span style={{ fontSize: 11, fontWeight: 400, letterSpacing: 2, color: '#000' }}>
+                YOUR BAG
+              </span>
+              <button
+                onClick={closeCart}
+                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                aria-label="Close cart"
+              >
+                <X size={20} color="#000" strokeWidth={1.5} />
+              </button>
+            </div>
+            <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+
+            {/* Centered empty content */}
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 16,
+                padding: '0 48px',
+              }}
+            >
+              <ShoppingBag size={48} color="#E5E5E5" strokeWidth={1} />
+              <p style={{ fontSize: 14, fontWeight: 300, color: '#999' }}>Your bag is empty</p>
+              <p style={{ fontSize: 12, fontWeight: 300, color: '#CCC', textAlign: 'center' }}>
+                Looks like you haven&apos;t added anything yet
               </p>
+              <div style={{ height: 8 }} />
+              <button
+                onClick={closeCart}
+                style={{
+                  height: 46,
+                  padding: '0 32px',
+                  border: '1px solid #000',
+                  backgroundColor: 'transparent',
+                  fontSize: 11,
+                  fontWeight: 400,
+                  letterSpacing: 2,
+                  color: '#000',
+                  cursor: 'pointer',
+                }}
+              >
+                CONTINUE SHOPPING
+              </button>
             </div>
 
-            {/* Items list */}
-            <div className="flex-1 overflow-y-auto hide-scrollbar px-5 py-4">
-              <ul className="divide-y divide-[var(--color-border)]">
-                {items.map((item) => (
-                  <li key={item.id} className="py-4 first:pt-0 last:pb-0">
-                    <CartItemRow item={item} />
-                  </li>
+            <div />
+          </>
+        ) : (
+          /* ───── Cart with items ───── */
+          <>
+            {/* Top section */}
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              {/* Header — 56px */}
+              <div
+                style={{
+                  height: 56,
+                  paddingLeft: 28,
+                  paddingRight: 28,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexShrink: 0,
+                }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 400, letterSpacing: 2, color: '#000' }}>
+                  YOUR BAG ({items.reduce((acc, i) => acc + i.quantity, 0)})
+                </span>
+                <button
+                  onClick={closeCart}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                  aria-label="Close cart"
+                >
+                  <X size={20} color="#000" strokeWidth={1.5} />
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: 1, backgroundColor: '#F0F0F0', flexShrink: 0 }} />
+
+              {/* Free shipping banner — 40px */}
+              <div
+                style={{
+                  height: 40,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 300, color: '#22C55E' }}>
+                  Free shipping on all orders
+                </span>
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: 1, backgroundColor: '#F0F0F0', flexShrink: 0 }} />
+
+              {/* Items list — scrollable, padding 20/28 */}
+              <div
+                className="hide-scrollbar"
+                style={{ flex: 1, overflowY: 'auto', padding: '20px 28px' }}
+              >
+                {items.map((item, i) => (
+                  <div key={item.id}>
+                    <div style={{ padding: '16px 0' }}>
+                      <CartItemRow item={item} />
+                    </div>
+                    {i < items.length - 1 && (
+                      <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+                    )}
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
 
-            {/* Footer */}
-            <div className="border-t border-[var(--color-border)] px-5 py-4">
-              {/* Discount */}
+            {/* Footer — padding 20/28/28/28, gap 20 */}
+            <div
+              style={{
+                padding: '20px 28px 28px 28px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 20,
+                flexShrink: 0,
+              }}
+            >
+              {/* Top divider */}
+              <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+
+              {/* Discount row */}
               {!discountCode ? (
-                <div className="mb-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={discountInput}
-                      onChange={(e) => setDiscountInput(e.target.value)}
-                      placeholder="Discount code"
-                      className="flex-1 rounded-[var(--button-radius)] border border-[var(--color-border)] px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)]"
-                    />
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={handleApplyDiscount}
-                      loading={applyingDiscount}
+                <div>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <div
+                      style={{
+                        flex: 1,
+                        height: 42,
+                        border: '1px solid #E5E5E5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '0 14px',
+                      }}
                     >
-                      Apply
-                    </Button>
+                      <input
+                        type="text"
+                        value={discountInput}
+                        onChange={(e) => setDiscountInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleApplyDiscount();
+                        }}
+                        placeholder="Discount code"
+                        style={{
+                          width: '100%',
+                          fontSize: 12,
+                          fontWeight: 300,
+                          color: '#000',
+                          border: 'none',
+                          outline: 'none',
+                          background: 'transparent',
+                        }}
+                      />
+                    </div>
+                    <button
+                      onClick={handleApplyDiscount}
+                      disabled={applyingDiscount}
+                      style={{
+                        height: 42,
+                        padding: '0 20px',
+                        border: '1px solid #000',
+                        backgroundColor: 'transparent',
+                        fontSize: 10,
+                        fontWeight: 400,
+                        letterSpacing: 1.5,
+                        color: '#000',
+                        cursor: 'pointer',
+                        opacity: applyingDiscount ? 0.5 : 1,
+                      }}
+                    >
+                      {applyingDiscount ? '...' : 'APPLY'}
+                    </button>
                   </div>
                   {discountError && (
-                    <p className="mt-1 text-xs text-[var(--color-sale)]">{discountError}</p>
+                    <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>{discountError}</p>
                   )}
                 </div>
               ) : (
-                <div className="mb-4 flex items-center justify-between rounded-[var(--badge-radius)] bg-[var(--color-surface)] px-3 py-2 text-sm">
-                  <span>
-                    <span className="font-semibold">{discountCode}</span> &minus;
-                    {formatPrice(discountAmount)}
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <span style={{ fontSize: 12, fontWeight: 400, color: '#000' }}>
+                    {discountCode}{' '}
+                    <span style={{ fontWeight: 300, color: '#22C55E' }}>
+                      −{formatPrice(discountAmount)}
+                    </span>
                   </span>
                   <button
                     onClick={removeDiscount}
-                    className="text-xs text-[var(--color-sale)] hover:underline"
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 300,
+                      color: '#999',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
                   >
                     Remove
                   </button>
@@ -242,82 +401,121 @@ export function CartDrawer() {
               )}
 
               {/* Totals */}
-              <div className="mb-4 space-y-1.5 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--color-muted)]">Subtotal</span>
-                  <span className="font-medium">{formatPrice(subtotal)}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>Subtotal</span>
+                  <span style={{ fontSize: 12, fontWeight: 400, color: '#000' }}>
+                    {formatPrice(subtotal)}
+                  </span>
                 </div>
                 {discountAmount > 0 && (
-                  <div className="flex items-center justify-between text-[var(--color-sale)]">
-                    <span>Discount</span>
-                    <span>-{formatPrice(discountAmount)}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>Discount</span>
+                    <span style={{ fontSize: 12, fontWeight: 400, color: '#22C55E' }}>
+                      -{formatPrice(discountAmount)}
+                    </span>
                   </div>
                 )}
-                <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-1.5 text-base font-bold">
-                  <span>Total</span>
-                  <span>{formatPrice(total)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>Shipping</span>
+                  <span style={{ fontSize: 12, fontWeight: 400, color: '#000' }}>Free</span>
+                </div>
+                <div style={{ height: 8 }} />
+                <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+                <div style={{ height: 4 }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 14, fontWeight: 400, color: '#000' }}>Total</span>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: '#000' }}>
+                    {formatPrice(total)}
+                  </span>
                 </div>
               </div>
 
+              {/* Checkout button or progress */}
               {checkoutStep !== 'idle' ? (
-                <div className="space-y-3">
-                  {/* Progress steps */}
-                  <div className="flex items-center gap-3">
-                    {[
-                      { key: 'securing', label: 'Securing your order' },
-                      { key: 'opening', label: 'Opening payment' },
-                      { key: 'verifying', label: 'Confirming' },
-                    ].map((step) => {
-                      const steps = ['securing', 'opening', 'verifying'];
-                      const current = steps.indexOf(checkoutStep);
-                      const isActive = steps.indexOf(step.key) === current;
-                      const isDone = steps.indexOf(step.key) < current;
-                      return (
-                        <div key={step.key} className="flex flex-1 flex-col items-center gap-1">
-                          <div
-                            className={`h-1 w-full rounded-full transition-all duration-500 ${
-                              isDone
-                                ? 'bg-[var(--color-text)]'
-                                : isActive
-                                  ? 'animate-pulse bg-[var(--color-text)]'
-                                  : 'bg-[var(--color-border)]'
-                            }`}
-                          />
-                          <span
-                            className={`text-[10px] uppercase tracking-wider transition-colors duration-300 ${
-                              isActive
-                                ? 'font-semibold text-[var(--color-text)]'
-                                : isDone
-                                  ? 'text-[var(--color-muted)]'
-                                  : 'text-[var(--color-border)]'
-                            }`}
-                          >
-                            {step.label}
-                          </span>
-                        </div>
-                      );
-                    })}
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}
+                >
+                  <div
+                    style={{
+                      width: '100%',
+                      height: 50,
+                      backgroundColor: '#000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <Spinner className="h-4 w-4" />
+                    <span
+                      style={{ fontSize: 12, fontWeight: 400, letterSpacing: 2, color: '#FFF' }}
+                    >
+                      {checkoutStep === 'securing'
+                        ? 'SECURING ORDER...'
+                        : checkoutStep === 'opening'
+                          ? 'OPENING PAYMENT...'
+                          : 'CONFIRMING...'}
+                    </span>
                   </div>
-                  <p className="text-center text-xs text-[var(--color-muted)]">
+                  <p style={{ fontSize: 10, fontWeight: 300, color: '#CCC' }}>
                     Please don&apos;t close this window
                   </p>
                 </div>
               ) : (
-                <Button
-                  variant="primary"
-                  fullWidth
-                  size="lg"
+                <button
                   onClick={() => setShowPaymentMethodModal(true)}
+                  style={{
+                    width: '100%',
+                    height: 50,
+                    backgroundColor: '#000',
+                    color: '#FFF',
+                    fontSize: 12,
+                    fontWeight: 400,
+                    letterSpacing: 2,
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
-                  Checkout
-                </Button>
+                  CHECKOUT
+                </button>
               )}
+
+              {/* Secure checkout + delivery */}
+              <div
+                style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}
+              >
+                <Lock size={12} color="#CCC" />
+                <span style={{ fontSize: 10, fontWeight: 300, color: '#CCC' }}>
+                  Secure checkout · Delivery in 3–5 days
+                </span>
+              </div>
+
+              {/* Continue shopping */}
+              <button
+                onClick={closeCart}
+                style={{
+                  width: '100%',
+                  textAlign: 'center',
+                  fontSize: 11,
+                  fontWeight: 300,
+                  color: '#999',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Continue shopping
+              </button>
             </div>
           </>
         )}
       </div>
 
-      {/* Payment method selection */}
+      {/* Modals */}
       <PaymentMethodModal
         isOpen={showPaymentMethodModal}
         onClose={() => setShowPaymentMethodModal(false)}
@@ -339,7 +537,6 @@ export function CartDrawer() {
         }}
       />
 
-      {/* Login modal — log in so orders are saved to account, or continue as guest */}
       <LoginModal
         isOpen={showLoginModal}
         onClose={() => {
@@ -365,7 +562,6 @@ export function CartDrawer() {
         }
       />
 
-      {/* COD checkout flow */}
       <CODCheckoutModal isOpen={showCODCheckout} onClose={() => setShowCODCheckout(false)} />
     </div>
   );

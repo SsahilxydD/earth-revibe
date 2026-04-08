@@ -14,65 +14,143 @@ export function CartItemRow({ item }: CartItemRowProps) {
   const { updateQuantity, removeItem } = useCartStore();
 
   return (
-    <div className="flex gap-3">
-      {/* Image */}
-      <div className="relative h-24 w-[4.5rem] shrink-0 overflow-hidden rounded-[var(--badge-radius)] bg-[var(--color-surface)]">
+    <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+      {/* Image — 64x84 */}
+      <div
+        style={{
+          width: 64,
+          height: 84,
+          flexShrink: 0,
+          position: 'relative',
+          overflow: 'hidden',
+          backgroundColor: '#F5F5F5',
+        }}
+      >
         <Image
           src={getImageUrl(item.image, 150)}
           alt={item.name}
           fill
-          sizes="72px"
-          className="object-cover"
+          sizes="64px"
+          style={{ objectFit: 'cover' }}
         />
       </div>
 
       {/* Details */}
-      <div className="flex flex-1 flex-col justify-between min-w-0">
-        <div>
-          <p className="truncate text-sm font-semibold">{item.name}</p>
-          <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-            {item.size && `Size: ${item.size}`}
-            {item.size && item.color && ' / '}
-            {item.color && `Color: ${item.color}`}
-          </p>
-        </div>
-
-        <div className="flex items-end justify-between">
-          {/* Quantity stepper */}
-          <div className="flex items-center rounded-[var(--badge-radius)] border border-[var(--color-border)]">
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {/* Name */}
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 400,
+            color: '#000',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {item.name}
+        </p>
+        {/* Meta */}
+        <p style={{ fontSize: 10, fontWeight: 300, color: '#999' }}>
+          {item.size && `Size: ${item.size}`}
+          {item.size && item.color && ' / '}
+          {item.color && `Color: ${item.color}`}
+        </p>
+        {/* Bottom row: qty stepper left, price + remove right */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 4,
+          }}
+        >
+          {/* Quantity stepper — 28px buttons, 24px center, 28px height, 1px border */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              border: '1px solid #E5E5E5',
+              height: 28,
+            }}
+          >
             <button
               onClick={() => updateQuantity(item.id, item.quantity - 1)}
               disabled={item.quantity <= 1}
-              className="flex h-7 w-7 items-center justify-center text-[var(--color-muted)] hover:text-[var(--color-text)] disabled:opacity-30"
+              style={{
+                width: 28,
+                height: 28,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 14,
+                fontWeight: 300,
+                color: item.quantity <= 1 ? '#E5E5E5' : '#999',
+              }}
               aria-label="Decrease quantity"
             >
-              <Minus className="h-3 w-3" />
+              <Minus size={12} />
             </button>
-            <span className="flex h-7 w-6 items-center justify-center text-xs font-semibold">
+            <span
+              style={{
+                width: 24,
+                height: 28,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 11,
+                fontWeight: 400,
+                color: '#000',
+              }}
+            >
               {item.quantity}
             </span>
             <button
               onClick={() => updateQuantity(item.id, item.quantity + 1)}
               disabled={item.quantity >= item.maxQuantity}
-              className="flex h-7 w-7 items-center justify-center text-[var(--color-muted)] hover:text-[var(--color-text)] disabled:opacity-30"
+              style={{
+                width: 28,
+                height: 28,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 14,
+                fontWeight: 300,
+                color: item.quantity >= item.maxQuantity ? '#E5E5E5' : '#000',
+              }}
               aria-label="Increase quantity"
             >
-              <Plus className="h-3 w-3" />
+              <Plus size={12} />
             </button>
           </div>
 
           {/* Price + remove */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold">{formatPrice(item.price * item.quantity)}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: '#000' }}>
+              {formatPrice(item.price * item.quantity)}
+            </span>
             <button
               onClick={() => {
                 trackRemoveFromCart({ id: item.id, name: item.name });
                 removeItem(item.id);
               }}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-sale)]"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
               aria-label="Remove item"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 size={14} color="#CCC" />
             </button>
           </div>
         </div>
