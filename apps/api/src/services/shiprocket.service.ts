@@ -109,7 +109,7 @@ export const shiprocketService = {
         billing_phone: customerPhone.replace(/^\+91/, ''),
         shipping_is_billing: true,
         order_items: orderItems,
-        payment_method: 'Prepaid',
+        payment_method: order.payment?.method === 'COD' ? 'COD' : 'Prepaid',
         sub_total: Number(order.totalAmount),
         length: 20,
         breadth: 15,
