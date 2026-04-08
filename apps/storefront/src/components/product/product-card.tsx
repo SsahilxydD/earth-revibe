@@ -11,6 +11,47 @@ import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/us
 import { QuickAddModal } from './quick-add-modal';
 import type { Product } from '@/types';
 
+// Map common color names to hex for swatches
+const COLOR_HEX: Record<string, string> = {
+  black: '#1C1C1C',
+  white: '#FFFFFF',
+  red: '#DC2626',
+  blue: '#2563EB',
+  green: '#16A34A',
+  yellow: '#EAB308',
+  pink: '#EC4899',
+  orange: '#F97316',
+  purple: '#9333EA',
+  brown: '#92400E',
+  gray: '#78716C',
+  grey: '#78716C',
+  navy: '#1E3A5F',
+  beige: '#D2B48C',
+  sand: '#D2B48C',
+  olive: '#556B2F',
+  cream: '#FFFDD0',
+  khaki: '#BDB76B',
+  tan: '#D2B48C',
+  maroon: '#800000',
+  teal: '#0D9488',
+  coral: '#F97171',
+  lavender: '#C084FC',
+  mint: '#86EFAC',
+  charcoal: '#374151',
+  sky: '#87CEEB',
+  rust: '#B7410E',
+  ivory: '#FFFFF0',
+  sage: '#9CAF88',
+  stone: '#A8A29E',
+  slate: '#64748B',
+  indigo: '#4F46E5',
+};
+
+function getColorHex(name: string): string {
+  const lower = name.toLowerCase().trim();
+  return COLOR_HEX[lower] || lower; // fallback to the string itself (might be a hex already)
+}
+
 interface ProductCardProps {
   product: Product;
   index?: number;
@@ -360,28 +401,29 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
           )}
         </div>
 
-        {/* Color swatches */}
-        {colorSwatches.length > 1 && (
-          <div style={{ display: 'flex', gap: 4 }}>
-            {colorSwatches.map((color) => (
+        {/* Color swatches — fixed height row so card height stays consistent */}
+        <div style={{ display: 'flex', gap: 4, minHeight: 10 }}>
+          {colorSwatches.map((color) => {
+            const hex = getColorHex(color);
+            const isWhite =
+              hex.toUpperCase() === '#FFFFFF' ||
+              hex.toUpperCase() === '#FFFFF0' ||
+              hex.toUpperCase() === '#FFFDD0';
+            return (
               <span
                 key={color}
+                title={color}
                 style={{
                   width: 10,
                   height: 10,
                   borderRadius: 9999,
-                  backgroundColor:
-                    color.toLowerCase() === 'white'
-                      ? '#FFF'
-                      : color.toLowerCase() === 'black'
-                        ? '#1C1C1C'
-                        : color,
-                  border: color.toLowerCase() === 'white' ? '1px solid #E5E5E5' : 'none',
+                  backgroundColor: hex,
+                  border: isWhite ? '1px solid #E5E5E5' : 'none',
                 }}
               />
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
       </Link>
 
       {/* Quick Add / Notify Me button — 34px height */}

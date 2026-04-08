@@ -87,9 +87,7 @@ export const productService = {
 
     // reviewCount is a computed field (count of reviews), not a column
     const orderBy =
-      sortBy === 'reviewCount'
-        ? { reviews: { _count: sortOrder } }
-        : { [sortBy]: sortOrder };
+      sortBy === 'reviewCount' ? { reviews: { _count: sortOrder } } : { [sortBy]: sortOrder };
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
@@ -101,6 +99,11 @@ export const productService = {
           images: {
             where: { isPrimary: true },
             take: 1,
+          },
+          variants: {
+            where: { isActive: true },
+            select: { id: true, size: true, color: true, stock: true },
+            orderBy: { createdAt: 'asc' },
           },
           category: {
             select: { id: true, name: true, slug: true },

@@ -12,6 +12,45 @@ import { api } from '@/lib/api-client';
 import { Spinner } from '@/components/ui/spinner';
 import type { Product } from '@/types';
 
+const COLOR_HEX: Record<string, string> = {
+  black: '#1C1C1C',
+  white: '#FFFFFF',
+  red: '#DC2626',
+  blue: '#2563EB',
+  green: '#16A34A',
+  yellow: '#EAB308',
+  pink: '#EC4899',
+  orange: '#F97316',
+  purple: '#9333EA',
+  brown: '#92400E',
+  gray: '#78716C',
+  grey: '#78716C',
+  navy: '#1E3A5F',
+  beige: '#D2B48C',
+  sand: '#D2B48C',
+  olive: '#556B2F',
+  cream: '#FFFDD0',
+  khaki: '#BDB76B',
+  tan: '#D2B48C',
+  maroon: '#800000',
+  teal: '#0D9488',
+  coral: '#F97171',
+  lavender: '#C084FC',
+  mint: '#86EFAC',
+  charcoal: '#374151',
+  sky: '#87CEEB',
+  rust: '#B7410E',
+  ivory: '#FFFFF0',
+  sage: '#9CAF88',
+  stone: '#A8A29E',
+  slate: '#64748B',
+  indigo: '#4F46E5',
+};
+
+function getColorHex(name: string): string {
+  return COLOR_HEX[name.toLowerCase().trim()] || name;
+}
+
 interface QuickAddModalProps {
   product: Product | null;
   onClose: () => void;
@@ -267,9 +306,12 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
             <div style={{ display: 'flex', gap: 10 }}>
               {colors.map(({ color, inStock }) => {
                 const isSelected = selectedColor === color;
-                const isWhite = color.toLowerCase() === 'white';
-                const isBlack = color.toLowerCase() === 'black';
-                const bg = isWhite ? '#FFF' : isBlack ? '#1C1C1C' : color;
+                const hex = getColorHex(color);
+                const isWhite =
+                  hex.toUpperCase() === '#FFFFFF' ||
+                  hex.toUpperCase() === '#FFFFF0' ||
+                  hex.toUpperCase() === '#FFFDD0';
+                const bg = hex;
                 return (
                   <button
                     key={color}
