@@ -4,16 +4,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
-import { cn } from '@/lib/utils';
 
 type Step = 'phone' | 'otp';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Called after successful login */
   onSuccess?: () => void;
-  /** Called when user opts to continue as guest (skip login) */
   onGuest?: () => void;
 }
 
@@ -31,9 +28,6 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const phoneRef = useRef<HTMLInputElement>(null);
 
-  // Reset state when modal opens
-  // Note: do NOT lock/unlock body scroll here — the cart drawer already manages it.
-  // Adding a second lock/unlock pair causes the cart to become scrollable when the modal closes.
   useEffect(() => {
     if (isOpen) {
       setStep('phone');
@@ -45,14 +39,12 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
     }
   }, [isOpen]);
 
-  // Countdown timer for resend
   useEffect(() => {
     if (resendTimer <= 0) return;
     const id = setTimeout(() => setResendTimer((t) => t - 1), 1000);
     return () => clearTimeout(id);
   }, [resendTimer]);
 
-  // Escape to close
   useEffect(() => {
     if (!isOpen) return;
     const handle = (e: KeyboardEvent) => {
@@ -62,14 +54,13 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
     return () => document.removeEventListener('keydown', handle);
   }, [isOpen, onClose]);
 
-  const maskedPhone = phone ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : '';
+  const formattedPhone = phone ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : '';
 
   const handleSendOtp = async () => {
     if (phone.length !== 10 || !/^[6-9]\d{9}$/.test(phone)) {
       setError('Enter a valid 10-digit mobile number');
       return;
     }
-
     setLoading(true);
     setError('');
     try {
@@ -93,7 +84,6 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
         await api.post('/auth/verify-otp', { phone: `+91${phone}`, code });
         await checkAuth();
         onClose();
-        // Delay onSuccess so auth state propagates before checkout starts
         if (onSuccess) setTimeout(onSuccess, 100);
       } catch (err: any) {
         setError(err?.message || 'Verification failed');
@@ -111,11 +101,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
     const next = [...otp];
     next[index] = value;
     setOtp(next);
-
-    if (value && index < 5) {
-      otpRefs.current[index + 1]?.focus();
-    }
-
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
     if (value && index === 5) {
       const code = next.join('');
       if (code.length === 6) handleVerifyOtp(code);
@@ -132,16 +118,11 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
     e.preventDefault();
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
     if (!pasted) return;
-
     const next = Array(6).fill('');
     for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
     setOtp(next);
-
-    if (pasted.length === 6) {
-      handleVerifyOtp(pasted);
-    } else {
-      otpRefs.current[pasted.length]?.focus();
-    }
+    if (pasted.length === 6) handleVerifyOtp(pasted);
+    else otpRefs.current[pasted.length]?.focus();
   };
 
   const handleResend = async () => {
@@ -163,38 +144,33 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative z-10 mx-4 w-full max-w-sm animate-slide-up rounded-xl bg-white p-6 shadow-2xl">
+      <div className="relative z-10 w-full max-w-sm animate-slide-up bg-white px-7 pb-8 pt-6 font-[family-name:var(--font-inter)] sm:mx-4 sm:rounded-none">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full hover:bg-[var(--color-surface)] transition-colors"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center text-[#999] transition-colors hover:text-black"
           aria-label="Close"
         >
-          <X className="h-5 w-5" />
+          <X className="h-5 w-5" strokeWidth={1.5} />
         </button>
 
         {step === 'otp' ? (
-          <>
-            <h2 className="mb-2 text-center text-lg font-bold uppercase tracking-wider">
-              Verify OTP
-            </h2>
-            <p className="mb-6 text-center text-sm text-[var(--color-muted)]">
-              OTP sent to {maskedPhone}
+          <div className="flex flex-col items-center pt-4">
+            <h2 className="text-[22px] font-light tracking-[-0.5px] text-black">Verify OTP</h2>
+            <p className="mt-2 text-center text-[13px] font-light text-[#999]">
+              Code sent to {formattedPhone}
             </p>
 
-            {error && (
-              <div className="mb-4 rounded-[var(--button-radius)] bg-red-50 px-4 py-3 text-sm text-[var(--color-sale)]">
-                {error}
-              </div>
-            )}
+            {error && <p className="mt-3 text-center text-[13px] text-[#cf2929]">{error}</p>}
 
+            {/* OTP boxes */}
             <div
-              className={cn('mb-6 flex justify-center gap-2', shake && 'animate-shake')}
+              className={`mt-8 flex gap-2.5 ${shake ? 'animate-shake' : ''}`}
               onPaste={handleOtpPaste}
             >
               {otp.map((digit, i) => (
@@ -210,22 +186,26 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
                   onChange={(e) => handleOtpChange(i, e.target.value)}
                   onKeyDown={(e) => handleOtpKeyDown(i, e)}
                   disabled={loading}
-                  className="h-12 w-11 rounded-lg border border-[var(--color-border)] bg-white text-center text-lg font-semibold transition-colors focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] disabled:opacity-60"
+                  className={`h-12 w-10 border bg-white text-center font-mono text-lg text-black outline-none transition-colors ${
+                    digit ? 'border-black' : 'border-[#e5e5e5]'
+                  } focus:border-black disabled:opacity-50`}
                   autoComplete="one-time-code"
                 />
               ))}
             </div>
 
+            {/* Verify button */}
             <button
               type="button"
               onClick={() => handleVerifyOtp(otp.join(''))}
               disabled={loading || otp.join('').length !== 6}
-              className="flex h-12 w-full items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
+              className="mt-8 flex h-[46px] w-full items-center justify-center bg-black text-[11px] font-normal tracking-[2px] text-white transition-opacity disabled:opacity-40"
             >
-              {loading ? 'Verifying...' : 'Verify'}
+              {loading ? 'VERIFYING...' : 'VERIFY'}
             </button>
 
-            <div className="mt-4 flex items-center justify-between text-sm">
+            {/* Footer */}
+            <div className="mt-5 flex w-full items-center justify-between">
               <button
                 type="button"
                 onClick={() => {
@@ -233,44 +213,42 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
                   setError('');
                   setOtp(Array(6).fill(''));
                 }}
-                className="text-[var(--color-muted)] hover:text-[var(--color-primary)]"
+                className="text-[11px] font-light text-[#999] hover:text-black"
               >
-                Change number
+                &#8592; Change
               </button>
               {resendTimer > 0 ? (
-                <span className="text-[var(--color-muted)]">Resend in {resendTimer}s</span>
+                <span className="font-mono text-[11px] tracking-[1px] text-[#ccc]">
+                  {String(Math.floor(resendTimer / 60)).padStart(2, '0')}:
+                  {String(resendTimer % 60).padStart(2, '0')}
+                </span>
               ) : (
                 <button
                   type="button"
                   onClick={handleResend}
                   disabled={loading}
-                  className="text-[var(--color-primary)] hover:underline disabled:opacity-60"
+                  className="text-[11px] font-normal text-black disabled:opacity-50"
                 >
-                  Resend OTP
+                  Resend
                 </button>
               )}
             </div>
-          </>
+          </div>
         ) : (
-          <>
-            <h2 className="mb-2 text-center text-lg font-bold uppercase tracking-wider">
-              Log in to checkout
-            </h2>
-            <p className="mb-6 text-center text-sm text-[var(--color-muted)]">
-              Enter your phone number to continue
-            </p>
+          <div className="flex flex-col items-center pt-4">
+            <h2 className="text-[22px] font-light tracking-[-0.5px] text-black">Log in</h2>
+            <p className="mt-2 text-[13px] font-light text-[#999]">Enter your number to continue</p>
 
-            {error && (
-              <div className="mb-4 rounded-[var(--button-radius)] bg-red-50 px-4 py-3 text-sm text-[var(--color-sale)]">
-                {error}
-              </div>
-            )}
+            {error && <p className="mt-3 text-center text-[13px] text-[#cf2929]">{error}</p>}
 
-            <div className="mb-4">
-              <div className="flex">
-                <span className="flex h-12 items-center rounded-l-[var(--button-radius)] border border-r-0 border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-muted)]">
-                  +91
-                </span>
+            {/* Phone field */}
+            <div className="mt-8 w-full">
+              <label className="text-[10px] font-normal tracking-[1.5px] text-[#999]">
+                MOBILE NUMBER
+              </label>
+              <div className="mt-3 flex items-center gap-2 border-b border-[#e5e5e5] pb-3">
+                <span className="text-[14px] font-normal text-black">+91</span>
+                <div className="h-4 w-px bg-[#ccc]" />
                 <input
                   ref={phoneRef}
                   type="tel"
@@ -286,30 +264,31 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
                     if (e.key === 'Enter') handleSendOtp();
                   }}
                   disabled={loading}
-                  className="h-12 w-full rounded-r-[var(--button-radius)] border border-[var(--color-border)] bg-white px-3 text-sm transition-colors focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] disabled:opacity-60"
+                  className="w-full bg-transparent text-[14px] font-light text-black outline-none placeholder:text-[#ccc] disabled:opacity-50"
                 />
               </div>
             </div>
 
+            {/* Send OTP button */}
             <button
               type="button"
               onClick={handleSendOtp}
               disabled={loading || phone.length !== 10}
-              className="flex h-12 w-full items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
+              className="mt-8 flex h-[46px] w-full items-center justify-center bg-black text-[11px] font-normal tracking-[2px] text-white transition-opacity disabled:opacity-40"
             >
-              {loading ? 'Sending OTP...' : 'Send OTP via WhatsApp'}
+              {loading ? 'SENDING...' : 'SEND OTP'}
             </button>
 
             {onGuest && (
               <button
                 type="button"
                 onClick={onGuest}
-                className="mt-3 w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors"
+                className="mt-4 text-[11px] font-light text-[#999] transition-colors hover:text-black"
               >
                 Continue as guest
               </button>
             )}
-          </>
+          </div>
         )}
       </div>
 

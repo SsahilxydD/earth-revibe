@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Script from 'next/script';
 import type { Metadata, Viewport } from 'next';
-import { Archivo_Narrow, Poppins } from 'next/font/google';
+import { Archivo_Narrow, Inter, Poppins } from 'next/font/google';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { Providers } from '@/providers';
 import { LenisProvider } from '@/providers/lenis-provider';
@@ -14,6 +14,13 @@ const archivoNarrow = Archivo_Narrow({
   variable: '--font-archivo',
   display: 'swap',
   weight: ['400', '500', '600', '700'],
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+  weight: ['300', '400', '500', '600'],
 });
 
 const poppins = Poppins({
@@ -95,7 +102,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${archivoNarrow.variable} ${poppins.variable}`}
+      className={`${archivoNarrow.variable} ${inter.variable} ${poppins.variable}`}
       suppressHydrationWarning
     >
       <head>
