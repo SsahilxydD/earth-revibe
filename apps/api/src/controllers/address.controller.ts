@@ -3,28 +3,8 @@ import { addressService } from '../services/address.service';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
 
-// Mappls OAuth2 token cache
-let mapplsToken: string | null = null;
-let mapplsTokenExpiry = 0;
-
-async function getMapplsToken(): Promise<string | null> {
-  if (!env.MAPPLS_CLIENT_ID || !env.MAPPLS_CLIENT_SECRET) return null;
-  if (mapplsToken && Date.now() < mapplsTokenExpiry) return mapplsToken;
-
-  const resp = await fetch('https://outpost.mappls.com/api/security/oauth/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'client_credentials',
-      client_id: env.MAPPLS_CLIENT_ID,
-      client_secret: env.MAPPLS_CLIENT_SECRET,
-    }),
-  });
-  const data: any = await resp.json();
-  if (!data.access_token) return null;
-  mapplsToken = data.access_token;
-  mapplsTokenExpiry = Date.now() + (data.expires_in - 60) * 1000; // refresh 1 min early
-  return mapplsToken;
+function getMapplsKey(): string | null {
+  return env.MAPPLS_API_KEY || null;
 }
 
 export const addressController = {
@@ -58,7 +38,7 @@ export const addressController = {
       res.json({ success: true, data: { suggestions: [] } });
       return;
     }
-    const token = await getMapplsToken();
+    const token = getMapplsKey();
     if (!token) {
       logger.warn('Mappls autosuggest: no token available (check MAPPLS_CLIENT_ID/SECRET)');
       res.json({ success: true, data: { suggestions: [] } });
@@ -88,7 +68,7 @@ export const addressController = {
   async reverseGeocode(req: Request, res: Response) {
     const lat = req.query.lat as string;
     const lng = req.query.lng as string;
-    const token = await getMapplsToken();
+    const token = getMapplsKey();
     if (!lat || !lng || !token) {
       res.json({ success: true, data: { address: null } });
       return;
