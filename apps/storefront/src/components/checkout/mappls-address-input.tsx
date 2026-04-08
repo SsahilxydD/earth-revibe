@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, MapPin, Loader2 } from 'lucide-react';
-import { api } from '@/lib/api-client';
+
+const MAPPLS_KEY = process.env.NEXT_PUBLIC_MAPPLS_API_KEY || '';
 
 interface Suggestion {
   placeName: string;
@@ -10,8 +11,6 @@ interface Suggestion {
   city: string;
   state: string;
   pinCode: string;
-  lat: string;
-  lng: string;
 }
 
 interface MapplsAddressInputProps {
@@ -28,17 +27,25 @@ export function MapplsAddressInput({ onSelect }: MapplsAddressInputProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const fetchSuggestions = useCallback(async (q: string) => {
-    if (q.length < 3) {
+    if (q.length < 3 || !MAPPLS_KEY) {
       setSuggestions([]);
       return;
     }
     setIsLoading(true);
     try {
-      const result = await api.get<{ suggestions: Suggestion[] }>(
-        `/addresses/autosuggest?query=${encodeURIComponent(q)}`
+      const resp = await fetch(
+        `https://atlas.mappls.com/api/places/search/json?query=${encodeURIComponent(q)}&region=IND&tokenizeAddress=true&access_token=${MAPPLS_KEY}`
       );
-      setSuggestions(result.suggestions || []);
-      setIsOpen(true);
+      const data = await resp.json();
+      const results = (data.suggestedLocations || []).map((s: any) => ({
+        placeName: s.placeName || '',
+        placeAddress: s.placeAddress || '',
+        city: s.city || '',
+        state: s.state || '',
+        pinCode: s.pincode || s.postalCode || '',
+      }));
+      setSuggestions(results);
+      setIsOpen(results.length > 0);
     } catch {
       setSuggestions([]);
     } finally {
@@ -60,17 +67,27 @@ export function MapplsAddressInput({ onSelect }: MapplsAddressInputProps) {
   };
 
   const handleUseLocation = async () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation || !MAPPLS_KEY) return;
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
-          const result = await api.get<{
-            address: { line1: string; city: string; state: string; pinCode: string } | null;
-          }>(`/addresses/reverse-geocode?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`);
-          if (result.address) {
-            setQuery(result.address.line1);
-            onSelect(result.address);
+          const resp = await fetch(
+            `https://apis.mappls.com/advancedmaps/v1/${MAPPLS_KEY}/rev_geocode?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`
+          );
+          const data = await resp.json();
+          const result = data.results?.[0];
+          if (result) {
+            const addr = {
+              line1: [result.street, result.subSubLocality, result.subLocality]
+                .filter(Boolean)
+                .join(', '),
+              city: result.city || result.district || '',
+              state: result.state || '',
+              pinCode: result.pincode || '',
+            };
+            setQuery(addr.line1);
+            onSelect(addr);
           }
         } catch {
           // Silently fail
