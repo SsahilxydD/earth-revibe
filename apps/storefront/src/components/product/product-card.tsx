@@ -55,9 +55,11 @@ function getColorHex(name: string): string {
 interface ProductCardProps {
   product: Product;
   index?: number;
+  /** Sibling color variants from related products (same base name, different colors) */
+  siblingColors?: { color: string; slug: string }[];
 }
 
-export function ProductCard({ product, index = 99 }: ProductCardProps) {
+export function ProductCard({ product, index = 99, siblingColors }: ProductCardProps) {
   const router = useRouter();
   const prefetched = useRef(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -401,14 +403,18 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
           )}
         </div>
 
-        {/* Color swatches — fixed height row so card height stays consistent */}
-        <div style={{ display: 'flex', gap: 4, minHeight: 10 }}>
-          {colorSwatches.map((color) => {
+        {/* Color swatches — show sibling product colors or variant colors */}
+        <div style={{ display: 'flex', gap: 4, minHeight: 10, alignItems: 'center' }}>
+          {(siblingColors && siblingColors.length > 1
+            ? siblingColors
+            : colorSwatches.map((c) => ({ color: c, slug: product.slug }))
+          ).map(({ color, slug }) => {
             const hex = getColorHex(color);
             const isWhite =
               hex.toUpperCase() === '#FFFFFF' ||
               hex.toUpperCase() === '#FFFFF0' ||
               hex.toUpperCase() === '#FFFDD0';
+            const isCurrent = slug === product.slug;
             return (
               <span
                 key={color}
@@ -418,7 +424,9 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
                   height: 10,
                   borderRadius: 9999,
                   backgroundColor: hex,
-                  border: isWhite ? '1px solid #E5E5E5' : 'none',
+                  border: isWhite ? '1px solid #E5E5E5' : isCurrent ? '1px solid #000' : 'none',
+                  outline: isCurrent && !isWhite ? '1px solid #000' : 'none',
+                  outlineOffset: 1,
                 }}
               />
             );

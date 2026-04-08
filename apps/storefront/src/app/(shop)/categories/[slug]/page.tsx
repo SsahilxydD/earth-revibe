@@ -120,6 +120,31 @@ function CategoryContent() {
   const totalCount = data?.pages?.[0]?.total ?? allProducts.length;
   const categoryName = currentCategory?.name || slug.replace(/-/g, ' ');
 
+  // Group products by base name to find sibling colors
+  // "Essential Round Neck T-Shirt — Garden Sage" → base "Essential Round Neck T-Shirt"
+  const siblingColorMap = useMemo(() => {
+    const baseGroups = new Map<string, { color: string; slug: string }[]>();
+    allProducts.forEach((p) => {
+      const dashIdx = p.name.lastIndexOf('—');
+      const emDashIdx = p.name.lastIndexOf('—');
+      const sepIdx = Math.max(dashIdx, emDashIdx);
+      if (sepIdx === -1) return;
+      const baseName = p.name.slice(0, sepIdx).trim();
+      const colorName = p.name.slice(sepIdx + 1).trim();
+      if (!colorName) return;
+      if (!baseGroups.has(baseName)) baseGroups.set(baseName, []);
+      baseGroups.get(baseName)!.push({ color: colorName, slug: p.slug });
+    });
+    // Map slug → sibling colors
+    const result = new Map<string, { color: string; slug: string }[]>();
+    baseGroups.forEach((siblings) => {
+      if (siblings.length > 1) {
+        siblings.forEach((s) => result.set(s.slug, siblings));
+      }
+    });
+    return result;
+  }, [allProducts]);
+
   const setNavContext = useProductNavStore((s) => s.setNavContext);
   useEffect(() => {
     if (allProducts.length > 0) {
@@ -404,7 +429,14 @@ function CategoryContent() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 14px' }}>
             {allProducts.map((product, i) => {
               const items = [];
-              items.push(<ProductCard key={product.id} product={product} index={i} />);
+              items.push(
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  index={i}
+                  siblingColors={siblingColorMap.get(product.slug)}
+                />
+              );
               // Vacation quote strip after first row (2 products)
               if (i === 1) {
                 items.push(
