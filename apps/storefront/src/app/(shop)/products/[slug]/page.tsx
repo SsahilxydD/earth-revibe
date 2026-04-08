@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { SwipeableProductWrapper } from '@/components/product/swipeable-product-wrapper';
+import { ProductDetail } from '@/components/product/product-detail';
 import type { Product } from '@/types';
 
 /* ------------------------------------------------------------------ */
@@ -142,7 +142,7 @@ export default async function ProductPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <SwipeableProductWrapper initialProduct={product} initialSlug={slug} />
+      <ProductDetail product={product} />
     </>
   );
 }
