@@ -37,6 +37,7 @@ function buildProductQuery(params: ProductListParams): string {
   if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
   if (params.isFeatured != null) searchParams.set('isFeatured', String(params.isFeatured));
   if (params.status) searchParams.set('status', params.status);
+  if ((params as any).tag) searchParams.set('tag', (params as any).tag);
 
   const qs = searchParams.toString();
   return qs ? `?${qs}` : '';

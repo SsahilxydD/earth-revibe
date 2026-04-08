@@ -23,6 +23,7 @@ export const productService = {
       size,
       color,
       material,
+      tag,
       search,
       isFeatured,
       page,
@@ -76,8 +77,8 @@ export const productService = {
     }
 
     // Filter by tag (e.g., mood-beach, mood-sunset)
-    if ((query as any).tag) {
-      where.tags = { some: { tag: { slug: (query as any).tag } } };
+    if (tag) {
+      where.tags = { some: { tag: { slug: tag } } };
     }
 
     // Filter by variant attributes

@@ -251,7 +251,7 @@ function CategoryContent() {
       <div
         className="hide-scrollbar"
         style={{
-          height: 90,
+          height: 100,
           padding: '16px 8px 10px 8px',
           display: 'flex',
           alignItems: 'center',
@@ -285,8 +285,8 @@ function CategoryContent() {
             >
               <div
                 style={{
-                  width: 46,
-                  height: 46,
+                  width: 56,
+                  height: 56,
                   borderRadius: 9999,
                   backgroundImage: `url(${m.img})`,
                   backgroundSize: 'cover',

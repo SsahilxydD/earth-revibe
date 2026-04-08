@@ -41,6 +41,7 @@ export const productQuerySchema = z.object({
   size: z.string().optional(),
   color: z.string().optional(),
   material: z.string().optional(),
+  tag: z.string().optional(),
   search: z.string().optional(),
   isFeatured: z.coerce.boolean().optional(),
   page: z.coerce.number().int().min(1).default(1),
