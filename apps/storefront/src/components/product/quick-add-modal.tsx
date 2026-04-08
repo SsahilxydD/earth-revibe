@@ -45,10 +45,28 @@ const COLOR_HEX: Record<string, string> = {
   stone: '#A8A29E',
   slate: '#64748B',
   indigo: '#4F46E5',
+  mocha: '#7B5B3A',
+  taupe: '#8B7D6B',
+  coffee: '#6F4E37',
+  camel: '#C19A6B',
+  mustard: '#CEAB07',
+  wine: '#722F37',
+  burgundy: '#800020',
+  peach: '#FFDAB9',
+  lilac: '#C8A2C8',
+  aqua: '#00CED1',
+  denim: '#1560BD',
+  ash: '#B2BEB5',
 };
 
 function getColorHex(name: string): string {
-  return COLOR_HEX[name.toLowerCase().trim()] || name;
+  const lower = name.toLowerCase().trim();
+  if (COLOR_HEX[lower]) return COLOR_HEX[lower];
+  const words = lower.split(/\s+/);
+  for (let i = words.length - 1; i >= 0; i--) {
+    if (COLOR_HEX[words[i]]) return COLOR_HEX[words[i]];
+  }
+  return '#A8A29E';
 }
 
 interface QuickAddModalProps {
