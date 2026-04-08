@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Package, ChevronRight, RefreshCw } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { formatPrice, formatDate } from '@/lib/utils';
@@ -15,24 +16,27 @@ interface Order {
   createdAt: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  DELIVERED: '#22C55E',
-  SHIPPED: '#8B5CF6',
-  CANCELLED: '#999',
-  PLACED: '#EAB308',
-  CONFIRMED: '#3B82F6',
-  PROCESSING: '#3B82F6',
-  OUT_FOR_DELIVERY: '#3B82F6',
-  RETURNED: '#999',
-  REFUNDED: '#999',
+const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
+  PLACED: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+  CONFIRMED: { bg: 'bg-blue-100', text: 'text-blue-800' },
+  PROCESSING: { bg: 'bg-blue-100', text: 'text-blue-800' },
+  SHIPPED: { bg: 'bg-purple-100', text: 'text-purple-800' },
+  OUT_FOR_DELIVERY: { bg: 'bg-purple-100', text: 'text-purple-800' },
+  DELIVERED: { bg: 'bg-green-100', text: 'text-green-800' },
+  CANCELLED: { bg: 'bg-red-100', text: 'text-red-800' },
+  RETURNED: { bg: 'bg-gray-100', text: 'text-gray-800' },
+  REFUNDED: { bg: 'bg-gray-100', text: 'text-gray-800' },
 };
 
-function getStatusColor(status: string): string {
-  return STATUS_COLORS[status] || '#3B82F6';
-}
-
-function formatStatusLabel(status: string): string {
-  return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+function OrderStatusBadge({ status }: { status: string }) {
+  const style = STATUS_STYLES[status] || STATUS_STYLES.PLACED;
+  return (
+    <span
+      className={`inline-block rounded-[var(--badge-radius)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${style.bg} ${style.text}`}
+    >
+      {status.replace(/_/g, ' ')}
+    </span>
+  );
 }
 
 export default function OrdersPage() {
@@ -48,6 +52,7 @@ export default function OrdersPage() {
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['orders'] });
       if (result.synced > 0) {
+        // Brief delay so the invalidated query has time to refetch
         setTimeout(() => qc.invalidateQueries({ queryKey: ['orders'] }), 1000);
       }
     },
@@ -57,14 +62,7 @@ export default function OrdersPage() {
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          minHeight: '40vh',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="flex min-h-[40vh] items-center justify-center">
         <Spinner className="h-6 w-6" />
       </div>
     );
@@ -73,43 +71,20 @@ export default function OrdersPage() {
   if (!orders || orders.length === 0) {
     return (
       <div
-        style={{
-          paddingTop: 80,
-          paddingBottom: 80,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-        }}
+        style={{ paddingTop: 80, paddingBottom: 80 }}
+        className="flex flex-col items-center text-center"
       >
-        <p
-          style={{
-            fontFamily: 'var(--font-inter)',
-            fontSize: 12,
-            fontWeight: 300,
-            color: '#999',
-          }}
-        >
+        <Package size={40} strokeWidth={1} className="text-[#c0c0c0]" />
+        <h2 style={{ marginTop: 24 }} className="text-xs font-bold uppercase tracking-[0.2em]">
           No orders yet
+        </h2>
+        <p style={{ marginTop: 10, maxWidth: 240 }} className="text-xs leading-relaxed text-[#999]">
+          Once you place an order, you&apos;ll be able to track it here.
         </p>
         <Link
           href="/categories/new-arrivals"
-          style={{
-            marginTop: 24,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid #000',
-            backgroundColor: 'transparent',
-            padding: '12px 32px',
-            fontFamily: 'var(--font-inter)',
-            fontSize: 12,
-            fontWeight: 400,
-            letterSpacing: '2px',
-            color: '#000',
-            textDecoration: 'none',
-            textTransform: 'uppercase',
-          }}
+          style={{ marginTop: 28 }}
+          className="inline-flex items-center justify-center border border-[var(--color-primary)] px-8 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white"
         >
           Start Shopping
         </Link>
@@ -119,134 +94,47 @@ export default function OrdersPage() {
 
   return (
     <div>
-      {/* Section header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-inter)',
-              fontSize: 10,
-              fontWeight: 400,
-              color: '#999',
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-            }}
-          >
-            Order History
-          </span>
-          <button
-            onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              fontFamily: 'var(--font-inter)',
-              fontSize: 11,
-              fontWeight: 400,
-              color: '#000',
-              opacity: syncMutation.isPending ? 0.5 : 1,
-            }}
-          >
-            {syncMutation.isPending ? 'Syncing...' : 'Sync'}
-          </button>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-wider">Order History</h2>
+          <p className="mt-2 text-xs text-[var(--color-muted)]">Track and manage your orders.</p>
         </div>
-        <span
-          style={{
-            fontFamily: 'var(--font-inter)',
-            fontSize: 11,
-            fontWeight: 300,
-            color: '#999',
-          }}
+        <button
+          onClick={() => syncMutation.mutate()}
+          disabled={syncMutation.isPending}
+          className="flex shrink-0 items-center gap-1.5 border border-[var(--color-border)] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:opacity-50"
         >
-          {orders.length} {orders.length === 1 ? 'order' : 'orders'}
-        </span>
+          <RefreshCw size={12} className={syncMutation.isPending ? 'animate-spin' : ''} />
+          {syncMutation.isPending ? 'Syncing…' : 'Sync Orders'}
+        </button>
       </div>
 
-      {/* Order list */}
-      <div style={{ marginTop: 20 }}>
-        {orders.map((order, index) => (
+      <hr
+        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
+      />
+
+      <div className="space-y-3">
+        {orders.map((order) => (
           <Link
             key={order.id}
             href={`/account/orders/${order.orderNumber}`}
-            style={{
-              display: 'block',
-              textDecoration: 'none',
-              padding: '20px 0',
-              borderBottom: index < orders.length - 1 ? '1px solid #F0F0F0' : 'none',
-              borderTop: index === 0 ? '1px solid #F0F0F0' : 'none',
-            }}
+            className="flex items-center justify-between rounded-xl border border-[var(--color-border)] p-3 transition-colors hover:bg-[var(--color-surface)] md:p-4"
           >
-            {/* Top row: order number + status */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: 'var(--font-geist-mono)',
-                  fontSize: 13,
-                  fontWeight: 400,
-                  color: '#000',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                #{order.orderNumber}
-              </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-inter)',
-                  fontSize: 11,
-                  fontWeight: 400,
-                  color: getStatusColor(order.status),
-                  letterSpacing: '0.5px',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {formatStatusLabel(order.status)}
-              </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-bold">#{order.orderNumber}</span>
+                <OrderStatusBadge status={order.status} />
+              </div>
+              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-[var(--color-muted)]">
+                <span>{formatDate(order.createdAt)}</span>
+                <span>
+                  {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+                </span>
+              </div>
             </div>
-
-            {/* Bottom row: date + items, price */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginTop: 10,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: 'var(--font-inter)',
-                  fontSize: 12,
-                  fontWeight: 300,
-                  color: '#999',
-                }}
-              >
-                {formatDate(order.createdAt)} &middot; {order.items.length}{' '}
-                {order.items.length === 1 ? 'item' : 'items'}
-              </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-inter)',
-                  fontSize: 13,
-                  fontWeight: 400,
-                  color: '#000',
-                }}
-              >
-                {formatPrice(order.totalAmount)}
-              </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold">{formatPrice(order.totalAmount)}</span>
+              <ChevronRight size={18} className="text-[var(--color-muted)]" />
             </div>
           </Link>
         ))}

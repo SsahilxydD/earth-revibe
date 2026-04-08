@@ -2,11 +2,13 @@
 
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Camera } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { useToast } from '@/providers';
-import { useRouter } from 'next/navigation';
 
 interface UserProfile {
   id: string;
@@ -23,11 +25,15 @@ interface ProfileForm {
   phone: string;
 }
 
+interface PasswordForm {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
 export default function ProfilePage() {
   const queryClient = useQueryClient();
-  const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
-  const logout = useAuthStore((s) => s.logout);
   const { addToast } = useToast();
 
   const { data: profile, isLoading } = useQuery({
@@ -55,6 +61,17 @@ export default function ProfilePage() {
     },
   });
 
+  const passwordMutation = useMutation({
+    mutationFn: (data: PasswordForm) => api.put('/auth/password', data),
+    onSuccess: () => {
+      passwordReset();
+      addToast('Password changed successfully', 'success');
+    },
+    onError: (err: any) => {
+      addToast(err?.message || 'Failed to change password', 'error');
+    },
+  });
+
   const {
     register: profileRegister,
     handleSubmit: handleProfileSubmit,
@@ -69,10 +86,19 @@ export default function ProfilePage() {
       : undefined,
   });
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/auth/login');
-  };
+  const {
+    register: passwordRegister,
+    handleSubmit: handlePasswordSubmit,
+    formState: { errors: passwordErrors },
+    reset: passwordReset,
+    watch: passwordWatch,
+  } = useForm<PasswordForm>({
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
+    },
+  });
 
   if (isLoading) {
     return (
@@ -82,135 +108,135 @@ export default function ProfilePage() {
     );
   }
 
-  const initials = `${profile?.firstName?.[0] || ''}${profile?.lastName?.[0] || ''}`;
-  const fullName = `${profile?.firstName || ''} ${profile?.lastName || ''}`.trim();
-  const displayPhone = profile?.phone ? `+91 ${profile.phone}` : '';
-
   return (
-    <div className="font-[family-name:var(--font-inter)] px-[28px] py-[32px] bg-white">
-      {/* Avatar section: circle + name/phone */}
-      <div className="flex items-center gap-[16px]">
-        <div className="w-[56px] h-[56px] rounded-full bg-[#F5F5F5] flex items-center justify-center shrink-0">
+    <div>
+      {/* Avatar Section */}
+      <div className="flex items-center gap-3 md:gap-4">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--color-surface)] md:h-20 md:w-20">
           {profile?.avatar ? (
-            <img
-              src={profile.avatar}
-              alt="Avatar"
-              className="w-full h-full rounded-full object-cover"
-            />
+            <img src={profile.avatar} alt="Avatar" className="h-full w-full object-cover" />
           ) : (
-            <span className="text-[18px] font-light text-black tracking-[1px]">{initials}</span>
+            <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[var(--color-muted)]">
+              {profile?.firstName?.[0]}
+              {profile?.lastName?.[0]}
+            </div>
           )}
+          <button
+            className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity hover:opacity-100"
+            aria-label="Change avatar"
+          >
+            <Camera size={20} />
+          </button>
         </div>
         <div>
-          <p className="text-[16px] font-normal text-black leading-tight">{fullName}</p>
-          {displayPhone && (
-            <p className="text-[12px] font-light text-[#999] mt-[2px]">{displayPhone}</p>
-          )}
+          <h2 className="text-lg font-bold">
+            {profile?.firstName} {profile?.lastName}
+          </h2>
+          <p className="text-sm text-[var(--color-muted)]">{profile?.email}</p>
         </div>
       </div>
 
-      {/* Section label */}
-      <p className="mt-[36px] text-[10px] font-normal text-[#999] tracking-[1.5px] uppercase">
-        PERSONAL INFORMATION
-      </p>
+      <hr
+        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
+      />
 
-      {/* Profile form */}
-      <form
-        onSubmit={handleProfileSubmit((data) => profileMutation.mutate(data))}
-        className="mt-[24px]"
-      >
-        {/* First Name */}
-        <div className="mb-[28px]">
-          <label className="block text-[10px] font-normal text-[#999] tracking-[1.5px] uppercase">
-            FIRST NAME
-          </label>
-          <input
-            type="text"
-            className="mt-[10px] block w-full text-[14px] font-light text-black bg-transparent outline-none border-none p-0"
-            {...profileRegister('firstName', {
-              required: 'First name is required',
-            })}
-          />
-          <div className="mt-[10px] h-px bg-[#E5E5E5]" />
-          {profileErrors.firstName?.message && (
-            <p className="mt-[6px] text-[11px] text-red-500">{profileErrors.firstName.message}</p>
-          )}
-        </div>
-
-        {/* Last Name */}
-        <div className="mb-[28px]">
-          <label className="block text-[10px] font-normal text-[#999] tracking-[1.5px] uppercase">
-            LAST NAME
-          </label>
-          <input
-            type="text"
-            className="mt-[10px] block w-full text-[14px] font-light text-black bg-transparent outline-none border-none p-0"
-            {...profileRegister('lastName', {
-              required: 'Last name is required',
-            })}
-          />
-          <div className="mt-[10px] h-px bg-[#E5E5E5]" />
-          {profileErrors.lastName?.message && (
-            <p className="mt-[6px] text-[11px] text-red-500">{profileErrors.lastName.message}</p>
-          )}
-        </div>
-
-        {/* Email (disabled) */}
-        <div className="mb-[28px]">
-          <label className="block text-[10px] font-normal text-[#999] tracking-[1.5px] uppercase">
-            EMAIL
-          </label>
-          <input
-            type="email"
-            value={profile?.email || ''}
-            disabled
-            className="mt-[10px] block w-full text-[14px] font-light text-[#CCC] bg-transparent outline-none border-none p-0 cursor-not-allowed"
-          />
-          <div className="mt-[10px] h-px bg-[#F0F0F0]" />
-        </div>
-
-        {/* Phone */}
-        <div className="mb-[28px]">
-          <label className="block text-[10px] font-normal text-[#999] tracking-[1.5px] uppercase">
-            PHONE
-          </label>
-          <div className="mt-[10px] flex items-center gap-0">
-            <span className="text-[14px] font-light text-black shrink-0">+91</span>
-            <div className="w-px h-[16px] bg-[#E5E5E5] mx-[10px] shrink-0" />
-            <input
-              type="tel"
-              className="block w-full text-[14px] font-light text-black bg-transparent outline-none border-none p-0"
-              {...profileRegister('phone', {
-                pattern: {
-                  value: /^[6-9]\d{9}$/,
-                  message: 'Enter a valid 10-digit Indian phone number',
-                },
+      {/* Profile Form */}
+      <div>
+        <h3 className="text-sm font-bold uppercase tracking-wider">Personal Information</h3>
+        <p className="mt-1 mb-5 text-xs text-[var(--color-muted)]">
+          Update your name and contact details.
+        </p>
+        <form
+          onSubmit={handleProfileSubmit((data) => profileMutation.mutate(data))}
+          className="space-y-4"
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="First Name"
+              error={profileErrors.firstName?.message}
+              {...profileRegister('firstName', {
+                required: 'First name is required',
+              })}
+            />
+            <Input
+              label="Last Name"
+              error={profileErrors.lastName?.message}
+              {...profileRegister('lastName', {
+                required: 'Last name is required',
               })}
             />
           </div>
-          <div className="mt-[10px] h-px bg-[#E5E5E5]" />
-          {profileErrors.phone?.message && (
-            <p className="mt-[6px] text-[11px] text-red-500">{profileErrors.phone.message}</p>
-          )}
-        </div>
+          <Input label="Email" value={profile?.email || ''} disabled />
+          <Input
+            label="Phone"
+            type="tel"
+            error={profileErrors.phone?.message}
+            {...profileRegister('phone', {
+              pattern: {
+                value: /^[6-9]\d{9}$/,
+                message: 'Enter a valid 10-digit Indian phone number',
+              },
+            })}
+          />
+          <Button type="submit" loading={profileMutation.isPending}>
+            Save Changes
+          </Button>
+        </form>
+      </div>
 
-        {/* Save button */}
-        <button
-          type="submit"
-          disabled={profileMutation.isPending}
-          className="mt-[36px] w-full h-[50px] bg-black text-white text-[12px] font-normal tracking-[2px] uppercase flex items-center justify-center disabled:opacity-50 transition-opacity"
+      <hr
+        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
+      />
+
+      {/* Change Password */}
+      <div>
+        <h3 className="text-sm font-bold uppercase tracking-wider">Change Password</h3>
+        <p className="mt-1 mb-5 text-xs text-[var(--color-muted)]">
+          Set a new password for your account.
+        </p>
+        <form
+          onSubmit={handlePasswordSubmit((data) => passwordMutation.mutate(data))}
+          className="max-w-md space-y-4"
         >
-          {profileMutation.isPending ? <Spinner className="h-4 w-4" /> : 'SAVE CHANGES'}
-        </button>
-      </form>
-
-      {/* Log out link */}
-      <button
-        onClick={handleLogout}
-        className="mt-[36px] w-full text-center text-[12px] font-light text-[#999] bg-transparent border-none cursor-pointer hover:text-[#666] transition-colors"
-      >
-        Log out
-      </button>
+          <Input
+            label="Current Password"
+            type="password"
+            autoComplete="current-password"
+            error={passwordErrors.currentPassword?.message}
+            {...passwordRegister('currentPassword', {
+              required: 'Current password is required',
+            })}
+          />
+          <Input
+            label="New Password"
+            type="password"
+            autoComplete="new-password"
+            error={passwordErrors.newPassword?.message}
+            {...passwordRegister('newPassword', {
+              required: 'New password is required',
+              minLength: { value: 8, message: 'Min 8 characters' },
+              validate: {
+                uppercase: (v) => /[A-Z]/.test(v) || 'Must contain an uppercase letter',
+                number: (v) => /[0-9]/.test(v) || 'Must contain a number',
+              },
+            })}
+          />
+          <Input
+            label="Confirm New Password"
+            type="password"
+            autoComplete="new-password"
+            error={passwordErrors.confirmNewPassword?.message}
+            {...passwordRegister('confirmNewPassword', {
+              required: 'Please confirm your new password',
+              validate: (value) =>
+                value === passwordWatch('newPassword') || 'Passwords do not match',
+            })}
+          />
+          <Button type="submit" loading={passwordMutation.isPending}>
+            Update Password
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

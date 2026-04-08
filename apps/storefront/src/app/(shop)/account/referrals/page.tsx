@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Share2, Users, UserPlus, Gift } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
@@ -82,184 +82,98 @@ export default function ReferralsPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-      {/* Referral Code Section */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-          alignItems: 'center',
-        }}
-      >
-        <p
-          style={{
-            fontFamily: 'var(--font-inter)',
-            fontSize: 10,
-            fontWeight: 400,
-            color: '#999',
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-            margin: 0,
-            textAlign: 'center',
-          }}
-        >
-          YOUR REFERRAL CODE
+    <div className="space-y-8 md:space-y-10">
+      {/* Referral Code */}
+      <div className="rounded-xl border border-[var(--color-border)] p-4 md:p-6">
+        <h2 className="mb-1 text-sm font-bold uppercase tracking-wider">Your Referral Code</h2>
+        <p className="mb-4 text-xs text-[var(--color-muted)]">
+          Share your code with friends and earn rewards when they make their first purchase.
         </p>
 
-        {/* Code Box */}
-        <div
-          style={{
-            width: '100%',
-            height: 56,
-            border: '1px dashed #E5E5E5',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-geist-mono)',
-              fontSize: 16,
-              fontWeight: 400,
-              color: '#000',
-              letterSpacing: '2px',
-            }}
-          >
+        <div className="flex items-center gap-3">
+          <div className="flex-1 rounded-[var(--button-radius)] border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-center text-lg font-bold tracking-[0.2em]">
             {code}
-          </span>
-        </div>
-
-        {/* Copy Code Button */}
-        <button
-          onClick={() => copyToClipboard(code, 'code')}
-          style={{
-            width: '100%',
-            height: 46,
-            backgroundColor: '#000',
-            color: '#FFF',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            fontFamily: 'var(--font-inter)',
-            fontSize: 11,
-            fontWeight: 400,
-            letterSpacing: '2px',
-          }}
-        >
-          {codeCopied ? <Check size={14} /> : <Copy size={14} />}
-          {codeCopied ? 'COPIED' : 'COPY CODE'}
-        </button>
-
-        {/* Share Row */}
-        <div style={{ display: 'flex', gap: 12, width: '100%' }}>
+          </div>
           <button
-            onClick={shareWhatsApp}
-            style={{
-              flex: 1,
-              height: 46,
-              backgroundColor: '#25D366',
-              color: '#FFF',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-inter)',
-              fontSize: 11,
-              fontWeight: 400,
-              letterSpacing: '1.5px',
-            }}
+            onClick={() => copyToClipboard(code, 'code')}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--button-radius)] bg-[var(--color-primary)] text-white transition-colors hover:bg-[#2a2a2a]"
+            aria-label="Copy referral code"
           >
-            WHATSAPP
-          </button>
-          <button
-            onClick={() => copyToClipboard(referralLink, 'link')}
-            style={{
-              flex: 1,
-              height: 46,
-              backgroundColor: 'transparent',
-              color: '#000',
-              border: '1px solid #E5E5E5',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-inter)',
-              fontSize: 11,
-              fontWeight: 400,
-              letterSpacing: '1.5px',
-            }}
-          >
-            {linkCopied ? 'COPIED' : 'COPY LINK'}
+            {codeCopied ? <Check size={20} /> : <Copy size={20} />}
           </button>
         </div>
       </div>
 
-      {/* Stats Section */}
+      {/* Share Buttons */}
       <div>
-        <p
-          style={{
-            fontFamily: 'var(--font-inter)',
-            fontSize: 10,
-            fontWeight: 400,
-            color: '#999',
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-            margin: 0,
-            marginBottom: 16,
-          }}
-        >
-          YOUR STATS
-        </p>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 10,
-          }}
-        >
-          {[
-            { value: stats.total, label: 'Referrals' },
-            { value: stats.signedUp, label: 'Signed Up' },
-            { value: stats.converted, label: 'Converted' },
-            { value: stats.totalRewardsEarned, label: 'Points Earned' },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              style={{
-                backgroundColor: '#F5F5F5',
-                padding: 16,
-                textAlign: 'center',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: 'var(--font-geist-mono)',
-                  fontSize: 20,
-                  fontWeight: 400,
-                  color: '#000',
-                  margin: 0,
-                }}
-              >
-                {stat.value}
-              </p>
-              <p
-                style={{
-                  fontFamily: 'var(--font-inter)',
-                  fontSize: 9,
-                  fontWeight: 300,
-                  color: '#999',
-                  letterSpacing: '0.5px',
-                  margin: 0,
-                  textTransform: 'uppercase',
-                }}
-              >
-                {stat.label}
-              </p>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">Share</h3>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={shareWhatsApp}
+            className="flex items-center gap-2 rounded-[var(--button-radius)] bg-[#25D366] px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            <Share2 size={16} />
+            WhatsApp
+          </button>
+          <button
+            onClick={() => copyToClipboard(referralLink, 'link')}
+            className="flex items-center gap-2 rounded-[var(--button-radius)] border border-[var(--color-border)] px-5 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface)]"
+          >
+            {linkCopied ? (
+              <>
+                <Check size={16} />
+                Link Copied
+              </>
+            ) : (
+              <>
+                <Copy size={16} />
+                Copy Link
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">Your Stats</h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-[var(--color-border)] p-3 text-center md:p-4">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">
+              <Share2 size={18} className="text-[var(--color-primary)]" />
             </div>
-          ))}
+            <p className="text-2xl font-bold">{stats.total}</p>
+            <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+              Referrals
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] p-4 text-center">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">
+              <UserPlus size={18} className="text-[var(--color-primary)]" />
+            </div>
+            <p className="text-2xl font-bold">{stats.signedUp}</p>
+            <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+              Signed Up
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] p-4 text-center">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">
+              <Users size={18} className="text-[var(--color-primary)]" />
+            </div>
+            <p className="text-2xl font-bold">{stats.converted}</p>
+            <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+              Converted
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] p-4 text-center">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">
+              <Gift size={18} className="text-[var(--color-primary)]" />
+            </div>
+            <p className="text-2xl font-bold">{stats.totalRewardsEarned}</p>
+            <p className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+              Points Earned
+            </p>
+          </div>
         </div>
       </div>
     </div>

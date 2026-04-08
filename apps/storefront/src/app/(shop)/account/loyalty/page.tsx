@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ShoppingBag, Gift, TrendingUp } from 'lucide-react';
+import { Star, TrendingUp, ShoppingBag, Gift } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
@@ -27,11 +27,11 @@ interface LoyaltyHistory {
 }
 
 const TYPE_STYLES: Record<string, { color: string; prefix: string }> = {
-  EARNED: { color: '#22C55E', prefix: '+' },
-  BONUS: { color: '#22C55E', prefix: '+' },
-  REDEEMED: { color: '#EF4444', prefix: '-' },
-  EXPIRED: { color: '#EF4444', prefix: '-' },
-  ADJUSTED: { color: '#3B82F6', prefix: '' },
+  EARNED: { color: 'text-green-600', prefix: '+' },
+  BONUS: { color: 'text-green-600', prefix: '+' },
+  REDEEMED: { color: 'text-[var(--color-sale)]', prefix: '-' },
+  EXPIRED: { color: 'text-[var(--color-muted)]', prefix: '-' },
+  ADJUSTED: { color: 'text-blue-600', prefix: '' },
 };
 
 const HOW_IT_WORKS = [
@@ -77,98 +77,32 @@ export default function LoyaltyPage() {
   const transactions = history?.transactions ?? [];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+    <div className="space-y-8 md:space-y-10">
       {/* Balance Card */}
-      <div
-        style={{
-          backgroundColor: '#000',
-          padding: 24,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
-        <p
-          style={{
-            fontFamily: 'var(--font-inter)',
-            fontSize: 10,
-            fontWeight: 400,
-            color: '#666',
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-            margin: 0,
-          }}
-        >
-          AVAILABLE POINTS
-        </p>
-        <p
-          style={{
-            fontFamily: 'var(--font-geist-mono)',
-            fontSize: 40,
-            fontWeight: 400,
-            color: '#FFF',
-            letterSpacing: '-1px',
-            margin: 0,
-            lineHeight: 1,
-          }}
-        >
-          {balance.toLocaleString('en-IN')}
-        </p>
-        <div style={{ height: 1, backgroundColor: '#333' }} />
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-primary)] p-4 text-white md:p-6">
+        <div className="flex items-start justify-between">
           <div>
-            <p
-              style={{
-                fontFamily: 'var(--font-inter)',
-                fontSize: 10,
-                fontWeight: 300,
-                color: '#666',
-                margin: 0,
-                marginBottom: 4,
-              }}
-            >
-              Total Earned
+            <p className="text-xs font-semibold uppercase tracking-wider opacity-70">
+              Available Points
             </p>
-            <p
-              style={{
-                fontFamily: 'var(--font-geist-mono)',
-                fontSize: 16,
-                fontWeight: 400,
-                color: '#FFF',
-                margin: 0,
-              }}
-            >
+            <p className="mt-1 text-4xl font-bold tracking-tight">
+              {balance.toLocaleString('en-IN')}
+            </p>
+          </div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+            <Star size={20} className="text-[var(--color-star)]" />
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-4 border-t border-white/20 pt-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">Total Earned</p>
+            <p className="text-sm font-bold">
               {(summary?.totalEarned ?? 0).toLocaleString('en-IN')}
             </p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p
-              style={{
-                fontFamily: 'var(--font-inter)',
-                fontSize: 10,
-                fontWeight: 300,
-                color: '#666',
-                margin: 0,
-                marginBottom: 4,
-              }}
-            >
-              Redeemed
-            </p>
-            <p
-              style={{
-                fontFamily: 'var(--font-geist-mono)',
-                fontSize: 16,
-                fontWeight: 400,
-                color: '#FFF',
-                margin: 0,
-              }}
-            >
+          <div>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">Total Redeemed</p>
+            <p className="text-sm font-bold">
               {(summary?.totalRedeemed ?? 0).toLocaleString('en-IN')}
             </p>
           </div>
@@ -177,157 +111,73 @@ export default function LoyaltyPage() {
 
       {/* How It Works */}
       <div>
-        <p
-          style={{
-            fontFamily: 'var(--font-inter)',
-            fontSize: 10,
-            fontWeight: 400,
-            color: '#999',
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-            margin: 0,
-            marginBottom: 16,
-          }}
-        >
-          HOW IT WORKS
-        </p>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 12,
-          }}
-        >
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">How It Works</h3>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {HOW_IT_WORKS.map((item) => (
             <div
               key={item.title}
-              style={{
-                border: '1px solid #F0F0F0',
-                padding: 16,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-              }}
+              className="rounded-xl border border-[var(--color-border)] p-4 md:p-5"
             >
-              <item.icon size={18} color="#000" strokeWidth={1.5} />
-              <p
-                style={{
-                  fontFamily: 'var(--font-inter)',
-                  fontSize: 11,
-                  fontWeight: 400,
-                  color: '#000',
-                  margin: 0,
-                }}
-              >
-                {item.title}
-              </p>
-              <p
-                style={{
-                  fontFamily: 'var(--font-inter)',
-                  fontSize: 10,
-                  fontWeight: 300,
-                  color: '#999',
-                  lineHeight: 1.4,
-                  margin: 0,
-                  width: '100%',
-                }}
-              >
-                {item.description}
-              </p>
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface)]">
+                <item.icon size={20} className="text-[var(--color-primary)]" />
+              </div>
+              <h4 className="text-sm font-bold">{item.title}</h4>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">{item.description}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Transaction History */}
       <div>
-        <p
-          style={{
-            fontFamily: 'var(--font-inter)',
-            fontSize: 10,
-            fontWeight: 400,
-            color: '#999',
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-            margin: 0,
-            marginBottom: 16,
-          }}
-        >
-          RECENT ACTIVITY
-        </p>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">Transaction History</h3>
         {transactions.length === 0 ? (
-          <p
-            style={{
-              fontFamily: 'var(--font-inter)',
-              fontSize: 13,
-              fontWeight: 300,
-              color: '#999',
-            }}
-          >
+          <p className="text-sm text-[var(--color-muted)]">
             No transactions yet. Start shopping to earn points.
           </p>
         ) : (
-          <div>
-            {transactions.map((tx, index) => {
-              const style = TYPE_STYLES[tx.type] || TYPE_STYLES.EARNED;
-              const isPositive = style.prefix === '+';
-              return (
-                <div key={tx.id}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      paddingTop: 14,
-                      paddingBottom: 14,
-                    }}
-                  >
-                    <div>
-                      <p
-                        style={{
-                          fontFamily: 'var(--font-inter)',
-                          fontSize: 12,
-                          fontWeight: 400,
-                          color: '#000',
-                          margin: 0,
-                          marginBottom: 2,
-                        }}
-                      >
-                        {tx.description}
-                      </p>
-                      <p
-                        style={{
-                          fontFamily: 'var(--font-inter)',
-                          fontSize: 10,
-                          fontWeight: 300,
-                          color: '#999',
-                          margin: 0,
-                        }}
-                      >
-                        {formatDate(tx.createdAt)}
-                      </p>
-                    </div>
-                    <p
-                      style={{
-                        fontFamily: 'var(--font-geist-mono)',
-                        fontSize: 13,
-                        fontWeight: 400,
-                        color: isPositive ? '#22C55E' : '#EF4444',
-                        margin: 0,
-                        flexShrink: 0,
-                        marginLeft: 16,
-                      }}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--color-border)]">
+                  <th className="pb-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Date
+                  </th>
+                  <th className="pb-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Type
+                  </th>
+                  <th className="pb-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Description
+                  </th>
+                  <th className="pb-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Points
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((tx) => {
+                  const style = TYPE_STYLES[tx.type] || TYPE_STYLES.EARNED;
+                  return (
+                    <tr
+                      key={tx.id}
+                      className="border-b border-[var(--color-border)] last:border-b-0"
                     >
-                      {style.prefix}
-                      {Math.abs(tx.points).toLocaleString('en-IN')}
-                    </p>
-                  </div>
-                  {index < transactions.length - 1 && (
-                    <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
-                  )}
-                </div>
-              );
-            })}
+                      <td className="py-3 text-[var(--color-muted)]">{formatDate(tx.createdAt)}</td>
+                      <td className="py-3">
+                        <span className="rounded-[var(--badge-radius)] bg-[var(--color-surface)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className="py-3">{tx.description}</td>
+                      <td className={`py-3 text-right font-bold ${style.color}`}>
+                        {style.prefix}
+                        {Math.abs(tx.points).toLocaleString('en-IN')}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
