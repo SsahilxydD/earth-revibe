@@ -45,11 +45,8 @@ export const addressController = {
       return;
     }
     try {
-      const url = `https://atlas.mappls.com/api/places/search/json?query=${encodeURIComponent(query)}&region=IND&tokenizeAddress=true`;
-      const resp = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-        signal: AbortSignal.timeout(5000),
-      });
+      const url = `https://apis.mappls.com/advancedmaps/v1/${token}/autosuggest?query=${encodeURIComponent(query)}&tokenizeAddress=true`;
+      const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
       const data: any = await resp.json();
       const suggestions = (data.suggestedLocations || []).map((s: any) => ({
         placeName: s.placeName || '',
