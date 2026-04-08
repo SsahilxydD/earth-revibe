@@ -60,6 +60,7 @@ export const addressController = {
     }
     const token = await getMapplsToken();
     if (!token) {
+      logger.warn('Mappls autosuggest: no token available (check MAPPLS_CLIENT_ID/SECRET)');
       res.json({ success: true, data: { suggestions: [] } });
       return;
     }
@@ -67,6 +68,7 @@ export const addressController = {
       const url = `https://atlas.mappls.com/api/places/search/json?query=${encodeURIComponent(query)}&region=IND&tokenizeAddress=true`;
       const resp = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(5000),
       });
       const data: any = await resp.json();
       const suggestions = (data.suggestedLocations || []).map((s: any) => ({
@@ -75,8 +77,6 @@ export const addressController = {
         city: s.city || '',
         state: s.state || '',
         pinCode: s.pincode || s.postalCode || '',
-        lat: s.latitude || '',
-        lng: s.longitude || '',
       }));
       res.json({ success: true, data: { suggestions } });
     } catch (err) {
@@ -95,29 +95,28 @@ export const addressController = {
     }
     try {
       const url = `https://apis.mappls.com/advancedmaps/v1/${token}/rev_geocode?lat=${lat}&lng=${lng}`;
-      const resp = await fetch(url);
+      const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
       const data: any = await resp.json();
       const result = data.results?.[0];
-      if (!result) {
-        res.json({ success: true, data: { address: null } });
+      if (result) {
+        res.json({
+          success: true,
+          data: {
+            address: {
+              line1: [result.street, result.subSubLocality, result.subLocality]
+                .filter(Boolean)
+                .join(', '),
+              city: result.city || result.district || '',
+              state: result.state || '',
+              pinCode: result.pincode || '',
+            },
+          },
+        });
         return;
       }
-      res.json({
-        success: true,
-        data: {
-          address: {
-            line1: [result.street, result.subSubLocality, result.subLocality]
-              .filter(Boolean)
-              .join(', '),
-            city: result.city || result.district || '',
-            state: result.state || '',
-            pinCode: result.pincode || '',
-          },
-        },
-      });
     } catch (err) {
       logger.warn({ err }, 'Mappls reverse geocode failed');
-      res.json({ success: true, data: { address: null } });
     }
+    res.json({ success: true, data: { address: null } });
   },
 };
