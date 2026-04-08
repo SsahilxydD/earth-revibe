@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Bookmark, Share2, Loader2 } from 'lucide-react';
+import { Bookmark, Share2, Plus, Loader2 } from 'lucide-react';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import {
   trackProductViewed,
@@ -16,6 +16,7 @@ import { api } from '@/lib/api-client';
 import { useCartStore } from '@/stores/cart-store';
 import { useRazorpay } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
+import { useProducts } from '@/hooks/use-products';
 import type { Product, ProductVariant } from '@/types';
 
 // Lazy-load DOMPurify
@@ -30,17 +31,9 @@ function sanitize(dirty: string): string {
   return _purify.sanitize(dirty);
 }
 
-/* ------------------------------------------------------------------ */
-/*  Props                                                              */
-/* ------------------------------------------------------------------ */
-
 interface ProductDetailProps {
   product: Product;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                            */
-/* ------------------------------------------------------------------ */
 
 function uniqueSizes(variants: ProductVariant[]): string[] {
   const seen = new Set<string>();
@@ -85,11 +78,9 @@ function SizeGuideSheet({ open, onClose }: { open: boolean; onClose: () => void 
   }));
 
   const rows = unit === 'IN' ? rowsIN : rowsCM;
-  const heads = ['Size', 'Chest', 'Shoulder', 'Length'];
 
   return (
     <>
-      {/* backdrop */}
       <div
         onClick={onClose}
         style={{
@@ -102,8 +93,6 @@ function SizeGuideSheet({ open, onClose }: { open: boolean; onClose: () => void 
           pointerEvents: open ? 'auto' : 'none',
         }}
       />
-
-      {/* sheet */}
       <div
         style={{
           position: 'fixed',
@@ -118,12 +107,12 @@ function SizeGuideSheet({ open, onClose }: { open: boolean; onClose: () => void 
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
-        {/* drag handle */}
+        {/* sgHandle — drag bar 40x4 */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px 0' }}>
           <div style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#E5E5E5' }} />
         </div>
 
-        {/* header */}
+        {/* sgHeader — title + toggle */}
         <div
           style={{
             display: 'flex',
@@ -157,10 +146,10 @@ function SizeGuideSheet({ open, onClose }: { open: boolean; onClose: () => void 
           </div>
         </div>
 
-        {/* table card */}
+        {/* tblCard — rounded 12, stroke #F0F0F0 */}
         <div style={{ padding: '0 16px 24px 16px' }}>
           <div style={{ border: '1px solid #F0F0F0', borderRadius: 12, overflow: 'hidden' }}>
-            {/* header row */}
+            {/* tH — header row, h44, #F8F8F8 */}
             <div
               style={{
                 display: 'flex',
@@ -169,7 +158,7 @@ function SizeGuideSheet({ open, onClose }: { open: boolean; onClose: () => void 
                 backgroundColor: '#F8F8F8',
               }}
             >
-              {heads.map((h) => (
+              {['Size', 'Chest', 'Shoulder', 'Length'].map((h) => (
                 <span
                   key={h}
                   style={{
@@ -185,8 +174,6 @@ function SizeGuideSheet({ open, onClose }: { open: boolean; onClose: () => void 
               ))}
             </div>
             <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
-
-            {/* data rows */}
             {rows.map((r, i) => (
               <div key={r.size}>
                 <div
@@ -234,7 +221,10 @@ function SizeGuideSheet({ open, onClose }: { open: boolean; onClose: () => void 
 }
 
 /* ------------------------------------------------------------------ */
-/*  Detail Tabs (Pencil — tabSec node Mzs7t)                           */
+/*  Detail Tabs — Pencil node Mzs7t                                    */
+/*  tabBar: zgrsv (h44, padding 0 20)                                  */
+/*  tabDivider: pJGrN (1px #F0F0F0)                                   */
+/*  tabContent: csm3f (padding 20 20 24 20, gap 16)                    */
 /* ------------------------------------------------------------------ */
 
 type TabKey = 'details' | 'washcare' | 'shipping';
@@ -248,7 +238,6 @@ function DetailTabs({ product }: { product: Product }) {
     { key: 'shipping', label: 'Shipping' },
   ];
 
-  // build rows
   const detailRows: string[] = [];
   if (product.material) detailRows.push(product.material);
   if (product.fit) detailRows.push(product.fit);
@@ -267,9 +256,15 @@ function DetailTabs({ product }: { product: Product }) {
 
   return (
     <div style={{ paddingTop: 24 }}>
-      {/* tab bar — height 44, padding 0 20 */}
+      {/* zgrsv — tabBar h44 */}
       <div
-        style={{ height: 44, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 24 }}
+        style={{
+          height: 44,
+          padding: '0 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 24,
+        }}
       >
         {tabs.map((t) => {
           const active = tab === t.key;
@@ -310,10 +305,10 @@ function DetailTabs({ product }: { product: Product }) {
           );
         })}
       </div>
-      {/* divider */}
+      {/* pJGrN — divider */}
       <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
-      {/* content — padding 20 20 24 20 */}
+      {/* csm3f — tabContent padding 20 20 24 20, gap 16 */}
       <div style={{ padding: '20px 20px 24px 20px' }}>
         {tab === 'details' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -387,7 +382,96 @@ function DetailTabs({ product }: { product: Product }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  ProductDetail (Pencil node ALtU6)                                  */
+/*  relSec — Pencil node dPB6i                                         */
+/*  2-col grid (jUVqS, gap 10), each card: image 220px rounded 8,     */
+/*  bookmark top-right, info row with name+price left, plus icon right */
+/* ------------------------------------------------------------------ */
+
+function RelatedSection({ categorySlug, excludeId }: { categorySlug?: string; excludeId: string }) {
+  const { data } = useProducts({
+    category: categorySlug,
+    limit: 4,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+
+  const products = useMemo(() => {
+    const all = data?.products ?? [];
+    return all.filter((p: Product) => p.id !== excludeId).slice(0, 2);
+  }, [data, excludeId]);
+
+  if (products.length === 0) return null;
+
+  return (
+    /* dPB6i — padding 0 20 28 20, gap 16 */
+    <div style={{ padding: '0 20px 28px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* jUVqS — relGrid, 2 cols, gap 10 */}
+      <div style={{ display: 'flex', gap: 10 }}>
+        {products.map((p: Product) => {
+          const img = p.images?.find((i: { isPrimary?: boolean }) => i.isPrimary) || p.images?.[0];
+          return (
+            /* r1 / r2 — vertical layout, fill_container width */
+            <div key={p.id} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              {/* r1Img / r2Img — h220, rounded 8, #F0F0F0 bg, bookmark top-right */}
+              <div
+                style={{
+                  position: 'relative',
+                  height: 220,
+                  borderRadius: 8,
+                  backgroundColor: '#F0F0F0',
+                  overflow: 'hidden',
+                }}
+              >
+                {img && (
+                  <Image
+                    src={getImageUrl(img.url, 400)}
+                    alt={img.altText || p.name}
+                    fill
+                    sizes="50vw"
+                    className="object-cover"
+                    placeholder="blur"
+                    blurDataURL={BLUR_DATA_URL}
+                  />
+                )}
+                {/* r1Bm — bookmark 16px white, positioned top-right */}
+                <Bookmark
+                  size={16}
+                  color="#FFF"
+                  fill="none"
+                  style={{ position: 'absolute', top: 10, right: 10 }}
+                />
+              </div>
+              {/* r1Info — space-between, padding 10 0 0 0 */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingTop: 10,
+                }}
+              >
+                {/* r1Left — name + price, gap 2 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontSize: 11, fontWeight: 400, color: '#000' }}>{p.name}</span>
+                  <span style={{ fontSize: 11, fontWeight: 300, color: '#000' }}>
+                    {formatPrice(p.price)}
+                  </span>
+                </div>
+                {/* r1Add — plus icon 16px black */}
+                <Plus size={16} color="#000" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  ProductDetail — Pencil node ALtU6                                  */
+/*  EXACT structure: JDMjn → OuNSa → EjlwE → ByiXm → Mzs7t → dPB6i  */
+/*  Nothing else. No stacked images. No desktop layout.                */
 /* ------------------------------------------------------------------ */
 
 export function ProductDetail({ product }: ProductDetailProps) {
@@ -422,13 +506,11 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const price = variant?.price ?? product.price;
   const onSale = product.compareAtPrice !== null && product.compareAtPrice > price;
 
-  const images = useMemo(
-    () => [...product.images].sort((a, b) => a.sortOrder - b.sortOrder),
-    [product.images]
-  );
-  const hero = images[0] || null;
+  const hero = useMemo(() => {
+    const sorted = [...product.images].sort((a, b) => a.sortOrder - b.sortOrder);
+    return sorted[0] || null;
+  }, [product.images]);
 
-  /* ---- Add to bag ---- */
   const addToBag = async () => {
     if (sizes.length > 0 && !selectedSize) {
       addToast('Please select a size', 'info');
@@ -466,7 +548,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
     setIsAdding(false);
   };
 
-  /* ---- Buy now ---- */
   const buyNow = async () => {
     if (sizes.length > 0 && !selectedSize) {
       addToast('Please select a size', 'info');
@@ -529,50 +610,59 @@ export function ProductDetail({ product }: ProductDetailProps) {
   };
 
   return (
-    <div className="font-[family-name:var(--font-inter)]" style={{ backgroundColor: '#FFF' }}>
-      {/* ===== 1. Hero Image (Pencil: JDMjn — 500px, #E8E4DF bg) ===== */}
+    <div
+      className="font-[family-name:var(--font-inter)]"
+      style={{ backgroundColor: '#FFF', display: 'flex', flexDirection: 'column' }}
+    >
+      {/* ===== JDMjn — Hero Image, h500, #E8E4DF, layout:none ===== */}
       {hero && (
-        <div style={{ position: 'relative', backgroundColor: '#E8E4DF' }}>
+        <div
+          style={{
+            position: 'relative',
+            height: 500,
+            backgroundColor: '#E8E4DF',
+            overflow: 'hidden',
+          }}
+        >
           <Image
             src={getImageUrl(hero.url, 800)}
             alt={hero.altText || product.name}
-            width={800}
-            height={1200}
-            quality={75}
+            fill
             sizes="100vw"
-            className="h-auto w-full"
+            className="object-cover"
             priority
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
           />
-          {/* counter — bottom left, 10px/300/white */}
+          {/* uIyUd — imgCounter, x:16 y:476, 10px/300/white */}
           <span
             style={{
               position: 'absolute',
-              bottom: 16,
               left: 16,
+              top: 476,
               fontSize: 10,
               fontWeight: 300,
               color: '#FFF',
             }}
           >
-            1 / {images.length}
+            1 / {product.images.length}
           </span>
-          {/* wishlist bookmark — top right, 20px white */}
+          {/* sP1wX — wishBtn bookmark, x:345 y:16, 20px white */}
           <button
             onClick={() => setWishlisted((v) => !v)}
             style={{
               position: 'absolute',
+              left: 345,
               top: 16,
-              right: 16,
               background: 'none',
               border: 'none',
               cursor: 'pointer',
+              padding: 0,
             }}
           >
             <Bookmark size={20} color="#FFF" fill={wishlisted ? '#FFF' : 'none'} />
           </button>
-          {/* share — top right offset, 18px white */}
+          {/* 6LGs4 — shareBtn, x:370 y:17, 18px white */}
           <button
             onClick={() => {
               if (navigator.share)
@@ -580,11 +670,12 @@ export function ProductDetail({ product }: ProductDetailProps) {
             }}
             style={{
               position: 'absolute',
+              left: 370,
               top: 17,
-              right: 48,
               background: 'none',
               border: 'none',
               cursor: 'pointer',
+              padding: 0,
             }}
           >
             <Share2 size={18} color="#FFF" />
@@ -592,16 +683,28 @@ export function ProductDetail({ product }: ProductDetailProps) {
         </div>
       )}
 
-      {/* ===== 2. infoSec (Pencil: OuNSa — padding 20 20 0 20, gap 6) ===== */}
+      {/* ===== OuNSa — infoSec, padding 20 20 0 20, gap 6, vertical ===== */}
       <div
-        style={{ padding: '20px 20px 0 20px', display: 'flex', flexDirection: 'column', gap: 6 }}
+        style={{
+          padding: '20px 20px 0 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+        }}
       >
-        {/* nameRow: name+bookmark left, sizeGuideBtn right */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* ejhxA — nameRow, space-between */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          {/* ZGyz4 — nameGroup, gap 8 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* pdpName — 16px/500/black */}
+            {/* cPNL0 — pdpName 16px/500/black */}
             <span style={{ fontSize: 16, fontWeight: 500, color: '#000' }}>{product.name}</span>
-            {/* pdpBookmark — 16px black */}
+            {/* 6jczs — pdpBookmark 16px black */}
             <button
               onClick={() => setWishlisted((v) => !v)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -609,7 +712,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
               <Bookmark size={16} color="#000" fill={wishlisted ? '#000' : 'none'} />
             </button>
           </div>
-          {/* sizeGuideBtn — h28, cornerRadius 4, stroke #E5E5E5, 10px/300 */}
+          {/* EOoig — sizeGuideBtn, h28, cornerRadius 4, stroke #E5E5E5, padding 0 12 */}
           <button
             onClick={() => setSizeGuideOpen(true)}
             style={{
@@ -628,7 +731,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
             Size Guide
           </button>
         </div>
-        {/* pdpPrice — 14px/300/black */}
+        {/* rBZft — pdpPrice, 14px/300/black */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 14, fontWeight: 300, color: '#000' }}>{formatPrice(price)}</span>
           {onSale && (
@@ -646,9 +749,10 @@ export function ProductDetail({ product }: ProductDetailProps) {
         </div>
       </div>
 
-      {/* ===== 3. sizeSec (Pencil: EjlwE — padding 16 20 0 20, gap 8) ===== */}
+      {/* ===== EjlwE — sizeSec, padding 16 20 0 20, gap 10, vertical ===== */}
       {sizes.length > 0 && (
         <div style={{ padding: '16px 20px 0 20px' }}>
+          {/* UOkor — sizeRow1, gap 8 */}
           <div style={{ display: 'flex', gap: 8 }}>
             {sizes.map((s) => {
               const sel = s === selectedSize;
@@ -682,11 +786,16 @@ export function ProductDetail({ product }: ProductDetailProps) {
         </div>
       )}
 
-      {/* ===== 4. btnSec (Pencil: ByiXm — padding 20 20 0 20, gap 10) ===== */}
+      {/* ===== ByiXm — btnSec, padding 20 20 0 20, gap 10, vertical ===== */}
       <div
-        style={{ padding: '20px 20px 0 20px', display: 'flex', flexDirection: 'column', gap: 10 }}
+        style={{
+          padding: '20px 20px 0 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+        }}
       >
-        {/* ADD TO BAG — outlined pill, h50, 12px, letterSpacing 1.5 */}
+        {/* 6IZXY — addBtn, h50, rounded pill, stroke #E5E5E5 */}
         <button
           onClick={addToBag}
           disabled={isAdding}
@@ -709,7 +818,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
         >
           {isAdding ? <Loader2 size={16} className="animate-spin" /> : 'ADD TO BAG'}
         </button>
-        {/* BUY NOW — filled black pill, h50, 12px/500, letterSpacing 1.5 */}
+        {/* E1Y3u — buyBtn, h50, rounded pill, black fill, 500 weight */}
         <button
           onClick={buyNow}
           disabled={isBuying}
@@ -734,33 +843,13 @@ export function ProductDetail({ product }: ProductDetailProps) {
         </button>
       </div>
 
-      {/* ===== 5. tabSec (Pencil: Mzs7t — paddingTop 24) ===== */}
+      {/* ===== Mzs7t — tabSec, paddingTop 24 ===== */}
       <DetailTabs product={product} />
 
-      {/* ===== 6. Remaining images — stacked full bleed ===== */}
-      {images.length > 1 && (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {images.slice(1).map((img) => (
-            <Image
-              key={img.id}
-              src={getImageUrl(img.url, 800)}
-              alt={img.altText || product.name}
-              width={800}
-              height={1200}
-              quality={75}
-              sizes="100vw"
-              className="h-auto w-full"
-              placeholder="blur"
-              blurDataURL={BLUR_DATA_URL}
-            />
-          ))}
-        </div>
-      )}
+      {/* ===== dPB6i — relSec ===== */}
+      <RelatedSection categorySlug={product.category?.slug} excludeId={product.id} />
 
-      {/* bottom padding */}
-      <div style={{ height: 28 }} />
-
-      {/* ===== Size Guide portal ===== */}
+      {/* Size Guide portal */}
       {mounted &&
         createPortal(
           <SizeGuideSheet open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />,
