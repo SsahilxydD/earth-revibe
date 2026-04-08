@@ -2,12 +2,14 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { X, ShieldCheck, RefreshCw, Truck, Headphones } from 'lucide-react';
 import { ProductCard } from '@/components/product/product-card';
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
 import { FilterSidebar, type FilterState } from '@/components/product/filter-sidebar';
 import { SortDropdown } from '@/components/product/sort-dropdown';
 import { useInfiniteProducts } from '@/hooks/use-products';
 import { useProductNavStore } from '@/stores/product-nav-store';
+import { Spinner } from '@/components/ui/spinner';
 
 function parseSort(sort: string | null): { sortBy: string; sortOrder: 'asc' | 'desc' } {
   switch (sort) {
@@ -64,14 +66,11 @@ function ProductsContent() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
     useInfiniteProducts(queryParams);
 
-  // Infinite scroll observer
   useEffect(() => {
     if (!loadMoreRef.current) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) fetchNextPage();
       },
       { rootMargin: '200px' }
     );
@@ -83,11 +82,8 @@ function ProductsContent() {
     (updates: Record<string, string | undefined>) => {
       const params = new URLSearchParams(searchParams.toString());
       for (const [key, value] of Object.entries(updates)) {
-        if (value) {
-          params.set(key, value);
-        } else {
-          params.delete(key);
-        }
+        if (value) params.set(key, value);
+        else params.delete(key);
       }
       router.push(`/products?${params.toString()}`, { scroll: false });
     },
@@ -119,7 +115,8 @@ function ProductsContent() {
     return data.pages.flatMap((page) => page.products ?? []);
   }, [data]);
 
-  // Populate navigation store so product detail page can swipe between products
+  const totalCount = data?.pages?.[0]?.total ?? allProducts.length;
+
   const setNavContext = useProductNavStore((s) => s.setNavContext);
   useEffect(() => {
     if (allProducts.length > 0) {
@@ -128,72 +125,246 @@ function ProductsContent() {
     }
   }, [allProducts, searchParams, setNavContext]);
 
-  const currentFilters: FilterState = {
-    category,
-    minPrice,
-    maxPrice,
-    size,
-    color,
+  const currentFilters: FilterState = { category, minPrice, maxPrice, size, color };
+  const hasActiveFilters = !!(minPrice || maxPrice || size || color || category);
+
+  const clearAllFilters = () => {
+    router.push('/products', { scroll: false });
   };
 
   return (
-    <div className="px-4 py-4 md:px-8 lg:px-12 xl:px-20">
+    <div className="font-[family-name:var(--font-inter)]" style={{ backgroundColor: '#FFF' }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold capitalize md:text-xl">
-          {search ? `Results for "${search}"` : 'All Products'}
-        </h1>
-        <div className="flex items-center gap-3">
-          <FilterSidebar filters={currentFilters} onFilterChange={handleFilterChange} />
-          <SortDropdown currentSort={`${sortBy}-${sortOrder}`} onSortChange={handleSortChange} />
-        </div>
+      <div
+        style={{ padding: '24px 28px 16px 28px', display: 'flex', flexDirection: 'column', gap: 6 }}
+      >
+        {search ? (
+          <>
+            <p style={{ fontSize: 10, fontWeight: 300, color: '#CCC', letterSpacing: 0.5 }}>
+              Search results
+            </p>
+            <h1 style={{ fontSize: 28, fontWeight: 300, color: '#000', letterSpacing: -0.5 }}>
+              &ldquo;{search}&rdquo;
+            </h1>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: 10, fontWeight: 300, color: '#CCC', letterSpacing: 0.5 }}>
+              Home / Products
+            </p>
+            <h1 style={{ fontSize: 28, fontWeight: 300, color: '#000', letterSpacing: -0.5 }}>
+              All Products
+            </h1>
+          </>
+        )}
+        <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+          {totalCount} PRODUCTS
+        </span>
       </div>
 
-      {/* Spacer between filters and products */}
-      <div style={{ height: 16 }} />
+      {/* Divider */}
+      <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
-      {/* Skeleton on true first load only — cached data skips this */}
+      {/* Filter bar — 44px */}
+      <div
+        style={{
+          height: 44,
+          padding: '0 28px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <FilterSidebar filters={currentFilters} onFilterChange={handleFilterChange} />
+        <SortDropdown currentSort={`${sortBy}-${sortOrder}`} onSortChange={handleSortChange} />
+      </div>
+
+      {/* Divider */}
+      <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+
+      {/* Active filter chips */}
+      {hasActiveFilters && (
+        <div
+          style={{
+            padding: '10px 28px',
+            display: 'flex',
+            gap: 8,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          {category && (
+            <button
+              onClick={() => updateParams({ category: undefined })}
+              style={{
+                display: 'inline-flex',
+                height: 28,
+                padding: '0 12px',
+                gap: 6,
+                alignItems: 'center',
+                backgroundColor: '#F5F5F5',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 400,
+                  color: '#000',
+                  letterSpacing: 0.5,
+                  textTransform: 'capitalize',
+                }}
+              >
+                {category}
+              </span>
+              <X size={10} color="#999" />
+            </button>
+          )}
+          {size && (
+            <button
+              onClick={() => updateParams({ size: undefined })}
+              style={{
+                display: 'inline-flex',
+                height: 28,
+                padding: '0 12px',
+                gap: 6,
+                alignItems: 'center',
+                backgroundColor: '#F5F5F5',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ fontSize: 10, fontWeight: 400, color: '#000', letterSpacing: 0.5 }}>
+                Size: {size}
+              </span>
+              <X size={10} color="#999" />
+            </button>
+          )}
+          {(minPrice || maxPrice) && (
+            <button
+              onClick={() => updateParams({ minPrice: undefined, maxPrice: undefined })}
+              style={{
+                display: 'inline-flex',
+                height: 28,
+                padding: '0 12px',
+                gap: 6,
+                alignItems: 'center',
+                backgroundColor: '#F5F5F5',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ fontSize: 10, fontWeight: 400, color: '#000', letterSpacing: 0.5 }}>
+                {minPrice ? `₹${(minPrice / 1000).toFixed(0)}k` : '₹0'} —{' '}
+                {maxPrice ? `₹${(maxPrice / 1000).toFixed(0)}k` : '∞'}
+              </span>
+              <X size={10} color="#999" />
+            </button>
+          )}
+          <button
+            onClick={clearAllFilters}
+            style={{
+              fontSize: 10,
+              fontWeight: 300,
+              color: '#999',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+
+      {/* Product grid */}
       {isLoading ? (
-        <ProductGridSkeleton />
+        <div style={{ padding: '14px 28px 28px 28px' }}>
+          <ProductGridSkeleton />
+        </div>
       ) : isError ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <h3 className="text-lg font-semibold">Something went wrong</h3>
-          <p className="mt-1 text-sm text-[var(--color-muted)]">
-            Could not load products. Please try again.
+        <div style={{ padding: '80px 28px', textAlign: 'center' }}>
+          <p style={{ fontSize: 13, fontWeight: 300, color: '#999' }}>
+            Something went wrong. Please try again.
           </p>
         </div>
       ) : allProducts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-4 text-5xl">:/</div>
-          <h3 className="text-lg font-semibold">No products found</h3>
-          <p className="mt-1 text-sm text-[var(--color-muted)]">
-            Try adjusting your filters or search terms.
-          </p>
-          <button
-            onClick={() => router.push('/products')}
-            className="mt-4 border border-[var(--color-primary)] px-6 py-2 text-sm font-semibold transition-colors hover:bg-[var(--color-surface)]"
-          >
-            Clear Filters
-          </button>
+        <div
+          style={{
+            padding: '80px 28px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+          }}
+        >
+          <p style={{ fontSize: 13, fontWeight: 300, color: '#999' }}>No products found</p>
+          {hasActiveFilters && (
+            <button
+              onClick={clearAllFilters}
+              style={{
+                marginTop: 20,
+                height: 46,
+                padding: '0 32px',
+                border: '1px solid #000',
+                backgroundColor: 'transparent',
+                fontSize: 12,
+                fontWeight: 400,
+                letterSpacing: 2,
+                color: '#000',
+                cursor: 'pointer',
+              }}
+            >
+              CLEAR FILTERS
+            </button>
+          )}
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4 xl:grid-cols-5">
+        <div style={{ padding: '14px 28px 28px 28px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 14px' }}>
             {allProducts.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}
           </div>
 
-          {/* Load more trigger */}
-          <div ref={loadMoreRef} className="flex justify-center py-8">
-            {isFetchingNextPage && (
-              <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-primary)]" />
-                Loading more...
+          {/* Trust strip */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '24px 0 0 0' }}>
+            {[
+              { icon: ShieldCheck, label: 'Secure\nPayment' },
+              { icon: RefreshCw, label: 'Easy\nReturns' },
+              { icon: Truck, label: 'Free\nShipping' },
+              { icon: Headphones, label: '24/7\nSupport' },
+            ].map((t) => (
+              <div
+                key={t.label}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+              >
+                <t.icon size={16} color="#CCC" strokeWidth={1.5} />
+                <span
+                  style={{
+                    fontSize: 8,
+                    fontWeight: 300,
+                    color: '#CCC',
+                    textAlign: 'center',
+                    lineHeight: 1.3,
+                    whiteSpace: 'pre-line',
+                  }}
+                >
+                  {t.label}
+                </span>
               </div>
-            )}
+            ))}
           </div>
-        </>
+
+          {/* Infinite scroll trigger */}
+          <div
+            ref={loadMoreRef}
+            style={{ display: 'flex', justifyContent: 'center', padding: '32px 0' }}
+          >
+            {isFetchingNextPage && <Spinner className="h-5 w-5" />}
+          </div>
+        </div>
       )}
     </div>
   );
