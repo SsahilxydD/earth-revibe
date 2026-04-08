@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Package, ChevronRight, RefreshCw } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { formatPrice, formatDate } from '@/lib/utils';
@@ -16,28 +15,17 @@ interface Order {
   createdAt: string;
 }
 
-const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  PLACED: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-  CONFIRMED: { bg: 'bg-blue-100', text: 'text-blue-800' },
-  PROCESSING: { bg: 'bg-blue-100', text: 'text-blue-800' },
-  SHIPPED: { bg: 'bg-purple-100', text: 'text-purple-800' },
-  OUT_FOR_DELIVERY: { bg: 'bg-purple-100', text: 'text-purple-800' },
-  DELIVERED: { bg: 'bg-green-100', text: 'text-green-800' },
-  CANCELLED: { bg: 'bg-red-100', text: 'text-red-800' },
-  RETURNED: { bg: 'bg-gray-100', text: 'text-gray-800' },
-  REFUNDED: { bg: 'bg-gray-100', text: 'text-gray-800' },
+const STATUS_COLOR: Record<string, string> = {
+  PLACED: '#EAB308',
+  CONFIRMED: '#3B82F6',
+  PROCESSING: '#3B82F6',
+  SHIPPED: '#8B5CF6',
+  OUT_FOR_DELIVERY: '#8B5CF6',
+  DELIVERED: '#22C55E',
+  CANCELLED: '#999',
+  RETURNED: '#999',
+  REFUNDED: '#999',
 };
-
-function OrderStatusBadge({ status }: { status: string }) {
-  const style = STATUS_STYLES[status] || STATUS_STYLES.PLACED;
-  return (
-    <span
-      className={`inline-block rounded-[var(--badge-radius)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${style.bg} ${style.text}`}
-    >
-      {status.replace(/_/g, ' ')}
-    </span>
-  );
-}
 
 export default function OrdersPage() {
   const qc = useQueryClient();
@@ -52,7 +40,6 @@ export default function OrdersPage() {
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['orders'] });
       if (result.synced > 0) {
-        // Brief delay so the invalidated query has time to refetch
         setTimeout(() => qc.invalidateQueries({ queryKey: ['orders'] }), 1000);
       }
     },
@@ -62,7 +49,14 @@ export default function OrdersPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
+      <div
+        style={{
+          display: 'flex',
+          minHeight: '40vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Spinner className="h-6 w-6" />
       </div>
     );
@@ -71,72 +65,124 @@ export default function OrdersPage() {
   if (!orders || orders.length === 0) {
     return (
       <div
-        style={{ paddingTop: 80, paddingBottom: 80 }}
-        className="flex flex-col items-center text-center"
+        style={{
+          padding: '80px 28px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+        }}
       >
-        <Package size={40} strokeWidth={1} className="text-[#c0c0c0]" />
-        <h2 style={{ marginTop: 24 }} className="text-xs font-bold uppercase tracking-[0.2em]">
-          No orders yet
-        </h2>
-        <p style={{ marginTop: 10, maxWidth: 240 }} className="text-xs leading-relaxed text-[#999]">
-          Once you place an order, you&apos;ll be able to track it here.
-        </p>
+        <p style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>No orders yet</p>
         <Link
           href="/categories/new-arrivals"
-          style={{ marginTop: 28 }}
-          className="inline-flex items-center justify-center border border-[var(--color-primary)] px-8 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white"
+          style={{
+            marginTop: 28,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 46,
+            padding: '0 32px',
+            border: '1px solid #000',
+            fontSize: 12,
+            fontWeight: 400,
+            letterSpacing: 2,
+            color: '#000',
+            textDecoration: 'none',
+          }}
         >
-          Start Shopping
+          START SHOPPING
         </Link>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider">Order History</h2>
-          <p className="mt-2 text-xs text-[var(--color-muted)]">Track and manage your orders.</p>
+    <div style={{ padding: '24px 28px 28px 28px' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+            ORDER HISTORY
+          </span>
+          <button
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+            style={{
+              fontSize: 11,
+              fontWeight: 400,
+              color: '#000',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              opacity: syncMutation.isPending ? 0.5 : 1,
+            }}
+          >
+            {syncMutation.isPending ? 'Syncing…' : 'Sync'}
+          </button>
         </div>
-        <button
-          onClick={() => syncMutation.mutate()}
-          disabled={syncMutation.isPending}
-          className="flex shrink-0 items-center gap-1.5 border border-[var(--color-border)] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:opacity-50"
-        >
-          <RefreshCw size={12} className={syncMutation.isPending ? 'animate-spin' : ''} />
-          {syncMutation.isPending ? 'Syncing…' : 'Sync Orders'}
-        </button>
+        <span style={{ fontSize: 11, fontWeight: 300, color: '#999' }}>
+          {orders.length} {orders.length === 1 ? 'order' : 'orders'}
+        </span>
       </div>
 
-      <hr
-        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
-      />
-
-      <div className="space-y-3">
-        {orders.map((order) => (
-          <Link
-            key={order.id}
-            href={`/account/orders/${order.orderNumber}`}
-            className="flex items-center justify-between rounded-xl border border-[var(--color-border)] p-3 transition-colors hover:bg-[var(--color-surface)] md:p-4"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-bold">#{order.orderNumber}</span>
-                <OrderStatusBadge status={order.status} />
-              </div>
-              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-[var(--color-muted)]">
-                <span>{formatDate(order.createdAt)}</span>
-                <span>
-                  {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+      {/* Order list — no gap between items, 1px dividers */}
+      <div style={{ marginTop: 0 }}>
+        {orders.map((order, i) => (
+          <div key={order.id}>
+            <Link
+              href={`/account/orders/${order.orderNumber}`}
+              style={{ display: 'block', padding: '20px 0', textDecoration: 'none' }}
+            >
+              {/* Top row: order number + status */}
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
+                    fontSize: 13,
+                    fontWeight: 400,
+                    color: '#000',
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  #{order.orderNumber}
+                </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 400,
+                    color: STATUS_COLOR[order.status] || '#999',
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  {order.status
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, (c) => c.toUpperCase())
+                    .replace(/\b(\w)(\w*)/g, (_, f, r) => f + r.toLowerCase())}
                 </span>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold">{formatPrice(order.totalAmount)}</span>
-              <ChevronRight size={18} className="text-[var(--color-muted)]" />
-            </div>
-          </Link>
+              {/* Bottom row: date + items | total */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: 10,
+                }}
+              >
+                <span style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>
+                  {formatDate(order.createdAt)} · {order.items.length}{' '}
+                  {order.items.length === 1 ? 'item' : 'items'}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 400, color: '#000' }}>
+                  {formatPrice(order.totalAmount)}
+                </span>
+              </div>
+            </Link>
+            {i < orders.length - 1 && <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />}
+          </div>
         ))}
       </div>
     </div>

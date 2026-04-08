@@ -2,9 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Camera } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
@@ -25,15 +23,11 @@ interface ProfileForm {
   phone: string;
 }
 
-interface PasswordForm {
-  currentPassword: string;
-  newPassword: string;
-  confirmNewPassword: string;
-}
-
 export default function ProfilePage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
+  const logout = useAuthStore((s) => s.logout);
   const { addToast } = useToast();
 
   const { data: profile, isLoading } = useQuery({
@@ -61,17 +55,6 @@ export default function ProfilePage() {
     },
   });
 
-  const passwordMutation = useMutation({
-    mutationFn: (data: PasswordForm) => api.put('/auth/password', data),
-    onSuccess: () => {
-      passwordReset();
-      addToast('Password changed successfully', 'success');
-    },
-    onError: (err: any) => {
-      addToast(err?.message || 'Failed to change password', 'error');
-    },
-  });
-
   const {
     register: profileRegister,
     handleSubmit: handleProfileSubmit,
@@ -86,157 +69,248 @@ export default function ProfilePage() {
       : undefined,
   });
 
-  const {
-    register: passwordRegister,
-    handleSubmit: handlePasswordSubmit,
-    formState: { errors: passwordErrors },
-    reset: passwordReset,
-    watch: passwordWatch,
-  } = useForm<PasswordForm>({
-    defaultValues: {
-      currentPassword: '',
-      newPassword: '',
-      confirmNewPassword: '',
-    },
-  });
+  const handleLogout = async () => {
+    await logout();
+    router.push('/auth/login');
+  };
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
+      <div
+        style={{
+          display: 'flex',
+          minHeight: '40vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Spinner className="h-6 w-6" />
       </div>
     );
   }
 
+  const initials = `${profile?.firstName?.[0] || ''}${profile?.lastName?.[0] || ''}`;
+  const fullName = `${profile?.firstName || ''} ${profile?.lastName || ''}`.trim();
+  const displayPhone = profile?.phone ? `+91 ${profile.phone.replace(/^\+91/, '')}` : '';
+
   return (
-    <div>
-      {/* Avatar Section */}
-      <div className="flex items-center gap-3 md:gap-4">
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--color-surface)] md:h-20 md:w-20">
+    <div style={{ padding: '32px 28px 28px 28px' }}>
+      {/* Avatar row — h=56, gap=16, center aligned */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 9999,
+            backgroundColor: '#F5F5F5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            overflow: 'hidden',
+          }}
+        >
           {profile?.avatar ? (
-            <img src={profile.avatar} alt="Avatar" className="h-full w-full object-cover" />
+            <img
+              src={profile.avatar}
+              alt="Avatar"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 9999 }}
+            />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[var(--color-muted)]">
-              {profile?.firstName?.[0]}
-              {profile?.lastName?.[0]}
-            </div>
+            <span style={{ fontSize: 18, fontWeight: 300, color: '#000', letterSpacing: 1 }}>
+              {initials}
+            </span>
           )}
-          <button
-            className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity hover:opacity-100"
-            aria-label="Change avatar"
-          >
-            <Camera size={20} />
-          </button>
         </div>
         <div>
-          <h2 className="text-lg font-bold">
-            {profile?.firstName} {profile?.lastName}
-          </h2>
-          <p className="text-sm text-[var(--color-muted)]">{profile?.email}</p>
+          <p style={{ fontSize: 16, fontWeight: 400, color: '#000', lineHeight: 1.2 }}>
+            {fullName}
+          </p>
+          {displayPhone && (
+            <p style={{ fontSize: 12, fontWeight: 300, color: '#999', marginTop: 4 }}>
+              {displayPhone}
+            </p>
+          )}
         </div>
       </div>
 
-      <hr
-        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
-      />
+      {/* Section label — 36px gap from avatar */}
+      <p
+        style={{ marginTop: 36, fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}
+      >
+        PERSONAL INFORMATION
+      </p>
 
-      {/* Profile Form */}
-      <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider">Personal Information</h3>
-        <p className="mt-1 mb-5 text-xs text-[var(--color-muted)]">
-          Update your name and contact details.
-        </p>
-        <form
-          onSubmit={handleProfileSubmit((data) => profileMutation.mutate(data))}
-          className="space-y-4"
-        >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Input
-              label="First Name"
-              error={profileErrors.firstName?.message}
-              {...profileRegister('firstName', {
-                required: 'First name is required',
-              })}
+      {/* Fields — 36px gap from label, 28px between fields */}
+      <form
+        onSubmit={handleProfileSubmit((data) => profileMutation.mutate(data))}
+        style={{ marginTop: 36 }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {/* First Name */}
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+              FIRST NAME
+            </label>
+            <div style={{ height: 10 }} />
+            <input
+              {...profileRegister('firstName', { required: 'First name is required' })}
+              style={{
+                width: '100%',
+                fontSize: 14,
+                fontWeight: 300,
+                color: '#000',
+                border: 'none',
+                outline: 'none',
+                padding: 0,
+                background: 'transparent',
+              }}
             />
-            <Input
-              label="Last Name"
-              error={profileErrors.lastName?.message}
-              {...profileRegister('lastName', {
-                required: 'Last name is required',
-              })}
-            />
+            <div style={{ height: 10 }} />
+            <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+            {profileErrors.firstName && (
+              <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                {profileErrors.firstName.message}
+              </p>
+            )}
           </div>
-          <Input label="Email" value={profile?.email || ''} disabled />
-          <Input
-            label="Phone"
-            type="tel"
-            error={profileErrors.phone?.message}
-            {...profileRegister('phone', {
-              pattern: {
-                value: /^[6-9]\d{9}$/,
-                message: 'Enter a valid 10-digit Indian phone number',
-              },
-            })}
-          />
-          <Button type="submit" loading={profileMutation.isPending}>
-            Save Changes
-          </Button>
-        </form>
-      </div>
 
-      <hr
-        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
-      />
+          {/* Last Name */}
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+              LAST NAME
+            </label>
+            <div style={{ height: 10 }} />
+            <input
+              {...profileRegister('lastName', { required: 'Last name is required' })}
+              style={{
+                width: '100%',
+                fontSize: 14,
+                fontWeight: 300,
+                color: '#000',
+                border: 'none',
+                outline: 'none',
+                padding: 0,
+                background: 'transparent',
+              }}
+            />
+            <div style={{ height: 10 }} />
+            <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+            {profileErrors.lastName && (
+              <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                {profileErrors.lastName.message}
+              </p>
+            )}
+          </div>
 
-      {/* Change Password */}
-      <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider">Change Password</h3>
-        <p className="mt-1 mb-5 text-xs text-[var(--color-muted)]">
-          Set a new password for your account.
-        </p>
-        <form
-          onSubmit={handlePasswordSubmit((data) => passwordMutation.mutate(data))}
-          className="max-w-md space-y-4"
+          {/* Email — disabled, #CCC text, #F0F0F0 line */}
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+              EMAIL
+            </label>
+            <div style={{ height: 10 }} />
+            <input
+              value={profile?.email || ''}
+              disabled
+              style={{
+                width: '100%',
+                fontSize: 14,
+                fontWeight: 300,
+                color: '#CCC',
+                border: 'none',
+                outline: 'none',
+                padding: 0,
+                background: 'transparent',
+              }}
+            />
+            <div style={{ height: 10 }} />
+            <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+          </div>
+
+          {/* Phone — +91 prefix with separator */}
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+              PHONE
+            </label>
+            <div style={{ height: 10 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 400, color: '#000' }}>+91</span>
+              <div style={{ width: 1, height: 14, backgroundColor: '#CCC' }} />
+              <input
+                {...profileRegister('phone', {
+                  pattern: {
+                    value: /^[6-9]\d{9}$/,
+                    message: 'Enter a valid 10-digit Indian phone number',
+                  },
+                })}
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="98765 43210"
+                style={{
+                  flex: 1,
+                  fontSize: 14,
+                  fontWeight: 300,
+                  color: '#000',
+                  border: 'none',
+                  outline: 'none',
+                  padding: 0,
+                  background: 'transparent',
+                }}
+              />
+            </div>
+            <div style={{ height: 10 }} />
+            <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+            {profileErrors.phone && (
+              <p style={{ fontSize: 11, color: '#cf2929', marginTop: 4 }}>
+                {profileErrors.phone.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Save button — 36px gap, h=50, black, full-width */}
+        <button
+          type="submit"
+          disabled={profileMutation.isPending}
+          style={{
+            marginTop: 36,
+            width: '100%',
+            height: 50,
+            backgroundColor: '#000',
+            color: '#FFF',
+            fontSize: 12,
+            fontWeight: 400,
+            letterSpacing: 2,
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: profileMutation.isPending ? 0.5 : 1,
+          }}
         >
-          <Input
-            label="Current Password"
-            type="password"
-            autoComplete="current-password"
-            error={passwordErrors.currentPassword?.message}
-            {...passwordRegister('currentPassword', {
-              required: 'Current password is required',
-            })}
-          />
-          <Input
-            label="New Password"
-            type="password"
-            autoComplete="new-password"
-            error={passwordErrors.newPassword?.message}
-            {...passwordRegister('newPassword', {
-              required: 'New password is required',
-              minLength: { value: 8, message: 'Min 8 characters' },
-              validate: {
-                uppercase: (v) => /[A-Z]/.test(v) || 'Must contain an uppercase letter',
-                number: (v) => /[0-9]/.test(v) || 'Must contain a number',
-              },
-            })}
-          />
-          <Input
-            label="Confirm New Password"
-            type="password"
-            autoComplete="new-password"
-            error={passwordErrors.confirmNewPassword?.message}
-            {...passwordRegister('confirmNewPassword', {
-              required: 'Please confirm your new password',
-              validate: (value) =>
-                value === passwordWatch('newPassword') || 'Passwords do not match',
-            })}
-          />
-          <Button type="submit" loading={passwordMutation.isPending}>
-            Update Password
-          </Button>
-        </form>
-      </div>
+          {profileMutation.isPending ? <Spinner className="h-4 w-4" /> : 'SAVE CHANGES'}
+        </button>
+      </form>
+
+      {/* Log out — 36px gap, centered */}
+      <button
+        onClick={handleLogout}
+        style={{
+          marginTop: 36,
+          width: '100%',
+          textAlign: 'center',
+          fontSize: 12,
+          fontWeight: 300,
+          color: '#999',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+        }}
+      >
+        Log out
+      </button>
     </div>
   );
 }
