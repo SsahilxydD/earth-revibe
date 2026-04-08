@@ -3,9 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Plus, Pencil, Trash2, X, Star, Zap } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Zap } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
@@ -84,7 +82,7 @@ export default function AddressesPage() {
     queryFn: () => api.get<Address[]>('/addresses'),
   });
 
-  // Import address from Razorpay: opens Magic Checkout (phone → OTP → address).
+  // Import address from Razorpay: opens Magic Checkout (phone -> OTP -> address).
   // When the user selects an address and dismisses before paying, we capture it.
   const importFromRazorpay = useCallback(async () => {
     setIsImporting(true);
@@ -108,7 +106,7 @@ export default function AddressesPage() {
         });
       }
 
-      // Open Magic Checkout — Razorpay handles phone → OTP → address
+      // Open Magic Checkout — Razorpay handles phone -> OTP -> address
       const rzp = new window.Razorpay({
         key: order.razorpayKeyId,
         amount: order.amount,
@@ -197,6 +195,17 @@ export default function AddressesPage() {
     },
   });
 
+  const defaultMutation = useMutation({
+    mutationFn: (id: string) => api.put(`/addresses/${id}`, { isDefault: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['addresses'] });
+      addToast('Default address updated', 'success');
+    },
+    onError: (err: any) => {
+      addToast(err?.message || 'Failed to set default address', 'error');
+    },
+  });
+
   const editingAddress = editingId ? addresses?.find((a) => a.id === editingId) : null;
 
   const {
@@ -262,102 +271,334 @@ export default function AddressesPage() {
   }
 
   return (
-    <div>
-      {/* Header */}
-      <h2 className="text-sm font-bold uppercase tracking-wider">Saved Addresses</h2>
-      <p className="mt-2 text-xs text-[var(--color-muted)]">
-        Manage your delivery addresses for faster checkout.
-      </p>
-
-      {/* Action buttons */}
-      {!showForm && (
-        <div style={{ marginTop: 24 }} className="flex gap-3">
-          <button
-            onClick={importFromRazorpay}
-            disabled={isImporting}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--button-radius)] border border-[#2B84EA] px-3 py-3 text-xs font-semibold text-[#2B84EA] transition-colors hover:bg-[#2B84EA]/5 disabled:opacity-60 md:flex-none"
-          >
-            <Zap size={14} />
-            {isImporting ? 'Importing...' : 'Import via Razorpay'}
-          </button>
-          <Button
-            size="sm"
-            className="flex-1 py-3 md:flex-none"
-            onClick={() => {
-              setEditingId(null);
-              reset();
-              setShowForm(true);
-            }}
-          >
-            <Plus size={16} />
-            Add Address
-          </Button>
-        </div>
-      )}
-
-      {/* Divider */}
-      <hr
-        style={{ marginTop: 28, marginBottom: 28, border: 'none', borderTop: '1px solid #e5e5e5' }}
-      />
+    <div style={{ fontFamily: 'var(--font-inter), Inter, sans-serif' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 400,
+            color: '#999',
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+          }}
+        >
+          SAVED ADDRESSES
+        </span>
+        {!showForm && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <button
+              onClick={importFromRazorpay}
+              disabled={isImporting}
+              style={{
+                fontSize: 11,
+                fontWeight: 400,
+                color: '#2B84EA',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: 0,
+                opacity: isImporting ? 0.6 : 1,
+              }}
+            >
+              <Zap size={12} />
+              {isImporting ? 'Importing...' : 'Import via Razorpay'}
+            </button>
+            <button
+              onClick={() => {
+                setEditingId(null);
+                reset();
+                setShowForm(true);
+              }}
+              style={{
+                fontSize: 11,
+                fontWeight: 400,
+                color: '#000',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              + Add new
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Address Form */}
       {showForm && (
-        <div className="rounded-xl border border-[var(--color-border)] p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider">
-              {editingId ? 'Edit Address' : 'New Address'}
-            </h3>
+        <div style={{ marginTop: 24 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 24,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 400,
+                color: '#999',
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+              }}
+            >
+              {editingId ? 'EDIT ADDRESS' : 'NEW ADDRESS'}
+            </span>
             <button
               onClick={closeForm}
-              className="text-[var(--color-muted)] hover:text-[var(--color-text)]"
-              aria-label="Close form"
+              style={{
+                fontSize: 11,
+                fontWeight: 400,
+                color: '#999',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
             >
-              <X size={20} />
+              Cancel
             </button>
           </div>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input
-                label="Full Name"
-                error={errors.fullName?.message}
-                {...register('fullName', {
-                  required: 'Full name is required',
-                })}
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+              {/* Full Name */}
+              <div>
+                <label
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 400,
+                    color: '#999',
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                    marginBottom: 8,
+                  }}
+                >
+                  FULL NAME
+                </label>
+                <input
+                  {...register('fullName', { required: 'Full name is required' })}
+                  style={{
+                    width: '100%',
+                    fontSize: 14,
+                    fontWeight: 300,
+                    color: '#000',
+                    border: 'none',
+                    borderBottom: '1px solid #E5E5E5',
+                    outline: 'none',
+                    padding: '4px 0 8px',
+                    background: 'transparent',
+                    borderRadius: 0,
+                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                  }}
+                />
+                {errors.fullName && (
+                  <p style={{ fontSize: 11, color: '#cc0000', marginTop: 4 }}>
+                    {errors.fullName.message}
+                  </p>
+                )}
+              </div>
+              {/* Phone */}
+              <div>
+                <label
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 400,
+                    color: '#999',
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                    marginBottom: 8,
+                  }}
+                >
+                  PHONE
+                </label>
+                <input
+                  type="tel"
+                  {...register('phone', {
+                    required: 'Phone is required',
+                    pattern: {
+                      value: /^[6-9]\d{9}$/,
+                      message: 'Enter a valid 10-digit number',
+                    },
+                  })}
+                  style={{
+                    width: '100%',
+                    fontSize: 14,
+                    fontWeight: 300,
+                    color: '#000',
+                    border: 'none',
+                    borderBottom: '1px solid #E5E5E5',
+                    outline: 'none',
+                    padding: '4px 0 8px',
+                    background: 'transparent',
+                    borderRadius: 0,
+                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                  }}
+                />
+                {errors.phone && (
+                  <p style={{ fontSize: 11, color: '#cc0000', marginTop: 4 }}>
+                    {errors.phone.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Address Line 1 */}
+            <div style={{ marginTop: 24 }}>
+              <label
+                style={{
+                  fontSize: 10,
+                  fontWeight: 400,
+                  color: '#999',
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  display: 'block',
+                  marginBottom: 8,
+                }}
+              >
+                ADDRESS LINE 1
+              </label>
+              <input
+                {...register('line1', { required: 'Address is required' })}
+                style={{
+                  width: '100%',
+                  fontSize: 14,
+                  fontWeight: 300,
+                  color: '#000',
+                  border: 'none',
+                  borderBottom: '1px solid #E5E5E5',
+                  outline: 'none',
+                  padding: '4px 0 8px',
+                  background: 'transparent',
+                  borderRadius: 0,
+                  fontFamily: 'var(--font-inter), Inter, sans-serif',
+                }}
               />
-              <Input
-                label="Phone"
-                type="tel"
-                error={errors.phone?.message}
-                {...register('phone', {
-                  required: 'Phone is required',
-                  pattern: {
-                    value: /^[6-9]\d{9}$/,
-                    message: 'Enter a valid 10-digit number',
-                  },
-                })}
+              {errors.line1 && (
+                <p style={{ fontSize: 11, color: '#cc0000', marginTop: 4 }}>
+                  {errors.line1.message}
+                </p>
+              )}
+            </div>
+
+            {/* Address Line 2 */}
+            <div style={{ marginTop: 24 }}>
+              <label
+                style={{
+                  fontSize: 10,
+                  fontWeight: 400,
+                  color: '#999',
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  display: 'block',
+                  marginBottom: 8,
+                }}
+              >
+                ADDRESS LINE 2 (OPTIONAL)
+              </label>
+              <input
+                {...register('line2')}
+                style={{
+                  width: '100%',
+                  fontSize: 14,
+                  fontWeight: 300,
+                  color: '#000',
+                  border: 'none',
+                  borderBottom: '1px solid #E5E5E5',
+                  outline: 'none',
+                  padding: '4px 0 8px',
+                  background: 'transparent',
+                  borderRadius: 0,
+                  fontFamily: 'var(--font-inter), Inter, sans-serif',
+                }}
               />
             </div>
-            <Input
-              label="Address Line 1"
-              error={errors.line1?.message}
-              {...register('line1', {
-                required: 'Address is required',
-              })}
-            />
-            <Input label="Address Line 2 (Optional)" {...register('line2')} />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Input
-                label="City"
-                error={errors.city?.message}
-                {...register('city', { required: 'City is required' })}
-              />
-              <div className="w-full">
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                  State
+
+            {/* City, State, Pin Code */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                gap: 24,
+                marginTop: 24,
+              }}
+            >
+              <div>
+                <label
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 400,
+                    color: '#999',
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                    marginBottom: 8,
+                  }}
+                >
+                  CITY
+                </label>
+                <input
+                  {...register('city', { required: 'City is required' })}
+                  style={{
+                    width: '100%',
+                    fontSize: 14,
+                    fontWeight: 300,
+                    color: '#000',
+                    border: 'none',
+                    borderBottom: '1px solid #E5E5E5',
+                    outline: 'none',
+                    padding: '4px 0 8px',
+                    background: 'transparent',
+                    borderRadius: 0,
+                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                  }}
+                />
+                {errors.city && (
+                  <p style={{ fontSize: 11, color: '#cc0000', marginTop: 4 }}>
+                    {errors.city.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 400,
+                    color: '#999',
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                    marginBottom: 8,
+                  }}
+                >
+                  STATE
                 </label>
                 <select
-                  className="w-full rounded-[var(--button-radius)] border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
                   {...register('state', { required: 'State is required' })}
+                  style={{
+                    width: '100%',
+                    fontSize: 14,
+                    fontWeight: 300,
+                    color: '#000',
+                    border: 'none',
+                    borderBottom: '1px solid #E5E5E5',
+                    outline: 'none',
+                    padding: '4px 0 8px',
+                    background: 'transparent',
+                    borderRadius: 0,
+                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
                   <option value="">Select state</option>
                   {INDIAN_STATES.map((s) => (
@@ -367,37 +608,99 @@ export default function AddressesPage() {
                   ))}
                 </select>
                 {errors.state && (
-                  <p className="mt-1 text-xs text-[var(--color-sale)]">{errors.state.message}</p>
+                  <p style={{ fontSize: 11, color: '#cc0000', marginTop: 4 }}>
+                    {errors.state.message}
+                  </p>
                 )}
               </div>
-              <Input
-                label="Pin Code"
-                error={errors.pinCode?.message}
-                {...register('pinCode', {
-                  required: 'Pin code is required',
-                  pattern: {
-                    value: /^\d{6}$/,
-                    message: 'Enter a valid 6-digit pin code',
-                  },
-                })}
-              />
+              <div>
+                <label
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 400,
+                    color: '#999',
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                    marginBottom: 8,
+                  }}
+                >
+                  PIN CODE
+                </label>
+                <input
+                  {...register('pinCode', {
+                    required: 'Pin code is required',
+                    pattern: {
+                      value: /^\d{6}$/,
+                      message: 'Enter a valid 6-digit pin code',
+                    },
+                  })}
+                  style={{
+                    width: '100%',
+                    fontSize: 14,
+                    fontWeight: 300,
+                    color: '#000',
+                    border: 'none',
+                    borderBottom: '1px solid #E5E5E5',
+                    outline: 'none',
+                    padding: '4px 0 8px',
+                    background: 'transparent',
+                    borderRadius: 0,
+                    fontFamily: 'var(--font-inter), Inter, sans-serif',
+                  }}
+                />
+                {errors.pinCode && (
+                  <p style={{ fontSize: 11, color: '#cc0000', marginTop: 4 }}>
+                    {errors.pinCode.message}
+                  </p>
+                )}
+              </div>
             </div>
-            <label className="flex items-center gap-2 text-sm">
+
+            {/* Default checkbox */}
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginTop: 24,
+                fontSize: 12,
+                fontWeight: 300,
+                color: '#999',
+                cursor: 'pointer',
+              }}
+            >
               <input
                 type="checkbox"
-                className="h-4 w-4 accent-[var(--color-primary)]"
                 {...register('isDefault')}
+                style={{ width: 14, height: 14, accentColor: '#000' }}
               />
-              <span className="text-[var(--color-muted)]">Set as default address</span>
+              Set as default address
             </label>
-            <div className="flex gap-3">
-              <Button type="submit" loading={createMutation.isPending || updateMutation.isPending}>
-                {editingId ? 'Update Address' : 'Save Address'}
-              </Button>
-              <Button type="button" variant="ghost" onClick={closeForm}>
-                Cancel
-              </Button>
-            </div>
+
+            {/* Save button */}
+            <button
+              type="submit"
+              disabled={createMutation.isPending || updateMutation.isPending}
+              style={{
+                width: '100%',
+                marginTop: 32,
+                padding: '14px 0',
+                backgroundColor: '#000',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 0,
+                fontSize: 10,
+                fontWeight: 400,
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-inter), Inter, sans-serif',
+                opacity: createMutation.isPending || updateMutation.isPending ? 0.6 : 1,
+              }}
+            >
+              {createMutation.isPending || updateMutation.isPending ? 'SAVING...' : 'SAVE ADDRESS'}
+            </button>
           </form>
         </div>
       )}
@@ -405,62 +708,160 @@ export default function AddressesPage() {
       {/* Address Cards */}
       {(!addresses || addresses.length === 0) && !showForm ? (
         <div
-          style={{ paddingTop: 60, paddingBottom: 60 }}
-          className="flex flex-col items-center text-center"
+          style={{
+            paddingTop: 60,
+            paddingBottom: 60,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+          }}
         >
-          <MapPin size={40} strokeWidth={1} className="text-[#c0c0c0]" />
-          <h3 style={{ marginTop: 24 }} className="text-xs font-bold uppercase tracking-[0.2em]">
-            No saved addresses
-          </h3>
-          <p
-            style={{ marginTop: 10, maxWidth: 240 }}
-            className="text-xs leading-relaxed text-[#999]"
-          >
+          <p style={{ fontSize: 13, fontWeight: 300, color: '#999' }}>No saved addresses yet</p>
+          <p style={{ fontSize: 12, fontWeight: 300, color: '#999', marginTop: 8 }}>
             Add a delivery address to speed up checkout.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {addresses?.map((address) => (
-            <div
-              key={address.id}
-              className="relative rounded-xl border border-[var(--color-border)] p-5"
-            >
-              {address.isDefault && (
-                <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-[var(--color-primary)]">
-                  <Star size={12} className="fill-current" />
-                  Default Address
+        !showForm && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 24 }}>
+            {addresses?.map((address) => (
+              <div
+                key={address.id}
+                style={{
+                  border: address.isDefault ? '1px solid #E5E5E5' : '1px solid #F0F0F0',
+                  borderRadius: 0,
+                  padding: 20,
+                }}
+              >
+                {/* Top row: name + default badge */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span style={{ fontSize: 14, fontWeight: 400, color: '#000' }}>
+                    {address.fullName}
+                  </span>
+                  {address.isDefault && (
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 400,
+                        color: '#000',
+                        letterSpacing: '1.5px',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      DEFAULT
+                    </span>
+                  )}
                 </div>
-              )}
-              <p className="text-sm font-bold">{address.fullName}</p>
-              <div className="mt-2 space-y-1 text-sm leading-relaxed text-[var(--color-muted)]">
-                <p>{address.line1}</p>
-                {address.line2 && <p>{address.line2}</p>}
-                <p>
-                  {address.city}, {address.state} {address.pinCode}
+
+                {/* Address text */}
+                <div style={{ marginTop: 10 }}>
+                  <p
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 300,
+                      color: '#999',
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    {address.line1}
+                    {address.line2 ? (
+                      <>
+                        <br />
+                        {address.line2}
+                      </>
+                    ) : null}
+                    <br />
+                    {address.city}, {address.state} {address.pinCode}
+                  </p>
+                </div>
+
+                {/* Phone */}
+                <p
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 300,
+                    color: '#999',
+                    marginTop: 10,
+                    marginBottom: 0,
+                  }}
+                >
+                  {address.phone}
                 </p>
-              </div>
-              <p className="mt-3 text-xs text-[var(--color-muted)]">Phone: {address.phone}</p>
-              <div className="mt-4 flex gap-4 border-t border-[var(--color-border)] pt-4">
-                <button
-                  onClick={() => openEdit(address.id)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-primary)] hover:underline"
+
+                {/* Actions row */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 16,
+                    paddingTop: 6,
+                    marginTop: 10,
+                  }}
                 >
-                  <Pencil size={12} />
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(address.id)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-sale)] hover:underline"
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 size={12} />
-                  Delete
-                </button>
+                  <button
+                    onClick={() => openEdit(address.id)}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 400,
+                      color: '#000',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      fontFamily: 'var(--font-inter), Inter, sans-serif',
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(address.id)}
+                    disabled={deleteMutation.isPending}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 300,
+                      color: '#999',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      fontFamily: 'var(--font-inter), Inter, sans-serif',
+                      opacity: deleteMutation.isPending ? 0.5 : 1,
+                    }}
+                  >
+                    Remove
+                  </button>
+                  {!address.isDefault && (
+                    <button
+                      onClick={() => defaultMutation.mutate(address.id)}
+                      disabled={defaultMutation.isPending}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 300,
+                        color: '#999',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                        fontFamily: 'var(--font-inter), Inter, sans-serif',
+                        opacity: defaultMutation.isPending ? 0.5 : 1,
+                      }}
+                    >
+                      Set as default
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       )}
     </div>
   );
