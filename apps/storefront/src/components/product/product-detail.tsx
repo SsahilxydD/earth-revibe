@@ -17,6 +17,7 @@ import { useCartStore } from '@/stores/cart-store';
 import { useRazorpay } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
 import { useProducts } from '@/hooks/use-products';
+import { useAddToWishlist, useRemoveFromWishlist, useWishlist } from '@/hooks/use-wishlist';
 import type { Product, ProductVariant } from '@/types';
 
 // Lazy-load DOMPurify
@@ -231,6 +232,33 @@ type TabKey = 'details' | 'washcare' | 'shipping';
 
 function DetailTabs({ product }: { product: Product }) {
   const [tab, setTab] = useState<TabKey>('details');
+  const [cardMinH, setCardMinH] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const measured = useRef(false);
+
+  // On mount: cycle through all tabs, measure each card height, lock to the tallest
+  useEffect(() => {
+    if (measured.current || !cardRef.current) return;
+    measured.current = true;
+    const origTab = tab;
+    let maxH = cardRef.current.scrollHeight;
+
+    // Briefly switch to each tab to measure
+    const allTabs: TabKey[] = ['details', 'washcare', 'shipping'];
+    const measure = async () => {
+      for (const t of allTabs) {
+        setTab(t);
+        // Wait for React to render
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        if (cardRef.current) {
+          maxH = Math.max(maxH, cardRef.current.scrollHeight);
+        }
+      }
+      setTab(origTab as TabKey);
+      setCardMinH(maxH);
+    };
+    measure();
+  }, []);
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'details', label: 'Details & Description' },
@@ -255,18 +283,17 @@ function DetailTabs({ product }: { product: Product }) {
   if (product.returnsInfo) shipRows.push({ label: 'Returns', value: product.returnsInfo });
 
   return (
-    /* Mzs7t — rounded card, centered, w:359 h:383, padding 20 20 24 20,
-       #F5F5F5 bg, 1px #F0F0F0 border, rounded 20 */
+    /* Mzs7t — rounded card, dynamic minHeight locked on mount */
     <div
+      ref={cardRef}
       style={{
-        margin: '0 auto',
-        width: 'calc(100% - 34px)',
-        maxWidth: 359,
+        margin: '0 20px',
+        width: 'auto',
         padding: '20px 20px 24px 20px',
         borderRadius: 20,
         border: '1px solid #F0F0F0',
         backgroundColor: '#F5F5F5',
-        minHeight: 383,
+        minHeight: cardMinH > 0 ? cardMinH : undefined,
       }}
     >
       {/* zgrsv — tabBar h44, padding 0 4 */}
@@ -392,90 +419,184 @@ function DetailTabs({ product }: { product: Product }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  relSec — Pencil node dPB6i                                         */
-/*  2-col grid (jUVqS, gap 10), each card: image 220px rounded 8,     */
-/*  bookmark top-right, info row with name+price left, plus icon right */
+/*  relSec — Pencil node e6Y3o (was dPB6i)                             */
+/*  Mood circles (radio, first default) + 2-col product grid           */
 /* ------------------------------------------------------------------ */
 
-function RelatedSection({ categorySlug, excludeId }: { categorySlug?: string; excludeId: string }) {
-  const { data } = useProducts({
-    category: categorySlug,
-    limit: 4,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
+const MOODS = [
+  { label: 'Beach', value: 'beach', img: '/moods/beach.webp' },
+  { label: 'Brunch', value: 'brunch', img: '/moods/brunch.webp' },
+  { label: 'Sunset', value: 'sunset', img: '/moods/sunset.webp' },
+  { label: 'Poolside', value: 'poolside', img: '/moods/poolside.webp' },
+  { label: 'Island', value: 'island', img: '/moods/island.webp' },
+];
 
-  const products = useMemo(() => {
+const MOOD_KEYWORDS: Record<string, string[]> = {
+  beach: ['Aqua', 'Coastal', 'Marine', 'Tidewater', 'Shoreline', 'Water', 'Blu ', 'Alpine Ivory'],
+  brunch: [
+    'Latte',
+    'Mocha',
+    'Cream',
+    'Oat',
+    'Vanilla',
+    'Biscotti',
+    'Cinnamon',
+    'Macchiato',
+    'Caramel',
+  ],
+  sunset: ['Amber', 'Coral', 'Ember', 'Peach', 'Flame', 'Sienna', 'Tangerine', 'Rust', 'Brick'],
+  poolside: ['Aqua', 'Mint', 'Teal', 'Cool', 'Fresh', 'Breeze', 'Splash', 'Dew', 'Mist'],
+  island: [
+    'Palm',
+    'Fern',
+    'Moss',
+    'Sage',
+    'Forest',
+    'Olive',
+    'Tropical',
+    'Jungle',
+    'Leaf',
+    'Void',
+    'Earth',
+    'Terra',
+    'Stone',
+    'Drift',
+  ],
+};
+
+function MoodSection({ excludeId }: { excludeId: string }) {
+  const [mood, setMood] = useState(MOODS[0].value);
+  const { data } = useProducts({ limit: 20, sortBy: 'createdAt', sortOrder: 'desc' });
+
+  const filtered = useMemo(() => {
     const all = data?.products ?? [];
-    return all.filter((p: Product) => p.id !== excludeId).slice(0, 2);
-  }, [data, excludeId]);
-
-  if (products.length === 0) return null;
+    const keywords = MOOD_KEYWORDS[mood] || [];
+    return all
+      .filter((p: Product) => p.id !== excludeId)
+      .filter((p: Product) =>
+        keywords.some((kw) => p.name.toLowerCase().includes(kw.toLowerCase()))
+      )
+      .slice(0, 2);
+  }, [data, mood, excludeId]);
 
   return (
-    /* dPB6i — padding 20 20 28 20, gap 16 */
+    /* relSec — padding 20 20 28 20, gap 16 */
     <div
       style={{ padding: '20px 20px 28px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}
     >
-      {/* jUVqS — relGrid, 2 cols, gap 10 */}
-      <div style={{ display: 'flex', gap: 10 }}>
-        {products.map((p: Product) => {
-          const img = p.images?.find((i: { isPrimary?: boolean }) => i.isPrimary) || p.images?.[0];
+      {/* moodRow — h80, space-between */}
+      <div
+        style={{
+          height: 80,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        {MOODS.map((m) => {
+          const active = mood === m.value;
           return (
-            /* r1 / r2 — vertical layout, fill_container width */
-            <div key={p.id} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              {/* r1Img / r2Img — h220, rounded 8, #F0F0F0 bg, bookmark top-right */}
+            <button
+              key={m.value}
+              onClick={() => setMood(m.value)}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
               <div
                 style={{
-                  position: 'relative',
-                  height: 220,
-                  borderRadius: 8,
-                  backgroundColor: '#F0F0F0',
-                  overflow: 'hidden',
+                  width: 48,
+                  height: 48,
+                  borderRadius: 9999,
+                  backgroundImage: `url(${m.img})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  outline: active ? '2px solid #000' : 'none',
+                  outlineOffset: 2,
                 }}
-              >
-                {img && (
-                  <Image
-                    src={getImageUrl(img.url, 400)}
-                    alt={img.altText || p.name}
-                    fill
-                    sizes="50vw"
-                    className="object-cover"
-                    placeholder="blur"
-                    blurDataURL={BLUR_DATA_URL}
-                  />
-                )}
-                {/* r1Bm — bookmark 16px white, positioned top-right */}
-                <Bookmark
-                  size={16}
-                  color="#FFF"
-                  fill="none"
-                  style={{ position: 'absolute', top: 10, right: 10 }}
-                />
-              </div>
-              {/* r1Info — space-between, padding 10 0 0 0 */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingTop: 10,
-                }}
-              >
-                {/* r1Left — name + price, gap 2 */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <span style={{ fontSize: 11, fontWeight: 400, color: '#000' }}>{p.name}</span>
-                  <span style={{ fontSize: 11, fontWeight: 300, color: '#000' }}>
-                    {formatPrice(p.price)}
-                  </span>
-                </div>
-                {/* r1Add — plus icon 16px black */}
-                <Plus size={16} color="#000" />
-              </div>
-            </div>
+              />
+              <span style={{ fontSize: 9, fontWeight: active ? 400 : 300, color: '#000' }}>
+                {m.label}
+              </span>
+            </button>
           );
         })}
       </div>
+
+      {/* moodGrid — 2 cols, gap 10 */}
+      {filtered.length > 0 && (
+        <div style={{ display: 'flex', gap: 10 }}>
+          {filtered.map((p: Product) => {
+            const img =
+              p.images?.find((i: { isPrimary?: boolean }) => i.isPrimary) || p.images?.[0];
+            return (
+              <a
+                key={p.id}
+                href={`/products/${p.slug}`}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  textDecoration: 'none',
+                }}
+              >
+                {/* image — h220, rounded 8 */}
+                <div
+                  style={{
+                    position: 'relative',
+                    height: 220,
+                    borderRadius: 8,
+                    backgroundColor: '#F0F0F0',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {img && (
+                    <Image
+                      src={getImageUrl(img.url, 400)}
+                      alt={img.altText || p.name}
+                      fill
+                      sizes="50vw"
+                      className="object-cover"
+                      placeholder="blur"
+                      blurDataURL={BLUR_DATA_URL}
+                    />
+                  )}
+                  <Bookmark
+                    size={16}
+                    color="#FFF"
+                    fill="none"
+                    style={{ position: 'absolute', top: 10, right: 10 }}
+                  />
+                </div>
+                {/* info — name + price left, plus right */}
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingTop: 10,
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 11, fontWeight: 400, color: '#000' }}>{p.name}</span>
+                    <span style={{ fontSize: 11, fontWeight: 300, color: '#000' }}>
+                      {formatPrice(p.price)}
+                    </span>
+                  </div>
+                  <Plus size={16} color="#000" />
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -493,9 +614,24 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
-  const [wishlisted, setWishlisted] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Wishlist
+  const { data: wishlistData } = useWishlist({ retry: false });
+  const addToWishlist = useAddToWishlist();
+  const removeFromWishlist = useRemoveFromWishlist();
+  const wishlisted = useMemo(
+    () => (wishlistData || []).some((item) => item.product?.id === product.id),
+    [wishlistData, product.id]
+  );
+  const toggleWishlist = () => {
+    if (wishlisted) {
+      removeFromWishlist.mutate(product.id);
+    } else {
+      addToWishlist.mutate(product.id);
+    }
+  };
 
   // Image carousel
   const [activeImg, setActiveImg] = useState(0);
@@ -649,8 +785,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
       });
       addToast('Order placed successfully!', 'success');
       router.push('/account/orders');
-    } catch (err: any) {
-      addToast(err?.message || 'Something went wrong', 'error');
+    } catch (err: unknown) {
+      addToast(err instanceof Error ? err.message : 'Something went wrong', 'error');
     } finally {
       setIsBuying(false);
     }
@@ -724,7 +860,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </span>
           {/* sP1wX — wishBtn bookmark, top-right */}
           <button
-            onClick={() => setWishlisted((v) => !v)}
+            onClick={toggleWishlist}
             style={{
               position: 'absolute',
               right: 28,
@@ -781,7 +917,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
             <span style={{ fontSize: 16, fontWeight: 500, color: '#000' }}>{product.name}</span>
             {/* 6jczs — pdpBookmark 16px black */}
             <button
-              onClick={() => setWishlisted((v) => !v)}
+              onClick={toggleWishlist}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
               <Bookmark size={16} color="#000" fill={wishlisted ? '#000' : 'none'} />
@@ -921,8 +1057,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
       {/* ===== Mzs7t — tabSec, paddingTop 24 ===== */}
       <DetailTabs product={product} />
 
-      {/* ===== dPB6i — relSec ===== */}
-      <RelatedSection categorySlug={product.category?.slug} excludeId={product.id} />
+      {/* ===== relSec — mood filters + grid ===== */}
+      <MoodSection excludeId={product.id} />
 
       {/* Size Guide portal */}
       {mounted &&
