@@ -213,6 +213,41 @@ function CategoryContent() {
       {/* Divider */}
       <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
+      {/* Style navigation — mood circles, h=97 */}
+      <div
+        className="hide-scrollbar"
+        style={{
+          height: 97,
+          padding: '14px 28px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          overflowX: 'auto',
+        }}
+      >
+        {[
+          { label: 'Beach', bg: '#E8E4DF' },
+          { label: 'Brunch', bg: '#D8D4CF' },
+          { label: 'Sunset', bg: '#C8C4BF' },
+          { label: 'Poolside', bg: '#B8B4AF' },
+          { label: 'Island', bg: '#D0CCC7' },
+        ].map((mood) => (
+          <div
+            key={mood.label}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 6,
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ width: 52, height: 52, borderRadius: 9999, backgroundColor: mood.bg }} />
+            <span style={{ fontSize: 9, fontWeight: 300, color: '#000' }}>{mood.label}</span>
+          </div>
+        ))}
+      </div>
+
       {/* Filter bar — 44px */}
       <div
         style={{
