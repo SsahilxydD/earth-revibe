@@ -4,23 +4,25 @@ import { useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Heart } from 'lucide-react';
+import { Heart, Plus } from 'lucide-react';
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { trackWishlistToggle } from '@/lib/analytics';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/use-wishlist';
+import { useCartStore } from '@/stores/cart-store';
+import { useToast } from '@/providers';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
   product: Product;
-  /** Index in the grid — first 8 cards load eagerly (above the fold) */
   index?: number;
 }
 
 export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const router = useRouter();
   const prefetched = useRef(false);
+  const addItem = useCartStore((s) => s.addItem);
+  const { addToast } = useToast();
 
-  // Wishlist — real API state
   const { data: wishlistItems } = useWishlist({ enabled: typeof window !== 'undefined' });
   const addToWishlist = useAddToWishlist();
   const removeFromWishlist = useRemoveFromWishlist();
@@ -42,13 +44,11 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
         addToWishlist.mutate(product.id);
       }
     },
-    [isWishlisted, product.id, addToWishlist, removeFromWishlist]
+    [isWishlisted, product.id, product.name, addToWishlist, removeFromWishlist]
   );
 
-  // First 4 cards are above the fold on mobile (2-col grid) — load eagerly
   const isAboveFold = index < 4;
 
-  // Prefetch the product page on first touch/hover so navigation is instant
   const handlePrefetch = useCallback(() => {
     if (!prefetched.current) {
       prefetched.current = true;
@@ -69,12 +69,12 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
     return sorted.find((img) => img !== primary) || null;
   }, [images]);
 
-  // Preload secondary image into browser cache so hover swap is instant
   const secondaryUrl = useMemo(
     () =>
       secondaryImage ? getImageUrl(secondaryImage.url, 600, secondaryImage.thumbnailUrl) : null,
     [secondaryImage]
   );
+
   useEffect(() => {
     if (!secondaryUrl) return;
     const img = new window.Image();
@@ -82,15 +82,67 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
   }, [secondaryUrl]);
 
   const isOnSale = product.compareAtPrice !== null && product.compareAtPrice > product.price;
-
   const variants = product.variants ?? [];
   const isOutOfStock = variants.length > 0 && variants.every((v) => v.stock <= 0);
+  const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
+  const isLowStock = !isOutOfStock && totalStock > 0 && totalStock <= 5;
+
+  // Color swatches from variants
+  const colorSwatches = useMemo(() => {
+    const colors = new Set<string>();
+    variants.forEach((v) => {
+      if (v.color) colors.add(v.color);
+    });
+    return Array.from(colors).slice(0, 4);
+  }, [variants]);
+
+  // Discount percentage
+  const discountPct = isOnSale
+    ? Math.round(((product.compareAtPrice! - product.price) / product.compareAtPrice!) * 100)
+    : 0;
+
+  // Savings amount
+  const savings = isOnSale ? product.compareAtPrice! - product.price : 0;
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isOutOfStock) return;
+    const defaultVariant = variants.find((v) => v.stock > 0) || variants[0];
+    if (!defaultVariant) return;
+    addItem({
+      id: defaultVariant.id,
+      productId: product.id,
+      name: product.name,
+      slug: product.slug,
+      image: primaryImage?.url || '',
+      price: product.price,
+      compareAtPrice: product.compareAtPrice || undefined,
+      size: defaultVariant.size || 'M',
+      color: defaultVariant.color || 'Default',
+      maxQuantity: defaultVariant.stock > 0 ? defaultVariant.stock : 10,
+    });
+    addToast('Added to bag', 'success');
+  };
 
   return (
-    <div className="group relative" onMouseEnter={handlePrefetch} onTouchStart={handlePrefetch}>
-      <Link href={`/products/${product.slug}`} className="block">
-        {/* Image container — fixed aspect ratio prevents layout shift */}
-        <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
+    <div
+      className="group"
+      style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+      onMouseEnter={handlePrefetch}
+      onTouchStart={handlePrefetch}
+    >
+      <Link href={`/products/${product.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
+        {/* Image — 210px height equivalent via aspect ratio */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '3/4',
+            overflow: 'hidden',
+            backgroundColor: '#F5F5F5',
+          }}
+        >
           {primaryImage && (
             <Image
               src={getImageUrl(primaryImage.url, 600, primaryImage.thumbnailUrl)}
@@ -120,48 +172,266 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             />
           )}
 
-          {/* Sold out overlay */}
-          {isOutOfStock && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/60">
-              <span className="text-sm font-semibold uppercase tracking-wider text-[var(--color-sold-out)]">
-                Sold Out
+          {/* Badges — top left */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 10,
+              left: 10,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            {product.tags?.includes('new-arrival') && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  height: 20,
+                  padding: '0 8px',
+                  alignItems: 'center',
+                  backgroundColor: '#000',
+                  fontSize: 8,
+                  fontWeight: 400,
+                  color: '#FFF',
+                  letterSpacing: 1.5,
+                }}
+              >
+                NEW
+              </span>
+            )}
+            {product.tags?.includes('bestseller') && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  height: 20,
+                  padding: '0 8px',
+                  alignItems: 'center',
+                  backgroundColor: '#000',
+                  fontSize: 8,
+                  fontWeight: 400,
+                  color: '#FFF',
+                  letterSpacing: 1.5,
+                }}
+              >
+                BESTSELLER
+              </span>
+            )}
+            {isOnSale && discountPct > 0 && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  height: 20,
+                  padding: '0 8px',
+                  alignItems: 'center',
+                  backgroundColor: '#FFF',
+                  border: '1px solid #E5E5E5',
+                  fontSize: 8,
+                  fontWeight: 400,
+                  color: '#000',
+                  letterSpacing: 0.5,
+                }}
+              >
+                -{discountPct}%
+              </span>
+            )}
+          </div>
+
+          {/* Urgency — bottom left */}
+          {isLowStock && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 10,
+                left: 10,
+                display: 'inline-flex',
+                height: 18,
+                padding: '0 8px',
+                alignItems: 'center',
+                gap: 4,
+                backgroundColor: '#FFF',
+              }}
+            >
+              <span
+                style={{ width: 5, height: 5, borderRadius: 9999, backgroundColor: '#EF4444' }}
+              />
+              <span style={{ fontSize: 8, fontWeight: 400, color: '#000', letterSpacing: 0.3 }}>
+                Only {totalStock} left
               </span>
             </div>
           )}
 
-          {/* Wishlist button */}
+          {/* Sold out overlay */}
+          {isOutOfStock && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(0,0,0,0.4)',
+              }}
+            >
+              <span style={{ fontSize: 10, fontWeight: 400, color: '#FFF', letterSpacing: 1.5 }}>
+                SOLD OUT
+              </span>
+            </div>
+          )}
+
+          {/* Wishlist heart — top right */}
           <button
             onClick={toggleWishlist}
-            className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-white"
+            style={{
+              position: 'absolute',
+              top: 10,
+              right: 10,
+              zIndex: 10,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+            }}
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <Heart
-              size={14}
+              size={16}
               className={cn(
                 'transition-colors',
-                isWishlisted ? 'fill-[var(--color-sale)] text-[var(--color-sale)]' : 'text-black/60'
+                isWishlisted ? 'fill-[#EF4444] text-[#EF4444]' : 'text-[#CCC]'
               )}
             />
           </button>
         </div>
 
-        {/* Product info */}
-        <div className="mt-2 px-0.5">
-          <h3 className="line-clamp-2 text-xs leading-snug text-black">{product.name}</h3>
-          <div className="mt-0.5 flex items-center gap-2">
-            {isOnSale ? (
-              <>
-                <span className="text-xs font-medium text-black">{formatPrice(product.price)}</span>
-                <span className="text-[10px] text-black/40 line-through">
-                  {formatPrice(product.compareAtPrice!)}
-                </span>
-              </>
-            ) : (
-              <span className="text-xs font-medium text-black">{formatPrice(product.price)}</span>
-            )}
-          </div>
+        {/* Name */}
+        <p
+          style={{
+            fontSize: 12,
+            fontWeight: 400,
+            color: isOutOfStock ? '#999' : '#000',
+            overflow: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+          }}
+        >
+          {product.name}
+        </p>
+
+        {/* Material line */}
+        {product.materialDescription && (
+          <p style={{ fontSize: 9, fontWeight: 300, color: '#CCC', letterSpacing: 0.3 }}>
+            {product.materialDescription}
+          </p>
+        )}
+
+        {/* Price */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 12, fontWeight: 300, color: isOutOfStock ? '#999' : '#000' }}>
+            {formatPrice(product.price)}
+          </span>
+          {isOnSale && (
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 300,
+                color: '#CCC',
+                textDecoration: 'line-through',
+              }}
+            >
+              {formatPrice(product.compareAtPrice!)}
+            </span>
+          )}
         </div>
+
+        {/* Savings */}
+        {isOnSale && savings > 0 && !isOutOfStock && (
+          <span style={{ fontSize: 9, fontWeight: 400, color: '#22C55E', letterSpacing: 0.3 }}>
+            You save {formatPrice(savings)}
+          </span>
+        )}
+
+        {/* Stars placeholder — TODO: wire to real reviews */}
+        {product.reviewCount && product.reviewCount > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 9, fontWeight: 400, color: '#000' }}>
+              {'★'.repeat(Math.round(product.averageRating || 0))}
+              {'☆'.repeat(5 - Math.round(product.averageRating || 0))}
+            </span>
+            <span style={{ fontSize: 9, fontWeight: 300, color: '#999' }}>
+              ({product.reviewCount})
+            </span>
+          </div>
+        )}
+
+        {/* Color swatches */}
+        {colorSwatches.length > 1 && (
+          <div style={{ display: 'flex', gap: 4 }}>
+            {colorSwatches.map((color) => (
+              <span
+                key={color}
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 9999,
+                  backgroundColor:
+                    color.toLowerCase() === 'white'
+                      ? '#FFF'
+                      : color.toLowerCase() === 'black'
+                        ? '#1C1C1C'
+                        : color,
+                  border: color.toLowerCase() === 'white' ? '1px solid #E5E5E5' : 'none',
+                }}
+              />
+            ))}
+          </div>
+        )}
       </Link>
+
+      {/* Quick Add / Notify Me button — 34px height */}
+      {isOutOfStock ? (
+        <button
+          style={{
+            width: '100%',
+            height: 34,
+            border: '1px solid #E5E5E5',
+            backgroundColor: 'transparent',
+            fontSize: 9,
+            fontWeight: 400,
+            letterSpacing: 1.5,
+            color: '#999',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+          }}
+        >
+          NOTIFY ME
+        </button>
+      ) : (
+        <button
+          onClick={handleQuickAdd}
+          style={{
+            width: '100%',
+            height: 34,
+            border: '1px solid #000',
+            backgroundColor: 'transparent',
+            fontSize: 9,
+            fontWeight: 400,
+            letterSpacing: 1.5,
+            color: '#000',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+          }}
+        >
+          <Plus size={12} />
+          QUICK ADD
+        </button>
+      )}
     </div>
   );
 }

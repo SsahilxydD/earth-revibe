@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, SlidersHorizontal } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { SlidersHorizontal } from 'lucide-react';
 import { useCategories } from '@/hooks/use-products';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 
@@ -11,24 +10,24 @@ const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
 const COLOR_OPTIONS = [
   { name: 'Black', hex: '#000000' },
   { name: 'White', hex: '#FFFFFF' },
-  { name: 'Red', hex: '#cf2929' },
-  { name: 'Blue', hex: '#2563eb' },
-  { name: 'Green', hex: '#16a34a' },
-  { name: 'Yellow', hex: '#eab308' },
-  { name: 'Pink', hex: '#ec4899' },
-  { name: 'Orange', hex: '#f97316' },
-  { name: 'Purple', hex: '#9333ea' },
-  { name: 'Brown', hex: '#92400e' },
-  { name: 'Gray', hex: '#6b7280' },
-  { name: 'Navy', hex: '#1e3a5f' },
+  { name: 'Red', hex: '#DC2626' },
+  { name: 'Blue', hex: '#2563EB' },
+  { name: 'Green', hex: '#16A34A' },
+  { name: 'Yellow', hex: '#CA8A04' },
+  { name: 'Pink', hex: '#EC4899' },
+  { name: 'Orange', hex: '#F97316' },
+  { name: 'Purple', hex: '#9333EA' },
+  { name: 'Brown', hex: '#92400E' },
+  { name: 'Gray', hex: '#78716C' },
+  { name: 'Navy', hex: '#1E3A5F' },
 ] as const;
 
 const PRICE_RANGES = [
-  { label: 'Under Rs.500', min: 0, max: 500 },
-  { label: 'Rs.500 - Rs.1,000', min: 500, max: 1000 },
-  { label: 'Rs.1,000 - Rs.2,000', min: 1000, max: 2000 },
-  { label: 'Rs.2,000 - Rs.5,000', min: 2000, max: 5000 },
-  { label: 'Above Rs.5,000', min: 5000, max: undefined },
+  { label: 'Under ₹500', min: 0, max: 500 },
+  { label: '₹500 — ₹1,000', min: 500, max: 1000 },
+  { label: '₹1,000 — ₹2,000', min: 1000, max: 2000 },
+  { label: '₹2,000 — ₹5,000', min: 2000, max: 5000 },
+  { label: 'Above ₹5,000', min: 5000, max: undefined },
 ] as const;
 
 export interface FilterState {
@@ -44,18 +43,28 @@ interface FilterSidebarProps {
   onFilterChange: (filters: FilterState) => void;
 }
 
-function FilterContent({ filters, onFilterChange }: FilterSidebarProps) {
-  const { data: categories } = useCategories();
+export function FilterSidebar({ filters, onFilterChange }: FilterSidebarProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  // Keep categories hook for potential future use
+  useCategories();
 
-  const hasActiveFilters =
+  useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+      return () => unlockBodyScroll();
+    }
+  }, [isOpen]);
+
+  const hasActiveFilters = !!(
     filters.minPrice !== undefined ||
     filters.maxPrice !== undefined ||
     filters.size ||
-    filters.color;
+    filters.color
+  );
 
   const clearAll = () => {
     onFilterChange({
-      category: filters.category, // preserve category — it's part of the URL on category pages
+      category: filters.category,
       minPrice: undefined,
       maxPrice: undefined,
       size: '',
@@ -64,187 +73,221 @@ function FilterContent({ filters, onFilterChange }: FilterSidebarProps) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-wider">Filters</h3>
-        {hasActiveFilters && (
-          <button
-            onClick={clearAll}
-            className="text-xs font-medium text-[var(--color-muted)] underline underline-offset-2 transition-colors hover:text-[var(--color-text)]"
-          >
-            Clear All
-          </button>
-        )}
-      </div>
-
-      {/* Categories */}
-      {categories && categories.length > 0 && (
-        <div>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-            Category
-          </h4>
-          <div className="space-y-2">
-            {categories.map((cat) => (
-              <label key={cat.id} className="flex cursor-pointer items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.category === cat.slug}
-                  onChange={() =>
-                    onFilterChange({
-                      ...filters,
-                      category: filters.category === cat.slug ? '' : cat.slug,
-                    })
-                  }
-                  className="h-4 w-4 rounded border-[var(--color-border)] accent-[var(--color-primary)]"
-                />
-                <span>{cat.name}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Price Range */}
-      <div>
-        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-          Price
-        </h4>
-        <div className="space-y-2">
-          {PRICE_RANGES.map((range) => {
-            const isSelected = filters.minPrice === range.min && filters.maxPrice === range.max;
-            return (
-              <label key={range.label} className="flex cursor-pointer items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() =>
-                    onFilterChange({
-                      ...filters,
-                      minPrice: isSelected ? undefined : range.min,
-                      maxPrice: isSelected ? undefined : range.max,
-                    })
-                  }
-                  className="h-4 w-4 rounded border-[var(--color-border)] accent-[var(--color-primary)]"
-                />
-                <span>{range.label}</span>
-              </label>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Size */}
-      <div>
-        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-          Size
-        </h4>
-        <div className="flex flex-wrap gap-2">
-          {SIZES.map((size) => {
-            const isSelected = filters.size === size;
-            return (
-              <button
-                key={size}
-                onClick={() =>
-                  onFilterChange({
-                    ...filters,
-                    size: isSelected ? '' : size,
-                  })
-                }
-                className={cn(
-                  'flex h-9 min-w-[3rem] items-center justify-center border px-3 text-xs font-semibold transition-colors',
-                  isSelected
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
-                    : 'border-[var(--color-border)] hover:border-[var(--color-primary)]'
-                )}
-              >
-                {size}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Color */}
-      <div>
-        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-          Color
-        </h4>
-        <div className="flex flex-wrap gap-2">
-          {COLOR_OPTIONS.map((color) => {
-            const isSelected = filters.color === color.name;
-            return (
-              <button
-                key={color.name}
-                onClick={() =>
-                  onFilterChange({
-                    ...filters,
-                    color: isSelected ? '' : color.name,
-                  })
-                }
-                title={color.name}
-                className={cn(
-                  'h-7 w-7 rounded-full border-2 transition-all',
-                  isSelected
-                    ? 'ring-2 ring-[var(--color-primary)] ring-offset-2'
-                    : 'border-[var(--color-border)] hover:scale-110',
-                  color.name === 'White' && 'border-gray-300'
-                )}
-                style={{ backgroundColor: color.hex }}
-              />
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function FilterSidebar({ filters, onFilterChange }: FilterSidebarProps) {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-
-  useEffect(() => {
-    if (isMobileOpen) {
-      lockBodyScroll();
-      return () => unlockBodyScroll();
-    }
-  }, [isMobileOpen]);
-
-  return (
     <>
-      {/* Filter button */}
+      {/* Trigger button — matches filter bar */}
       <button
-        onClick={() => setIsMobileOpen(true)}
-        className="flex items-center gap-1.5 border border-[var(--color-border)] px-3 py-2 text-sm font-medium transition-colors hover:border-[var(--color-text)]"
+        onClick={() => setIsOpen(true)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+        }}
       >
-        <SlidersHorizontal size={14} />
-        Filters
+        <SlidersHorizontal size={14} color="#000" />
+        <span style={{ fontSize: 11, fontWeight: 400, color: '#000', letterSpacing: 0.5 }}>
+          Filters
+        </span>
       </button>
 
-      {/* Drawer overlay */}
-      {isMobileOpen && (
-        <div className="fixed inset-0 z-50">
+      {/* Full-screen drawer */}
+      {isOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/40" onClick={() => setIsMobileOpen(false)} />
-          {/* Drawer */}
-          <div className="absolute bottom-0 left-0 top-0 w-[300px] max-w-[85vw] animate-slide-in-left overflow-y-auto bg-white p-6 shadow-xl">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-base font-bold uppercase tracking-wider">Filters</h2>
-              <button
-                onClick={() => setIsMobileOpen(false)}
-                className="flex h-8 w-8 items-center justify-center"
-                aria-label="Close filters"
+          <div
+            className="animate-fade-in"
+            style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)' }}
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Drawer — full height, left side */}
+          <div
+            className="animate-slide-in-left font-[family-name:var(--font-inter)]"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: '100%',
+              maxWidth: 393,
+              backgroundColor: '#FFF',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+            }}
+          >
+            {/* Top — header + filter sections */}
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {/* Header — 56px */}
+              <div
+                style={{
+                  height: 56,
+                  padding: '0 28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
               >
-                <X size={20} />
-              </button>
+                <span style={{ fontSize: 11, fontWeight: 400, color: '#000', letterSpacing: 2 }}>
+                  FILTERS
+                </span>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearAll}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 300,
+                      color: '#999',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+              <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+
+              {/* Filter sections — padding 24/28, gap 28 */}
+              <div
+                style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 28 }}
+              >
+                {/* Price */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <span
+                    style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}
+                  >
+                    PRICE
+                  </span>
+                  {PRICE_RANGES.map((range) => {
+                    const isSelected =
+                      filters.minPrice === range.min && filters.maxPrice === range.max;
+                    return (
+                      <button
+                        key={range.label}
+                        onClick={() =>
+                          onFilterChange({
+                            ...filters,
+                            minPrice: isSelected ? undefined : range.min,
+                            maxPrice: isSelected ? undefined : range.max,
+                          })
+                        }
+                        style={{
+                          textAlign: 'left',
+                          fontSize: 13,
+                          fontWeight: isSelected ? 400 : 300,
+                          color: '#000',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                      >
+                        {range.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Size — 40x36 buttons */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <span
+                    style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}
+                  >
+                    SIZE
+                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {SIZES.map((size) => {
+                      const isSelected = filters.size === size;
+                      return (
+                        <button
+                          key={size}
+                          onClick={() =>
+                            onFilterChange({ ...filters, size: isSelected ? '' : size })
+                          }
+                          style={{
+                            width: 40,
+                            height: 36,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 11,
+                            fontWeight: isSelected ? 400 : 300,
+                            color: isSelected ? '#FFF' : '#000',
+                            backgroundColor: isSelected ? '#000' : 'transparent',
+                            border: isSelected ? 'none' : '1px solid #E5E5E5',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Color — 28px circles */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <span
+                    style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}
+                  >
+                    COLOR
+                  </span>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {COLOR_OPTIONS.map((color) => {
+                      const isSelected = filters.color === color.name;
+                      return (
+                        <button
+                          key={color.name}
+                          onClick={() =>
+                            onFilterChange({ ...filters, color: isSelected ? '' : color.name })
+                          }
+                          title={color.name}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 9999,
+                            backgroundColor: color.hex,
+                            border:
+                              color.name === 'White'
+                                ? '1px solid #E5E5E5'
+                                : isSelected
+                                  ? '2px solid #000'
+                                  : 'none',
+                            cursor: 'pointer',
+                            outline:
+                              isSelected && color.name !== 'White' ? '2px solid #000' : 'none',
+                            outlineOffset: 2,
+                            padding: 0,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
-            <FilterContent filters={filters} onFilterChange={onFilterChange} />
-            <div className="mt-8">
+
+            {/* Bottom — APPLY FILTERS button */}
+            <div style={{ padding: '20px 28px 28px 28px' }}>
               <button
-                onClick={() => setIsMobileOpen(false)}
-                className="w-full bg-[var(--color-primary)] py-3 text-sm font-semibold uppercase tracking-wider text-white transition-opacity hover:opacity-90"
+                onClick={() => setIsOpen(false)}
+                style={{
+                  width: '100%',
+                  height: 50,
+                  backgroundColor: '#000',
+                  color: '#FFF',
+                  fontSize: 12,
+                  fontWeight: 400,
+                  letterSpacing: 2,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
               >
-                Apply Filters
+                APPLY FILTERS
               </button>
             </div>
           </div>
