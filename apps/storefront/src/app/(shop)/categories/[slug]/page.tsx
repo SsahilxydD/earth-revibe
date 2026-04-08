@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { X, Truck, Wind, Luggage, Sun, ShieldCheck, RefreshCw, Headphones } from 'lucide-react';
 import { ProductCard } from '@/components/product/product-card';
@@ -46,26 +46,72 @@ function CategoryContent() {
   const maxPriceRaw = searchParams.get('maxPrice');
   const size = searchParams.get('size') || '';
   const color = searchParams.get('color') || '';
-  const mood = searchParams.get('mood') || '';
+  const [activeMood, setActiveMood] = useState<string>('');
 
   const { sortBy, sortOrder } = parseSort(sort);
   const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
   const maxPrice = maxPriceRaw ? Number(maxPriceRaw) : undefined;
 
+  // Client-side mood keyword matching — instant, no API call
+  const MOOD_KEYWORDS: Record<string, string[]> = {
+    beach: ['Aqua', 'Coastal', 'Marine', 'Tidewater', 'Shoreline', 'Water', 'Blu ', 'Alpine Ivory'],
+    brunch: [
+      'Polo',
+      'polo',
+      'Cream',
+      'Formal',
+      'Herbal White',
+      'Minimal',
+      'Two-Panel',
+      'Skin-Conscious',
+      'Countryside',
+    ],
+    sunset: [
+      'Ember',
+      'Fireside',
+      'Solstice',
+      'Dustroad',
+      'Mocha',
+      'Desert',
+      'Maroon',
+      'Khakhi',
+      'Earthstone',
+      'Golden',
+    ],
+    poolside: [
+      'Cloudweave',
+      'Windpath',
+      'Garden Sage',
+      'Tropical',
+      'Plain Blue',
+      'Alpine',
+      'Coastal',
+    ],
+    island: [
+      'Terra',
+      'Void',
+      'Ether',
+      'Vintage',
+      'Cargo',
+      'Utility',
+      'Olive',
+      'Wildflower',
+      'Trail',
+    ],
+  };
+
   const queryParams = useMemo(
-    () =>
-      ({
-        category: slug,
-        sortBy,
-        sortOrder,
-        minPrice,
-        maxPrice,
-        sizes: size ? [size] : undefined,
-        colors: color ? [color] : undefined,
-        tag: mood ? `mood-${mood}` : undefined,
-        limit: 12,
-      }) as any,
-    [slug, sortBy, sortOrder, minPrice, maxPrice, size, color, mood]
+    () => ({
+      category: slug,
+      sortBy,
+      sortOrder,
+      minPrice,
+      maxPrice,
+      sizes: size ? [size] : undefined,
+      colors: color ? [color] : undefined,
+      limit: 12,
+    }),
+    [slug, sortBy, sortOrder, minPrice, maxPrice, size, color]
   );
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
@@ -115,10 +161,17 @@ function CategoryContent() {
     [updateParams]
   );
 
-  const allProducts = useMemo(() => {
+  const rawProducts = useMemo(() => {
     if (!data?.pages) return [];
     return data.pages.flatMap((page) => page.products ?? []);
   }, [data]);
+
+  // Client-side mood filter — instant, no API round-trip
+  const allProducts = useMemo(() => {
+    if (!activeMood || !MOOD_KEYWORDS[activeMood]) return rawProducts;
+    const keywords = MOOD_KEYWORDS[activeMood];
+    return rawProducts.filter((p) => keywords.some((kw) => p.name.includes(kw)));
+  }, [rawProducts, activeMood]);
 
   const totalCount = data?.pages?.[0]?.total ?? allProducts.length;
   const categoryName = currentCategory?.name || slug.replace(/-/g, ' ');
@@ -157,18 +210,18 @@ function CategoryContent() {
   }, [allProducts, categoryName, slug, setNavContext]);
 
   const currentFilters: FilterState = { category: slug, minPrice, maxPrice, size, color };
-  const hasActiveFilters = !!(minPrice || maxPrice || size || color || mood);
+  const hasActiveFilters = !!(minPrice || maxPrice || size || color || activeMood);
   const clearFilter = (key: string) => {
     updateParams({ [key]: undefined });
   };
 
   const clearAllFilters = () => {
+    setActiveMood('');
     updateParams({
       minPrice: undefined,
       maxPrice: undefined,
       size: undefined,
       color: undefined,
-      mood: undefined,
     });
   };
 
@@ -266,11 +319,11 @@ function CategoryContent() {
           { label: 'Poolside', value: 'poolside', img: '/moods/poolside.webp' },
           { label: 'Island', value: 'island', img: '/moods/island.webp' },
         ].map((m) => {
-          const isActive = mood === m.value;
+          const isActive = activeMood === m.value;
           return (
             <button
               key={m.label}
-              onClick={() => updateParams({ mood: isActive ? undefined : m.value })}
+              onClick={() => setActiveMood(isActive ? '' : m.value)}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -331,9 +384,9 @@ function CategoryContent() {
             flexWrap: 'wrap',
           }}
         >
-          {mood && (
+          {activeMood && (
             <button
-              onClick={() => clearFilter('mood')}
+              onClick={() => setActiveMood('')}
               style={{
                 display: 'inline-flex',
                 height: 28,
@@ -354,7 +407,7 @@ function CategoryContent() {
                   textTransform: 'capitalize',
                 }}
               >
-                {mood}
+                {activeMood}
               </span>
               <X size={10} color="#999" />
             </button>
