@@ -5,7 +5,8 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(amount: number): string {
+export function formatPrice(amount: number | null | undefined): string {
+  if (amount == null) return '₹0';
   return `\u20B9${amount.toLocaleString('en-IN')}`;
 }
 

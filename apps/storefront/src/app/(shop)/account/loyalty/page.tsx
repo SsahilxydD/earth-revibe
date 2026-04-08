@@ -89,7 +89,7 @@ export default function LoyaltyPage() {
             letterSpacing: -1,
           }}
         >
-          {balance.toLocaleString('en-IN')}
+          {(balance ?? 0).toLocaleString('en-IN')}
         </span>
         <div style={{ height: 1, backgroundColor: '#333' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -102,7 +102,7 @@ export default function LoyaltyPage() {
                 color: '#FFF',
               }}
             >
-              {totalEarned.toLocaleString('en-IN')}
+              {(totalEarned ?? 0).toLocaleString('en-IN')}
             </span>
             <span style={{ fontSize: 10, fontWeight: 300, color: '#666' }}>Total Earned</span>
           </div>
@@ -115,7 +115,7 @@ export default function LoyaltyPage() {
                 color: '#FFF',
               }}
             >
-              {totalRedeemed.toLocaleString('en-IN')}
+              {(totalRedeemed ?? 0).toLocaleString('en-IN')}
             </span>
             <span style={{ fontSize: 10, fontWeight: 300, color: '#666' }}>Redeemed</span>
           </div>

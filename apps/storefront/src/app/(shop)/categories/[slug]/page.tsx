@@ -140,23 +140,6 @@ function CategoryContent() {
 
   return (
     <div className="font-[family-name:var(--font-inter)]" style={{ backgroundColor: '#FFF' }}>
-      {/* Free shipping banner — 36px, black */}
-      <div
-        style={{
-          height: 36,
-          backgroundColor: '#000',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-        }}
-      >
-        <Truck size={12} color="#FFF" />
-        <span style={{ fontSize: 9, fontWeight: 400, color: '#FFF', letterSpacing: 1.5 }}>
-          FREE SHIPPING ON ALL ORDERS
-        </span>
-      </div>
-
       {/* Header — breadcrumb, title, count */}
       <div
         style={{ padding: '24px 28px 16px 28px', display: 'flex', flexDirection: 'column', gap: 6 }}
