@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -497,11 +497,11 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Image carousel state
+  // Image carousel
   const [activeImg, setActiveImg] = useState(0);
   const [swipeX, setSwipeX] = useState(0);
   const [swiping, setSwiping] = useState(false);
-  const touchStartX = useRef(0);
+  const swipeRef = useRef({ startX: 0, dx: 0, active: false });
   const heroRef = useRef<HTMLDivElement>(null);
 
   const images = useMemo(
@@ -509,30 +509,33 @@ export function ProductDetail({ product }: ProductDetailProps) {
     [product.images]
   );
 
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
+  const onTouchStart = (e: React.TouchEvent) => {
+    swipeRef.current.startX = e.touches[0].clientX;
+    swipeRef.current.active = true;
     setSwiping(true);
-  }, []);
+  };
 
-  const onTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!swiping) return;
-      const dx = e.touches[0].clientX - touchStartX.current;
-      setSwipeX(dx);
-    },
-    [swiping]
-  );
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!swipeRef.current.active) return;
+    const dx = e.touches[0].clientX - swipeRef.current.startX;
+    swipeRef.current.dx = dx;
+    setSwipeX(dx);
+  };
 
-  const onTouchEnd = useCallback(() => {
+  const onTouchEnd = () => {
+    if (!swipeRef.current.active) return;
+    swipeRef.current.active = false;
     setSwiping(false);
+    const dx = swipeRef.current.dx;
     const threshold = 50;
-    if (swipeX < -threshold && activeImg < images.length - 1) {
-      setActiveImg((i) => i + 1);
-    } else if (swipeX > threshold && activeImg > 0) {
-      setActiveImg((i) => i - 1);
-    }
+    setActiveImg((prev) => {
+      if (dx < -threshold && prev < images.length - 1) return prev + 1;
+      if (dx > threshold && prev > 0) return prev - 1;
+      return prev;
+    });
+    swipeRef.current.dx = 0;
     setSwipeX(0);
-  }, [swipeX, activeImg, images.length]);
+  };
 
   useEffect(() => {
     setMounted(true);
