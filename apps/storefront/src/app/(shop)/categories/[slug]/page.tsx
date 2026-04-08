@@ -247,16 +247,16 @@ function CategoryContent() {
       {/* Divider */}
       <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
-      {/* Style navigation — mood circles, h=97 */}
+      {/* Style navigation — mood circles, h=90 */}
       <div
         className="hide-scrollbar"
         style={{
-          height: 97,
-          padding: '14px 28px',
+          height: 90,
+          padding: '16px 8px 10px 8px',
           display: 'flex',
           alignItems: 'center',
-          gap: 16,
-          overflowX: 'auto',
+          justifyContent: 'space-around',
+          gap: 0,
         }}
       >
         {[
@@ -285,8 +285,8 @@ function CategoryContent() {
             >
               <div
                 style={{
-                  width: 52,
-                  height: 52,
+                  width: 46,
+                  height: 46,
                   borderRadius: 9999,
                   backgroundColor: m.bg,
                   outline: isActive ? '2px solid #000' : 'none',
