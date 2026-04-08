@@ -40,6 +40,9 @@ const envSchema = z.object({
   // Resend email service
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM_EMAIL: z.string().default('Earth Revibe <noreply@earthrevibe.com>'),
+  // Razorpay COD review API — Basic Auth credentials
+  RAZORPAY_COD_REVIEW_USERNAME: z.string().optional(),
+  RAZORPAY_COD_REVIEW_PASSWORD: z.string().optional(),
   // Cron job secret — protects internal endpoints from public access
   CRON_SECRET: z.string().optional(),
 });

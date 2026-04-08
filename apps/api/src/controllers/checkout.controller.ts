@@ -115,4 +115,36 @@ export const checkoutController = {
     const result = await checkoutService.verifyMagicPayment(userId, req.body);
     res.json({ success: true, data: result });
   },
+
+  /**
+   * Razorpay COD Review API — called by Razorpay before confirming a COD order.
+   * Uses Basic Auth (configured via env vars).
+   * Responds with { status: "accept" } or { status: "reject", reason: "..." }.
+   */
+  async reviewCodOrder(req: Request, res: Response) {
+    // Verify Basic Auth
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Basic ')) {
+      res.status(401).json({ status: 'reject', reason: 'Unauthorized' });
+      return;
+    }
+
+    const expectedUser = env.RAZORPAY_COD_REVIEW_USERNAME;
+    const expectedPass = env.RAZORPAY_COD_REVIEW_PASSWORD;
+    if (!expectedUser || !expectedPass) {
+      res.status(500).json({ status: 'reject', reason: 'COD review not configured' });
+      return;
+    }
+
+    const decoded = Buffer.from(authHeader.slice(6), 'base64').toString();
+    const [user, pass] = decoded.split(':');
+    if (user !== expectedUser || pass !== expectedPass) {
+      res.status(401).json({ status: 'reject', reason: 'Invalid credentials' });
+      return;
+    }
+
+    // Accept the COD order — add rejection logic here later if needed
+    // (e.g., block high-value orders, repeat RTO addresses, etc.)
+    res.json({ status: 'accept' });
+  },
 };

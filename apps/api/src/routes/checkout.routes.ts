@@ -68,4 +68,7 @@ router.post(
   asyncHandler(checkoutController.applyPromotion)
 );
 
+// Razorpay COD review callback — Basic Auth, no JWT
+router.post('/review-order', asyncHandler(checkoutController.reviewCodOrder));
+
 export { router as checkoutRouter };
