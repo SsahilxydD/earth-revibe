@@ -250,10 +250,11 @@ function CategoryContent() {
         </span>
       </div>
 
-      {/* Category hero — 220px, warm bg, vacation tagline */}
+      {/* Category hero — 220px, video background, vacation tagline overlaid */}
       {currentCategory?.description && (
         <div
           style={{
+            position: 'relative',
             height: 220,
             backgroundColor: '#EDE8DF',
             padding: '0 28px 24px 28px',
@@ -261,35 +262,98 @@ function CategoryContent() {
             flexDirection: 'column',
             justifyContent: 'flex-end',
             gap: 8,
+            overflow: 'hidden',
           }}
         >
+          {/* Background video */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              zIndex: 0,
+            }}
+          >
+            <source
+              src="https://pahlcltpwzsqdclizdtl.supabase.co/storage/v1/object/public/product-videos/showcase/hero-showcase.mp4"
+              type="video/mp4"
+            />
+          </video>
+          {/* Dark gradient for text legibility */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background:
+                'linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0) 100%)',
+              zIndex: 1,
+            }}
+          />
           <p
             style={{
+              position: 'relative',
+              zIndex: 2,
               fontSize: 20,
               fontWeight: 300,
-              color: '#000',
+              color: '#FFF',
               letterSpacing: -0.3,
               lineHeight: 1.35,
             }}
           >
             Pack light, look effortless.{'\n'}Made for warm days ahead.
           </p>
-          <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 2,
+              display: 'flex',
+              gap: 20,
+              alignItems: 'center',
+            }}
+          >
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Wind size={11} color="#999" />
-              <span style={{ fontSize: 9, fontWeight: 300, color: '#999', letterSpacing: 0.3 }}>
+              <Wind size={11} color="rgba(255,255,255,0.75)" />
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 300,
+                  color: 'rgba(255,255,255,0.75)',
+                  letterSpacing: 0.3,
+                }}
+              >
                 Breathable
               </span>
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Luggage size={11} color="#999" />
-              <span style={{ fontSize: 9, fontWeight: 300, color: '#999', letterSpacing: 0.3 }}>
+              <Luggage size={11} color="rgba(255,255,255,0.75)" />
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 300,
+                  color: 'rgba(255,255,255,0.75)',
+                  letterSpacing: 0.3,
+                }}
+              >
                 Travel-ready
               </span>
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Sun size={11} color="#999" />
-              <span style={{ fontSize: 9, fontWeight: 300, color: '#999', letterSpacing: 0.3 }}>
+              <Sun size={11} color="rgba(255,255,255,0.75)" />
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 300,
+                  color: 'rgba(255,255,255,0.75)',
+                  letterSpacing: 0.3,
+                }}
+              >
                 Sun-washed tones
               </span>
             </span>
