@@ -1064,6 +1064,40 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </button>
         </div>
 
+        {/* ===== p8hDz — stacked image cards (staggered sticky) =====
+             Images from index 1 onwards stack as user scrolls. Each image
+             sticks at a staggered top offset so underlying rounded corners
+             peek through. After the last image, natural scrolling resumes. */}
+        {images.length > 1 && (
+          <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {images.slice(1).map((img, i) => (
+              <div
+                key={img.id}
+                style={{
+                  position: 'sticky',
+                  top: 72 + i * 16,
+                  height: 440,
+                  borderRadius: 20,
+                  border: '1px solid #F0F0F0',
+                  backgroundColor: '#F5F5F5',
+                  overflow: 'hidden',
+                  zIndex: i + 1,
+                }}
+              >
+                <Image
+                  src={getImageUrl(img.url, 800)}
+                  alt={img.altText || product.name}
+                  fill
+                  sizes="100vw"
+                  className="object-cover"
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ===== Mzs7t — tabSec, paddingTop 24 ===== */}
         <DetailTabs product={product} />
 
