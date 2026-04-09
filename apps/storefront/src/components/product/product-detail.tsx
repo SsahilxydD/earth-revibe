@@ -801,7 +801,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
         position: 'relative',
       }}
     >
-      {/* ===== JDMjn — Hero Image carousel, h500, sticky top so content scrolls over it ===== */}
+      {/* ===== JDMjn — Hero Image carousel, h500, sticky below header (56px) ===== */}
       {images.length > 0 && (
         <div
           ref={heroRef}
@@ -810,7 +810,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
           onTouchEnd={onTouchEnd}
           style={{
             position: 'sticky',
-            top: 0,
+            top: 56,
             zIndex: 0,
             height: 500,
             backgroundColor: '#E8E4DF',
