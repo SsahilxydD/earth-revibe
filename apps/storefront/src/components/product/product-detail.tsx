@@ -634,45 +634,10 @@ export function ProductDetail({ product }: ProductDetailProps) {
     }
   };
 
-  // Image carousel
-  const [activeImg, setActiveImg] = useState(0);
-  const [swipeX, setSwipeX] = useState(0);
-  const [swiping, setSwiping] = useState(false);
-  const swipeRef = useRef({ startX: 0, dx: 0, active: false });
-  const heroRef = useRef<HTMLDivElement>(null);
-
   const images = useMemo(
     () => [...product.images].sort((a, b) => a.sortOrder - b.sortOrder),
     [product.images]
   );
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    swipeRef.current.startX = e.touches[0].clientX;
-    swipeRef.current.active = true;
-    setSwiping(true);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    if (!swipeRef.current.active) return;
-    const dx = e.touches[0].clientX - swipeRef.current.startX;
-    swipeRef.current.dx = dx;
-    setSwipeX(dx);
-  };
-
-  const onTouchEnd = () => {
-    if (!swipeRef.current.active) return;
-    swipeRef.current.active = false;
-    setSwiping(false);
-    const dx = swipeRef.current.dx;
-    const threshold = 50;
-    setActiveImg((prev) => {
-      if (dx < -threshold && prev < images.length - 1) return prev + 1;
-      if (dx > threshold && prev > 0) return prev - 1;
-      return prev;
-    });
-    swipeRef.current.dx = 0;
-    setSwipeX(0);
-  };
 
   useEffect(() => {
     setMounted(true);
@@ -802,12 +767,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
       }}
     >
       {/* ===== JDMjn — Hero Image carousel, h500, sticky below header (56px) ===== */}
-      {images.length > 0 && (
+      {images[0] && (
         <div
-          ref={heroRef}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
           style={{
             position: 'sticky',
             top: 56,
@@ -815,42 +776,18 @@ export function ProductDetail({ product }: ProductDetailProps) {
             height: 500,
             backgroundColor: '#E8E4DF',
             overflow: 'hidden',
-            touchAction: 'pan-y',
           }}
         >
-          {/* Sliding tape — each slide is exactly the container width */}
-          <div
-            style={{
-              display: 'flex',
-              height: '100%',
-              transform: `translateX(calc(-${activeImg * 100}% + ${swipeX}px))`,
-              transition: swiping ? 'none' : 'transform 300ms ease-out',
-              willChange: 'transform',
-            }}
-          >
-            {images.map((img, i) => (
-              <div
-                key={img.id}
-                style={{
-                  position: 'relative',
-                  minWidth: '100%',
-                  height: '100%',
-                  flexShrink: 0,
-                }}
-              >
-                <Image
-                  src={getImageUrl(img.url, 800)}
-                  alt={img.altText || product.name}
-                  fill
-                  sizes="100vw"
-                  className="object-cover"
-                  priority={i === 0}
-                  placeholder="blur"
-                  blurDataURL={BLUR_DATA_URL}
-                />
-              </div>
-            ))}
-          </div>
+          <Image
+            src={getImageUrl(images[0].url, 800)}
+            alt={images[0].altText || product.name}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
+          />
           {/* sP1wX — wishBtn bookmark, top-right */}
           <button
             onClick={toggleWishlist}
@@ -1069,7 +1006,15 @@ export function ProductDetail({ product }: ProductDetailProps) {
              sticks at a staggered top offset so underlying rounded corners
              peek through. After the last image, natural scrolling resumes. */}
         {images.length > 1 && (
-          <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div
+            style={{
+              padding: '0 20px',
+              marginBottom: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+            }}
+          >
             {images.slice(1).map((img, i) => (
               <div
                 key={img.id}
