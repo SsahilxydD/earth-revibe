@@ -43,9 +43,21 @@ export function SortDropdown({ currentSort, onSortChange }: SortDropdownProps) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-1.5 border border-[var(--color-border)] px-3 py-2 text-sm font-medium transition-colors hover:border-[var(--color-text)]"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          fontSize: 11,
+          fontWeight: 300,
+          color: '#999',
+          fontFamily: 'var(--font-inter), Inter, sans-serif',
+        }}
       >
-        <span>Sort: {selectedOption.label}</span>
+        <span>Sort by: {selectedOption.label}</span>
         <ChevronDown size={14} className={cn('transition-transform', isOpen && 'rotate-180')} />
       </button>
 

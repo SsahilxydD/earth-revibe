@@ -465,9 +465,6 @@ function CategoryContent() {
           <SortDropdown currentSort={`${sortBy}-${sortOrder}`} onSortChange={handleSortChange} />
         </div>
 
-        {/* Divider */}
-        <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
-
         {/* Active filter chips */}
         {hasActiveFilters && (
           <div
