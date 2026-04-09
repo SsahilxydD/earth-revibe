@@ -433,35 +433,150 @@ const MOODS = [
 ];
 
 const MOOD_KEYWORDS: Record<string, string[]> = {
-  beach: ['Aqua', 'Coastal', 'Marine', 'Tidewater', 'Shoreline', 'Water', 'Blu ', 'Alpine Ivory'],
-  brunch: [
-    'Latte',
-    'Mocha',
-    'Cream',
-    'Oat',
-    'Vanilla',
-    'Biscotti',
-    'Cinnamon',
-    'Macchiato',
-    'Caramel',
+  beach: [
+    'aqua',
+    'coastal',
+    'marine',
+    'tidewater',
+    'shoreline',
+    'water',
+    'blu',
+    'alpine',
+    'ivory',
+    'ocean',
+    'wave',
+    'sea',
+    'shore',
+    'cyan',
+    'blue',
+    'sand',
+    'powder',
+    'navy',
+    'azure',
+    'sail',
+    'breeze',
+    'wind',
+    'salt',
+    'mulberry',
+    'trousers',
   ],
-  sunset: ['Amber', 'Coral', 'Ember', 'Peach', 'Flame', 'Sienna', 'Tangerine', 'Rust', 'Brick'],
-  poolside: ['Aqua', 'Mint', 'Teal', 'Cool', 'Fresh', 'Breeze', 'Splash', 'Dew', 'Mist'],
+  brunch: [
+    'latte',
+    'mocha',
+    'cream',
+    'oat',
+    'vanilla',
+    'biscotti',
+    'cinnamon',
+    'macchiato',
+    'caramel',
+    'coffee',
+    'khakhi',
+    'khaki',
+    'heritage',
+    'beige',
+    'toast',
+    'nude',
+    'tan',
+    'biscuit',
+    'butter',
+    'honey',
+    'wheat',
+    'desert',
+    'dust',
+    'off-white',
+    'off white',
+    'cloudweave',
+    'cloud',
+    'two-panel',
+    'minimal',
+    'branding',
+    'formal',
+  ],
+  sunset: [
+    'amber',
+    'coral',
+    'ember',
+    'peach',
+    'flame',
+    'sienna',
+    'tangerine',
+    'rust',
+    'brick',
+    'fire',
+    'golden',
+    'dustroad',
+    'maroon',
+    'red',
+    'orange',
+    'fireside',
+    'solstice',
+    'sunset',
+    'dusk',
+    'glen',
+    'plaid',
+    'grid',
+    'check',
+    'a-to-a',
+    'graphic',
+    'pinstripe',
+  ],
+  poolside: [
+    'aqua',
+    'mint',
+    'teal',
+    'cool',
+    'fresh',
+    'breeze',
+    'splash',
+    'dew',
+    'mist',
+    'pool',
+    'poolside',
+    'retreat',
+    'cactus',
+    'skin',
+    'contrast',
+    'puff',
+    'boxy',
+    'oversized',
+    'overshirt',
+    'shacket',
+    'pocket',
+  ],
   island: [
-    'Palm',
-    'Fern',
-    'Moss',
-    'Sage',
-    'Forest',
-    'Olive',
-    'Tropical',
-    'Jungle',
-    'Leaf',
-    'Void',
-    'Earth',
-    'Terra',
-    'Stone',
-    'Drift',
+    'palm',
+    'fern',
+    'moss',
+    'sage',
+    'forest',
+    'olive',
+    'tropical',
+    'jungle',
+    'leaf',
+    'void',
+    'earth',
+    'terra',
+    'stone',
+    'drift',
+    'wild',
+    'garden',
+    'valley',
+    'herbal',
+    'herbarium',
+    'summit',
+    'green',
+    'vintage',
+    'bloom',
+    'ether',
+    'countryside',
+    'noir',
+    'black',
+    'shadow',
+    'windpath',
+    'cargo',
+    'bellbottom',
+    'straight-fit',
   ],
 };
 
@@ -471,13 +586,27 @@ function MoodSection({ excludeId }: { excludeId: string }) {
   const { data } = useProducts({ limit: 100, sortBy: 'createdAt', sortOrder: 'desc' });
 
   const filtered = useMemo(() => {
-    const all = data?.products ?? [];
+    const all = (data?.products ?? []).filter((p: Product) => p.id !== excludeId);
     const keywords = MOOD_KEYWORDS[mood] || [];
-    return all
-      .filter((p: Product) => p.id !== excludeId)
-      .filter((p: Product) =>
-        keywords.some((kw) => p.name.toLowerCase().includes(kw.toLowerCase()))
-      );
+    const allKeywords = Object.values(MOOD_KEYWORDS).flat();
+
+    const matched: Product[] = [];
+    const unmatchedByAnyMood: Product[] = [];
+
+    for (const p of all) {
+      const name = p.name.toLowerCase();
+      const matchesThisMood = keywords.some((kw) => name.includes(kw.toLowerCase()));
+      const matchesAnyMood = allKeywords.some((kw) => name.includes(kw.toLowerCase()));
+
+      if (matchesThisMood) {
+        matched.push(p);
+      } else if (!matchesAnyMood) {
+        // Product doesn't fit any mood bucket — show it under every mood as fallback
+        unmatchedByAnyMood.push(p);
+      }
+    }
+
+    return [...matched, ...unmatchedByAnyMood];
   }, [data, mood, excludeId]);
 
   return (
