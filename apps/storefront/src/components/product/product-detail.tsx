@@ -467,7 +467,8 @@ const MOOD_KEYWORDS: Record<string, string[]> = {
 
 function MoodSection({ excludeId }: { excludeId: string }) {
   const [mood, setMood] = useState(MOODS[0].value);
-  const { data } = useProducts({ limit: 20, sortBy: 'createdAt', sortOrder: 'desc' });
+  // Fetch a large pool so all products are available for client-side mood filtering
+  const { data } = useProducts({ limit: 100, sortBy: 'createdAt', sortOrder: 'desc' });
 
   const filtered = useMemo(() => {
     const all = data?.products ?? [];
@@ -476,8 +477,7 @@ function MoodSection({ excludeId }: { excludeId: string }) {
       .filter((p: Product) => p.id !== excludeId)
       .filter((p: Product) =>
         keywords.some((kw) => p.name.toLowerCase().includes(kw.toLowerCase()))
-      )
-      .slice(0, 2);
+      );
   }, [data, mood, excludeId]);
 
   return (
@@ -531,9 +531,16 @@ function MoodSection({ excludeId }: { excludeId: string }) {
         })}
       </div>
 
-      {/* moodGrid — 2 cols, gap 10 */}
+      {/* moodGrid — 2 cols, gap 10, rows wrap */}
       {filtered.length > 0 && (
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 10,
+            rowGap: 20,
+          }}
+        >
           {filtered.map((p: Product) => {
             const img =
               p.images?.find((i: { isPrimary?: boolean }) => i.isPrimary) || p.images?.[0];
@@ -542,7 +549,6 @@ function MoodSection({ excludeId }: { excludeId: string }) {
                 key={p.id}
                 href={`/products/${p.slug}`}
                 style={{
-                  flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   textDecoration: 'none',
@@ -597,6 +603,19 @@ function MoodSection({ excludeId }: { excludeId: string }) {
             );
           })}
         </div>
+      )}
+      {filtered.length === 0 && (
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 300,
+            color: '#999',
+            textAlign: 'center',
+            padding: '20px 0',
+          }}
+        >
+          No products in this mood yet.
+        </span>
       )}
     </div>
   );
