@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Bookmark, Share2, Plus, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import {
   trackProductViewed,
@@ -795,9 +796,12 @@ export function ProductDetail({ product }: ProductDetailProps) {
   return (
     <div
       className="font-[family-name:var(--font-inter)]"
-      style={{ backgroundColor: '#FFF', display: 'flex', flexDirection: 'column' }}
+      style={{
+        backgroundColor: '#FFF',
+        position: 'relative',
+      }}
     >
-      {/* ===== JDMjn — Hero Image carousel, h500, #E8E4DF, swipeable ===== */}
+      {/* ===== JDMjn — Hero Image carousel, h500, sticky top so content scrolls over it ===== */}
       {images.length > 0 && (
         <div
           ref={heroRef}
@@ -805,7 +809,9 @@ export function ProductDetail({ product }: ProductDetailProps) {
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
           style={{
-            position: 'relative',
+            position: 'sticky',
+            top: 0,
+            zIndex: 0,
             height: 500,
             backgroundColor: '#E8E4DF',
             overflow: 'hidden',
@@ -845,19 +851,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
               </div>
             ))}
           </div>
-          {/* uIyUd — imgCounter, bottom-left, 10px/300/white */}
-          <span
-            style={{
-              position: 'absolute',
-              left: 16,
-              bottom: 24,
-              fontSize: 10,
-              fontWeight: 300,
-              color: '#FFF',
-            }}
-          >
-            {activeImg + 1} / {images.length}
-          </span>
           {/* sP1wX — wishBtn bookmark, top-right */}
           <button
             onClick={toggleWishlist}
@@ -894,171 +887,189 @@ export function ProductDetail({ product }: ProductDetailProps) {
         </div>
       )}
 
-      {/* ===== OuNSa — infoSec, padding 20 20 0 20, gap 6, vertical ===== */}
-      <div
+      {/* ===== GABNg — infoWrap: rounded top 16, white bg, marginTop -16
+           to overlap sticky hero. z-index 1 so it scrolls over the hero. ===== */}
+      <motion.div
+        initial={{ y: 16 }}
+        animate={{ y: 0 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 30 }}
         style={{
-          padding: '20px 20px 0 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
+          position: 'relative',
+          zIndex: 1,
+          marginTop: -16,
+          backgroundColor: '#FFF',
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
         }}
       >
-        {/* ejhxA — nameRow, space-between */}
+        {/* ===== OuNSa — infoSec, padding 20 20 0 20, gap 6, vertical ===== */}
         <div
           style={{
+            padding: '20px 20px 0 20px',
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            flexDirection: 'column',
+            gap: 6,
           }}
         >
-          {/* ZGyz4 — nameGroup, gap 8 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* cPNL0 — pdpName 16px/500/black */}
-            <span style={{ fontSize: 16, fontWeight: 500, color: '#000' }}>{product.name}</span>
-            {/* 6jczs — pdpBookmark 16px black */}
-            <button
-              onClick={toggleWishlist}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <Bookmark size={16} color="#000" fill={wishlisted ? '#000' : 'none'} />
-            </button>
-          </div>
-          {/* EOoig — sizeGuideBtn, h28, cornerRadius 4, stroke #E5E5E5, padding 0 12 */}
-          <button
-            onClick={() => setSizeGuideOpen(true)}
+          {/* ejhxA — nameRow, space-between */}
+          <div
             style={{
-              height: 28,
-              padding: '0 12px',
-              border: '1px solid #E5E5E5',
-              borderRadius: 4,
-              background: 'none',
-              cursor: 'pointer',
-              fontSize: 10,
-              fontWeight: 300,
-              color: '#000',
-              flexShrink: 0,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
-            Size Guide
-          </button>
-        </div>
-        {/* rBZft — pdpPrice, 14px/300/black */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14, fontWeight: 300, color: '#000' }}>{formatPrice(price)}</span>
-          {onSale && (
-            <span
+            {/* ZGyz4 — nameGroup, gap 8 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* cPNL0 — pdpName 16px/500/black */}
+              <span style={{ fontSize: 16, fontWeight: 500, color: '#000' }}>{product.name}</span>
+              {/* 6jczs — pdpBookmark 16px black */}
+              <button
+                onClick={toggleWishlist}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                <Bookmark size={16} color="#000" fill={wishlisted ? '#000' : 'none'} />
+              </button>
+            </div>
+            {/* EOoig — sizeGuideBtn, h28, cornerRadius 4, stroke #E5E5E5, padding 0 12 */}
+            <button
+              onClick={() => setSizeGuideOpen(true)}
               style={{
-                fontSize: 12,
+                height: 28,
+                padding: '0 12px',
+                border: '1px solid #E5E5E5',
+                borderRadius: 4,
+                background: 'none',
+                cursor: 'pointer',
+                fontSize: 10,
                 fontWeight: 300,
-                color: '#CCC',
-                textDecoration: 'line-through',
+                color: '#000',
+                flexShrink: 0,
               }}
             >
-              {formatPrice(product.compareAtPrice!)}
+              Size Guide
+            </button>
+          </div>
+          {/* rBZft — pdpPrice, 14px/300/black */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 300, color: '#000' }}>
+              {formatPrice(price)}
             </span>
-          )}
-        </div>
-      </div>
-
-      {/* ===== EjlwE — sizeSec, padding 16 20 0 20, gap 10, vertical ===== */}
-      {sizes.length > 0 && (
-        <div style={{ padding: '16px 20px 0 20px' }}>
-          {/* UOkor — sizeRow1, gap 8 */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            {sizes.map((s) => {
-              const sel = s === selectedSize;
-              const stock = stockFor(product.variants, s);
-              const oos = product.variants.length > 0 && stock <= 0;
-              return (
-                <button
-                  key={s}
-                  onClick={() => !oos && setSelectedSize(s)}
-                  disabled={oos}
-                  style={{
-                    flex: 1,
-                    height: 40,
-                    borderRadius: 9999,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: sel ? 400 : 300,
-                    color: oos ? '#CCC' : sel ? '#FFF' : '#000',
-                    backgroundColor: sel ? '#000' : 'transparent',
-                    border: sel ? 'none' : `1px solid ${oos ? '#F0F0F0' : '#E5E5E5'}`,
-                    cursor: oos ? 'default' : 'pointer',
-                  }}
-                >
-                  {s}
-                </button>
-              );
-            })}
+            {onSale && (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 300,
+                  color: '#CCC',
+                  textDecoration: 'line-through',
+                }}
+              >
+                {formatPrice(product.compareAtPrice!)}
+              </span>
+            )}
           </div>
         </div>
-      )}
 
-      {/* ===== ByiXm — btnSec, padding 20 all sides, gap 10, vertical ===== */}
-      <div
-        style={{
-          padding: 20,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-        }}
-      >
-        {/* 6IZXY — addBtn, h50, rounded pill, stroke #E5E5E5 */}
-        <button
-          onClick={addToBag}
-          disabled={isAdding}
+        {/* ===== EjlwE — sizeSec, padding 16 20 0 20, gap 10, vertical ===== */}
+        {sizes.length > 0 && (
+          <div style={{ padding: '16px 20px 0 20px' }}>
+            {/* UOkor — sizeRow1, gap 8 */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              {sizes.map((s) => {
+                const sel = s === selectedSize;
+                const stock = stockFor(product.variants, s);
+                const oos = product.variants.length > 0 && stock <= 0;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => !oos && setSelectedSize(s)}
+                    disabled={oos}
+                    style={{
+                      flex: 1,
+                      height: 40,
+                      borderRadius: 9999,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: sel ? 400 : 300,
+                      color: oos ? '#CCC' : sel ? '#FFF' : '#000',
+                      backgroundColor: sel ? '#000' : 'transparent',
+                      border: sel ? 'none' : `1px solid ${oos ? '#F0F0F0' : '#E5E5E5'}`,
+                      cursor: oos ? 'default' : 'pointer',
+                    }}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ===== ByiXm — btnSec, padding 20 all sides, gap 10, vertical ===== */}
+        <div
           style={{
-            width: '100%',
-            height: 50,
-            borderRadius: 9999,
-            border: '1px solid #E5E5E5',
-            backgroundColor: 'transparent',
-            fontSize: 12,
-            fontWeight: 400,
-            letterSpacing: 1.5,
-            color: '#000',
-            cursor: 'pointer',
+            padding: 20,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: isAdding ? 0.5 : 1,
+            flexDirection: 'column',
+            gap: 10,
           }}
         >
-          {isAdding ? <Loader2 size={16} className="animate-spin" /> : 'ADD TO BAG'}
-        </button>
-        {/* E1Y3u — buyBtn, h50, rounded pill, black fill, 500 weight */}
-        <button
-          onClick={buyNow}
-          disabled={isBuying}
-          style={{
-            width: '100%',
-            height: 50,
-            borderRadius: 9999,
-            border: 'none',
-            backgroundColor: '#000',
-            fontSize: 12,
-            fontWeight: 500,
-            letterSpacing: 1.5,
-            color: '#FFF',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: isBuying ? 0.5 : 1,
-          }}
-        >
-          {isBuying ? <Loader2 size={16} className="animate-spin" /> : 'BUY NOW'}
-        </button>
-      </div>
+          {/* 6IZXY — addBtn, h50, rounded pill, stroke #E5E5E5 */}
+          <button
+            onClick={addToBag}
+            disabled={isAdding}
+            style={{
+              width: '100%',
+              height: 50,
+              borderRadius: 9999,
+              border: '1px solid #E5E5E5',
+              backgroundColor: 'transparent',
+              fontSize: 12,
+              fontWeight: 400,
+              letterSpacing: 1.5,
+              color: '#000',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: isAdding ? 0.5 : 1,
+            }}
+          >
+            {isAdding ? <Loader2 size={16} className="animate-spin" /> : 'ADD TO BAG'}
+          </button>
+          {/* E1Y3u — buyBtn, h50, rounded pill, black fill, 500 weight */}
+          <button
+            onClick={buyNow}
+            disabled={isBuying}
+            style={{
+              width: '100%',
+              height: 50,
+              borderRadius: 9999,
+              border: 'none',
+              backgroundColor: '#000',
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: 1.5,
+              color: '#FFF',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: isBuying ? 0.5 : 1,
+            }}
+          >
+            {isBuying ? <Loader2 size={16} className="animate-spin" /> : 'BUY NOW'}
+          </button>
+        </div>
 
-      {/* ===== Mzs7t — tabSec, paddingTop 24 ===== */}
-      <DetailTabs product={product} />
+        {/* ===== Mzs7t — tabSec, paddingTop 24 ===== */}
+        <DetailTabs product={product} />
 
-      {/* ===== relSec — mood filters + grid ===== */}
-      <MoodSection excludeId={product.id} />
+        {/* ===== relSec — mood filters + grid ===== */}
+        <MoodSection excludeId={product.id} />
+      </motion.div>
 
       {/* Size Guide portal */}
       {mounted &&
