@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { X, ShoppingBag, Lock } from 'lucide-react';
+import { X, Lock, ArrowUpRight, ChevronRight } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
@@ -15,6 +17,76 @@ import { api } from '@/lib/api-client';
 import { useRazorpay, preloadRazorpayScript } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
 import { Spinner } from '@/components/ui/spinner';
+
+// ───── Empty cart content ─────
+// Placeholder imagery for the "PRODUCTS YOU MAY LIKE" horizontal scroll
+// and the "BROWSE BY VIBE" list. Swap with real curation later.
+const EMPTY_RECOMMENDED: { id: string; img: string; href: string }[] = [
+  {
+    id: 'r1',
+    img: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=300&q=80&fm=jpg',
+    href: '/products',
+  },
+  {
+    id: 'r2',
+    img: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=300&q=80&fm=jpg',
+    href: '/products',
+  },
+  {
+    id: 'r3',
+    img: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=300&q=80&fm=jpg',
+    href: '/products',
+  },
+  {
+    id: 'r4',
+    img: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300&q=80&fm=jpg',
+    href: '/products',
+  },
+  {
+    id: 'r5',
+    img: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&q=80&fm=jpg',
+    href: '/products',
+  },
+];
+
+const EMPTY_VIBES: { label: string; slug: string; img: string; count: string }[] = [
+  {
+    label: 'Above the Clouds',
+    slug: 'above-the-clouds',
+    img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&q=80&fm=jpg',
+    count: '14',
+  },
+  {
+    label: 'Salt on Skin',
+    slug: 'salt-on-skin',
+    img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&q=80&fm=jpg',
+    count: '22',
+  },
+  {
+    label: 'Golden Hour Gang',
+    slug: 'golden-hour-gang',
+    img: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=200&q=80&fm=jpg',
+    count: '16',
+  },
+  {
+    label: 'Into the Wild',
+    slug: 'into-the-wild',
+    img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=200&q=80&fm=jpg',
+    count: '22',
+  },
+  {
+    label: 'Neon Nomads',
+    slug: 'neon-nomads',
+    img: 'https://images.unsplash.com/photo-1514214246283-d427a95c5d2f?w=200&q=80&fm=jpg',
+    count: '20',
+  },
+  {
+    label: 'Flight Mode',
+    slug: 'flight-mode',
+    img: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=200&q=80&fm=jpg',
+    count: '20+',
+  },
+];
 
 export function CartDrawer() {
   const {
@@ -173,70 +245,209 @@ export function CartDrawer() {
         }}
       >
         {items.length === 0 ? (
-          /* ───── Empty state ───── */
-          <>
-            {/* Header */}
+          /* ───── Empty state — editorial Bluorng-style discovery surface ───── */
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '56px 32px 72px 32px',
+            }}
+          >
+            {/* Title block + close */}
             <div
               style={{
-                height: 56,
-                paddingLeft: 28,
-                paddingRight: 28,
                 display: 'flex',
-                alignItems: 'center',
                 justifyContent: 'space-between',
+                alignItems: 'flex-start',
               }}
             >
-              <span style={{ fontSize: 11, fontWeight: 400, letterSpacing: 2, color: '#000' }}>
-                YOUR BAG
-              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <h2
+                  style={{
+                    fontSize: 44,
+                    fontWeight: 300,
+                    fontStyle: 'italic',
+                    letterSpacing: -1.8,
+                    lineHeight: 1,
+                    color: '#000',
+                    margin: 0,
+                  }}
+                >
+                  Your cart
+                  <br />
+                  is empty.
+                </h2>
+                <p
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 300,
+                    color: '#999',
+                    margin: 0,
+                  }}
+                >
+                  Every trip starts with a clean rack.
+                </p>
+              </div>
               <button
                 onClick={closeCart}
-                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  flexShrink: 0,
+                }}
                 aria-label="Close cart"
               >
                 <X size={20} color="#000" strokeWidth={1.5} />
               </button>
             </div>
-            <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
-            {/* Centered empty content */}
-            <div
+            {/* Shop now link */}
+            <Link
+              href="/products"
+              onClick={closeCart}
               style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
+                marginTop: 28,
+                display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: 16,
-                padding: '0 48px',
+                gap: 4,
+                fontSize: 13,
+                fontWeight: 400,
+                color: '#000',
+                textDecoration: 'none',
               }}
             >
-              <ShoppingBag size={48} color="#E5E5E5" strokeWidth={1} />
-              <p style={{ fontSize: 14, fontWeight: 300, color: '#999' }}>Your bag is empty</p>
-              <p style={{ fontSize: 12, fontWeight: 300, color: '#CCC', textAlign: 'center' }}>
-                Looks like you haven&apos;t added anything yet
-              </p>
-              <div style={{ height: 8 }} />
-              <button
-                onClick={closeCart}
-                style={{
-                  height: 46,
-                  padding: '0 32px',
-                  border: '1px solid #000',
-                  backgroundColor: 'transparent',
-                  fontSize: 11,
-                  fontWeight: 400,
-                  letterSpacing: 2,
-                  color: '#000',
-                  cursor: 'pointer',
-                }}
-              >
-                CONTINUE SHOPPING
-              </button>
+              Shop now
+              <ArrowUpRight size={14} color="#000" />
+            </Link>
+
+            {/* Spacer — major section break */}
+            <div style={{ height: 80 }} />
+
+            {/* PRODUCTS YOU MAY LIKE label */}
+            <span
+              style={{
+                display: 'block',
+                fontSize: 9,
+                fontWeight: 500,
+                letterSpacing: 2.5,
+                color: '#999',
+              }}
+            >
+              PRODUCTS YOU MAY LIKE
+            </span>
+
+            {/* Horizontal scroll of product thumbnails */}
+            <div
+              className="hide-scrollbar"
+              style={{
+                marginTop: 24,
+                display: 'flex',
+                gap: 12,
+                overflowX: 'auto',
+                marginLeft: -32,
+                marginRight: -32,
+                paddingLeft: 32,
+                paddingRight: 32,
+              }}
+            >
+              {EMPTY_RECOMMENDED.map((p) => (
+                <Link
+                  key={p.id}
+                  href={p.href}
+                  onClick={closeCart}
+                  style={{
+                    position: 'relative',
+                    width: 128,
+                    height: 172,
+                    flexShrink: 0,
+                    borderRadius: 14,
+                    overflow: 'hidden',
+                    backgroundColor: '#F5F5F5',
+                  }}
+                >
+                  <Image src={p.img} alt="" fill sizes="128px" className="object-cover" />
+                </Link>
+              ))}
             </div>
 
-            <div />
-          </>
+            {/* Spacer — major section break */}
+            <div style={{ height: 88 }} />
+
+            {/* BROWSE BY VIBE label */}
+            <span
+              style={{
+                display: 'block',
+                fontSize: 9,
+                fontWeight: 500,
+                letterSpacing: 2.5,
+                color: '#999',
+              }}
+            >
+              BROWSE BY VIBE
+            </span>
+
+            {/* Vibe list */}
+            <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column' }}>
+              {EMPTY_VIBES.map((v, i) => (
+                <div key={v.slug}>
+                  <Link
+                    href={`/products?vibe=${v.slug}`}
+                    onClick={closeCart}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      height: 96,
+                      gap: 20,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: 1 }}>
+                      <div
+                        style={{
+                          position: 'relative',
+                          width: 52,
+                          height: 72,
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          backgroundColor: '#F5F5F5',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Image
+                          src={v.img}
+                          alt={v.label}
+                          fill
+                          sizes="52px"
+                          className="object-cover"
+                        />
+                      </div>
+                      <span
+                        style={{
+                          fontSize: 15,
+                          fontWeight: 400,
+                          color: '#000',
+                        }}
+                      >
+                        {v.label}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <span style={{ fontSize: 11, fontWeight: 300, color: '#CCC' }}>
+                        {v.count}
+                      </span>
+                      <ChevronRight size={12} color="#CCC" />
+                    </div>
+                  </Link>
+                  {i < EMPTY_VIBES.length - 1 && (
+                    <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
           /* ───── Cart with items ───── */
           <>
