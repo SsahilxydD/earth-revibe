@@ -209,8 +209,8 @@ export default function HomePage() {
           </span>
         </div>
 
-        {/* Stacked sticky cards — each pins at staggered top offsets so later
-            cards land on top of earlier ones, exposing 16px of the one below */}
+        {/* Stacked sticky cards — all pin at the same top so later cards
+            land fully on top of earlier ones, covering them completely */}
         <div
           style={{
             display: 'flex',
@@ -225,7 +225,7 @@ export default function HomePage() {
               href={`/products?vibe=${vibe.slug}`}
               style={{
                 position: 'sticky',
-                top: 72 + i * 16,
+                top: 72,
                 zIndex: i + 1,
                 aspectRatio: '9 / 16',
                 borderRadius: 20,
@@ -259,22 +259,6 @@ export default function HomePage() {
                 }}
               />
 
-              {/* Number watermark — top-left */}
-              <span
-                style={{
-                  position: 'absolute',
-                  top: 40,
-                  left: 24,
-                  fontSize: 100,
-                  fontWeight: 200,
-                  color: 'rgba(255,255,255,0.18)',
-                  lineHeight: 0.9,
-                  letterSpacing: -4,
-                }}
-              >
-                {vibe.num}
-              </span>
-
               {/* Arrow icon — top-right */}
               <div
                 style={{
@@ -286,16 +270,18 @@ export default function HomePage() {
                 <ArrowUpRight size={20} color="#FFF" />
               </div>
 
-              {/* Bottom stack: kicker, title, accent line, tagline, stats */}
+              {/* Centered text stack: kicker, title, accent line, tagline, stats */}
               <div
                 style={{
                   position: 'absolute',
-                  left: 24,
-                  right: 24,
-                  bottom: 32,
+                  inset: 0,
+                  padding: '0 24px',
                   display: 'flex',
                   flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 10,
+                  textAlign: 'center',
                 }}
               >
                 <span
