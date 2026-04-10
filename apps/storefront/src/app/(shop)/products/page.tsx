@@ -12,6 +12,42 @@ import { useProductNavStore } from '@/stores/product-nav-store';
 import { Spinner } from '@/components/ui/spinner';
 import { motion } from 'framer-motion';
 
+// Trip Vibe circles — short labels, Unsplash placeholders.
+// Selection is visual-only for now; product filtering by vibe will
+// be wired in a follow-up when the category system is revamped.
+const VIBES = [
+  {
+    label: 'Clouds',
+    value: 'above-the-clouds',
+    img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&q=80&fm=jpg',
+  },
+  {
+    label: 'Salt',
+    value: 'salt-on-skin',
+    img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&q=80&fm=jpg',
+  },
+  {
+    label: 'Gold',
+    value: 'golden-hour-gang',
+    img: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=200&q=80&fm=jpg',
+  },
+  {
+    label: 'Wild',
+    value: 'into-the-wild',
+    img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=200&q=80&fm=jpg',
+  },
+  {
+    label: 'Neon',
+    value: 'neon-nomads',
+    img: 'https://images.unsplash.com/photo-1514214246283-d427a95c5d2f?w=200&q=80&fm=jpg',
+  },
+  {
+    label: 'Flight',
+    value: 'flight-mode',
+    img: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=200&q=80&fm=jpg',
+  },
+] as const;
+
 function parseSort(sort: string | null): { sortBy: string; sortOrder: 'asc' | 'desc' } {
   switch (sort) {
     case 'price-asc':
@@ -45,54 +81,8 @@ function ProductsContent() {
   const color = searchParams.get('color') || '';
   const search = searchParams.get('search') || '';
 
-  const [activeMood, setActiveMood] = useState<string>('');
-
-  const MOOD_KEYWORDS: Record<string, string[]> = {
-    beach: ['Aqua', 'Coastal', 'Marine', 'Tidewater', 'Shoreline', 'Water', 'Blu ', 'Alpine Ivory'],
-    brunch: [
-      'Polo',
-      'polo',
-      'Cream',
-      'Formal',
-      'Herbal White',
-      'Minimal',
-      'Two-Panel',
-      'Skin-Conscious',
-      'Countryside',
-    ],
-    sunset: [
-      'Ember',
-      'Fireside',
-      'Solstice',
-      'Dustroad',
-      'Mocha',
-      'Desert',
-      'Maroon',
-      'Khakhi',
-      'Earthstone',
-      'Golden',
-    ],
-    poolside: [
-      'Cloudweave',
-      'Windpath',
-      'Garden Sage',
-      'Tropical',
-      'Plain Blue',
-      'Alpine',
-      'Coastal',
-    ],
-    island: [
-      'Terra',
-      'Void',
-      'Ether',
-      'Vintage',
-      'Cargo',
-      'Utility',
-      'Olive',
-      'Wildflower',
-      'Trail',
-    ],
-  };
+  // Vibe selection — visual-only for now, no filtering applied
+  const [activeVibe, setActiveVibe] = useState<string>('');
 
   const { sortBy, sortOrder } = parseSort(sort);
   const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
@@ -165,11 +155,8 @@ function ProductsContent() {
     return data.pages.flatMap((page) => page.products ?? []);
   }, [data]);
 
-  const allProducts = useMemo(() => {
-    if (!activeMood || !MOOD_KEYWORDS[activeMood]) return rawProducts;
-    const keywords = MOOD_KEYWORDS[activeMood];
-    return rawProducts.filter((p) => keywords.some((kw) => p.name.includes(kw)));
-  }, [rawProducts, activeMood]);
+  // Vibe is visual-only for now — products are not filtered by vibe yet
+  const allProducts = rawProducts;
 
   const totalCount = data?.pages?.[0]?.total ?? allProducts.length;
 
@@ -182,10 +169,10 @@ function ProductsContent() {
   }, [allProducts, searchParams, setNavContext]);
 
   const currentFilters: FilterState = { category, minPrice, maxPrice, size, color };
-  const hasActiveFilters = !!(minPrice || maxPrice || size || color || category || activeMood);
+  const hasActiveFilters = !!(minPrice || maxPrice || size || color || category);
 
   const clearAllFilters = () => {
-    setActiveMood('');
+    setActiveVibe('');
     router.push('/products', { scroll: false });
   };
 
@@ -363,7 +350,7 @@ function ProductsContent() {
           borderTopRightRadius: 16,
         }}
       >
-        {/* Mood circles — instant client-side filter */}
+        {/* Trip Vibe circles — 6 vibes, tap to select */}
         {!search && (
           <div
             style={{
@@ -375,18 +362,12 @@ function ProductsContent() {
               gap: 0,
             }}
           >
-            {[
-              { label: 'Beach', value: 'beach', img: '/moods/beach.webp' },
-              { label: 'Brunch', value: 'brunch', img: '/moods/brunch.webp' },
-              { label: 'Sunset', value: 'sunset', img: '/moods/sunset.webp' },
-              { label: 'Poolside', value: 'poolside', img: '/moods/poolside.webp' },
-              { label: 'Island', value: 'island', img: '/moods/island.webp' },
-            ].map((m) => {
-              const isActive = activeMood === m.value;
+            {VIBES.map((v) => {
+              const isActive = activeVibe === v.value;
               return (
                 <button
-                  key={m.label}
-                  onClick={() => setActiveMood(isActive ? '' : m.value)}
+                  key={v.value}
+                  onClick={() => setActiveVibe(isActive ? '' : v.value)}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -401,10 +382,10 @@ function ProductsContent() {
                 >
                   <div
                     style={{
-                      width: 56,
-                      height: 56,
+                      width: 48,
+                      height: 48,
                       borderRadius: 9999,
-                      backgroundImage: `url(${m.img})`,
+                      backgroundImage: `url(${v.img})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                       outline: isActive ? '2px solid #000' : 'none',
@@ -412,7 +393,7 @@ function ProductsContent() {
                     }}
                   />
                   <span style={{ fontSize: 9, fontWeight: isActive ? 400 : 300, color: '#000' }}>
-                    {m.label}
+                    {v.label}
                   </span>
                 </button>
               );
@@ -445,34 +426,6 @@ function ProductsContent() {
               flexWrap: 'wrap',
             }}
           >
-            {activeMood && (
-              <button
-                onClick={() => setActiveMood('')}
-                style={{
-                  display: 'inline-flex',
-                  height: 28,
-                  padding: '0 12px',
-                  gap: 6,
-                  alignItems: 'center',
-                  backgroundColor: '#F5F5F5',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 400,
-                    color: '#000',
-                    letterSpacing: 0.5,
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {activeMood}
-                </span>
-                <X size={10} color="#999" />
-              </button>
-            )}
             {category && (
               <button
                 onClick={() => updateParams({ category: undefined })}
