@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -8,46 +8,17 @@ import { X, Lock, ArrowUpRight, ChevronRight } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, getImageUrl } from '@/lib/utils';
 import { CartItemRow } from './cart-item';
 import { LoginModal } from '@/components/auth/login-modal';
 import { PaymentMethodModal } from '@/components/checkout/payment-method-modal';
 import { CODCheckoutModal } from '@/components/checkout/cod-checkout-modal';
 import { api } from '@/lib/api-client';
 import { useRazorpay, preloadRazorpayScript } from '@/hooks/use-razorpay';
+import { useProducts } from '@/hooks/use-products';
 import { useToast } from '@/providers';
 import { Spinner } from '@/components/ui/spinner';
-
-// ───── Empty cart content ─────
-// Placeholder imagery for the "PRODUCTS YOU MAY LIKE" horizontal scroll
-// and the "BROWSE BY VIBE" list. Swap with real curation later.
-const EMPTY_RECOMMENDED: { id: string; img: string; href: string }[] = [
-  {
-    id: 'r1',
-    img: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=300&q=80&fm=jpg',
-    href: '/products',
-  },
-  {
-    id: 'r2',
-    img: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=300&q=80&fm=jpg',
-    href: '/products',
-  },
-  {
-    id: 'r3',
-    img: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=300&q=80&fm=jpg',
-    href: '/products',
-  },
-  {
-    id: 'r4',
-    img: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300&q=80&fm=jpg',
-    href: '/products',
-  },
-  {
-    id: 'r5',
-    img: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&q=80&fm=jpg',
-    href: '/products',
-  },
-];
+import type { Product } from '@/types';
 
 const EMPTY_VIBES: { label: string; slug: string; img: string; count: string }[] = [
   {
@@ -120,6 +91,39 @@ export function CartDrawer() {
 
   const subtotal = getSubtotal();
   const total = getTotal();
+
+  // ───── Empty cart — live newest products from T-shirts / Shirts / Polos ─────
+  // Fetch 4 newest from each category, only when the cart is actually open and
+  // empty, then interleave them as t,s,p,t,s,p,t,s,p,t,s,p → 12 total.
+  const emptyQueryEnabled = isOpen && items.length === 0;
+  const tshirtsQuery = useProducts(
+    { category: 't-shirts', limit: 4, sortBy: 'createdAt', sortOrder: 'desc' },
+    { enabled: emptyQueryEnabled, staleTime: 5 * 60 * 1000 }
+  );
+  const shirtsQuery = useProducts(
+    { category: 'shirts', limit: 4, sortBy: 'createdAt', sortOrder: 'desc' },
+    { enabled: emptyQueryEnabled, staleTime: 5 * 60 * 1000 }
+  );
+  const polosQuery = useProducts(
+    { category: 'polos', limit: 4, sortBy: 'createdAt', sortOrder: 'desc' },
+    { enabled: emptyQueryEnabled, staleTime: 5 * 60 * 1000 }
+  );
+
+  const emptyRecommended = useMemo<Product[]>(() => {
+    const t = tshirtsQuery.data?.products ?? [];
+    const s = shirtsQuery.data?.products ?? [];
+    const p = polosQuery.data?.products ?? [];
+    const out: Product[] = [];
+    for (let i = 0; i < 4; i++) {
+      if (t[i]) out.push(t[i]);
+      if (s[i]) out.push(s[i]);
+      if (p[i]) out.push(p[i]);
+    }
+    return out;
+  }, [tshirtsQuery.data, shirtsQuery.data, polosQuery.data]);
+
+  const emptyRecommendedLoading =
+    emptyQueryEnabled && (tshirtsQuery.isLoading || shirtsQuery.isLoading || polosQuery.isLoading);
 
   useEffect(() => {
     if (isOpen) {
@@ -338,7 +342,7 @@ export function CartDrawer() {
               PRODUCTS YOU MAY LIKE
             </span>
 
-            {/* Horizontal scroll of product thumbnails */}
+            {/* Horizontal scroll — 12 newest products interleaved t,s,p,t,s,p,… */}
             <div
               className="hide-scrollbar"
               style={{
@@ -352,24 +356,51 @@ export function CartDrawer() {
                 paddingRight: 32,
               }}
             >
-              {EMPTY_RECOMMENDED.map((p) => (
-                <Link
-                  key={p.id}
-                  href={p.href}
-                  onClick={closeCart}
-                  style={{
-                    position: 'relative',
-                    width: 128,
-                    height: 172,
-                    flexShrink: 0,
-                    borderRadius: 14,
-                    overflow: 'hidden',
-                    backgroundColor: '#F5F5F5',
-                  }}
-                >
-                  <Image src={p.img} alt="" fill sizes="128px" className="object-cover" />
-                </Link>
-              ))}
+              {emptyRecommendedLoading && emptyRecommended.length === 0
+                ? Array.from({ length: 12 }).map((_, i) => (
+                    <div
+                      key={`skeleton-${i}`}
+                      style={{
+                        width: 128,
+                        height: 172,
+                        flexShrink: 0,
+                        borderRadius: 14,
+                        backgroundColor: '#F5F5F5',
+                      }}
+                    />
+                  ))
+                : emptyRecommended.map((product) => {
+                    const sorted = [...(product.images ?? [])].sort(
+                      (a, b) => a.sortOrder - b.sortOrder
+                    );
+                    const primary = sorted.find((img) => img.isPrimary) || sorted[0];
+                    return (
+                      <Link
+                        key={product.id}
+                        href={`/products/${product.slug}`}
+                        onClick={closeCart}
+                        style={{
+                          position: 'relative',
+                          width: 128,
+                          height: 172,
+                          flexShrink: 0,
+                          borderRadius: 14,
+                          overflow: 'hidden',
+                          backgroundColor: '#F5F5F5',
+                        }}
+                      >
+                        {primary && (
+                          <Image
+                            src={getImageUrl(primary.url, 300, primary.thumbnailUrl)}
+                            alt={primary.altText || product.name}
+                            fill
+                            sizes="128px"
+                            className="object-cover"
+                          />
+                        )}
+                      </Link>
+                    );
+                  })}
             </div>
 
             {/* Spacer — major section break */}
