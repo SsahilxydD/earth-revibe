@@ -28,6 +28,12 @@ html {
   background: #ffffff;
   /* iOS: ensure background fills behind safe area when viewport-fit=cover */
   min-height: 100%;
+  /* Disable pinch-zoom and double-tap zoom across the entire site */
+  touch-action: pan-x pan-y;
+  -ms-touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 body {
   font-family: var(--font-body);
@@ -39,6 +45,7 @@ body {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   min-height: 100%;
+  touch-action: pan-x pan-y;
 }
 ::selection {
   background: #121212;
