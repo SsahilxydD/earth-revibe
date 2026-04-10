@@ -360,12 +360,12 @@ export function CartDrawer() {
                 ? Array.from({ length: 12 }).map((_, i) => (
                     <div
                       key={`skeleton-${i}`}
+                      className="skeleton"
                       style={{
                         width: 128,
                         height: 172,
                         flexShrink: 0,
                         borderRadius: 14,
-                        backgroundColor: '#F5F5F5',
                       }}
                     />
                   ))
