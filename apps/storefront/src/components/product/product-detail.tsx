@@ -14,11 +14,15 @@ import {
   trackPurchaseCompleted,
 } from '@/lib/analytics';
 import { api } from '@/lib/api-client';
-import { useCartStore } from '@/stores/cart-store';
+import { useCartStore, type CartItem } from '@/stores/cart-store';
+import { useAuthStore } from '@/stores/auth-store';
 import { useRazorpay } from '@/hooks/use-razorpay';
 import { useToast } from '@/providers';
 import { useProducts } from '@/hooks/use-products';
 import { useAddToWishlist, useRemoveFromWishlist, useWishlist } from '@/hooks/use-wishlist';
+import { PaymentMethodModal } from '@/components/checkout/payment-method-modal';
+import { CODCheckoutModal } from '@/components/checkout/cod-checkout-modal';
+import { LoginModal } from '@/components/auth/login-modal';
 import type { Product, ProductVariant } from '@/types';
 
 // Lazy-load DOMPurify
@@ -766,6 +770,14 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Buy Now — unified with cart-drawer checkout flow via PaymentMethodModal
+  const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCODCheckout, setShowCODCheckout] = useState(false);
+  const [pendingCOD, setPendingCOD] = useState(false);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   // Wishlist
   const { data: wishlistData } = useWishlist({ retry: false });
   const addToWishlist = useAddToWishlist();
@@ -845,14 +857,55 @@ export function ProductDetail({ product }: ProductDetailProps) {
     setIsAdding(false);
   };
 
-  const buyNow = async () => {
+  /**
+   * Build a CartItem-shaped object for the currently selected variant. Used
+   * by the Buy Now flow so the PaymentMethodModal + COD modal show the single
+   * item price, and the prepaid razorpay call receives its variantId.
+   */
+  const buildBuyNowItem = (): CartItem | null => {
     if (sizes.length > 0 && !selectedSize) {
       addToast('Please select a size', 'info');
-      return;
+      return null;
     }
     const v = findVariant(product.variants, selectedSize);
-    if (!v || v.stock <= 0) return;
+    if (!v || v.stock <= 0) return null;
+    const img = product.images.find((i) => i.isPrimary) || product.images[0];
+    return {
+      id: v.id,
+      productId: product.id,
+      name: product.name,
+      slug: product.slug,
+      image: img?.url || '',
+      price: v.price ?? product.price,
+      compareAtPrice: product.compareAtPrice ?? undefined,
+      size: selectedSize || '',
+      color: '',
+      maxQuantity: v.stock,
+      quantity: 1,
+    };
+  };
 
+  /**
+   * Buy Now entrypoint — validates size, snapshots the variant, then opens the
+   * same PaymentMethodModal the cart-drawer checkout button uses. The modal
+   * lets the customer pick prepaid or COD; we then branch into the matching
+   * flow, adding a login gate for unauthenticated users exactly like the cart
+   * drawer does.
+   */
+  const handleBuyNowClick = () => {
+    const item = buildBuyNowItem();
+    if (!item) return;
+    setBuyNowItem(item);
+    setShowPaymentMethodModal(true);
+  };
+
+  /**
+   * Runs the existing Razorpay magic-checkout flow for a single variant. Kept
+   * separate from the cart-wide launchMagicCheckout in cart-drawer so Buy Now
+   * stays scoped to just the one item the user clicked on, even if their cart
+   * contains other things.
+   */
+  const launchPrepaidBuyNow = async (item: CartItem) => {
     setIsBuying(true);
     try {
       const order = await api.post<{
@@ -862,11 +915,11 @@ export function ProductDetail({ product }: ProductDetailProps) {
         orderNumber: string;
         prefill: { name: string; email: string; contact: string };
       }>('/checkout/create-order', {
-        items: [{ variantId: v.id, quantity: 1 }],
+        items: [{ variantId: item.id, quantity: item.quantity }],
         loyaltyPointsToUse: 0,
       });
 
-      trackCheckoutStarted({ total: order.amount, itemCount: 1 });
+      trackCheckoutStarted({ total: order.amount, itemCount: item.quantity });
 
       const pay = await initiatePayment({
         orderId: order.orderNumber,
@@ -894,7 +947,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
       trackPurchaseCompleted({
         orderId: order.orderNumber,
         total: order.amount,
-        itemCount: 1,
+        itemCount: item.quantity,
         paymentMethod: 'razorpay',
       });
       addToast('Order placed successfully!', 'success');
@@ -903,6 +956,26 @@ export function ProductDetail({ product }: ProductDetailProps) {
       addToast(err instanceof Error ? err.message : 'Something went wrong', 'error');
     } finally {
       setIsBuying(false);
+    }
+  };
+
+  const handleSelectPrepaid = () => {
+    if (!buyNowItem) return;
+    if (isAuthenticated) {
+      launchPrepaidBuyNow(buyNowItem);
+    } else {
+      setPendingCOD(false);
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleSelectCOD = () => {
+    if (!buyNowItem) return;
+    if (isAuthenticated) {
+      setShowCODCheckout(true);
+    } else {
+      setPendingCOD(true);
+      setShowLoginModal(true);
     }
   };
 
@@ -1126,7 +1199,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </button>
           {/* E1Y3u — buyBtn, h50, rounded pill, black fill, 500 weight */}
           <button
-            onClick={buyNow}
+            onClick={handleBuyNowClick}
             disabled={isBuying}
             style={{
               width: '100%',
@@ -1204,6 +1277,46 @@ export function ProductDetail({ product }: ProductDetailProps) {
           <SizeGuideSheet open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />,
           document.body
         )}
+
+      {/* ── Buy Now checkout modals — same sheet as the cart drawer ── */}
+      <PaymentMethodModal
+        isOpen={showPaymentMethodModal}
+        onClose={() => setShowPaymentMethodModal(false)}
+        onSelectPrepaid={handleSelectPrepaid}
+        onSelectCOD={handleSelectCOD}
+        subtotalOverride={buyNowItem ? buyNowItem.price * buyNowItem.quantity : undefined}
+      />
+
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => {
+          setShowLoginModal(false);
+          setPendingCOD(false);
+        }}
+        onSuccess={() => {
+          setShowLoginModal(false);
+          if (pendingCOD) {
+            setPendingCOD(false);
+            setShowCODCheckout(true);
+          } else if (buyNowItem) {
+            launchPrepaidBuyNow(buyNowItem);
+          }
+        }}
+        onGuest={
+          pendingCOD
+            ? undefined
+            : () => {
+                setShowLoginModal(false);
+                if (buyNowItem) launchPrepaidBuyNow(buyNowItem);
+              }
+        }
+      />
+
+      <CODCheckoutModal
+        isOpen={showCODCheckout}
+        onClose={() => setShowCODCheckout(false)}
+        directItems={buyNowItem ? [buyNowItem] : undefined}
+      />
     </div>
   );
 }

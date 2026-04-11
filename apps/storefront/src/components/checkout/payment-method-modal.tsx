@@ -22,6 +22,11 @@ interface PaymentMethodModalProps {
   onClose: () => void;
   onSelectPrepaid: () => void;
   onSelectCOD: () => void;
+  /**
+   * Optional override for direct Buy Now flows — lets the sheet show the
+   * single-variant price instead of the full cart total.
+   */
+  subtotalOverride?: number;
 }
 
 type Method = 'prepaid' | 'cod';
@@ -31,9 +36,10 @@ export function PaymentMethodModal({
   onClose,
   onSelectPrepaid,
   onSelectCOD,
+  subtotalOverride,
 }: PaymentMethodModalProps) {
   const getTotal = useCartStore((s) => s.getTotal);
-  const subtotal = getTotal();
+  const subtotal = subtotalOverride ?? getTotal();
   const codTotal = subtotal + COD_SURCHARGE;
 
   const [method, setMethod] = useState<Method>('prepaid');
@@ -290,16 +296,7 @@ export function PaymentMethodModal({
                     gap: 4,
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 300,
-                      color: method === 'cod' ? 'rgba(255,255,255,0.5)' : '#CCC',
-                      textDecoration: 'line-through',
-                    }}
-                  >
-                    {formatPrice(subtotal)}
-                  </span>
+                  {/* JTvE8 — main price = original subtotal, no markup */}
                   <span
                     style={{
                       fontSize: 16,
@@ -307,7 +304,17 @@ export function PaymentMethodModal({
                       color: method === 'cod' ? '#FFF' : '#000',
                     }}
                   >
-                    {formatPrice(codTotal)}
+                    {formatPrice(subtotal)}
+                  </span>
+                  {/* sUdKW — small grey COD fee annotation underneath */}
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 300,
+                      color: method === 'cod' ? 'rgba(255,255,255,0.5)' : '#CCC',
+                    }}
+                  >
+                    +{formatPrice(COD_SURCHARGE)} COD charge
                   </span>
                 </div>
               </button>

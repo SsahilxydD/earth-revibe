@@ -6,7 +6,7 @@ import { ChevronLeft, MapPin, Plus, Loader2, Check } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { MapplsAddressInput } from './mappls-address-input';
-import { useCartStore } from '@/stores/cart-store';
+import { useCartStore, type CartItem } from '@/stores/cart-store';
 import { useAddresses, useCreateAddress } from '@/hooks/use-addresses';
 import { api } from '@/lib/api-client';
 import { formatPrice } from '@/lib/utils';
@@ -56,15 +56,28 @@ type Step = 'address' | 'review' | 'confirming';
 interface CODCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /**
+   * Optional override for direct Buy Now flows. When provided, the modal uses
+   * these items for display + order placement instead of the cart store, and
+   * leaves the cart untouched on success.
+   */
+  directItems?: CartItem[];
 }
 
-export function CODCheckoutModal({ isOpen, onClose }: CODCheckoutModalProps) {
+export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutModalProps) {
   const router = useRouter();
-  const items = useCartStore((s) => s.items);
+  const cartItems = useCartStore((s) => s.items);
   const discountCode = useCartStore((s) => s.discountCode);
   const discountAmount = useCartStore((s) => s.discountAmount);
   const getSubtotal = useCartStore((s) => s.getSubtotal);
   const clearCart = useCartStore((s) => s.clearCart);
+
+  // When directItems is provided (Buy Now), use those and ignore cart-wide
+  // discounts entirely. Otherwise fall back to the regular cart flow.
+  const isDirect = !!directItems && directItems.length > 0;
+  const items = isDirect ? directItems : cartItems;
+  const effectiveDiscountCode = isDirect ? '' : discountCode;
+  const effectiveDiscountAmount = isDirect ? 0 : discountAmount;
 
   const { data: addresses = [], isLoading: loadingAddresses } = useAddresses({ enabled: isOpen });
   const createAddress = useCreateAddress();
@@ -86,8 +99,10 @@ export function CODCheckoutModal({ isOpen, onClose }: CODCheckoutModalProps) {
     pinCode: '',
   });
 
-  const subtotal = getSubtotal();
-  const total = Math.max(subtotal - discountAmount, 0);
+  const subtotal = isDirect
+    ? items.reduce((acc, i) => acc + i.price * i.quantity, 0)
+    : getSubtotal();
+  const total = Math.max(subtotal - effectiveDiscountAmount, 0);
 
   const selectedAddress = addresses.find((a: Address) => a.id === selectedAddressId);
 
@@ -159,11 +174,12 @@ export function CODCheckoutModal({ isOpen, onClose }: CODCheckoutModalProps) {
         {
           items: items.map((i) => ({ variantId: i.id, quantity: i.quantity })),
           addressId: selectedAddressId,
-          discountCode: discountCode || undefined,
+          discountCode: effectiveDiscountCode || undefined,
           loyaltyPointsToUse: 0,
         }
       );
-      clearCart();
+      // Direct Buy Now flows never touched the cart — don't clear it.
+      if (!isDirect) clearCart();
       resetAndClose();
       router.push(`/checkout/confirmation?orderId=${result.orderNumber}&method=cod`);
     } catch (err: any) {
@@ -370,10 +386,10 @@ export function CODCheckoutModal({ isOpen, onClose }: CODCheckoutModalProps) {
               <span className="text-[var(--color-muted)]">Subtotal</span>
               <span>{formatPrice(subtotal)}</span>
             </div>
-            {discountAmount > 0 && (
+            {effectiveDiscountAmount > 0 && (
               <div className="flex justify-between text-green-600">
-                <span>Discount ({discountCode})</span>
-                <span>-{formatPrice(discountAmount)}</span>
+                <span>Discount ({effectiveDiscountCode})</span>
+                <span>-{formatPrice(effectiveDiscountAmount)}</span>
               </div>
             )}
             <div className="flex justify-between">
