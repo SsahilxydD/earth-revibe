@@ -20,6 +20,7 @@ interface Vibe {
   pieces: string;
   startingFrom: string;
   image: string;
+  video?: string;
 }
 
 const VIBES: Vibe[] = [
@@ -32,6 +33,8 @@ const VIBES: Vibe[] = [
     pieces: '14 PIECES',
     startingFrom: 'FROM ₹990',
     image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=720&q=80&fm=jpg',
+    video:
+      'https://pahlcltpwzsqdclizdtl.supabase.co/storage/v1/object/public/product-videos/showcase/above_the_clouds_opt.mp4',
   },
   {
     num: '02',
@@ -236,18 +239,36 @@ export default function HomePage() {
                 backgroundColor: '#1a1a1a',
               }}
             >
-              {/* Background image */}
-              <Image
-                src={vibe.image}
-                alt={vibe.title.join(' ')}
-                fill
-                sizes="(max-width: 393px) 100vw, 393px"
-                quality={80}
-                priority={i === 0}
-                placeholder="blur"
-                blurDataURL={BLUR_DATA_URL}
-                style={{ objectFit: 'cover' }}
-              />
+              {/* Background — video if available, otherwise image */}
+              {vibe.video ? (
+                <video
+                  src={vibe.video}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  poster={vibe.image}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <Image
+                  src={vibe.image}
+                  alt={vibe.title.join(' ')}
+                  fill
+                  sizes="(max-width: 393px) 100vw, 393px"
+                  quality={80}
+                  priority={i === 0}
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
+                  style={{ objectFit: 'cover' }}
+                />
+              )}
 
               {/* Bottom-to-top gradient for text legibility */}
               <div
