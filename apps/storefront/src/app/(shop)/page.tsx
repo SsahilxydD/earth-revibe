@@ -45,6 +45,8 @@ const VIBES: Vibe[] = [
     pieces: '22 PIECES',
     startingFrom: 'FROM ₹990',
     image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=720&q=80&fm=jpg',
+    video:
+      'https://pahlcltpwzsqdclizdtl.supabase.co/storage/v1/object/public/product-videos/showcase/salt_on_skin_opt.mp4',
   },
   {
     num: '03',
