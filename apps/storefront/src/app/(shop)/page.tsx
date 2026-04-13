@@ -235,14 +235,14 @@ export default function HomePage() {
                 backgroundColor: '#1a1a1a',
               }}
             >
-              {/* Background — only the video, no image fallback */}
+              {/* Background — video only, same loading pattern as the category hero */}
               {vibe.video && (
                 <video
-                  src={vibe.video}
                   autoPlay
-                  loop
                   muted
+                  loop
                   playsInline
+                  preload="auto"
                   style={{
                     position: 'absolute',
                     inset: 0,
@@ -250,7 +250,9 @@ export default function HomePage() {
                     height: '100%',
                     objectFit: 'cover',
                   }}
-                />
+                >
+                  <source src={vibe.video} type="video/mp4" />
+                </video>
               )}
 
               {/* Bottom-to-top gradient for text legibility */}
