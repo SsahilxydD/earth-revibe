@@ -864,8 +864,8 @@ model IdempotencyKey {
 // ==========================================
 // TRAVEL CIRCLE APPLICATIONS
 // ==========================================
-// Submitted by the trip-form (apps/trip-form) after a user completes the
-// 14-screen WhatsApp-OTP-gated flow. Reviewed manually by the team.
+// Submitted from the /apply-for-trip-form route on the storefront after
+// a user completes the 14-screen WhatsApp-OTP-gated flow. Reviewed manually.
 
 model TravelApplication {
   id                String                    @id @default(cuid())

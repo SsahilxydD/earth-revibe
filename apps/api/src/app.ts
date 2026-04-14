@@ -68,7 +68,6 @@ app.use(
       const allowed = [
         env.FRONTEND_URL,
         env.ADMIN_URL,
-        env.TRIP_FORM_URL,
         // Production custom domains (both www and non-www)
         'https://earthrevibe.com',
         'https://www.earthrevibe.com',
