@@ -278,7 +278,7 @@ export const checkoutService = {
             id: 'standard',
             name: 'Free Delivery',
             description: '5-7 business days',
-            serviceable: addr.country === 'IN',
+            serviceable: addr.country?.toLowerCase() === 'in',
             shipping_fee: 0,
             cod: true,
             cod_fee: 15000,
