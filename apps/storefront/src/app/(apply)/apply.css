@@ -1,22 +1,31 @@
 /*
  * Scoped base rules for the /apply-for-trip-form route.
  *
- * Design tokens (paper, ink, clay, wa, etc.) live in the root globals.css
- * @theme block — that's the only place Tailwind v4 will process them.
- * This file only holds the body-level rules that need to be scoped to the
+ * Design tokens (paper, ink, clay, wa, hairline, dim, apply-muted,
+ * apply-surface, etc.) live in the root globals.css @theme block — that's
+ * the only place Tailwind v4 will process them.
+ *
+ * This file holds the body-level rules that need to be scoped to the
  * `.apply-scope` wrapper (defined in `(apply)/layout.tsx`) so they don't
- * leak into the rest of the storefront.
+ * leak into the rest of the storefront. These mirror the original
+ * trip-form body: Inter as default font, ink background, antialiasing,
+ * and chrome-less inputs.
  */
 
 .apply-scope {
   min-height: 100dvh;
   background: var(--color-ink);
   color: var(--color-ink);
+  /* Default font for every descendant — matches the original trip-form
+     <body className="font-sans">. Without this, storefront's Archivo
+     Narrow cascades in and the whole vibe flips. */
+  font-family: var(--font-apply-inter), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Editorial typography utilities — only active inside the apply flow. */
+/* Editorial typography utilities — explicit classes still available. */
 .apply-scope .font-display {
   font-family: var(--font-fraunces), ui-serif, Georgia, serif;
   font-optical-sizing: auto;
