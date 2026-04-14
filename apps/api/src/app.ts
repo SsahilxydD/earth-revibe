@@ -41,6 +41,7 @@ import { homepageRouter } from './routes/homepage.routes';
 import { uploadRouter } from './routes/upload.routes';
 import { webhookRouter } from './routes/webhook.routes';
 import { travelApplicationRouter } from './routes/travel-application.routes';
+import { adminTravelApplicationRouter } from './routes/admin-travel-application.routes';
 import { sanitize } from './middleware/sanitize';
 
 const app: Express = express();
@@ -684,6 +685,7 @@ app.use('/api/v1/homepage', homepageRouter);
 app.use('/api/v1/upload', uploadRouter);
 app.use('/api/v1/webhooks', webhookRouter);
 app.use('/api/v1/travel-applications', travelApplicationRouter);
+app.use('/api/v1/admin/travel-applications', adminTravelApplicationRouter);
 
 // Sentry error handler (must be before custom error handler)
 Sentry.setupExpressErrorHandler(app);

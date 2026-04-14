@@ -20,6 +20,7 @@ import {
   Bell,
   LayoutTemplate,
   GitBranchPlus,
+  Plane,
 } from 'lucide-react';
 import { useUIStore } from '@/stores/ui-store';
 
@@ -32,6 +33,7 @@ const navItems = [
   { label: 'Inventory', href: '/inventory', icon: Warehouse },
   { label: 'Discounts', href: '/discounts', icon: Tags },
   { label: 'Customers', href: '/customers', icon: Users },
+  { label: 'Travel Applications', href: '/travel-applications', icon: Plane },
   { label: 'Blog', href: '/blog', icon: FileText },
   { label: 'Support', href: '/support-tickets', icon: Headset },
   { label: 'Notifications', href: '/notifications', icon: Bell },

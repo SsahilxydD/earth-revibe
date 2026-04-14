@@ -1,6 +1,12 @@
-import { prisma } from '@earth-revibe/db';
-import type { TravelApplicationSubmitInput } from '@earth-revibe/shared';
+import { prisma, Prisma } from '@earth-revibe/db';
+import type {
+  TravelApplicationSubmitInput,
+  TravelApplicationListQuery,
+  TravelApplicationUpdateInput,
+} from '@earth-revibe/shared';
 import { logger } from '../config/logger';
+import { APP_CONSTANTS } from '../config/constants';
+import { ApiError } from '../utils/api-error';
 import { sendTripApplicationToDiscord } from './discord.service';
 import { sendWhatsAppTripApplicationAlert } from './whatsapp.service';
 
@@ -76,5 +82,114 @@ export const travelApplicationService = {
       }
     }
     throw lastErr ?? new Error('Failed to assign application number');
+  },
+
+  // ── Admin operations ─────────────────────────────────────────────────────
+
+  async list(query: TravelApplicationListQuery) {
+    const { page, limit, status, search, sortBy, sortOrder } = query;
+    const where: Prisma.TravelApplicationWhereInput = {};
+    if (status) where.status = status;
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { city: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
+        { instagram: { contains: search, mode: 'insensitive' } },
+        { applicationNumber: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [rows, total] = await Promise.all([
+      prisma.travelApplication.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder },
+      }),
+      prisma.travelApplication.count({ where }),
+    ]);
+
+    return {
+      data: rows,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  },
+
+  async getById(id: string) {
+    const row = await prisma.travelApplication.findUnique({ where: { id } });
+    if (!row) throw ApiError.notFound('Application not found');
+    return row;
+  },
+
+  async update(id: string, data: TravelApplicationUpdateInput) {
+    const existing = await prisma.travelApplication.findUnique({ where: { id } });
+    if (!existing) throw ApiError.notFound('Application not found');
+
+    return prisma.travelApplication.update({
+      where: { id },
+      data: {
+        ...(data.status ? { status: data.status, reviewedAt: new Date() } : {}),
+        ...(data.reviewNotes !== undefined ? { reviewNotes: data.reviewNotes } : {}),
+      },
+    });
+  },
+
+  async exportCSV() {
+    const totalCount = await prisma.travelApplication.count();
+    const rows = await prisma.travelApplication.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: APP_CONSTANTS.MAX_CSV_EXPORT_ROWS,
+    });
+    const truncated = totalCount > APP_CONSTANTS.MAX_CSV_EXPORT_ROWS;
+
+    const escape = (val: string) => (/[,"\n]/.test(val) ? `"${val.replace(/"/g, '""')}"` : val);
+
+    const header = [
+      'Application #',
+      'Submitted',
+      'Status',
+      'Name',
+      'Age',
+      'City',
+      'Phone',
+      'Instagram',
+      'Traveler Type',
+      'Trip Preferences',
+      'Travelled Before',
+      'Met Before',
+      'Curated OK',
+      'Why Join',
+      'Review Notes',
+      'Reviewed',
+    ].join(',');
+
+    const body = rows.map((r) =>
+      [
+        escape(r.applicationNumber),
+        new Date(r.createdAt).toISOString(),
+        r.status,
+        escape(r.name),
+        String(r.age),
+        escape(r.city),
+        escape(r.phone),
+        escape(r.instagram),
+        r.travelerType,
+        escape(r.tripPrefs.join('; ')),
+        r.pastTravel,
+        r.meetBefore,
+        r.curated,
+        escape(r.whyJoin),
+        escape(r.reviewNotes ?? ''),
+        r.reviewedAt ? new Date(r.reviewedAt).toISOString() : '',
+      ].join(',')
+    );
+
+    return {
+      csv: [header, ...body].join('\n'),
+      truncated,
+      totalCount,
+      exportedCount: rows.length,
+    };
   },
 };

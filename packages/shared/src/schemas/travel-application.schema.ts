@@ -58,3 +58,22 @@ export const travelApplicationResponseSchema = z.object({
   applicationNumber: z.string(), // e.g. "ER-2026-0042"
 });
 export type TravelApplicationResponse = z.infer<typeof travelApplicationResponseSchema>;
+
+// ── Admin: list + update ────────────────────────────────────────────────────
+import { TRAVEL_APPLICATION_STATUSES } from '../enums/travel-application.enum';
+
+export const travelApplicationListQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  status: z.enum(TRAVEL_APPLICATION_STATUSES).optional(),
+  search: z.string().trim().optional(),
+  sortBy: z.enum(['createdAt', 'applicationNumber', 'name', 'city']).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+});
+export type TravelApplicationListQuery = z.infer<typeof travelApplicationListQuerySchema>;
+
+export const travelApplicationUpdateSchema = z.object({
+  status: z.enum(TRAVEL_APPLICATION_STATUSES).optional(),
+  reviewNotes: z.string().trim().max(2000).optional(),
+});
+export type TravelApplicationUpdateInput = z.infer<typeof travelApplicationUpdateSchema>;
