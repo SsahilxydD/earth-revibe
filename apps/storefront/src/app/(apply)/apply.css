@@ -16,14 +16,39 @@
   --color-muted: #6e665b;
   --color-surface: #ffffff;
 
-  /* Original body-level styling, rehomed here. */
+  /* Original body-level styling, rehomed here. Also neutralizes storefront
+     body defaults (touch-action, overflow, font) that otherwise cascade in. */
   min-height: 100dvh;
+  width: 100%;
   background: var(--color-ink);
   color: var(--color-ink);
   font-family: var(--font-apply-inter), ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Storefront body sets touch-action: pan-x pan-y which disables pinch +
+     can mess with framer-motion drag gestures. The apply form uses its own
+     viewport lock so restore default touch behavior here. */
+  touch-action: auto;
+  /* Stop storefront body overflow-x: hidden from clipping the mobile
+     preview frame's shadow/ring on desktop. */
+  overflow: visible;
+}
+
+/* Body-direct descendants that the storefront forces to inherit Archivo
+   Narrow — explicitly restore trip-form Inter at every descendant. This
+   wins over inheritance because specificity ties then source order wins,
+   and the apply.css rule lives later than globals.css body rule. */
+.apply-scope,
+.apply-scope * {
+  font-family: var(--font-apply-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Re-assert display font for explicit .font-display elements. */
+.apply-scope .font-display,
+.apply-scope .font-display * {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-optical-sizing: auto;
 }
 
 /* Font utility classes — tokens hold var refs, not comma lists */

@@ -1,12 +1,8 @@
-import { Suspense } from 'react';
 import Script from 'next/script';
 import type { Metadata, Viewport } from 'next';
 import { Archivo_Narrow, Inter, Poppins } from 'next/font/google';
 import { GoogleAnalytics } from '@next/third-parties/google';
-import { Providers } from '@/providers';
-import { LenisProvider } from '@/providers/lenis-provider';
-import { PrefetchProvider } from '@/providers/prefetch-provider';
-import { PostHogProvider, PostHogPageview } from '@/providers/posthog-provider';
+import { ClientLayoutShell } from '@/providers/client-layout-shell';
 import './globals.css';
 
 const archivoNarrow = Archivo_Narrow({
@@ -135,16 +131,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <PostHogProvider>
-          <Suspense fallback={null}>
-            <PostHogPageview />
-          </Suspense>
-          <Providers>
-            <PrefetchProvider>
-              <LenisProvider>{children}</LenisProvider>
-            </PrefetchProvider>
-          </Providers>
-        </PostHogProvider>
+        <ClientLayoutShell>{children}</ClientLayoutShell>
         {process.env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />}
         <Script
           src="https://cloud.umami.is/script.js"
