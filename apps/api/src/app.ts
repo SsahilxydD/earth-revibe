@@ -40,6 +40,7 @@ import { adminHomepageRouter } from './routes/admin-homepage.routes';
 import { homepageRouter } from './routes/homepage.routes';
 import { uploadRouter } from './routes/upload.routes';
 import { webhookRouter } from './routes/webhook.routes';
+import { travelApplicationRouter } from './routes/travel-application.routes';
 import { sanitize } from './middleware/sanitize';
 
 const app: Express = express();
@@ -67,6 +68,7 @@ app.use(
       const allowed = [
         env.FRONTEND_URL,
         env.ADMIN_URL,
+        env.TRIP_FORM_URL,
         // Production custom domains (both www and non-www)
         'https://earthrevibe.com',
         'https://www.earthrevibe.com',
@@ -682,6 +684,7 @@ app.use('/api/v1/admin/homepage', adminHomepageRouter);
 app.use('/api/v1/homepage', homepageRouter);
 app.use('/api/v1/upload', uploadRouter);
 app.use('/api/v1/webhooks', webhookRouter);
+app.use('/api/v1/travel-applications', travelApplicationRouter);
 
 // Sentry error handler (must be before custom error handler)
 Sentry.setupExpressErrorHandler(app);

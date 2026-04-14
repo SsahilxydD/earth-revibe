@@ -860,3 +860,43 @@ model IdempotencyKey {
   @@index([expiresAt])
   @@map("idempotency_keys")
 }
+
+// ==========================================
+// TRAVEL CIRCLE APPLICATIONS
+// ==========================================
+// Submitted by the trip-form (apps/trip-form) after a user completes the
+// 14-screen WhatsApp-OTP-gated flow. Reviewed manually by the team.
+
+model TravelApplication {
+  id                String                    @id @default(cuid())
+  applicationNumber String                    @unique // e.g. "ER-2026-0042"
+  userId            String? // optional — filled when the OTP step created/linked a User
+  phone             String                    @db.VarChar(15)
+  name              String
+  age               Int
+  city              String
+  instagram         String
+  travelerType      String // chill | party | explorer | mix
+  whyJoin           String                    @db.Text
+  pastTravel        String // yes | no
+  tripPrefs         String[] // mountains | beaches | weekend | luxury
+  meetBefore        String // yes | maybe | no
+  curated           String // yes | no
+  status            TravelApplicationStatus   @default(PENDING)
+  reviewNotes       String?                   @db.Text
+  reviewedAt        DateTime?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@index([phone])
+  @@index([userId])
+  @@index([status, createdAt])
+  @@map("travel_applications")
+}
+
+enum TravelApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WAITLISTED
+}

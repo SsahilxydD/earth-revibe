@@ -13,3 +13,4 @@ export * from './loyalty.schema';
 export * from './referral.schema';
 export * from './settings.schema';
 export * from './checkout.schema';
+export * from './travel-application.schema';

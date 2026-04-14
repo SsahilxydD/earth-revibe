@@ -27,9 +27,10 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().optional(),
   FRONTEND_URL: z.string().default('http://localhost:3000'),
   ADMIN_URL: z.string().default('http://localhost:3001'),
+  TRIP_FORM_URL: z.string().default('http://localhost:3002'),
   SHIPROCKET_EMAIL: z.string().optional(),
   SHIPROCKET_PASSWORD: z.string().optional(),
-  SHIPROCKET_PICKUP_PINCODE: z.string().default('110001'),
+  SHIPROCKET_PICKUP_PINCODE: z.string().default('380014'),
   SHIPROCKET_PICKUP_LOCATION: z.string().default('Earthrevibe'),
   // Meta Conversions API (server-side pixel)
   META_PIXEL_ID: z.string().default('1263879098593572'),
