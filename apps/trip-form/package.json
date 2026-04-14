@@ -1,0 +1,30 @@
+{
+  "name": "@earth-revibe/trip-form",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3002",
+    "build": "next build",
+    "start": "next start --port 3002",
+    "lint": "eslint . && tsc --noEmit"
+  },
+  "dependencies": {
+    "@earth-revibe/shared": "workspace:*",
+    "framer-motion": "^11.11.9",
+    "next": "15.5.14",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@earth-revibe/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3"
+  }
+}

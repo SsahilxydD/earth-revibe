@@ -1,38 +1,5 @@
 @import 'tailwindcss';
 
-/*
- * Design tokens for the /apply-for-trip-form route (Travel Circle flow).
- * 1:1 with the original trip-form — NO token renames. Tailwind v4 @theme
- * registers utility classes (text-paper, bg-ink, bg-clay, text-muted,
- * bg-surface, etc.) and exposes matching CSS vars at :root.
- *
- * The two tokens that overlap with the storefront's own :root vars
- * (--color-muted, --color-surface) are resolved by ORDERING: the storefront's
- * :root block below re-declares them with its own values so shop/auth pages
- * keep the storefront look, and `.apply-scope` (in apply.css) re-declares
- * them AGAIN with trip-form values so every descendant of the apply page
- * resolves them to the trip-form palette. CSS var cascade handles the rest.
- */
-@theme {
-  --color-paper: #f2ede3;
-  --color-surface: #ffffff;
-  --color-ink: #1a1714;
-  --color-ink-deep: #0e0b08;
-  --color-ink-dark: #211c18;
-  --color-ink-soft: #4a4239;
-  --color-muted: #6e665b;
-  --color-dim: #8c8273;
-  --color-udim: #5c4f44;
-  --color-hairline: #d9cfbc;
-  --color-clay: #b85c38;
-  --color-clay-soft: #e6c7b0;
-  --color-wa: #1f8754;
-  --color-sage: #5c7c5f;
-
-  --radius-card: 18px;
-  --radius-card-lg: 22px;
-}
-
 :root {
   --color-primary: #121212;
   --color-background: #ffffff;

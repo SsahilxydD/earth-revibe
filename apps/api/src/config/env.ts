@@ -27,6 +27,7 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().optional(),
   FRONTEND_URL: z.string().default('http://localhost:3000'),
   ADMIN_URL: z.string().default('http://localhost:3001'),
+  TRIP_FORM_URL: z.string().default('http://localhost:3002'),
   SHIPROCKET_EMAIL: z.string().optional(),
   SHIPROCKET_PASSWORD: z.string().optional(),
   SHIPROCKET_PICKUP_PINCODE: z.string().default('380014'),
