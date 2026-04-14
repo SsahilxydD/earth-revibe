@@ -35,7 +35,7 @@ export function MeetBefore() {
         </motion.h1>
         <motion.p
           variants={stageItem}
-          className="font-sans text-[13px] font-normal leading-[1.5] text-apply-muted"
+          className="font-sans text-[13px] font-normal leading-[1.5] text-muted"
         >
           We host a small intro meet 1&ndash;2 weeks before each trip.
         </motion.p>

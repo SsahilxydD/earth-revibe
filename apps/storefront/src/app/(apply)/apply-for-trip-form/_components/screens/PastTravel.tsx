@@ -28,7 +28,7 @@ export function PastTravel() {
         </motion.h1>
         <motion.p
           variants={stageItem}
-          className="font-sans text-[13px] font-normal leading-[1.5] text-apply-muted"
+          className="font-sans text-[13px] font-normal leading-[1.5] text-muted"
         >
           Either way is okay &mdash; we host first-timers all the time.
         </motion.p>

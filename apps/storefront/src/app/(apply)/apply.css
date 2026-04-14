@@ -1,31 +1,32 @@
 /*
- * Scoped base rules for the /apply-for-trip-form route.
+ * 1:1 replica of the original trip-form globals.css base layer, scoped to
+ * the `.apply-scope` wrapper (defined in `(apply)/layout.tsx`) so nothing
+ * leaks into the rest of the storefront.
  *
- * Design tokens (paper, ink, clay, wa, hairline, dim, apply-muted,
- * apply-surface, etc.) live in the root globals.css @theme block — that's
- * the only place Tailwind v4 will process them.
- *
- * This file holds the body-level rules that need to be scoped to the
- * `.apply-scope` wrapper (defined in `(apply)/layout.tsx`) so they don't
- * leak into the rest of the storefront. These mirror the original
- * trip-form body: Inter as default font, ink background, antialiasing,
- * and chrome-less inputs.
+ * Tailwind v4 @theme tokens live in the root globals.css (that's the only
+ * place Tailwind processes @theme). The two tokens that collide with the
+ * storefront's own :root (--color-muted, --color-surface) are re-declared
+ * here so every descendant of .apply-scope resolves them to the trip-form
+ * palette (#6e665b / #ffffff), overriding the storefront's defaults via
+ * normal CSS-var cascade.
  */
 
 .apply-scope {
+  /* CSS-var overrides — win for everything inside the apply subtree. */
+  --color-muted: #6e665b;
+  --color-surface: #ffffff;
+
+  /* Original body-level styling, rehomed here. */
   min-height: 100dvh;
   background: var(--color-ink);
   color: var(--color-ink);
-  /* Default font for every descendant — matches the original trip-form
-     <body className="font-sans">. Without this, storefront's Archivo
-     Narrow cascades in and the whole vibe flips. */
   font-family: var(--font-apply-inter), ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Editorial typography utilities — explicit classes still available. */
+/* Font utility classes — tokens hold var refs, not comma lists */
 .apply-scope .font-display {
   font-family: var(--font-fraunces), ui-serif, Georgia, serif;
   font-optical-sizing: auto;
@@ -35,7 +36,7 @@
   font-family: var(--font-apply-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Reset default input chrome so the underline/filled styles own the look. */
+/* Reset default input chrome so our underline/filled styles own the look */
 .apply-scope input,
 .apply-scope textarea,
 .apply-scope button {
@@ -56,13 +57,13 @@
   cursor: pointer;
 }
 
-/* Scrollbar fade for the mobile preview frame on desktop. */
+/* Scrollbar fade for the mobile preview frame on desktop */
 .apply-scope .screen-scroll::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
 
-/* Editorial caret for underline text inputs. */
+/* Editorial caret for underline text inputs */
 @keyframes apply-caret {
   0%,
   49% {

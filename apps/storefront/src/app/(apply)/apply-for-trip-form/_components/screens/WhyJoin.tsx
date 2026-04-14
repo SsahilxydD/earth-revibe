@@ -31,13 +31,13 @@ export function WhyJoin() {
         </motion.h1>
         <motion.p
           variants={stageItem}
-          className="font-sans text-[13px] font-normal leading-[1.55] text-apply-muted"
+          className="font-sans text-[13px] font-normal leading-[1.55] text-muted"
         >
           This is the part we read closest. A few honest lines work better than a polished pitch.
         </motion.p>
         <motion.div
           variants={stageItem}
-          className="flex flex-col gap-3 rounded-[18px] border border-hairline bg-apply-surface p-[18px]"
+          className="flex flex-col gap-3 rounded-[18px] border border-hairline bg-surface p-[18px]"
         >
           <textarea
             value={value}

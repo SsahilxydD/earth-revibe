@@ -59,10 +59,7 @@ export function TripPrefs() {
         >
           Which trips excite you most?
         </motion.h1>
-        <motion.p
-          variants={stageItem}
-          className="font-sans text-[13px] font-normal text-apply-muted"
-        >
+        <motion.p variants={stageItem} className="font-sans text-[13px] font-normal text-muted">
           Pick all that apply.
         </motion.p>
         <motion.div variants={stageItem} className="flex flex-col gap-2 pt-[10px]">

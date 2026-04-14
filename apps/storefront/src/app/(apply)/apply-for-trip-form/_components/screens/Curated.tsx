@@ -58,7 +58,7 @@ export function Curated() {
         </motion.h1>
         <motion.div
           variants={stageItem}
-          className="flex flex-col gap-2 rounded-[18px] border border-hairline bg-apply-surface p-[18px]"
+          className="flex flex-col gap-2 rounded-[18px] border border-hairline bg-surface p-[18px]"
         >
           <span className="font-sans text-[9px] font-bold tracking-[0.18em] text-dim">
             WHY WE ASK

@@ -14,7 +14,7 @@ export function ChoiceCard({ letter, title, subtitle, selected, onSelect }: Prop
   const bg = selected ? 'bg-ink' : 'bg-transparent';
   const border = selected ? 'border-ink' : 'border-hairline';
   const titleColor = selected ? 'text-paper' : 'text-ink';
-  const subColor = selected ? 'text-paper/60' : 'text-apply-muted';
+  const subColor = selected ? 'text-paper/60' : 'text-muted';
   const letterColor = selected ? 'text-dim' : 'text-dim';
   const radio = selected ? 'bg-clay border-clay ring-[3px] ring-inset ring-paper/90' : 'border-ink';
   return (
@@ -64,7 +64,7 @@ export function YesNoCard({
   const bg = selected ? 'bg-ink' : 'bg-transparent';
   const border = selected ? 'border-ink' : 'border-hairline';
   const titleColor = selected ? 'text-paper' : 'text-ink';
-  const subColor = selected ? 'text-paper/60' : 'text-apply-muted';
+  const subColor = selected ? 'text-paper/60' : 'text-muted';
   const radio = selected ? 'bg-clay border-clay ring-[3px] ring-inset ring-paper/90' : 'border-ink';
   return (
     <motion.button
@@ -106,7 +106,7 @@ export function SplitCard({
   const bg = selected ? 'bg-ink' : 'bg-transparent';
   const border = selected ? 'border-ink' : 'border-hairline';
   const titleColor = selected ? 'text-paper' : 'text-ink';
-  const subColor = selected ? 'text-paper/60' : 'text-apply-muted';
+  const subColor = selected ? 'text-paper/60' : 'text-muted';
   return (
     <motion.button
       {...tapFeedback}

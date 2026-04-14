@@ -125,7 +125,7 @@ export function OtpVerify() {
 
         <motion.div
           variants={stageItem}
-          className="flex flex-wrap items-baseline gap-[6px] font-sans text-[13px] text-apply-muted"
+          className="flex flex-wrap items-baseline gap-[6px] font-sans text-[13px] text-muted"
         >
           <span>Code sent on WhatsApp to</span>
           <span className="font-display text-[14px] font-normal tracking-[0.005em] text-ink">
@@ -152,7 +152,7 @@ export function OtpVerify() {
             return (
               <div
                 key={i}
-                className={`relative grid h-[66px] w-[50px] place-items-center rounded-2xl border bg-apply-surface transition-colors ${borderCls}`}
+                className={`relative grid h-[66px] w-[50px] place-items-center rounded-2xl border bg-surface transition-colors ${borderCls}`}
                 onClick={() => {
                   refs.current[i]?.focus();
                   setFocus(i);
@@ -189,7 +189,7 @@ export function OtpVerify() {
         >
           <span className="flex items-center gap-2">
             <span aria-hidden className="block size-[6px] rounded-full bg-wa" />
-            <span className="font-sans text-[11px] font-medium text-apply-muted">
+            <span className="font-sans text-[11px] font-medium text-muted">
               Waiting for the WhatsApp ping…
             </span>
           </span>

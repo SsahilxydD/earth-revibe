@@ -29,7 +29,7 @@ export function NameScreen() {
         </motion.h1>
         <motion.p
           variants={stageItem}
-          className="font-sans text-[13px] font-normal leading-[1.5] text-apply-muted"
+          className="font-sans text-[13px] font-normal leading-[1.5] text-muted"
         >
           The name that goes on your boarding pass.
         </motion.p>

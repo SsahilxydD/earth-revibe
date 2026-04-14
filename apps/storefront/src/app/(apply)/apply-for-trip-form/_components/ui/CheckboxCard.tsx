@@ -11,7 +11,7 @@ type Props = {
 export function CheckboxCard({ title, subtitle, checked, onToggle }: Props) {
   const frame = checked ? 'bg-ink border-transparent' : 'bg-transparent border-hairline';
   const titleColor = checked ? 'text-paper' : 'text-ink';
-  const subColor = checked ? 'text-paper/60' : 'text-apply-muted';
+  const subColor = checked ? 'text-paper/60' : 'text-muted';
   const box = checked ? 'bg-clay border-clay' : 'bg-transparent border-ink';
 
   return (

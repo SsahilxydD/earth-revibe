@@ -30,7 +30,7 @@ export function AgeScreen() {
         </motion.h1>
         <motion.p
           variants={stageItem}
-          className="font-sans text-[13px] font-normal leading-[1.5] text-apply-muted"
+          className="font-sans text-[13px] font-normal leading-[1.5] text-muted"
         >
           We mostly host travelers between 20&ndash;30.
         </motion.p>

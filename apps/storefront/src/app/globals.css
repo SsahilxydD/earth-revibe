@@ -2,21 +2,25 @@
 
 /*
  * Design tokens for the /apply-for-trip-form route (Travel Circle flow).
- * Tailwind v4 @theme registers utility classes (text-paper, bg-ink, bg-clay,
- * text-apply-muted, etc.) and exposes matching CSS vars at :root. Must live
- * in this file because Tailwind only processes @theme blocks in CSS that
- * imports tailwindcss. The two tokens that would collide with the
- * storefront's existing :root vars (--color-muted, --color-surface) are
- * renamed to --color-apply-muted / --color-apply-surface.
+ * 1:1 with the original trip-form — NO token renames. Tailwind v4 @theme
+ * registers utility classes (text-paper, bg-ink, bg-clay, text-muted,
+ * bg-surface, etc.) and exposes matching CSS vars at :root.
+ *
+ * The two tokens that overlap with the storefront's own :root vars
+ * (--color-muted, --color-surface) are resolved by ORDERING: the storefront's
+ * :root block below re-declares them with its own values so shop/auth pages
+ * keep the storefront look, and `.apply-scope` (in apply.css) re-declares
+ * them AGAIN with trip-form values so every descendant of the apply page
+ * resolves them to the trip-form palette. CSS var cascade handles the rest.
  */
 @theme {
   --color-paper: #f2ede3;
-  --color-apply-surface: #ffffff;
+  --color-surface: #ffffff;
   --color-ink: #1a1714;
   --color-ink-deep: #0e0b08;
   --color-ink-dark: #211c18;
   --color-ink-soft: #4a4239;
-  --color-apply-muted: #6e665b;
+  --color-muted: #6e665b;
   --color-dim: #8c8273;
   --color-udim: #5c4f44;
   --color-hairline: #d9cfbc;

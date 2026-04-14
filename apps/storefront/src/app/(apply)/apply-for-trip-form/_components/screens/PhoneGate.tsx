@@ -45,7 +45,7 @@ export function PhoneGate() {
         </motion.h1>
         <motion.p
           variants={stageItem}
-          className="font-sans text-[13px] font-normal leading-[1.55] text-apply-muted"
+          className="font-sans text-[13px] font-normal leading-[1.55] text-muted"
         >
           We send the trip drop, the meet-up location, and your selection update &mdash; nothing
           else. No promo spam, ever.
@@ -78,7 +78,7 @@ export function PhoneGate() {
 
         <motion.div
           variants={stageItem}
-          className="flex items-center gap-3 rounded-[14px] border border-hairline bg-apply-surface p-[14px]"
+          className="flex items-center gap-3 rounded-[14px] border border-hairline bg-surface p-[14px]"
         >
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-wa text-paper">
             <svg viewBox="0 0 14 10" className="h-[10px] w-[14px]" fill="none" aria-hidden>
@@ -95,7 +95,7 @@ export function PhoneGate() {
             <span className="block font-sans text-[12px] font-semibold text-ink">
               We&rsquo;ll send a code on WhatsApp.
             </span>
-            <span className="mt-[2px] block font-sans text-[11px] font-normal text-apply-muted">
+            <span className="mt-[2px] block font-sans text-[11px] font-normal text-muted">
               Open WhatsApp to grab it &mdash; one tap and you&rsquo;re in.
             </span>
           </span>
@@ -146,7 +146,7 @@ function TrustItem({ label }: { label: string }) {
   return (
     <span className="flex items-center gap-[6px]">
       <span aria-hidden className="block size-[5px] rounded-full bg-wa" />
-      <span className="font-sans text-[10px] font-semibold tracking-[0.04em] text-apply-muted">
+      <span className="font-sans text-[10px] font-semibold tracking-[0.04em] text-muted">
         {label}
       </span>
     </span>
