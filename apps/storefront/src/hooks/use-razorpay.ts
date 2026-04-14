@@ -28,6 +28,7 @@ interface RazorpayOptions {
     ondismiss?: () => void;
   };
   one_click_checkout?: boolean;
+  show_coupons?: boolean;
 }
 
 interface RazorpayInstance {
@@ -68,7 +69,7 @@ function loadRazorpayScript(): Promise<boolean> {
     }
 
     const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.src = 'https://checkout.razorpay.com/v1/magic-checkout.js';
     script.async = true;
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
@@ -88,11 +89,11 @@ export function preloadRazorpayScript() {
   const link = document.createElement('link');
   link.rel = 'preload';
   link.as = 'script';
-  link.href = 'https://checkout.razorpay.com/v1/checkout.js';
+  link.href = 'https://checkout.razorpay.com/v1/magic-checkout.js';
   document.head.appendChild(link);
 
   const script = document.createElement('script');
-  script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+  script.src = 'https://checkout.razorpay.com/v1/magic-checkout.js';
   script.async = true;
   document.body.appendChild(script);
 }
@@ -134,6 +135,7 @@ export function useRazorpay() {
             color: '#121212',
           },
           one_click_checkout: true,
+          show_coupons: true,
           handler: (response: RazorpayResponse) => {
             setIsLoading(false);
             resolve(response);
