@@ -164,6 +164,7 @@ export const checkoutService = {
         receipt: orderNumber,
         line_items_total: effectiveTotal,
         shipping_fee: 0,
+        cod: 1,
         cod_fee: 15000,
         line_items: lineItems,
         notes: {
