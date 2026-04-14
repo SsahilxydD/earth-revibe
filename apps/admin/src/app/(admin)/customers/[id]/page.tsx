@@ -58,7 +58,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const { data, isLoading } = useCustomer(id);
   const toggleActive = useToggleCustomerActive();
 
-  const customer = data?.customer;
+  const customer = data;
 
   const handleToggle = async () => {
     if (!customer) return;
