@@ -1,85 +1,59 @@
 /*
- * Travel-Circle application — design tokens
+ * Scoped base rules for the /apply-for-trip-form route.
  *
- * Tailwind v4 @theme generates global utility classes, so we rename the two
- * tokens that would collide with the storefront's existing CSS vars
- * (`--color-muted`, `--color-surface`) to `--color-apply-muted` /
- * `--color-apply-surface`. Component class names use `text-apply-muted`,
- * `bg-apply-surface`, etc. All other tokens (paper, ink, clay, wa, sage…)
- * are unique to the apply flow and coexist with the storefront cleanly.
- *
- * Base body-level rules (ink background, font utilities) are scoped to
- * the `.apply-scope` wrapper defined in `(apply)/layout.tsx` so they don't
- * leak to shop/auth routes.
+ * Design tokens (paper, ink, clay, wa, etc.) live in the root globals.css
+ * @theme block — that's the only place Tailwind v4 will process them.
+ * This file only holds the body-level rules that need to be scoped to the
+ * `.apply-scope` wrapper (defined in `(apply)/layout.tsx`) so they don't
+ * leak into the rest of the storefront.
  */
-@theme {
-  --color-paper: #f2ede3;
-  --color-apply-surface: #ffffff;
-  --color-ink: #1a1714;
-  --color-ink-deep: #0e0b08;
-  --color-ink-dark: #211c18;
-  --color-ink-soft: #4a4239;
-  --color-apply-muted: #6e665b;
-  --color-dim: #8c8273;
-  --color-udim: #5c4f44;
-  --color-hairline: #d9cfbc;
-  --color-clay: #b85c38;
-  --color-clay-soft: #e6c7b0;
-  --color-wa: #1f8754;
-  --color-sage: #5c7c5f;
 
-  --radius-card: 18px;
-  --radius-card-lg: 22px;
+.apply-scope {
+  min-height: 100dvh;
+  background: var(--color-ink);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@layer base {
-  .apply-scope {
-    min-height: 100dvh;
-    background: var(--color-ink);
-    color: var(--color-ink);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Font utilities — scoped so shop pages still get their own typography */
-  .apply-scope .font-display {
-    font-family: var(--font-fraunces), ui-serif, Georgia, serif;
-    font-optical-sizing: auto;
-  }
-
-  .apply-scope .font-sans {
-    font-family: var(--font-apply-inter), ui-sans-serif, system-ui, sans-serif;
-  }
-
-  /* Reset default input chrome so our underline/filled styles own the look */
-  .apply-scope input,
-  .apply-scope textarea,
-  .apply-scope button {
-    font: inherit;
-    color: inherit;
-    background: transparent;
-    border: 0;
-    outline: 0;
-    padding: 0;
-  }
-
-  .apply-scope input::placeholder,
-  .apply-scope textarea::placeholder {
-    color: var(--color-dim);
-  }
-
-  .apply-scope button {
-    cursor: pointer;
-  }
+/* Editorial typography utilities — only active inside the apply flow. */
+.apply-scope .font-display {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-optical-sizing: auto;
 }
 
-/* Scrollbar fade for the mobile preview frame on desktop */
+.apply-scope .font-sans {
+  font-family: var(--font-apply-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Reset default input chrome so the underline/filled styles own the look. */
+.apply-scope input,
+.apply-scope textarea,
+.apply-scope button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  padding: 0;
+}
+
+.apply-scope input::placeholder,
+.apply-scope textarea::placeholder {
+  color: var(--color-dim);
+}
+
+.apply-scope button {
+  cursor: pointer;
+}
+
+/* Scrollbar fade for the mobile preview frame on desktop. */
 .apply-scope .screen-scroll::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
 
-/* Editorial caret for underline text inputs */
+/* Editorial caret for underline text inputs. */
 @keyframes apply-caret {
   0%,
   49% {
