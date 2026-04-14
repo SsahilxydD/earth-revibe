@@ -5502,7 +5502,8 @@
                   "fill": "#000000FF",
                   "content": "Clouds",
                   "fontFamily": "Inter",
-                  "fontSize": 9
+                  "fontSize": 9,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -10888,6 +10889,7 @@
                   "content": "YOU PAY",
                   "fontFamily": "Inter",
                   "fontSize": 10,
+                  "fontWeight": "normal",
                   "letterSpacing": 2
                 },
                 {
@@ -11031,7 +11033,8 @@
                               "fill": "#000000FF",
                               "content": "Cash on delivery",
                               "fontFamily": "Inter",
-                              "fontSize": 15
+                              "fontSize": 15,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -11058,22 +11061,23 @@
                       "children": [
                         {
                           "type": "text",
-                          "id": "sUdKW",
-                          "name": "pmR2Strike",
-                          "fill": "#CCCCCCFF",
-                          "content": "₹1,449",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "300"
-                        },
-                        {
-                          "type": "text",
                           "id": "JTvE8",
                           "name": "pmR2Price",
                           "fill": "#000000FF",
-                          "content": "₹1,599",
+                          "content": "₹1,449",
                           "fontFamily": "Inter",
-                          "fontSize": 16
+                          "fontSize": 16,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "sUdKW",
+                          "name": "pmR2Strike",
+                          "fill": "#CCCCCCFF",
+                          "content": "+₹150 COD charge",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "300"
                         }
                       ]
                     }
@@ -11185,6 +11189,7 @@
           "content": "CART  ·  00 / 47",
           "fontFamily": "Inter",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 2
         },
         {
@@ -11288,7 +11293,8 @@
               "fill": "#000000FF",
               "content": "Shop now",
               "fontFamily": "Inter",
-              "fontSize": 13
+              "fontSize": 13,
+              "fontWeight": "normal"
             },
             {
               "type": "icon_font",
@@ -11466,7 +11472,8 @@
                   "fill": "#000000FF",
                   "content": "Above the Clouds",
                   "fontFamily": "Inter",
-                  "fontSize": 15
+                  "fontSize": 15,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "frame",
@@ -11542,7 +11549,8 @@
                   "fill": "#000000FF",
                   "content": "Salt on Skin",
                   "fontFamily": "Inter",
-                  "fontSize": 15
+                  "fontSize": 15,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "frame",
@@ -11618,7 +11626,8 @@
                   "fill": "#000000FF",
                   "content": "Golden Hour Gang",
                   "fontFamily": "Inter",
-                  "fontSize": 15
+                  "fontSize": 15,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "frame",
@@ -11694,7 +11703,8 @@
                   "fill": "#000000FF",
                   "content": "Into the Wild",
                   "fontFamily": "Inter",
-                  "fontSize": 15
+                  "fontSize": 15,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "frame",
@@ -11770,7 +11780,8 @@
                   "fill": "#000000FF",
                   "content": "Neon Nomads",
                   "fontFamily": "Inter",
-                  "fontSize": 15
+                  "fontSize": 15,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "frame",
@@ -11846,7 +11857,8 @@
                   "fill": "#000000FF",
                   "content": "Flight Mode",
                   "fontFamily": "Inter",
-                  "fontSize": 15
+                  "fontSize": 15,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "frame",
@@ -11874,6 +11886,970 @@
                       "iconFontName": "chevron-right",
                       "iconFontFamily": "lucide",
                       "fill": "#CCCCCCFF"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "hvL1z",
+      "x": 3979,
+      "y": 0,
+      "name": "365 Buyback — Design Review",
+      "width": 900,
+      "height": 1700,
+      "fill": "#F5F5F5",
+      "layout": "vertical",
+      "gap": 40,
+      "padding": 40,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "1sV9l",
+          "name": "workHeading",
+          "fill": "#000000FF",
+          "content": "365-day · 33% store credit — proposed placements",
+          "textAlign": "center",
+          "fontFamily": "Inter",
+          "fontSize": 18,
+          "fontWeight": "500",
+          "letterSpacing": -0.3
+        },
+        {
+          "type": "text",
+          "id": "Azz53",
+          "name": "workSub",
+          "fill": "#666666FF",
+          "content": "Three ambient surfaces. Nothing shouty. Same quiet editorial voice as the rest of the site.",
+          "textAlign": "center",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "300",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "frame",
+          "id": "kagJ4",
+          "name": "1 — Cart banner (6UrmJ)",
+          "width": 820,
+          "fill": "#FFFFFFFF",
+          "cornerRadius": 12,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#E5E5E5FF"
+          },
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "okrcb",
+              "name": "sec1Label",
+              "fill": "#999999FF",
+              "content": "1 — CART DRAWER TRUST STRIP",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "ycqbX",
+              "name": "sec1BeforeLbl",
+              "fill": "#666666FF",
+              "content": "Before",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300"
+            },
+            {
+              "type": "frame",
+              "id": "e7wJW",
+              "name": "s1Before",
+              "width": "fill_container",
+              "height": 40,
+              "fill": "#FFFFFFFF",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#F0F0F0FF"
+              },
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "UzSky",
+                  "name": "s1bText",
+                  "fill": "#22C55EFF",
+                  "content": "Free shipping on all orders",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "300"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "cDDgb",
+              "name": "sec1AfterLbl",
+              "fill": "#666666FF",
+              "content": "After — two-line strip, 56px, green top + grey buyback line",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300"
+            },
+            {
+              "type": "frame",
+              "id": "EMPYI",
+              "name": "s1After",
+              "width": "fill_container",
+              "height": 56,
+              "fill": "#FFFFFFFF",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#F0F0F0FF"
+              },
+              "layout": "vertical",
+              "gap": 4,
+              "padding": [
+                10,
+                0
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "gFm8Z",
+                  "name": "s1aTop",
+                  "fill": "#22C55EFF",
+                  "content": "Free shipping on all orders",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "300"
+                },
+                {
+                  "type": "text",
+                  "id": "R5JTw",
+                  "name": "s1aBot",
+                  "fill": "#999999FF",
+                  "content": "365-DAY BUYBACK  ·  33% STORE CREDIT BACK",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "500",
+                  "letterSpacing": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "FqB5Z",
+          "name": "2 — PDP quote strip (0GeGq)",
+          "width": 820,
+          "fill": "#FFFFFFFF",
+          "cornerRadius": 12,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#E5E5E5FF"
+          },
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "KLqZC",
+              "name": "sec2Label",
+              "fill": "#999999FF",
+              "content": "2 — PDP 'VACATION STORY' EDITORIAL STRIP",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "UXqFD",
+              "name": "sec2BeforeLbl",
+              "fill": "#666666FF",
+              "content": "Before",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300"
+            },
+            {
+              "type": "frame",
+              "id": "XFnR5",
+              "name": "s2Before",
+              "width": "fill_container",
+              "height": 80,
+              "fill": "#FFFFFFFF",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#F0F0F0FF"
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "line",
+                  "id": "j4FXV",
+                  "name": "s2bL1",
+                  "width": 24,
+                  "height": 1,
+                  "stroke": {
+                    "align": "center",
+                    "thickness": 1,
+                    "fill": "#CCCCCCFF"
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "pLSx1",
+                  "name": "s2bT",
+                  "fill": "#999999FF",
+                  "content": "\"Wear it like you're already there.\"",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "300",
+                  "fontStyle": "italic"
+                },
+                {
+                  "type": "line",
+                  "id": "ofmSz",
+                  "name": "s2bL2",
+                  "width": 24,
+                  "height": 1,
+                  "stroke": {
+                    "align": "center",
+                    "thickness": 1,
+                    "fill": "#CCCCCCFF"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "BflkU",
+              "name": "sec2AfterLbl",
+              "fill": "#666666FF",
+              "content": "After — second editorial stanza about the guarantee, same exact typography",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300"
+            },
+            {
+              "type": "frame",
+              "id": "JQOFq",
+              "name": "s2After",
+              "width": "fill_container",
+              "height": 120,
+              "fill": "#FFFFFFFF",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#F0F0F0FF"
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "line",
+                  "id": "vX22g",
+                  "name": "s2aL1",
+                  "width": 24,
+                  "height": 1,
+                  "stroke": {
+                    "align": "center",
+                    "thickness": 1,
+                    "fill": "#CCCCCCFF"
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "4n64q",
+                  "name": "s2aT1",
+                  "fill": "#999999FF",
+                  "content": "\"Wear it like you're already there.\"",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "300",
+                  "fontStyle": "italic"
+                },
+                {
+                  "type": "text",
+                  "id": "NH1xX",
+                  "name": "s2aT2",
+                  "fill": "#999999FF",
+                  "content": "365 days to fall out of love.  ·  33% back as store credit.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1
+                },
+                {
+                  "type": "line",
+                  "id": "ZfbS6",
+                  "name": "s2aL2",
+                  "width": 24,
+                  "height": 1,
+                  "stroke": {
+                    "align": "center",
+                    "thickness": 1,
+                    "fill": "#CCCCCCFF"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "FxMJw",
+          "name": "3 — Homepage popup",
+          "width": 820,
+          "height": 2163,
+          "fill": "#FFFFFFFF",
+          "cornerRadius": 12,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#E5E5E5FF"
+          },
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "BbVZ3",
+              "name": "sec3Label",
+              "fill": "#999999FF",
+              "content": "3 — HOMEPAGE POPUP (first visit, then dismissed 30 days)",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "IO1B1",
+              "name": "sec3Note",
+              "fill": "#666666FF",
+              "content": "Bottom sheet on mobile · centered card on desktop. Delayed 2s after first paint so it doesn't punch the user.",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300",
+              "fontStyle": "italic"
+            },
+            {
+              "type": "text",
+              "id": "ovUZf",
+              "name": "altIntro",
+              "fill": "#666666FF",
+              "content": "Three different forms — pick one, I'll kill the other two",
+              "textAlign": "center",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300",
+              "fontStyle": "italic"
+            },
+            {
+              "type": "frame",
+              "id": "UumQc",
+              "name": "Option A — Slim bottom toast",
+              "width": "fill_container",
+              "fill": "#FAFAFAFF",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#E5E5E5FF"
+              },
+              "layout": "vertical",
+              "gap": 16,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "pMcfs",
+                  "name": "aLbl",
+                  "fill": "#999999FF",
+                  "content": "A — SLIM BOTTOM TOAST (not a modal, doesn't block)",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "500",
+                  "letterSpacing": 2
+                },
+                {
+                  "type": "text",
+                  "id": "TiN5o",
+                  "name": "aNote",
+                  "fill": "#666666FF",
+                  "content": "Slides up after 3s, sits above the dock. One-line editorial message, single tap opens a full page with the promise. Tiny × dismisses, sets 30-day cookie.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "300",
+                  "fontStyle": "italic"
+                },
+                {
+                  "type": "frame",
+                  "id": "cWvcE",
+                  "name": "aPhoneWrap",
+                  "width": "fill_container",
+                  "height": 360,
+                  "fill": "#F5F5F5FF",
+                  "padding": 20,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "8F4eW",
+                      "name": "aPhone",
+                      "clip": true,
+                      "width": 393,
+                      "height": 320,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=720&q=80&fm=jpg",
+                        "mode": "stretch"
+                      },
+                      "cornerRadius": 24,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#E5E5E5FF"
+                      },
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "id": "uCIyh",
+                          "x": 0,
+                          "y": 0,
+                          "name": "darkenBg",
+                          "fill": "#00000020",
+                          "width": 393,
+                          "height": 320
+                        },
+                        {
+                          "type": "frame",
+                          "id": "SB0rS",
+                          "x": 16,
+                          "y": 240,
+                          "name": "toast",
+                          "width": 361,
+                          "height": 64,
+                          "fill": "#000000FF",
+                          "cornerRadius": 16,
+                          "padding": [
+                            0,
+                            20
+                          ],
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "d2iyZ",
+                              "name": "toastL",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "BRgaW",
+                                  "name": "aL1",
+                                  "fill": "#FFFFFFFF",
+                                  "content": "365 DAYS · 33% BACK",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "500",
+                                  "letterSpacing": 2
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "NezYS",
+                                  "name": "aL2",
+                                  "fill": "#CCCCCCFF",
+                                  "content": "Wear it. Love it. Or trade it back.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 12,
+                                  "fontWeight": "300",
+                                  "fontStyle": "italic"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "yZy10",
+                              "name": "toastR",
+                              "gap": 16,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "mReMG",
+                                  "name": "aArrow",
+                                  "width": 16,
+                                  "height": 16,
+                                  "iconFontName": "arrow-right",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#FFFFFFFF"
+                                },
+                                {
+                                  "type": "icon_font",
+                                  "id": "gcoSx",
+                                  "name": "aX",
+                                  "width": 14,
+                                  "height": 14,
+                                  "iconFontName": "x",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#666666FF"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "2oQJh",
+              "name": "Option B — Full-bleed editorial modal",
+              "width": "fill_container",
+              "fill": "#FAFAFAFF",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#E5E5E5FF"
+              },
+              "layout": "vertical",
+              "gap": 16,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BF7ZN",
+                  "name": "bLbl",
+                  "fill": "#999999FF",
+                  "content": "B — FULL-BLEED EDITORIAL MODAL (real imagery behind, black overlay, words on top)",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "500",
+                  "letterSpacing": 2
+                },
+                {
+                  "type": "text",
+                  "id": "ud8q1",
+                  "name": "bNote",
+                  "fill": "#666666FF",
+                  "content": "Photography (eventually your own shoot) as bg. Feels like a brand moment, not a SaaS popup. Sheet still dismissible.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "300",
+                  "fontStyle": "italic"
+                },
+                {
+                  "type": "frame",
+                  "id": "LVLz4",
+                  "name": "bPhoneWrap",
+                  "width": "fill_container",
+                  "height": 780,
+                  "fill": "#F5F5F5FF",
+                  "padding": 40,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "eRFYs",
+                      "name": "bPhone",
+                      "clip": true,
+                      "width": 393,
+                      "height": 700,
+                      "fill": "#FFFFFFFF",
+                      "cornerRadius": 32,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#E5E5E5FF"
+                      },
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "id": "l2D8S",
+                          "x": 0,
+                          "y": 0,
+                          "name": "bBackdrop",
+                          "fill": "#000000A0",
+                          "width": 393,
+                          "height": 700
+                        },
+                        {
+                          "type": "frame",
+                          "id": "PRjW9",
+                          "x": 16,
+                          "y": 60,
+                          "name": "bSheet",
+                          "clip": true,
+                          "width": 361,
+                          "height": 580,
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=720&q=80&fm=jpg",
+                            "mode": "stretch"
+                          },
+                          "cornerRadius": 20,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "id": "mCoIa",
+                              "x": 0,
+                              "y": 0,
+                              "name": "bTint",
+                              "fill": "#000000B8",
+                              "width": 361,
+                              "height": 580
+                            },
+                            {
+                              "type": "frame",
+                              "id": "I9EJR",
+                              "x": 316,
+                              "y": 20,
+                              "name": "closeWrap",
+                              "width": 32,
+                              "height": 32,
+                              "fill": "#FFFFFF30",
+                              "cornerRadius": 9999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "5IlCg",
+                                  "name": "bCloseX",
+                                  "width": 14,
+                                  "height": 14,
+                                  "iconFontName": "x",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#FFFFFFFF"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "i4uqG",
+                              "x": 32,
+                              "y": 140,
+                              "name": "bContent",
+                              "width": 297,
+                              "height": 400,
+                              "layout": "vertical",
+                              "gap": 20,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "jegkP",
+                                  "name": "bKicker",
+                                  "fill": "#FFFFFFB3",
+                                  "content": "THE LONG GAME",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 10,
+                                  "fontWeight": "500",
+                                  "letterSpacing": 3
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "FjmnJ",
+                                  "name": "bTitle",
+                                  "fill": "#FFFFFFFF",
+                                  "content": "Keep it.\nOr send\nit back.",
+                                  "lineHeight": 1,
+                                  "fontFamily": "Inter",
+                                  "fontSize": 52,
+                                  "fontWeight": "300",
+                                  "letterSpacing": -1.8,
+                                  "fontStyle": "italic"
+                                },
+                                {
+                                  "type": "rectangle",
+                                  "id": "hTAo9",
+                                  "name": "bSep",
+                                  "fill": "#FFFFFF66",
+                                  "width": 24,
+                                  "height": 1
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "F86Em",
+                                  "name": "bBody",
+                                  "fill": "#FFFFFFCC",
+                                  "content": "You get a full year. If a piece doesn't earn its keep, trade it in — we drop 33% of what you paid into store credit.",
+                                  "lineHeight": 1.5,
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "300"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "W1Ruh",
+                                  "name": "bStats",
+                                  "fill": "#FFFFFF80",
+                                  "content": "365 DAYS  ·  33% BACK  ·  ANY REASON",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 9,
+                                  "fontWeight": "500",
+                                  "letterSpacing": 2
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "TYqc9",
+                              "x": 32,
+                              "y": 515,
+                              "name": "bCta",
+                              "width": 297,
+                              "height": 44,
+                              "fill": "#FFFFFFFF",
+                              "cornerRadius": 9999,
+                              "gap": 8,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "AOaXS",
+                                  "name": "bCTAText",
+                                  "fill": "#000000FF",
+                                  "content": "READ THE FINE PRINT",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 11,
+                                  "fontWeight": "500",
+                                  "letterSpacing": 2
+                                },
+                                {
+                                  "type": "icon_font",
+                                  "id": "Zqwnx",
+                                  "name": "bCTAIcon",
+                                  "width": 14,
+                                  "height": 14,
+                                  "iconFontName": "arrow-right",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#000000FF"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "UpjUw",
+              "name": "Option C — Always-on header ribbon",
+              "width": "fill_container",
+              "height": 499,
+              "fill": "#FAFAFAFF",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#E5E5E5FF"
+              },
+              "layout": "vertical",
+              "gap": 16,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "gQHBE",
+                  "name": "cLbl",
+                  "fill": "#999999FF",
+                  "content": "C — ALWAYS-ON TOP RIBBON (replaces your current announcement strip)",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "500",
+                  "letterSpacing": 2
+                },
+                {
+                  "type": "text",
+                  "id": "SwQIK",
+                  "name": "cNote",
+                  "fill": "#666666FF",
+                  "content": "36px strip above the header, sits there quietly on every page until dismissed. No popup, no friction, constant reassurance.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "300",
+                  "fontStyle": "italic"
+                },
+                {
+                  "type": "frame",
+                  "id": "zxuAo",
+                  "name": "cPhoneWrap",
+                  "width": "fill_container",
+                  "height": 280,
+                  "fill": "#F5F5F5FF",
+                  "padding": 20,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ISWYG",
+                      "name": "cPhone",
+                      "clip": true,
+                      "width": 393,
+                      "height": 240,
+                      "fill": "#FFFFFFFF",
+                      "cornerRadius": 24,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#E5E5E5FF"
+                      },
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Yv612",
+                          "x": 0,
+                          "y": 0,
+                          "name": "ribbon",
+                          "width": 393,
+                          "height": 36,
+                          "fill": "#000000FF",
+                          "gap": 8,
+                          "padding": [
+                            0,
+                            16
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "eC546",
+                              "name": "cRibText",
+                              "fill": "#FFFFFFFF",
+                              "content": "365-DAY BUYBACK  ·  TRADE BACK FOR 33% STORE CREDIT",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "500",
+                              "letterSpacing": 2
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "kv4x0",
+                          "x": 0,
+                          "y": 36,
+                          "name": "header",
+                          "width": 393,
+                          "height": 56,
+                          "fill": "#FFFFFFFF",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#F0F0F0FF"
+                          },
+                          "padding": [
+                            0,
+                            20
+                          ],
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "0ay7g",
+                              "name": "cLogo",
+                              "fill": "#000000FF",
+                              "content": "EARTH REVIBE",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "500",
+                              "letterSpacing": 1.5
+                            },
+                            {
+                              "type": "frame",
+                              "id": "83FKv",
+                              "name": "cHIcons",
+                              "gap": 16,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "ZJFW8",
+                                  "name": "cH1",
+                                  "width": 18,
+                                  "height": 18,
+                                  "iconFontName": "search",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#000000FF"
+                                },
+                                {
+                                  "type": "icon_font",
+                                  "id": "LGjH5",
+                                  "name": "cH2",
+                                  "width": 18,
+                                  "height": 18,
+                                  "iconFontName": "shopping-bag",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "#000000FF"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "uvHr9",
+                          "x": 0,
+                          "y": 92,
+                          "name": "cPage",
+                          "fill": "#F5F5F5FF",
+                          "width": 393,
+                          "height": 148
+                        }
+                      ]
                     }
                   ]
                 }
