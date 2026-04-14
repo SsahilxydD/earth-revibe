@@ -50,6 +50,12 @@ const envSchema = z.object({
   COD_FEE: z.coerce.number().default(0),
   // Cron job secret — protects internal endpoints from public access
   CRON_SECRET: z.string().optional(),
+  // Trip-form application notifications
+  // Discord webhook — posts rich embed with every field on each new application
+  DISCORD_TRIP_FORM_WEBHOOK_URL: z.string().url().optional(),
+  // WhatsApp — short templated alert to a team number (pre-approved template required)
+  TRIP_FORM_NOTIFY_PHONE: z.string().optional(), // E.164, e.g. "+919876543210"
+  WHATSAPP_TRIP_APPLICATION_TEMPLATE: z.string().default('earth_revibe_trip_application_alert'),
 });
 
 export const env = envSchema.parse(process.env);

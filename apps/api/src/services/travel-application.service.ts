@@ -1,6 +1,8 @@
 import { prisma } from '@earth-revibe/db';
 import type { TravelApplicationSubmitInput } from '@earth-revibe/shared';
 import { logger } from '../config/logger';
+import { sendTripApplicationToDiscord } from './discord.service';
+import { sendWhatsAppTripApplicationAlert } from './whatsapp.service';
 
 /**
  * Generate a human-friendly application number like "ER-2026-0042".
@@ -50,6 +52,18 @@ export const travelApplicationService = {
           { id: created.id, applicationNumber: created.applicationNumber, userId },
           'travel application submitted'
         );
+
+        // Fan out notifications in parallel. Both are soft-fail (never throw),
+        // and we fire-and-forget so the applicant's response isn't blocked by
+        // slow third-party APIs. Errors are logged inside each function.
+        void Promise.allSettled([
+          sendTripApplicationToDiscord({
+            applicationNumber: created.applicationNumber,
+            data,
+          }),
+          sendWhatsAppTripApplicationAlert(created.applicationNumber, data.name, data.city),
+        ]);
+
         return created;
       } catch (err) {
         // Prisma P2002 = unique constraint violation. Retry with a fresh number.

@@ -140,6 +140,79 @@ export async function sendWhatsAppOrderUpdate(
 }
 
 /**
+ * Notify the team via WhatsApp when a new Travel Circle application is submitted.
+ * Uses the pre-approved `WHATSAPP_TRIP_APPLICATION_TEMPLATE` template.
+ *
+ * Template body (must be approved in Meta Business Manager):
+ *   "🎒 New Travel Circle application {{1}}
+ *    {{2}} from {{3}} just applied. Check Discord/admin for full details."
+ *
+ *   {{1}} = applicationNumber (e.g. "ER-2026-0042")
+ *   {{2}} = applicant name
+ *   {{3}} = city
+ *
+ * Soft-fail: returns boolean, never throws — notification must not block submission.
+ */
+export async function sendWhatsAppTripApplicationAlert(
+  applicationNumber: string,
+  name: string,
+  city: string
+): Promise<boolean> {
+  const targetPhone = env.TRIP_FORM_NOTIFY_PHONE;
+  if (!targetPhone) {
+    logger.warn('TRIP_FORM_NOTIFY_PHONE not set — skipping WhatsApp application alert');
+    return false;
+  }
+  const to = targetPhone.replace(/^\+/, '');
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: env.WHATSAPP_TRIP_APPLICATION_TEMPLATE,
+      language: { code: 'en' },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: applicationNumber },
+            { type: 'text', text: name },
+            { type: 'text', text: city },
+          ],
+        },
+      ],
+    },
+  };
+
+  try {
+    const res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      logger.error(
+        { status: res.status, body: text, applicationNumber },
+        'WhatsApp trip-application alert error'
+      );
+      return false;
+    }
+
+    logger.info({ applicationNumber }, 'WhatsApp trip-application alert sent');
+    return true;
+  } catch (err) {
+    logger.error({ err, applicationNumber }, 'WhatsApp trip-application alert network error');
+    return false;
+  }
+}
+
+/**
  * Send an abandoned cart recovery message via WhatsApp Cloud API.
  * Uses the pre-approved "earth_revibe_abandoned_cart" template.
  * @param phone       E.164 phone number (e.g. "+919876543210")
