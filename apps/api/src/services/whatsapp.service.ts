@@ -283,16 +283,51 @@ export async function sendWhatsAppDecision(
       body: JSON.stringify(body),
     });
 
+    // Meta's Graph API returns 200 on template ACCEPTANCE — delivery can
+    // still fail silently (pacing, language mismatch, template not yet
+    // propagated). Capture the full response body so we can trace specific
+    // messages in Meta's dashboard by the message ID.
+    const bodyText = await res.text();
     if (!res.ok) {
-      const text = await res.text();
       logger.error(
-        { status: res.status, body: text, applicationNumber, kind },
+        {
+          status: res.status,
+          body: bodyText,
+          applicationNumber,
+          kind,
+          to,
+          templateName: templateNameFor(kind),
+        },
         'WhatsApp decision template error'
       );
       return false;
     }
 
-    logger.info({ applicationNumber, kind }, 'WhatsApp decision sent');
+    let messageId: string | undefined;
+    let wabaId: string | undefined;
+    try {
+      const parsed = JSON.parse(bodyText) as {
+        messages?: { id: string; message_status?: string }[];
+        contacts?: { wa_id: string }[];
+      };
+      messageId = parsed.messages?.[0]?.id;
+      wabaId = parsed.contacts?.[0]?.wa_id;
+    } catch {
+      // Fall through with undefined IDs — bodyText is still logged below.
+    }
+
+    logger.info(
+      {
+        applicationNumber,
+        kind,
+        to,
+        wa_id: wabaId,
+        messageId,
+        templateName: templateNameFor(kind),
+        rawResponse: bodyText,
+      },
+      'WhatsApp decision sent'
+    );
     return true;
   } catch (err) {
     logger.error({ err, applicationNumber, kind }, 'WhatsApp decision network error');
