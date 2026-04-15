@@ -18,7 +18,7 @@ export function WhyJoin() {
 
   return (
     <ScreenShell
-      topRight={<StepPill label="07 / 11" />}
+      topRight={<StepPill label="07 / 08" />}
       bottom={<BottomNav nextDisabled={!valid} />}
     >
       <motion.div className="flex flex-col gap-[18px] pt-8">

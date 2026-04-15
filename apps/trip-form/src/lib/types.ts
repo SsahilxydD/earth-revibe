@@ -1,18 +1,15 @@
 export type Step =
-  | 'gate'
-  | 'otp'
   | 'welcome'
-  | 'name'
-  | 'age'
-  | 'city'
-  | 'instagram'
-  | 'email'
   | 'travelerType'
-  | 'whyJoin'
   | 'pastTravel'
   | 'tripPrefs'
   | 'meetBefore'
+  | 'basicProfile'
+  | 'contact'
+  | 'whyJoin'
   | 'curated'
+  | 'gate'
+  | 'otp'
   | 'submitted';
 
 export type TravelerTypeId = 'chill' | 'party' | 'explorer' | 'mix';
@@ -21,7 +18,7 @@ export type YesNo = 'yes' | 'no';
 export type YesMaybeNo = 'yes' | 'maybe' | 'no';
 
 export type FormData = {
-  // Auth gate
+  // Auth gate (now at end of flow)
   phone: string; // local part only, e.g. "9876543210"
   phoneVerified: boolean;
   otp: string; // 6 digits

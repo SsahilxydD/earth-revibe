@@ -53,7 +53,7 @@ export function Welcome() {
           <motion.div variants={stageItem} className="flex items-center gap-[14px] pt-3">
             <div className="flex flex-col gap-1">
               <span className="font-display text-[26px] font-normal -tracking-[0.02em] text-ink">
-                10
+                8
               </span>
               <span className="font-sans text-[9px] font-bold tracking-[0.18em] text-dim">
                 QUESTIONS

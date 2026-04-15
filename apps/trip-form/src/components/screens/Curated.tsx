@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useFlow } from '@/lib/store';
 import { stageItem } from '@/lib/motion';
@@ -9,42 +8,18 @@ import { StepPill } from '@/components/shell/TopBar';
 import { Eyebrow } from '@/components/shell/Eyebrow';
 import { BottomNav } from '@/components/shell/BottomNav';
 import { SplitCard } from '@/components/ui/ChoiceCard';
-import { submitApplication } from '@/lib/submit';
 
 export function Curated() {
   const selected = useFlow((s) => s.data.curated);
-  const data = useFlow((s) => s.data);
   const setField = useFlow((s) => s.setField);
-  const goNext = useFlow((s) => s.goNext);
-  const [pending, setPending] = useState(false);
-
-  const onSubmit = async () => {
-    if (!selected || pending) return;
-    setPending(true);
-    try {
-      const { id } = await submitApplication(data);
-      setField('applicationId', id);
-      goNext();
-    } finally {
-      setPending(false);
-    }
-  };
 
   return (
     <ScreenShell
-      topRight={<StepPill label="11 / 11" />}
-      bottom={
-        <BottomNav
-          nextLabel="Submit application"
-          nextDisabled={!selected}
-          onNext={onSubmit}
-          pending={pending}
-          tone="clay"
-        />
-      }
+      topRight={<StepPill label="08 / 08" />}
+      bottom={<BottomNav nextDisabled={!selected} tone="clay" />}
     >
       <motion.div className="flex flex-col gap-[18px] pt-7">
-        <Eyebrow tone="clay">Q · 11 · LAST ONE</Eyebrow>
+        <Eyebrow tone="clay">LAST QUESTION</Eyebrow>
         <motion.h1
           variants={stageItem}
           className="font-display text-[32px] font-light leading-[1.1] tracking-[-0.031em] text-ink"

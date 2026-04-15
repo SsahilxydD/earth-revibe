@@ -6,34 +6,28 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { PhoneGate } from '@/components/screens/PhoneGate';
 import { OtpVerify } from '@/components/screens/OtpVerify';
 import { Welcome } from '@/components/screens/Welcome';
-import { NameScreen } from '@/components/screens/Name';
-import { AgeScreen } from '@/components/screens/Age';
-import { CityScreen } from '@/components/screens/City';
-import { InstagramScreen } from '@/components/screens/Instagram';
-import { EmailScreen } from '@/components/screens/Email';
 import { TravelerType } from '@/components/screens/TravelerType';
-import { WhyJoin } from '@/components/screens/WhyJoin';
 import { PastTravel } from '@/components/screens/PastTravel';
 import { TripPrefs } from '@/components/screens/TripPrefs';
 import { MeetBefore } from '@/components/screens/MeetBefore';
+import { BasicProfile } from '@/components/screens/BasicProfile';
+import { Contact } from '@/components/screens/Contact';
+import { WhyJoin } from '@/components/screens/WhyJoin';
 import { Curated } from '@/components/screens/Curated';
 import { Submitted } from '@/components/screens/Submitted';
 
 const registry = {
-  gate: PhoneGate,
-  otp: OtpVerify,
   welcome: Welcome,
-  name: NameScreen,
-  age: AgeScreen,
-  city: CityScreen,
-  instagram: InstagramScreen,
-  email: EmailScreen,
   travelerType: TravelerType,
-  whyJoin: WhyJoin,
   pastTravel: PastTravel,
   tripPrefs: TripPrefs,
   meetBefore: MeetBefore,
+  basicProfile: BasicProfile,
+  contact: Contact,
+  whyJoin: WhyJoin,
   curated: Curated,
+  gate: PhoneGate,
+  otp: OtpVerify,
   submitted: Submitted,
 } as const;
 

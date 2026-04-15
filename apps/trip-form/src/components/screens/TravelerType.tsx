@@ -43,11 +43,11 @@ export function TravelerType() {
 
   return (
     <ScreenShell
-      topRight={<StepPill label="06 / 11" />}
-      bottom={<BottomNav nextDisabled={!selected} />}
+      topRight={<StepPill label="01 / 08" />}
+      bottom={<BottomNav nextDisabled={!selected} hideBack />}
     >
       <motion.div className="flex flex-col gap-[18px] pt-8">
-        <Eyebrow>Q · 06</Eyebrow>
+        <Eyebrow>Q · 01</Eyebrow>
         <motion.h1
           variants={stageItem}
           className="font-display text-[32px] font-light leading-[1.1] tracking-[-0.031em] text-ink"

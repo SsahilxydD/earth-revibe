@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useFlow } from '@/lib/store';
 import { stageItem, tapFeedback } from '@/lib/motion';
 import { verifyWhatsAppCode, sendWhatsAppCode } from '@/lib/auth';
+import { submitApplication } from '@/lib/submit';
 import { ScreenShell } from '@/components/shell/ScreenShell';
 import { GatePill } from '@/components/shell/TopBar';
 import { Eyebrow } from '@/components/shell/Eyebrow';
@@ -16,6 +17,7 @@ const RESEND_SECONDS = 24;
 export function OtpVerify() {
   const phone = useFlow((s) => s.data.phone);
   const otp = useFlow((s) => s.data.otp);
+  const data = useFlow((s) => s.data);
   const setField = useFlow((s) => s.setField);
   const goNext = useFlow((s) => s.goNext);
   const goBack = useFlow((s) => s.goBack);
@@ -97,7 +99,17 @@ export function OtpVerify() {
         return;
       }
       setField('phoneVerified', true);
-      goNext();
+
+      // Phone is verified → NOW submit the application. Same-origin cookies
+      // set by verify-otp ride along. Only proceed to Submitted screen if
+      // the API accepts the submission.
+      try {
+        const { id } = await submitApplication(data);
+        setField('applicationId', id);
+        goNext();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not submit — please retry.');
+      }
     } finally {
       setPending(false);
     }

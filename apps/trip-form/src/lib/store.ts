@@ -34,7 +34,7 @@ const initialData: FormData = {
 };
 
 export const useFlow = create<FlowState>((set) => ({
-  step: 'gate',
+  step: 'welcome',
   direction: 1,
   data: initialData,
   setField: (key, value) => set((s) => ({ data: { ...s.data, [key]: value } })),
