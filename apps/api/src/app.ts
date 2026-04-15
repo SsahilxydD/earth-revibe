@@ -73,6 +73,10 @@ app.use(
         // Production custom domains (both www and non-www)
         'https://earthrevibe.com',
         'https://www.earthrevibe.com',
+        // Travel-circle application form lives on a separate Vercel project
+        // at earthrevibe.info (both www and non-www).
+        'https://earthrevibe.info',
+        'https://www.earthrevibe.info',
       ].filter(Boolean);
 
       // Exact match or Vercel preview URLs for our apps
