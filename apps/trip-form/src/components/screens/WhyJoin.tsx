@@ -18,11 +18,11 @@ export function WhyJoin() {
 
   return (
     <ScreenShell
-      topRight={<StepPill label="06 / 10" />}
+      topRight={<StepPill label="07 / 11" />}
       bottom={<BottomNav nextDisabled={!valid} />}
     >
       <motion.div className="flex flex-col gap-[18px] pt-8">
-        <Eyebrow>Q · 06</Eyebrow>
+        <Eyebrow>Q · 07</Eyebrow>
         <motion.h1
           variants={stageItem}
           className="font-display text-[32px] font-light leading-[1.1] tracking-[-0.031em] text-ink"

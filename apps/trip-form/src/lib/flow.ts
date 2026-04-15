@@ -9,6 +9,7 @@ export const ORDER: readonly Step[] = [
   'age',
   'city',
   'instagram',
+  'email',
   'travelerType',
   'whyJoin',
   'pastTravel',
@@ -18,21 +19,22 @@ export const ORDER: readonly Step[] = [
   'submitted',
 ] as const;
 
-/** Q-number (1-based) for screens that count toward the 10-question progress. */
+/** Q-number (1-based) for screens that count toward the 11-question progress. */
 export const QUESTION_INDEX: Partial<Record<Step, number>> = {
   name: 1,
   age: 2,
   city: 3,
   instagram: 4,
-  travelerType: 5,
-  whyJoin: 6,
-  pastTravel: 7,
-  tripPrefs: 8,
-  meetBefore: 9,
-  curated: 10,
+  email: 5,
+  travelerType: 6,
+  whyJoin: 7,
+  pastTravel: 8,
+  tripPrefs: 9,
+  meetBefore: 10,
+  curated: 11,
 };
 
-export const TOTAL_QUESTIONS = 10;
+export const TOTAL_QUESTIONS = 11;
 
 export function nextStep(current: Step): Step {
   const i = ORDER.indexOf(current);

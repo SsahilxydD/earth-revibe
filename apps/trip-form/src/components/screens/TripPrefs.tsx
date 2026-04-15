@@ -48,11 +48,11 @@ export function TripPrefs() {
 
   return (
     <ScreenShell
-      topRight={<StepPill label="08 / 10" />}
+      topRight={<StepPill label="09 / 11" />}
       bottom={<BottomNav nextDisabled={!valid} />}
     >
       <motion.div className="flex flex-col gap-4 pt-8">
-        <Eyebrow>Q · 08</Eyebrow>
+        <Eyebrow>Q · 09</Eyebrow>
         <motion.h1
           variants={stageItem}
           className="font-display text-[32px] font-light leading-[1.1] tracking-[-0.031em] text-ink"

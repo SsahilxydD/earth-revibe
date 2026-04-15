@@ -17,7 +17,7 @@ export function AgeScreen() {
 
   return (
     <ScreenShell
-      topRight={<StepPill label="02 / 10" />}
+      topRight={<StepPill label="02 / 11" />}
       bottom={<BottomNav nextDisabled={!valid} />}
     >
       <motion.div className="flex flex-col gap-[22px] pt-10">

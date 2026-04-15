@@ -32,7 +32,7 @@ export function Curated() {
 
   return (
     <ScreenShell
-      topRight={<StepPill label="10 / 10" />}
+      topRight={<StepPill label="11 / 11" />}
       bottom={
         <BottomNav
           nextLabel="Submit application"
@@ -44,7 +44,7 @@ export function Curated() {
       }
     >
       <motion.div className="flex flex-col gap-[18px] pt-7">
-        <Eyebrow tone="clay">Q · 10 · LAST ONE</Eyebrow>
+        <Eyebrow tone="clay">Q · 11 · LAST ONE</Eyebrow>
         <motion.h1
           variants={stageItem}
           className="font-display text-[32px] font-light leading-[1.1] tracking-[-0.031em] text-ink"

@@ -8,7 +8,12 @@ import { logger } from '../config/logger';
 import { APP_CONSTANTS } from '../config/constants';
 import { ApiError } from '../utils/api-error';
 import { sendTripApplicationToDiscord } from './discord.service';
-import { sendWhatsAppTripApplicationAlert } from './whatsapp.service';
+import { sendWhatsAppTripApplicationAlert, sendWhatsAppDecision } from './whatsapp.service';
+import {
+  sendApprovalEmail,
+  sendRejectionEmail,
+  sendWaitlistEmail,
+} from './travel-application-email.service';
 
 /**
  * Generate a human-friendly application number like "ER-2026-0042".
@@ -41,6 +46,7 @@ export const travelApplicationService = {
             applicationNumber,
             userId,
             phone: data.phone,
+            email: data.email,
             name: data.name,
             age: Number(data.age),
             city: data.city,
@@ -126,13 +132,65 @@ export const travelApplicationService = {
     const existing = await prisma.travelApplication.findUnique({ where: { id } });
     if (!existing) throw ApiError.notFound('Application not found');
 
-    return prisma.travelApplication.update({
+    const updated = await prisma.travelApplication.update({
       where: { id },
       data: {
         ...(data.status ? { status: data.status, reviewedAt: new Date() } : {}),
         ...(data.reviewNotes !== undefined ? { reviewNotes: data.reviewNotes } : {}),
       },
     });
+
+    // Fire applicant-facing notifications on a decision status change.
+    // Dedupe: skip if we've already notified for this same status (prevents
+    // duplicate emails/WhatsApps if admin re-clicks the same decision).
+    const DECISION_STATUSES = ['APPROVED', 'REJECTED', 'WAITLISTED'] as const;
+    type DecisionStatus = (typeof DECISION_STATUSES)[number];
+    const isDecision = (s: string | null): s is DecisionStatus =>
+      s !== null && (DECISION_STATUSES as readonly string[]).includes(s);
+
+    if (data.status && isDecision(updated.status) && updated.notifiedStatus !== updated.status) {
+      const kind =
+        updated.status === 'APPROVED'
+          ? 'approved'
+          : updated.status === 'REJECTED'
+            ? 'rejected'
+            : 'waitlisted';
+
+      const emailSender =
+        kind === 'approved'
+          ? sendApprovalEmail
+          : kind === 'rejected'
+            ? sendRejectionEmail
+            : sendWaitlistEmail;
+
+      // Fan out email + WhatsApp in parallel, soft-fail. Mark as notified
+      // after both settle (regardless of success) so the admin can manually
+      // retry by clicking a different status and back if a transient
+      // delivery failure occurs.
+      const emailPromise = updated.email
+        ? emailSender({
+            to: updated.email,
+            name: updated.name,
+            applicationNumber: updated.applicationNumber,
+          })
+        : Promise.resolve(false);
+
+      const whatsAppPromise = sendWhatsAppDecision(
+        kind,
+        updated.phone,
+        updated.name,
+        updated.applicationNumber
+      );
+
+      void Promise.allSettled([emailPromise, whatsAppPromise]).then(async () => {
+        await prisma.travelApplication.update({
+          where: { id: updated.id },
+          data: { notifiedAt: new Date(), notifiedStatus: updated.status },
+        });
+      });
+    }
+
+    return updated;
   },
 
   async exportCSV() {
@@ -153,6 +211,7 @@ export const travelApplicationService = {
       'Age',
       'City',
       'Phone',
+      'Email',
       'Instagram',
       'Traveler Type',
       'Trip Preferences',
@@ -173,6 +232,7 @@ export const travelApplicationService = {
         String(r.age),
         escape(r.city),
         escape(r.phone),
+        escape(r.email ?? ''),
         escape(r.instagram),
         r.travelerType,
         escape(r.tripPrefs.join('; ')),

@@ -10,6 +10,7 @@ import { NameScreen } from '@/components/screens/Name';
 import { AgeScreen } from '@/components/screens/Age';
 import { CityScreen } from '@/components/screens/City';
 import { InstagramScreen } from '@/components/screens/Instagram';
+import { EmailScreen } from '@/components/screens/Email';
 import { TravelerType } from '@/components/screens/TravelerType';
 import { WhyJoin } from '@/components/screens/WhyJoin';
 import { PastTravel } from '@/components/screens/PastTravel';
@@ -26,6 +27,7 @@ const registry = {
   age: AgeScreen,
   city: CityScreen,
   instagram: InstagramScreen,
+  email: EmailScreen,
   travelerType: TravelerType,
   whyJoin: WhyJoin,
   pastTravel: PastTravel,

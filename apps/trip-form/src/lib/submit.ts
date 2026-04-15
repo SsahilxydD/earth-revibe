@@ -16,6 +16,7 @@ export async function submitApplication(data: FormData): Promise<{ id: string }>
     age: data.age,
     city: data.city,
     instagram: data.instagram,
+    email: data.email,
     travelerType: data.travelerType!,
     whyJoin: data.whyJoin,
     pastTravel: data.pastTravel!,

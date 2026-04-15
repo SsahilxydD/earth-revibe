@@ -34,6 +34,7 @@ export async function sendTripApplicationToDiscord(
       { name: 'Age', value: String(data.age), inline: true },
       { name: 'City', value: data.city, inline: true },
       { name: 'Phone', value: data.phone, inline: true },
+      { name: 'Email', value: data.email, inline: true },
       { name: 'Instagram', value: data.instagram, inline: true },
       { name: 'Traveler type', value: data.travelerType, inline: true },
       { name: 'Trip preferences', value: data.tripPrefs.join(', '), inline: false },

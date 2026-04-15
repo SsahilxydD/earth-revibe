@@ -6,6 +6,7 @@ export type Step =
   | 'age'
   | 'city'
   | 'instagram'
+  | 'email'
   | 'travelerType'
   | 'whyJoin'
   | 'pastTravel'
@@ -30,6 +31,7 @@ export type FormData = {
   age: string;
   city: string;
   instagram: string;
+  email: string;
 
   // Preferences
   travelerType: TravelerTypeId | null;

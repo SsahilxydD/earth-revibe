@@ -21,6 +21,7 @@ export interface TravelApplicationRow {
   applicationNumber: string;
   userId: string | null;
   phone: string;
+  email: string | null;
   name: string;
   age: number;
   city: string;
@@ -34,6 +35,8 @@ export interface TravelApplicationRow {
   status: TravelApplicationStatus;
   reviewNotes: string | null;
   reviewedAt: string | null;
+  notifiedAt: string | null;
+  notifiedStatus: TravelApplicationStatus | null;
   createdAt: string;
   updatedAt: string;
 }

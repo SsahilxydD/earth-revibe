@@ -16,7 +16,7 @@ export function InstagramScreen() {
 
   return (
     <ScreenShell
-      topRight={<StepPill label="04 / 10" />}
+      topRight={<StepPill label="04 / 11" />}
       bottom={<BottomNav nextDisabled={!valid} />}
     >
       <motion.div className="flex flex-col gap-[22px] pt-10">

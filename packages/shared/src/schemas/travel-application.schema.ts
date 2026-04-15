@@ -42,6 +42,7 @@ export const travelApplicationSubmitSchema = z.object({
     .min(1, 'Enter your Instagram handle')
     .max(40)
     .regex(/^@?[A-Za-z0-9._]+$/, 'Invalid Instagram handle'),
+  email: z.string().trim().toLowerCase().email('Enter a valid email').max(120),
   travelerType: z.enum(TRAVELER_TYPES),
   whyJoin: z.string().trim().min(8, 'Tell us a bit more').max(500),
   pastTravel: z.enum(YES_NO),

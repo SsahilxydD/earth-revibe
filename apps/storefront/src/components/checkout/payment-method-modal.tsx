@@ -306,12 +306,12 @@ export function PaymentMethodModal({
                   >
                     {formatPrice(subtotal)}
                   </span>
-                  {/* sUdKW — small grey COD fee annotation underneath */}
+                  {/* sUdKW — bolder COD fee annotation: solid color, 11/300 */}
                   <span
                     style={{
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: 300,
-                      color: method === 'cod' ? 'rgba(255,255,255,0.5)' : '#CCC',
+                      color: method === 'cod' ? '#FFF' : '#000',
                     }}
                   >
                     +{formatPrice(COD_SURCHARGE)} COD charge

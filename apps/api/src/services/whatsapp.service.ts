@@ -213,6 +213,94 @@ export async function sendWhatsAppTripApplicationAlert(
 }
 
 /**
+ * Send a Travel Circle DECISION message to the applicant (approved /
+ * rejected / waitlisted). Uses pre-approved Meta templates configured via
+ * env. Soft-fail: returns boolean, never throws.
+ *
+ * Template body shapes (must be created + approved in Meta Business Manager):
+ *   approved   : "Welcome in, {{1}}! 🎒 You're in the Earth Revibe Travel Circle
+ *                 — we'll add you to the private WhatsApp group within 48h.
+ *                 Application {{2}}."
+ *   waitlisted : "Hey {{1}}, you're on the Earth Revibe Travel Circle waitlist.
+ *                 We'll reach out the moment a spot opens. Application {{2}}."
+ *   rejected   : "Thanks for applying to Earth Revibe, {{1}}. Not this round
+ *                 — but we'd love to see you apply again next cycle.
+ *                 Application {{2}}."
+ *
+ * Params: {{1}} = applicant first name, {{2}} = application number.
+ */
+type DecisionKind = 'approved' | 'rejected' | 'waitlisted';
+
+function templateNameFor(kind: DecisionKind): string {
+  switch (kind) {
+    case 'approved':
+      return env.WHATSAPP_TRIP_APPROVED_TEMPLATE;
+    case 'rejected':
+      return env.WHATSAPP_TRIP_REJECTED_TEMPLATE;
+    case 'waitlisted':
+      return env.WHATSAPP_TRIP_WAITLISTED_TEMPLATE;
+  }
+}
+
+export async function sendWhatsAppDecision(
+  kind: DecisionKind,
+  phone: string,
+  name: string,
+  applicationNumber: string
+): Promise<boolean> {
+  // Normalize phone — strip leading + and any non-digits
+  const to = phone.replace(/\D/g, '');
+  if (!to) return false;
+
+  const first = name.trim().split(/\s+/)[0] || 'there';
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: templateNameFor(kind),
+      language: { code: 'en' },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: first },
+            { type: 'text', text: applicationNumber },
+          ],
+        },
+      ],
+    },
+  };
+
+  try {
+    const res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      logger.error(
+        { status: res.status, body: text, applicationNumber, kind },
+        'WhatsApp decision template error'
+      );
+      return false;
+    }
+
+    logger.info({ applicationNumber, kind }, 'WhatsApp decision sent');
+    return true;
+  } catch (err) {
+    logger.error({ err, applicationNumber, kind }, 'WhatsApp decision network error');
+    return false;
+  }
+}
+
+/**
  * Send an abandoned cart recovery message via WhatsApp Cloud API.
  * Uses the pre-approved "earth_revibe_abandoned_cart" template.
  * @param phone       E.164 phone number (e.g. "+919876543210")

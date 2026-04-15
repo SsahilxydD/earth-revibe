@@ -23,6 +23,7 @@ const initialData: FormData = {
   age: '',
   city: '',
   instagram: '',
+  email: '',
   travelerType: null,
   whyJoin: '',
   pastTravel: null,

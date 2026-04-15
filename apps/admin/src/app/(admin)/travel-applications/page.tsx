@@ -281,6 +281,7 @@ function DetailDrawer({
           <Field label="Age">{row.age}</Field>
           <Field label="City">{row.city}</Field>
           <Field label="Phone">{row.phone}</Field>
+          <Field label="Email">{row.email ?? <span className="text-medium-gray">—</span>}</Field>
           <Field label="Instagram">{row.instagram}</Field>
           <Field label="Traveler type">
             <span className="capitalize">{row.travelerType}</span>
@@ -301,6 +302,14 @@ function DetailDrawer({
             <p className="whitespace-pre-wrap text-charcoal">{row.whyJoin}</p>
           </Field>
           <Field label="Submitted">{new Date(row.createdAt).toLocaleString('en-IN')}</Field>
+          {row.notifiedAt ? (
+            <Field label="Applicant notified">
+              {new Date(row.notifiedAt).toLocaleString('en-IN')}
+              {row.notifiedStatus ? (
+                <span className="text-medium-gray"> · {row.notifiedStatus}</span>
+              ) : null}
+            </Field>
+          ) : null}
           {row.reviewedAt ? (
             <Field label="Last reviewed">{new Date(row.reviewedAt).toLocaleString('en-IN')}</Field>
           ) : null}
