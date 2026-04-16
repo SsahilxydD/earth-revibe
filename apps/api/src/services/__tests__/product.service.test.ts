@@ -303,6 +303,36 @@ describe('productService.listProducts', () => {
     const call = vi.mocked(prisma.product.findMany).mock.calls[0][0] as any;
     expect(call.where.variants).toBeUndefined();
   });
+
+  it('filters by single vibe via ?vibe= using array `has` operator', async () => {
+    vi.mocked(prisma.product.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.product.count).mockResolvedValue(0);
+
+    await productService.listProducts(makeProductQuery({ vibe: 'salt-on-skin' as any }));
+
+    const call = vi.mocked(prisma.product.findMany).mock.calls[0][0] as any;
+    expect(call.where.vibes).toEqual({ has: 'salt-on-skin' });
+  });
+
+  it('combines vibe filter with category filter (does not overwrite category)', async () => {
+    vi.mocked(prisma.product.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.product.count).mockResolvedValue(0);
+
+    await productService.listProducts(
+      makeProductQuery({ vibe: 'into-the-wild' as any, category: 'shirts' })
+    );
+
+    const call = vi.mocked(prisma.product.findMany).mock.calls[0][0] as any;
+    expect(call.where.vibes).toEqual({ has: 'into-the-wild' });
+    expect(call.where.AND).toEqual([
+      {
+        OR: [
+          { category: { slug: 'shirts' } },
+          { productCategories: { some: { category: { slug: 'shirts' } } } },
+        ],
+      },
+    ]);
+  });
 });
 
 // ===========================================================================
@@ -432,6 +462,24 @@ describe('productService.createProduct', () => {
     await productService.createProduct({ ...baseInput, name: 'Hemp Shirt' });
 
     expect(prisma.product.findUnique).toHaveBeenCalledWith({ where: { slug: 'hemp-shirt' } });
+  });
+
+  it('persists the vibes array verbatim when provided', async () => {
+    vi.mocked(prisma.category.findUnique).mockResolvedValue(makeCategory() as any);
+    vi.mocked(prisma.product.create).mockResolvedValue(makeProduct() as any);
+
+    await productService.createProduct({
+      name: 'Tester',
+      description: 'Long enough description',
+      price: 100,
+      categoryId: 'cat-1',
+      status: 'DRAFT' as any,
+      isFeatured: false,
+      vibes: ['salt-on-skin', 'neon-nomads'],
+    } as any);
+
+    const call = vi.mocked(prisma.product.create).mock.calls[0][0] as any;
+    expect(call.data.vibes).toEqual(['salt-on-skin', 'neon-nomads']);
   });
 });
 

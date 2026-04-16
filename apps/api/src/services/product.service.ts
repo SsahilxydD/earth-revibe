@@ -17,6 +17,7 @@ export const productService = {
   async listProducts(query: ProductQuery, adminMode = false) {
     const {
       category,
+      vibe,
       status,
       minPrice,
       maxPrice,
@@ -54,6 +55,10 @@ export const productService = {
         ],
       };
       where.AND = [...((where.AND as Prisma.ProductWhereInput[]) || []), categoryFilter];
+    }
+
+    if (vibe) {
+      where.vibes = { has: vibe };
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -206,6 +211,7 @@ export const productService = {
         status: data.status,
         isFeatured: data.isFeatured,
         categoryId: data.categoryId,
+        vibes: data.vibes ?? [],
       },
       include: {
         category: {
