@@ -188,6 +188,7 @@ model Product {
   washInstructions String?
   status          ProductStatus @default(DRAFT)
   isFeatured      Boolean       @default(false)
+  vibes           String[]      @default([])
   categoryId      String
   category        Category      @relation(fields: [categoryId], references: [id])
   createdAt       DateTime      @default(now())
