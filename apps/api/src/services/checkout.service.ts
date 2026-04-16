@@ -164,7 +164,11 @@ export const checkoutService = {
         receipt: orderNumber,
         line_items_total: effectiveTotal,
         shipping_fee: 0,
-        cod_fee: 15000,
+        // NOTE: do NOT pass `cod` or `cod_fee` here — Razorpay rejects/ignores
+        // them at orders.create. COD availability + fee must be returned
+        // dynamically via the Shipping Info API (`shipping_methods[].cod` +
+        // `shipping_methods[].cod_fee`, in paise). See getShippingInfo()
+        // below and Razorpay support ticket #18726923 (2026-04-15).
         line_items: lineItems,
         notes: {
           userId: userId || 'guest',
@@ -265,26 +269,42 @@ export const checkoutService = {
   },
 
   /**
-   * Called by Razorpay's servers to get shipping info for addresses.
+   * Called by Razorpay's servers to get shipping info for each address the
+   * customer enters at checkout. This is the ONLY place COD availability +
+   * fee are communicated — Razorpay support confirmed (ticket #18726923,
+   * 2026-04-15) that `cod` / `cod_fee` must NOT be passed on orders.create.
+   *
+   * Rules per Razorpay docs + support:
+   *   - All monetary values in paise (INR × 100).
+   *   - If cod === false, cod_fee MUST be 0.
+   *   - Non-serviceable address → the shipping method is still returned but
+   *     marked serviceable: false, cod: false, cod_fee: 0.
    */
   async getShippingInfo(data: ShippingInfoRequest) {
+    const codFeePaise = Math.round((env.COD_FEE || 0) * 100);
+
     const addresses = data.addresses.map(
-      (addr: { id: string; zipcode: string; country: string; state_code?: string }) => ({
-        id: addr.id,
-        zipcode: addr.zipcode,
-        country: addr.country,
-        shipping_methods: [
-          {
-            id: 'standard',
-            name: 'Free Delivery',
-            description: '5-7 business days',
-            serviceable: addr.country?.toLowerCase() === 'in',
-            shipping_fee: 0,
-            cod: true,
-            cod_fee: 15000,
-          },
-        ],
-      })
+      (addr: { id: string; zipcode: string; country: string; state_code?: string }) => {
+        const serviceable = addr.country?.toLowerCase() === 'in';
+        return {
+          id: addr.id,
+          zipcode: addr.zipcode,
+          country: addr.country,
+          shipping_methods: [
+            {
+              id: 'standard',
+              name: 'Free Delivery',
+              description: '5-7 business days',
+              serviceable,
+              shipping_fee: 0,
+              // COD only offered for serviceable (India) addresses. Razorpay
+              // enforces: cod === false ⇒ cod_fee === 0.
+              cod: serviceable,
+              cod_fee: serviceable ? codFeePaise : 0,
+            },
+          ],
+        };
+      }
     );
 
     return { addresses };
