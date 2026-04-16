@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useFlow } from '@/lib/store';
 import { stageItem } from '@/lib/motion';
 import { sendWhatsAppCode } from '@/lib/auth';
+import { trackPhoneSubmitted } from '@/lib/analytics';
 import { ScreenShell } from '@/components/shell/ScreenShell';
 import { GatePill } from '@/components/shell/TopBar';
 import { Eyebrow } from '@/components/shell/Eyebrow';
@@ -25,6 +26,7 @@ export function PhoneGate() {
     setPending(true);
     try {
       await sendWhatsAppCode(phone);
+      trackPhoneSubmitted({ phone: `+91${phone}` });
       goNext(); // advance to OTP screen
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');

@@ -6,6 +6,12 @@ import { useFlow } from '@/lib/store';
 import { stageItem, tapFeedback } from '@/lib/motion';
 import { verifyWhatsAppCode, sendWhatsAppCode } from '@/lib/auth';
 import { submitApplication } from '@/lib/submit';
+import {
+  identifyUser,
+  trackPhoneVerified,
+  trackApplicationSubmitted,
+  trackApplicationSubmitFailed,
+} from '@/lib/analytics';
 import { ScreenShell } from '@/components/shell/ScreenShell';
 import { GatePill } from '@/components/shell/TopBar';
 import { Eyebrow } from '@/components/shell/Eyebrow';
@@ -100,15 +106,35 @@ export function OtpVerify() {
       }
       setField('phoneVerified', true);
 
+      const e164 = `+91${phone}`;
+      identifyUser(e164, {
+        phone: e164,
+        name: data.name || undefined,
+        email: data.email || undefined,
+        city: data.city || undefined,
+        instagram: data.instagram || undefined,
+      });
+      trackPhoneVerified({ phone: e164 });
+
       // Phone is verified → NOW submit the application. Same-origin cookies
       // set by verify-otp ride along. Only proceed to Submitted screen if
       // the API accepts the submission.
       try {
         const { id } = await submitApplication(data);
         setField('applicationId', id);
+        trackApplicationSubmitted({
+          applicationId: id,
+          travelerType: data.travelerType,
+          pastTravel: data.pastTravel,
+          meetBefore: data.meetBefore,
+          curated: data.curated,
+          tripPrefsCount: data.tripPrefs.length,
+        });
         goNext();
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Could not submit — please retry.');
+        const reason = e instanceof Error ? e.message : 'Could not submit — please retry.';
+        trackApplicationSubmitFailed({ reason });
+        setError(reason);
       }
     } finally {
       setPending(false);

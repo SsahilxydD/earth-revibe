@@ -1,5 +1,7 @@
+import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { Fraunces, Inter } from 'next/font/google';
+import { PostHogProvider, PostHogPageview, PostHogStepTracker } from '@/providers/posthog-provider';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -33,7 +35,15 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
-      <body className="font-sans h-full bg-ink">{children}</body>
+      <body className="font-sans h-full bg-ink">
+        <PostHogProvider>
+          <Suspense fallback={null}>
+            <PostHogPageview />
+          </Suspense>
+          <PostHogStepTracker />
+          {children}
+        </PostHogProvider>
+      </body>
     </html>
   );
 }
