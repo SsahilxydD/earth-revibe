@@ -28,7 +28,10 @@ function buildProductQuery(params: ProductListParams): string {
   if (params.page) searchParams.set('page', String(params.page));
   if (params.limit) searchParams.set('limit', String(params.limit));
   if (params.search) searchParams.set('search', params.search);
-  if (params.category) searchParams.set('category', params.category);
+  if (params.category) {
+    const value = Array.isArray(params.category) ? params.category.join(',') : params.category;
+    if (value) searchParams.set('category', value);
+  }
   if (params.minPrice != null) searchParams.set('minPrice', String(params.minPrice));
   if (params.maxPrice != null) searchParams.set('maxPrice', String(params.maxPrice));
   if (params.sizes?.length) searchParams.set('size', params.sizes.join(','));

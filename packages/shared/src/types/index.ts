@@ -385,7 +385,7 @@ export interface ProductListParams {
   page?: number;
   limit?: number;
   search?: string;
-  category?: string;
+  category?: string | string[];
   minPrice?: number;
   maxPrice?: number;
   sizes?: string[];
