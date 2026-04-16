@@ -34,7 +34,10 @@ export const createProductSchema = z.object({
 export const updateProductSchema = createProductSchema.partial();
 
 export const productQuerySchema = z.object({
-  category: z.string().optional(),
+  category: z.preprocess(
+    (v) => (typeof v === 'string' && v.includes(',') ? v.split(',').filter(Boolean) : v),
+    z.union([z.string(), z.array(z.string())]).optional()
+  ),
   status: z.nativeEnum(ProductStatus).optional(),
   minPrice: z.coerce.number().optional(),
   maxPrice: z.coerce.number().optional(),
