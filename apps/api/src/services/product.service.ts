@@ -44,11 +44,13 @@ export const productService = {
     }
 
     if (category) {
-      // Match products by primary category OR via the many-to-many join table
+      // Match products by primary category OR via the many-to-many join table.
+      // `category` is `string` (single slug) or `string[]` (vibe → multi-category).
+      const slugFilter = Array.isArray(category) ? { in: category } : category;
       const categoryFilter: Prisma.ProductWhereInput = {
         OR: [
-          { category: { slug: category } },
-          { productCategories: { some: { category: { slug: category } } } },
+          { category: { slug: slugFilter } },
+          { productCategories: { some: { category: { slug: slugFilter } } } },
         ],
       };
       where.AND = [...((where.AND as Prisma.ProductWhereInput[]) || []), categoryFilter];

@@ -151,14 +151,40 @@ describe('productService.listProducts', () => {
     expect(call.where.status).toBe('DRAFT');
   });
 
-  it('filters by category slug when category is provided', async () => {
+  it('filters by category slug when category is a single string', async () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
     vi.mocked(prisma.product.count).mockResolvedValue(0);
 
     await productService.listProducts(makeProductQuery({ category: 'tops' }));
 
     const call = vi.mocked(prisma.product.findMany).mock.calls[0][0] as any;
-    expect(call.where.category).toEqual({ slug: 'tops' });
+    expect(call.where.AND).toEqual([
+      {
+        OR: [
+          { category: { slug: 'tops' } },
+          { productCategories: { some: { category: { slug: 'tops' } } } },
+        ],
+      },
+    ]);
+  });
+
+  it('filters by IN clause when category is an array of slugs', async () => {
+    vi.mocked(prisma.product.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.product.count).mockResolvedValue(0);
+
+    await productService.listProducts(
+      makeProductQuery({ category: ['t-shirts', 'shirts'] as any })
+    );
+
+    const call = vi.mocked(prisma.product.findMany).mock.calls[0][0] as any;
+    expect(call.where.AND).toEqual([
+      {
+        OR: [
+          { category: { slug: { in: ['t-shirts', 'shirts'] } } },
+          { productCategories: { some: { category: { slug: { in: ['t-shirts', 'shirts'] } } } } },
+        ],
+      },
+    ]);
   });
 
   it('applies minPrice and maxPrice as a Decimal range filter', async () => {
