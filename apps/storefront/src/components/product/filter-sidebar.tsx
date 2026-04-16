@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
-import { useCategories } from '@/hooks/use-products';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
@@ -31,7 +30,6 @@ const PRICE_RANGES = [
 ] as const;
 
 export interface FilterState {
-  category: string;
   minPrice: number | undefined;
   maxPrice: number | undefined;
   size: string;
@@ -45,8 +43,6 @@ interface FilterSidebarProps {
 
 export function FilterSidebar({ filters, onFilterChange }: FilterSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
-  // Keep categories hook for potential future use
-  useCategories();
 
   useEffect(() => {
     if (isOpen) {
@@ -64,7 +60,6 @@ export function FilterSidebar({ filters, onFilterChange }: FilterSidebarProps) {
 
   const clearAll = () => {
     onFilterChange({
-      category: filters.category,
       minPrice: undefined,
       maxPrice: undefined,
       size: '',

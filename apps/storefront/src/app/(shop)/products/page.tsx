@@ -135,7 +135,6 @@ function ProductsContent() {
   const handleFilterChange = useCallback(
     (filters: FilterState) => {
       updateParams({
-        category: filters.category || undefined,
         minPrice: filters.minPrice !== undefined ? String(filters.minPrice) : undefined,
         maxPrice: filters.maxPrice !== undefined ? String(filters.maxPrice) : undefined,
         size: filters.size || undefined,
@@ -169,7 +168,7 @@ function ProductsContent() {
     }
   }, [allProducts, searchParams, setNavContext]);
 
-  const currentFilters: FilterState = { category, minPrice, maxPrice, size, color };
+  const currentFilters: FilterState = { minPrice, maxPrice, size, color };
   const hasActiveFilters = !!(minPrice || maxPrice || size || color || category || activeVibe);
 
   const clearAllFilters = () => {
