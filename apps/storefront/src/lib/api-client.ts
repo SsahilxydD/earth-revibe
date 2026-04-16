@@ -72,7 +72,7 @@ function stopProactiveRefresh() {
   lastRefreshAt = 0;
 }
 
-export { startProactiveRefresh, stopProactiveRefresh };
+export { refreshAccessToken, startProactiveRefresh, stopProactiveRefresh };
 
 class ApiClient {
   async request<T = any>(

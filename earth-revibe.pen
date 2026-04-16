@@ -11073,10 +11073,10 @@
                           "type": "text",
                           "id": "sUdKW",
                           "name": "pmR2Strike",
-                          "fill": "#CCCCCCFF",
+                          "fill": "#000000FF",
                           "content": "+₹150 COD charge",
                           "fontFamily": "Inter",
-                          "fontSize": 10,
+                          "fontSize": 11,
                           "fontWeight": "300"
                         }
                       ]

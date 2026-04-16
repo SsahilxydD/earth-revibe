@@ -191,13 +191,15 @@ describe('validateDiscount — global usage limit', () => {
     expect(result.valid).toBe(true);
   });
 
-  it('treats zero usageLimit as falsy (unlimited) and does not throw', async () => {
-    // usageLimit === 0 is falsy in JS, so the guard `if (discount.usageLimit && ...)` is skipped
-    mockDiscountCode.findUnique.mockResolvedValue(makeDiscount({ usageCount: 5, usageLimit: 0 }));
+  it('throws when usageLimit is zero (0 uses allowed)', async () => {
+    // Source uses `usageLimit != null` — 0 is not null, so limit check runs.
+    // usageCount(0) >= usageLimit(0) is true → throws.
+    mockDiscountCode.findUnique.mockResolvedValue(makeDiscount({ usageCount: 0, usageLimit: 0 }));
 
-    const result = await discountService.validateDiscount(VALID_INPUT);
-
-    expect(result.valid).toBe(true);
+    await expect(discountService.validateDiscount(VALID_INPUT)).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringContaining('usage limit'),
+    });
   });
 });
 
