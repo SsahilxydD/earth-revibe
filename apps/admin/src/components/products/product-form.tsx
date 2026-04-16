@@ -2,7 +2,13 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createProductSchema, type CreateProductInput, ProductStatus } from '@earth-revibe/shared';
+import {
+  createProductSchema,
+  type CreateProductInput,
+  ProductStatus,
+  VIBES,
+  VIBE_LABELS,
+} from '@earth-revibe/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Input, Select, Textarea, Card } from '@/components/ui';
 import { api } from '@/lib/api-client';
@@ -38,17 +44,20 @@ export function ProductForm({
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateProductInput>({
     resolver: zodResolver(createProductSchema) as any,
     defaultValues: {
       status: ProductStatus.DRAFT,
       isFeatured: false,
+      vibes: [],
       ...defaultValues,
     },
   });
 
   const currentPrice = watch('price');
+  const currentVibes = (watch('vibes') ?? []) as string[];
 
   const statusOptions = [
     { value: ProductStatus.DRAFT, label: 'Draft' },
@@ -256,6 +265,38 @@ export function ProductForm({
                 error={errors.categoryId?.message}
                 {...register('categoryId')}
               />
+              {/* Vibes multi-select — checkboxes for the 5 trip vibes */}
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-2">Vibes</label>
+                <div className="space-y-2">
+                  {VIBES.map((vibe) => {
+                    const checked = currentVibes.includes(vibe);
+                    return (
+                      <label key={vibe} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded border-light-gray text-deep-earth focus:ring-deep-earth"
+                          checked={checked}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...currentVibes, vibe]
+                              : currentVibes.filter((v) => v !== vibe);
+                            setValue('vibes', next as any, { shouldDirty: true });
+                          }}
+                        />
+                        <span className="text-sm text-charcoal">{VIBE_LABELS[vibe]}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {errors.vibes && (
+                  <p className="text-xs text-red-600 mt-1">{(errors.vibes as any).message}</p>
+                )}
+                <p className="text-xs text-medium-gray mt-2">
+                  Pick the trip vibes this product belongs to. A product can have multiple vibes.
+                </p>
+              </div>
+
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
