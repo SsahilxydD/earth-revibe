@@ -8,3 +8,4 @@ export * from './support.enum';
 export * from './loyalty.enum';
 export * from './notification.enum';
 export * from './travel-application.enum';
+export * from './vibe';
