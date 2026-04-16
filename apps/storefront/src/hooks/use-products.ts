@@ -98,6 +98,10 @@ export function useInfiniteProducts(params: Omit<ProductListParams, 'page'> = {}
     },
     // Keep previous data during param changes so there's never a blank frame
     placeholderData: (prev) => prev,
+    // Cache product lists for 5min — switching back to a vibe is instant from cache.
+    // Background revalidation still keeps data fresh.
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 }
 

@@ -7,12 +7,15 @@ import { ProductCard } from '@/components/product/product-card';
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
 import { FilterSidebar, type FilterState } from '@/components/product/filter-sidebar';
 import { SortDropdown } from '@/components/product/sort-dropdown';
-import { useInfiniteProducts } from '@/hooks/use-products';
+import { useInfiniteProducts, productKeys } from '@/hooks/use-products';
+import { api } from '@/lib/api-client';
+import { useQueryClient } from '@tanstack/react-query';
+import { normalizePaginated } from '@earth-revibe/shared';
 import { useProductNavStore } from '@/stores/product-nav-store';
 import { Spinner } from '@/components/ui/spinner';
 import { motion } from 'framer-motion';
 
-import { isVibe } from '@earth-revibe/shared';
+import { isVibe, VIBES as VIBE_SLUGS } from '@earth-revibe/shared';
 
 // 5 trip vibes — visual labels + Unsplash placeholders. Slugs are the
 // source of truth and match Vibe enum in @earth-revibe/shared.
@@ -103,6 +106,35 @@ function ProductsContent() {
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
     useInfiniteProducts(queryParams);
+
+  // Prefetch the other 4 vibes in the background a moment after first paint.
+  // Switching vibes then resolves from cache (instant) instead of round-tripping.
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const t = setTimeout(() => {
+      for (const vibe of VIBE_SLUGS) {
+        if (vibe === activeVibe) continue;
+        const prefetchParams = { ...queryParams, vibe };
+        queryClient.prefetchInfiniteQuery({
+          queryKey: [...productKeys.lists(), 'infinite', prefetchParams],
+          queryFn: async ({ pageParam, signal }) => {
+            const sp = new URLSearchParams();
+            sp.set('page', String(pageParam ?? 1));
+            sp.set('limit', String(prefetchParams.limit ?? 48));
+            sp.set('vibe', vibe);
+            if (prefetchParams.sortBy) sp.set('sortBy', prefetchParams.sortBy);
+            if (prefetchParams.sortOrder) sp.set('sortOrder', prefetchParams.sortOrder);
+            return normalizePaginated<unknown, 'products'>(
+              await api.get(`/products?${sp.toString()}`, signal)
+            );
+          },
+          initialPageParam: 1,
+          staleTime: 5 * 60 * 1000,
+        });
+      }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [activeVibe, queryClient, queryParams]);
 
   useEffect(() => {
     if (!loadMoreRef.current) return;
