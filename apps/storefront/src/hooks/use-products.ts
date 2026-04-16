@@ -2,7 +2,7 @@
 
 import { useQuery, useInfiniteQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import type { Product, Category, ProductListParams, PaginatedResponse, ApiError } from '@/types';
+import type { Product, ProductListParams, PaginatedResponse, ApiError } from '@/types';
 
 // ─── Query Keys ─────────────────────────────────────────────────────────────
 
@@ -14,7 +14,6 @@ export const productKeys = {
   detail: (slug: string) => [...productKeys.details(), slug] as const,
   related: (categorySlug: string, excludeId: string) =>
     [...productKeys.all, 'related', categorySlug, excludeId] as const,
-  categories: ['categories'] as const,
 };
 
 // Shared normalizer — converts flat pagination from API to nested { pagination } object
@@ -125,18 +124,5 @@ export function useRelatedProducts(_categorySlug: string | undefined, excludeId:
         products: p.products.filter((prod) => prod.id !== excludeId),
       })),
     }),
-  });
-}
-
-// ─── useCategories ──────────────────────────────────────────────────────────
-
-export function useCategories(
-  options?: Omit<UseQueryOptions<Category[], ApiError>, 'queryKey' | 'queryFn'>
-) {
-  return useQuery<Category[], ApiError>({
-    queryKey: productKeys.categories,
-    queryFn: ({ signal }) => api.get<Category[]>('/categories', signal),
-    staleTime: 10 * 60 * 1000, // categories change infrequently
-    ...options,
   });
 }
