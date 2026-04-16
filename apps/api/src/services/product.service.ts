@@ -108,15 +108,29 @@ export const productService = {
         skip,
         take: limit,
         orderBy: orderBy as any,
-        include: {
+        // List view returns only what ProductCard needs. This cuts payload
+        // by ~80% — the heavy text fields (description, care, SEO, etc.)
+        // are loaded on demand by getProductBySlug for the PDP.
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          compareAtPrice: true,
+          status: true,
+          isFeatured: true,
+          vibes: true,
+          categoryId: true,
+          createdAt: true,
+          updatedAt: true,
           images: {
             where: { isPrimary: true },
             take: 1,
           },
+          // Card only uses stock to compute isOutOfStock — drop size/color/colorHex from list.
           variants: {
             where: { isActive: true },
-            select: { id: true, size: true, color: true, colorHex: true, stock: true },
-            orderBy: { createdAt: 'asc' },
+            select: { stock: true },
           },
           category: {
             select: { id: true, name: true, slug: true },
