@@ -125,7 +125,7 @@ export default function CheckoutPage() {
         <div className="text-center">
           <ShoppingBag className="mx-auto h-12 w-12 text-[var(--color-muted)]" />
           <p className="mt-4 text-lg font-semibold">Your cart is empty</p>
-          <Link href="/categories/new-arrivals">
+          <Link href="/products">
             <Button className="mt-4">Browse Products</Button>
           </Link>
         </div>

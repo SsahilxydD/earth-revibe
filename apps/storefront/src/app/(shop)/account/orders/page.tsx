@@ -75,7 +75,7 @@ export default function OrdersPage() {
       >
         <p style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>No orders yet</p>
         <Link
-          href="/categories/new-arrivals"
+          href="/products"
           style={{
             marginTop: 28,
             display: 'inline-flex',

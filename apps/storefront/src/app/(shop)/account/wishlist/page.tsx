@@ -97,7 +97,7 @@ export default function WishlistPage() {
       >
         <p style={{ fontSize: 13, fontWeight: 300, color: '#999' }}>Your wishlist is empty</p>
         <Link
-          href="/categories/new-arrivals"
+          href="/products"
           style={{
             marginTop: 28,
             display: 'inline-flex',
