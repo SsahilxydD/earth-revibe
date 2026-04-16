@@ -250,6 +250,7 @@ describe('authService.changePassword', () => {
     await authService.changePassword(USER_ID, {
       currentPassword: 'old-password',
       newPassword: 'new-password',
+      confirmNewPassword: 'new-password',
     });
 
     expect(mockUser.update).toHaveBeenCalledWith(
@@ -270,6 +271,7 @@ describe('authService.changePassword', () => {
       authService.changePassword(USER_ID, {
         currentPassword: 'wrong-password',
         newPassword: 'new-password',
+        confirmNewPassword: 'new-password',
       })
     ).rejects.toThrow('Current password is incorrect');
   });
@@ -281,6 +283,7 @@ describe('authService.changePassword', () => {
       authService.changePassword(USER_ID, {
         currentPassword: 'any',
         newPassword: 'new-password',
+        confirmNewPassword: 'new-password',
       })
     ).rejects.toThrow('Password login is not enabled for this account');
   });
@@ -292,6 +295,7 @@ describe('authService.changePassword', () => {
       authService.changePassword(USER_ID, {
         currentPassword: 'any',
         newPassword: 'new-password',
+        confirmNewPassword: 'new-password',
       })
     ).rejects.toThrow('Password login is not enabled for this account');
   });
