@@ -169,7 +169,7 @@ function ProductsContent() {
   }, [allProducts, searchParams, setNavContext]);
 
   const currentFilters: FilterState = { minPrice, maxPrice, size, color };
-  const hasActiveFilters = !!(minPrice || maxPrice || size || color || category || activeVibe);
+  const hasActiveFilters = !!(minPrice || maxPrice || size || color || category);
 
   const clearAllFilters = () => {
     router.push('/products', { scroll: false });
@@ -425,34 +425,6 @@ function ProductsContent() {
               flexWrap: 'wrap',
             }}
           >
-            {activeVibe && (
-              <button
-                onClick={() => updateParams({ vibe: undefined })}
-                style={{
-                  display: 'inline-flex',
-                  height: 28,
-                  padding: '0 12px',
-                  gap: 6,
-                  alignItems: 'center',
-                  backgroundColor: '#F5F5F5',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 400,
-                    color: '#000',
-                    letterSpacing: 0.5,
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  Vibe: {VIBES.find((v) => v.value === activeVibe)?.label ?? activeVibe}
-                </span>
-                <X size={10} color="#999" />
-              </button>
-            )}
             {category && (
               <button
                 onClick={() => updateParams({ category: undefined })}
