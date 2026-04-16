@@ -11,96 +11,49 @@ import { useUiStore } from '@/stores/ui-store';
 import { SearchOverlay } from './search-overlay';
 
 const NAV_LINKS = [
-  { label: 'NEW ARRIVALS', href: '/categories/new-arrivals' },
-  { label: 'BESTSELLERS', href: '/categories/bestsellers' },
   { label: 'ALL PRODUCTS', href: '/products' },
-  { label: 'T-SHIRTS', href: '/categories/t-shirts' },
-  { label: 'SHIRTS', href: '/categories/shirts' },
-  { label: 'POLOS', href: '/categories/polos' },
-  { label: 'BOTTOMWEAR', href: '/categories/bottomwear' },
+  { label: 'CLOUDS', href: '/products?vibe=above-the-clouds' },
+  { label: 'SALT', href: '/products?vibe=salt-on-skin' },
+  { label: 'GOLD', href: '/products?vibe=golden-hour-gang' },
+  { label: 'WILD', href: '/products?vibe=into-the-wild' },
+  { label: 'NEON', href: '/products?vibe=neon-nomads' },
+  { label: 'FLIGHT', href: '/products?vibe=flight-mode' },
 ];
 
 export function Header() {
-  const { isSearchOpen, openSearch, announcementDismissed } = useUiStore();
+  const { isSearchOpen, openSearch } = useUiStore();
   const itemCount = useCartStore((s) => s.getItemCount());
   const openCart = useCartStore((s) => s.openCart);
   const pathname = usePathname();
-
-  // Fixed banner height — avoids measuring DOM on every mount which causes
-  // the header to jump down/up. Banner is always ~36px when visible.
-  const bannerHeight = announcementDismissed ? 0 : 36;
 
   // Initialize from current scroll position to avoid wrong state on first frame
   const [scrolled, setScrolled] = useState(() =>
     typeof window !== 'undefined' ? window.scrollY > 10 : false
   );
-  const [logoTop, setLogoTop] = useState(() => {
-    if (typeof window === 'undefined') return bannerHeight;
-    return Math.max(0, bannerHeight - window.scrollY);
-  });
 
   const isProductDetail = pathname.startsWith('/products/') && pathname !== '/products';
-  const isHomepage = pathname === '/';
 
-  // Lightweight scroll handler — no DOM reads, just math with fixed banner height
-  const updatePositions = useCallback(() => {
-    const scrollY = window.scrollY;
-    setScrolled(scrollY > 10);
-
-    if (announcementDismissed) {
-      setLogoTop(0);
-      return;
-    }
-
-    const visibleBannerBottom = Math.max(0, bannerHeight - scrollY);
-    setLogoTop(visibleBannerBottom);
-  }, [announcementDismissed, bannerHeight]);
+  const updateScrolled = useCallback(() => {
+    setScrolled(window.scrollY > 10);
+  }, []);
 
   useEffect(() => {
-    updatePositions();
-    window.addEventListener('scroll', updatePositions, { passive: true });
-    return () => window.removeEventListener('scroll', updatePositions);
-  }, [updatePositions]);
+    updateScrolled();
+    window.addEventListener('scroll', updateScrolled, { passive: true });
+    return () => window.removeEventListener('scroll', updateScrolled);
+  }, [updateScrolled]);
 
   return (
     <>
       {/* ------------------------------------------------------------ */}
-      {/* Mobile transparent navbar — non-product-detail pages only     */}
-      {/* Fixed overlay that floats over page content. Tracks the       */}
-      {/* announcement banner: sits below it when visible, slides up    */}
-      {/* to top:0 as the banner scrolls out of view.                   */}
-      {/* ------------------------------------------------------------ */}
-      {isHomepage && (
-        <div
-          className="fixed left-0 right-0 z-30 pointer-events-none md:hidden"
-          style={{ top: logoTop }}
-        >
-          <div className="flex items-center justify-center px-4 py-3 pointer-events-auto">
-            <Link href="/">
-              <Image
-                src="/Earth Revibe Logo White.png"
-                alt="Earth Revibe"
-                width={160}
-                height={40}
-                priority
-                className="h-auto w-10 drop-shadow-md"
-              />
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------ */}
       {/* Solid header                                                  */}
       {/* Mobile: product detail (back+icons) / other pages (logo only) */}
       {/* Desktop: always full nav                                      */}
-      {/* Homepage mobile: hidden (transparent logo above handles it)   */}
       {/* ------------------------------------------------------------ */}
       <header
         className={cn(
           'sticky top-0 z-40 w-full bg-white transition-all duration-300',
-          scrolled && 'shadow-md',
-          isHomepage && 'hidden md:block'
+          scrolled && 'shadow-md'
         )}
       >
         <div
