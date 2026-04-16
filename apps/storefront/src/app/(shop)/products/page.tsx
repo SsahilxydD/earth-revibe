@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { X, Wind, Luggage, Sun, ShieldCheck, RefreshCw, Truck, Headphones } from 'lucide-react';
 import { ProductCard } from '@/components/product/product-card';
@@ -12,9 +12,10 @@ import { useProductNavStore } from '@/stores/product-nav-store';
 import { Spinner } from '@/components/ui/spinner';
 import { motion } from 'framer-motion';
 
-// Trip Vibe circles — short labels, Unsplash placeholders.
-// Selection is visual-only for now; product filtering by vibe will
-// be wired in a follow-up when the category system is revamped.
+import { categoriesForVibe, isKnownVibe } from '@/lib/vibe-categories';
+
+// 6 trip vibes — visual labels + Unsplash placeholders. The slug field
+// is the source of truth and matches keys in VIBE_TO_CATEGORIES.
 const VIBES = [
   {
     label: 'Clouds',
@@ -81,8 +82,9 @@ function ProductsContent() {
   const color = searchParams.get('color') || '';
   const search = searchParams.get('search') || '';
 
-  // Vibe selection — visual-only for now, no filtering applied
-  const [activeVibe, setActiveVibe] = useState<string>('');
+  // Vibe selection — URL-driven via ?vibe=<slug>
+  const vibeParam = searchParams.get('vibe');
+  const activeVibe = isKnownVibe(vibeParam) ? vibeParam : '';
 
   const { sortBy, sortOrder } = parseSort(sort);
   const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
@@ -90,7 +92,7 @@ function ProductsContent() {
 
   const queryParams = useMemo(
     () => ({
-      category: category || undefined,
+      category: activeVibe ? categoriesForVibe(activeVibe) : category || undefined,
       sortBy,
       sortOrder,
       minPrice,
@@ -100,7 +102,7 @@ function ProductsContent() {
       search: search || undefined,
       limit: 48,
     }),
-    [category, sortBy, sortOrder, minPrice, maxPrice, size, color, search]
+    [activeVibe, category, sortBy, sortOrder, minPrice, maxPrice, size, color, search]
   );
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
@@ -155,7 +157,6 @@ function ProductsContent() {
     return data.pages.flatMap((page) => page.products ?? []);
   }, [data]);
 
-  // Vibe is visual-only for now — products are not filtered by vibe yet
   const allProducts = rawProducts;
 
   const totalCount = data?.pages?.[0]?.total ?? allProducts.length;
@@ -169,10 +170,9 @@ function ProductsContent() {
   }, [allProducts, searchParams, setNavContext]);
 
   const currentFilters: FilterState = { category, minPrice, maxPrice, size, color };
-  const hasActiveFilters = !!(minPrice || maxPrice || size || color || category);
+  const hasActiveFilters = !!(minPrice || maxPrice || size || color || category || activeVibe);
 
   const clearAllFilters = () => {
-    setActiveVibe('');
     router.push('/products', { scroll: false });
   };
 
@@ -367,7 +367,7 @@ function ProductsContent() {
               return (
                 <button
                   key={v.value}
-                  onClick={() => setActiveVibe(isActive ? '' : v.value)}
+                  onClick={() => updateParams({ vibe: isActive ? undefined : v.value })}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -426,6 +426,34 @@ function ProductsContent() {
               flexWrap: 'wrap',
             }}
           >
+            {activeVibe && (
+              <button
+                onClick={() => updateParams({ vibe: undefined })}
+                style={{
+                  display: 'inline-flex',
+                  height: 28,
+                  padding: '0 12px',
+                  gap: 6,
+                  alignItems: 'center',
+                  backgroundColor: '#F5F5F5',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 400,
+                    color: '#000',
+                    letterSpacing: 0.5,
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  Vibe: {VIBES.find((v) => v.value === activeVibe)?.label ?? activeVibe}
+                </span>
+                <X size={10} color="#999" />
+              </button>
+            )}
             {category && (
               <button
                 onClick={() => updateParams({ category: undefined })}
