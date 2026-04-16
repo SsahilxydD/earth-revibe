@@ -17,17 +17,27 @@ export const createMagicCheckoutSchema = z.object({
 // Razorpay may send additional fields we don't explicitly define.
 // Without passthrough, Zod's strict mode strips/rejects unknown fields.
 
-// Razorpay sends this to our shipping info endpoint
+// Razorpay sends this to our shipping info endpoint.
+//
+// Observed actual payload (2026-04-16):
+//   { "addresses": [{ "line1": "...", "city": "...", "state": "...",
+//                     "zipcode": "380009", "country": "in" }] }
+//
+// Razorpay's docs suggest `order_id` and per-address `id` would be present,
+// but in practice the early shipping-info call (fired as soon as the user
+// enters a pincode, before an order exists) sends neither. Everything
+// except zipcode + country is therefore treated as optional so validation
+// doesn't 400 the legitimate Razorpay payload.
 export const shippingInfoRequestSchema = z
   .object({
-    order_id: z.string(),
+    order_id: z.string().optional(),
     razorpay_order_id: z.string().optional(),
     contact: z.string().optional(),
     email: z.string().optional(),
     addresses: z.array(
       z
         .object({
-          id: z.string(),
+          id: z.string().optional(),
           zipcode: z.string(),
           state_code: z.string().optional(),
           country: z.string(),

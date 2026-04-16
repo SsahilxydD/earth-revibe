@@ -284,10 +284,16 @@ export const checkoutService = {
     const codFeePaise = Math.round((env.COD_FEE || 0) * 100);
 
     const addresses = data.addresses.map(
-      (addr: { id: string; zipcode: string; country: string; state_code?: string }) => {
+      (
+        addr: { id?: string; zipcode: string; country: string; state_code?: string },
+        idx: number
+      ) => {
         const serviceable = addr.country?.toLowerCase() === 'in';
         return {
-          id: addr.id,
+          // Echo Razorpay's id if they sent one; otherwise synthesize a stable
+          // per-request id from the array index (Razorpay's early shipping-info
+          // call often omits the address id entirely).
+          id: addr.id ?? `addr_${idx}`,
           zipcode: addr.zipcode,
           country: addr.country,
           shipping_methods: [
