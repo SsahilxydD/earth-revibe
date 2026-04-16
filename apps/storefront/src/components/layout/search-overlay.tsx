@@ -23,7 +23,6 @@ const BROWSE_VIBES = [
   { label: 'Gold', href: '/products?vibe=golden-hour-gang', icon: Sparkles },
   { label: 'Wild', href: '/products?vibe=into-the-wild', icon: Sparkles },
   { label: 'Neon', href: '/products?vibe=neon-nomads', icon: Sparkles },
-  { label: 'Flight', href: '/products?vibe=flight-mode', icon: Sparkles },
 ];
 
 /* ------------------------------------------------------------------ */

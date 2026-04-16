@@ -17,7 +17,6 @@ const NAV_LINKS = [
   { label: 'GOLD', href: '/products?vibe=golden-hour-gang' },
   { label: 'WILD', href: '/products?vibe=into-the-wild' },
   { label: 'NEON', href: '/products?vibe=neon-nomads' },
-  { label: 'FLIGHT', href: '/products?vibe=flight-mode' },
 ];
 
 export function Header() {
