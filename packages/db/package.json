@@ -12,9 +12,11 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx src/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "backfill-vibes": "tsx src/scripts/backfill-product-vibes.ts"
   },
   "dependencies": {
+    "@earth-revibe/shared": "workspace:*",
     "@prisma/client": "^5.22.0"
   },
   "devDependencies": {
