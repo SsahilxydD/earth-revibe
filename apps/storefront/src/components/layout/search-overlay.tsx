@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, X, Clock, ArrowRight, Grid3X3, Sparkles, Shirt } from 'lucide-react';
+import { Search, X, Clock, ArrowRight, Grid3X3, Sparkles } from 'lucide-react';
 import { useUiStore, lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 import { api } from '@/lib/api-client';
 import { Spinner } from '@/components/ui/spinner';
@@ -13,17 +13,17 @@ const RECENT_SEARCHES_KEY = 'earth-revibe-recent-searches';
 const MAX_RECENT = 5;
 
 /* ------------------------------------------------------------------ */
-/*  Category quick-links (shown when search is empty — replaces        */
+/*  Vibe quick-links (shown when search is empty — replaces            */
 /*  hamburger menu navigation)                                         */
 /* ------------------------------------------------------------------ */
-const BROWSE_CATEGORIES = [
-  { label: 'New Arrivals', href: '/categories/new-arrivals', icon: Sparkles },
-  { label: 'Bestsellers', href: '/categories/bestsellers', icon: Sparkles },
+const BROWSE_VIBES = [
   { label: 'All Products', href: '/products', icon: Grid3X3 },
-  { label: 'T-Shirts', href: '/categories/t-shirts', icon: Shirt },
-  { label: 'Shirts', href: '/categories/shirts', icon: Shirt },
-  { label: 'Polos', href: '/categories/polos', icon: Shirt },
-  { label: 'Bottomwear', href: '/categories/bottomwear', icon: Shirt },
+  { label: 'Clouds', href: '/products?vibe=above-the-clouds', icon: Sparkles },
+  { label: 'Salt', href: '/products?vibe=salt-on-skin', icon: Sparkles },
+  { label: 'Gold', href: '/products?vibe=golden-hour-gang', icon: Sparkles },
+  { label: 'Wild', href: '/products?vibe=into-the-wild', icon: Sparkles },
+  { label: 'Neon', href: '/products?vibe=neon-nomads', icon: Sparkles },
+  { label: 'Flight', href: '/products?vibe=flight-mode', icon: Sparkles },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -35,10 +35,6 @@ interface AutocompleteResult {
     slug: string;
     price: number;
     images?: { url: string }[];
-  }[];
-  categories: {
-    name: string;
-    slug: string;
   }[];
   blogPosts?: {
     title: string;
@@ -126,8 +122,7 @@ export function SearchOverlay() {
   };
 
   const hasProducts = results && results.products.length > 0;
-  const hasCategories = results && results.categories.length > 0;
-  const hasResults = hasProducts || hasCategories;
+  const hasResults = hasProducts;
   const showEmpty = !loading && query.length < 2;
 
   return (
@@ -161,31 +156,6 @@ export function SearchOverlay() {
             {loading && (
               <div className="flex items-center justify-center py-8">
                 <Spinner />
-              </div>
-            )}
-
-            {/* ---- Search results: categories ---- */}
-            {!loading && hasCategories && (
-              <div className="mb-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-                  Categories
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {results!.categories.map((cat) => (
-                    <Link
-                      key={cat.slug}
-                      href={`/categories/${cat.slug}`}
-                      onClick={() => {
-                        saveRecentSearch(query);
-                        closeSearch();
-                      }}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-primary)] hover:text-white hover:border-[var(--color-primary)]"
-                    >
-                      <Grid3X3 className="h-3.5 w-3.5" />
-                      {cat.name}
-                    </Link>
-                  ))}
-                </div>
               </div>
             )}
 
@@ -241,23 +211,23 @@ export function SearchOverlay() {
             {/* ---- Empty state: browse categories + recent searches ---- */}
             {showEmpty && (
               <>
-                {/* Browse categories — replaces hamburger menu */}
+                {/* Browse vibes — replaces hamburger menu */}
                 <div className="mb-6">
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                     Browse
                   </p>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {BROWSE_CATEGORIES.map((cat) => {
-                      const Icon = cat.icon;
+                    {BROWSE_VIBES.map((vibe) => {
+                      const Icon = vibe.icon;
                       return (
                         <Link
-                          key={cat.href}
-                          href={cat.href}
+                          key={vibe.href}
+                          href={vibe.href}
                           onClick={closeSearch}
                           className="flex items-center gap-2.5 rounded-lg border border-[var(--color-border)] px-3 py-3 text-sm font-medium transition-colors hover:bg-[var(--color-surface)] hover:border-[var(--color-primary)]"
                         >
                           <Icon className="h-4 w-4 text-[var(--color-muted)]" />
-                          {cat.label}
+                          {vibe.label}
                         </Link>
                       );
                     })}
