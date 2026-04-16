@@ -13,30 +13,13 @@ interface NavSection {
 }
 
 const NAV_SECTIONS: NavSection[] = [
-  {
-    label: 'NEW ARRIVALS',
-    href: '/categories/new-arrivals',
-  },
-  {
-    label: 'SHIRTS',
-    href: '/categories/shirts',
-  },
-  {
-    label: 'T-SHIRTS',
-    href: '/categories/t-shirts',
-  },
-  {
-    label: 'OUTERWEAR',
-    href: '/categories/outerwear',
-  },
-  {
-    label: 'ALL PRODUCTS',
-    href: '/products',
-  },
-  {
-    label: 'BESTSELLERS',
-    href: '/categories/bestsellers',
-  },
+  { label: 'ALL PRODUCTS', href: '/products' },
+  { label: 'CLOUDS', href: '/products?vibe=above-the-clouds' },
+  { label: 'SALT', href: '/products?vibe=salt-on-skin' },
+  { label: 'GOLD', href: '/products?vibe=golden-hour-gang' },
+  { label: 'WILD', href: '/products?vibe=into-the-wild' },
+  { label: 'NEON', href: '/products?vibe=neon-nomads' },
+  { label: 'FLIGHT', href: '/products?vibe=flight-mode' },
 ];
 
 export function MobileMenu() {

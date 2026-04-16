@@ -10,13 +10,13 @@ const SECTIONS = [
   {
     title: 'SHOP',
     links: [
-      { label: 'New Arrivals', href: '/categories/new-arrivals' },
-      { label: 'Bestsellers', href: '/categories/bestsellers' },
       { label: 'All Products', href: '/products' },
-      { label: 'T-Shirts', href: '/categories/t-shirts' },
-      { label: 'Shirts', href: '/categories/shirts' },
-      { label: 'Polos', href: '/categories/polos' },
-      { label: 'Bottomwear', href: '/categories/bottomwear' },
+      { label: 'Clouds', href: '/products?vibe=above-the-clouds' },
+      { label: 'Salt', href: '/products?vibe=salt-on-skin' },
+      { label: 'Gold', href: '/products?vibe=golden-hour-gang' },
+      { label: 'Wild', href: '/products?vibe=into-the-wild' },
+      { label: 'Neon', href: '/products?vibe=neon-nomads' },
+      { label: 'Flight', href: '/products?vibe=flight-mode' },
     ],
   },
   {
