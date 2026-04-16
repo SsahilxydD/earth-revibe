@@ -12,10 +12,10 @@ import { useProductNavStore } from '@/stores/product-nav-store';
 import { Spinner } from '@/components/ui/spinner';
 import { motion } from 'framer-motion';
 
-import { categoriesForVibe, isKnownVibe } from '@/lib/vibe-categories';
+import { isVibe } from '@earth-revibe/shared';
 
-// 6 trip vibes — visual labels + Unsplash placeholders. The slug field
-// is the source of truth and matches keys in VIBE_TO_CATEGORIES.
+// 5 trip vibes — visual labels + Unsplash placeholders. Slugs are the
+// source of truth and match Vibe enum in @earth-revibe/shared.
 const VIBES = [
   {
     label: 'Clouds',
@@ -41,11 +41,6 @@ const VIBES = [
     label: 'Neon',
     value: 'neon-nomads',
     img: 'https://images.unsplash.com/photo-1514214246283-d427a95c5d2f?w=200&q=80&fm=jpg',
-  },
-  {
-    label: 'Flight',
-    value: 'flight-mode',
-    img: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=200&q=80&fm=jpg',
   },
 ] as const;
 
@@ -84,7 +79,7 @@ function ProductsContent() {
 
   // Vibe selection — URL-driven via ?vibe=<slug>
   const vibeParam = searchParams.get('vibe');
-  const activeVibe = isKnownVibe(vibeParam) ? vibeParam : '';
+  const activeVibe = isVibe(vibeParam) ? vibeParam : '';
 
   const { sortBy, sortOrder } = parseSort(sort);
   const minPrice = minPriceRaw ? Number(minPriceRaw) : undefined;
@@ -92,7 +87,8 @@ function ProductsContent() {
 
   const queryParams = useMemo(
     () => ({
-      category: activeVibe ? categoriesForVibe(activeVibe) : category || undefined,
+      category: category || undefined,
+      vibe: activeVibe || undefined,
       sortBy,
       sortOrder,
       minPrice,

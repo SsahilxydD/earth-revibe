@@ -31,6 +31,7 @@ function buildProductQuery(params: ProductListParams): string {
     const value = Array.isArray(params.category) ? params.category.join(',') : params.category;
     if (value) searchParams.set('category', value);
   }
+  if (params.vibe) searchParams.set('vibe', params.vibe);
   if (params.minPrice != null) searchParams.set('minPrice', String(params.minPrice));
   if (params.maxPrice != null) searchParams.set('maxPrice', String(params.maxPrice));
   if (params.sizes?.length) searchParams.set('size', params.sizes.join(','));
