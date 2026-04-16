@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ProductStatus } from '../enums';
+import { ProductStatus, VIBES } from '../enums';
 
 export const createProductSchema = z.object({
   name: z.string().min(2).max(200),
@@ -29,6 +29,7 @@ export const createProductSchema = z.object({
   isFeatured: z.boolean().default(false),
   categoryId: z.string().min(1),
   tags: z.array(z.string()).optional(),
+  vibes: z.array(z.enum(VIBES)).default([]),
 });
 
 export const updateProductSchema = createProductSchema.partial();
@@ -38,6 +39,7 @@ export const productQuerySchema = z.object({
     (v) => (typeof v === 'string' && v.includes(',') ? v.split(',').filter(Boolean) : v),
     z.union([z.string(), z.array(z.string())]).optional()
   ),
+  vibe: z.enum(VIBES).optional(),
   status: z.nativeEnum(ProductStatus).optional(),
   minPrice: z.coerce.number().optional(),
   maxPrice: z.coerce.number().optional(),

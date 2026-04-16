@@ -102,6 +102,7 @@ export interface Product {
   compareAtPrice: number | null;
   status: ProductStatus;
   isFeatured: boolean;
+  vibes: string[];
   averageRating: number | null;
   reviewCount: number;
   categoryId: string | null;
@@ -386,6 +387,7 @@ export interface ProductListParams {
   limit?: number;
   search?: string;
   category?: string | string[];
+  vibe?: string;
   minPrice?: number;
   maxPrice?: number;
   sizes?: string[];
