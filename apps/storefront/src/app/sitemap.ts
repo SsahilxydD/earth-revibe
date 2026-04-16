@@ -7,11 +7,6 @@ interface Product {
   updatedAt?: string;
 }
 
-interface Collection {
-  slug: string;
-  updatedAt?: string;
-}
-
 interface BlogPost {
   slug: string;
   updatedAt?: string;
@@ -31,25 +26,6 @@ async function fetchProducts(): Promise<Product[]> {
 
     const json = await res.json();
     return json.data?.products || json.data || [];
-  } catch {
-    return [];
-  }
-}
-
-async function fetchCollections(): Promise<Collection[]> {
-  try {
-    const apiBase =
-      process.env.NEXT_PUBLIC_API_URL || 'https://earth-revibeapi-production.up.railway.app/api/v1';
-    const baseUrl = apiBase.startsWith('http') ? apiBase : `https://${apiBase}`;
-
-    const res = await fetch(`${baseUrl}/categories?limit=100`, {
-      next: { revalidate: 3600, tags: ['categories'] },
-    });
-
-    if (!res.ok) return [];
-
-    const json = await res.json();
-    return json.data?.collections || json.data || [];
   } catch {
     return [];
   }
@@ -75,11 +51,7 @@ async function fetchBlogPosts(): Promise<BlogPost[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [products, collections, blogPosts] = await Promise.all([
-    fetchProducts(),
-    fetchCollections(),
-    fetchBlogPosts(),
-  ]);
+  const [products, blogPosts] = await Promise.all([fetchProducts(), fetchBlogPosts()]);
 
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -157,13 +129,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const collectionPages: MetadataRoute.Sitemap = collections.map((collection) => ({
-    url: `${SITE_URL}/categories/${collection.slug}`,
-    lastModified: collection.updatedAt ? new Date(collection.updatedAt) : new Date(),
-    changeFrequency: 'daily' as const,
-    priority: 0.8,
-  }));
-
   const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
     url: `${SITE_URL}/blog/${post.slug}`,
     lastModified: post.updatedAt ? new Date(post.updatedAt) : new Date(),
@@ -171,5 +136,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...productPages, ...collectionPages, ...blogPages];
+  return [...staticPages, ...productPages, ...blogPages];
 }

@@ -46,11 +46,7 @@ export function SwipeableProductWrapper({ initialProduct, initialSlug }: Props) 
         const productSlugs = result.products.map((p) => p.slug);
         if (productSlugs.length > 1) {
           if (categorySlug) {
-            setNavContext(
-              productSlugs,
-              initialProduct.category?.name || 'Products',
-              categorySlug ? `/categories/${categorySlug}` : '/products'
-            );
+            setNavContext(productSlugs, initialProduct.category?.name || 'Products', '/products');
           } else {
             setAllSlugs(productSlugs);
           }
