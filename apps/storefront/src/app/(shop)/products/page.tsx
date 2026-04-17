@@ -2,7 +2,18 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { X, Wind, Luggage, Sun, ShieldCheck, RefreshCw, Truck, Headphones } from 'lucide-react';
+import {
+  X,
+  Wind,
+  Luggage,
+  Sun,
+  ShieldCheck,
+  RefreshCw,
+  Truck,
+  Headphones,
+  ArrowRight,
+} from 'lucide-react';
+import Link from 'next/link';
 import { ProductCard } from '@/components/product/product-card';
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
 import { FilterSidebar, type FilterState } from '@/components/product/filter-sidebar';
@@ -377,7 +388,7 @@ function ProductsContent() {
           borderTopRightRadius: 16,
         }}
       >
-        {/* Trip Vibe circles — 6 vibes, tap to select */}
+        {/* Trip Vibe circles — 5 vibes + Flight shortcut to bundles */}
         {!search && (
           <div
             style={{
@@ -425,7 +436,101 @@ function ProductsContent() {
                 </button>
               );
             })}
+
+            {/* Flight — a special circle that jumps to the /flight-mode section
+                instead of filtering. Visually matches the other vibe circles so
+                it reads as part of the same row, but behaves as a shortcut. */}
+            <Link
+              href="/flight-mode"
+              prefetch
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                flexShrink: 0,
+                textDecoration: 'none',
+              }}
+            >
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 9999,
+                  backgroundColor: '#000',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Luggage size={20} color="#FFF" />
+              </div>
+              <span style={{ fontSize: 9, fontWeight: 400, color: '#000' }}>Flight</span>
+            </Link>
           </div>
+        )}
+
+        {/* Flight Mode promo strip — slim editorial banner above the grid */}
+        {!search && (
+          <Link
+            href="/flight-mode"
+            prefetch
+            style={{
+              display: 'flex',
+              margin: '0 20px 16px 20px',
+              padding: '14px 18px',
+              borderRadius: 12,
+              backgroundColor: '#000',
+              color: '#FFF',
+              textDecoration: 'none',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 3,
+                alignItems: 'flex-start',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 500,
+                  letterSpacing: 2,
+                  color: 'rgba(255,255,255,0.6)',
+                }}
+              >
+                FLIGHT MODE
+              </span>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 400,
+                  color: '#FFF',
+                }}
+              >
+                Pre-packed kits. Save up to 22%.
+              </span>
+            </div>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 10,
+                fontWeight: 500,
+                letterSpacing: 1.5,
+                color: '#FFF',
+              }}
+            >
+              EXPLORE
+              <ArrowRight size={13} color="#FFF" />
+            </span>
+          </Link>
         )}
 
         {/* Filter bar — 44px */}
