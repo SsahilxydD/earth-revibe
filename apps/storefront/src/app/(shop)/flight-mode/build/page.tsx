@@ -9,7 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatPrice, getImageUrl } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart-store';
 import { useToast } from '@/providers';
-import { VIBE_META, primaryImageUrl, type ComboVibe } from '@/lib/flight-mode-data';
+import { VIBE_META, primaryImageUrl, toNumber, type ComboVibe } from '@/lib/flight-mode-data';
+import { SwapSheet } from '@/components/flight-mode/swap-sheet';
 import { useProducts } from '@/hooks/use-products';
 import type { Product, ProductVariant } from '@/types';
 
@@ -52,9 +53,9 @@ function KitBuilderInner() {
   const [vibe, setVibe] = useState<VibeSlug>('above-the-clouds');
   const [duration, setDuration] = useState<Duration>(5);
 
-  // Fetch a larger pool so the user can swap into alternates without
-  // blowing it up. We only actually use `duration` items.
-  const { data, isLoading } = useProducts(
+  // 1) Vibe-scoped fetch — seeds the default kit selection from products
+  //    that actually match the chosen collection.
+  const { data: vibeData, isLoading } = useProducts(
     {
       vibe: vibe === 'mixed' ? undefined : vibe,
       limit: 24,
@@ -63,31 +64,46 @@ function KitBuilderInner() {
     },
     { enabled: step >= 2 }
   );
-  const pool = data?.products ?? [];
+  const vibePool: Product[] = vibeData?.products ?? [];
+
+  // 2) Full catalog — what the swap sheet shows so the customer can pick
+  //    anything from the store when swapping.
+  const { data: allData } = useProducts(
+    { limit: 100, sortBy: 'createdAt', sortOrder: 'desc' },
+    { enabled: step >= 2 }
+  );
+  const catalog: Product[] = allData?.products ?? [];
+
+  const pool: Product[] = catalog.length > 0 ? catalog : vibePool;
 
   // Selected piece IDs, in display order
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   // Sizes by product id
   const [sizes, setSizes] = useState<Record<string, string>>({});
 
-  // When pool arrives or duration changes, seed selection from the top-N
+  // Seed selection from the vibe-scoped pool (so defaults match the
+  // chosen trip), but keep existing selection as long as every id is
+  // still resolvable in the broader catalog.
   useEffect(() => {
-    if (pool.length === 0) return;
+    if (vibePool.length === 0) return;
     const needed = DURATION_TO_PIECES[duration];
     setSelectedIds((prev) => {
       if (prev.length === needed && prev.every((id) => pool.some((p) => p.id === id))) {
         return prev;
       }
-      return pool.slice(0, needed).map((p) => p.id);
+      return vibePool.slice(0, needed).map((p) => p.id);
     });
-  }, [pool, duration]);
+  }, [vibePool, pool, duration]);
 
   const pieces: Product[] = useMemo(
     () => selectedIds.map((id) => pool.find((p) => p.id === id)).filter((p): p is Product => !!p),
     [selectedIds, pool]
   );
 
-  const individualTotal = useMemo(() => pieces.reduce((acc, p) => acc + p.price, 0), [pieces]);
+  const individualTotal = useMemo(
+    () => pieces.reduce((acc, p) => acc + toNumber(p.price), 0),
+    [pieces]
+  );
   const kitPrice = useMemo(
     () => Math.round(individualTotal * (1 - BUNDLE_DISCOUNT_PCT / 100)),
     [individualTotal]
@@ -97,28 +113,31 @@ function KitBuilderInner() {
 
   const goStep = (n: 1 | 2 | 3 | 4) => router.push(`/flight-mode/build?step=${n}`);
 
-  const swapPiece = (idx: number) => {
+  // Index of the slot whose swap sheet is open (step 2 only)
+  const [swapSlot, setSwapSlot] = useState<number | null>(null);
+
+  const openSwap = (idx: number) => {
+    if (catalog.length <= pieces.length) {
+      addToast('No other options available right now', 'info');
+      return;
+    }
+    setSwapSlot(idx);
+  };
+
+  const applySwap = (idx: number, next: Product) => {
     const current = pieces[idx];
-    if (!current || pool.length <= pieces.length) {
-      addToast('No other options right now for that slot', 'info');
-      return;
-    }
-    const alreadyIn = new Set(selectedIds);
-    const next = pool.find((p) => !alreadyIn.has(p.id));
-    if (!next) {
-      addToast('No more alternates available', 'info');
-      return;
-    }
+    if (!current) return;
     setSelectedIds((prev) => {
       const copy = [...prev];
       copy[idx] = next.id;
       return copy;
     });
-    // Carry size preference if possible
     setSizes((prev) => {
       const copy = { ...prev };
-      if (copy[current.id]) {
-        copy[next.id] = copy[current.id];
+      const oldSize = copy[current.id];
+      if (oldSize) {
+        const nextHasSize = next.variants.some((v) => v.size === oldSize && v.stock > 0);
+        if (nextHasSize) copy[next.id] = oldSize;
         delete copy[current.id];
       }
       return copy;
@@ -133,10 +152,9 @@ function KitBuilderInner() {
     pieces.forEach((product) => {
       const size = sizes[product.id] || defaultSize(product);
       const variant = findVariant(product.variants, size);
+      const unitPrice = toNumber(product.price);
       const scaledPrice =
-        individualTotal > 0
-          ? Math.round((kitPrice / individualTotal) * product.price)
-          : product.price;
+        individualTotal > 0 ? Math.round((kitPrice / individualTotal) * unitPrice) : unitPrice;
       const img = primaryImageUrl(product) || '';
       addItem({
         id: variant?.id || `kit-${product.id}`,
@@ -250,7 +268,7 @@ function KitBuilderInner() {
               pieces={pieces}
               expectedCount={DURATION_TO_PIECES[duration]}
               isLoading={isLoading}
-              onSwap={swapPiece}
+              onSwap={openSwap}
             />
             <StickyBar
               leftBlockLeft={`${pieces.length} PIECES SELECTED`}
@@ -306,6 +324,21 @@ function KitBuilderInner() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Swap picker — used by step 2 */}
+      <SwapSheet
+        isOpen={swapSlot !== null}
+        onClose={() => setSwapSlot(null)}
+        pool={pool}
+        currentId={swapSlot !== null ? (pieces[swapSlot]?.id ?? null) : null}
+        takenIds={selectedIds}
+        kindLabel={
+          swapSlot !== null ? pieces[swapSlot]?.category?.name?.toUpperCase() || 'PIECE' : 'PIECE'
+        }
+        onSelect={(next) => {
+          if (swapSlot !== null) applySwap(swapSlot, next);
+        }}
+      />
     </div>
   );
 }

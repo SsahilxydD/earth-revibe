@@ -11,11 +11,13 @@ import {
   comboIndividualTotal,
   comboPrice,
   primaryImageUrl,
+  toNumber,
 } from '@/lib/flight-mode-data';
 import { useProducts } from '@/hooks/use-products';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart-store';
 import { useToast } from '@/providers';
+import { SwapSheet } from '@/components/flight-mode/swap-sheet';
 import type { Product, ProductVariant } from '@/types';
 
 export default function ComboDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -27,54 +29,71 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
   const { addToast } = useToast();
   const addItem = useCartStore((s) => s.addItem);
 
-  // Fetch a larger pool so the customer can swap in alternates from the
-  // same vibe. We only *show* pieceCount items; the rest are swap pool.
-  const { data, isLoading } = useProducts({
+  // 1) Vibe-scoped fetch — seeds the default roster with products that
+  //    actually match the combo's collection.
+  const { data: vibeData, isLoading } = useProducts({
     vibe: combo.vibe,
     limit: 24,
     sortBy: 'createdAt',
     sortOrder: 'desc',
   });
-  const pool: Product[] = useMemo(() => data?.products ?? [], [data]);
+  const vibePool: Product[] = useMemo(() => vibeData?.products ?? [], [vibeData]);
 
-  // Selected piece IDs in display order. Seeded from the top pieceCount
-  // as soon as products arrive.
+  // 2) Full catalog fetch — powers the swap sheet so the customer can
+  //    pick anything from the store, not just items tagged with the
+  //    combo's vibe.
+  const { data: allData } = useProducts({
+    limit: 100,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const catalog: Product[] = useMemo(() => allData?.products ?? [], [allData]);
+
+  // Pool used for selection resolution. Prefer the full catalog when it's
+  // arrived (so swapped-in products exist in the pool), otherwise fall
+  // back to the vibe pool so the default roster can still render.
+  const pool: Product[] = catalog.length > 0 ? catalog : vibePool;
+
+  // Selected piece IDs in display order. Seeded from the vibe-scoped
+  // pool so the default roster actually matches the combo's collection.
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   useEffect(() => {
-    if (pool.length === 0) return;
+    if (vibePool.length === 0) return;
     setSelectedIds((prev) => {
-      // Keep existing selection as long as every id is still in the pool
+      // Keep existing selection as long as every id still resolves
       if (prev.length === combo.pieceCount && prev.every((id) => pool.some((p) => p.id === id))) {
         return prev;
       }
-      return pool.slice(0, combo.pieceCount).map((p) => p.id);
+      return vibePool.slice(0, combo.pieceCount).map((p) => p.id);
     });
-  }, [pool, combo.pieceCount]);
+  }, [vibePool, pool, combo.pieceCount]);
 
   const pieces: Product[] = useMemo(
     () => selectedIds.map((id) => pool.find((p) => p.id === id)).filter((p): p is Product => !!p),
     [selectedIds, pool]
   );
 
-  const swapPiece = (index: number) => {
+  // Index of the slot whose swap sheet is currently open, or null.
+  const [swapSlot, setSwapSlot] = useState<number | null>(null);
+
+  const openSwap = (index: number) => {
+    if (catalog.length <= pieces.length) {
+      addToast('No other pieces available right now', 'info');
+      return;
+    }
+    setOpenSizePicker(null);
+    setSwapSlot(index);
+  };
+
+  const applySwap = (index: number, next: Product) => {
     const current = pieces[index];
     if (!current) return;
-    if (pool.length <= pieces.length) {
-      addToast('No other pieces in this collection right now', 'info');
-      return;
-    }
-    const taken = new Set(selectedIds);
-    const next = pool.find((p) => !taken.has(p.id));
-    if (!next) {
-      addToast('No more alternates available', 'info');
-      return;
-    }
     setSelectedIds((prev) => {
       const copy = [...prev];
       copy[index] = next.id;
       return copy;
     });
-    // Preserve size preference if the new product offers the same size
+    // Preserve size preference if the new product offers the same size in stock
     setSizes((prev) => {
       const copy = { ...prev };
       const oldSize = copy[current.id];
@@ -85,7 +104,6 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
       }
       return copy;
     });
-    setOpenSizePicker(null);
   };
 
   const individualTotal = useMemo(
@@ -119,7 +137,9 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
       const chosenSize = sizes[product.id] || defaultSize(product);
       const variant = findVariant(product.variants, chosenSize);
       const lineId = variant?.id || `${combo.slug}-${product.id}`;
-      const scaledPrice = Math.round((price / individualTotal) * product.price);
+      const unitPrice = toNumber(product.price);
+      const scaledPrice =
+        individualTotal > 0 ? Math.round((price / individualTotal) * unitPrice) : unitPrice;
       const img = primaryImageUrl(product) || '';
       addItem({
         id: lineId,
@@ -326,8 +346,8 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
                   setSizes((prev) => ({ ...prev, [p.id]: s }));
                   setOpenSizePicker(null);
                 }}
-                onSwap={() => swapPiece(i)}
-                canSwap={pool.length > pieces.length}
+                onSwap={() => openSwap(i)}
+                canSwap={catalog.length > pieces.length}
               />
               {i < pieces.length - 1 && <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />}
             </div>
@@ -450,6 +470,21 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
           </span>
         </div>
       </section>
+
+      {/* Swap picker — bottom sheet with every alternate from this vibe */}
+      <SwapSheet
+        isOpen={swapSlot !== null}
+        onClose={() => setSwapSlot(null)}
+        pool={pool}
+        currentId={swapSlot !== null ? (pieces[swapSlot]?.id ?? null) : null}
+        takenIds={selectedIds}
+        kindLabel={
+          swapSlot !== null ? pieces[swapSlot]?.category?.name?.toUpperCase() || 'PIECE' : 'PIECE'
+        }
+        onSelect={(next) => {
+          if (swapSlot !== null) applySwap(swapSlot, next);
+        }}
+      />
     </div>
   );
 }

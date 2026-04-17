@@ -98,14 +98,24 @@ export function getCombo(slug: string): ComboMeta | undefined {
   return COMBOS.find((c) => c.slug === slug);
 }
 
+/**
+ * Coerce a numeric-looking value to a real number. The API serializes
+ * Postgres `numeric` columns as strings (e.g. "990.00"), so arithmetic
+ * on product.price without this accidentally does string concatenation.
+ */
+export function toNumber(value: unknown): number {
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
 /** Sum the real prices of the first N products for a combo. */
 export function comboIndividualTotal(products: Product[], pieceCount: number): number {
-  return products.slice(0, pieceCount).reduce((acc, p) => acc + p.price, 0);
+  return products.slice(0, pieceCount).reduce((acc, p) => acc + toNumber(p.price), 0);
 }
 
 /** Apply the combo's discount to the summed individual prices. */
 export function comboPrice(individualTotal: number, discountPct: number): number {
-  return Math.round(individualTotal * (1 - discountPct / 100));
+  return Math.round(toNumber(individualTotal) * (1 - discountPct / 100));
 }
 
 /** Get the primary (or first) image URL for a product, or null if none. */

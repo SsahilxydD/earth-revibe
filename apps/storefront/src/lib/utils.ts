@@ -5,9 +5,14 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(amount: number | null | undefined): string {
+export function formatPrice(amount: number | string | null | undefined): string {
   if (amount == null) return '₹0';
-  return `\u20B9${amount.toLocaleString('en-IN')}`;
+  // Prisma serializes Postgres `numeric` columns as strings — coerce so
+  // callers that forget to Number() a product.price don't end up with
+  // "0990990" string-concatenation garbage on the page.
+  const n = typeof amount === 'number' ? amount : Number(amount);
+  if (!Number.isFinite(n)) return '₹0';
+  return `\u20B9${n.toLocaleString('en-IN')}`;
 }
 
 export function formatDate(date: string): string {
