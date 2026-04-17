@@ -77,22 +77,46 @@ export const travelApplicationService = {
         // Team-facing: Discord embed + WhatsApp alert to TRIP_FORM_NOTIFY_PHONE.
         // Applicant-facing: acknowledgement email + WhatsApp, triggered together
         // (both fire — not either/or — so the applicant gets confirmation on
-        // whichever channel they check first).
+        // whichever channel they check first). After both applicant-facing
+        // sends settle, stamp `receivedNotifiedAt` so the admin backfill job
+        // can skip this row next time.
         void Promise.allSettled([
           sendTripApplicationToDiscord({
             applicationNumber: created.applicationNumber,
             data,
           }),
           sendWhatsAppTripApplicationAlert(created.applicationNumber, data.name, data.city),
-          data.email
-            ? sendSubmissionReceivedEmail({
-                to: data.email,
-                name: data.name,
-                applicationNumber: created.applicationNumber,
-              })
-            : Promise.resolve(false),
-          sendWhatsAppTripApplicationReceived(data.phone, data.name, created.applicationNumber),
         ]);
+
+        void (async () => {
+          const [emailRes, whatsAppRes] = await Promise.allSettled([
+            data.email
+              ? sendSubmissionReceivedEmail({
+                  to: data.email,
+                  name: data.name,
+                  applicationNumber: created.applicationNumber,
+                })
+              : Promise.resolve(false),
+            sendWhatsAppTripApplicationReceived(data.phone, data.name, created.applicationNumber),
+          ]);
+          const emailSent = emailRes.status === 'fulfilled' && emailRes.value === true;
+          const whatsAppSent = whatsAppRes.status === 'fulfilled' && whatsAppRes.value === true;
+          // Stamp receipt if either channel succeeded. If both failed the
+          // admin backfill will pick this row up later.
+          if (emailSent || whatsAppSent) {
+            await prisma.travelApplication
+              .update({
+                where: { id: created.id },
+                data: { receivedNotifiedAt: new Date() },
+              })
+              .catch((err: unknown) =>
+                logger.error(
+                  { err, applicationNumber: created.applicationNumber },
+                  'failed to stamp receivedNotifiedAt'
+                )
+              );
+          }
+        })();
 
         return created;
       } catch (err) {
@@ -109,6 +133,101 @@ export const travelApplicationService = {
   },
 
   // ── Admin operations ─────────────────────────────────────────────────────
+
+  /**
+   * One-click backfill: send the submission-receipt email + WhatsApp to every
+   * applicant who has not yet received one (receivedNotifiedAt IS NULL).
+   *
+   * We scope to `status = PENDING` by default — decided applicants have
+   * already had an approval/rejection/waitlist message, so sending a "we got
+   * your application" on top would read oddly. Admins can override via the
+   * `includeDecided` flag if they specifically want to touch everyone.
+   *
+   * Runs inline (no queue) with a small delay between sends to stay polite
+   * to Meta's rate limits. Soft-fail per row — one failure doesn't abort
+   * the batch. Idempotency-safe: re-running only picks up rows that haven't
+   * been stamped yet.
+   */
+  async backfillReceiptNotifications(opts: { includeDecided?: boolean } = {}) {
+    const where: Prisma.TravelApplicationWhereInput = {
+      receivedNotifiedAt: null,
+    };
+    if (!opts.includeDecided) where.status = 'PENDING';
+
+    const rows = await prisma.travelApplication.findMany({
+      where,
+      select: {
+        id: true,
+        applicationNumber: true,
+        name: true,
+        email: true,
+        phone: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    let emailSent = 0;
+    let whatsAppSent = 0;
+    let stamped = 0;
+    let failed = 0;
+
+    for (const row of rows) {
+      try {
+        const [emailRes, whatsAppRes] = await Promise.allSettled([
+          row.email
+            ? sendSubmissionReceivedEmail({
+                to: row.email,
+                name: row.name,
+                applicationNumber: row.applicationNumber,
+              })
+            : Promise.resolve(false),
+          sendWhatsAppTripApplicationReceived(row.phone, row.name, row.applicationNumber),
+        ]);
+
+        const okEmail = emailRes.status === 'fulfilled' && emailRes.value === true;
+        const okWhatsApp = whatsAppRes.status === 'fulfilled' && whatsAppRes.value === true;
+        if (okEmail) emailSent++;
+        if (okWhatsApp) whatsAppSent++;
+
+        if (okEmail || okWhatsApp) {
+          await prisma.travelApplication.update({
+            where: { id: row.id },
+            data: { receivedNotifiedAt: new Date() },
+          });
+          stamped++;
+        } else {
+          failed++;
+          logger.warn(
+            { applicationNumber: row.applicationNumber },
+            'backfill: both email and WhatsApp failed for row'
+          );
+        }
+      } catch (err) {
+        failed++;
+        logger.error(
+          { err, applicationNumber: row.applicationNumber },
+          'backfill: row processing threw'
+        );
+      }
+
+      // Pace outbound to respect Meta template rate limits. 200ms per row =
+      // up to 5 rps, well below the default cap.
+      await new Promise((r) => setTimeout(r, 200));
+    }
+
+    logger.info(
+      { total: rows.length, emailSent, whatsAppSent, stamped, failed },
+      'travel application receipt backfill complete'
+    );
+
+    return {
+      total: rows.length,
+      emailSent,
+      whatsAppSent,
+      stamped,
+      failed,
+    };
+  },
 
   async list(query: TravelApplicationListQuery) {
     const { page, limit, status, search, sortBy, sortOrder } = query;

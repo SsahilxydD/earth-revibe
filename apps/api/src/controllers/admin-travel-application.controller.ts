@@ -1,6 +1,14 @@
 import type { Request, Response } from 'express';
 import { travelApplicationService } from '../services/travel-application.service';
 import type { TravelApplicationListQuery } from '@earth-revibe/shared';
+import { ApiError } from '../utils/api-error';
+
+// In-memory lock — prevents a second admin (or a double-click) from kicking
+// off overlapping backfill runs while one is already in flight. Process-local
+// by design: if there are multiple API instances this is best-effort, but the
+// idempotency of `receivedNotifiedAt IS NULL` prevents duplicate sends even
+// across instances.
+let backfillInFlight = false;
 
 export const adminTravelApplicationController = {
   async list(_req: Request, res: Response) {
@@ -20,6 +28,22 @@ export const adminTravelApplicationController = {
     const id = req.params.id as string;
     const row = await travelApplicationService.update(id, req.body);
     res.json({ success: true, data: row });
+  },
+
+  async backfillReceipts(req: Request, res: Response) {
+    if (backfillInFlight) {
+      throw ApiError.conflict('A receipt backfill is already running. Try again in a moment.');
+    }
+    backfillInFlight = true;
+    try {
+      const includeDecided = req.body?.includeDecided === true;
+      const result = await travelApplicationService.backfillReceiptNotifications({
+        includeDecided,
+      });
+      res.json({ success: true, data: result });
+    } finally {
+      backfillInFlight = false;
+    }
   },
 
   async exportCSV(_req: Request, res: Response) {

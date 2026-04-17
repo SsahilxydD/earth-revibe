@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Download, Eye } from 'lucide-react';
+import { Search, Download, Eye, Send } from 'lucide-react';
 import { Button, Badge, Card, Select } from '@/components/ui';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/toast';
@@ -9,6 +9,7 @@ import {
   useTravelApplications,
   useExportTravelApplicationsCSV,
   useUpdateTravelApplication,
+  useBackfillReceipts,
   type TravelApplicationRow,
 } from '@/hooks/use-travel-applications';
 import type { TravelApplicationStatus } from '@earth-revibe/shared';
@@ -50,6 +51,7 @@ export default function TravelApplicationsPage() {
   });
   const exportCSV = useExportTravelApplicationsCSV();
   const update = useUpdateTravelApplication();
+  const backfill = useBackfillReceipts();
 
   return (
     <div className="space-y-6">
@@ -61,27 +63,56 @@ export default function TravelApplicationsPage() {
             Review Travel Circle applications submitted via /apply-for-trip-form
           </p>
         </div>
-        <Button
-          variant="secondary"
-          disabled={exportCSV.isPending}
-          onClick={async () => {
-            try {
-              const result = await exportCSV.mutateAsync();
-              if (result?.truncated) {
-                toast.success(
-                  `Exported ${result.exported?.toLocaleString()} of ${result.total?.toLocaleString()} applications (limit reached)`
-                );
-              } else {
-                toast.success('Applications exported');
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            disabled={backfill.isPending}
+            onClick={async () => {
+              // Confirm before fanning out to external services.
+              const ok = window.confirm(
+                'Send the receipt email + WhatsApp to every pending applicant who hasn’t received one yet?\n\nThis skips anyone already acknowledged and can take a minute if there’s a backlog.'
+              );
+              if (!ok) return;
+              try {
+                const r = await backfill.mutateAsync(false);
+                if (r.total === 0) {
+                  toast.success('Everyone is already acknowledged — nothing to send.');
+                } else {
+                  toast.success(
+                    `Sent to ${r.stamped}/${r.total} applicants (email: ${r.emailSent}, WhatsApp: ${r.whatsAppSent}${r.failed ? `, failed: ${r.failed}` : ''})`
+                  );
+                }
+              } catch (err: any) {
+                toast.error(err.message || 'Failed to run backfill');
               }
-            } catch (err: any) {
-              toast.error(err.message || 'Failed to export');
-            }
-          }}
-        >
-          <Download size={16} />
-          {exportCSV.isPending ? 'Exporting…' : 'Export CSV'}
-        </Button>
+            }}
+            title="Send the acknowledgement message to applicants who applied before this workflow existed"
+          >
+            <Send size={16} />
+            {backfill.isPending ? 'Sending…' : 'Send receipts to prior applicants'}
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={exportCSV.isPending}
+            onClick={async () => {
+              try {
+                const result = await exportCSV.mutateAsync();
+                if (result?.truncated) {
+                  toast.success(
+                    `Exported ${result.exported?.toLocaleString()} of ${result.total?.toLocaleString()} applications (limit reached)`
+                  );
+                } else {
+                  toast.success('Applications exported');
+                }
+              } catch (err: any) {
+                toast.error(err.message || 'Failed to export');
+              }
+            }}
+          >
+            <Download size={16} />
+            {exportCSV.isPending ? 'Exporting…' : 'Export CSV'}
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -302,6 +333,11 @@ function DetailDrawer({
             <p className="whitespace-pre-wrap text-charcoal">{row.whyJoin}</p>
           </Field>
           <Field label="Submitted">{new Date(row.createdAt).toLocaleString('en-IN')}</Field>
+          {row.receivedNotifiedAt ? (
+            <Field label="Receipt sent">
+              {new Date(row.receivedNotifiedAt).toLocaleString('en-IN')}
+            </Field>
+          ) : null}
           {row.notifiedAt ? (
             <Field label="Applicant notified">
               {new Date(row.notifiedAt).toLocaleString('en-IN')}

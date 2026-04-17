@@ -20,6 +20,7 @@ router.get(
   asyncHandler(adminTravelApplicationController.list)
 );
 router.get('/export-csv', asyncHandler(adminTravelApplicationController.exportCSV));
+router.post('/backfill-receipts', asyncHandler(adminTravelApplicationController.backfillReceipts));
 router.get('/:id', asyncHandler(adminTravelApplicationController.getOne));
 router.patch(
   '/:id',

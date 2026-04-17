@@ -893,6 +893,10 @@ model TravelApplication {
   // duplicate approval/rejection emails + WhatsApps if admin re-clicks.
   notifiedAt        DateTime?
   notifiedStatus    TravelApplicationStatus?
+  // Tracks when the applicant-facing receipt acknowledgement (email +
+  // WhatsApp) was sent on submission. Used to gate the admin backfill so
+  // we never send the same "we got your application" twice.
+  receivedNotifiedAt DateTime?
   createdAt         DateTime                  @default(now())
   updatedAt         DateTime                  @updatedAt
 

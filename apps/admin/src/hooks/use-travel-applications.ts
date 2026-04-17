@@ -37,8 +37,17 @@ export interface TravelApplicationRow {
   reviewedAt: string | null;
   notifiedAt: string | null;
   notifiedStatus: TravelApplicationStatus | null;
+  receivedNotifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BackfillReceiptsResult {
+  total: number;
+  emailSent: number;
+  whatsAppSent: number;
+  stamped: number;
+  failed: number;
 }
 
 interface ListResponse {
@@ -73,6 +82,19 @@ export function useUpdateTravelApplication() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-travel-applications'] });
       qc.invalidateQueries({ queryKey: ['admin-travel-application'] });
+    },
+  });
+}
+
+export function useBackfillReceipts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (includeDecided: boolean = false) =>
+      api.post<BackfillReceiptsResult>('/admin/travel-applications/backfill-receipts', {
+        includeDecided,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-travel-applications'] });
     },
   });
 }
