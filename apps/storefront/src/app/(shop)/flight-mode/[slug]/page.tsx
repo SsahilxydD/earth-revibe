@@ -3,15 +3,20 @@
 import { use, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { notFound } from 'next/navigation';
-import { ArrowLeft, Bookmark, Share2, Lock, ChevronDown } from 'lucide-react';
-import { getCombo, formatBundleSavings, type ComboPiece } from '@/lib/flight-mode-data';
-import { formatPrice } from '@/lib/utils';
+import { useRouter, notFound } from 'next/navigation';
+import { ArrowLeft, Bookmark, Share2, Lock, ChevronDown, Shuffle } from 'lucide-react';
+import { useEffect } from 'react';
+import {
+  getCombo,
+  comboIndividualTotal,
+  comboPrice,
+  primaryImageUrl,
+} from '@/lib/flight-mode-data';
+import { useProducts } from '@/hooks/use-products';
+import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart-store';
 import { useToast } from '@/providers';
-
-const SIZES = ['S', 'M', 'L', 'XL', 'XXL'] as const;
+import type { Product, ProductVariant } from '@/types';
 
 export default function ComboDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -22,27 +27,110 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
   const { addToast } = useToast();
   const addItem = useCartStore((s) => s.addItem);
 
-  // Per-piece size state — default to M for everything
-  const [sizes, setSizes] = useState<Record<string, string>>(() =>
-    Object.fromEntries(combo.pieces.map((p) => [p.slug, 'M']))
+  // Fetch a larger pool so the customer can swap in alternates from the
+  // same vibe. We only *show* pieceCount items; the rest are swap pool.
+  const { data, isLoading } = useProducts({
+    vibe: combo.vibe,
+    limit: 24,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const pool: Product[] = useMemo(() => data?.products ?? [], [data]);
+
+  // Selected piece IDs in display order. Seeded from the top pieceCount
+  // as soon as products arrive.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (pool.length === 0) return;
+    setSelectedIds((prev) => {
+      // Keep existing selection as long as every id is still in the pool
+      if (prev.length === combo.pieceCount && prev.every((id) => pool.some((p) => p.id === id))) {
+        return prev;
+      }
+      return pool.slice(0, combo.pieceCount).map((p) => p.id);
+    });
+  }, [pool, combo.pieceCount]);
+
+  const pieces: Product[] = useMemo(
+    () => selectedIds.map((id) => pool.find((p) => p.id === id)).filter((p): p is Product => !!p),
+    [selectedIds, pool]
   );
+
+  const swapPiece = (index: number) => {
+    const current = pieces[index];
+    if (!current) return;
+    if (pool.length <= pieces.length) {
+      addToast('No other pieces in this collection right now', 'info');
+      return;
+    }
+    const taken = new Set(selectedIds);
+    const next = pool.find((p) => !taken.has(p.id));
+    if (!next) {
+      addToast('No more alternates available', 'info');
+      return;
+    }
+    setSelectedIds((prev) => {
+      const copy = [...prev];
+      copy[index] = next.id;
+      return copy;
+    });
+    // Preserve size preference if the new product offers the same size
+    setSizes((prev) => {
+      const copy = { ...prev };
+      const oldSize = copy[current.id];
+      if (oldSize) {
+        const nextHasSize = next.variants.some((v) => v.size === oldSize && v.stock > 0);
+        if (nextHasSize) copy[next.id] = oldSize;
+        delete copy[current.id];
+      }
+      return copy;
+    });
+    setOpenSizePicker(null);
+  };
+
+  const individualTotal = useMemo(
+    () => comboIndividualTotal(pieces, combo.pieceCount),
+    [pieces, combo.pieceCount]
+  );
+  const price = useMemo(
+    () => comboPrice(individualTotal, combo.discountPct),
+    [individualTotal, combo.discountPct]
+  );
+  const savedAmount = individualTotal - price;
+
+  // Hero mosaic — real product primaries
+  const heroImages = useMemo(
+    () => pieces.map((p) => primaryImageUrl(p)).filter(Boolean) as string[],
+    [pieces]
+  );
+  const heroMosaic = heroImages.slice(0, 4);
+
+  // Per-piece size state, stored by product id
+  const [sizes, setSizes] = useState<Record<string, string>>({});
   const [openSizePicker, setOpenSizePicker] = useState<string | null>(null);
 
-  const { savedAmount, savedPct } = useMemo(() => formatBundleSavings(combo), [combo]);
-
   const addBundleToCart = () => {
-    // Add each piece as its own cart line with a bundle reference in the name
-    combo.pieces.forEach((piece) => {
+    if (pieces.length === 0) {
+      addToast('Bundle is empty right now — try again', 'error');
+      return;
+    }
+    // Split the bundle price proportionally so cart totals match
+    pieces.forEach((product) => {
+      const chosenSize = sizes[product.id] || defaultSize(product);
+      const variant = findVariant(product.variants, chosenSize);
+      const lineId = variant?.id || `${combo.slug}-${product.id}`;
+      const scaledPrice = Math.round((price / individualTotal) * product.price);
+      const img = primaryImageUrl(product) || '';
       addItem({
-        id: `${combo.slug}-${piece.slug}`,
-        productId: piece.slug,
-        name: `${piece.name} · ${combo.name}`,
-        slug: piece.slug,
-        image: piece.image,
-        price: Math.round((combo.price / combo.individualTotal) * piece.price),
-        size: sizes[piece.slug] || 'M',
+        id: lineId,
+        productId: product.id,
+        name: `${product.name} · ${combo.name}`,
+        slug: product.slug,
+        image: img,
+        price: scaledPrice,
+        size: chosenSize,
         color: '',
-        maxQuantity: 99,
+        maxQuantity: variant?.stock ?? 99,
         quantity: 1,
       });
     });
@@ -74,20 +162,10 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
           zIndex: 10,
         }}
       >
-        <Link
-          href="/flight-mode"
-          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-        >
+        <Link href="/flight-mode" style={{ display: 'inline-flex', alignItems: 'center' }}>
           <ArrowLeft size={20} color="#000" />
         </Link>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 500,
-            letterSpacing: 2,
-            color: '#000',
-          }}
-        >
+        <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 2, color: '#000' }}>
           FLIGHT MODE · {combo.name.toUpperCase()}
         </span>
         <button
@@ -97,21 +175,14 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
               navigator.share?.({ title: combo.name, url: window.location.href }).catch(() => {});
             }
           }}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          aria-label="Share"
         >
           <Share2 size={18} color="#000" />
         </button>
       </div>
 
-      {/* Hero mosaic */}
+      {/* Hero mosaic — real products */}
       <div
         style={{
           position: 'relative',
@@ -121,21 +192,36 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
           overflow: 'hidden',
         }}
       >
-        {combo.heroImages.slice(0, 4).map((src, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              width: '50%',
-              height: '50%',
-              top: i < 2 ? 0 : '50%',
-              left: i % 2 === 0 ? 0 : '50%',
-              overflow: 'hidden',
-            }}
-          >
-            <Image src={src} alt="" fill sizes="50vw" style={{ objectFit: 'cover' }} />
-          </div>
-        ))}
+        {Array.from({ length: 4 }).map((_, i) => {
+          const src = heroMosaic[i];
+          return (
+            <div
+              key={i}
+              className={!src && isLoading ? 'skeleton' : ''}
+              style={{
+                position: 'absolute',
+                width: '50%',
+                height: '50%',
+                top: i < 2 ? 0 : '50%',
+                left: i % 2 === 0 ? 0 : '50%',
+                overflow: 'hidden',
+                backgroundColor: '#F5F5F5',
+              }}
+            >
+              {src && (
+                <Image
+                  src={getImageUrl(src, 600)}
+                  alt=""
+                  fill
+                  sizes="50vw"
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
+                  style={{ objectFit: 'cover' }}
+                />
+              )}
+            </div>
+          );
+        })}
         <button
           type="button"
           style={{
@@ -167,14 +253,7 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
           gap: 10,
         }}
       >
-        <span
-          style={{
-            fontSize: 9,
-            fontWeight: 500,
-            letterSpacing: 2,
-            color: '#999',
-          }}
-        >
+        <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 2, color: '#999' }}>
           {combo.kicker}
         </span>
         <h1
@@ -203,7 +282,7 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
         </p>
       </section>
 
-      {/* What's in it */}
+      {/* What's in it — real products */}
       <section
         style={{
           padding: '8px 24px 20px 24px',
@@ -212,82 +291,93 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
           gap: 16,
         }}
       >
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 500,
-            letterSpacing: 2.5,
-            color: '#999',
-          }}
-        >
+        <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 2.5, color: '#999' }}>
           WHAT&apos;S IN IT
         </span>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {combo.pieces.map((piece, i) => (
-            <div key={`${piece.slug}-${i}`}>
+          {pieces.length === 0 && isLoading && (
+            <>
+              {Array.from({ length: combo.pieceCount }).map((_, i) => (
+                <div
+                  key={i}
+                  className="skeleton"
+                  style={{
+                    height: 72,
+                    marginBottom: 12,
+                    borderRadius: 8,
+                  }}
+                />
+              ))}
+            </>
+          )}
+          {pieces.length === 0 && !isLoading && (
+            <p style={{ fontSize: 12, color: '#999', fontStyle: 'italic' }}>
+              Inventory for this kit is getting packed — check back soon.
+            </p>
+          )}
+          {pieces.map((p, i) => (
+            <div key={p.id}>
               <PieceRow
-                piece={piece}
-                size={sizes[piece.slug] || 'M'}
-                onSizeClick={() =>
-                  setOpenSizePicker((cur) => (cur === piece.slug ? null : piece.slug))
-                }
-                expanded={openSizePicker === piece.slug}
+                product={p}
+                size={sizes[p.id] || defaultSize(p)}
+                onSizeClick={() => setOpenSizePicker((cur) => (cur === p.id ? null : p.id))}
+                expanded={openSizePicker === p.id}
                 onSizeChange={(s) => {
-                  setSizes((prev) => ({ ...prev, [piece.slug]: s }));
+                  setSizes((prev) => ({ ...prev, [p.id]: s }));
                   setOpenSizePicker(null);
                 }}
+                onSwap={() => swapPiece(i)}
+                canSwap={pool.length > pieces.length}
               />
-              {i < combo.pieces.length - 1 && (
-                <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
-              )}
+              {i < pieces.length - 1 && <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />}
             </div>
           ))}
         </div>
       </section>
 
       {/* Price summary */}
-      <section
-        style={{
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 14,
-          backgroundColor: '#F5F5F5',
-        }}
-      >
-        <SumRow
-          left={<span>Individual total</span>}
-          right={<span style={{ color: '#999' }}>{formatPrice(combo.individualTotal)}</span>}
-          leftColor="#666"
-          rightSize={13}
-        />
-        <SumRow
-          left={<span style={{ color: '#22C55E' }}>Bundle discount (−{savedPct}%)</span>}
-          right={<span style={{ color: '#22C55E' }}>−{formatPrice(savedAmount)}</span>}
-          leftColor="#22C55E"
-          rightSize={13}
-        />
-        <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
-        <div
+      {pieces.length > 0 && (
+        <section
           style={{
+            padding: '24px',
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            flexDirection: 'column',
+            gap: 14,
+            backgroundColor: '#F5F5F5',
           }}
         >
-          <span style={{ fontSize: 14, fontWeight: 500, color: '#000' }}>You pay</span>
-          <span
+          <Row
+            left={<span>Individual total</span>}
+            right={<span style={{ color: '#999' }}>{formatPrice(individualTotal)}</span>}
+            leftColor="#666"
+          />
+          <Row
+            left={<span style={{ color: '#22C55E' }}>Bundle discount (−{combo.discountPct}%)</span>}
+            right={<span style={{ color: '#22C55E' }}>−{formatPrice(savedAmount)}</span>}
+            leftColor="#22C55E"
+          />
+          <div style={{ height: 1, backgroundColor: '#E5E5E5' }} />
+          <div
             style={{
-              fontSize: 22,
-              fontWeight: 500,
-              color: '#000',
-              letterSpacing: -0.5,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
-            {formatPrice(combo.price)}
-          </span>
-        </div>
-      </section>
+            <span style={{ fontSize: 14, fontWeight: 500, color: '#000' }}>You pay</span>
+            <span
+              style={{
+                fontSize: 22,
+                fontWeight: 500,
+                color: '#000',
+                letterSpacing: -0.5,
+              }}
+            >
+              {formatPrice(price)}
+            </span>
+          </div>
+        </section>
+      )}
 
       {/* CTAs */}
       <section
@@ -301,6 +391,7 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
         <button
           type="button"
           onClick={addBundleToCart}
+          disabled={pieces.length === 0}
           style={{
             width: '100%',
             height: 50,
@@ -311,7 +402,8 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
             fontSize: 12,
             fontWeight: 400,
             letterSpacing: 1.5,
-            cursor: 'pointer',
+            cursor: pieces.length === 0 ? 'not-allowed' : 'pointer',
+            opacity: pieces.length === 0 ? 0.5 : 1,
           }}
         >
           ADD PACK TO BAG
@@ -319,6 +411,7 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
         <button
           type="button"
           onClick={buyBundleNow}
+          disabled={pieces.length === 0}
           style={{
             width: '100%',
             height: 52,
@@ -329,10 +422,11 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
             fontSize: 12,
             fontWeight: 500,
             letterSpacing: 1.5,
-            cursor: 'pointer',
+            cursor: pieces.length === 0 ? 'not-allowed' : 'pointer',
+            opacity: pieces.length === 0 ? 0.5 : 1,
           }}
         >
-          BUY PACK NOW · {formatPrice(combo.price)}
+          BUY PACK NOW {pieces.length > 0 ? `· ${formatPrice(price)}` : ''}
         </button>
         <div
           style={{
@@ -360,29 +454,34 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
   );
 }
 
+/* ─── Per-piece row ───────────────────────────────────────────────── */
+
 function PieceRow({
-  piece,
+  product,
   size,
   onSizeClick,
   expanded,
   onSizeChange,
+  onSwap,
+  canSwap,
 }: {
-  piece: ComboPiece;
+  product: Product;
   size: string;
   onSizeClick: () => void;
   expanded: boolean;
   onSizeChange: (s: string) => void;
+  onSwap: () => void;
+  canSwap: boolean;
 }) {
+  const img = primaryImageUrl(product);
+  const sizes = useMemo(() => uniqueSizes(product.variants), [product.variants]);
+  const kind = product.category?.name?.toUpperCase() || 'PIECE';
+
   return (
     <div style={{ padding: '16px 0' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-        }}
-      >
-        <div
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Link
+          href={`/products/${product.slug}`}
           style={{
             position: 'relative',
             width: 60,
@@ -393,20 +492,23 @@ function PieceRow({
             backgroundColor: '#F5F5F5',
           }}
         >
-          <Image
-            src={piece.image}
-            alt={piece.name}
-            fill
-            sizes="60px"
-            style={{ objectFit: 'cover' }}
-          />
-        </div>
+          {img && (
+            <Image
+              src={getImageUrl(img, 200)}
+              alt={product.name}
+              fill
+              sizes="60px"
+              style={{ objectFit: 'cover' }}
+            />
+          )}
+        </Link>
         <div
           style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
             gap: 4,
+            minWidth: 0,
           }}
         >
           <span
@@ -417,62 +519,103 @@ function PieceRow({
               color: '#999',
             }}
           >
-            {piece.kind}
+            {kind}
           </span>
-          <span style={{ fontSize: 14, fontWeight: 400, color: '#000' }}>{piece.name}</span>
-          <button
-            type="button"
-            onClick={onSizeClick}
+          <Link
+            href={`/products/${product.slug}`}
             style={{
-              marginTop: 2,
-              alignSelf: 'flex-start',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8,
-              height: 28,
-              width: 80,
-              padding: '0 12px',
-              borderRadius: 6,
-              border: '1px solid #E5E5E5',
-              backgroundColor: '#FFF',
-              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: 400,
+              color: '#000',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
-            <span style={{ fontSize: 10, fontWeight: 400, color: '#000' }}>Size · {size}</span>
-            <ChevronDown size={10} color="#000" />
-          </button>
+            {product.name}
+          </Link>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
+            {sizes.length > 0 && (
+              <button
+                type="button"
+                onClick={onSizeClick}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  height: 28,
+                  width: 80,
+                  padding: '0 12px',
+                  borderRadius: 6,
+                  border: '1px solid #E5E5E5',
+                  backgroundColor: '#FFF',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ fontSize: 10, fontWeight: 400, color: '#000' }}>Size · {size}</span>
+                <ChevronDown size={10} color="#000" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onSwap}
+              disabled={!canSwap}
+              aria-label="Swap this piece"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                height: 28,
+                padding: '0 10px',
+                borderRadius: 6,
+                border: '1px solid #E5E5E5',
+                backgroundColor: '#FFF',
+                cursor: canSwap ? 'pointer' : 'not-allowed',
+                opacity: canSwap ? 1 : 0.4,
+              }}
+            >
+              <Shuffle size={11} color="#000" />
+              <span style={{ fontSize: 10, fontWeight: 400, color: '#000' }}>Swap</span>
+            </button>
+          </div>
         </div>
         <span style={{ fontSize: 13, fontWeight: 400, color: '#000' }}>
-          {formatPrice(piece.price)}
+          {formatPrice(product.price)}
         </span>
       </div>
-      {expanded && (
+      {expanded && sizes.length > 0 && (
         <div
           style={{
             display: 'flex',
             gap: 8,
             marginTop: 12,
             paddingLeft: 74,
+            flexWrap: 'wrap',
           }}
         >
-          {SIZES.map((s) => {
+          {sizes.map((s) => {
             const active = s === size;
+            const outOfStock = isSizeOutOfStock(product.variants, s);
             return (
               <button
                 key={s}
                 type="button"
-                onClick={() => onSizeChange(s)}
+                onClick={() => !outOfStock && onSizeChange(s)}
+                disabled={outOfStock}
                 style={{
-                  flex: 1,
+                  minWidth: 56,
                   height: 36,
+                  padding: '0 10px',
                   borderRadius: 8,
-                  border: active ? 'none' : '1px solid #E5E5E5',
+                  border: active ? 'none' : `1px solid ${outOfStock ? '#F0F0F0' : '#E5E5E5'}`,
                   backgroundColor: active ? '#000' : '#FFF',
-                  color: active ? '#FFF' : '#000',
+                  color: active ? '#FFF' : outOfStock ? '#CCC' : '#000',
                   fontSize: 12,
                   fontWeight: active ? 500 : 400,
-                  cursor: 'pointer',
+                  cursor: outOfStock ? 'not-allowed' : 'pointer',
+                  textDecoration: outOfStock ? 'line-through' : 'none',
                 }}
               >
                 {s}
@@ -485,27 +628,51 @@ function PieceRow({
   );
 }
 
-function SumRow({
+/* ─── Helpers ─────────────────────────────────────────────────────── */
+
+function uniqueSizes(variants: ProductVariant[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of variants) {
+    if (v.size && !seen.has(v.size)) {
+      seen.add(v.size);
+      out.push(v.size);
+    }
+  }
+  return out;
+}
+
+function findVariant(variants: ProductVariant[], size: string): ProductVariant | undefined {
+  return variants.find((v) => v.size === size);
+}
+
+function isSizeOutOfStock(variants: ProductVariant[], size: string): boolean {
+  const v = findVariant(variants, size);
+  return v ? v.stock <= 0 : true;
+}
+
+function defaultSize(product: Product): string {
+  const sizes = uniqueSizes(product.variants);
+  if (sizes.length === 0) return '';
+  // Prefer M if available, otherwise first in-stock size
+  const inStock = sizes.find((s) => !isSizeOutOfStock(product.variants, s));
+  if (sizes.includes('M') && !isSizeOutOfStock(product.variants, 'M')) return 'M';
+  return inStock || sizes[0];
+}
+
+function Row({
   left,
   right,
   leftColor = '#666',
-  rightSize = 13,
 }: {
   left: React.ReactNode;
   right: React.ReactNode;
   leftColor?: string;
-  rightSize?: number;
 }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}
-    >
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <span style={{ fontSize: 12, fontWeight: 300, color: leftColor }}>{left}</span>
-      <span style={{ fontSize: rightSize, fontWeight: 400, color: '#000' }}>{right}</span>
+      <span style={{ fontSize: 13, fontWeight: 400, color: '#000' }}>{right}</span>
     </div>
   );
 }

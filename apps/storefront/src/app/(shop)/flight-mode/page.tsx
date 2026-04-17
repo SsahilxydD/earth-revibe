@@ -4,8 +4,15 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, ArrowUpRight, Flame } from 'lucide-react';
-import { COMBOS, formatBundleSavings } from '@/lib/flight-mode-data';
-import { formatPrice } from '@/lib/utils';
+import {
+  COMBOS,
+  comboIndividualTotal,
+  comboPrice,
+  primaryImageUrl,
+  type ComboMeta,
+} from '@/lib/flight-mode-data';
+import { useProducts } from '@/hooks/use-products';
+import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 
 type Filter = 'all' | '3-piece' | '5-piece' | 'weekender';
 
@@ -24,7 +31,7 @@ export default function FlightModePage() {
     () => COMBOS.filter((c) => !c.featured && (filter === 'all' || c.category === filter)),
     [filter]
   );
-  const showFlagship = filter === 'all' || (flagship && flagship.category === filter);
+  const showFlagship = filter === 'all' || (flagship ? flagship.category === filter : false);
 
   return (
     <div
@@ -40,14 +47,7 @@ export default function FlightModePage() {
           gap: 10,
         }}
       >
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 500,
-            letterSpacing: 2,
-            color: '#999',
-          }}
-        >
+        <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 2, color: '#999' }}>
           BUNDLES · COMBOS
         </span>
         <div style={{ height: 8 }} />
@@ -88,42 +88,16 @@ export default function FlightModePage() {
             paddingTop: 20,
           }}
         >
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 500,
-              letterSpacing: 1.5,
-              color: '#000',
-            }}
-          >
-            20+ BUNDLES
+          <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 1.5, color: '#000' }}>
+            {COMBOS.length} BUNDLES
           </span>
           <span style={{ fontSize: 10, color: '#CCC' }}>·</span>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 500,
-              letterSpacing: 1.5,
-              color: '#000',
-            }}
-          >
-            FROM ₹3,570
-          </span>
-          <span style={{ fontSize: 10, color: '#CCC' }}>·</span>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 500,
-              letterSpacing: 1.5,
-              color: '#22C55E',
-            }}
-          >
+          <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 1.5, color: '#22C55E' }}>
             SAVE UP TO 22%
           </span>
         </div>
       </section>
 
-      {/* Divider */}
       <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
       {/* Filter chips */}
@@ -162,7 +136,6 @@ export default function FlightModePage() {
         })}
       </div>
 
-      {/* Divider */}
       <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
       {/* Bundle list */}
@@ -180,7 +153,7 @@ export default function FlightModePage() {
         ))}
       </div>
 
-      {/* Closer — Build your own */}
+      {/* BUILD YOUR OWN closer */}
       <section
         style={{
           padding: '60px 28px 80px 28px',
@@ -219,8 +192,8 @@ export default function FlightModePage() {
             margin: 0,
           }}
         >
-          Tell us your trip. We&apos;ll hand-pack a kit for you — still bundle pricing, still free
-          shipping.
+          Tell us your trip. We&apos;ll hand-pack a kit from our actual inventory — still bundle
+          pricing, still free shipping.
         </p>
         <Link
           href="/flight-mode/build"
@@ -249,9 +222,20 @@ export default function FlightModePage() {
   );
 }
 
-function FlagshipCard({ combo }: { combo: (typeof COMBOS)[number] }) {
-  const { savedPct } = formatBundleSavings(combo);
-  const bg = combo.heroImages[0];
+/* ─── Flagship card — pulls products live by vibe ─────────────────── */
+
+function FlagshipCard({ combo }: { combo: ComboMeta }) {
+  const { data, isLoading } = useProducts({
+    vibe: combo.vibe,
+    limit: combo.pieceCount,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const products = data?.products ?? [];
+  const hero = primaryImageUrl(products[0]);
+  const individualTotal = comboIndividualTotal(products, combo.pieceCount);
+  const price = comboPrice(individualTotal, combo.discountPct);
+
   return (
     <Link
       href={`/flight-mode/${combo.slug}`}
@@ -266,13 +250,22 @@ function FlagshipCard({ combo }: { combo: (typeof COMBOS)[number] }) {
         backgroundColor: '#1a1a1a',
       }}
     >
-      <Image
-        src={bg}
-        alt={combo.name}
-        fill
-        sizes="(max-width: 393px) 100vw, 393px"
-        style={{ objectFit: 'cover' }}
-      />
+      {hero ? (
+        <Image
+          src={getImageUrl(hero, 720)}
+          alt={combo.name}
+          fill
+          sizes="(max-width: 393px) 100vw, 393px"
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
+          style={{ objectFit: 'cover' }}
+        />
+      ) : (
+        <div
+          className={isLoading ? 'skeleton' : ''}
+          style={{ position: 'absolute', inset: 0, backgroundColor: '#1a1a1a' }}
+        />
+      )}
       <div
         style={{
           position: 'absolute',
@@ -295,14 +288,7 @@ function FlagshipCard({ combo }: { combo: (typeof COMBOS)[number] }) {
         }}
       >
         <Flame size={12} color="#000" />
-        <span
-          style={{
-            fontSize: 9,
-            fontWeight: 500,
-            letterSpacing: 2,
-            color: '#000',
-          }}
-        >
+        <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 2, color: '#000' }}>
           MOST PACKED
         </span>
       </div>
@@ -343,13 +329,7 @@ function FlagshipCard({ combo }: { combo: (typeof COMBOS)[number] }) {
         >
           {combo.name}
         </h3>
-        <div
-          style={{
-            width: 24,
-            height: 1,
-            backgroundColor: 'rgba(255,255,255,0.5)',
-          }}
-        />
+        <div style={{ width: 24, height: 1, backgroundColor: 'rgba(255,255,255,0.5)' }} />
         <p
           style={{
             fontSize: 12,
@@ -370,51 +350,69 @@ function FlagshipCard({ combo }: { combo: (typeof COMBOS)[number] }) {
             paddingTop: 12,
           }}
         >
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 300,
-              color: 'rgba(255,255,255,0.5)',
-              textDecoration: 'line-through',
-            }}
-          >
-            {formatPrice(combo.individualTotal)}
-          </span>
-          <span
-            style={{
-              fontSize: 22,
-              fontWeight: 500,
-              color: '#FFF',
-              letterSpacing: -0.4,
-            }}
-          >
-            {formatPrice(combo.price)}
-          </span>
-          <span
-            style={{
-              height: 22,
-              padding: '0 8px',
-              borderRadius: 9999,
-              backgroundColor: '#22C55E',
-              color: '#FFF',
-              fontSize: 9,
-              fontWeight: 500,
-              letterSpacing: 1.5,
-              display: 'inline-flex',
-              alignItems: 'center',
-            }}
-          >
-            SAVE {savedPct}%
-          </span>
+          {individualTotal > 0 ? (
+            <>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 300,
+                  color: 'rgba(255,255,255,0.5)',
+                  textDecoration: 'line-through',
+                }}
+              >
+                {formatPrice(individualTotal)}
+              </span>
+              <span
+                style={{
+                  fontSize: 22,
+                  fontWeight: 500,
+                  color: '#FFF',
+                  letterSpacing: -0.4,
+                }}
+              >
+                {formatPrice(price)}
+              </span>
+              <span
+                style={{
+                  height: 22,
+                  padding: '0 8px',
+                  borderRadius: 9999,
+                  backgroundColor: '#22C55E',
+                  color: '#FFF',
+                  fontSize: 9,
+                  fontWeight: 500,
+                  letterSpacing: 1.5,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
+                SAVE {combo.discountPct}%
+              </span>
+            </>
+          ) : (
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Loading pricing…</span>
+          )}
         </div>
       </div>
     </Link>
   );
 }
 
-function HorizontalCard({ combo }: { combo: (typeof COMBOS)[number] }) {
-  const { savedAmount } = formatBundleSavings(combo);
-  const mosaic = combo.heroImages.slice(0, 4);
+/* ─── Horizontal card — pulls products live by vibe ───────────────── */
+
+function HorizontalCard({ combo }: { combo: ComboMeta }) {
+  const { data, isLoading } = useProducts({
+    vibe: combo.vibe,
+    limit: combo.pieceCount,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const products = data?.products ?? [];
+  const mosaic = products.slice(0, 4);
+  const individualTotal = comboIndividualTotal(products, combo.pieceCount);
+  const price = comboPrice(individualTotal, combo.discountPct);
+  const saved = individualTotal - price;
+
   return (
     <Link
       href={`/flight-mode/${combo.slug}`}
@@ -429,7 +427,7 @@ function HorizontalCard({ combo }: { combo: (typeof COMBOS)[number] }) {
         backgroundColor: '#FFF',
       }}
     >
-      {/* 2×2 thumbnail mosaic */}
+      {/* 2×2 thumbnail mosaic — real product primaries */}
       <div
         style={{
           position: 'relative',
@@ -439,21 +437,35 @@ function HorizontalCard({ combo }: { combo: (typeof COMBOS)[number] }) {
           flexShrink: 0,
         }}
       >
-        {mosaic.map((src, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              width: 80,
-              height: 100,
-              top: i < 2 ? 0 : 100,
-              left: i % 2 === 0 ? 0 : 80,
-              overflow: 'hidden',
-            }}
-          >
-            <Image src={src} alt="" fill sizes="80px" style={{ objectFit: 'cover' }} />
-          </div>
-        ))}
+        {Array.from({ length: 4 }).map((_, i) => {
+          const p = mosaic[i];
+          const src = primaryImageUrl(p);
+          return (
+            <div
+              key={i}
+              className={!src && isLoading ? 'skeleton' : ''}
+              style={{
+                position: 'absolute',
+                width: 80,
+                height: 100,
+                top: i < 2 ? 0 : 100,
+                left: i % 2 === 0 ? 0 : 80,
+                overflow: 'hidden',
+                backgroundColor: '#F5F5F5',
+              }}
+            >
+              {src && (
+                <Image
+                  src={getImageUrl(src, 300)}
+                  alt={p?.name || ''}
+                  fill
+                  sizes="80px"
+                  style={{ objectFit: 'cover' }}
+                />
+              )}
+            </div>
+          );
+        })}
         <div
           style={{
             position: 'absolute',
@@ -471,7 +483,7 @@ function HorizontalCard({ combo }: { combo: (typeof COMBOS)[number] }) {
             justifyContent: 'center',
           }}
         >
-          {combo.pieces.length}
+          {combo.pieceCount}
         </div>
       </div>
 
@@ -487,14 +499,7 @@ function HorizontalCard({ combo }: { combo: (typeof COMBOS)[number] }) {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span
-            style={{
-              fontSize: 9,
-              fontWeight: 500,
-              letterSpacing: 2,
-              color: '#999',
-            }}
-          >
+          <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 2, color: '#999' }}>
             {combo.kicker}
           </span>
           <span
@@ -507,14 +512,7 @@ function HorizontalCard({ combo }: { combo: (typeof COMBOS)[number] }) {
           >
             {combo.name}
           </span>
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 300,
-              color: '#666',
-              lineHeight: 1.4,
-            }}
-          >
+          <span style={{ fontSize: 11, fontWeight: 300, color: '#666', lineHeight: 1.4 }}>
             {combo.description}
           </span>
         </div>
@@ -526,29 +524,35 @@ function HorizontalCard({ combo }: { combo: (typeof COMBOS)[number] }) {
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 10, fontWeight: 300, color: '#CCC' }}>
-              {formatPrice(combo.individualTotal)}
-            </span>
-            <span
-              style={{
-                fontSize: 18,
-                fontWeight: 500,
-                letterSpacing: -0.3,
-                color: '#000',
-              }}
-            >
-              {formatPrice(combo.price)}
-            </span>
-            <span
-              style={{
-                fontSize: 9,
-                fontWeight: 500,
-                letterSpacing: 1.5,
-                color: '#22C55E',
-              }}
-            >
-              SAVE {formatPrice(savedAmount)}
-            </span>
+            {individualTotal > 0 ? (
+              <>
+                <span style={{ fontSize: 10, fontWeight: 300, color: '#CCC' }}>
+                  {formatPrice(individualTotal)}
+                </span>
+                <span
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 500,
+                    letterSpacing: -0.3,
+                    color: '#000',
+                  }}
+                >
+                  {formatPrice(price)}
+                </span>
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 500,
+                    letterSpacing: 1.5,
+                    color: '#22C55E',
+                  }}
+                >
+                  SAVE {formatPrice(saved)}
+                </span>
+              </>
+            ) : (
+              <span style={{ fontSize: 11, color: '#CCC' }}>…</span>
+            )}
           </div>
           <ArrowUpRight size={18} color="#000" />
         </div>

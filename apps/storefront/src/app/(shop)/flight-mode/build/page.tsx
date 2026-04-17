@@ -1,80 +1,24 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, X, Check, Shuffle, Info, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, getImageUrl } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart-store';
 import { useToast } from '@/providers';
-import { VIBE_META } from '@/lib/flight-mode-data';
+import { VIBE_META, primaryImageUrl, type ComboVibe } from '@/lib/flight-mode-data';
+import { useProducts } from '@/hooks/use-products';
+import type { Product, ProductVariant } from '@/types';
 
-type VibeSlug =
-  | 'above-the-clouds'
-  | 'salt-on-skin'
-  | 'golden-hour-gang'
-  | 'into-the-wild'
-  | 'neon-nomads'
-  | 'mixed';
+type VibeSlug = ComboVibe | 'mixed';
 
 type Duration = 3 | 5 | 7;
 
-interface KitPiece {
-  slug: string;
-  kind: string;
-  name: string;
-  image: string;
-  price: number;
-  sized?: string | null;
-}
-
 const DURATION_TO_PIECES: Record<Duration, number> = { 3: 3, 5: 5, 7: 7 };
-
-// ── Sample curation — one starter palette per vibe/duration combo ──
-const CURATION: Record<string, KitPiece[]> = {
-  'above-the-clouds-5': [
-    {
-      slug: 'core-tee-fog',
-      kind: 'BASE TEE',
-      name: 'Core Tee — Fog',
-      image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=300&q=80',
-      price: 990,
-    },
-    {
-      slug: 'cloud-overshirt',
-      kind: 'OVERSHIRT',
-      name: 'Cloud Overshirt — Stone',
-      image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&q=80',
-      price: 1290,
-    },
-    {
-      slug: 'summit-hoodie',
-      kind: 'HOODIE',
-      name: 'Summit Hoodie — Ash',
-      image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&q=80',
-      price: 1490,
-    },
-    {
-      slug: 'trail-trouser-olive',
-      kind: 'TROUSER',
-      name: 'Trail Trouser — Olive',
-      image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300&q=80',
-      price: 1290,
-    },
-    {
-      slug: 'wool-scarf-charcoal',
-      kind: 'SCARF',
-      name: 'Wool Scarf — Charcoal',
-      image: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=300&q=80',
-      price: 890,
-    },
-  ],
-};
-
 const BUNDLE_DISCOUNT_PCT = 22;
-const SIZES = ['S', 'M', 'L', 'XL', 'XXL'] as const;
 
 export default function KitBuilderPage() {
   return (
@@ -107,8 +51,41 @@ function KitBuilderInner() {
 
   const [vibe, setVibe] = useState<VibeSlug>('above-the-clouds');
   const [duration, setDuration] = useState<Duration>(5);
-  const [pieces, setPieces] = useState<KitPiece[]>(CURATION['above-the-clouds-5'] || []);
+
+  // Fetch a larger pool so the user can swap into alternates without
+  // blowing it up. We only actually use `duration` items.
+  const { data, isLoading } = useProducts(
+    {
+      vibe: vibe === 'mixed' ? undefined : vibe,
+      limit: 24,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+    },
+    { enabled: step >= 2 }
+  );
+  const pool = data?.products ?? [];
+
+  // Selected piece IDs, in display order
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // Sizes by product id
   const [sizes, setSizes] = useState<Record<string, string>>({});
+
+  // When pool arrives or duration changes, seed selection from the top-N
+  useEffect(() => {
+    if (pool.length === 0) return;
+    const needed = DURATION_TO_PIECES[duration];
+    setSelectedIds((prev) => {
+      if (prev.length === needed && prev.every((id) => pool.some((p) => p.id === id))) {
+        return prev;
+      }
+      return pool.slice(0, needed).map((p) => p.id);
+    });
+  }, [pool, duration]);
+
+  const pieces: Product[] = useMemo(
+    () => selectedIds.map((id) => pool.find((p) => p.id === id)).filter((p): p is Product => !!p),
+    [selectedIds, pool]
+  );
 
   const individualTotal = useMemo(() => pieces.reduce((acc, p) => acc + p.price, 0), [pieces]);
   const kitPrice = useMemo(
@@ -120,23 +97,61 @@ function KitBuilderInner() {
 
   const goStep = (n: 1 | 2 | 3 | 4) => router.push(`/flight-mode/build?step=${n}`);
 
+  const swapPiece = (idx: number) => {
+    const current = pieces[idx];
+    if (!current || pool.length <= pieces.length) {
+      addToast('No other options right now for that slot', 'info');
+      return;
+    }
+    const alreadyIn = new Set(selectedIds);
+    const next = pool.find((p) => !alreadyIn.has(p.id));
+    if (!next) {
+      addToast('No more alternates available', 'info');
+      return;
+    }
+    setSelectedIds((prev) => {
+      const copy = [...prev];
+      copy[idx] = next.id;
+      return copy;
+    });
+    // Carry size preference if possible
+    setSizes((prev) => {
+      const copy = { ...prev };
+      if (copy[current.id]) {
+        copy[next.id] = copy[current.id];
+        delete copy[current.id];
+      }
+      return copy;
+    });
+  };
+
   const packKit = () => {
-    pieces.forEach((piece) => {
+    if (pieces.length === 0) {
+      addToast('Kit is empty', 'error');
+      return;
+    }
+    pieces.forEach((product) => {
+      const size = sizes[product.id] || defaultSize(product);
+      const variant = findVariant(product.variants, size);
+      const scaledPrice =
+        individualTotal > 0
+          ? Math.round((kitPrice / individualTotal) * product.price)
+          : product.price;
+      const img = primaryImageUrl(product) || '';
       addItem({
-        id: `kit-${piece.slug}`,
-        productId: piece.slug,
-        name: `${piece.name} · Custom Kit`,
-        slug: piece.slug,
-        image: piece.image,
-        price: Math.round((kitPrice / individualTotal) * piece.price),
-        size: sizes[piece.slug] || 'M',
+        id: variant?.id || `kit-${product.id}`,
+        productId: product.id,
+        name: `${product.name} · Custom Kit`,
+        slug: product.slug,
+        image: img,
+        price: scaledPrice,
+        size,
         color: '',
-        maxQuantity: 99,
+        maxQuantity: variant?.stock ?? 99,
         quantity: 1,
       });
     });
     addToast('Kit added to bag', 'success');
-    router.push('/cart');
   };
 
   return (
@@ -182,13 +197,7 @@ function KitBuilderInner() {
       </div>
 
       {/* Progress bar */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 4,
-          padding: '8px 20px',
-        }}
-      >
+      <div style={{ display: 'flex', gap: 4, padding: '8px 20px' }}>
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
@@ -239,17 +248,9 @@ function KitBuilderInner() {
             <Step2Pieces
               vibeLabel={selectedVibeLabel}
               pieces={pieces}
-              onSwap={(idx) => {
-                // Mock swap — rotate image for now
-                setPieces((prev) => {
-                  const next = [...prev];
-                  const p = next[idx];
-                  if (!p) return prev;
-                  next[idx] = { ...p, slug: `${p.slug}-alt-${Date.now()}` };
-                  return next;
-                });
-                addToast('Swapped — more options coming soon', 'info');
-              }}
+              expectedCount={DURATION_TO_PIECES[duration]}
+              isLoading={isLoading}
+              onSwap={swapPiece}
             />
             <StickyBar
               leftBlockLeft={`${pieces.length} PIECES SELECTED`}
@@ -258,6 +259,7 @@ function KitBuilderInner() {
               rightBlockRight={`~${formatPrice(kitPrice)}`}
               ctaLabel="CONTINUE"
               onCta={() => goStep(3)}
+              disabled={pieces.length === 0}
             />
           </motion.div>
         )}
@@ -273,7 +275,7 @@ function KitBuilderInner() {
           >
             <Step3Sizes pieces={pieces} sizes={sizes} setSizes={setSizes} />
             <Step3Sticky
-              sizedCount={pieces.filter((p) => sizes[p.slug]).length}
+              sizedCount={pieces.filter((p) => sizes[p.id]).length}
               totalCount={pieces.length}
               onCta={() => goStep(4)}
             />
@@ -295,24 +297,11 @@ function KitBuilderInner() {
               sizes={sizes}
               individualTotal={individualTotal}
               kitPrice={kitPrice}
-              onAdd={packKit}
-              onAddToBagOnly={() => {
-                pieces.forEach((piece) => {
-                  addItem({
-                    id: `kit-${piece.slug}`,
-                    productId: piece.slug,
-                    name: `${piece.name} · Custom Kit`,
-                    slug: piece.slug,
-                    image: piece.image,
-                    price: Math.round((kitPrice / individualTotal) * piece.price),
-                    size: sizes[piece.slug] || 'M',
-                    color: '',
-                    maxQuantity: 99,
-                    quantity: 1,
-                  });
-                });
-                addToast('Kit added to bag', 'success');
+              onAdd={() => {
+                packKit();
+                router.push('/cart');
               }}
+              onAddToBagOnly={packKit}
             />
           </motion.div>
         )}
@@ -371,11 +360,11 @@ function Step1Vibe({
         </h1>
         <div style={{ width: 24, height: 1, backgroundColor: '#000' }} />
         <p style={{ fontSize: 13, fontWeight: 300, color: '#666', lineHeight: 1.5, margin: 0 }}>
-          Pick the trip — we&apos;ll pull pieces that actually match.
+          Pick the trip — we pull pieces from the matching collection in your catalog.
         </p>
       </div>
 
-      {/* Vibe grid */}
+      {/* Vibe grid — each tile preloads one real primary image from that vibe */}
       <div
         style={{
           display: 'grid',
@@ -384,95 +373,9 @@ function Step1Vibe({
           padding: '0 20px 20px 20px',
         }}
       >
-        {vibeOptions.map((v) => {
-          const meta = VIBE_META[v];
-          const selected = vibe === v;
-          return (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setVibe(v)}
-              style={{
-                position: 'relative',
-                height: 220,
-                borderRadius: 14,
-                overflow: 'hidden',
-                cursor: 'pointer',
-                padding: 0,
-                border: selected ? '2px solid #000' : '1px solid #E5E5E5',
-                backgroundColor: '#1a1a1a',
-              }}
-            >
-              <Image
-                src={meta.bg}
-                alt={meta.label.join(' ')}
-                fill
-                sizes="169px"
-                style={{ objectFit: 'cover' }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundColor: selected ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.22)',
-                }}
-              />
-              {selected && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 10,
-                    left: 10,
-                    width: 22,
-                    height: 22,
-                    borderRadius: 9999,
-                    backgroundColor: '#FFF',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Check size={12} color="#000" />
-                </div>
-              )}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  bottom: 20,
-                  textAlign: 'center',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 20,
-                    fontWeight: 300,
-                    fontStyle: 'italic',
-                    letterSpacing: -0.6,
-                    lineHeight: 1,
-                    color: '#FFF',
-                  }}
-                >
-                  {meta.label[0]}
-                  <br />
-                  {meta.label[1]}
-                </div>
-                <div
-                  style={{
-                    fontSize: 8,
-                    fontWeight: 500,
-                    color: 'rgba(255,255,255,0.8)',
-                    letterSpacing: 2,
-                    marginTop: 8,
-                  }}
-                >
-                  {meta.kicker}
-                </div>
-              </div>
-            </button>
-          );
-        })}
+        {vibeOptions.map((v) => (
+          <VibeTile key={v} slug={v} selected={vibe === v} onClick={() => setVibe(v)} />
+        ))}
         {/* Mixed tile */}
         <button
           type="button"
@@ -501,7 +404,7 @@ function Step1Vibe({
               textAlign: 'center',
             }}
           >
-            Pieces that work everywhere
+            Pieces from any collection
           </span>
         </button>
       </div>
@@ -537,14 +440,7 @@ function Step1Vibe({
                   gap: 4,
                 }}
               >
-                <span
-                  style={{
-                    fontSize: 26,
-                    fontWeight: 300,
-                    letterSpacing: -0.5,
-                    lineHeight: 1,
-                  }}
-                >
+                <span style={{ fontSize: 26, fontWeight: 300, letterSpacing: -0.5, lineHeight: 1 }}>
                   {d === 7 ? '7+' : d}
                 </span>
                 <span
@@ -568,24 +464,24 @@ function Step1Vibe({
 
       {/* What's next */}
       <div
-        style={{ padding: '8px 28px 32px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}
+        style={{
+          padding: '8px 28px 32px 28px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+        }}
       >
         <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 2.5, color: '#999' }}>
           WHAT&apos;S NEXT
         </span>
         {[
-          ['02', 'Pick the pieces we suggest (or swap them).'],
-          ['03', 'Size each item — we remember from last order.'],
-          ['04', 'Review, apply bundle pricing, add to bag.'],
+          ['02', 'Review the pieces we pulled (swap any).'],
+          ['03', 'Pick your size for each piece.'],
+          ['04', 'Bundle discount applies automatically — add to bag.'],
         ].map(([n, text]) => (
           <div
             key={n}
-            style={{
-              padding: '10px 0',
-              display: 'flex',
-              gap: 14,
-              alignItems: 'center',
-            }}
+            style={{ padding: '10px 0', display: 'flex', gap: 14, alignItems: 'center' }}
           >
             <span style={{ fontSize: 11, fontWeight: 400, color: '#CCC', letterSpacing: 1 }}>
               {n}
@@ -598,15 +494,126 @@ function Step1Vibe({
   );
 }
 
-/* ── Step 2 — Pick the pieces ─────────────────────────────────────── */
+function VibeTile({
+  slug,
+  selected,
+  onClick,
+}: {
+  slug: Exclude<VibeSlug, 'mixed'>;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  const meta = VIBE_META[slug];
+  const { data } = useProducts({
+    vibe: slug,
+    limit: 1,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const hero = primaryImageUrl(data?.products?.[0]);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        position: 'relative',
+        height: 220,
+        borderRadius: 14,
+        overflow: 'hidden',
+        cursor: 'pointer',
+        padding: 0,
+        border: selected ? '2px solid #000' : '1px solid #E5E5E5',
+        backgroundColor: '#1a1a1a',
+      }}
+    >
+      {hero ? (
+        <Image
+          src={getImageUrl(hero, 400)}
+          alt={meta.label.join(' ')}
+          fill
+          sizes="169px"
+          style={{ objectFit: 'cover' }}
+        />
+      ) : (
+        <div className="skeleton" style={{ position: 'absolute', inset: 0 }} />
+      )}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: selected ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.22)',
+        }}
+      />
+      {selected && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            width: 22,
+            height: 22,
+            borderRadius: 9999,
+            backgroundColor: '#FFF',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Check size={12} color="#000" />
+        </div>
+      )}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 20,
+          textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            fontSize: 20,
+            fontWeight: 300,
+            fontStyle: 'italic',
+            letterSpacing: -0.6,
+            lineHeight: 1,
+            color: '#FFF',
+          }}
+        >
+          {meta.label[0]}
+          <br />
+          {meta.label[1]}
+        </div>
+        <div
+          style={{
+            fontSize: 8,
+            fontWeight: 500,
+            color: 'rgba(255,255,255,0.8)',
+            letterSpacing: 2,
+            marginTop: 8,
+          }}
+        >
+          {meta.kicker}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/* ── Step 2 — Pick the pieces (from real inventory) ───────────────── */
 
 function Step2Pieces({
   vibeLabel,
   pieces,
+  expectedCount,
+  isLoading,
   onSwap,
 }: {
   vibeLabel: string;
-  pieces: KitPiece[];
+  pieces: Product[];
+  expectedCount: number;
+  isLoading: boolean;
   onSwap: (idx: number) => void;
 }) {
   return (
@@ -620,7 +627,7 @@ function Step2Pieces({
         }}
       >
         <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 2, color: '#999' }}>
-          STEP TWO · {vibeLabel.toUpperCase()} · {pieces.length} PIECES
+          STEP TWO · {vibeLabel.toUpperCase()} · {expectedCount} PIECES
         </span>
         <h1
           style={{
@@ -639,7 +646,8 @@ function Step2Pieces({
         </h1>
         <div style={{ width: 24, height: 1, backgroundColor: '#000' }} />
         <p style={{ fontSize: 13, fontWeight: 300, color: '#666', lineHeight: 1.5, margin: 0 }}>
-          We pre-picked {pieces.length} that layer well. Tap any to swap for a similar piece.
+          We pulled {expectedCount} pieces from your catalog that layer well. Tap any to swap for a
+          similar in-stock piece.
         </p>
       </div>
 
@@ -651,85 +659,116 @@ function Step2Pieces({
           gap: 12,
         }}
       >
-        {pieces.map((p, i) => (
-          <div
-            key={`${p.slug}-${i}`}
-            style={{
-              height: 92,
-              borderRadius: 12,
-              border: '1px solid #F0F0F0',
-              backgroundColor: '#FFF',
-              padding: '0 14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
+        {pieces.length === 0 && isLoading && (
+          <>
+            {Array.from({ length: expectedCount }).map((_, i) => (
+              <div key={i} className="skeleton" style={{ height: 92, borderRadius: 12 }} />
+            ))}
+          </>
+        )}
+        {pieces.length === 0 && !isLoading && (
+          <p style={{ fontSize: 12, color: '#999', fontStyle: 'italic' }}>
+            No products match this trip yet — try a different vibe.
+          </p>
+        )}
+        {pieces.map((p, i) => {
+          const img = primaryImageUrl(p);
+          const kind = p.category?.name?.toUpperCase() || 'PIECE';
+          return (
             <div
+              key={p.id}
               style={{
-                position: 'relative',
-                width: 64,
-                height: 76,
-                borderRadius: 8,
-                overflow: 'hidden',
-                backgroundColor: '#F5F5F5',
-                flexShrink: 0,
-              }}
-            >
-              <Image src={p.image} alt={p.name} fill sizes="64px" style={{ objectFit: 'cover' }} />
-            </div>
-            <div
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-                alignItems: 'flex-start',
-              }}
-            >
-              <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 2, color: '#999' }}>
-                {p.kind}
-              </span>
-              <span style={{ fontSize: 14, fontWeight: 400, color: '#000' }}>{p.name}</span>
-              <span style={{ fontSize: 11, fontWeight: 300, color: '#666' }}>
-                {formatPrice(p.price)}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => onSwap(i)}
-              style={{
-                height: 32,
-                minWidth: 72,
-                padding: '0 12px',
-                borderRadius: 9999,
-                border: '1px solid #E5E5E5',
+                height: 92,
+                borderRadius: 12,
+                border: '1px solid #F0F0F0',
                 backgroundColor: '#FFF',
-                cursor: 'pointer',
-                display: 'inline-flex',
+                padding: '0 14px',
+                display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
+                gap: 12,
               }}
             >
-              <Shuffle size={11} color="#000" />
-              <span style={{ fontSize: 10, fontWeight: 400, color: '#000' }}>Swap</span>
-            </button>
-          </div>
-        ))}
+              <div
+                style={{
+                  position: 'relative',
+                  width: 64,
+                  height: 76,
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  backgroundColor: '#F5F5F5',
+                  flexShrink: 0,
+                }}
+              >
+                {img && (
+                  <Image
+                    src={getImageUrl(img, 200)}
+                    alt={p.name}
+                    fill
+                    sizes="64px"
+                    style={{ objectFit: 'cover' }}
+                  />
+                )}
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 4,
+                  alignItems: 'flex-start',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 500,
+                    letterSpacing: 2,
+                    color: '#999',
+                  }}
+                >
+                  {kind}
+                </span>
+                <span style={{ fontSize: 14, fontWeight: 400, color: '#000' }}>{p.name}</span>
+                <span style={{ fontSize: 11, fontWeight: 300, color: '#666' }}>
+                  {formatPrice(p.price)}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onSwap(i)}
+                style={{
+                  height: 32,
+                  minWidth: 72,
+                  padding: '0 12px',
+                  borderRadius: 9999,
+                  border: '1px solid #E5E5E5',
+                  backgroundColor: '#FFF',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
+              >
+                <Shuffle size={11} color="#000" />
+                <span style={{ fontSize: 10, fontWeight: 400, color: '#000' }}>Swap</span>
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-/* ── Step 3 — Sizes ──────────────────────────────────────────────── */
+/* ── Step 3 — Sizes (from real variants) ──────────────────────────── */
 
 function Step3Sizes({
   pieces,
   sizes,
   setSizes,
 }: {
-  pieces: KitPiece[];
+  pieces: Product[];
   sizes: Record<string, string>;
   setSizes: (updater: (prev: Record<string, string>) => Record<string, string>) => void;
 }) {
@@ -762,8 +801,16 @@ function Step3Sizes({
           your size?
         </h1>
         <div style={{ width: 24, height: 1, backgroundColor: '#000' }} />
-        <p style={{ fontSize: 13, fontWeight: 300, color: '#666', lineHeight: 1.5, margin: 0 }}>
-          Pre-filled from your last order. Adjust anything that doesn&apos;t fit the same.
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 300,
+            color: '#666',
+            lineHeight: 1.5,
+            margin: 0,
+          }}
+        >
+          Real sizes from real variants — only in-stock options are tappable.
         </p>
       </div>
 
@@ -789,11 +836,14 @@ function Step3Sizes({
           gap: 16,
         }}
       >
-        {pieces.map((p, i) => {
-          const currentSize = sizes[p.slug];
+        {pieces.map((p) => {
+          const img = primaryImageUrl(p);
+          const currentSize = sizes[p.id];
+          const availableSizes = uniqueSizes(p.variants);
+          const kind = p.category?.name?.toUpperCase() || 'PIECE';
           return (
             <div
-              key={`${p.slug}-${i}`}
+              key={p.id}
               style={{
                 borderRadius: 12,
                 border: '1px solid #F0F0F0',
@@ -816,13 +866,15 @@ function Step3Sizes({
                     flexShrink: 0,
                   }}
                 >
-                  <Image
-                    src={p.image}
-                    alt={p.name}
-                    fill
-                    sizes="56px"
-                    style={{ objectFit: 'cover' }}
-                  />
+                  {img && (
+                    <Image
+                      src={getImageUrl(img, 200)}
+                      alt={p.name}
+                      fill
+                      sizes="56px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  )}
                 </div>
                 <div
                   style={{
@@ -833,8 +885,15 @@ function Step3Sizes({
                     alignItems: 'flex-start',
                   }}
                 >
-                  <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 2, color: '#999' }}>
-                    {p.kind}
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 500,
+                      letterSpacing: 2,
+                      color: '#999',
+                    }}
+                  >
+                    {kind}
                   </span>
                   <span style={{ fontSize: 14, fontWeight: 400, color: '#000' }}>{p.name}</span>
                   {currentSize ? (
@@ -855,37 +914,48 @@ function Step3Sizes({
                   )}
                 </div>
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 8,
-                  justifyContent: 'space-between',
-                }}
-              >
-                {SIZES.map((s) => {
-                  const active = currentSize === s;
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setSizes((prev) => ({ ...prev, [p.slug]: s }))}
-                      style={{
-                        flex: 1,
-                        height: 36,
-                        borderRadius: 8,
-                        border: active ? 'none' : '1px solid #E5E5E5',
-                        backgroundColor: active ? '#000' : '#FFF',
-                        color: active ? '#FFF' : '#000',
-                        fontSize: 12,
-                        fontWeight: active ? 500 : 400,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {s}
-                    </button>
-                  );
-                })}
-              </div>
+              {availableSizes.length === 0 ? (
+                <span style={{ fontSize: 11, color: '#999', fontStyle: 'italic' }}>
+                  One-size product
+                </span>
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {availableSizes.map((s) => {
+                    const active = currentSize === s;
+                    const oos = isSizeOutOfStock(p.variants, s);
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        disabled={oos}
+                        onClick={() => !oos && setSizes((prev) => ({ ...prev, [p.id]: s }))}
+                        style={{
+                          flex: 1,
+                          minWidth: 48,
+                          height: 36,
+                          borderRadius: 8,
+                          border: active ? 'none' : `1px solid ${oos ? '#F0F0F0' : '#E5E5E5'}`,
+                          backgroundColor: active ? '#000' : '#FFF',
+                          color: active ? '#FFF' : oos ? '#CCC' : '#000',
+                          fontSize: 12,
+                          fontWeight: active ? 500 : 400,
+                          cursor: oos ? 'not-allowed' : 'pointer',
+                          textDecoration: oos ? 'line-through' : 'none',
+                        }}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
@@ -903,7 +973,7 @@ function Step3Sticky({
   totalCount: number;
   onCta: () => void;
 }) {
-  const allSized = sizedCount === totalCount;
+  const allSized = sizedCount === totalCount && totalCount > 0;
   return (
     <div
       style={{
@@ -917,14 +987,7 @@ function Step3Sticky({
         bottom: 0,
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-          alignItems: 'flex-start',
-        }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}>
         <span
           style={{
             fontSize: 9,
@@ -935,14 +998,7 @@ function Step3Sticky({
         >
           {sizedCount} OF {totalCount} SIZED
         </span>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 300,
-            fontStyle: 'italic',
-            color: '#666',
-          }}
-        >
+        <span style={{ fontSize: 11, fontWeight: 300, fontStyle: 'italic', color: '#666' }}>
           {allSized ? 'All set — ready to review.' : 'Finish sizing to continue'}
         </span>
       </div>
@@ -974,7 +1030,7 @@ function Step3Sticky({
   );
 }
 
-/* ── Step 4 — Review ──────────────────────────────────────────────── */
+/* ── Step 4 — Review (real product mosaic) ────────────────────────── */
 
 function Step4Review({
   vibe,
@@ -986,7 +1042,7 @@ function Step4Review({
   onAddToBagOnly,
 }: {
   vibe: VibeSlug;
-  pieces: KitPiece[];
+  pieces: Product[];
   sizes: Record<string, string>;
   individualTotal: number;
   kitPrice: number;
@@ -996,10 +1052,9 @@ function Step4Review({
   const savedAmount = individualTotal - kitPrice;
   const isMixed = vibe === 'mixed';
   const meta = isMixed ? null : VIBE_META[vibe as Exclude<VibeSlug, 'mixed'>];
-  const heroBg =
-    meta?.bg ?? 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=720&q=80';
   const vibeLabel = meta ? meta.label.join(' ') : 'Mixed trip';
   const kicker = meta ? `${meta.kicker} KIT · ${pieces.length} PIECES` : 'MIXED KIT';
+  const mosaicImages = pieces.map((p) => primaryImageUrl(p)).filter((u): u is string => !!u);
 
   return (
     <div style={{ flex: 1 }}>
@@ -1035,7 +1090,7 @@ function Step4Review({
         </p>
       </div>
 
-      {/* Mosaic preview */}
+      {/* Mosaic preview — real piece images + hero strip */}
       <div style={{ padding: '0 20px' }}>
         <div
           style={{
@@ -1049,19 +1104,40 @@ function Step4Review({
           }}
         >
           <div style={{ position: 'absolute', inset: 0, display: 'flex', height: 110 }}>
-            {pieces.slice(0, 5).map((p, i) => (
-              <div key={i} style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
-                <Image src={p.image} alt="" fill sizes="70px" style={{ objectFit: 'cover' }} />
-              </div>
-            ))}
+            {pieces.slice(0, 5).map((p, i) => {
+              const src = primaryImageUrl(p);
+              return (
+                <div key={i} style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+                  {src && (
+                    <Image
+                      src={getImageUrl(src, 200)}
+                      alt=""
+                      fill
+                      sizes="70px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div style={{ position: 'absolute', left: 0, right: 0, top: 110, height: 110 }}>
-            <Image src={heroBg} alt="" fill sizes="353px" style={{ objectFit: 'cover' }} />
+            {mosaicImages[0] ? (
+              <Image
+                src={getImageUrl(mosaicImages[0], 720)}
+                alt=""
+                fill
+                sizes="353px"
+                style={{ objectFit: 'cover' }}
+              />
+            ) : (
+              <div style={{ position: 'absolute', inset: 0, backgroundColor: '#222' }} />
+            )}
             <div
               style={{
                 position: 'absolute',
                 inset: 0,
-                backgroundColor: 'rgba(0,0,0,0.45)',
+                backgroundColor: 'rgba(0,0,0,0.5)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -1098,19 +1174,13 @@ function Step4Review({
       <div style={{ height: 32 }} />
 
       {/* Line items */}
-      <div
-        style={{
-          padding: '0 28px',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+      <div style={{ padding: '0 28px', display: 'flex', flexDirection: 'column' }}>
         <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 2.5, color: '#999' }}>
           WHAT&apos;S IN IT
         </span>
         <div style={{ height: 14 }} />
         {pieces.map((p, i) => (
-          <div key={`${p.slug}-${i}`}>
+          <div key={p.id}>
             <div
               style={{
                 padding: '10px 0',
@@ -1121,10 +1191,11 @@ function Step4Review({
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span style={{ fontSize: 13, fontWeight: 400, color: '#000' }}>
-                  {p.name} · {sizes[p.slug] || 'M'}
+                  {p.name}
+                  {sizes[p.id] ? ` · ${sizes[p.id]}` : ''}
                 </span>
                 <span style={{ fontSize: 10, fontWeight: 300, color: '#999' }}>
-                  {p.kind.toLowerCase()}
+                  {(p.category?.name || 'piece').toLowerCase()}
                 </span>
               </div>
               <span style={{ fontSize: 13, fontWeight: 400, color: '#000' }}>
@@ -1237,14 +1308,7 @@ function Step4Review({
           }}
         >
           <Lock size={12} color="#CCC" />
-          <span
-            style={{
-              fontSize: 9,
-              fontWeight: 400,
-              letterSpacing: 2,
-              color: '#999',
-            }}
-          >
+          <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: 2, color: '#999' }}>
             365-DAY BUYBACK · FREE SHIPPING
           </span>
         </div>
@@ -1264,6 +1328,7 @@ function StickyBar({
   rightBlockRight,
   ctaLabel,
   onCta,
+  disabled,
 }: {
   left?: string;
   right?: string;
@@ -1273,6 +1338,7 @@ function StickyBar({
   rightBlockRight?: string;
   ctaLabel: string;
   onCta: () => void;
+  disabled?: boolean;
 }) {
   const showBlock = !!(leftBlockLeft || rightBlockLeft);
   return (
@@ -1291,7 +1357,12 @@ function StickyBar({
       {showBlock ? (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div
-            style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              alignItems: 'flex-start',
+            }}
           >
             {leftBlockLeft && (
               <span
@@ -1309,7 +1380,14 @@ function StickyBar({
               <span style={{ fontSize: 12, fontWeight: 400, color: '#000' }}>{leftBlockRight}</span>
             )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-end' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              alignItems: 'flex-end',
+            }}
+          >
             {rightBlockLeft && (
               <span
                 style={{
@@ -1347,17 +1425,18 @@ function StickyBar({
       <button
         type="button"
         onClick={onCta}
+        disabled={disabled}
         style={{
           width: '100%',
           height: 52,
           borderRadius: 9999,
-          backgroundColor: '#000',
+          backgroundColor: disabled ? 'rgba(0,0,0,0.3)' : '#000',
           color: '#FFF',
           border: 'none',
           fontSize: 11,
           fontWeight: 500,
           letterSpacing: 2,
-          cursor: 'pointer',
+          cursor: disabled ? 'not-allowed' : 'pointer',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1369,4 +1448,35 @@ function StickyBar({
       </button>
     </div>
   );
+}
+
+/* ── Helpers ─────────────────────────────────────────────────────── */
+
+function uniqueSizes(variants: ProductVariant[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of variants) {
+    if (v.size && !seen.has(v.size)) {
+      seen.add(v.size);
+      out.push(v.size);
+    }
+  }
+  return out;
+}
+
+function findVariant(variants: ProductVariant[], size: string): ProductVariant | undefined {
+  return variants.find((v) => v.size === size);
+}
+
+function isSizeOutOfStock(variants: ProductVariant[], size: string): boolean {
+  const v = findVariant(variants, size);
+  return v ? v.stock <= 0 : true;
+}
+
+function defaultSize(product: Product): string {
+  const sizes = uniqueSizes(product.variants);
+  if (sizes.length === 0) return '';
+  if (sizes.includes('M') && !isSizeOutOfStock(product.variants, 'M')) return 'M';
+  const inStock = sizes.find((s) => !isSizeOutOfStock(product.variants, s));
+  return inStock || sizes[0];
 }
