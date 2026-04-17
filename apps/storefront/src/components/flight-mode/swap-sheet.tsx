@@ -205,6 +205,11 @@ export function SwapSheet({
                       }}
                       disabled={disabled}
                       style={{
+                        // minWidth: 0 lets the grid 1fr actually constrain the
+                        // cell; <button> defaults to min-content which lets long
+                        // product names blow the grid wider than the viewport.
+                        minWidth: 0,
+                        width: '100%',
                         position: 'relative',
                         display: 'flex',
                         flexDirection: 'column',
@@ -277,15 +282,31 @@ export function SwapSheet({
                           </div>
                         )}
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <div
+                        style={{
+                          width: '100%',
+                          minWidth: 0,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 2,
+                          padding: '0 2px',
+                        }}
+                      >
                         <span
+                          title={product.name}
                           style={{
+                            // 2-line clamp with reserved height so every tile
+                            // aligns its price row on the same baseline
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
                             fontSize: 12,
                             fontWeight: 400,
                             color: '#000',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
+                            lineHeight: 1.3,
+                            minHeight: 32,
                           }}
                         >
                           {product.name}

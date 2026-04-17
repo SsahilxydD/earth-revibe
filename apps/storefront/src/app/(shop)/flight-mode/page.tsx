@@ -13,6 +13,7 @@ import {
 } from '@/lib/flight-mode-data';
 import { useProducts } from '@/hooks/use-products';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
+import type { Product } from '@/types';
 
 type Filter = 'all' | '3-piece' | '5-piece' | 'weekender';
 
@@ -427,65 +428,9 @@ function HorizontalCard({ combo }: { combo: ComboMeta }) {
         backgroundColor: '#FFF',
       }}
     >
-      {/* 2×2 thumbnail mosaic — real product primaries */}
-      <div
-        style={{
-          position: 'relative',
-          width: 160,
-          height: 200,
-          backgroundColor: '#F5F5F5',
-          flexShrink: 0,
-        }}
-      >
-        {Array.from({ length: 4 }).map((_, i) => {
-          const p = mosaic[i];
-          const src = primaryImageUrl(p);
-          return (
-            <div
-              key={i}
-              className={!src && isLoading ? 'skeleton' : ''}
-              style={{
-                position: 'absolute',
-                width: 80,
-                height: 100,
-                top: i < 2 ? 0 : 100,
-                left: i % 2 === 0 ? 0 : 80,
-                overflow: 'hidden',
-                backgroundColor: '#F5F5F5',
-              }}
-            >
-              {src && (
-                <Image
-                  src={getImageUrl(src, 300)}
-                  alt={p?.name || ''}
-                  fill
-                  sizes="80px"
-                  style={{ objectFit: 'cover' }}
-                />
-              )}
-            </div>
-          );
-        })}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 8,
-            right: 8,
-            width: 32,
-            height: 32,
-            borderRadius: 9999,
-            backgroundColor: '#000',
-            color: '#FFF',
-            fontSize: 12,
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {combo.pieceCount}
-        </div>
-      </div>
+      {/* Adaptive mosaic — shape follows pieceCount so 3-piece kits
+          don't render an awkward empty 4th grey cell. */}
+      <AdaptiveMosaic products={mosaic} pieceCount={combo.pieceCount} isLoading={isLoading} />
 
       {/* Body */}
       <div
@@ -496,67 +441,260 @@ function HorizontalCard({ combo }: { combo: ComboMeta }) {
           flexDirection: 'column',
           justifyContent: 'space-between',
           gap: 4,
+          minWidth: 0,
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 2, color: '#999' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 500,
+              letterSpacing: 2,
+              color: '#999',
+            }}
+          >
             {combo.kicker}
           </span>
           <span
             style={{
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: 400,
               letterSpacing: -0.4,
               color: '#000',
+              lineHeight: 1.1,
             }}
           >
             {combo.name}
           </span>
-          <span style={{ fontSize: 11, fontWeight: 300, color: '#666', lineHeight: 1.4 }}>
-            {combo.description}
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 300,
+              fontStyle: 'italic',
+              color: '#999',
+              lineHeight: 1.4,
+            }}
+          >
+            {combo.tagline}
           </span>
         </div>
         <div
           style={{
             display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
+            flexDirection: 'column',
+            gap: 6,
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {individualTotal > 0 ? (
-              <>
-                <span style={{ fontSize: 10, fontWeight: 300, color: '#CCC' }}>
-                  {formatPrice(individualTotal)}
-                </span>
-                <span
+          {individualTotal > 0 ? (
+            <>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}
+              >
+                <div
                   style={{
-                    fontSize: 18,
-                    fontWeight: 500,
-                    letterSpacing: -0.3,
-                    color: '#000',
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 8,
                   }}
                 >
-                  {formatPrice(price)}
-                </span>
-                <span
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 500,
-                    letterSpacing: 1.5,
-                    color: '#22C55E',
-                  }}
-                >
-                  SAVE {formatPrice(saved)}
-                </span>
-              </>
-            ) : (
-              <span style={{ fontSize: 11, color: '#CCC' }}>…</span>
-            )}
-          </div>
-          <ArrowUpRight size={18} color="#000" />
+                  <span
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 500,
+                      letterSpacing: -0.4,
+                      color: '#000',
+                    }}
+                  >
+                    {formatPrice(price)}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 300,
+                      color: '#CCC',
+                    }}
+                  >
+                    {formatPrice(individualTotal)}
+                  </span>
+                </div>
+                <ArrowUpRight size={16} color="#000" style={{ flexShrink: 0 }} />
+              </div>
+              <div
+                style={{
+                  alignSelf: 'flex-start',
+                  height: 22,
+                  padding: '0 8px',
+                  borderRadius: 9999,
+                  backgroundColor: '#22C55E',
+                  color: '#FFF',
+                  fontSize: 9,
+                  fontWeight: 500,
+                  letterSpacing: 1.5,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
+                SAVE {formatPrice(saved)} · {combo.discountPct}%
+              </div>
+            </>
+          ) : (
+            <span style={{ fontSize: 11, color: '#CCC' }}>…</span>
+          )}
         </div>
       </div>
     </Link>
+  );
+}
+
+/* ─── AdaptiveMosaic — mosaic layout adapts to combo.pieceCount ──── */
+
+function AdaptiveMosaic({
+  products,
+  pieceCount,
+  isLoading,
+}: {
+  products: Product[];
+  pieceCount: number;
+  isLoading: boolean;
+}) {
+  // Wrap for 160×200 mosaic — same dimensions as before so card height doesn't shift.
+  const shell: React.CSSProperties = {
+    position: 'relative',
+    width: 160,
+    height: 200,
+    backgroundColor: '#F5F5F5',
+    flexShrink: 0,
+  };
+
+  // 3-piece layout: 1 tall hero left (80×200), 2 stacked right (80×100 each)
+  if (pieceCount === 3) {
+    return (
+      <div style={shell}>
+        <MosaicTile product={products[0]} x={0} y={0} w={80} h={200} isLoading={isLoading} />
+        <MosaicTile product={products[1]} x={80} y={0} w={80} h={100} isLoading={isLoading} />
+        <MosaicTile product={products[2]} x={80} y={100} w={80} h={100} isLoading={isLoading} />
+      </div>
+    );
+  }
+
+  // 4-piece layout: clean 2×2
+  if (pieceCount === 4) {
+    return (
+      <div style={shell}>
+        {products.slice(0, 4).map((p, i) => (
+          <MosaicTile
+            key={i}
+            product={p}
+            x={i % 2 === 0 ? 0 : 80}
+            y={i < 2 ? 0 : 100}
+            w={80}
+            h={100}
+            isLoading={isLoading}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // 5+ layout: 2×2 with "+N" overlay on the 4th tile
+  const extra = pieceCount - 4;
+  return (
+    <div style={shell}>
+      {products.slice(0, 3).map((p, i) => (
+        <MosaicTile
+          key={i}
+          product={p}
+          x={i % 2 === 0 ? 0 : 80}
+          y={i < 2 ? 0 : 100}
+          w={80}
+          h={100}
+          isLoading={isLoading}
+        />
+      ))}
+      <div
+        style={{
+          position: 'absolute',
+          top: 100,
+          left: 80,
+          width: 80,
+          height: 100,
+          overflow: 'hidden',
+          backgroundColor: '#F5F5F5',
+        }}
+      >
+        {products[3] && (
+          <MosaicTile product={products[3]} x={0} y={0} w={80} h={100} isLoading={isLoading} />
+        )}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.68)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <span
+            style={{
+              fontSize: 20,
+              fontWeight: 300,
+              fontStyle: 'italic',
+              color: '#FFF',
+              letterSpacing: -0.5,
+            }}
+          >
+            +{extra}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MosaicTile({
+  product,
+  x,
+  y,
+  w,
+  h,
+  isLoading,
+}: {
+  product: Product | undefined;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  isLoading: boolean;
+}) {
+  const src = primaryImageUrl(product);
+  return (
+    <div
+      className={!src && isLoading ? 'skeleton' : ''}
+      style={{
+        position: 'absolute',
+        top: y,
+        left: x,
+        width: w,
+        height: h,
+        overflow: 'hidden',
+        backgroundColor: '#F5F5F5',
+      }}
+    >
+      {src && (
+        <Image
+          src={getImageUrl(src, 300)}
+          alt={product?.name || ''}
+          fill
+          sizes={`${w}px`}
+          style={{ objectFit: 'cover' }}
+        />
+      )}
+    </div>
   );
 }
