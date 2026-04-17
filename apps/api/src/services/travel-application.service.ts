@@ -8,8 +8,13 @@ import { logger } from '../config/logger';
 import { APP_CONSTANTS } from '../config/constants';
 import { ApiError } from '../utils/api-error';
 import { sendTripApplicationToDiscord } from './discord.service';
-import { sendWhatsAppTripApplicationAlert, sendWhatsAppDecision } from './whatsapp.service';
 import {
+  sendWhatsAppTripApplicationAlert,
+  sendWhatsAppTripApplicationReceived,
+  sendWhatsAppDecision,
+} from './whatsapp.service';
+import {
+  sendSubmissionReceivedEmail,
   sendApprovalEmail,
   sendRejectionEmail,
   sendWaitlistEmail,
@@ -65,15 +70,28 @@ export const travelApplicationService = {
           'travel application submitted'
         );
 
-        // Fan out notifications in parallel. Both are soft-fail (never throw),
+        // Fan out notifications in parallel. All are soft-fail (never throw),
         // and we fire-and-forget so the applicant's response isn't blocked by
         // slow third-party APIs. Errors are logged inside each function.
+        //
+        // Team-facing: Discord embed + WhatsApp alert to TRIP_FORM_NOTIFY_PHONE.
+        // Applicant-facing: acknowledgement email + WhatsApp, triggered together
+        // (both fire — not either/or — so the applicant gets confirmation on
+        // whichever channel they check first).
         void Promise.allSettled([
           sendTripApplicationToDiscord({
             applicationNumber: created.applicationNumber,
             data,
           }),
           sendWhatsAppTripApplicationAlert(created.applicationNumber, data.name, data.city),
+          data.email
+            ? sendSubmissionReceivedEmail({
+                to: data.email,
+                name: data.name,
+                applicationNumber: created.applicationNumber,
+              })
+            : Promise.resolve(false),
+          sendWhatsAppTripApplicationReceived(data.phone, data.name, created.applicationNumber),
         ]);
 
         return created;

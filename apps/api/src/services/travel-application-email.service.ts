@@ -89,6 +89,43 @@ async function send(
   }
 }
 
+// ── Received (acknowledgement on submission) ──────────────────────────────
+export async function sendSubmissionReceivedEmail(input: DecisionEmailInput): Promise<boolean> {
+  const { to, name, applicationNumber } = input;
+  const first = firstName(name);
+
+  const headerCopy = `
+    <h1 style="margin:0 0 8px;font-size:32px;font-weight:300;letter-spacing:-0.5px;color:#1a1714">
+      Thanks, ${first}.
+    </h1>
+    <p style="margin:0;font-size:12px;letter-spacing:2px;color:#b85c38;text-transform:uppercase">
+      Application received
+    </p>`;
+
+  const body = `
+    <p style="font-size:15px;line-height:1.7;color:#4a4239;margin:0 0 20px">
+      We've got your Travel Circle application &mdash; thanks for taking the time to share. 🎒
+    </p>
+    <p style="font-size:15px;line-height:1.7;color:#4a4239;margin:0 0 20px">
+      Here's what happens next:
+    </p>
+    <ol style="font-size:14px;line-height:1.9;color:#4a4239;margin:0 0 24px;padding-left:20px">
+      <li>We read every single application personally &mdash; no bots.</li>
+      <li>You'll hear back within <strong>48 hours</strong> on both email and WhatsApp.</li>
+      <li>If you're in, we'll add you to the private WhatsApp travel circle.</li>
+    </ol>
+    <p style="font-size:13px;line-height:1.7;color:#6e665b;margin:0;padding:16px;background:#f2ede3;border-left:3px solid #b85c38">
+      <strong>Application #${applicationNumber}</strong> &bull; Keep this handy for reference.
+    </p>`;
+
+  return send(
+    to,
+    `We got your Earth Revibe Travel Circle application`,
+    envelope(headerCopy, body, 'Explore earthrevibe.com', FRONTEND_URL),
+    applicationNumber
+  );
+}
+
 // ── Approval ────────────────────────────────────────────────────────────────
 export async function sendApprovalEmail(input: DecisionEmailInput): Promise<boolean> {
   const { to, name, applicationNumber } = input;

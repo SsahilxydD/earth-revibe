@@ -213,6 +213,81 @@ export async function sendWhatsAppTripApplicationAlert(
 }
 
 /**
+ * Acknowledge a Travel Circle application to the APPLICANT the moment the
+ * form is submitted. Uses the pre-approved `WHATSAPP_TRIP_RECEIVED_TEMPLATE`.
+ *
+ * Template body (must be approved in Meta Business Manager):
+ *   "Thanks for applying, {{1}}! 🎒 We've got your Earth Revibe Travel
+ *    Circle application {{2}} and will review it within 48h."
+ *
+ *   {{1}} = applicant first name
+ *   {{2}} = applicationNumber (e.g. "ER-2026-0042")
+ *
+ * Soft-fail: returns boolean, never throws.
+ */
+export async function sendWhatsAppTripApplicationReceived(
+  phone: string,
+  name: string,
+  applicationNumber: string
+): Promise<boolean> {
+  const digits = phone.replace(/\D/g, '');
+  const to = /^\d{10}$/.test(digits) ? `91${digits}` : digits;
+  if (!to) return false;
+
+  const first = name.trim().split(/\s+/)[0] || 'there';
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: env.WHATSAPP_TRIP_RECEIVED_TEMPLATE,
+      language: { code: 'en' },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: first },
+            { type: 'text', text: applicationNumber },
+          ],
+        },
+      ],
+    },
+  };
+
+  try {
+    const res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      logger.error(
+        {
+          status: res.status,
+          body: text,
+          applicationNumber,
+          templateName: env.WHATSAPP_TRIP_RECEIVED_TEMPLATE,
+        },
+        'WhatsApp trip-application received error'
+      );
+      return false;
+    }
+
+    logger.info({ applicationNumber }, 'WhatsApp trip-application receipt sent');
+    return true;
+  } catch (err) {
+    logger.error({ err, applicationNumber }, 'WhatsApp trip-application received network error');
+    return false;
+  }
+}
+
+/**
  * Send a Travel Circle DECISION message to the applicant (approved /
  * rejected / waitlisted). Uses pre-approved Meta templates configured via
  * env. Soft-fail: returns boolean, never throws.

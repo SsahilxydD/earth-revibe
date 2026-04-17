@@ -56,6 +56,9 @@ const envSchema = z.object({
   // WhatsApp — short templated alert to a team number (pre-approved template required)
   TRIP_FORM_NOTIFY_PHONE: z.string().optional(), // E.164, e.g. "+919876543210"
   WHATSAPP_TRIP_APPLICATION_TEMPLATE: z.string().default('earth_revibe_trip_application_alert'),
+  // Applicant-facing acknowledgement sent the moment the form is submitted
+  // (fires in parallel with the acknowledgement email).
+  WHATSAPP_TRIP_RECEIVED_TEMPLATE: z.string().default('earth_revibe_trip_received'),
   // Applicant-facing decision templates — sent when admin changes status.
   WHATSAPP_TRIP_APPROVED_TEMPLATE: z.string().default('earth_revibe_trip_approved'),
   WHATSAPP_TRIP_REJECTED_TEMPLATE: z.string().default('earth_revibe_trip_rejected'),
