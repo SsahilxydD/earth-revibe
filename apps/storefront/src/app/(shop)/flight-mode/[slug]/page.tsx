@@ -132,28 +132,34 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
       addToast('Bundle is empty right now — try again', 'error');
       return;
     }
-    // Split the bundle price proportionally so cart totals match
-    pieces.forEach((product) => {
+    // Only real variant IDs and real product prices survive the cart-sync /
+    // checkout boundary — the server looks everything up from the variantId
+    // and ignores client-sent price/name. Scaling prices or using
+    // ${combo.slug}-${product.id} as a fallback id here just produced
+    // "product not available" at checkout and silently dropped the combo
+    // discount (customer saw ₹X in cart, paid full price).
+    // The combo discount must be applied server-side (via a coupon/bundle
+    // rule keyed off all pieces being present) — not by mutating cart items.
+    for (const product of pieces) {
       const chosenSize = sizes[product.id] || defaultSize(product);
       const variant = findVariant(product.variants, chosenSize);
-      const lineId = variant?.id || `${combo.slug}-${product.id}`;
-      const unitPrice = toNumber(product.price);
-      const scaledPrice =
-        individualTotal > 0 ? Math.round((price / individualTotal) * unitPrice) : unitPrice;
-      const img = primaryImageUrl(product) || '';
+      if (!variant) {
+        addToast(`Pick a size for ${product.name}`, 'error');
+        return;
+      }
       addItem({
-        id: lineId,
+        id: variant.id,
         productId: product.id,
-        name: `${product.name} · ${combo.name}`,
+        name: product.name,
         slug: product.slug,
-        image: img,
-        price: scaledPrice,
+        image: primaryImageUrl(product) || '',
+        price: toNumber(product.price),
         size: chosenSize,
         color: '',
-        maxQuantity: variant?.stock ?? 99,
+        maxQuantity: variant.stock,
         quantity: 1,
       });
-    });
+    }
     addToast(`${combo.name} added to bag`, 'success');
   };
 

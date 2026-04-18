@@ -40,8 +40,10 @@ function normalizeWishlistItems(raw: RawWishlistItem[]): WishlistItem[] {
     name: item.product.name,
     slug: item.product.slug,
     image: item.product.images?.[0]?.url || '',
-    price: item.product.price,
-    compareAtPrice: item.product.compareAtPrice,
+    // Prisma Decimal serializes as string; coerce so arithmetic/compare works.
+    price: Number(item.product.price),
+    compareAtPrice:
+      item.product.compareAtPrice == null ? null : Number(item.product.compareAtPrice),
     inStock: true,
   }));
 }

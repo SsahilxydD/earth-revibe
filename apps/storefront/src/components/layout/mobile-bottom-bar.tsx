@@ -7,7 +7,7 @@ import { Home, Search, Heart, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart-store';
-import { useUiStore } from '@/stores/ui-store';
+import { useUiStore, subscribeDockHidden } from '@/stores/ui-store';
 
 const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home },
@@ -22,6 +22,12 @@ export function MobileBottomBar() {
   const openCart = useCartStore((s) => s.openCart);
   const { openSearch } = useUiStore();
   const [footerInView, setFooterInView] = useState(false);
+  const [dockHidden, setDockHidden] = useState(false);
+
+  // Subscribe to programmatic dock-hide requests (e.g. QuickAddModal opens —
+  // the dock overlaps the add-to-cart button, so the modal pushes it away
+  // for the duration of its open state).
+  useEffect(() => subscribeDockHidden(setDockHidden), []);
 
   // Hide on product detail pages — the top header handles nav there
   const isProductDetail = pathname.startsWith('/products/') && pathname !== '/products';
@@ -44,7 +50,7 @@ export function MobileBottomBar() {
 
   return (
     <AnimatePresence>
-      {!footerInView && (
+      {!footerInView && !dockHidden && (
         <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

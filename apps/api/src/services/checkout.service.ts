@@ -153,6 +153,12 @@ export const checkoutService = {
       loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
     }
 
+    // Take the larger of (coupon discount) vs (auto-bundle tier discount).
+    // No stacking — customer gets whichever saves more.
+    const itemCount = data.items.reduce((n, i) => n + i.quantity, 0);
+    const autoBundle = autoBundleDiscount(itemCount, lineItemsTotal);
+    if (autoBundle > discountAmount) discountAmount = autoBundle;
+
     // Cap total discount so the order is at least ₹1 (Razorpay minimum)
     const maxDiscount = lineItemsTotal - 1;
     if (discountAmount > maxDiscount) discountAmount = Math.max(maxDiscount, 0);
@@ -1140,6 +1146,12 @@ export async function createCodOrder(
     loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
   }
 
+  // Auto-bundle tier discount (see autoBundleDiscount below). No stacking —
+  // take whichever is larger between the coupon and the automatic tier.
+  const itemCount = data.items.reduce((n, i) => n + i.quantity, 0);
+  const autoBundle = autoBundleDiscount(itemCount, subtotal);
+  if (autoBundle > discountAmount) discountAmount = autoBundle;
+
   const codFee = env.COD_FEE || 0;
   const totalAmount = Math.max(subtotal - discountAmount - loyaltyDiscount + codFee, 0);
   const orderNumber = generateOrderNumber();
@@ -1536,6 +1548,21 @@ function mapPaymentMethod(method: string): string | undefined {
     cod: 'COD',
   };
   return map[method];
+}
+
+/**
+ * Tier-based automatic bundle discount applied at order creation.
+ * Mirrored on the client in cart-store.ts for live preview — keep them in
+ * sync. Authority is this function; the client value is only a hint.
+ *
+ *   itemCount 3 or 4  → 20% off subtotal
+ *   itemCount >= 5    → 22% off subtotal
+ *   anything else     → 0
+ */
+export function autoBundleDiscount(itemCount: number, subtotal: number): number {
+  if (itemCount >= 5) return subtotal * 0.22;
+  if (itemCount >= 3) return subtotal * 0.2;
+  return 0;
 }
 
 /** Helper: calculate discount amount for a given code and subtotal */

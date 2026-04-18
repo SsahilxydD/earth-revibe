@@ -39,6 +39,20 @@ interface CartState {
   getItemCount: () => number;
   getSubtotal: () => number;
   getTotal: () => number;
+  getAutoBundleDiscount: () => number;
+}
+
+/**
+ * Mirror of the server's autoBundleDiscount in apps/api/src/services/checkout.service.ts.
+ * Keep these two in sync — the server value is authoritative.
+ *   3 or 4 items   → 20%
+ *   5+ items       → 22%
+ *   anything else  → 0
+ */
+function autoBundleDiscountPreview(itemCount: number, subtotal: number): number {
+  if (itemCount >= 5) return subtotal * 0.22;
+  if (itemCount >= 3) return subtotal * 0.2;
+  return 0;
 }
 
 // Debounced sync to server — fires for logged-in users (auth cart sync)
@@ -153,9 +167,18 @@ export const useCartStore = create<CartState>()(
         return get().items.reduce((sum, i) => sum + i.price * i.quantity, 0);
       },
 
+      getAutoBundleDiscount: () => {
+        const { items } = get();
+        const itemCount = items.reduce((n, i) => n + i.quantity, 0);
+        const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+        return autoBundleDiscountPreview(itemCount, subtotal);
+      },
+
       getTotal: () => {
         const subtotal = get().getSubtotal();
-        return Math.max(0, subtotal - get().discountAmount);
+        // Coupon vs auto-bundle: take whichever saves more (no stacking).
+        const effectiveDiscount = Math.max(get().discountAmount, get().getAutoBundleDiscount());
+        return Math.max(0, subtotal - effectiveDiscount);
       },
     }),
     {

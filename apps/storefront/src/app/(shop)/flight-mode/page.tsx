@@ -517,6 +517,7 @@ function HorizontalCard({ combo }: { combo: ComboMeta }) {
                       fontSize: 11,
                       fontWeight: 300,
                       color: '#CCC',
+                      textDecoration: 'line-through',
                     }}
                   >
                     {formatPrice(individualTotal)}
