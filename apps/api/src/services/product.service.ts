@@ -127,10 +127,15 @@ export const productService = {
             where: { isPrimary: true },
             take: 1,
           },
-          // Card only uses stock to compute isOutOfStock — drop size/color/colorHex from list.
+          // ProductCard only needs stock, but Flight Mode bundles read
+          // variants.{id,size,color} from the same list endpoint to render
+          // the size picker and resolve variantId at add-to-cart. Keep these
+          // — the heavy payload wins come from dropping description/SEO/care,
+          // not tiny variant scalars.
           variants: {
             where: { isActive: true },
-            select: { stock: true },
+            select: { id: true, size: true, color: true, colorHex: true, stock: true },
+            orderBy: { createdAt: 'asc' },
           },
           category: {
             select: { id: true, name: true, slug: true },
