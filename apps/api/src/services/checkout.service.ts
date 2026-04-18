@@ -301,6 +301,9 @@ export const checkoutService = {
       const zipcode = coerceString(addr.zipcode ?? addr.pincode);
       const country = coerceString(addr.country);
       const id = coerceString(addr.id) ?? `addr_${idx}`;
+      const city = coerceString(addr.city) ?? '';
+      const state = coerceString(addr.state) ?? '';
+      const stateCode = coerceString(addr.state_code) ?? '';
 
       // Serviceable only when country is India AND a non-empty pincode exists.
       // On the pre-pincode callback we return the method but mark it
@@ -308,11 +311,25 @@ export const checkoutService = {
       // pipeline healthy — once the customer types a pincode, Razorpay
       // calls again and we flip to serviceable.
       const serviceable = country?.toLowerCase() === 'in' && !!zipcode;
+      const codFee = serviceable ? codFeePaise : 0;
 
+      // Razorpay's Magic Checkout reads cod / cod_fee / shipping_fee /
+      // serviceable at the ADDRESS level (confirmed by inspecting
+      // /v1/standard_checkout/merchant/shipping_info response shape in
+      // the browser 2026-04-18). Putting them only inside shipping_methods
+      // was the long-standing bug that made "COD not available" stick.
+      // We populate both levels so either parser works.
       return {
         id,
         zipcode: zipcode ?? '',
         country: country ?? '',
+        city,
+        state,
+        state_code: stateCode,
+        serviceable,
+        shipping_fee: 0,
+        cod: serviceable,
+        cod_fee: codFee,
         shipping_methods: [
           {
             id: 'standard',
@@ -321,13 +338,13 @@ export const checkoutService = {
             serviceable,
             shipping_fee: 0,
             cod: serviceable,
-            cod_fee: serviceable ? codFeePaise : 0,
+            cod_fee: codFee,
           },
         ],
       };
     });
 
-    return { addresses };
+    return { addresses, tax_details: null };
   },
 
   /**
