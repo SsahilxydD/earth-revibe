@@ -1535,7 +1535,7 @@ describe('checkoutService.getShippingInfo', () => {
     expect(result.addresses[0].cod).toBe(true);
   });
 
-  it('synthesizes addr_${idx} id when Razorpay omits the per-address id', async () => {
+  it('omits `id` when Razorpay does not send one (matches their default response shape)', async () => {
     const result = await checkoutService.getShippingInfo({
       addresses: [
         { zipcode: '400001', country: 'IN' },
@@ -1543,8 +1543,16 @@ describe('checkoutService.getShippingInfo', () => {
       ],
     } as any);
 
-    expect(result.addresses[0].id).toBe('addr_0');
-    expect(result.addresses[1].id).toBe('addr_1');
+    expect((result.addresses[0] as any).id).toBeUndefined();
+    expect((result.addresses[1] as any).id).toBeUndefined();
+  });
+
+  it('echoes `id` back only when Razorpay explicitly sends one', async () => {
+    const result = await checkoutService.getShippingInfo({
+      addresses: [{ id: 'razorpay-addr-xyz', zipcode: '400001', country: 'IN' }],
+    } as any);
+
+    expect((result.addresses[0] as any).id).toBe('razorpay-addr-xyz');
   });
 
   it('accepts `pincode` alias in place of `zipcode`', async () => {

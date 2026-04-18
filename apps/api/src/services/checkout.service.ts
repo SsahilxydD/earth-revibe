@@ -171,12 +171,13 @@ export const checkoutService = {
         currency: 'INR',
         receipt: orderNumber,
         line_items_total: effectiveTotal,
-        shipping_fee: 0,
-        // NOTE: do NOT pass `cod` or `cod_fee` here — Razorpay rejects/ignores
-        // them at orders.create. COD availability + fee must be returned
-        // dynamically via the Shipping Info API (`shipping_methods[].cod` +
-        // `shipping_methods[].cod_fee`, in paise). See getShippingInfo()
-        // below and Razorpay support ticket #18726923 (2026-04-15).
+        // NOTE: do NOT pre-declare shipping_fee or cod_fee here. Both must be
+        // returned dynamically via the Shipping Info API (shipping_methods[]
+        // + address-level cod/cod_fee in paise). Pre-declaring shipping_fee: 0
+        // on orders.create caused Razorpay's backend to skip dispatching to
+        // our merchant shipping-info URL entirely — COD appeared unavailable
+        // because Razorpay's own default fallback was used. Removed 2026-04-18.
+        // See ticket #18726923 and getShippingInfo() below.
         line_items: lineItems,
         notes: {
           userId: userId || 'guest',
@@ -297,10 +298,10 @@ export const checkoutService = {
     const codFeePaise = Math.round((env.COD_FEE || 0) * 100);
     const addressesIn = Array.isArray(data.addresses) ? data.addresses : [];
 
-    const addresses = addressesIn.map((addr: Record<string, unknown>, idx: number) => {
+    const addresses = addressesIn.map((addr: Record<string, unknown>) => {
       const zipcode = coerceString(addr.zipcode ?? addr.pincode);
       const country = coerceString(addr.country);
-      const id = coerceString(addr.id) ?? `addr_${idx}`;
+      const incomingId = coerceString(addr.id);
       const city = coerceString(addr.city) ?? '';
       const state = coerceString(addr.state) ?? '';
       const stateCode = coerceString(addr.state_code) ?? '';
@@ -313,21 +314,22 @@ export const checkoutService = {
       const serviceable = country?.toLowerCase() === 'in' && !!zipcode;
       const codFee = serviceable ? codFeePaise : 0;
 
-      // Razorpay's Magic Checkout reads cod / cod_fee / shipping_fee /
-      // serviceable at the ADDRESS level (confirmed by inspecting
-      // /v1/standard_checkout/merchant/shipping_info response shape in
-      // the browser 2026-04-18). Putting them only inside shipping_methods
-      // was the long-standing bug that made "COD not available" stick.
-      // We populate both levels so either parser works.
-      return {
-        id,
+      // Match Razorpay's own default response shape exactly — confirmed by
+      // inspecting /v1/standard_checkout/merchant/shipping_info in the
+      // browser 2026-04-18:
+      //   { zipcode, country, city, state, state_code, shipping_fee,
+      //     serviceable, cod, cod_fee, shipping_methods }
+      // Razorpay reads cod/cod_fee/shipping_fee/serviceable at the ADDRESS
+      // level. Only echo `id` back when they sent one (their default response
+      // omits it, and an unexpected field can confuse their parser).
+      const out: Record<string, unknown> = {
         zipcode: zipcode ?? '',
         country: country ?? '',
         city,
         state,
         state_code: stateCode,
-        serviceable,
         shipping_fee: 0,
+        serviceable,
         cod: serviceable,
         cod_fee: codFee,
         shipping_methods: [
@@ -342,6 +344,8 @@ export const checkoutService = {
           },
         ],
       };
+      if (incomingId) out.id = incomingId;
+      return out;
     });
 
     return { addresses, tax_details: null };
