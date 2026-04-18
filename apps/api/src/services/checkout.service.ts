@@ -89,6 +89,12 @@ export const checkoutService = {
       const itemTotal = unitPrice * reqItem.quantity;
       lineItemsTotal += itemTotal;
 
+      // image_url is MANDATORY per Magic Checkout docs — missing/undefined
+      // can silently disqualify the order as 1CC-eligible. Fall back to the
+      // storefront logo if no product image exists.
+      const imageUrl =
+        variant.product.images[0]?.url || 'https://www.earthrevibe.com/placeholder-product.png';
+
       lineItems.push({
         type: 'e-commerce',
         sku: variant.id,
@@ -98,7 +104,7 @@ export const checkoutService = {
         quantity: reqItem.quantity,
         name: variant.product.name,
         description: `${variant.size} / ${variant.color}`,
-        image_url: variant.product.images[0]?.url || undefined,
+        image_url: imageUrl,
       });
     }
 
@@ -298,13 +304,11 @@ export const checkoutService = {
     const codFeePaise = Math.round((env.COD_FEE || 0) * 100);
     const addressesIn = Array.isArray(data.addresses) ? data.addresses : [];
 
-    const addresses = addressesIn.map((addr: Record<string, unknown>) => {
+    const addresses = addressesIn.map((addr: Record<string, unknown>, idx: number) => {
       const zipcode = coerceString(addr.zipcode ?? addr.pincode);
       const country = coerceString(addr.country);
-      const incomingId = coerceString(addr.id);
-      const city = coerceString(addr.city) ?? '';
-      const state = coerceString(addr.state) ?? '';
-      const stateCode = coerceString(addr.state_code) ?? '';
+      const id = coerceString(addr.id) ?? `addr_${idx}`;
+      const stateCode = coerceString(addr.state_code);
 
       // Serviceable only when country is India AND a non-empty pincode exists.
       // On the pre-pincode callback we return the method but mark it
@@ -314,25 +318,18 @@ export const checkoutService = {
       const serviceable = country?.toLowerCase() === 'in' && !!zipcode;
       const codFee = serviceable ? codFeePaise : 0;
 
-      // Match Razorpay's own default response shape exactly — confirmed by
-      // inspecting /v1/standard_checkout/merchant/shipping_info in the
-      // browser 2026-04-18:
-      //   { zipcode, country, city, state, state_code, shipping_fee,
-      //     serviceable, cod, cod_fee, shipping_methods }
-      // Razorpay reads cod/cod_fee/shipping_fee/serviceable at the ADDRESS
-      // level. Only echo `id` back when they sent one (their default response
-      // omits it, and an unexpected field can confuse their parser).
+      // Docs-exact shape (razorpay.com/docs/payments/magic-checkout/web/):
+      //   Address level (required): id, zipcode, country; (optional) state_code.
+      //   cod / cod_fee / shipping_fee / serviceable live ONLY inside
+      //   shipping_methods[]. Putting them at address level is our extension
+      //   that isn't in the merchant spec — a prior attempt to match
+      //   Razorpay's internal fallback shape. Removing those keeps the
+      //   response literal to what the spec declares.
       return {
-        ...(incomingId ? { id: incomingId } : {}),
+        id,
         zipcode: zipcode ?? '',
         country: country ?? '',
-        city,
-        state,
-        state_code: stateCode,
-        shipping_fee: 0,
-        serviceable,
-        cod: serviceable,
-        cod_fee: codFee,
+        ...(stateCode ? { state_code: stateCode } : {}),
         shipping_methods: [
           {
             id: 'standard',
@@ -347,7 +344,7 @@ export const checkoutService = {
       };
     });
 
-    return { addresses, tax_details: null };
+    return { addresses };
   },
 
   /**
