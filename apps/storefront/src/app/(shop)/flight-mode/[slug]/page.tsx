@@ -587,12 +587,14 @@ function PieceRow({
                   justifyContent: 'space-between',
                   gap: 8,
                   height: 28,
-                  width: 80,
+                  width: 112,
+                  flexShrink: 0,
                   padding: '0 12px',
                   borderRadius: 6,
                   border: '1px solid #E5E5E5',
                   backgroundColor: '#FFF',
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 <span style={{ fontSize: 10, fontWeight: 400, color: '#000' }}>Size · {size}</span>
