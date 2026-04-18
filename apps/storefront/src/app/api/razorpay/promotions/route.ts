@@ -10,6 +10,9 @@ const API_BASE =
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get('x-razorpay-signature') ?? '';
+  const userAgent = request.headers.get('user-agent') ?? '';
+
+  console.log(`[promotions proxy] ua=${userAgent} sig=${signature ? 'yes' : 'no'} body=${body}`);
 
   const upstream = await fetch(`${API_BASE}/checkout/promotions`, {
     method: 'POST',
@@ -21,6 +24,8 @@ export async function POST(request: NextRequest) {
   });
 
   const text = await upstream.text();
+  console.log(`[promotions proxy] upstream=${upstream.status} response=${text}`);
+
   return new NextResponse(text, {
     status: upstream.status,
     headers: { 'Content-Type': upstream.headers.get('Content-Type') ?? 'application/json' },

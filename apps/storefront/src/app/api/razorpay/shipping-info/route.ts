@@ -16,6 +16,14 @@ const API_BASE =
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get('x-razorpay-signature') ?? '';
+  const userAgent = request.headers.get('user-agent') ?? '';
+  const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? '';
+
+  // Visible in Vercel function logs — distinguishes real Razorpay calls
+  // from our curl tests, and captures the exact payload Razorpay sends.
+  console.log(
+    `[shipping-info proxy] ua=${userAgent} ip=${ip} sig=${signature ? 'yes' : 'no'} body=${body}`
+  );
 
   const upstream = await fetch(`${API_BASE}/checkout/shipping-info`, {
     method: 'POST',
@@ -27,6 +35,8 @@ export async function POST(request: NextRequest) {
   });
 
   const text = await upstream.text();
+  console.log(`[shipping-info proxy] upstream=${upstream.status} response=${text}`);
+
   return new NextResponse(text, {
     status: upstream.status,
     headers: { 'Content-Type': upstream.headers.get('Content-Type') ?? 'application/json' },
