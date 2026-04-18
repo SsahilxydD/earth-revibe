@@ -322,7 +322,8 @@ export const checkoutService = {
       // Razorpay reads cod/cod_fee/shipping_fee/serviceable at the ADDRESS
       // level. Only echo `id` back when they sent one (their default response
       // omits it, and an unexpected field can confuse their parser).
-      const out: Record<string, unknown> = {
+      return {
+        ...(incomingId ? { id: incomingId } : {}),
         zipcode: zipcode ?? '',
         country: country ?? '',
         city,
@@ -344,8 +345,6 @@ export const checkoutService = {
           },
         ],
       };
-      if (incomingId) out.id = incomingId;
-      return out;
     });
 
     return { addresses, tax_details: null };
