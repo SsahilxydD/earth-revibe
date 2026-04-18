@@ -9,9 +9,6 @@ import {
   createMagicCheckoutSchema,
   createCodOrderSchema,
   verifyPaymentSchema,
-  shippingInfoRequestSchema,
-  getPromotionsRequestSchema,
-  applyPromotionRequestSchema,
 } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
@@ -47,25 +44,23 @@ router.get(
   asyncHandler(checkoutController.getOrderAddress)
 );
 
-// Razorpay server-to-server callbacks — verify signature before processing
+// Razorpay server-to-server callbacks.
+//
+// No Zod validate() here on purpose: a single 400 from schema rejection can
+// trip Razorpay's callback circuit breaker and permanently disable our URL
+// on their side (cf. ticket #18726923, commit 021c2a0). Handlers are
+// defensive and always return a valid 200 — see checkout.controller.ts.
 router.post(
   '/shipping-info',
   verifyRazorpayCallback,
-  validate({ body: shippingInfoRequestSchema }),
   asyncHandler(checkoutController.shippingInfo)
 );
 
-router.post(
-  '/promotions',
-  verifyRazorpayCallback,
-  validate({ body: getPromotionsRequestSchema }),
-  asyncHandler(checkoutController.getPromotions)
-);
+router.post('/promotions', verifyRazorpayCallback, asyncHandler(checkoutController.getPromotions));
 
 router.post(
   '/promotions/apply',
   verifyRazorpayCallback,
-  validate({ body: applyPromotionRequestSchema }),
   asyncHandler(checkoutController.applyPromotion)
 );
 

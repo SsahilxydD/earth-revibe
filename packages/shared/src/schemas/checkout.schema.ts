@@ -19,39 +19,45 @@ export const createMagicCheckoutSchema = z.object({
 
 // Razorpay sends this to our shipping info endpoint.
 //
-// Observed actual payload (2026-04-16):
-//   { "addresses": [{ "line1": "...", "city": "...", "state": "...",
-//                     "zipcode": "380009", "country": "in" }] }
+// Observed actual payloads:
+//   Pre-pincode (country-only, fires when widget opens):
+//     { "addresses": [{ "country": "in" }] }
+//   Mid-flow (after pincode entered):
+//     { "addresses": [{ "line1": "...", "city": "...", "state": "...",
+//                       "zipcode": "380009", "country": "in" }] }
+//   Some flows send zipcode as a number, not a string.
 //
-// Razorpay's docs suggest `order_id` and per-address `id` would be present,
-// but in practice the early shipping-info call (fired as soon as the user
-// enters a pincode, before an order exists) sends neither. Everything
-// except zipcode + country is therefore treated as optional so validation
-// doesn't 400 the legitimate Razorpay payload.
+// Everything is permissive on purpose: the ONLY fatal outcome for Magic
+// Checkout is a non-200 response — a single 400 can cause Razorpay's
+// callback circuit breaker to disable our URL entirely. We accept whatever
+// shape Razorpay sends and let the handler decide serviceability.
+//
+// Coerce numeric zipcode/pincode to string; accept missing fields gracefully.
+const addressSchema = z
+  .object({
+    id: z.union([z.string(), z.number()]).optional(),
+    zipcode: z.union([z.string(), z.number()]).optional(),
+    pincode: z.union([z.string(), z.number()]).optional(),
+    state_code: z.union([z.string(), z.number()]).optional(),
+    country: z.union([z.string(), z.number()]).optional(),
+  })
+  .passthrough();
+
 export const shippingInfoRequestSchema = z
   .object({
-    order_id: z.string().optional(),
-    razorpay_order_id: z.string().optional(),
-    contact: z.string().optional(),
+    order_id: z.union([z.string(), z.number()]).optional(),
+    razorpay_order_id: z.union([z.string(), z.number()]).optional(),
+    contact: z.union([z.string(), z.number()]).optional(),
     email: z.string().optional(),
-    addresses: z.array(
-      z
-        .object({
-          id: z.string().optional(),
-          zipcode: z.string(),
-          state_code: z.string().optional(),
-          country: z.string(),
-        })
-        .passthrough()
-    ),
+    addresses: z.array(addressSchema).optional().default([]),
   })
   .passthrough();
 
 // Razorpay sends this to our get-promotions endpoint
 export const getPromotionsRequestSchema = z
   .object({
-    order_id: z.string(),
-    contact: z.string().optional(),
+    order_id: z.union([z.string(), z.number()]).optional(),
+    contact: z.union([z.string(), z.number()]).optional(),
     email: z.string().optional(),
   })
   .passthrough();
@@ -59,8 +65,8 @@ export const getPromotionsRequestSchema = z
 // Razorpay sends this to our apply-promotion endpoint
 export const applyPromotionRequestSchema = z
   .object({
-    order_id: z.string(),
-    contact: z.string().optional(),
+    order_id: z.union([z.string(), z.number()]).optional(),
+    contact: z.union([z.string(), z.number()]).optional(),
     email: z.string().optional(),
     code: z.string().min(1),
   })

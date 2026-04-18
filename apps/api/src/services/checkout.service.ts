@@ -19,6 +19,14 @@ import type {
   VerifyPaymentInput,
 } from '@earth-revibe/shared';
 
+/** Coerce unknown values (Razorpay sometimes sends numbers where docs say strings) to string. */
+function coerceString(v: unknown): string | undefined {
+  if (v === null || v === undefined) return undefined;
+  if (typeof v === 'string') return v.length > 0 ? v : undefined;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  return undefined;
+}
+
 /** Delete a record, silently ignoring P2025 ("record not found") from concurrent deletes. */
 async function idempotentDelete<T>(deleteOp: Promise<T>): Promise<T | null> {
   try {
@@ -274,44 +282,50 @@ export const checkoutService = {
    * fee are communicated — Razorpay support confirmed (ticket #18726923,
    * 2026-04-15) that `cod` / `cod_fee` must NOT be passed on orders.create.
    *
+   * Contract: ALWAYS return a valid 200 response, even if the payload is
+   * partial. A single 4xx/5xx can cause Razorpay's callback circuit breaker
+   * to silently disable our URL — Bug #21 of the 1CC integration.
+   *
    * Rules per Razorpay docs + support:
    *   - All monetary values in paise (INR × 100).
    *   - If cod === false, cod_fee MUST be 0.
    *   - Non-serviceable address → the shipping method is still returned but
    *     marked serviceable: false, cod: false, cod_fee: 0.
+   *   - Pre-pincode callback (country-only): return placeholder, not error.
    */
   async getShippingInfo(data: ShippingInfoRequest) {
     const codFeePaise = Math.round((env.COD_FEE || 0) * 100);
+    const addressesIn = Array.isArray(data.addresses) ? data.addresses : [];
 
-    const addresses = data.addresses.map(
-      (
-        addr: { id?: string; zipcode: string; country: string; state_code?: string },
-        idx: number
-      ) => {
-        const serviceable = addr.country?.toLowerCase() === 'in';
-        return {
-          // Echo Razorpay's id if they sent one; otherwise synthesize a stable
-          // per-request id from the array index (Razorpay's early shipping-info
-          // call often omits the address id entirely).
-          id: addr.id ?? `addr_${idx}`,
-          zipcode: addr.zipcode,
-          country: addr.country,
-          shipping_methods: [
-            {
-              id: 'standard',
-              name: 'Free Delivery',
-              description: '5-7 business days',
-              serviceable,
-              shipping_fee: 0,
-              // COD only offered for serviceable (India) addresses. Razorpay
-              // enforces: cod === false ⇒ cod_fee === 0.
-              cod: serviceable,
-              cod_fee: serviceable ? codFeePaise : 0,
-            },
-          ],
-        };
-      }
-    );
+    const addresses = addressesIn.map((addr: Record<string, unknown>, idx: number) => {
+      const zipcode = coerceString(addr.zipcode ?? addr.pincode);
+      const country = coerceString(addr.country);
+      const id = coerceString(addr.id) ?? `addr_${idx}`;
+
+      // Serviceable only when country is India AND a non-empty pincode exists.
+      // On the pre-pincode callback we return the method but mark it
+      // non-serviceable so Razorpay accepts the response and keeps the
+      // pipeline healthy — once the customer types a pincode, Razorpay
+      // calls again and we flip to serviceable.
+      const serviceable = country?.toLowerCase() === 'in' && !!zipcode;
+
+      return {
+        id,
+        zipcode: zipcode ?? '',
+        country: country ?? '',
+        shipping_methods: [
+          {
+            id: 'standard',
+            name: 'Free Delivery',
+            description: '5-7 business days',
+            serviceable,
+            shipping_fee: 0,
+            cod: serviceable,
+            cod_fee: serviceable ? codFeePaise : 0,
+          },
+        ],
+      };
+    });
 
     return { addresses };
   },
@@ -359,18 +373,25 @@ export const checkoutService = {
   async applyPromotion(data: ApplyPromotionRequest) {
     logger.info({ data }, 'applyPromotion called by Razorpay');
 
+    // Razorpay's order_id may arrive as number in some flows; schema accepts both.
+    const orderIdStr = coerceString(data.order_id);
+    if (!orderIdStr) {
+      logger.warn({ data }, 'applyPromotion: missing order_id');
+      return { promotion_not_applicable: true };
+    }
+
     // Razorpay sends the razorpay order ID — try that first, then our orderNumber
     let pending = await prisma.pendingCheckout.findUnique({
-      where: { razorpayOrderId: data.order_id },
+      where: { razorpayOrderId: orderIdStr },
     });
     if (!pending) {
       pending = await prisma.pendingCheckout.findUnique({
-        where: { orderNumber: data.order_id },
+        where: { orderNumber: orderIdStr },
       });
     }
 
     if (!pending) {
-      logger.warn({ order_id: data.order_id }, 'applyPromotion: order not found');
+      logger.warn({ order_id: orderIdStr }, 'applyPromotion: order not found');
       return { promotion_not_applicable: true };
     }
 

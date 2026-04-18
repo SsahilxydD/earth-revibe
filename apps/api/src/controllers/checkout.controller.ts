@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { checkoutService, createCodOrder } from '../services/checkout.service';
 import { getRazorpay } from '../config/razorpay';
 import { env } from '../config/env';
+import { logger } from '../config/logger';
 
 export const checkoutController = {
   async createMagicOrder(req: Request, res: Response) {
@@ -13,23 +14,52 @@ export const checkoutController = {
     res.status(201).json({ success: true, data: result });
   },
 
-  /** Called by Razorpay's servers — no user auth */
+  /**
+   * Called by Razorpay's servers — no user auth.
+   *
+   * CRITICAL: must ALWAYS respond 200 with a valid shape. A single non-200
+   * can flip Razorpay's circuit breaker and silently disable our URL —
+   * when that happens, no future checkouts see COD or custom shipping.
+   */
   async shippingInfo(req: Request, res: Response) {
-    const result = await checkoutService.getShippingInfo(req.body);
-    res.json(result);
+    logger.info(
+      { body: req.body, sig: req.headers['x-razorpay-signature'] ? 'present' : 'missing' },
+      'razorpay.shipping-info received'
+    );
+    try {
+      const result = await checkoutService.getShippingInfo(req.body);
+      res.json(result);
+    } catch (err) {
+      // Never 500 Razorpay. Fall back to an empty-but-valid shape so the
+      // circuit breaker stays closed. We still log the failure for us.
+      logger.error({ err, body: req.body }, 'razorpay.shipping-info handler crashed');
+      res.json({ addresses: [] });
+    }
   },
 
   /** Called by Razorpay's servers — no user auth */
   async getPromotions(req: Request, res: Response) {
-    const result = await checkoutService.getPromotions(req.body);
-    res.json(result);
+    logger.info({ body: req.body }, 'razorpay.promotions received');
+    try {
+      const result = await checkoutService.getPromotions(req.body);
+      res.json(result);
+    } catch (err) {
+      logger.error({ err, body: req.body }, 'razorpay.promotions handler crashed');
+      res.json({ promotions: [] });
+    }
   },
 
   /** Called by Razorpay's servers — no user auth */
   async applyPromotion(req: Request, res: Response) {
-    const result = await checkoutService.applyPromotion(req.body);
-    // If there's an error, Razorpay expects a 200 with error object
-    res.json(result);
+    logger.info({ body: req.body }, 'razorpay.promotions.apply received');
+    try {
+      const result = await checkoutService.applyPromotion(req.body);
+      // If there's an error, Razorpay expects a 200 with error object
+      res.json(result);
+    } catch (err) {
+      logger.error({ err, body: req.body }, 'razorpay.promotions.apply handler crashed');
+      res.json({ promotion_not_applicable: true });
+    }
   },
 
   /**

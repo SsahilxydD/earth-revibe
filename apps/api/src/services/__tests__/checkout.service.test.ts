@@ -1445,12 +1445,22 @@ describe('checkoutService.getShippingInfo', () => {
     expect(result.addresses).toEqual([]);
   });
 
-  it('returns cod=false for all addresses', async () => {
+  it('returns cod=true for serviceable (IN) addresses', async () => {
     const result = await checkoutService.getShippingInfo({
       addresses: [{ id: 'x', zipcode: '400001', country: 'IN' }],
     } as any);
 
+    expect(result.addresses[0].shipping_methods[0].cod).toBe(true);
+    expect(result.addresses[0].shipping_methods[0].cod_fee).toBeGreaterThanOrEqual(0);
+  });
+
+  it('returns cod=false AND cod_fee=0 for non-serviceable addresses (Razorpay rule)', async () => {
+    const result = await checkoutService.getShippingInfo({
+      addresses: [{ id: 'x', zipcode: '10001', country: 'US' }],
+    } as any);
+
     expect(result.addresses[0].shipping_methods[0].cod).toBe(false);
+    expect(result.addresses[0].shipping_methods[0].cod_fee).toBe(0);
   });
 
   it('handles multiple IN addresses correctly', async () => {
@@ -1464,6 +1474,62 @@ describe('checkoutService.getShippingInfo', () => {
     result.addresses.forEach((addr: any) => {
       expect(addr.shipping_methods[0].serviceable).toBe(true);
     });
+  });
+
+  // Regressions covering the schema-rejection bug that silently tripped
+  // Razorpay's callback circuit breaker (cf. ticket #18726923).
+
+  it('accepts pre-pincode callback (country-only, no zipcode) with a 200 placeholder', async () => {
+    const result = await checkoutService.getShippingInfo({
+      addresses: [{ country: 'in' }],
+    } as any);
+
+    expect(result.addresses).toHaveLength(1);
+    expect(result.addresses[0].shipping_methods[0].serviceable).toBe(false);
+    expect(result.addresses[0].shipping_methods[0].cod).toBe(false);
+    expect(result.addresses[0].shipping_methods[0].cod_fee).toBe(0);
+  });
+
+  it('coerces numeric zipcode to string and still marks serviceable', async () => {
+    const result = await checkoutService.getShippingInfo({
+      addresses: [{ zipcode: 400001, country: 'in' }],
+    } as any);
+
+    expect(result.addresses[0].zipcode).toBe('400001');
+    expect(result.addresses[0].shipping_methods[0].serviceable).toBe(true);
+  });
+
+  it('synthesizes addr_${idx} id when Razorpay omits the per-address id', async () => {
+    const result = await checkoutService.getShippingInfo({
+      addresses: [
+        { zipcode: '400001', country: 'IN' },
+        { zipcode: '110001', country: 'IN' },
+      ],
+    } as any);
+
+    expect(result.addresses[0].id).toBe('addr_0');
+    expect(result.addresses[1].id).toBe('addr_1');
+  });
+
+  it('accepts `pincode` alias in place of `zipcode`', async () => {
+    const result = await checkoutService.getShippingInfo({
+      addresses: [{ pincode: '400001', country: 'IN' }],
+    } as any);
+
+    expect(result.addresses[0].zipcode).toBe('400001');
+    expect(result.addresses[0].shipping_methods[0].serviceable).toBe(true);
+  });
+
+  it('is case-insensitive on country (accepts both `IN` and `in`)', async () => {
+    const upper = await checkoutService.getShippingInfo({
+      addresses: [{ zipcode: '400001', country: 'IN' }],
+    } as any);
+    const lower = await checkoutService.getShippingInfo({
+      addresses: [{ zipcode: '400001', country: 'in' }],
+    } as any);
+
+    expect(upper.addresses[0].shipping_methods[0].serviceable).toBe(true);
+    expect(lower.addresses[0].shipping_methods[0].serviceable).toBe(true);
   });
 });
 
