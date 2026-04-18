@@ -465,7 +465,7 @@ function ProductsContent() {
               >
                 <Luggage size={20} color="#FFF" />
               </div>
-              <span style={{ fontSize: 9, fontWeight: 400, color: '#000' }}>Flight</span>
+              <span style={{ fontSize: 9, fontWeight: 400, color: '#000' }}>Trip</span>
             </Link>
           </div>
         )}
@@ -715,7 +715,7 @@ function ProductsContent() {
                           textAlign: 'center',
                         }}
                       >
-                        &ldquo;Wear it like you&apos;re already there.&rdquo;
+                        Ever heard of a brand who pays you back for your clothes ?
                       </p>
                       <div style={{ width: 24, height: 1, backgroundColor: '#CCC' }} />
                     </div>

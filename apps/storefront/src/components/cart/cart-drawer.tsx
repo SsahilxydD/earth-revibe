@@ -511,18 +511,31 @@ export function CartDrawer() {
               {/* Divider */}
               <div style={{ height: 1, backgroundColor: '#F0F0F0', flexShrink: 0 }} />
 
-              {/* Free shipping banner — 40px */}
+              {/* Free shipping + buyback banner — 56px */}
               <div
                 style={{
-                  height: 40,
+                  height: 56,
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  gap: 4,
+                  padding: '10px 0',
                   flexShrink: 0,
                 }}
               >
                 <span style={{ fontSize: 11, fontWeight: 300, color: '#22C55E' }}>
                   Free shipping on all orders
+                </span>
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 500,
+                    color: '#999',
+                    letterSpacing: 2,
+                  }}
+                >
+                  365-DAY BUYBACK · 33% STORE CREDIT BACK
                 </span>
               </div>
 

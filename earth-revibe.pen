@@ -1,5 +1,5 @@
 {
-  "version": "2.10",
+  "version": "2.11",
   "children": [
     {
       "type": "frame",
@@ -5665,7 +5665,7 @@
                   "id": "Ok57R",
                   "name": "tr6Label",
                   "fill": "#000000FF",
-                  "content": "Flight",
+                  "content": "Trip",
                   "fontFamily": "Inter",
                   "fontSize": 9,
                   "fontWeight": "300"
@@ -6379,7 +6379,7 @@
                   "fill": "#999999FF",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "\"Wear it like you're already there.\"",
+                  "content": "Ever heard of a brand who pays you back for your clothes ?",
                   "textAlign": "center",
                   "fontFamily": "Inter",
                   "fontSize": 13,
