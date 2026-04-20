@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:referrals": "tsx --env-file=.env scripts/test-referrals.ts"
+    "test:referrals": "tsx --env-file=.env scripts/test-referrals.ts",
+    "test:referrals:cleanup": "tsx --env-file=.env scripts/test-referrals-cleanup.ts"
   },
   "dependencies": {
     "@earth-revibe/db": "workspace:*",
