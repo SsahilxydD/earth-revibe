@@ -1,7 +1,23 @@
 import { z } from 'zod';
 
+// NODE_ENV must tolerate whatever Railway/hosts inject (empty string,
+// 'Production' with capitals, trailing whitespace, etc.) — we normalise to a
+// canonical lowercase value and fall back to 'development' for anything
+// unrecognised so app startup never fails on this single variable.
+const nodeEnvSchema = z.preprocess(
+  (v) => {
+    if (typeof v !== 'string') return 'development';
+    const normalised = v.trim().toLowerCase();
+    if (['development', 'production', 'test'].includes(normalised)) {
+      return normalised;
+    }
+    return 'development';
+  },
+  z.enum(['development', 'production', 'test'])
+);
+
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: nodeEnvSchema,
   PORT: z.coerce.number().default(5000),
   DATABASE_URL: z.string().url(),
   DIRECT_URL: z.string().optional(),
