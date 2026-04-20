@@ -2,7 +2,6 @@ import { prisma, Prisma } from '@earth-revibe/db';
 import { ApiError } from '../utils/api-error';
 import { logger } from '../config/logger';
 import { getResend } from '../config/resend';
-import { env } from '../config/env';
 
 function randomCode(): string {
   // Human-friendly code shape: ER-RDM-XXXXXXX (no ambiguous chars)

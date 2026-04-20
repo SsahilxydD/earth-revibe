@@ -33,14 +33,16 @@ export const adminLoyaltyController = {
 
   async approve(req: Request, res: Response) {
     const adminId = req.user!.id;
-    const result = await approveRedemption(req.params.id!, adminId);
+    const id = String(req.params.id ?? '');
+    const result = await approveRedemption(id, adminId);
     res.json({ success: true, data: result });
   },
 
   async reject(req: Request, res: Response) {
     const adminId = req.user!.id;
     const reason = (req.body as { reason?: string })?.reason;
-    const result = await rejectRedemption(req.params.id!, adminId, reason);
+    const id = String(req.params.id ?? '');
+    const result = await rejectRedemption(id, adminId, reason);
     res.json({ success: true, data: result });
   },
 
