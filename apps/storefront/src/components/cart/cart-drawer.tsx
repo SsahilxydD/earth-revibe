@@ -142,18 +142,40 @@ export function CartDrawer() {
   }, [isOpen, closeCart]);
 
   const handleApplyDiscount = async () => {
-    if (!discountInput.trim()) return;
+    const code = discountInput.trim();
+    if (!code) return;
     setApplyingDiscount(true);
     setDiscountError('');
     try {
+      // Try as a discount code first.
       const result = await api.post<{ code: string; discountAmount: number }>(
         '/discounts/validate',
-        { code: discountInput.trim(), orderTotal: subtotal }
+        { code, orderTotal: subtotal }
       );
       applyDiscount(result.code, result.discountAmount);
       setDiscountInput('');
-    } catch (error: any) {
-      setDiscountError(error?.message || 'Invalid discount code');
+    } catch (discountErr: any) {
+      // Fall back to referral. Logged-in users only — the referral table keys
+      // on refereeId so guest carts can't attribute anything.
+      try {
+        const ref = await api.get<{ valid: boolean; reason?: string; referrerName?: string }>(
+          `/referrals/validate?code=${encodeURIComponent(code)}`
+        );
+        if (ref.valid) {
+          applyDiscount(code, 0);
+          setDiscountInput('');
+        } else {
+          const messages: Record<string, string> = {
+            'not-found': 'Invalid code',
+            self: "You can't use your own referral code",
+            'not-first-order': 'Referral codes only work on your first order',
+            'different-referrer': 'You have already used a different referral code',
+          };
+          setDiscountError(messages[ref.reason ?? ''] ?? discountErr?.message ?? 'Invalid code');
+        }
+      } catch {
+        setDiscountError(discountErr?.message || 'Invalid code');
+      }
     } finally {
       setApplyingDiscount(false);
     }
@@ -594,7 +616,7 @@ export function CartDrawer() {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') handleApplyDiscount();
                         }}
-                        placeholder="Discount code"
+                        placeholder="Discount or referral code"
                         style={{
                           width: '100%',
                           fontSize: 12,
@@ -636,7 +658,9 @@ export function CartDrawer() {
                   <span style={{ fontSize: 12, fontWeight: 400, color: '#000' }}>
                     {discountCode}{' '}
                     <span style={{ fontWeight: 300, color: '#22C55E' }}>
-                      −{formatPrice(discountAmount)}
+                      {discountAmount > 0
+                        ? `−${formatPrice(discountAmount)}`
+                        : 'Referral applied'}
                     </span>
                   </span>
                   <button

@@ -10,5 +10,6 @@ router.use(authenticate);
 router.get('/code', asyncHandler(referralController.getMyReferralCode));
 router.get('/my-referrals', asyncHandler(referralController.getMyReferrals));
 router.get('/referred-by', asyncHandler(referralController.getReferredBy));
+router.get('/validate', asyncHandler(referralController.validate));
 
 export { router as referralRouter };

@@ -5,6 +5,10 @@ import { getRazorpay } from '../config/razorpay';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
 import { APP_CONSTANTS } from '../config/constants';
+import {
+  maybeLinkReferralAtCheckout,
+  computeReferrerReward,
+} from './referral.service';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
 import { sendWhatsAppOrderUpdate } from './whatsapp.service';
@@ -108,11 +112,21 @@ export const checkoutService = {
       });
     }
 
+    // The same input field (`discountCode`) accepts either a discount code or
+    // a referral code. Try referral first — if the code matches a user's
+    // invite code, link the Referral row now so the post-first-order hook can
+    // credit both parties, and treat the code as consumed (no discount).
+    let effectiveDiscountCode = data.discountCode || undefined;
+    if (!isGuest && effectiveDiscountCode) {
+      const linked = await maybeLinkReferralAtCheckout(userId, effectiveDiscountCode);
+      if (linked) effectiveDiscountCode = undefined;
+    }
+
     // Collect product/category IDs for discount applicability check
     const cartProductIds = variants.map((v) => v.product.id);
     const cartCategoryIds: string[] = [];
     // Category IDs require a separate lookup if not already included
-    if (data.discountCode) {
+    if (effectiveDiscountCode) {
       const productsWithCat = await prisma.product.findMany({
         where: { id: { in: cartProductIds } },
         select: { id: true, categoryId: true },
@@ -122,9 +136,9 @@ export const checkoutService = {
 
     // Apply discount if provided
     let discountAmount = 0;
-    if (data.discountCode) {
+    if (effectiveDiscountCode) {
       discountAmount = await calculateDiscount(
-        data.discountCode,
+        effectiveDiscountCode,
         lineItemsTotal,
         userId,
         cartProductIds,
@@ -195,7 +209,7 @@ export const checkoutService = {
           userId: userId || 'guest',
           guestEmail: guestEmail || '',
           orderNumber,
-          discountCode: data.discountCode || '',
+          discountCode: effectiveDiscountCode || '',
           discountAmount: String(discountAmount),
           loyaltyPointsToUse: String(isGuest ? 0 : data.loyaltyPointsToUse),
           items: data.items
@@ -254,7 +268,7 @@ export const checkoutService = {
             userId: userId || undefined,
             guestEmail: guestEmail || undefined,
             razorpayOrderId: razorpayOrder.id,
-            discountCode: data.discountCode || null,
+            discountCode: effectiveDiscountCode || null,
             loyaltyPointsToUse: isGuest ? 0 : data.loyaltyPointsToUse,
             subtotal: lineItemsTotal,
             discountAmount,
@@ -887,7 +901,8 @@ export async function finalizeOrderFromPending(
         if (orderCount === 1) {
           const referral = await tx.referral.findUnique({ where: { refereeId: effectiveUserId } });
           if (referral && referral.status === 'SIGNED_UP') {
-            const REFERRER_REWARD = APP_CONSTANTS.REFERRER_REWARD_POINTS;
+            // 1 point = ₹1, so 20% of subtotal (in ₹) becomes the points reward.
+            const REFERRER_REWARD = computeReferrerReward(Number(order.subtotal));
             const REFEREE_REWARD = APP_CONSTANTS.REFEREE_REWARD_POINTS;
             await tx.referral.update({
               where: { id: referral.id },
@@ -1114,24 +1129,32 @@ export async function createCodOrder(
     });
   }
 
+  // Same field accepts discount OR referral code; try referral first so a
+  // referral code doesn't incorrectly error out as "invalid discount".
+  let effectiveDiscountCode = data.discountCode || undefined;
+  if (effectiveDiscountCode) {
+    const linked = await maybeLinkReferralAtCheckout(userId, effectiveDiscountCode);
+    if (linked) effectiveDiscountCode = undefined;
+  }
+
   // Discount
   const cartProductIds = variants.map((v) => v.product.id);
   let discountAmount = 0;
   let discountCodeId: string | null = null;
-  if (data.discountCode) {
+  if (effectiveDiscountCode) {
     const productsWithCat = await prisma.product.findMany({
       where: { id: { in: cartProductIds } },
       select: { id: true, categoryId: true },
     });
     const cartCategoryIds = productsWithCat.map((p) => p.categoryId);
     discountAmount = await calculateDiscount(
-      data.discountCode,
+      effectiveDiscountCode,
       subtotal,
       userId,
       cartProductIds,
       cartCategoryIds
     );
-    const dc = await prisma.discountCode.findUnique({ where: { code: data.discountCode } });
+    const dc = await prisma.discountCode.findUnique({ where: { code: effectiveDiscountCode } });
     if (dc) discountCodeId = dc.id;
   }
 
@@ -1256,7 +1279,8 @@ export async function createCodOrder(
       if (orderCount === 1) {
         const referral = await tx.referral.findUnique({ where: { refereeId: userId } });
         if (referral && referral.status === 'SIGNED_UP') {
-          const REFERRER_REWARD = APP_CONSTANTS.REFERRER_REWARD_POINTS;
+          // 1 point = ₹1, so 20% of subtotal (in ₹) becomes the points reward.
+          const REFERRER_REWARD = computeReferrerReward(subtotal);
           const REFEREE_REWARD = APP_CONSTANTS.REFEREE_REWARD_POINTS;
           await tx.referral.update({
             where: { id: referral.id },

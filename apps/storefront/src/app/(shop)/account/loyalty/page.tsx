@@ -27,9 +27,9 @@ interface LoyaltyHistory {
 }
 
 const HOW_IT_WORKS = [
-  { icon: ShoppingBag, title: 'Shop', desc: '1 pt per ₹10 spent' },
-  { icon: Gift, title: 'Redeem', desc: '100 pts = ₹10 off' },
-  { icon: TrendingUp, title: 'Level Up', desc: 'Tier bonuses unlock' },
+  { icon: ShoppingBag, title: 'Shop', desc: '1 pt per ₹100 spent' },
+  { icon: Gift, title: 'Redeem', desc: '1 pt = ₹1 off' },
+  { icon: TrendingUp, title: 'Refer', desc: '20% of friend\'s first order' },
 ] as const;
 
 export default function LoyaltyPage() {
