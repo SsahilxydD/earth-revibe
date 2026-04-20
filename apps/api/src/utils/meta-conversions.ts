@@ -46,7 +46,7 @@ export async function sendMetaEvent(params: {
     logger.warn({ event: params.eventName }, 'Meta CAPI skipped — no token configured');
     return;
   }
-  logger.info({ event: params.eventName, orderId: params.orderId }, 'Meta CAPI send start');
+  logger.debug({ event: params.eventName, orderId: params.orderId }, 'Meta CAPI send start');
 
   const eventData: MetaEventData = {
     event_name: params.eventName,
@@ -94,7 +94,7 @@ export async function sendMetaEvent(params: {
       logger.error({ status: res.status, body, event: params.eventName }, 'Meta CAPI error');
     } else {
       const body = await res.text();
-      logger.info({ event: params.eventName, orderId: params.orderId, response: body }, 'Meta CAPI sent');
+      logger.debug({ event: params.eventName, orderId: params.orderId, response: body }, 'Meta CAPI sent');
     }
   } catch (err) {
     logger.error({ err }, 'Meta Conversions API request failed');
