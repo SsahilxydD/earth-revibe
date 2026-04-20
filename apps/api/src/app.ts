@@ -42,6 +42,7 @@ import { uploadRouter } from './routes/upload.routes';
 import { webhookRouter } from './routes/webhook.routes';
 import { travelApplicationRouter } from './routes/travel-application.routes';
 import { adminTravelApplicationRouter } from './routes/admin-travel-application.routes';
+import { catalogFeedRouter } from './routes/catalog-feed.routes';
 import { sanitize } from './middleware/sanitize';
 
 const app: Express = express();
@@ -122,7 +123,7 @@ app.use(sanitize);
 // because Indian mobile carriers use CGNAT — thousands of subscribers share one
 // public IP, so they collectively exhaust a per-IP bucket almost immediately.
 // Mutations (POST/PUT/DELETE) and sensitive flows (auth, checkout) remain limited.
-const PUBLIC_GET_PATHS = /^\/api\/v1\/(products|categories|homepage|blog|search)(\/|$|\?)/;
+const PUBLIC_GET_PATHS = /^\/api\/v1\/(products|categories|homepage|blog|search|catalog)(\/|$|\?)/;
 
 app.use(
   rateLimit({
@@ -691,6 +692,7 @@ app.use('/api/v1/upload', uploadRouter);
 app.use('/api/v1/webhooks', webhookRouter);
 app.use('/api/v1/travel-applications', travelApplicationRouter);
 app.use('/api/v1/admin/travel-applications', adminTravelApplicationRouter);
+app.use('/api/v1/catalog', catalogFeedRouter);
 
 // Sentry error handler (must be before custom error handler)
 Sentry.setupExpressErrorHandler(app);
