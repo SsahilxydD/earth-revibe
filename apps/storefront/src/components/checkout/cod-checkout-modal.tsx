@@ -10,6 +10,7 @@ import { useCartStore, type CartItem } from '@/stores/cart-store';
 import { useAddresses, useCreateAddress } from '@/hooks/use-addresses';
 import { api } from '@/lib/api-client';
 import { formatPrice } from '@/lib/utils';
+import { trackPurchaseCompleted } from '@/lib/analytics';
 import type { Address } from '@/types';
 
 const INDIAN_STATES = [
@@ -178,6 +179,14 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
           loyaltyPointsToUse: 0,
         }
       );
+
+      trackPurchaseCompleted({
+        orderId: result.orderNumber,
+        total: result.total,
+        itemCount: items.reduce((n, i) => n + i.quantity, 0),
+        paymentMethod: 'cod',
+      });
+
       // Direct Buy Now flows never touched the cart — don't clear it.
       if (!isDirect) clearCart();
       resetAndClose();

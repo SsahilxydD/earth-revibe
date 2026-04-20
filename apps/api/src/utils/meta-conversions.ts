@@ -42,7 +42,7 @@ export async function sendMetaEvent(params: {
   orderId?: string;
 }): Promise<void> {
   const token = env.META_CONVERSIONS_API_TOKEN;
-  if (!token || env.NODE_ENV !== 'production') return;
+  if (!token) return;
 
   const eventData: MetaEventData = {
     event_name: params.eventName,
