@@ -18,7 +18,7 @@ export const adminLoyaltyController = {
     const page = req.query.page ? Number(req.query.page) : undefined;
     const limit = req.query.limit ? Number(req.query.limit) : undefined;
     const result = await listRedemptions({ status, page, limit });
-    res.json({ success: true, ...result });
+    res.json({ success: true, data: result });
   },
 
   async create(req: Request, res: Response) {
