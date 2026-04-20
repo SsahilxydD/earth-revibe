@@ -15,7 +15,7 @@
     "db:generate": "turbo db:generate",
     "db:push": "turbo db:push",
     "db:seed": "turbo db:seed",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "claw": "node scripts/claw.js",
     "claw:frontend": "node scripts/claw.js frontend",
     "claw:admin": "node scripts/claw.js admin",
