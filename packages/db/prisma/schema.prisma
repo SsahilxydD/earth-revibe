@@ -35,6 +35,7 @@ model User {
   cart              Cart?
   loyaltyPoints     Int              @default(0)
   loyaltyHistory    LoyaltyTransaction[]
+  loyaltyRedemptions LoyaltyRedemption[]
   referralCode      String?          @unique
   referralsMade     Referral[]       @relation("Referrer")
   referredBy        Referral?        @relation("Referee")
@@ -540,6 +541,10 @@ model DiscountCode {
   usageLimit       Int?
   usageCount       Int          @default(0)
   perUserLimit     Int          @default(1)
+  // Codes minted from a loyalty-points redemption are scoped to one specific
+  // user so the redeeming customer can't share the code with others. Null
+  // means the code is globally redeemable (the existing public-coupon case).
+  userId           String?
   applicableCategories String[]
   applicableProducts   String[]
   isActive         Boolean      @default(true)
@@ -549,8 +554,10 @@ model DiscountCode {
   updatedAt        DateTime     @updatedAt
 
   orders           Order[]
+  redemption       LoyaltyRedemption?
 
   @@index([code])
+  @@index([userId])
   @@map("discount_codes")
 }
 
@@ -573,9 +580,15 @@ model LoyaltyTransaction {
   points      Int
   description String
   orderId     String?
+  // When the points from this EARNED/BONUS txn stop being usable. Null means
+  // never (e.g. REDEEMED/EXPIRED/ADJUSTED rows don't have their own expiry).
+  expiresAt   DateTime?
+  // Set when the expiry cron sweeps this row; prevents double-expiring.
+  expiredAt   DateTime?
   createdAt   DateTime               @default(now())
 
   @@index([userId])
+  @@index([expiresAt, expiredAt])
   @@map("loyalty_transactions")
 }
 
@@ -585,6 +598,36 @@ enum LoyaltyTransactionType {
   BONUS
   EXPIRED
   ADJUSTED
+}
+
+// Email-gated redemption of loyalty points. Customer emails support → manager
+// creates a row here with the requested amount → manager clicks "Approve" →
+// points are deducted and a single-use, user-scoped DiscountCode is issued.
+model LoyaltyRedemption {
+  id             String                  @id @default(cuid())
+  userId         String
+  user           User                    @relation(fields: [userId], references: [id])
+  pointsAmount   Int
+  status         LoyaltyRedemptionStatus @default(PENDING)
+  notes          String?
+  approvedBy     String?
+  approvedAt     DateTime?
+  // The single-use DiscountCode we minted when approved. Null while PENDING.
+  discountCodeId String?                 @unique
+  discountCode   DiscountCode?           @relation(fields: [discountCodeId], references: [id])
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("loyalty_redemptions")
+}
+
+enum LoyaltyRedemptionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
 
 model LoyaltyConfig {

@@ -149,6 +149,24 @@ export default function LoyaltyPage() {
         ))}
       </div>
 
+      {/* Fine print */}
+      <div
+        style={{
+          padding: 14,
+          border: '1px solid #F0F0F0',
+          fontSize: 11,
+          lineHeight: 1.6,
+          color: '#777',
+        }}
+      >
+        <strong style={{ color: '#000' }}>How redemption works:</strong>{' '}
+        Email{' '}
+        <a href="mailto:support@earthrevibe.com" style={{ color: '#000' }}>
+          support@earthrevibe.com
+        </a>{' '}
+        with the number of points you&apos;d like to cash out. A manager will review and issue you a single-use discount code by email, usable at checkout with no minimum order value. Points expire 6 months from the date they were earned.
+      </div>
+
       {/* RECENT ACTIVITY label */}
       <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
         RECENT ACTIVITY

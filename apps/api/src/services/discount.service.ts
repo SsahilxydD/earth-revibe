@@ -21,6 +21,15 @@ export const discountService = {
       throw ApiError.badRequest('Discount code usage limit reached');
     }
 
+    // User-scoped codes (minted by the loyalty redemption flow) can only be
+    // used by the account they were issued to. Guests (no userId) can never
+    // redeem a scoped code.
+    if (discount.userId) {
+      if (!userId || discount.userId !== userId) {
+        throw ApiError.badRequest('This code is not valid for your account');
+      }
+    }
+
     // Per-user limit check — also check by email for guest checkout users
     if (userId) {
       const userUsageCount = await prisma.order.count({

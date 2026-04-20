@@ -1,6 +1,7 @@
 import { prisma } from '@earth-revibe/db';
 import type { Prisma } from '@earth-revibe/db';
 import { ApiError } from '../utils/api-error';
+import { defaultExpiresAt } from './points-expiry.service';
 
 /**
  * Try to interpret `code` as a referral code entered at checkout and, if valid,
@@ -142,6 +143,7 @@ export async function convertReferralOnFirstOrder(
         type: 'BONUS',
         points: referrerReward,
         description: `Referral reward (20% of order #${orderNumber})`,
+        expiresAt: defaultExpiresAt(),
       },
     });
   }

@@ -21,6 +21,7 @@ import {
   LayoutTemplate,
   GitBranchPlus,
   Plane,
+  Coins,
 } from 'lucide-react';
 import { useUIStore } from '@/stores/ui-store';
 
@@ -32,6 +33,7 @@ const navItems = [
   { label: 'Orders', href: '/orders', icon: ShoppingCart },
   { label: 'Inventory', href: '/inventory', icon: Warehouse },
   { label: 'Discounts', href: '/discounts', icon: Tags },
+  { label: 'Loyalty Redemptions', href: '/loyalty-redemptions', icon: Coins },
   { label: 'Customers', href: '/customers', icon: Users },
   { label: 'Travel Applications', href: '/travel-applications', icon: Plane },
   { label: 'Blog', href: '/blog', icon: FileText },

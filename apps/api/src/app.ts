@@ -43,6 +43,7 @@ import { webhookRouter } from './routes/webhook.routes';
 import { travelApplicationRouter } from './routes/travel-application.routes';
 import { adminTravelApplicationRouter } from './routes/admin-travel-application.routes';
 import { catalogFeedRouter } from './routes/catalog-feed.routes';
+import { adminLoyaltyRouter } from './routes/admin-loyalty.routes';
 import { sanitize } from './middleware/sanitize';
 
 const app: Express = express();
@@ -155,6 +156,30 @@ app.get('/api/v1/health', async (_req, res) => {
     timestamp: new Date().toISOString(),
     checks,
   });
+});
+
+// Daily cron: expire loyalty points older than 6 months.
+// cron-job.org hits this with x-cron-secret; runs in small batches so one call
+// can't drag on. Safe to retry — each txn row is only expired once via the
+// expiredAt guard.
+app.post('/api/v1/internal/expire-points', async (req, res) => {
+  if (env.CRON_SECRET && req.headers['x-cron-secret'] !== env.CRON_SECRET) {
+    res
+      .status(401)
+      .json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid cron secret' } });
+    return;
+  }
+  try {
+    const { expireOldPoints } = await import('./services/points-expiry.service.js');
+    const result = await expireOldPoints();
+    logger.info(result, 'Loyalty point expiry sweep complete');
+    res.json({ success: true, data: result });
+  } catch (err) {
+    logger.error({ err }, 'Point expiry failed');
+    res
+      .status(500)
+      .json({ success: false, error: { code: 'EXPIRY_FAILED', message: 'Point expiry failed' } });
+  }
 });
 
 // Cleanup stale pending checkouts, restore reserved stock, and purge expired idempotency keys.
@@ -693,6 +718,7 @@ app.use('/api/v1/webhooks', webhookRouter);
 app.use('/api/v1/travel-applications', travelApplicationRouter);
 app.use('/api/v1/admin/travel-applications', adminTravelApplicationRouter);
 app.use('/api/v1/catalog', catalogFeedRouter);
+app.use('/api/v1/admin/loyalty', adminLoyaltyRouter);
 
 // Sentry error handler (must be before custom error handler)
 Sentry.setupExpressErrorHandler(app);

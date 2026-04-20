@@ -9,6 +9,7 @@ import {
   maybeLinkReferralAtCheckout,
   convertReferralOnFirstOrder,
 } from './referral.service';
+import { defaultExpiresAt } from './points-expiry.service';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
 import { sendWhatsAppOrderUpdate } from './whatsapp.service';
@@ -911,6 +912,7 @@ export async function finalizeOrderFromPending(
                 ? `100% cashback — first order #${pending.orderNumber}`
                 : `Earned from order #${pending.orderNumber}`,
               orderId: order.id,
+              expiresAt: defaultExpiresAt(),
             },
           });
         }
@@ -1268,6 +1270,7 @@ export async function createCodOrder(
               ? `100% cashback — first COD order #${orderNumber}`
               : `Earned from COD order #${orderNumber}`,
             orderId: order.id,
+            expiresAt: defaultExpiresAt(),
           },
         });
       }
@@ -1565,6 +1568,13 @@ async function calculateDiscount(
   }
   if (discount.usageLimit != null && discount.usageCount >= discount.usageLimit) {
     throw ApiError.badRequest('Discount code usage limit reached');
+  }
+
+  // User-scoped codes (loyalty redemptions) only work for the issued user.
+  if (discount.userId) {
+    if (!userId || discount.userId !== userId) {
+      throw ApiError.badRequest('This code is not valid for your account');
+    }
   }
 
   // Per-user limit check
