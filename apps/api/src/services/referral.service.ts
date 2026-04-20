@@ -94,8 +94,6 @@ export async function _linkReferralInTx(
   });
 }
 
-const REFEREE_REWARD_POINTS = 50;
-
 /**
  * Convert a pending referral for `userId` on their first successful order,
  * credit both parties, and mark the referral CONVERTED. Pure: no side effects
@@ -123,7 +121,10 @@ export async function convertReferralOnFirstOrder(
   if (!referral || referral.status !== 'SIGNED_UP') return { credited: false };
 
   const referrerReward = computeReferrerReward(subtotal);
-  const refereeReward = REFEREE_REWARD_POINTS;
+  // The referee already got 15% off + 100% cashback on the paid amount at
+  // checkout; a separate welcome bonus on top would be triple-dipping and
+  // adds unnecessary liability with no behavioural lift, so we skip it.
+  const refereeReward = 0;
 
   await tx.referral.update({
     where: { id: referral.id },
@@ -141,21 +142,6 @@ export async function convertReferralOnFirstOrder(
         type: 'BONUS',
         points: referrerReward,
         description: `Referral reward (20% of order #${orderNumber})`,
-      },
-    });
-  }
-
-  if (refereeReward > 0) {
-    await tx.user.update({
-      where: { id: userId },
-      data: { loyaltyPoints: { increment: refereeReward } },
-    });
-    await tx.loyaltyTransaction.create({
-      data: {
-        userId,
-        type: 'BONUS',
-        points: refereeReward,
-        description: `Welcome bonus — referred signup`,
       },
     });
   }

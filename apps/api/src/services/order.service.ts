@@ -4,10 +4,10 @@ import { ApiError } from '../utils/api-error';
 import { getRazorpay } from '../config/razorpay';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
-import { APP_CONSTANTS } from '../config/constants';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
 import { sendWhatsAppOrderUpdate } from './whatsapp.service';
+import { convertReferralOnFirstOrder } from './referral.service';
 import type {
   CreateOrderInput,
   VerifyPaymentInput,
@@ -385,54 +385,16 @@ export const orderService = {
           });
         }
 
-        // Handle referral conversion (first purchase by referred user)
-        const orderCount = await tx.order.count({
-          where: { userId, status: { not: 'CANCELLED' } },
-        });
-        if (orderCount === 1) {
-          const referral = await tx.referral.findUnique({
-            where: { refereeId: userId },
-          });
-          if (referral && referral.status === 'SIGNED_UP') {
-            const REFERRER_REWARD = APP_CONSTANTS.REFERRER_REWARD_POINTS;
-            const REFEREE_REWARD = APP_CONSTANTS.REFEREE_REWARD_POINTS;
-
-            await tx.referral.update({
-              where: { id: referral.id },
-              data: {
-                status: 'CONVERTED',
-                referrerReward: REFERRER_REWARD,
-                refereeReward: REFEREE_REWARD,
-              },
-            });
-
-            await tx.user.update({
-              where: { id: referral.referrerId },
-              data: { loyaltyPoints: { increment: REFERRER_REWARD } },
-            });
-            await tx.loyaltyTransaction.create({
-              data: {
-                userId: referral.referrerId,
-                type: 'BONUS',
-                points: REFERRER_REWARD,
-                description: 'Referral reward - friend made first purchase',
-              },
-            });
-
-            await tx.user.update({
-              where: { id: userId },
-              data: { loyaltyPoints: { increment: REFEREE_REWARD } },
-            });
-            await tx.loyaltyTransaction.create({
-              data: {
-                userId,
-                type: 'BONUS',
-                points: REFEREE_REWARD,
-                description: 'Welcome bonus - first purchase reward',
-              },
-            });
-          }
-        }
+        // Handle referral conversion (first purchase by referred user). Shared
+        // with the Magic Checkout path so both flows stay consistent: referrer
+        // earns 20% of subtotal, referee gets nothing extra (already enjoyed
+        // 15% off + 100% cashback on the paid amount).
+        await convertReferralOnFirstOrder(
+          tx,
+          userId,
+          Number(payment.order.subtotal),
+          payment.order.orderNumber
+        );
 
         // Clear cart
         const cart = await tx.cart.findUnique({ where: { userId } });

@@ -253,22 +253,24 @@ async function testConvertCreditsBothParties() {
   assert(credited.credited, 'should credit on first order');
   if (!credited.credited) return;
   assertEq(credited.referrerReward, 200);
-  assertEq(credited.refereeReward, 50);
+  // Referee gets no BONUS points — they already received 15% off + 100%
+  // cashback at checkout, so we skip the welcome bonus to avoid triple-dipping.
+  assertEq(credited.refereeReward, 0);
 
   const rAfter = await prisma.user.findUnique({ where: { id: r.id } });
   const uAfter = await prisma.user.findUnique({ where: { id: u.id } });
   assertEq(rAfter!.loyaltyPoints, 200);
-  assertEq(uAfter!.loyaltyPoints, 50);
+  assertEq(uAfter!.loyaltyPoints, 0);
 
   const refRow = await prisma.referral.findUnique({ where: { refereeId: u.id } });
   assertEq(refRow!.status, 'CONVERTED');
   assertEq(refRow!.referrerReward, 200);
-  assertEq(refRow!.refereeReward, 50);
+  assertEq(refRow!.refereeReward, 0);
 
   const bonusTxns = await prisma.loyaltyTransaction.count({
     where: { userId: { in: [r.id, u.id] }, type: 'BONUS' },
   });
-  assertEq(bonusTxns, 2, 'one BONUS transaction per party');
+  assertEq(bonusTxns, 1, 'exactly one BONUS txn — the referrer only');
 }
 
 async function testConvertNoOpOnSecondOrder() {
