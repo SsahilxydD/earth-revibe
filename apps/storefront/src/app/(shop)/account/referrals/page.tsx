@@ -65,7 +65,7 @@ export default function ReferralsPage() {
 
   const shareWhatsApp = () => {
     const message = encodeURIComponent(
-      `Hey — check out Earth Revibe! Use my code ${code} at checkout (discount code box) on your first order. ${referralLink}`
+      `Check out Earth Revibe — use my code ${code} at checkout on your first order for 15% off + 100% cashback in loyalty points. ${referralLink}`
     );
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };

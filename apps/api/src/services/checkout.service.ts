@@ -117,9 +117,16 @@ export const checkoutService = {
     // invite code, link the Referral row now so the post-first-order hook can
     // credit both parties, and treat the code as consumed (no discount).
     let effectiveDiscountCode = data.discountCode || undefined;
+    let refereeDiscount = 0;
     if (!isGuest && effectiveDiscountCode) {
       const linked = await maybeLinkReferralAtCheckout(userId, effectiveDiscountCode);
-      if (linked) effectiveDiscountCode = undefined;
+      if (linked) {
+        effectiveDiscountCode = undefined;
+        // Referee gets a flat 15% off their first order as an immediate
+        // incentive to enter the referral code. The referrer still earns 20%
+        // of subtotal in points on conversion.
+        refereeDiscount = Math.floor(lineItemsTotal * 0.15);
+      }
     }
 
     // Collect product/category IDs for discount applicability check
@@ -134,8 +141,8 @@ export const checkoutService = {
       cartCategoryIds.push(...productsWithCat.map((p) => p.categoryId));
     }
 
-    // Apply discount if provided
-    let discountAmount = 0;
+    // Apply discount if provided (coupon/discount code path)
+    let discountAmount = refereeDiscount;
     if (effectiveDiscountCode) {
       discountAmount = await calculateDiscount(
         effectiveDiscountCode,
@@ -874,7 +881,18 @@ export async function finalizeOrderFromPending(
           });
         }
 
-        pointsEarned = Math.floor(totalAmount / 100);
+        // 100% cashback on the first order as a hook; 1% on repeat orders.
+        // Redemption is email-gated (admin approval required) so the realised
+        // liability is far less than face value thanks to breakage.
+        const priorOrderCount = await tx.order.count({
+          where: {
+            userId: effectiveUserId,
+            status: { not: 'CANCELLED' },
+            id: { not: order.id },
+          },
+        });
+        const isFirstOrder = priorOrderCount === 0;
+        pointsEarned = Math.floor(isFirstOrder ? totalAmount : totalAmount / 100);
         if (pointsEarned > 0) {
           await tx.user.update({
             where: { id: effectiveUserId },
@@ -889,7 +907,9 @@ export async function finalizeOrderFromPending(
               userId: effectiveUserId,
               type: 'EARNED',
               points: pointsEarned,
-              description: `Earned from order #${pending.orderNumber}`,
+              description: isFirstOrder
+                ? `100% cashback — first order #${pending.orderNumber}`
+                : `Earned from order #${pending.orderNumber}`,
               orderId: order.id,
             },
           });
@@ -1095,14 +1115,19 @@ export async function createCodOrder(
   // Same field accepts discount OR referral code; try referral first so a
   // referral code doesn't incorrectly error out as "invalid discount".
   let effectiveDiscountCode = data.discountCode || undefined;
+  let refereeDiscount = 0;
   if (effectiveDiscountCode) {
     const linked = await maybeLinkReferralAtCheckout(userId, effectiveDiscountCode);
-    if (linked) effectiveDiscountCode = undefined;
+    if (linked) {
+      effectiveDiscountCode = undefined;
+      // 15% off first order for the referred customer.
+      refereeDiscount = Math.floor(subtotal * 0.15);
+    }
   }
 
   // Discount
   const cartProductIds = variants.map((v) => v.product.id);
-  let discountAmount = 0;
+  let discountAmount = refereeDiscount;
   let discountCodeId: string | null = null;
   if (effectiveDiscountCode) {
     const productsWithCat = await prisma.product.findMany({
@@ -1214,7 +1239,17 @@ export async function createCodOrder(
         });
       }
 
-      pointsEarned = Math.floor(totalAmount / 100);
+      // 100% cashback on the first order; 1% thereafter. Email-gated redemption
+      // keeps breakage high so realised cost is far below face value.
+      const priorOrderCount = await tx.order.count({
+        where: {
+          userId,
+          status: { not: 'CANCELLED' },
+          id: { not: order.id },
+        },
+      });
+      const isFirstOrder = priorOrderCount === 0;
+      pointsEarned = Math.floor(isFirstOrder ? totalAmount : totalAmount / 100);
       if (pointsEarned > 0) {
         await tx.user.update({
           where: { id: userId },
@@ -1229,7 +1264,9 @@ export async function createCodOrder(
             userId,
             type: 'EARNED',
             points: pointsEarned,
-            description: `Earned from COD order #${orderNumber}`,
+            description: isFirstOrder
+              ? `100% cashback — first COD order #${orderNumber}`
+              : `Earned from COD order #${orderNumber}`,
             orderId: order.id,
           },
         });

@@ -27,9 +27,9 @@ interface LoyaltyHistory {
 }
 
 const HOW_IT_WORKS = [
-  { icon: ShoppingBag, title: 'Shop', desc: '1 pt per ₹100 spent' },
-  { icon: Gift, title: 'Redeem', desc: '1 pt = ₹1 off' },
-  { icon: TrendingUp, title: 'Refer', desc: '20% of friend\'s first order' },
+  { icon: ShoppingBag, title: 'Earn', desc: '100% cashback on first order, 1% after' },
+  { icon: Gift, title: 'Redeem', desc: 'Email support@earthrevibe.com to claim' },
+  { icon: TrendingUp, title: 'Refer', desc: '20% of friend\'s first order + 15% off them' },
 ] as const;
 
 export default function LoyaltyPage() {

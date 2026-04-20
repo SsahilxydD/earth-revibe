@@ -162,7 +162,10 @@ export function CartDrawer() {
           `/referrals/validate?code=${encodeURIComponent(code)}`
         );
         if (ref.valid) {
-          applyDiscount(code, 0);
+          // Referee gets a flat 15% off their first order. Backend recomputes
+          // authoritatively at order creation; this is purely for cart display.
+          const refereeDiscount = Math.floor(subtotal * 0.15);
+          applyDiscount(code, refereeDiscount);
           setDiscountInput('');
         } else {
           const messages: Record<string, string> = {
@@ -658,9 +661,7 @@ export function CartDrawer() {
                   <span style={{ fontSize: 12, fontWeight: 400, color: '#000' }}>
                     {discountCode}{' '}
                     <span style={{ fontWeight: 300, color: '#22C55E' }}>
-                      {discountAmount > 0
-                        ? `−${formatPrice(discountAmount)}`
-                        : 'Referral applied'}
+                      −{formatPrice(discountAmount)}
                     </span>
                   </span>
                   <button
