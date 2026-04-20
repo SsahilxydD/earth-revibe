@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pnpm install --frozen-lockfile --prod=false && pnpm turbo build --filter=@earth-revibe/api"
+buildCommand = "pnpm install --frozen-lockfile && pnpm turbo build --filter=@earth-revibe/api"
 
 [deploy]
 startCommand = "node apps/api/dist/index.js"
