@@ -7,7 +7,7 @@ import { logger } from '../config/logger';
 import { APP_CONSTANTS } from '../config/constants';
 import {
   maybeLinkReferralAtCheckout,
-  computeReferrerReward,
+  convertReferralOnFirstOrder,
 } from './referral.service';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
@@ -895,49 +895,12 @@ export async function finalizeOrderFromPending(
           });
         }
 
-        const orderCount = await tx.order.count({
-          where: { userId: effectiveUserId, status: { not: 'CANCELLED' } },
-        });
-        if (orderCount === 1) {
-          const referral = await tx.referral.findUnique({ where: { refereeId: effectiveUserId } });
-          if (referral && referral.status === 'SIGNED_UP') {
-            // 1 point = ₹1, so 20% of subtotal (in ₹) becomes the points reward.
-            const REFERRER_REWARD = computeReferrerReward(Number(order.subtotal));
-            const REFEREE_REWARD = APP_CONSTANTS.REFEREE_REWARD_POINTS;
-            await tx.referral.update({
-              where: { id: referral.id },
-              data: {
-                status: 'CONVERTED',
-                referrerReward: REFERRER_REWARD,
-                refereeReward: REFEREE_REWARD,
-              },
-            });
-            await tx.user.update({
-              where: { id: referral.referrerId },
-              data: { loyaltyPoints: { increment: REFERRER_REWARD } },
-            });
-            await tx.loyaltyTransaction.create({
-              data: {
-                userId: referral.referrerId,
-                type: 'BONUS',
-                points: REFERRER_REWARD,
-                description: 'Referral reward - friend made first purchase',
-              },
-            });
-            await tx.user.update({
-              where: { id: effectiveUserId },
-              data: { loyaltyPoints: { increment: REFEREE_REWARD } },
-            });
-            await tx.loyaltyTransaction.create({
-              data: {
-                userId: effectiveUserId,
-                type: 'BONUS',
-                points: REFEREE_REWARD,
-                description: 'Welcome bonus - first purchase reward',
-              },
-            });
-          }
-        }
+        await convertReferralOnFirstOrder(
+          tx,
+          effectiveUserId,
+          Number(order.subtotal),
+          pending.orderNumber
+        );
 
         const cart = await tx.cart.findUnique({ where: { userId: effectiveUserId } });
         if (cart) {
@@ -1273,49 +1236,7 @@ export async function createCodOrder(
       }
 
       // Referral reward on first order
-      const orderCount = await tx.order.count({
-        where: { userId, status: { not: 'CANCELLED' } },
-      });
-      if (orderCount === 1) {
-        const referral = await tx.referral.findUnique({ where: { refereeId: userId } });
-        if (referral && referral.status === 'SIGNED_UP') {
-          // 1 point = ₹1, so 20% of subtotal (in ₹) becomes the points reward.
-          const REFERRER_REWARD = computeReferrerReward(subtotal);
-          const REFEREE_REWARD = APP_CONSTANTS.REFEREE_REWARD_POINTS;
-          await tx.referral.update({
-            where: { id: referral.id },
-            data: {
-              status: 'CONVERTED',
-              referrerReward: REFERRER_REWARD,
-              refereeReward: REFEREE_REWARD,
-            },
-          });
-          await tx.user.update({
-            where: { id: referral.referrerId },
-            data: { loyaltyPoints: { increment: REFERRER_REWARD } },
-          });
-          await tx.loyaltyTransaction.create({
-            data: {
-              userId: referral.referrerId,
-              type: 'BONUS',
-              points: REFERRER_REWARD,
-              description: 'Referral reward - friend made first purchase',
-            },
-          });
-          await tx.user.update({
-            where: { id: userId },
-            data: { loyaltyPoints: { increment: REFEREE_REWARD } },
-          });
-          await tx.loyaltyTransaction.create({
-            data: {
-              userId,
-              type: 'BONUS',
-              points: REFEREE_REWARD,
-              description: 'Welcome bonus - first purchase reward',
-            },
-          });
-        }
-      }
+      await convertReferralOnFirstOrder(tx, userId, subtotal, orderNumber);
 
       // Clear server-side cart
       const cart = await tx.cart.findUnique({ where: { userId } });

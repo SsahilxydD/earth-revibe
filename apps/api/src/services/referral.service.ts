@@ -94,6 +94,80 @@ export async function _linkReferralInTx(
   });
 }
 
+const REFEREE_REWARD_POINTS = 50;
+
+/**
+ * Convert a pending referral for `userId` on their first successful order,
+ * credit both parties, and mark the referral CONVERTED. Pure: no side effects
+ * outside the supplied transaction. Idempotent: safe to re-run because it
+ * re-checks `orderCount === 1` and `status === 'SIGNED_UP'` on every call.
+ *
+ * Returns `{ credited: false }` when the user has no pending referral or
+ * isn't on their first order; callers don't need to special-case that.
+ */
+export async function convertReferralOnFirstOrder(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  subtotal: number,
+  orderNumber: string
+): Promise<
+  | { credited: false }
+  | { credited: true; referrerId: string; referrerReward: number; refereeReward: number }
+> {
+  const orderCount = await tx.order.count({
+    where: { userId, status: { not: 'CANCELLED' } },
+  });
+  if (orderCount !== 1) return { credited: false };
+
+  const referral = await tx.referral.findUnique({ where: { refereeId: userId } });
+  if (!referral || referral.status !== 'SIGNED_UP') return { credited: false };
+
+  const referrerReward = computeReferrerReward(subtotal);
+  const refereeReward = REFEREE_REWARD_POINTS;
+
+  await tx.referral.update({
+    where: { id: referral.id },
+    data: { status: 'CONVERTED', referrerReward, refereeReward },
+  });
+
+  if (referrerReward > 0) {
+    await tx.user.update({
+      where: { id: referral.referrerId },
+      data: { loyaltyPoints: { increment: referrerReward } },
+    });
+    await tx.loyaltyTransaction.create({
+      data: {
+        userId: referral.referrerId,
+        type: 'BONUS',
+        points: referrerReward,
+        description: `Referral reward (20% of order #${orderNumber})`,
+      },
+    });
+  }
+
+  if (refereeReward > 0) {
+    await tx.user.update({
+      where: { id: userId },
+      data: { loyaltyPoints: { increment: refereeReward } },
+    });
+    await tx.loyaltyTransaction.create({
+      data: {
+        userId,
+        type: 'BONUS',
+        points: refereeReward,
+        description: `Welcome bonus — referred signup`,
+      },
+    });
+  }
+
+  return {
+    credited: true,
+    referrerId: referral.referrerId,
+    referrerReward,
+    refereeReward,
+  };
+}
+
 /**
  * Cheap pre-checkout check so the storefront can tell the user "Referral code
  * accepted" without committing to anything. Does not create any DB rows.
