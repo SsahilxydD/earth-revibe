@@ -48,17 +48,17 @@ const OFFERS: Offer[] = [
     theme: 'light',
   },
   {
-    eyebrow: 'OFFER 03 · REPEAT REWARDS',
+    eyebrow: 'OFFER 03 · TAKE-BACK',
     big: '33%',
-    headline: '365 days of rewards, every order',
+    headline: 'Send it back after a year, earn 33% back',
     description:
-      "For a full year from your first order, every repeat purchase earns 33% back in points. Stack them. Spend them. Keep coming back — the rewards window doesn't reset, it runs.",
+      "Clothes shouldn't die in your wardrobe. Wear your Earth Revibe piece for a year, then ship it back to us — we'll credit 33% of what you paid as loyalty points. Circular fashion, rewarded.",
     fine: [
-      'Kicks in the moment your first order is delivered.',
-      'Active for 365 days; auto-applied on every eligible order.',
-      'Points stack with referral bonuses and first-order cashback.',
+      'Eligible 365 days after the order was delivered.',
+      'Item must be returned intact and in wearable condition.',
+      'We handle pickup + re-use; you get the points credited straight to your account.',
     ],
-    cta: { label: 'View your balance', href: '/account/loyalty' },
+    cta: { label: 'Start a take-back', href: '/account/support' },
     theme: 'dark',
   },
 ];
