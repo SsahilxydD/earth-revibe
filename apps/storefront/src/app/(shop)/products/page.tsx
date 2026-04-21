@@ -318,7 +318,7 @@ function ProductsContent() {
                 lineHeight: 1.35,
               }}
             >
-              {'Pack light, look effortless.\nMade for warm days ahead.'}
+              {'Pack it Friday. Wear it all weekend.\nVacation-ready essentials from India.'}
             </p>
             <div
               style={{
