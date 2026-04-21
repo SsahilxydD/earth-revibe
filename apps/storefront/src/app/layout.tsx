@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   title: 'Earth Revibe | Vacation-Ready Minimal Fits',
   description:
-    'Shop vacation-ready, minimal fashion from India. Relaxed-fit shirts, polos, breezy essentials and bottomwear. Free shipping on all orders.',
+    'Vacation-ready minimal fashion from India. 100% cashback on your first order. Shirts, polos, shorts, linen — free shipping, 1-year take-back.',
   applicationName: 'Earth Revibe',
   keywords: [
     'vacation wear',
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Earth Revibe | Vacation-Ready Minimal Fits',
     description:
-      'Shop vacation-ready, minimal fashion from India. Relaxed-fit shirts, polos, breezy essentials and bottomwear.',
+      'Vacation-ready minimal fashion from India. 100% cashback on your first order. Free shipping, 1-year take-back.',
     type: 'website',
     locale: 'en_IN',
     siteName: 'Earth Revibe',
@@ -86,7 +86,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Earth Revibe | Vacation-Ready Minimal Fits',
     description:
-      'Shop vacation-ready, minimal fashion from India. Relaxed-fit shirts, polos, breezy essentials and bottomwear.',
+      'Vacation-ready minimal fashion from India. 100% cashback on your first order. Free shipping, 1-year take-back.',
     images: ['/og-image.png'],
   },
 };
@@ -119,7 +119,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               url: 'https://www.earthrevibe.com',
               logo: 'https://www.earthrevibe.com/Earth Revibe Logo Black.png',
               description:
-                'Vacation-ready, minimal fashion from India. Relaxed-fit shirts, polos, breezy essentials and bottomwear.',
+                'Vacation-ready minimal fashion from India. 100% cashback on your first order.',
               contactPoint: {
                 '@type': 'ContactPoint',
                 email: 'contact@earthrevibe.in',

@@ -108,7 +108,7 @@ function EmptyCart() {
       </div>
       <h2 className="mt-6 text-xl font-bold uppercase tracking-wider">Your cart is empty</h2>
       <p className="mt-2 text-sm text-[var(--color-muted)]">
-        Looks like you haven&apos;t added anything to your cart yet.
+        Start with a shirt, a pair of linens, or whatever the weekend needs.
       </p>
       <Link href="/products">
         <Button size="lg" className="mt-8">

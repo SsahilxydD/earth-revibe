@@ -41,9 +41,9 @@ interface ActiveCodesResponse {
 }
 
 const HOW_IT_WORKS = [
-  { icon: ShoppingBag, title: 'Earn', desc: '100% cashback on first order, 20% after' },
-  { icon: Gift, title: 'Redeem', desc: 'Email support@earthrevibe.com to claim' },
-  { icon: TrendingUp, title: 'Refer', desc: '20% of friend\'s first order + 15% off them' },
+  { icon: ShoppingBag, title: 'Earn', desc: '100% cashback on your first order' },
+  { icon: Gift, title: 'Redeem', desc: 'Email support to get a single-use code' },
+  { icon: TrendingUp, title: 'Refer', desc: '20% cash to your bank + 15% off for them' },
 ] as const;
 
 export default function LoyaltyPage() {
