@@ -14,8 +14,8 @@ const NAV_LINKS = [
   { label: 'ALL', href: '/products' },
   { label: 'SHIRTS', href: '/products?category=shirts' },
   { label: 'POLOS', href: '/products?category=polos' },
-  { label: 'SHORTS', href: '/products?category=shorts' },
-  { label: 'LINEN', href: '/products?category=linen' },
+  { label: 'T-SHIRTS', href: '/products?category=t-shirts' },
+  { label: 'BOTTOMWEAR', href: '/products?category=bottomwear' },
   { label: 'OFFERS', href: '/offers' },
 ];
 
