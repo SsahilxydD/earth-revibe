@@ -67,7 +67,7 @@ export default function OffersPage() {
   return (
     <div>
       {/* Hero — white so it contrasts against the dark first offer section below */}
-      <section className="bg-white py-20 md:py-28">
+      <section className="bg-white py-12 md:py-24">
         <div className="mx-auto max-w-xl px-6 text-center">
           <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--color-muted)]">
             What's on right now
@@ -95,9 +95,11 @@ export default function OffersPage() {
                 : 'bg-[var(--color-surface)] text-[var(--color-text)]'
             }
           >
-            <div className="mx-auto grid max-w-5xl gap-10 px-6 py-20 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-16 md:py-28">
-              {/* Left: number */}
-              <div className="flex flex-col justify-center">
+            <div className="mx-auto grid max-w-5xl gap-4 px-6 py-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-16 md:py-24">
+              {/* Left: number — justify-center only kicks in on desktop where
+                  there's a shared row height. On mobile we want it tight to
+                  the headline below (no orphaned-number look). */}
+              <div className="flex flex-col md:justify-center">
                 <p
                   className={
                     isDark
@@ -116,7 +118,7 @@ export default function OffersPage() {
               </div>
 
               {/* Right: copy + CTA */}
-              <div className="flex flex-col justify-center">
+              <div className="flex flex-col md:justify-center">
                 <h2 className="text-2xl font-bold uppercase tracking-wider md:text-3xl">
                   {offer.headline}
                 </h2>
