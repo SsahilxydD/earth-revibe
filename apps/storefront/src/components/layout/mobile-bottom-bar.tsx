@@ -14,7 +14,7 @@ import { useUiStore, subscribeDockHidden } from '@/stores/ui-store';
 const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Search', href: '#search', icon: Search },
-  { label: 'Offers', href: '/account/loyalty', icon: Gift },
+  { label: 'Offers', href: '/offers', icon: Gift },
   { label: 'Account', href: '/account', icon: User },
 ] as const;
 
