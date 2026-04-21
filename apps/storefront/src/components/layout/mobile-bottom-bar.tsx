@@ -3,23 +3,23 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, Heart, ShoppingBag } from 'lucide-react';
+import { Home, Search, Gift, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useCartStore } from '@/stores/cart-store';
 import { useUiStore, subscribeDockHidden } from '@/stores/ui-store';
 
+// Dock: Home · Search · Offers (loyalty) · Account. Cart lives in the header
+// top-right on mobile now — it's a one-tap destination that shouldn't compete
+// with primary nav.
 const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Search', href: '#search', icon: Search },
-  { label: 'Wishlist', href: '/account/wishlist', icon: Heart },
-  { label: 'Cart', href: '#cart', icon: ShoppingBag },
+  { label: 'Offers', href: '/account/loyalty', icon: Gift },
+  { label: 'Account', href: '/account', icon: User },
 ] as const;
 
 export function MobileBottomBar() {
   const pathname = usePathname();
-  const itemCount = useCartStore((s) => s.getItemCount());
-  const openCart = useCartStore((s) => s.openCart);
   const { openSearch } = useUiStore();
   const [footerInView, setFooterInView] = useState(false);
   const [dockHidden, setDockHidden] = useState(false);
@@ -73,25 +73,6 @@ export function MobileBottomBar() {
                     aria-label={item.label}
                   >
                     <Icon className="h-5 w-5 text-[var(--color-muted)]" />
-                    <span className="text-[10px] text-[var(--color-muted)]">{item.label}</span>
-                  </button>
-                );
-              }
-
-              if (item.href === '#cart') {
-                return (
-                  <button
-                    key={item.label}
-                    onClick={openCart}
-                    className="relative flex flex-col items-center gap-0.5 px-3 py-1"
-                    aria-label={item.label}
-                  >
-                    <Icon className="h-5 w-5 text-[var(--color-muted)]" />
-                    {itemCount > 0 && (
-                      <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-primary)] text-[9px] font-bold text-white">
-                        {itemCount > 99 ? '99+' : itemCount}
-                      </span>
-                    )}
                     <span className="text-[10px] text-[var(--color-muted)]">{item.label}</span>
                   </button>
                 );

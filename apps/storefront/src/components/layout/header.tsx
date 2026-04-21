@@ -87,24 +87,20 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Right icons: always on desktop, only on product detail mobile */}
-          {/* Other mobile pages use the bottom dock for search/cart */}
-          <div
-            className={cn(
-              'flex items-center justify-end gap-1',
-              !isProductDetail && 'hidden md:flex'
-            )}
-          >
+          {/* Right icons. Cart is always visible (the dock no longer carries it).
+              Search + wishlist remain desktop-only — search is in the mobile dock,
+              wishlist is accessible via /account/wishlist from the Account tab. */}
+          <div className="flex items-center justify-end gap-1">
             <button
               onClick={openSearch}
-              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--color-surface)] transition-colors"
+              className="hidden h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--color-surface)] transition-colors md:flex"
               aria-label="Search"
             >
               <Search className="h-5 w-5" />
             </button>
             <Link
               href="/account/wishlist"
-              className="hidden h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--color-surface)] transition-colors sm:flex"
+              className="hidden h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--color-surface)] transition-colors md:flex"
               aria-label="Wishlist"
             >
               <Heart className="h-5 w-5" />
