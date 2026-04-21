@@ -28,31 +28,32 @@ import { motion } from 'framer-motion';
 
 import { isVibe, VIBES as VIBE_SLUGS } from '@earth-revibe/shared';
 
-// 5 trip vibes — visual labels + Unsplash placeholders. Slugs are the
-// source of truth and match Vibe enum in @earth-revibe/shared.
+// 5 trip vibes — renamed to phrases the audience already uses. Slugs
+// (vibe URL params) unchanged so saved links and categorisation stay
+// valid. Labels just read clearer to first-time visitors.
 const VIBES = [
   {
-    label: 'Clouds',
+    label: 'Hill Trip',
     value: 'above-the-clouds',
     img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&q=80&fm=jpg',
   },
   {
-    label: 'Salt',
+    label: 'Beach',
     value: 'salt-on-skin',
     img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&q=80&fm=jpg',
   },
   {
-    label: 'Gold',
+    label: 'Golden Hour',
     value: 'golden-hour-gang',
     img: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=200&q=80&fm=jpg',
   },
   {
-    label: 'Wild',
+    label: 'Outdoors',
     value: 'into-the-wild',
     img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=200&q=80&fm=jpg',
   },
   {
-    label: 'Neon',
+    label: 'Night Out',
     value: 'neon-nomads',
     img: 'https://images.unsplash.com/photo-1514214246283-d427a95c5d2f?w=200&q=80&fm=jpg',
   },

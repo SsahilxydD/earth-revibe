@@ -11,13 +11,12 @@ import { useUiStore } from '@/stores/ui-store';
 import { SearchOverlay } from './search-overlay';
 
 const NAV_LINKS = [
-  { label: 'ALL PRODUCTS', href: '/products' },
-  { label: 'CLOUDS', href: '/products?vibe=above-the-clouds' },
-  { label: 'SALT', href: '/products?vibe=salt-on-skin' },
-  { label: 'GOLD', href: '/products?vibe=golden-hour-gang' },
-  { label: 'WILD', href: '/products?vibe=into-the-wild' },
-  { label: 'NEON', href: '/products?vibe=neon-nomads' },
-  { label: 'FLIGHT', href: '/flight-mode' },
+  { label: 'ALL', href: '/products' },
+  { label: 'SHIRTS', href: '/products?category=shirts' },
+  { label: 'POLOS', href: '/products?category=polos' },
+  { label: 'SHORTS', href: '/products?category=shorts' },
+  { label: 'LINEN', href: '/products?category=linen' },
+  { label: 'OFFERS', href: '/offers' },
 ];
 
 export function Header() {
