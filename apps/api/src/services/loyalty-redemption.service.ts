@@ -155,7 +155,9 @@ export async function approveRedemption(redemptionId: string, adminId: string) {
               applicableProducts: [],
               isActive: true,
               startsAt: new Date(),
-              expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+              // Redemption codes don't expire — policy change from the
+              // offers page / fine print.
+              expiresAt: null,
             },
           });
           code = candidate;
@@ -192,7 +194,7 @@ export async function approveRedemption(redemptionId: string, adminId: string) {
   <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 24px;">Your loyalty redemption request has been approved. Use the code below at checkout for <strong>₹${result.redemption.pointsAmount} off</strong> your next order — no minimum, no expiry catch, just paste and save.</p>
   <div style="background:#000;color:#fff;text-align:center;padding:32px 24px;font-family:'Courier New',monospace;font-size:32px;letter-spacing:6px;font-weight:700;margin:0 0 24px;">${result.code}</div>
   <p style="color:#777;font-size:12px;line-height:1.6;margin:0 0 8px;">• This code is tied to your account and can only be used once.</p>
-  <p style="color:#777;font-size:12px;line-height:1.6;margin:0 0 8px;">• Valid for 60 days from today.</p>
+  <p style="color:#777;font-size:12px;line-height:1.6;margin:0 0 8px;">• Single-use — doesn't expire, use it whenever.</p>
   <p style="color:#777;font-size:12px;line-height:1.6;margin:0 0 24px;">• We've deducted ${result.redemption.pointsAmount} pts from your balance.</p>
   <p style="color:#999;font-size:11px;text-align:center;margin:32px 0 0;">earthrevibe.com · EST. 2024</p>
 </body></html>`,

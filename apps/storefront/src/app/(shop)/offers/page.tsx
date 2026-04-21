@@ -38,10 +38,10 @@ const OFFERS: Offer[] = [
     big: '20%',
     headline: 'For every friend you bring in',
     description:
-      "Share your referral link. When a friend places their first order, you earn 20% of their order value as points — and they get a 15% discount off their first order. Both of you win.",
+      "Share your referral link. When a friend places their first order, you earn 20% of their order value — paid directly to your bank account, not as points. They get a 15% discount off their first order. Both of you win.",
     fine: [
       'Friend must be a new Earth Revibe customer.',
-      "Your reward is credited when their first order ships.",
+      'Cash transferred to your bank once their first order ships.',
       'No cap on how many friends you can invite.',
     ],
     cta: { label: 'Get your referral link', href: '/account/referrals' },
@@ -50,12 +50,12 @@ const OFFERS: Offer[] = [
   {
     eyebrow: 'OFFER 03 · TAKE-BACK',
     big: '33%',
-    headline: 'Send it back after a year, earn 33% back',
+    headline: 'Send it back any time after a year, earn 33% back',
     description:
-      "Clothes shouldn't die in your wardrobe. Wear your Earth Revibe piece for a year, then ship it back to us — we'll credit 33% of what you paid as loyalty points. Circular fashion, rewarded.",
+      "Clothes shouldn't die in your wardrobe. Wear your Earth Revibe piece for a year, then ship it back to us — any time, for life — and we'll credit 33% of what you paid as loyalty points. Circular fashion, rewarded.",
     fine: [
-      'Eligible 365 days after the order was delivered.',
-      'Item must be returned intact and in wearable condition.',
+      'Eligible any time from 1 year after delivery onwards — no upper limit.',
+      'We accept the item in any condition.',
       'We handle pickup + re-use; you get the points credited straight to your account.',
     ],
     cta: { label: 'Start a take-back', href: '/account/support' },
@@ -176,9 +176,9 @@ export default function OffersPage() {
             Fine print
           </p>
           <p className="mt-4 text-[13px] leading-[1.8] text-[var(--color-muted)]">
-            Loyalty points expire 6 months after they are earned. Redemption codes are single-use
-            and valid for 60 days from issue. Offers cannot be combined with promotional discount
-            codes at checkout. We reserve the right to adjust offer mechanics with 30 days' notice.
+            Redemption codes are single-use and don't expire. Offers cannot be combined with
+            promotional discount codes at checkout. We reserve the right to adjust offer mechanics
+            with 30 days' notice.
           </p>
           <Link
             href="/account/loyalty"
