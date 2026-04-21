@@ -91,12 +91,12 @@ export default function LoyaltyRedemptionsPage() {
   });
 
   const expireMutation = useMutation({
-    mutationFn: () => api.post<{ data: { scanned: number; expiredPoints: number } }>(
-      '/admin/loyalty/expire-points'
-    ),
+    mutationFn: () =>
+      api.post<{ scanned: number; expiredPoints: number }>('/admin/loyalty/expire-points'),
     onSuccess: (res) => {
-      const { scanned, expiredPoints } = res.data;
-      toast.success(`Expiry sweep: ${scanned} rows scanned, ${expiredPoints} pts removed`);
+      toast.success(
+        `Expiry sweep: ${res.scanned} rows scanned, ${res.expiredPoints} pts removed`
+      );
     },
     onError: (err: Error) => toast.error(err.message || 'Expiry failed'),
   });
