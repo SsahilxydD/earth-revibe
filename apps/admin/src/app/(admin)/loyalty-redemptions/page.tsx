@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check, X, Loader2, Plus } from 'lucide-react';
+import { Check, X, Loader2, Plus, Search } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
@@ -39,6 +39,27 @@ interface RedemptionsResponse {
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
+interface CustomerRow {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  isActive: boolean;
+  loyaltyPoints: number;
+  createdAt: string;
+  lastLoginAt: string | null;
+  _count: { orders: number };
+}
+
+interface CustomersResponse {
+  customers: CustomerRow[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 const STATUS_STYLES: Record<RedemptionStatus, { bg: string; color: string; label: string }> = {
   PENDING: { bg: '#FEF3C7', color: '#92400E', label: 'PENDING' },
   APPROVED: { bg: '#D1FAE5', color: '#065F46', label: 'APPROVED' },
@@ -51,6 +72,13 @@ export default function LoyaltyRedemptionsPage() {
   const [statusFilter, setStatusFilter] = useState<RedemptionStatus | ''>('');
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ userEmail: '', pointsAmount: '', notes: '' });
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(customerSearch.trim()), 300);
+    return () => clearTimeout(t);
+  }, [customerSearch]);
 
   const { data, isLoading } = useQuery<RedemptionsResponse>({
     queryKey: ['admin-redemptions', statusFilter],
@@ -59,6 +87,25 @@ export default function LoyaltyRedemptionsPage() {
         `/admin/loyalty/redemptions${statusFilter ? `?status=${statusFilter}` : ''}`
       ),
   });
+
+  const { data: customersData, isLoading: customersLoading } = useQuery<CustomersResponse>({
+    queryKey: ['loyalty-customers', debouncedSearch],
+    queryFn: () => {
+      const params = new URLSearchParams({
+        limit: '20',
+        sortBy: 'loyaltyPoints',
+        sortOrder: 'desc',
+      });
+      if (debouncedSearch) params.set('search', debouncedSearch);
+      return api.get<CustomersResponse>(`/admin/customers?${params.toString()}`);
+    },
+    placeholderData: (prev) => prev,
+  });
+
+  const openRedemptionFor = (email: string) => {
+    setForm({ userEmail: email, pointsAmount: '', notes: '' });
+    setShowCreate(true);
+  };
 
   const createMutation = useMutation({
     mutationFn: (payload: { userEmail: string; pointsAmount: number; notes?: string }) =>
@@ -144,6 +191,118 @@ export default function LoyaltyRedemptionsPage() {
         </div>
       </div>
 
+      <div
+        style={{
+          border: '1px solid #E5E5E5',
+          padding: 16,
+          marginBottom: 32,
+          background: '#FAFAFA',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Customers by balance
+            </div>
+            <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
+              Top 20 by points. Search any name, email, or phone to find a specific customer.
+            </div>
+          </div>
+          <div style={{ position: 'relative', width: 320 }}>
+            <Search
+              style={{
+                position: 'absolute',
+                left: 10,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#999',
+              }}
+              className="h-4 w-4"
+            />
+            <input
+              type="text"
+              placeholder="Search by name, email or phone…"
+              value={customerSearch}
+              onChange={(e) => setCustomerSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px 8px 34px',
+                border: '1px solid #E5E5E5',
+                background: '#fff',
+                fontSize: 13,
+              }}
+            />
+          </div>
+        </div>
+        {customersLoading && !customersData ? (
+          <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: '#999' }}>
+            Loading customers…
+          </div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #E5E5E5', textAlign: 'left' }}>
+                <th style={{ padding: '8px 6px', fontSize: 11, letterSpacing: 1 }}>CUSTOMER</th>
+                <th style={{ padding: '8px 6px', fontSize: 11, letterSpacing: 1 }}>EMAIL</th>
+                <th style={{ padding: '8px 6px', fontSize: 11, letterSpacing: 1 }}>BALANCE</th>
+                <th style={{ padding: '8px 6px', fontSize: 11, letterSpacing: 1 }}>ORDERS</th>
+                <th style={{ padding: '8px 6px' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {(customersData?.customers ?? []).map((c) => {
+                const name = `${c.firstName ?? ''} ${c.lastName ?? ''}`.trim();
+                return (
+                  <tr key={c.id} style={{ borderBottom: '1px solid #F0F0F0' }}>
+                    <td style={{ padding: '8px 6px' }}>
+                      <div style={{ fontWeight: 500 }}>{name || '—'}</div>
+                      {c.phone && (
+                        <div style={{ fontSize: 11, color: '#999' }}>{c.phone}</div>
+                      )}
+                    </td>
+                    <td style={{ padding: '8px 6px', fontSize: 12, color: '#444' }}>{c.email}</td>
+                    <td style={{ padding: '8px 6px', fontFamily: 'monospace' }}>
+                      ₹{c.loyaltyPoints.toLocaleString('en-IN')}
+                    </td>
+                    <td style={{ padding: '8px 6px', fontFamily: 'monospace', color: '#666' }}>
+                      {c._count?.orders ?? 0}
+                    </td>
+                    <td style={{ padding: '8px 6px', textAlign: 'right' }}>
+                      <button
+                        onClick={() => openRedemptionFor(c.email)}
+                        disabled={c.loyaltyPoints <= 0}
+                        style={{
+                          padding: '4px 10px',
+                          background: c.loyaltyPoints > 0 ? '#000' : '#E5E5E5',
+                          color: c.loyaltyPoints > 0 ? '#fff' : '#999',
+                          border: 'none',
+                          fontSize: 11,
+                          cursor: c.loyaltyPoints > 0 ? 'pointer' : 'not-allowed',
+                        }}
+                      >
+                        Redeem →
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {(customersData?.customers ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ padding: 24, textAlign: 'center', color: '#999' }}>
+                    {debouncedSearch
+                      ? `No customers matching "${debouncedSearch}"`
+                      : 'No customers yet'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>
+        Redemption requests
+      </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         {(['', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'] as const).map((s) => (
           <button
