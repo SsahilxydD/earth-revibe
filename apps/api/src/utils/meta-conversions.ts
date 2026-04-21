@@ -46,7 +46,10 @@ export async function sendMetaEvent(params: {
     logger.warn({ event: params.eventName }, 'Meta CAPI skipped — no token configured');
     return;
   }
-  logger.debug({ event: params.eventName, orderId: params.orderId }, 'Meta CAPI send start');
+  logger.info(
+    { event: params.eventName, orderId: params.orderId, pixelId: PIXEL_ID },
+    'Meta CAPI send start'
+  );
 
   const eventData: MetaEventData = {
     event_name: params.eventName,
@@ -89,12 +92,46 @@ export async function sendMetaEvent(params: {
       }
     );
 
+    const body = await res.text();
     if (!res.ok) {
-      const body = await res.text();
       logger.error({ status: res.status, body, event: params.eventName }, 'Meta CAPI error');
+      return;
+    }
+
+    // Meta can return 200 with events_received: 0 and error messages in the body
+    // when the payload is malformed or missing required fields. Parse to detect silent drops.
+    let parsed: { events_received?: number; messages?: unknown[]; fbtrace_id?: string } = {};
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      logger.warn({ body, event: params.eventName }, 'Meta CAPI returned non-JSON body');
+      return;
+    }
+
+    const received = parsed.events_received ?? 0;
+    const messages = Array.isArray(parsed.messages) ? parsed.messages : [];
+
+    if (received < 1 || messages.length > 0) {
+      logger.warn(
+        {
+          event: params.eventName,
+          orderId: params.orderId,
+          events_received: received,
+          messages,
+          fbtrace_id: parsed.fbtrace_id,
+        },
+        'Meta CAPI accepted request but dropped event'
+      );
     } else {
-      const body = await res.text();
-      logger.debug({ event: params.eventName, orderId: params.orderId, response: body }, 'Meta CAPI sent');
+      logger.info(
+        {
+          event: params.eventName,
+          orderId: params.orderId,
+          events_received: received,
+          fbtrace_id: parsed.fbtrace_id,
+        },
+        'Meta CAPI sent'
+      );
     }
   } catch (err) {
     logger.error({ err }, 'Meta Conversions API request failed');
