@@ -2,6 +2,7 @@ import { prisma, Prisma } from '@earth-revibe/db';
 import { ApiError } from '../utils/api-error';
 import { logger } from '../config/logger';
 import { getResend } from '../config/resend';
+import { sendWhatsAppLoyaltyCode } from './whatsapp.service';
 
 function randomCode(): string {
   // Human-friendly code shape: ER-RDM-XXXXXXX (no ambiguous chars)
@@ -14,24 +15,57 @@ function randomCode(): string {
 }
 
 /**
- * Create a PENDING redemption request when a customer emails support asking
- * to cash out some of their loyalty points. Validates balance but does NOT
- * decrement or mint a code yet — that happens on approve.
+ * Create a PENDING redemption request. Admin supplies either the customer's
+ * email OR an order number — because many phone-based signups have
+ * auto-generated emails the customer doesn't remember. Order-number lookup
+ * traces back to the user who placed it.
+ *
+ * Validates balance but does NOT decrement or mint a code yet — that happens
+ * on approve.
  */
 export async function createRedemption(params: {
-  userEmail: string;
+  userEmail?: string;
+  orderNumber?: string;
   pointsAmount: number;
   notes?: string;
 }) {
   if (!Number.isInteger(params.pointsAmount) || params.pointsAmount <= 0) {
     throw ApiError.badRequest('pointsAmount must be a positive integer');
   }
+  const email = params.userEmail?.trim().toLowerCase();
+  const orderNumber = params.orderNumber?.trim();
+  if (!email && !orderNumber) {
+    throw ApiError.badRequest('Either userEmail or orderNumber is required');
+  }
 
-  const user = await prisma.user.findUnique({
-    where: { email: params.userEmail.trim().toLowerCase() },
-    select: { id: true, loyaltyPoints: true, firstName: true, email: true },
-  });
-  if (!user) throw ApiError.notFound('No user with that email');
+  let user: {
+    id: string;
+    loyaltyPoints: number;
+    firstName: string | null;
+    email: string;
+    phone: string | null;
+  } | null = null;
+
+  if (orderNumber) {
+    const order = await prisma.order.findUnique({
+      where: { orderNumber },
+      select: {
+        user: {
+          select: { id: true, loyaltyPoints: true, firstName: true, email: true, phone: true },
+        },
+      },
+    });
+    if (!order?.user) throw ApiError.notFound(`No order found with number ${orderNumber}`);
+    user = order.user;
+  } else if (email) {
+    user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, loyaltyPoints: true, firstName: true, email: true, phone: true },
+    });
+    if (!user) throw ApiError.notFound('No user with that email');
+  }
+
+  if (!user) throw ApiError.notFound('Customer not found');
   if (user.loyaltyPoints < params.pointsAmount) {
     throw ApiError.badRequest(
       `User has ${user.loyaltyPoints} pts but requested ${params.pointsAmount}`
@@ -51,6 +85,7 @@ export async function createRedemption(params: {
     ...redemption,
     userEmail: user.email,
     userFirstName: user.firstName,
+    userPhone: user.phone,
     userCurrentBalance: user.loyaltyPoints,
   };
 }
@@ -71,7 +106,7 @@ export async function approveRedemption(redemptionId: string, adminId: string) {
         where: { id: redemptionId },
         include: {
           user: {
-            select: { id: true, email: true, firstName: true, loyaltyPoints: true },
+            select: { id: true, email: true, firstName: true, phone: true, loyaltyPoints: true },
           },
         },
       });
@@ -170,6 +205,34 @@ export async function approveRedemption(redemptionId: string, adminId: string) {
     logger.warn({ redemptionId: result.redemption.id }, 'Resend not configured, skipping email');
   }
 
+  // WhatsApp the code too (best-effort, soft-fails if template not approved).
+  // Phone-signup users often don't check email — WhatsApp is the reliable channel.
+  if (result.user.phone) {
+    sendWhatsAppLoyaltyCode(
+      result.user.phone,
+      result.user.firstName ?? 'there',
+      result.code,
+      result.redemption.pointsAmount
+    )
+      .then((ok) =>
+        logger.info(
+          { redemptionId: result.redemption.id, delivered: ok },
+          ok ? 'Redemption code WhatsApped' : 'WhatsApp template not accepted — email is the fallback'
+        )
+      )
+      .catch((err) =>
+        logger.error(
+          { err, redemptionId: result.redemption.id },
+          'Failed to WhatsApp redemption code'
+        )
+      );
+  } else {
+    logger.warn(
+      { redemptionId: result.redemption.id },
+      'User has no phone on file — WhatsApp delivery skipped'
+    );
+  }
+
   return { ...result.redemption, generatedCode: result.code };
 }
 
@@ -214,7 +277,13 @@ export async function listRedemptions(params: {
       orderBy: { createdAt: 'desc' },
       include: {
         user: {
-          select: { email: true, firstName: true, lastName: true, loyaltyPoints: true },
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            loyaltyPoints: true,
+          },
         },
         discountCode: {
           select: { code: true, expiresAt: true, usageCount: true, usageLimit: true },

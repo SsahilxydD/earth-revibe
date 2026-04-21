@@ -22,12 +22,13 @@ export const adminLoyaltyController = {
   },
 
   async create(req: Request, res: Response) {
-    const { userEmail, pointsAmount, notes } = req.body as {
-      userEmail: string;
+    const { userEmail, orderNumber, pointsAmount, notes } = req.body as {
+      userEmail?: string;
+      orderNumber?: string;
       pointsAmount: number;
       notes?: string;
     };
-    const result = await createRedemption({ userEmail, pointsAmount, notes });
+    const result = await createRedemption({ userEmail, orderNumber, pointsAmount, notes });
     res.status(201).json({ success: true, data: result });
   },
 

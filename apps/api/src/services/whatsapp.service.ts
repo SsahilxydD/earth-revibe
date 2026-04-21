@@ -411,6 +411,78 @@ export async function sendWhatsAppDecision(
 }
 
 /**
+ * Send a loyalty redemption code to the customer via WhatsApp Cloud API.
+ * Uses the pre-approved `WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE`.
+ *
+ * Template body (must be approved in Meta Business Manager):
+ *   "Hi {{1}} 🎉 Your Earth Revibe loyalty redemption is approved. Use code
+ *    {{2}} at checkout for ₹{{3}} off your next order. Valid 60 days, single
+ *    use. — earthrevibe.com"
+ *
+ *   {{1}} = customer first name
+ *   {{2}} = redemption code (e.g. ER-RDM-ZSTVWBF)
+ *   {{3}} = amount in rupees (e.g. "500")
+ *
+ * Soft-fail: returns boolean, never throws — email is the fallback.
+ */
+export async function sendWhatsAppLoyaltyCode(
+  phone: string,
+  firstName: string,
+  code: string,
+  amount: number
+): Promise<boolean> {
+  const digits = phone.replace(/\D/g, '');
+  const to = /^\d{10}$/.test(digits) ? `91${digits}` : digits;
+  if (!to) return false;
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: env.WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE,
+      language: { code: 'en' },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: firstName || 'there' },
+            { type: 'text', text: code },
+            { type: 'text', text: String(amount) },
+          ],
+        },
+      ],
+    },
+  };
+
+  try {
+    const res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      logger.error(
+        { status: res.status, body: text, code, templateName: env.WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE },
+        'WhatsApp loyalty code send error'
+      );
+      return false;
+    }
+
+    logger.info({ code, amount }, 'WhatsApp loyalty code sent');
+    return true;
+  } catch (err) {
+    logger.error({ err, code }, 'WhatsApp loyalty code network error');
+    return false;
+  }
+}
+
+/**
  * Send an abandoned cart recovery message via WhatsApp Cloud API.
  * Uses the pre-approved "earth_revibe_abandoned_cart" template.
  * @param phone       E.164 phone number (e.g. "+919876543210")

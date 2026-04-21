@@ -24,6 +24,7 @@ interface Redemption {
     email: string;
     firstName: string | null;
     lastName: string | null;
+    phone: string | null;
     loyaltyPoints: number;
   };
   discountCode: {
@@ -71,7 +72,12 @@ export default function LoyaltyRedemptionsPage() {
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<RedemptionStatus | ''>('');
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ userEmail: '', pointsAmount: '', notes: '' });
+  const [form, setForm] = useState({
+    userEmail: '',
+    orderNumber: '',
+    pointsAmount: '',
+    notes: '',
+  });
   const [customerSearch, setCustomerSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -103,18 +109,22 @@ export default function LoyaltyRedemptionsPage() {
   });
 
   const openRedemptionFor = (email: string) => {
-    setForm({ userEmail: email, pointsAmount: '', notes: '' });
+    setForm({ userEmail: email, orderNumber: '', pointsAmount: '', notes: '' });
     setShowCreate(true);
   };
 
   const createMutation = useMutation({
-    mutationFn: (payload: { userEmail: string; pointsAmount: number; notes?: string }) =>
-      api.post('/admin/loyalty/redemptions', payload),
+    mutationFn: (payload: {
+      userEmail?: string;
+      orderNumber?: string;
+      pointsAmount: number;
+      notes?: string;
+    }) => api.post('/admin/loyalty/redemptions', payload),
     onSuccess: () => {
       toast.success('Redemption request created');
       qc.invalidateQueries({ queryKey: ['admin-redemptions'] });
       setShowCreate(false);
-      setForm({ userEmail: '', pointsAmount: '', notes: '' });
+      setForm({ userEmail: '', orderNumber: '', pointsAmount: '', notes: '' });
     },
     onError: (err: Error) => toast.error(err.message || 'Failed to create'),
   });
@@ -151,12 +161,15 @@ export default function LoyaltyRedemptionsPage() {
   const onCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const pts = Number(form.pointsAmount);
-    if (!form.userEmail.trim() || !pts || pts <= 0) {
-      toast.error('Email + positive points amount required');
+    const email = form.userEmail.trim();
+    const orderNumber = form.orderNumber.trim();
+    if ((!email && !orderNumber) || !pts || pts <= 0) {
+      toast.error('Email OR order number + positive points amount required');
       return;
     }
     createMutation.mutate({
-      userEmail: form.userEmail.trim(),
+      userEmail: email || undefined,
+      orderNumber: orderNumber || undefined,
       pointsAmount: pts,
       notes: form.notes || undefined,
     });
@@ -347,6 +360,11 @@ export default function LoyaltyRedemptionsPage() {
                   <td style={{ padding: '10px 8px' }}>
                     <div style={{ fontWeight: 500 }}>{name || '—'}</div>
                     <div style={{ fontSize: 11, color: '#666' }}>{r.user.email}</div>
+                    {r.user.phone && (
+                      <div style={{ fontSize: 11, color: '#0A7A3B', fontWeight: 500 }}>
+                        📱 {r.user.phone}
+                      </div>
+                    )}
                   </td>
                   <td style={{ padding: '10px 8px', fontFamily: 'monospace' }}>
                     ₹{r.pointsAmount.toLocaleString('en-IN')}
@@ -432,6 +450,31 @@ export default function LoyaltyRedemptionsPage() {
         maxWidth="max-w-lg"
       >
         <form onSubmit={onCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ padding: 10, background: '#FEF9E7', fontSize: 11, color: '#7A5901', border: '1px solid #F5E7A8' }}>
+            Fill EITHER email OR order number. Order number is more reliable for phone-signup customers whose email was auto-generated.
+          </div>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1 }}>
+              ORDER NUMBER
+            </label>
+            <input
+              type="text"
+              value={form.orderNumber}
+              onChange={(e) => setForm({ ...form, orderNumber: e.target.value })}
+              placeholder="e.g. ORD-2026-ABC123"
+              style={{
+                width: '100%',
+                padding: 10,
+                border: '1px solid #E5E5E5',
+                fontSize: 13,
+                marginTop: 4,
+                fontFamily: 'monospace',
+              }}
+            />
+          </div>
+          <div style={{ textAlign: 'center', fontSize: 10, color: '#999', letterSpacing: 2 }}>
+            — OR —
+          </div>
           <div>
             <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1 }}>
               CUSTOMER EMAIL
@@ -447,7 +490,6 @@ export default function LoyaltyRedemptionsPage() {
                 fontSize: 13,
                 marginTop: 4,
               }}
-              required
             />
           </div>
           <div>
