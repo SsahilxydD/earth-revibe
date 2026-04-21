@@ -470,10 +470,12 @@ function ProductsContent() {
           </div>
         )}
 
-        {/* Flight Mode promo strip — slim editorial banner above the grid */}
+        {/* Offers promo strip — slim editorial banner above the grid.
+            Leads to /offers. Copy front-loads the three numbers because
+            "100/20/33" reads like a puzzle; the CTA is the reveal. */}
         {!search && (
           <Link
-            href="/flight-mode"
+            href="/offers"
             prefetch
             style={{
               display: 'flex',
@@ -504,7 +506,7 @@ function ProductsContent() {
                   color: 'rgba(255,255,255,0.6)',
                 }}
               >
-                FLIGHT MODE
+                3 OFFERS RUNNING
               </span>
               <span
                 style={{
@@ -513,7 +515,7 @@ function ProductsContent() {
                   color: '#FFF',
                 }}
               >
-                Pre-packed kits. Save up to 22%.
+                100%, 20%, 33% back — stacked on every order.
               </span>
             </div>
             <span
@@ -527,7 +529,7 @@ function ProductsContent() {
                 color: '#FFF',
               }}
             >
-              EXPLORE
+              SEE HOW
               <ArrowRight size={13} color="#FFF" />
             </span>
           </Link>
