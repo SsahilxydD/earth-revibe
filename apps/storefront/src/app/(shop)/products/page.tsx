@@ -506,7 +506,7 @@ function ProductsContent() {
                   color: 'rgba(255,255,255,0.6)',
                 }}
               >
-                3 OFFERS RUNNING
+                FIRST ORDER, ON US
               </span>
               <span
                 style={{
@@ -515,7 +515,7 @@ function ProductsContent() {
                   color: '#FFF',
                 }}
               >
-                100%, 20%, 33% back — stacked on every order.
+                Every rupee back as points. No catch.
               </span>
             </div>
             <span
