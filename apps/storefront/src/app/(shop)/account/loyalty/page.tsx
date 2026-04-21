@@ -27,7 +27,7 @@ interface LoyaltyHistory {
 }
 
 const HOW_IT_WORKS = [
-  { icon: ShoppingBag, title: 'Earn', desc: '100% cashback on first order, 1% after' },
+  { icon: ShoppingBag, title: 'Earn', desc: '100% cashback on first order, 20% after' },
   { icon: Gift, title: 'Redeem', desc: 'Email support@earthrevibe.com to claim' },
   { icon: TrendingUp, title: 'Refer', desc: '20% of friend\'s first order + 15% off them' },
 ] as const;

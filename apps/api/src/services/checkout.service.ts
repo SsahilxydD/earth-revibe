@@ -882,7 +882,7 @@ export async function finalizeOrderFromPending(
           });
         }
 
-        // 100% cashback on the first order as a hook; 1% on repeat orders.
+        // 100% cashback on the first order as a hook; 20% on repeat orders.
         // Redemption is email-gated (admin approval required) so the realised
         // liability is far less than face value thanks to breakage.
         const priorOrderCount = await tx.order.count({
@@ -893,7 +893,7 @@ export async function finalizeOrderFromPending(
           },
         });
         const isFirstOrder = priorOrderCount === 0;
-        pointsEarned = Math.floor(isFirstOrder ? totalAmount : totalAmount / 100);
+        pointsEarned = Math.floor(isFirstOrder ? totalAmount : totalAmount / 5);
         if (pointsEarned > 0) {
           await tx.user.update({
             where: { id: effectiveUserId },
@@ -910,7 +910,7 @@ export async function finalizeOrderFromPending(
               points: pointsEarned,
               description: isFirstOrder
                 ? `100% cashback — first order #${pending.orderNumber}`
-                : `Earned from order #${pending.orderNumber}`,
+                : `20% cashback — order #${pending.orderNumber}`,
               orderId: order.id,
               expiresAt: defaultExpiresAt(),
             },
@@ -1241,8 +1241,8 @@ export async function createCodOrder(
         });
       }
 
-      // 100% cashback on the first order; 1% thereafter. Email-gated redemption
-      // keeps breakage high so realised cost is far below face value.
+      // 100% cashback on the first order; 20% thereafter. Email-gated
+      // redemption keeps breakage high so realised cost stays below face value.
       const priorOrderCount = await tx.order.count({
         where: {
           userId,
@@ -1251,7 +1251,7 @@ export async function createCodOrder(
         },
       });
       const isFirstOrder = priorOrderCount === 0;
-      pointsEarned = Math.floor(isFirstOrder ? totalAmount : totalAmount / 100);
+      pointsEarned = Math.floor(isFirstOrder ? totalAmount : totalAmount / 5);
       if (pointsEarned > 0) {
         await tx.user.update({
           where: { id: userId },
@@ -1268,7 +1268,7 @@ export async function createCodOrder(
             points: pointsEarned,
             description: isFirstOrder
               ? `100% cashback — first COD order #${orderNumber}`
-              : `Earned from COD order #${orderNumber}`,
+              : `20% cashback — COD order #${orderNumber}`,
             orderId: order.id,
             expiresAt: defaultExpiresAt(),
           },
