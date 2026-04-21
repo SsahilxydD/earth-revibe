@@ -66,9 +66,9 @@ export const loyaltyService = {
       where: {
         userId,
         isActive: true,
-        // Codes either have no expiry (new policy) or are still in the
-        // future (legacy codes minted with a 60-day window).
-        OR: [{ expiresAt: { equals: null } }, { expiresAt: { gt: now } }],
+        // gt: now catches both future codes (legacy 60-day window) and
+        // sentinel-dated codes (2099-12-31, our "never expires" marker).
+        expiresAt: { gt: now },
       },
       orderBy: { createdAt: 'desc' },
       select: {

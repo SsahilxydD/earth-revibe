@@ -155,9 +155,11 @@ export async function approveRedemption(redemptionId: string, adminId: string) {
               applicableProducts: [],
               isActive: true,
               startsAt: new Date(),
-              // Redemption codes don't expire — policy change from the
-              // offers page / fine print.
-              expiresAt: null,
+              // Redemption codes don't expire — policy from offers page.
+              // Schema has expiresAt as non-nullable, so we use a sentinel
+              // far-future date (2099-12-31) which behaves as "never" in all
+              // practical comparisons without requiring a schema migration.
+              expiresAt: new Date('2099-12-31T23:59:59Z'),
             },
           });
           code = candidate;
