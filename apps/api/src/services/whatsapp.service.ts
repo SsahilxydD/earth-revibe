@@ -465,16 +465,51 @@ export async function sendWhatsAppLoyaltyCode(
       body: JSON.stringify(body),
     });
 
+    const bodyText = await res.text();
+
     if (!res.ok) {
-      const text = await res.text();
       logger.error(
-        { status: res.status, body: text, code, templateName: env.WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE },
+        {
+          status: res.status,
+          body: bodyText,
+          code,
+          to,
+          templateName: env.WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE,
+        },
         'WhatsApp loyalty code send error'
       );
       return false;
     }
 
-    logger.info({ code, amount }, 'WhatsApp loyalty code sent');
+    // Capture Meta's message ID + wa_id so we can trace each send in
+    // Business Manager → WhatsApp → Insights. "200 accepted" is not the
+    // same as "delivered" — template propagation, category rules, or recipient
+    // settings can still drop the message silently.
+    let messageId: string | undefined;
+    let waId: string | undefined;
+    try {
+      const parsed = JSON.parse(bodyText) as {
+        messages?: { id: string }[];
+        contacts?: { wa_id: string }[];
+      };
+      messageId = parsed.messages?.[0]?.id;
+      waId = parsed.contacts?.[0]?.wa_id;
+    } catch {
+      // bodyText is still logged below
+    }
+
+    logger.info(
+      {
+        code,
+        amount,
+        to,
+        messageId,
+        wa_id: waId,
+        templateName: env.WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE,
+        rawResponse: bodyText,
+      },
+      'WhatsApp loyalty code sent'
+    );
     return true;
   } catch (err) {
     logger.error({ err, code }, 'WhatsApp loyalty code network error');
