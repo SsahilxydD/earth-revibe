@@ -129,18 +129,27 @@ export default function OffersPage() {
                 >
                   {offer.description}
                 </p>
-                <ul className="mt-6 space-y-2">
+                {/* Grid keeps the marker column fixed-width so wrapped text
+                    aligns under the first character of the previous line
+                    (not under the marker). Horizontal dash is visually
+                    grounded at mid-line regardless of wrap length. */}
+                <ul className="mt-7 space-y-2.5">
                   {offer.fine.map((line) => (
                     <li
                       key={line}
-                      className={
-                        isDark
-                          ? 'flex items-start gap-2 text-[12px] leading-relaxed text-white/55'
-                          : 'flex items-start gap-2 text-[12px] leading-relaxed text-[var(--color-muted)]'
-                      }
+                      className="grid grid-cols-[16px_1fr] items-start gap-x-3 text-[12px] leading-[1.7]"
                     >
-                      <span className={isDark ? 'mt-1 h-[3px] w-[3px] shrink-0 rounded-full bg-white/40' : 'mt-1 h-[3px] w-[3px] shrink-0 rounded-full bg-[var(--color-muted)]'} />
-                      {line}
+                      <span
+                        aria-hidden="true"
+                        className={
+                          isDark
+                            ? 'mt-[10px] h-px w-3 bg-white/50'
+                            : 'mt-[10px] h-px w-3 bg-[var(--color-muted)]'
+                        }
+                      />
+                      <span className={isDark ? 'text-white/70' : 'text-[var(--color-muted)]'}>
+                        {line}
+                      </span>
                     </li>
                   ))}
                 </ul>
