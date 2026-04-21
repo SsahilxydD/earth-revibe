@@ -66,18 +66,18 @@ const OFFERS: Offer[] = [
 export default function OffersPage() {
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-[var(--color-primary)] py-20 md:py-28">
+      {/* Hero — white so it contrasts against the dark first offer section below */}
+      <section className="bg-white py-20 md:py-28">
         <div className="mx-auto max-w-xl px-6 text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--color-muted)]">
             What's on right now
           </p>
-          <h1 className="mt-4 text-3xl font-bold uppercase tracking-[0.15em] text-white sm:text-4xl md:text-5xl">
+          <h1 className="mt-4 text-3xl font-bold uppercase tracking-[0.15em] text-[var(--color-text)] sm:text-4xl md:text-5xl">
             Three offers,
             <br />
             always on.
           </h1>
-          <p className="mt-6 text-sm leading-relaxed text-white/60">
+          <p className="mt-6 text-sm leading-relaxed text-[var(--color-muted)]">
             No flash sales. No gimmicks. Three running offers that reward you for shopping and
             sharing — layered so you can stack them on every order.
           </p>
