@@ -151,8 +151,8 @@ export default function OffersPage() {
                   href={offer.cta.href}
                   className={
                     isDark
-                      ? 'mt-8 inline-flex items-center gap-2 border border-white/20 bg-white px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-primary)] transition-colors hover:bg-white/90 w-fit'
-                      : 'mt-8 inline-flex items-center gap-2 border border-[var(--color-primary)] bg-[var(--color-primary)] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition-colors hover:opacity-90 w-fit'
+                      ? 'mt-10 inline-flex items-center gap-2 border border-white/20 bg-white px-6 py-3.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-primary)] transition-colors hover:bg-white/90 w-fit'
+                      : 'mt-10 inline-flex items-center gap-2 border border-[var(--color-primary)] bg-[var(--color-primary)] px-6 py-3.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition-colors hover:opacity-90 w-fit'
                   }
                 >
                   {offer.cta.label}
