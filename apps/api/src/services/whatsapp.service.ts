@@ -329,6 +329,16 @@ export async function sendWhatsAppDecision(
 
   const first = name.trim().split(/\s+/)[0] || 'there';
 
+  // The `approved` template has a third body variable for the community
+  // WhatsApp invite link. `rejected` and `waitlisted` still take 2 params.
+  const bodyParameters: { type: 'text'; text: string }[] = [
+    { type: 'text', text: first },
+    { type: 'text', text: applicationNumber },
+  ];
+  if (kind === 'approved') {
+    bodyParameters.push({ type: 'text', text: env.COMMUNITY_WHATSAPP_URL });
+  }
+
   const body = {
     messaging_product: 'whatsapp',
     to,
@@ -339,10 +349,7 @@ export async function sendWhatsAppDecision(
       components: [
         {
           type: 'body',
-          parameters: [
-            { type: 'text', text: first },
-            { type: 'text', text: applicationNumber },
-          ],
+          parameters: bodyParameters,
         },
       ],
     },

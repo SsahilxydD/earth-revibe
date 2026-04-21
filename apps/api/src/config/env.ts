@@ -79,6 +79,12 @@ const envSchema = z.object({
   WHATSAPP_TRIP_APPROVED_TEMPLATE: z.string().default('earth_revibe_trip_approved'),
   WHATSAPP_TRIP_REJECTED_TEMPLATE: z.string().default('earth_revibe_trip_rejected'),
   WHATSAPP_TRIP_WAITLISTED_TEMPLATE: z.string().default('earth_revibe_trip_waitlisted'),
+  // Applicant-facing approved template now has a 3rd body variable = the
+  // community WhatsApp group link. Override via Railway env if the invite
+  // URL ever changes (don't redeploy just for that).
+  COMMUNITY_WHATSAPP_URL: z
+    .string()
+    .default('https://chat.whatsapp.com/HLDBhFiwYAnGiaJvzWLzfu'),
   // Loyalty redemption code delivery — pre-approved Meta template required.
   // If unset, WhatsApp delivery is skipped silently and only email is sent.
   WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE: z.string().default('earth_revibe_redemption_ready'),
