@@ -66,7 +66,9 @@ export const loyaltyService = {
       where: {
         userId,
         isActive: true,
-        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+        // Redemption codes minted by approveRedemption always have an
+        // expiresAt (60 days). Filter out anything already expired.
+        expiresAt: { gt: now },
       },
       orderBy: { createdAt: 'desc' },
       select: {
