@@ -18,4 +18,9 @@ export const loyaltyController = {
     const result = await loyaltyService.getSummary(req.user!.id);
     res.json({ success: true, data: result });
   },
+
+  async getActiveCodes(req: Request, res: Response) {
+    const result = await loyaltyService.getActiveCodes(req.user!.id);
+    res.json({ success: true, data: result });
+  },
 };

@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ShoppingBag, Gift, TrendingUp } from 'lucide-react';
+import { ShoppingBag, Gift, TrendingUp, Copy, Check } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
@@ -26,6 +27,19 @@ interface LoyaltyHistory {
   total: number;
 }
 
+interface ActiveCode {
+  id: string;
+  code: string;
+  value: number;
+  type: string;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+interface ActiveCodesResponse {
+  codes: ActiveCode[];
+}
+
 const HOW_IT_WORKS = [
   { icon: ShoppingBag, title: 'Earn', desc: '100% cashback on first order, 20% after' },
   { icon: Gift, title: 'Redeem', desc: 'Email support@earthrevibe.com to claim' },
@@ -42,6 +56,24 @@ export default function LoyaltyPage() {
     queryKey: ['loyalty-history'],
     queryFn: () => api.get<LoyaltyHistory>('/loyalty/history'),
   });
+
+  const { data: codesData } = useQuery({
+    queryKey: ['loyalty-codes'],
+    queryFn: () => api.get<ActiveCodesResponse>('/loyalty/codes'),
+  });
+
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copyCode = async (id: string, code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // navigator.clipboard can fail on insecure contexts / iOS private mode.
+      // The code text is visible on-screen already so the copy failing is
+      // a paper-cut, not a blocker.
+    }
+  };
 
   if (summaryLoading || historyLoading) {
     return (
@@ -121,6 +153,79 @@ export default function LoyaltyPage() {
           </div>
         </div>
       </div>
+
+      {/* Redemption codes — issued when admin approves a redemption request */}
+      {codesData?.codes && codesData.codes.length > 0 && (
+        <>
+          <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+            YOUR REDEMPTION CODES
+          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {codesData.codes.map((c) => {
+              const expiryLabel = c.expiresAt
+                ? `Valid until ${formatDate(c.expiresAt)}`
+                : 'No expiry';
+              const isCopied = copiedId === c.id;
+              return (
+                <div
+                  key={c.id}
+                  style={{
+                    border: '1px solid #E5E5E5',
+                    padding: 16,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
+                        fontSize: 15,
+                        fontWeight: 500,
+                        color: '#000',
+                        letterSpacing: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {c.code}
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 300, color: '#666' }}>
+                      ₹{c.value.toLocaleString('en-IN')} off · {expiryLabel}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyCode(c.id, c.code)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '8px 14px',
+                      border: '1px solid #000',
+                      background: isCopied ? '#000' : '#FFF',
+                      color: isCopied ? '#FFF' : '#000',
+                      fontSize: 11,
+                      fontWeight: 500,
+                      letterSpacing: 1,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {isCopied ? <Check size={13} /> : <Copy size={13} />}
+                    {isCopied ? 'COPIED' : 'COPY'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <span style={{ fontSize: 11, fontWeight: 300, color: '#777', marginTop: -24 }}>
+            Paste any code at checkout. Each code works once.
+          </span>
+        </>
+      )}
 
       {/* HOW IT WORKS label */}
       <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>

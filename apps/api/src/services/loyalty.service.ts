@@ -50,4 +50,52 @@ export const loyaltyService = {
       pointValue: 1,
     };
   },
+
+  /**
+   * List the user's still-usable redemption codes — minted from approved
+   * LoyaltyRedemption requests. We filter to the user-scoped DiscountCodes
+   * that are active, unexpired, and still within their usage budget.
+   *
+   * This powers the storefront /account/loyalty page so customers can view +
+   * copy their codes. It's the delivery channel the WhatsApp utility template
+   * points to (Meta won't deliver a message that contains the code inline).
+   */
+  async getActiveCodes(userId: string) {
+    const now = new Date();
+    const codes = await prisma.discountCode.findMany({
+      where: {
+        userId,
+        isActive: true,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        code: true,
+        value: true,
+        type: true,
+        expiresAt: true,
+        usageCount: true,
+        usageLimit: true,
+        createdAt: true,
+      },
+    });
+
+    // Drop codes that have hit their usage limit (single-use redemption codes
+    // will have usageLimit=1 and usageCount=1 once used).
+    const stillUsable = codes.filter(
+      (c) => c.usageLimit == null || c.usageCount < c.usageLimit
+    );
+
+    return {
+      codes: stillUsable.map((c) => ({
+        id: c.id,
+        code: c.code,
+        value: Number(c.value),
+        type: c.type,
+        expiresAt: c.expiresAt,
+        createdAt: c.createdAt,
+      })),
+    };
+  },
 };

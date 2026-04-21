@@ -81,7 +81,7 @@ const envSchema = z.object({
   WHATSAPP_TRIP_WAITLISTED_TEMPLATE: z.string().default('earth_revibe_trip_waitlisted'),
   // Loyalty redemption code delivery — pre-approved Meta template required.
   // If unset, WhatsApp delivery is skipped silently and only email is sent.
-  WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE: z.string().default('earth_revibe_loyalty_code'),
+  WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE: z.string().default('earth_revibe_redemption_ready'),
 });
 
 export const env = envSchema.parse(process.env);

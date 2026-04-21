@@ -411,17 +411,21 @@ export async function sendWhatsAppDecision(
 }
 
 /**
- * Send a loyalty redemption code to the customer via WhatsApp Cloud API.
+ * Notify the customer that their loyalty redemption is ready via WhatsApp.
  * Uses the pre-approved `WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE`.
  *
+ * Important: Meta's India classifier silently drops templates that contain a
+ * monetary value + a redeemable code inline (marks them MARKETING regardless
+ * of wording). So the template body is a bare UTILITY notification that
+ * points customers to earthrevibe.com/account/loyalty where the actual code
+ * lives. Only {{1}} = first name is passed to Meta. code + amount are still
+ * logged on our side for traceability.
+ *
  * Template body (must be approved in Meta Business Manager):
- *   "Hi {{1}} 🎉 Your Earth Revibe loyalty redemption is approved. Use code
- *    {{2}} at checkout for ₹{{3}} off your next order. Valid 60 days, single
- *    use. — earthrevibe.com"
+ *   "Hi {{1}}, your loyalty redemption request has been processed. View the
+ *    details on your account: earthrevibe.com/account/loyalty"
  *
  *   {{1}} = customer first name
- *   {{2}} = redemption code (e.g. ER-RDM-ZSTVWBF)
- *   {{3}} = amount in rupees (e.g. "500")
  *
  * Soft-fail: returns boolean, never throws — email is the fallback.
  */
@@ -445,11 +449,7 @@ export async function sendWhatsAppLoyaltyCode(
       components: [
         {
           type: 'body',
-          parameters: [
-            { type: 'text', text: firstName || 'there' },
-            { type: 'text', text: code },
-            { type: 'text', text: String(amount) },
-          ],
+          parameters: [{ type: 'text', text: firstName || 'there' }],
         },
       ],
     },
