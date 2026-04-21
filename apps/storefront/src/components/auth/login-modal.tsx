@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 
-type Step = 'phone' | 'otp';
+type Step = 'phone' | 'name' | 'otp';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -19,6 +19,8 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
 
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [needsName, setNeedsName] = useState(false);
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -27,11 +29,14 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const phoneRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setStep('phone');
       setPhone('');
+      setFullName('');
+      setNeedsName(false);
       setOtp(Array(6).fill(''));
       setError('');
       setLoading(false);
@@ -64,11 +69,20 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/send-otp', { phone: `+91${phone}` });
-      setStep('otp');
+      const res = await api.post<{ isNewUser: boolean; hasName: boolean }>('/auth/send-otp', {
+        phone: `+91${phone}`,
+      });
       setResendTimer(30);
       setOtp(Array(6).fill(''));
-      setTimeout(() => otpRefs.current[0]?.focus(), 100);
+      const mustAskName = !!res && (res.isNewUser || !res.hasName);
+      setNeedsName(mustAskName);
+      if (mustAskName) {
+        setStep('name');
+        setTimeout(() => nameRef.current?.focus(), 100);
+      } else {
+        setStep('otp');
+        setTimeout(() => otpRefs.current[0]?.focus(), 100);
+      }
     } catch (err: any) {
       setError(err?.message || 'Failed to send OTP');
     } finally {
@@ -76,12 +90,29 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
     }
   };
 
+  const handleNameNext = () => {
+    const trimmed = fullName.trim();
+    if (trimmed.length < 2) {
+      setError('Please enter your full name');
+      return;
+    }
+    setError('');
+    setStep('otp');
+    setTimeout(() => otpRefs.current[0]?.focus(), 100);
+  };
+
   const handleVerifyOtp = useCallback(
     async (code: string) => {
       setLoading(true);
       setError('');
       try {
-        await api.post('/auth/verify-otp', { phone: `+91${phone}`, code });
+        const body: Record<string, string> = { phone: `+91${phone}`, code };
+        if (needsName && fullName.trim()) {
+          const parts = fullName.trim().split(/\s+/);
+          body.firstName = parts[0];
+          if (parts.length > 1) body.lastName = parts.slice(1).join(' ');
+        }
+        await api.post('/auth/verify-otp', body);
         await checkAuth();
         onClose();
         if (onSuccess) setTimeout(onSuccess, 100);
@@ -93,7 +124,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
         setLoading(false);
       }
     },
-    [phone, checkAuth, onClose, onSuccess]
+    [phone, fullName, needsName, checkAuth, onClose, onSuccess]
   );
 
   const handleOtpChange = (index: number, value: string) => {
@@ -159,7 +190,54 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
           <X className="h-5 w-5" strokeWidth={1.5} />
         </button>
 
-        {step === 'otp' ? (
+        {step === 'name' ? (
+          <div className="flex flex-col items-center pt-4">
+            <h2 className="text-[22px] font-light tracking-[-0.5px] text-black">Welcome</h2>
+            <p className="mt-2 text-center text-[13px] font-light text-[#999]">
+              What should we call you?
+            </p>
+
+            {error && <p className="mt-3 text-center text-[13px] text-[#cf2929]">{error}</p>}
+
+            <div className="mt-8 w-full">
+              <label className="text-[10px] font-normal tracking-[1.5px] text-[#999]">
+                FULL NAME
+              </label>
+              <div className="mt-3 border-b border-[#e5e5e5] pb-3">
+                <input
+                  ref={nameRef}
+                  type="text"
+                  autoComplete="name"
+                  maxLength={80}
+                  placeholder="Priya Sharma"
+                  value={fullName}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    setError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleNameNext();
+                  }}
+                  disabled={loading}
+                  className="w-full bg-transparent text-[14px] font-light text-black outline-none placeholder:text-[#ccc] disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleNameNext}
+              disabled={loading || fullName.trim().length < 2}
+              className="mt-8 flex h-[46px] w-full items-center justify-center bg-black text-[11px] font-normal tracking-[2px] text-white transition-opacity disabled:opacity-40"
+            >
+              CONTINUE TO OTP
+            </button>
+
+            <p className="mt-5 text-center text-[11px] font-light text-[#999]">
+              We'll use this on your orders and account.
+            </p>
+          </div>
+        ) : step === 'otp' ? (
           <div className="flex flex-col items-center pt-4">
             <h2 className="text-[22px] font-light tracking-[-0.5px] text-black">Verify OTP</h2>
             <p className="mt-2 text-center text-[13px] font-light text-[#999]">

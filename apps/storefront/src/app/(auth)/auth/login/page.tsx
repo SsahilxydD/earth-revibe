@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 
-type Step = 'phone' | 'otp';
+type Step = 'phone' | 'name' | 'otp';
 
 const fade = {
   initial: { opacity: 0, y: 8 },
@@ -20,6 +20,8 @@ export default function LoginPage() {
 
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [needsName, setNeedsName] = useState(false);
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -27,6 +29,7 @@ export default function LoginPage() {
   const [resendTimer, setResendTimer] = useState(0);
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (resendTimer <= 0) return;
@@ -44,11 +47,20 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/send-otp', { phone: `+91${phone}` });
-      setStep('otp');
+      const res = await api.post<{ isNewUser: boolean; hasName: boolean }>('/auth/send-otp', {
+        phone: `+91${phone}`,
+      });
       setResendTimer(30);
       setOtp(Array(6).fill(''));
-      setTimeout(() => otpRefs.current[0]?.focus(), 200);
+      const mustAskName = !!res && (res.isNewUser || !res.hasName);
+      setNeedsName(mustAskName);
+      if (mustAskName) {
+        setStep('name');
+        setTimeout(() => nameRef.current?.focus(), 200);
+      } else {
+        setStep('otp');
+        setTimeout(() => otpRefs.current[0]?.focus(), 200);
+      }
     } catch (err: any) {
       setError(err?.message || 'Failed to send OTP');
     } finally {
@@ -56,15 +68,29 @@ export default function LoginPage() {
     }
   };
 
+  const handleNameNext = () => {
+    const trimmed = fullName.trim();
+    if (trimmed.length < 2) {
+      setError('Please enter your full name');
+      return;
+    }
+    setError('');
+    setStep('otp');
+    setTimeout(() => otpRefs.current[0]?.focus(), 200);
+  };
+
   const handleVerifyOtp = useCallback(
     async (code: string) => {
       setLoading(true);
       setError('');
       try {
-        const user = await api.post('/auth/verify-otp', {
-          phone: `+91${phone}`,
-          code,
-        });
+        const body: Record<string, string> = { phone: `+91${phone}`, code };
+        if (needsName && fullName.trim()) {
+          const parts = fullName.trim().split(/\s+/);
+          body.firstName = parts[0];
+          if (parts.length > 1) body.lastName = parts.slice(1).join(' ');
+        }
+        const user = await api.post('/auth/verify-otp', body);
         setUser(user);
         router.replace('/');
       } catch (err: any) {
@@ -75,7 +101,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     },
-    [phone, setUser, router]
+    [phone, fullName, needsName, setUser, router]
   );
 
   const handleOtpChange = (index: number, value: string) => {
@@ -125,7 +151,69 @@ export default function LoginPage() {
 
   return (
     <AnimatePresence mode="wait">
-      {step === 'otp' ? (
+      {step === 'name' ? (
+        <motion.div
+          key="name"
+          {...fade}
+          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+          className="flex flex-col items-center gap-12"
+        >
+          <div className="flex flex-col items-center gap-3">
+            <h1 className="text-[28px] font-light tracking-[-0.5px] text-black">Welcome</h1>
+            <p className="text-center text-[13px] font-light text-[#999]">
+              What should we call you?
+            </p>
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-center text-[13px] text-[#cf2929]"
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="w-full max-w-sm">
+            <label className="text-[10px] font-normal tracking-[1.5px] text-[#999]">
+              FULL NAME
+            </label>
+            <div className="mt-3 border-b border-[#e5e5e5] pb-3">
+              <input
+                ref={nameRef}
+                type="text"
+                autoComplete="name"
+                maxLength={80}
+                placeholder="Priya Sharma"
+                value={fullName}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  setError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleNameNext();
+                }}
+                disabled={loading}
+                className="w-full bg-transparent text-[14px] font-light text-black outline-none placeholder:text-[#ccc] disabled:opacity-50"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleNameNext}
+              disabled={loading || fullName.trim().length < 2}
+              className="mt-8 flex h-[46px] w-full items-center justify-center bg-black text-[11px] font-normal tracking-[2px] text-white transition-opacity disabled:opacity-40"
+            >
+              CONTINUE TO OTP
+            </button>
+            <p className="mt-5 text-center text-[11px] font-light text-[#999]">
+              We'll use this on your orders and account.
+            </p>
+          </div>
+        </motion.div>
+      ) : step === 'otp' ? (
         <motion.div
           key="otp"
           {...fade}

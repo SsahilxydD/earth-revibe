@@ -150,12 +150,21 @@ export const authService = {
     await sendWhatsAppOtp(phone, code);
 
     logger.info({ phone: phone.slice(0, 6) + '****' }, 'OTP sent');
+
+    // Tell the client whether this phone belongs to a returning user so the
+    // UI can decide whether to collect the full name before the OTP step.
+    const existing = await prisma.user.findUnique({
+      where: { phone },
+      select: { id: true, firstName: true, lastName: true },
+    });
+    const hasName = !!(existing && (existing.firstName?.trim() || existing.lastName?.trim()));
+    return { isNewUser: !existing, hasName };
   },
 
   /**
    * Verify an OTP code and return a signed JWT + user data.
    */
-  async verifyOtp({ phone, code }: VerifyOtpInput) {
+  async verifyOtp({ phone, code, firstName, lastName }: VerifyOtpInput) {
     // Find the latest unverified, unexpired OTP for this phone
     const otp = await prisma.otpCode.findFirst({
       where: { phone, verified: false, expiresAt: { gte: new Date() } },
@@ -189,13 +198,16 @@ export const authService = {
     // Find or create user by phone
     let user = await prisma.user.findUnique({ where: { phone } });
 
+    const incomingFirst = firstName?.trim() ?? '';
+    const incomingLast = lastName?.trim() ?? '';
+
     if (!user) {
       user = await prisma.user.create({
         data: {
           phone,
           email: `${phone.replace('+', '')}@phone.earthrevibe.com`,
-          firstName: '',
-          lastName: '',
+          firstName: incomingFirst,
+          lastName: incomingLast,
           phoneVerified: true,
           isActive: true,
         },
@@ -208,9 +220,18 @@ export const authService = {
         data: { referralCode },
       });
     } else {
+      // Backfill name only if it was missing — never overwrite a name the user
+      // already has (profile edits happen via a dedicated endpoint).
+      const shouldBackfillFirst = !user.firstName?.trim() && incomingFirst;
+      const shouldBackfillLast = !user.lastName?.trim() && incomingLast;
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { phoneVerified: true, lastLoginAt: new Date() },
+        data: {
+          phoneVerified: true,
+          lastLoginAt: new Date(),
+          ...(shouldBackfillFirst && { firstName: incomingFirst }),
+          ...(shouldBackfillLast && { lastName: incomingLast }),
+        },
       });
     }
 

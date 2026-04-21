@@ -12,8 +12,8 @@ export const authController = {
   },
 
   async sendOtp(req: Request, res: Response) {
-    await authService.sendOtp(req.body);
-    res.json({ success: true, message: 'OTP sent' });
+    const result = await authService.sendOtp(req.body);
+    res.json({ success: true, message: 'OTP sent', data: result });
   },
 
   async verifyOtp(req: Request, res: Response) {

@@ -70,6 +70,11 @@ export const verifyOtpSchema = z.object({
     .string()
     .length(6, 'OTP must be 6 digits')
     .regex(/^\d{6}$/, 'OTP must be numeric'),
+  // Optional — collected on the signup path so new users land with a real name
+  // instead of the phone-derived blanks. Ignored for returning users who
+  // already have a name on file.
+  firstName: z.string().trim().min(1).max(60).optional(),
+  lastName: z.string().trim().max(60).optional(),
 });
 
 export type SendOtpInput = z.infer<typeof sendOtpSchema>;
