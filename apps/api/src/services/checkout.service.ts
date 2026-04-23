@@ -5,14 +5,12 @@ import { getRazorpay } from '../config/razorpay';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
 import { APP_CONSTANTS } from '../config/constants';
-import {
-  maybeLinkReferralAtCheckout,
-  convertReferralOnFirstOrder,
-} from './referral.service';
+import { maybeLinkReferralAtCheckout, convertReferralOnFirstOrder } from './referral.service';
 import { defaultExpiresAt } from './points-expiry.service';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
 import { sendWhatsAppOrderUpdate } from './whatsapp.service';
+import { notifyAdminOfNewOrder } from './admin-alert.service';
 import { getPostHog } from '../config/posthog';
 import { sendMetaEvent } from '../utils/meta-conversions';
 import type {
@@ -1008,6 +1006,20 @@ export async function finalizeOrderFromPending(
     );
   }
 
+  // Admin team alerts — Discord + WhatsApp + email (fire-and-forget)
+  notifyAdminOfNewOrder({
+    orderNumber: finalOrderNumber,
+    customerName,
+    customerEmail: customerEmail || null,
+    customerPhone: customerPhone || null,
+    totalAmount,
+    itemCount: cartItems.length,
+    paymentMethod: 'razorpay',
+    status: 'CONFIRMED',
+  }).catch((err) =>
+    logger.error({ err, orderNumber: finalOrderNumber }, 'Admin new-order alert fanout threw')
+  );
+
   const ph = getPostHog();
   if (ph) {
     const distinctId = effectiveUserId || guestEmail || 'anonymous';
@@ -1296,13 +1308,25 @@ export async function createCodOrder(
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { phone: true, firstName: true },
+    select: { phone: true, firstName: true, lastName: true, email: true },
   });
   if (user?.phone) {
     sendWhatsAppOrderUpdate(user.phone, user.firstName || '', orderNumber, 'CONFIRMED').catch(
       (err) => logger.error({ err, orderNumber }, 'COD: Failed to send WhatsApp confirmation')
     );
   }
+
+  // Admin team alerts — Discord + WhatsApp + email (fire-and-forget)
+  notifyAdminOfNewOrder({
+    orderNumber,
+    customerName: [user?.firstName, user?.lastName].filter(Boolean).join(' '),
+    customerEmail: user?.email || null,
+    customerPhone: user?.phone || null,
+    totalAmount,
+    itemCount: data.items.length,
+    paymentMethod: 'COD',
+    status: 'PLACED',
+  }).catch((err) => logger.error({ err, orderNumber }, 'COD admin new-order alert fanout threw'));
 
   const ph = getPostHog();
   if (ph) {

@@ -4,6 +4,8 @@ import type { TravelApplicationSubmitInput } from '@earth-revibe/shared';
 
 // Clay tone from the trip-form design system — matches the brand.
 const EMBED_COLOR_CLAY = 0xb85c38;
+// Green for successful order events.
+const EMBED_COLOR_GREEN = 0x2f9e44;
 
 interface TripApplicationEmbedInput {
   applicationNumber: string;
@@ -66,6 +68,70 @@ export async function sendTripApplicationToDiscord(
     return true;
   } catch (err) {
     logger.error({ err, applicationNumber }, 'Discord webhook network error');
+    return false;
+  }
+}
+
+export interface NewOrderDiscordInput {
+  orderNumber: string;
+  customerName: string;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
+  totalAmount: number;
+  itemCount: number;
+  paymentMethod: string; // 'razorpay' | 'COD' | etc.
+  status: string; // PLACED | CONFIRMED
+  adminOrderUrl?: string;
+}
+
+/**
+ * Post a rich embed to the orders Discord webhook for every new order.
+ * Soft-fail: submission/payment must not be blocked by notification failure.
+ */
+export async function sendNewOrderToDiscord(input: NewOrderDiscordInput): Promise<boolean> {
+  const url = env.DISCORD_ORDER_WEBHOOK_URL;
+  if (!url) {
+    logger.warn('DISCORD_ORDER_WEBHOOK_URL not set — skipping Discord order notification');
+    return false;
+  }
+
+  const embed = {
+    title: `🛒 New order — ${input.orderNumber}`,
+    color: EMBED_COLOR_GREEN,
+    timestamp: new Date().toISOString(),
+    fields: [
+      { name: 'Customer', value: input.customerName || '—', inline: true },
+      { name: 'Total', value: `₹${input.totalAmount.toLocaleString('en-IN')}`, inline: true },
+      { name: 'Items', value: String(input.itemCount), inline: true },
+      { name: 'Payment', value: input.paymentMethod, inline: true },
+      { name: 'Status', value: input.status, inline: true },
+      ...(input.customerEmail ? [{ name: 'Email', value: input.customerEmail, inline: true }] : []),
+      ...(input.customerPhone ? [{ name: 'Phone', value: input.customerPhone, inline: true }] : []),
+    ],
+    ...(input.adminOrderUrl ? { url: input.adminOrderUrl } : {}),
+    footer: { text: 'Earth Revibe · Orders' },
+  };
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ embeds: [embed] }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      logger.error(
+        { status: res.status, body: text, orderNumber: input.orderNumber },
+        'Discord order webhook error'
+      );
+      return false;
+    }
+
+    logger.info({ orderNumber: input.orderNumber }, 'Discord order notification sent');
+    return true;
+  } catch (err) {
+    logger.error({ err, orderNumber: input.orderNumber }, 'Discord order webhook network error');
     return false;
   }
 }

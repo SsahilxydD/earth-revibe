@@ -71,6 +71,13 @@ const envSchema = z.object({
   DISCORD_TRIP_FORM_WEBHOOK_URL: z.string().url().optional(),
   // WhatsApp — short templated alert to a team number (pre-approved template required)
   TRIP_FORM_NOTIFY_PHONE: z.string().optional(), // E.164, e.g. "+919876543210"
+  // New-order admin notifications — fires on every PLACED/CONFIRMED order.
+  // Discord: rich embed with order + customer + total. Email + WhatsApp reuse
+  // the same team phone/email as trip-form alerts.
+  DISCORD_ORDER_WEBHOOK_URL: z.string().url().optional(),
+  WHATSAPP_NEW_ORDER_TEMPLATE: z.string().default('er_new_order_alert'),
+  // Comma-separated list of ops emails to CC on every new order
+  ORDER_NOTIFY_EMAIL: z.string().optional(),
   WHATSAPP_TRIP_APPLICATION_TEMPLATE: z.string().default('earth_revibe_trip_application_alert'),
   // Applicant-facing acknowledgement sent the moment the form is submitted
   // (fires in parallel with the acknowledgement email).

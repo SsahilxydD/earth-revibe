@@ -627,6 +627,82 @@ export async function sendWhatsAppTripAnnouncement(args: {
 }
 
 /**
+ * Notify the ops team via WhatsApp when a new order is placed. Reuses the
+ * same TRIP_FORM_NOTIFY_PHONE so all transactional business alerts land on
+ * one team number. Requires the `er_new_order_alert` template (or override
+ * via WHATSAPP_NEW_ORDER_TEMPLATE) to be approved under Utility category.
+ *
+ * Template body (3 vars):
+ *   {{1}} = orderNumber
+ *   {{2}} = customerName (first name)
+ *   {{3}} = totalAmount (already formatted, e.g. "2,499")
+ *
+ * Suggested approved body:
+ *   "🔔 New order {{1}} — {{2}} placed an order for ₹{{3}}. Check admin for details."
+ *
+ * Soft-fail: returns boolean, never throws.
+ */
+export async function sendWhatsAppNewOrderAdminAlert(args: {
+  orderNumber: string;
+  customerFirstName: string;
+  totalAmountFormatted: string;
+}): Promise<boolean> {
+  const targetPhone = env.TRIP_FORM_NOTIFY_PHONE;
+  if (!targetPhone) {
+    logger.warn('TRIP_FORM_NOTIFY_PHONE not set — skipping WhatsApp new-order alert');
+    return false;
+  }
+  const to = targetPhone.replace(/^\+/, '');
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: env.WHATSAPP_NEW_ORDER_TEMPLATE,
+      language: { code: 'en' },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: args.orderNumber },
+            { type: 'text', text: args.customerFirstName || 'Customer' },
+            { type: 'text', text: args.totalAmountFormatted },
+          ],
+        },
+      ],
+    },
+  };
+
+  try {
+    const res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      logger.error(
+        { status: res.status, body: text, orderNumber: args.orderNumber },
+        'WhatsApp new-order admin alert error'
+      );
+      return false;
+    }
+    logger.info({ orderNumber: args.orderNumber }, 'WhatsApp new-order admin alert sent');
+    return true;
+  } catch (err) {
+    logger.error(
+      { err, orderNumber: args.orderNumber },
+      'WhatsApp new-order admin alert network error'
+    );
+    return false;
+  }
+}
+
+/**
  * Send a UTILITY-category "trip opening" update to a single applicant.
  * Each recipient has a pre-existing TravelApplication row (transactional
  * hook required by Meta's Utility guidelines).
