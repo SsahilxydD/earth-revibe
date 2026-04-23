@@ -525,6 +525,93 @@ export async function sendWhatsAppLoyaltyCode(
 }
 
 /**
+ * Send a MARKETING-category trip announcement to a single recipient via
+ * WhatsApp Cloud API. Used by the broadcast service; the caller is responsible
+ * for loop control, concurrency, and aggregate reporting.
+ *
+ * Template resolution:
+ *   - templateName arg overrides env.WHATSAPP_TRIP_ANNOUNCEMENT_TEMPLATE
+ *   - bodyParams is passed positionally: params[0] -> {{1}}, params[1] -> {{2}}, ...
+ *   - buttonUrlParam (optional) is appended as a URL-button dynamic suffix
+ *     (index 0). Template must declare a dynamic URL button for this to work.
+ *
+ * Returns detailed per-call result — the broadcast service logs aggregates.
+ */
+export async function sendWhatsAppTripAnnouncement(args: {
+  phone: string;
+  bodyParams: string[];
+  buttonUrlParam?: string;
+  templateName?: string;
+}): Promise<{ ok: boolean; status: number; messageId?: string; error?: string }> {
+  const digits = args.phone.replace(/\D/g, '');
+  const to = /^\d{10}$/.test(digits) ? `91${digits}` : digits;
+  if (!to) return { ok: false, status: 0, error: 'invalid_phone' };
+
+  const templateName = args.templateName ?? env.WHATSAPP_TRIP_ANNOUNCEMENT_TEMPLATE;
+
+  // Meta rejects a body component with empty parameters for zero-variable
+  // templates. Omit the body component entirely when there are no params.
+  const components: unknown[] = [];
+  if (args.bodyParams.length > 0) {
+    components.push({
+      type: 'body',
+      parameters: args.bodyParams.map((t) => ({ type: 'text', text: t })),
+    });
+  }
+  if (args.buttonUrlParam) {
+    components.push({
+      type: 'button',
+      sub_type: 'url',
+      index: '0',
+      parameters: [{ type: 'text', text: args.buttonUrlParam }],
+    });
+  }
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: 'en' },
+      components,
+    },
+  };
+
+  try {
+    const res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const bodyText = await res.text();
+
+    if (!res.ok) {
+      logger.error(
+        { status: res.status, body: bodyText, to, templateName },
+        'WhatsApp trip announcement error'
+      );
+      return { ok: false, status: res.status, error: bodyText.slice(0, 500) };
+    }
+
+    let messageId: string | undefined;
+    try {
+      const parsed = JSON.parse(bodyText) as { messages?: { id: string }[] };
+      messageId = parsed.messages?.[0]?.id;
+    } catch {
+      // ignored
+    }
+    return { ok: true, status: res.status, messageId };
+  } catch (err) {
+    logger.error({ err, to, templateName }, 'WhatsApp trip announcement network error');
+    return { ok: false, status: 0, error: err instanceof Error ? err.message : 'network_error' };
+  }
+}
+
+/**
  * Send an abandoned cart recovery message via WhatsApp Cloud API.
  * Uses the pre-approved "earth_revibe_abandoned_cart" template.
  * @param phone       E.164 phone number (e.g. "+919876543210")

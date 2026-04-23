@@ -22,6 +22,7 @@ import {
   GitBranchPlus,
   Plane,
   Coins,
+  MessageCircle,
 } from 'lucide-react';
 import { useUIStore } from '@/stores/ui-store';
 
@@ -36,6 +37,7 @@ const navItems = [
   { label: 'Loyalty Redemptions', href: '/loyalty-redemptions', icon: Coins },
   { label: 'Customers', href: '/customers', icon: Users },
   { label: 'Travel Applications', href: '/travel-applications', icon: Plane },
+  { label: 'WhatsApp Broadcast', href: '/whatsapp-broadcast', icon: MessageCircle },
   { label: 'Blog', href: '/blog', icon: FileText },
   { label: 'Support', href: '/support-tickets', icon: Headset },
   { label: 'Notifications', href: '/notifications', icon: Bell },

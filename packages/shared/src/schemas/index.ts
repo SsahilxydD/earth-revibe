@@ -14,3 +14,4 @@ export * from './referral.schema';
 export * from './settings.schema';
 export * from './checkout.schema';
 export * from './travel-application.schema';
+export * from './whatsapp-broadcast.schema';

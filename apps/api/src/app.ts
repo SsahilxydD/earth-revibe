@@ -44,6 +44,7 @@ import { travelApplicationRouter } from './routes/travel-application.routes';
 import { adminTravelApplicationRouter } from './routes/admin-travel-application.routes';
 import { catalogFeedRouter } from './routes/catalog-feed.routes';
 import { adminLoyaltyRouter } from './routes/admin-loyalty.routes';
+import { adminWhatsAppRouter } from './routes/admin-whatsapp.routes';
 import { sanitize } from './middleware/sanitize';
 
 const app: Express = express();
@@ -719,6 +720,7 @@ app.use('/api/v1/travel-applications', travelApplicationRouter);
 app.use('/api/v1/admin/travel-applications', adminTravelApplicationRouter);
 app.use('/api/v1/catalog', catalogFeedRouter);
 app.use('/api/v1/admin/loyalty', adminLoyaltyRouter);
+app.use('/api/v1/admin/whatsapp', adminWhatsAppRouter);
 
 // Sentry error handler (must be before custom error handler)
 Sentry.setupExpressErrorHandler(app);
