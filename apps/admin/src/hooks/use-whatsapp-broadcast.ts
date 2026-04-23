@@ -20,6 +20,7 @@ export interface BroadcastResult {
 
 export interface BroadcastInput {
   recipients: { phone: string }[];
+  params?: string[];
   dryRun?: boolean;
 }
 
@@ -34,10 +35,10 @@ export function useBroadcastQuota() {
 export function useTripBroadcast() {
   const qc = useQueryClient();
   return useMutation<BroadcastResult, { message: string; code: string }, BroadcastInput>({
-    mutationFn: ({ recipients, dryRun = false }) =>
+    mutationFn: ({ recipients, params = [], dryRun = false }) =>
       api.post<BroadcastResult>('/admin/whatsapp/broadcast-trip', {
         source: { type: 'recipients', recipients },
-        params: [],
+        params,
         dryRun,
       }),
     onSuccess: () => {
