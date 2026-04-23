@@ -11,12 +11,13 @@ import {
   type BroadcastResult,
 } from '@/hooks/use-whatsapp-broadcast';
 
-// Accept a variety of pasted formats: newline, comma, semicolon, space — the
-// user doesn't care about format, we do. Normalise to +91 E.164 when the
-// number is 10 digits bare.
+// Accept a variety of pasted formats. Split ONLY on newlines, commas, or
+// semicolons — preserve internal spaces so "91 87692 00607" is treated as
+// one phone, not three tokens. All non-digit characters are stripped before
+// validation so spaces, dashes, parens, and leading + are all fine.
 function parsePhones(raw: string): { valid: string[]; invalid: string[] } {
   const tokens = raw
-    .split(/[\s,;]+/)
+    .split(/[\n,;]+/)
     .map((t) => t.trim())
     .filter(Boolean);
 
