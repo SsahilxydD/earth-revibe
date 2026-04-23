@@ -65,7 +65,7 @@ export default function WhatsAppBroadcastPage() {
     }
     if (!dryRun && overQuota) {
       toast.error(
-        `Too many: ${valid.length} requested, ${quota?.remaining ?? 0} left in this 2h window.`
+        `Too many: ${valid.length} requested, ${quota?.remaining ?? 0} left in this window.`
       );
       return;
     }
@@ -114,7 +114,7 @@ export default function WhatsAppBroadcastPage() {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs uppercase tracking-wide text-medium-gray">
-              2-hour send window
+              {quota ? `${Math.round(quota.windowMinutes / 60)}-hour send window` : 'Send window'}
             </div>
             <div className="text-2xl font-semibold text-charcoal mt-1">
               {quota ? `${quota.remaining} / ${quota.limit}` : '—'}

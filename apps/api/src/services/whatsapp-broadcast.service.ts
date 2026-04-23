@@ -4,11 +4,14 @@ import { logger } from '../config/logger';
 import { ApiError } from '../utils/api-error';
 import { sendWhatsAppTripAnnouncement } from './whatsapp.service';
 
-// ── Rate limit: 250 sends per rolling 2-hour window ─────────────────────
-// In-memory sliding window — resets on redeploy. Good enough for a single
-// Railway instance; migrate to Redis or a DB-backed log when scaling out.
-const RATE_LIMIT_MAX = 250;
-const RATE_LIMIT_WINDOW_MS = 2 * 60 * 60 * 1000;
+// ── Rate limit: matches Meta's per-phone-number messaging tier ─────────
+// Default 2000/24h = Meta Tier 2. As the WABA gets upgraded (10K, 100K,
+// unlimited) set BROADCAST_LIMIT_MAX in Railway. Window defaults to the 24h
+// rolling period Meta itself uses for the tier cap; override via env if
+// desired. In-memory sliding window — resets on redeploy.
+const RATE_LIMIT_MAX = Number(process.env.BROADCAST_LIMIT_MAX) || 2000;
+const RATE_LIMIT_WINDOW_MS =
+  (Number(process.env.BROADCAST_LIMIT_WINDOW_HOURS) || 24) * 60 * 60 * 1000;
 const sendTimestamps: number[] = [];
 
 function pruneExpired() {
@@ -161,12 +164,12 @@ export const whatsAppBroadcastService = {
       };
     }
 
-    // Rate-limit check — refuse the whole batch if it would push us over the
-    // 2h window, rather than partially sending. Admin can retry after reset.
+    // Rate-limit check — refuse the whole batch if it would push us over
+    // the window, rather than partially sending. Admin can retry after reset.
     const quota = getBroadcastQuota();
     if (contacts.length > quota.remaining) {
       throw ApiError.tooManyRequests(
-        `Broadcast of ${contacts.length} would exceed 2h limit (${quota.remaining} remaining, resets ${quota.resetAt ?? 'now'}).`
+        `Broadcast of ${contacts.length} would exceed ${quota.windowMinutes / 60}h limit (${quota.remaining} remaining, resets ${quota.resetAt ?? 'now'}).`
       );
     }
 
