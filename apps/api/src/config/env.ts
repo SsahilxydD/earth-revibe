@@ -91,10 +91,10 @@ const envSchema = z.object({
   // template name per-request via the broadcast API.
   WHATSAPP_TRIP_ANNOUNCEMENT_TEMPLATE: z.string().default('earth_revibe_trip_announcement'),
   // Language code for the trip-announcement template. Meta approves each
-  // template in a specific locale — 'en_US' is the most common default for
-  // Marketing templates, but 'en' / 'en_GB' / 'hi' also valid. Whatever was
-  // selected at template submission time must be repeated here exactly.
-  WHATSAPP_TRIP_ANNOUNCEMENT_LANG: z.string().default('en_US'),
+  // template in a specific locale — our current approved template is
+  // submitted as plain 'en' (English), but 'en_US' / 'en_GB' / 'hi' are also
+  // valid. Whatever was selected at template submission must match exactly.
+  WHATSAPP_TRIP_ANNOUNCEMENT_LANG: z.string().default('en'),
 });
 
 export const env = envSchema.parse(process.env);
