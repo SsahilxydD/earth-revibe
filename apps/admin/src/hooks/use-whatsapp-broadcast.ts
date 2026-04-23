@@ -45,3 +45,21 @@ export function useTripBroadcast() {
     },
   });
 }
+
+export interface TripOpeningInput {
+  city: string;
+  tripLabel: string;
+  statuses?: ('PENDING' | 'APPROVED' | 'REJECTED' | 'WAITLISTED')[];
+  dryRun?: boolean;
+}
+
+export function useTripOpeningBroadcast() {
+  const qc = useQueryClient();
+  return useMutation<BroadcastResult, { message: string; code: string }, TripOpeningInput>({
+    mutationFn: (input) =>
+      api.post<BroadcastResult>('/admin/whatsapp/broadcast-trip-opening', input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['whatsapp-broadcast-quota'] });
+    },
+  });
+}

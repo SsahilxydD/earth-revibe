@@ -1,8 +1,12 @@
 import { prisma } from '@earth-revibe/db';
-import type { WhatsAppBroadcastInput, WhatsAppBroadcastSource } from '@earth-revibe/shared';
+import type {
+  WhatsAppBroadcastInput,
+  WhatsAppBroadcastSource,
+  WhatsAppTripOpeningBroadcastInput,
+} from '@earth-revibe/shared';
 import { logger } from '../config/logger';
 import { ApiError } from '../utils/api-error';
-import { sendWhatsAppTripAnnouncement } from './whatsapp.service';
+import { sendWhatsAppTripAnnouncement, sendWhatsAppTripOpening } from './whatsapp.service';
 
 // ── Rate limit: matches Meta's per-phone-number messaging tier ─────────
 // Default 2000/24h = Meta Tier 2. As the WABA gets upgraded (10K, 100K,
@@ -212,6 +216,89 @@ export const whatsAppBroadcastService = {
 
     return {
       totalResolved: contacts.length,
+      totalSent: sent,
+      totalFailed: failures.length,
+      failures: failures.slice(0, 50),
+      dryRun: false,
+    };
+  },
+
+  async broadcastTripOpening(input: WhatsAppTripOpeningBroadcastInput): Promise<BroadcastResult> {
+    const rows = await prisma.travelApplication.findMany({
+      where: {
+        status: { in: input.statuses },
+        city: { equals: input.city, mode: 'insensitive' },
+      },
+      select: { phone: true, name: true, applicationNumber: true, city: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Dedupe by phone — applicants can re-apply; always use the most recent
+    // applicationNumber (rows are createdAt desc above).
+    const seen = new Set<string>();
+    const recipients: {
+      phone: string;
+      firstName: string;
+      applicationNumber: string;
+    }[] = [];
+    for (const r of rows) {
+      if (seen.has(r.phone)) continue;
+      seen.add(r.phone);
+      const first = (r.name || '').trim().split(/\s+/)[0] || 'there';
+      recipients.push({
+        phone: r.phone,
+        firstName: first,
+        applicationNumber: r.applicationNumber,
+      });
+    }
+
+    if (input.dryRun) {
+      return {
+        totalResolved: recipients.length,
+        totalSent: 0,
+        totalFailed: 0,
+        failures: [],
+        dryRun: true,
+        sampleRecipients: recipients.slice(0, 5).map((r) => maskPhone(r.phone)),
+      };
+    }
+
+    const quota = getBroadcastQuota();
+    if (recipients.length > quota.remaining) {
+      throw ApiError.tooManyRequests(
+        `Broadcast of ${recipients.length} would exceed ${quota.windowMinutes / 60}h limit (${quota.remaining} remaining, resets ${quota.resetAt ?? 'now'}).`
+      );
+    }
+
+    logger.info(
+      { count: recipients.length, city: input.city, tripLabel: input.tripLabel },
+      'WhatsApp trip-opening broadcast starting'
+    );
+
+    const failures: { phone: string; error: string }[] = [];
+    let sent = 0;
+
+    await runLimited(recipients, input.concurrency, async (r) => {
+      const result = await sendWhatsAppTripOpening({
+        phone: r.phone,
+        firstName: r.firstName,
+        applicationNumber: r.applicationNumber,
+        tripLabel: input.tripLabel,
+        templateName: input.templateName,
+      });
+      if (result.ok) sent++;
+      else failures.push({ phone: maskPhone(r.phone), error: result.error || 'unknown' });
+    });
+
+    recordSends(sent);
+
+    logger.info(
+      { resolved: recipients.length, sent, failed: failures.length, city: input.city },
+      'WhatsApp trip-opening broadcast complete'
+    );
+
+    return {
+      totalResolved: recipients.length,
       totalSent: sent,
       totalFailed: failures.length,
       failures: failures.slice(0, 50),

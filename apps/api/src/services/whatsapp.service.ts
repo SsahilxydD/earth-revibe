@@ -627,6 +627,110 @@ export async function sendWhatsAppTripAnnouncement(args: {
 }
 
 /**
+ * Send a UTILITY-category "trip opening" update to a single applicant.
+ * Each recipient has a pre-existing TravelApplication row (transactional
+ * hook required by Meta's Utility guidelines).
+ *
+ * Template body (3 vars):
+ *   {{1}} = applicant first name
+ *   {{2}} = application number (e.g. ER-2026-0042)
+ *   {{3}} = trip label (e.g. "Ahmedabad weekender")
+ *
+ * Button: dynamic URL suffix → https://earthrevibe.info/application/{{1}}
+ *   {{1}} = applicationNumber (makes each recipient's CTA unique)
+ */
+export async function sendWhatsAppTripOpening(args: {
+  phone: string;
+  firstName: string;
+  applicationNumber: string;
+  tripLabel: string;
+  templateName?: string;
+  languageCode?: string;
+}): Promise<{ ok: boolean; status: number; messageId?: string; error?: string }> {
+  const digits = args.phone.replace(/\D/g, '');
+  const to = /^\d{10}$/.test(digits) ? `91${digits}` : digits;
+  if (!to) return { ok: false, status: 0, error: 'invalid_phone' };
+
+  const templateName = args.templateName ?? env.WHATSAPP_TRIP_OPENING_TEMPLATE;
+  const languageCode = args.languageCode ?? env.WHATSAPP_TRIP_OPENING_LANG;
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: languageCode },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: args.firstName || 'there' },
+            { type: 'text', text: args.applicationNumber },
+            { type: 'text', text: args.tripLabel },
+          ],
+        },
+        {
+          type: 'button',
+          sub_type: 'url',
+          index: '0',
+          parameters: [{ type: 'text', text: args.applicationNumber }],
+        },
+      ],
+    },
+  };
+
+  try {
+    const res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const bodyText = await res.text();
+
+    if (!res.ok) {
+      logger.error(
+        { status: res.status, body: bodyText, to, templateName, languageCode },
+        'WhatsApp trip opening error'
+      );
+      return { ok: false, status: res.status, error: bodyText.slice(0, 500) };
+    }
+
+    let messageId: string | undefined;
+    let waId: string | undefined;
+    try {
+      const parsed = JSON.parse(bodyText) as {
+        messages?: { id: string }[];
+        contacts?: { wa_id: string }[];
+      };
+      messageId = parsed.messages?.[0]?.id;
+      waId = parsed.contacts?.[0]?.wa_id;
+    } catch {
+      // ignored
+    }
+    const masked = to.length >= 6 ? to.slice(0, 4) + '****' + to.slice(-2) : to;
+    logger.info(
+      {
+        to: masked,
+        templateName,
+        languageCode,
+        applicationNumber: args.applicationNumber,
+        messageId,
+        wa_id: waId,
+      },
+      'WhatsApp trip opening accepted by Meta'
+    );
+    return { ok: true, status: res.status, messageId };
+  } catch (err) {
+    logger.error({ err, to, templateName }, 'WhatsApp trip opening network error');
+    return { ok: false, status: 0, error: err instanceof Error ? err.message : 'network_error' };
+  }
+}
+
+/**
  * Send an abandoned cart recovery message via WhatsApp Cloud API.
  * Uses the pre-approved "earth_revibe_abandoned_cart" template.
  * @param phone       E.164 phone number (e.g. "+919876543210")

@@ -3,7 +3,11 @@ import { adminWhatsAppController } from '../controllers/admin-whatsapp.controlle
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { asyncHandler } from '../utils/async-handler';
-import { UserRole, whatsAppBroadcastSchema } from '@earth-revibe/shared';
+import {
+  UserRole,
+  whatsAppBroadcastSchema,
+  whatsAppTripOpeningBroadcastSchema,
+} from '@earth-revibe/shared';
 
 const router: IRouter = Router();
 
@@ -15,6 +19,11 @@ router.post(
   '/broadcast-trip',
   validate({ body: whatsAppBroadcastSchema }),
   asyncHandler(adminWhatsAppController.broadcastTrip)
+);
+router.post(
+  '/broadcast-trip-opening',
+  validate({ body: whatsAppTripOpeningBroadcastSchema }),
+  asyncHandler(adminWhatsAppController.broadcastTripOpening)
 );
 
 export { router as adminWhatsAppRouter };

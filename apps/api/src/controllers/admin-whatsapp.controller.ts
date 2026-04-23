@@ -1,5 +1,8 @@
 import type { Request, Response } from 'express';
-import type { WhatsAppBroadcastInput } from '@earth-revibe/shared';
+import type {
+  WhatsAppBroadcastInput,
+  WhatsAppTripOpeningBroadcastInput,
+} from '@earth-revibe/shared';
 import { whatsAppBroadcastService } from '../services/whatsapp-broadcast.service';
 import { ApiError } from '../utils/api-error';
 
@@ -26,5 +29,19 @@ export const adminWhatsAppController = {
 
   async getQuota(_req: Request, res: Response) {
     res.json({ success: true, data: whatsAppBroadcastService.getQuota() });
+  },
+
+  async broadcastTripOpening(req: Request, res: Response) {
+    if (broadcastInFlight) {
+      throw ApiError.conflict('A broadcast is already running. Try again in a moment.');
+    }
+    broadcastInFlight = true;
+    try {
+      const input = req.body as WhatsAppTripOpeningBroadcastInput;
+      const result = await whatsAppBroadcastService.broadcastTripOpening(input);
+      res.json({ success: true, data: result });
+    } finally {
+      broadcastInFlight = false;
+    }
   },
 };

@@ -90,6 +90,11 @@ const envSchema = z.object({
   // approved in Meta Business Manager before first use. Admin can override the
   // template name per-request via the broadcast API.
   WHATSAPP_TRIP_ANNOUNCEMENT_TEMPLATE: z.string().default('earth_revibe_trip_announcement'),
+  // Utility-category template fired to existing applicants when a new trip
+  // batch opens. Must be approved under Utility (NOT Marketing) so it
+  // bypasses MM_LITE pacing. Takes 3 body vars + 1 URL button suffix.
+  WHATSAPP_TRIP_OPENING_TEMPLATE: z.string().default('er_trip_opening_update'),
+  WHATSAPP_TRIP_OPENING_LANG: z.string().default('en'),
   // Language code for the trip-announcement template. Meta approves each
   // template in a specific locale — our current approved template is
   // submitted as plain 'en' (English), but 'en_US' / 'en_GB' / 'hi' are also

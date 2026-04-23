@@ -23,6 +23,7 @@ import {
   Plane,
   Coins,
   MessageCircle,
+  Send,
 } from 'lucide-react';
 import { useUIStore } from '@/stores/ui-store';
 
@@ -38,6 +39,7 @@ const navItems = [
   { label: 'Customers', href: '/customers', icon: Users },
   { label: 'Travel Applications', href: '/travel-applications', icon: Plane },
   { label: 'WhatsApp Broadcast', href: '/whatsapp-broadcast', icon: MessageCircle },
+  { label: 'Trip Opening Broadcast', href: '/trip-opening-broadcast', icon: Send },
   { label: 'Blog', href: '/blog', icon: FileText },
   { label: 'Support', href: '/support-tickets', icon: Headset },
   { label: 'Notifications', href: '/notifications', icon: Bell },
