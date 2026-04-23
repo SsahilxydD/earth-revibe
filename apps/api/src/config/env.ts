@@ -90,6 +90,11 @@ const envSchema = z.object({
   // approved in Meta Business Manager before first use. Admin can override the
   // template name per-request via the broadcast API.
   WHATSAPP_TRIP_ANNOUNCEMENT_TEMPLATE: z.string().default('earth_revibe_trip_announcement'),
+  // Language code for the trip-announcement template. Meta approves each
+  // template in a specific locale — 'en_US' is the most common default for
+  // Marketing templates, but 'en' / 'en_GB' / 'hi' also valid. Whatever was
+  // selected at template submission time must be repeated here exactly.
+  WHATSAPP_TRIP_ANNOUNCEMENT_LANG: z.string().default('en_US'),
 });
 
 export const env = envSchema.parse(process.env);

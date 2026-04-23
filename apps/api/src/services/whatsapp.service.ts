@@ -542,12 +542,14 @@ export async function sendWhatsAppTripAnnouncement(args: {
   bodyParams: string[];
   buttonUrlParam?: string;
   templateName?: string;
+  languageCode?: string;
 }): Promise<{ ok: boolean; status: number; messageId?: string; error?: string }> {
   const digits = args.phone.replace(/\D/g, '');
   const to = /^\d{10}$/.test(digits) ? `91${digits}` : digits;
   if (!to) return { ok: false, status: 0, error: 'invalid_phone' };
 
   const templateName = args.templateName ?? env.WHATSAPP_TRIP_ANNOUNCEMENT_TEMPLATE;
+  const languageCode = args.languageCode ?? env.WHATSAPP_TRIP_ANNOUNCEMENT_LANG;
 
   // Meta rejects a body component with empty parameters for zero-variable
   // templates. Omit the body component entirely when there are no params.
@@ -573,7 +575,7 @@ export async function sendWhatsAppTripAnnouncement(args: {
     type: 'template',
     template: {
       name: templateName,
-      language: { code: 'en' },
+      language: { code: languageCode },
       components,
     },
   };
@@ -591,7 +593,7 @@ export async function sendWhatsAppTripAnnouncement(args: {
 
     if (!res.ok) {
       logger.error(
-        { status: res.status, body: bodyText, to, templateName },
+        { status: res.status, body: bodyText, to, templateName, languageCode },
         'WhatsApp trip announcement error'
       );
       return { ok: false, status: res.status, error: bodyText.slice(0, 500) };
