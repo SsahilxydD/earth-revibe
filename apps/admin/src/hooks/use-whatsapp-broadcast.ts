@@ -20,9 +20,14 @@ export interface BroadcastResult {
 
 export interface BroadcastInput {
   recipients: { phone: string }[];
-  params?: string[];
   dryRun?: boolean;
 }
+
+// Fixed value sent as {{1}} for every broadcast. The approved Utility
+// template expects 1 body variable (order-number-style placeholder); admin
+// UI doesn't ask for it because the same value going to every recipient is
+// acceptable for this use case. Change here if the template wording changes.
+const FIXED_BODY_PARAM = 'Update';
 
 export function useBroadcastQuota() {
   return useQuery<BroadcastQuota>({
@@ -35,10 +40,10 @@ export function useBroadcastQuota() {
 export function useTripBroadcast() {
   const qc = useQueryClient();
   return useMutation<BroadcastResult, { message: string; code: string }, BroadcastInput>({
-    mutationFn: ({ recipients, params = [], dryRun = false }) =>
+    mutationFn: ({ recipients, dryRun = false }) =>
       api.post<BroadcastResult>('/admin/whatsapp/broadcast-trip', {
         source: { type: 'recipients', recipients },
-        params,
+        params: [FIXED_BODY_PARAM],
         dryRun,
       }),
     onSuccess: () => {

@@ -50,23 +50,12 @@ function formatResetAt(iso: string | null): string {
 
 export default function WhatsAppBroadcastPage() {
   const [raw, setRaw] = useState('');
-  const [paramsRaw, setParamsRaw] = useState('');
   const [lastResult, setLastResult] = useState<BroadcastResult | null>(null);
 
   const { data: quota } = useBroadcastQuota();
   const broadcast = useTripBroadcast();
 
   const { valid, invalid } = useMemo(() => parsePhones(raw), [raw]);
-  // Each line in the template-vars field is one positional body param.
-  // Empty lines are ignored. Trimming is deliberate — Meta rejects leading/trailing whitespace.
-  const params = useMemo(
-    () =>
-      paramsRaw
-        .split(/\r?\n/)
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0),
-    [paramsRaw]
-  );
   const overQuota = quota ? valid.length > quota.remaining : false;
 
   const runBroadcast = async (dryRun: boolean) => {
@@ -92,7 +81,6 @@ export default function WhatsAppBroadcastPage() {
     try {
       const result = await broadcast.mutateAsync({
         recipients: valid.map((phone) => ({ phone })),
-        params,
         dryRun,
       });
       setLastResult(result);
@@ -116,10 +104,7 @@ export default function WhatsAppBroadcastPage() {
       <div>
         <h1 className="text-2xl font-semibold text-charcoal">WhatsApp Broadcast</h1>
         <p className="text-sm text-medium-gray mt-1">
-          Send the approved <code className="text-xs">earth_revibe_trip_announcement</code> template
-          to a pasted list of phone numbers. For templates with body variables, enter one value per
-          line — they map to <code className="text-xs">{'{{1}}'}</code>,{' '}
-          <code className="text-xs">{'{{2}}'}</code>, etc. in order.
+          Send the approved Utility template to a pasted list of phone numbers.
         </p>
       </div>
 
@@ -166,32 +151,6 @@ export default function WhatsAppBroadcastPage() {
             placeholder={'9876543210\n9876543211\n+919876543212'}
             className="mt-2 font-mono text-sm"
           />
-        </label>
-
-        <label className="block pt-2 border-t border-border">
-          <span className="text-sm font-medium text-charcoal">
-            Template body variables <span className="text-medium-gray font-normal">(optional)</span>
-          </span>
-          <span className="block text-xs text-medium-gray mt-0.5">
-            One value per line. Leave empty for zero-variable templates. Values apply to every
-            recipient in the broadcast — use the Trip Opening panel if you need per-recipient
-            personalization.
-          </span>
-          <Textarea
-            rows={Math.max(2, params.length + 1)}
-            value={paramsRaw}
-            onChange={(e) => setParamsRaw(e.target.value)}
-            placeholder={'Value for {{1}}\nValue for {{2}}'}
-            className="mt-2 font-mono text-sm"
-          />
-          {params.length > 0 && (
-            <span className="block text-xs text-medium-gray mt-1">
-              {params.length} variable{params.length === 1 ? '' : 's'} — will send as {'{{1}}'}…
-              {'{{'}
-              {params.length}
-              {'}}'}
-            </span>
-          )}
         </label>
 
         <div className="flex items-center gap-4 text-sm pt-2 border-t border-border">
