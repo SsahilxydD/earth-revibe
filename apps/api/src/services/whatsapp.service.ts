@@ -600,12 +600,25 @@ export async function sendWhatsAppTripAnnouncement(args: {
     }
 
     let messageId: string | undefined;
+    let waId: string | undefined;
     try {
-      const parsed = JSON.parse(bodyText) as { messages?: { id: string }[] };
+      const parsed = JSON.parse(bodyText) as {
+        messages?: { id: string; message_status?: string }[];
+        contacts?: { wa_id: string; input?: string }[];
+      };
       messageId = parsed.messages?.[0]?.id;
+      waId = parsed.contacts?.[0]?.wa_id;
     } catch {
       // ignored
     }
+    // Meta's 200 response = "accepted for delivery", NOT delivered. The
+    // rawResponse is the ground truth for tracing silent drops — search
+    // Railway logs by messageId to reconstruct delivery history.
+    const masked = to.length >= 6 ? to.slice(0, 4) + '****' + to.slice(-2) : to;
+    logger.info(
+      { to: masked, templateName, languageCode, messageId, wa_id: waId, rawResponse: bodyText },
+      'WhatsApp trip announcement accepted by Meta'
+    );
     return { ok: true, status: res.status, messageId };
   } catch (err) {
     logger.error({ err, to, templateName }, 'WhatsApp trip announcement network error');
