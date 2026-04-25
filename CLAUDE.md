@@ -21,20 +21,6 @@ pnpm db:push      # push schema to database
 pnpm db:seed      # seed database
 ```
 
-## Ruflo Memory
-
-Use ruflo for cross-session memory storage. Swarm commands are metadata-only and do not execute real work.
-
-```bash
-ruflo memory search -q "query"        # semantic search
-ruflo memory list                      # list all keys
-ruflo memory retrieve -k "key"        # get specific key
-ruflo memory store -k "key" --value "value"  # store a decision or result
-ruflo memory stats                     # see what's stored
-```
-
-Store design decisions after completing work so future sessions can reference them.
-
 ## Thinking Protocol
 
 Always use the `mcp__sequential-thinking__sequentialthinking` MCP tool on every prompt before writing any code or making changes. Use it to:

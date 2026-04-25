@@ -33,11 +33,3 @@ auth, product, category, cart, checkout, order, address, wishlist, review, searc
 blog, support, discount, loyalty, referral, shipping, upload, analytics,
 admin-product, admin-order, admin-customer, admin-blog, admin-discount,
 admin-inventory, admin-support, admin-notification
-
-## Ruflo Swarm
-
-Always use --swarm api-swarm for work in this directory.
-
-Example:
-ruflo --agent coder --swarm api-swarm --task "Add endpoint to bulk update inventory stock levels"
-ruflo --agent security-architect --swarm api-swarm --task "Audit auth middleware for token validation gaps"
