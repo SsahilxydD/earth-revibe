@@ -58,6 +58,20 @@ export function getAccessTokenFromRequest(req: {
 
 export function getRefreshTokenFromRequest(req: {
   cookies?: Record<string, string>;
+  body?: { refreshToken?: string };
 }): string | null {
-  return req.cookies?.[REFRESH_COOKIE] || null;
+  // Cookie path (web). Mobile clients can't reliably persist cookies across
+  // cold starts, so they POST { refreshToken } in the body instead.
+  return req.cookies?.[REFRESH_COOKIE] || req.body?.refreshToken || null;
+}
+
+/**
+ * Mobile clients send `X-Client: mobile`. They get tokens echoed in the
+ * response body (in addition to the standard cookies, which they ignore)
+ * so they can store them in SecureStore and send them as Bearer headers.
+ */
+export function isMobileClient(req: { headers: Record<string, unknown> }): boolean {
+  const header = req.headers['x-client'];
+  const value = Array.isArray(header) ? header[0] : header;
+  return typeof value === 'string' && value.toLowerCase() === 'mobile';
 }

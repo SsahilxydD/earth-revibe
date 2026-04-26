@@ -126,6 +126,9 @@ importers:
       '@expo/vector-icons':
         specifier: ^14.0.4
         version: 14.1.0(expo-font@13.3.2(expo@53.0.27(@babel/core@7.29.0)(@expo/metro-runtime@4.0.1(react-native@0.78.0(@babel/core@7.29.0)(@babel/preset-env@7.29.2(@babel/core@7.29.0))(@types/react@19.0.10)(react@19.0.0)))(react-native@0.78.0(@babel/core@7.29.0)(@babel/preset-env@7.29.2(@babel/core@7.29.0))(@types/react@19.0.10)(react@19.0.0))(react@19.0.0))(react@19.0.0))(react-native@0.78.0(@babel/core@7.29.0)(@babel/preset-env@7.29.2(@babel/core@7.29.0))(@types/react@19.0.10)(react@19.0.0))(react@19.0.0)
+      '@hookform/resolvers':
+        specifier: ^5.2.2
+        version: 5.2.2(react-hook-form@7.71.2(react@19.0.0))
       '@react-native-async-storage/async-storage':
         specifier: 2.1.2
         version: 2.1.2(react-native@0.78.0(@babel/core@7.29.0)(@babel/preset-env@7.29.2(@babel/core@7.29.0))(@types/react@19.0.10)(react@19.0.0))
@@ -174,6 +177,9 @@ importers:
       react:
         specifier: 19.0.0
         version: 19.0.0
+      react-hook-form:
+        specifier: ^7.71.2
+        version: 7.71.2(react@19.0.0)
       react-native:
         specifier: 0.78.0
         version: 0.78.0(@babel/core@7.29.0)(@babel/preset-env@7.29.2(@babel/core@7.29.0))(@types/react@19.0.10)(react@19.0.0)
@@ -9282,6 +9288,11 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
+  '@hookform/resolvers@5.2.2(react-hook-form@7.71.2(react@19.0.0))':
+    dependencies:
+      '@standard-schema/utils': 0.3.0
+      react-hook-form: 7.71.2(react@19.0.0)
+
   '@hookform/resolvers@5.2.2(react-hook-form@7.71.2(react@19.2.4))':
     dependencies:
       '@standard-schema/utils': 0.3.0
@@ -15013,6 +15024,10 @@ snapshots:
       react-dom: 19.2.4(react@19.0.0)
       react-fast-compare: 3.2.2
       shallowequal: 1.1.0
+
+  react-hook-form@7.71.2(react@19.0.0):
+    dependencies:
+      react: 19.0.0
 
   react-hook-form@7.71.2(react@19.2.4):
     dependencies:

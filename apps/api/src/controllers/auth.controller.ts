@@ -1,13 +1,30 @@
 import type { Request, Response } from 'express';
 import { authService } from '../services/auth.service';
-import { setAuthCookies, clearAuthCookies, getRefreshTokenFromRequest } from '../utils/cookies';
+import {
+  setAuthCookies,
+  clearAuthCookies,
+  getRefreshTokenFromRequest,
+  isMobileClient,
+} from '../utils/cookies';
 import { ApiError } from '../utils/api-error';
 
 export const authController = {
   async login(req: Request, res: Response) {
     const result = await authService.login(req.body);
     setAuthCookies(res, result.accessToken, result.refreshToken);
-    // Tokens are in httpOnly cookies — only return the user in JSON
+    if (isMobileClient(req)) {
+      // Mobile clients store tokens in SecureStore; cookies are set too but
+      // ignored by react-native fetch.
+      res.json({
+        success: true,
+        data: {
+          user: result.user,
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+        },
+      });
+      return;
+    }
     res.json({ success: true, data: result.user });
   },
 
@@ -19,6 +36,17 @@ export const authController = {
   async verifyOtp(req: Request, res: Response) {
     const result = await authService.verifyOtp(req.body);
     setAuthCookies(res, result.accessToken, result.refreshToken);
+    if (isMobileClient(req)) {
+      res.json({
+        success: true,
+        data: {
+          user: result.user,
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+        },
+      });
+      return;
+    }
     res.json({ success: true, data: result.user });
   },
 
@@ -29,6 +57,16 @@ export const authController = {
     }
     const tokens = await authService.refresh(rawToken);
     setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+    if (isMobileClient(req)) {
+      res.json({
+        success: true,
+        data: {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+        },
+      });
+      return;
+    }
     res.json({ success: true });
   },
 

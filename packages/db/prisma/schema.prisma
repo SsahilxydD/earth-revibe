@@ -44,6 +44,7 @@ model User {
   refreshTokens     RefreshToken[]
   notifications     Notification[]
   orderNotes        OrderNote[]
+  adminDevices      AdminDevice[]
 
   @@map("users")
 }
@@ -91,6 +92,23 @@ model PasswordResetToken {
   @@index([email])
   @@index([token])
   @@map("password_reset_tokens")
+}
+
+// Expo push tokens for the admin mobile app. One user can have multiple
+// devices (phone + tablet). Service uses these to fan out new-order push
+// notifications alongside Discord/WhatsApp/email channels.
+model AdminDevice {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expoPushToken  String   @unique
+  platform       String   @default("android")
+  appVersion     String?
+  lastSeenAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@map("admin_devices")
 }
 
 model Address {

@@ -1,5 +1,6 @@
 import { Router, type IRouter } from 'express';
 import { authController } from '../controllers/auth.controller';
+import { adminDeviceController } from '../controllers/admin-device.controller';
 import { validate } from '../middleware/validate';
 import { authenticate, optionalAuthenticate } from '../middleware/auth';
 import { asyncHandler } from '../utils/async-handler';
@@ -10,6 +11,7 @@ import {
   verifyOtpSchema,
   updateProfileSchema,
   changePasswordSchema,
+  registerDeviceSchema,
 } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
@@ -40,6 +42,22 @@ router.put(
   authenticate,
   validate({ body: changePasswordSchema }),
   asyncHandler(authController.changePassword)
+);
+
+// Mobile push device registration. The mobile client posts its Expo push
+// token here right after login (and on token rotation). The token is stored
+// against the authenticated user; the alert-fanout looks these up to send
+// new-order notifications.
+router.post(
+  '/devices',
+  authenticate,
+  validate({ body: registerDeviceSchema }),
+  asyncHandler(adminDeviceController.register)
+);
+router.delete(
+  '/devices/:expoPushToken',
+  authenticate,
+  asyncHandler(adminDeviceController.unregister)
 );
 
 export { router as authRouter };
