@@ -1,10 +1,9 @@
-// react-native-worklets is installed as a direct dep so babel-preset-expo
-// (SDK 53) can resolve `react-native-worklets/plugin` at bundle time. We do
-// NOT want its native code linked, though — it codegens the same
-// NativeWorkletsModuleSpecJSI TurboModule that react-native-reanimated@3.17
-// already provides, and the C++ NDK build dies on the duplicate definition.
-// Setting platforms to null disables RN's native autolinking for this
-// package on both platforms; the JS / babel side is unaffected.
+// Keep react-native-worklets installed so babel-preset-expo's auto-loaded
+// `react-native-worklets/plugin` resolves at bundle time, but disable RN
+// native autolinking for it. With reanimated 3.16 (no NativeWorkletsModuleSpecJSI
+// codegen) the previous duplicate-symbol NDK conflict is gone, but we still
+// don't want the worklets TurboModule registering at runtime since we don't
+// actually use any worklet bodies anywhere.
 module.exports = {
   dependencies: {
     'react-native-worklets': {

@@ -6,8 +6,7 @@
     "version": "0.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
-    "jsEngine": "jsc",
+    "newArchEnabled": true,
     "android": {
       "package": "com.earthrevibe.admin",
       "permissions": ["android.permission.POST_NOTIFICATIONS"]
