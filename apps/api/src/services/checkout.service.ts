@@ -336,13 +336,16 @@ export const checkoutService = {
       const id = coerceString(addr.id) ?? `addr_${idx}`;
       const stateCode = coerceString(addr.state_code);
 
-      // Serviceable only when country is India AND a non-empty pincode exists.
-      // On the pre-pincode callback we return the method but mark it
-      // non-serviceable so Razorpay accepts the response and keeps the
-      // pipeline healthy — once the customer types a pincode, Razorpay
-      // calls again and we flip to serviceable.
-      const serviceable = country?.toLowerCase() === 'in' && !!zipcode;
-      const codFee = serviceable ? codFeePaise : 0;
+      // Always serviceable + COD-eligible for India, even on the pre-pincode
+      // probe (country-only callback). Previously we returned cod:false until
+      // a pincode arrived, but Razorpay's Magic UI evidently uses the FIRST
+      // shipping-info response to decide whether COD renders as available —
+      // a later cod:true didn't promote it back. Returning cod:true upfront
+      // matches the merchant's account-level COD eligibility (we ship
+      // anywhere in India via Shiprocket and don't gate on pincode).
+      const isIndia = country?.toLowerCase() === 'in';
+      const serviceable = isIndia;
+      const codFee = isIndia ? codFeePaise : 0;
 
       // Docs-exact shape (razorpay.com/docs/payments/magic-checkout/web/):
       //   Address level (required): id, zipcode, country; (optional) state_code.
@@ -363,7 +366,7 @@ export const checkoutService = {
             description: '5-7 business days',
             serviceable,
             shipping_fee: 0,
-            cod: serviceable,
+            cod: isIndia,
             cod_fee: codFee,
           },
         ],
