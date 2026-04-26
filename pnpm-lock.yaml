@@ -202,8 +202,8 @@ importers:
         specifier: 15.11.2
         version: 15.11.2(react-native@0.79.0(@babel/core@7.29.0)(@types/react@19.0.10)(react@19.0.0))(react@19.0.0)
       react-native-worklets:
-        specifier: 0.3.0
-        version: 0.3.0(@babel/core@7.29.0)(react-native@0.79.0(@babel/core@7.29.0)(@types/react@19.0.10)(react@19.0.0))(react@19.0.0)
+        specifier: 0.1.0
+        version: 0.1.0(@babel/core@7.29.0)(react-native@0.79.0(@babel/core@7.29.0)(@types/react@19.0.10)(react@19.0.0))(react@19.0.0)
       zustand:
         specifier: ^5.0.11
         version: 5.0.11(@types/react@19.0.10)(immer@11.1.4)(react@19.0.0)(use-sync-external-store@1.6.0(react@19.0.0))
@@ -6854,8 +6854,8 @@ packages:
       react: '*'
       react-native: '*'
 
-  react-native-worklets@0.3.0:
-    resolution: {integrity: sha512-dmsLZ1XJdUZgbd+SVo7yL2uzOHIissjIt8SD6L7ejzfYOxrZ5lz9rlJzVLlppjKvL5AcUcASOcp1CIDu1fxC5A==}
+  react-native-worklets@0.1.0:
+    resolution: {integrity: sha512-+SlJfWlclW8T2W9l5q9EuDhurHk6OKc3892yQNrNgeJr7vBEYdHEpjyHsQR4nnpfSt13nzB5OZrL4OAD1sQnWw==}
     peerDependencies:
       '@babel/core': ^7.0.0-0
       react: '*'
@@ -15877,23 +15877,11 @@ snapshots:
       react-native: 0.79.0(@babel/core@7.29.0)(@types/react@19.0.10)(react@19.0.0)
       warn-once: 0.1.1
 
-  react-native-worklets@0.3.0(@babel/core@7.29.0)(react-native@0.79.0(@babel/core@7.29.0)(@types/react@19.0.10)(react@19.0.0))(react@19.0.0):
+  react-native-worklets@0.1.0(@babel/core@7.29.0)(react-native@0.79.0(@babel/core@7.29.0)(@types/react@19.0.10)(react@19.0.0))(react@19.0.0):
     dependencies:
       '@babel/core': 7.29.0
-      '@babel/plugin-transform-arrow-functions': 7.27.1(@babel/core@7.29.0)
-      '@babel/plugin-transform-class-properties': 7.28.6(@babel/core@7.29.0)
-      '@babel/plugin-transform-classes': 7.28.6(@babel/core@7.29.0)
-      '@babel/plugin-transform-nullish-coalescing-operator': 7.28.6(@babel/core@7.29.0)
-      '@babel/plugin-transform-optional-chaining': 7.28.6(@babel/core@7.29.0)
-      '@babel/plugin-transform-shorthand-properties': 7.27.1(@babel/core@7.29.0)
-      '@babel/plugin-transform-template-literals': 7.27.1(@babel/core@7.29.0)
-      '@babel/plugin-transform-unicode-regex': 7.27.1(@babel/core@7.29.0)
-      '@babel/preset-typescript': 7.28.5(@babel/core@7.29.0)
-      convert-source-map: 2.0.0
       react: 19.0.0
       react-native: 0.79.0(@babel/core@7.29.0)(@types/react@19.0.10)(react@19.0.0)
-    transitivePeerDependencies:
-      - supports-color
 
   react-native@0.79.0(@babel/core@7.29.0)(@types/react@19.0.10)(react@19.0.0):
     dependencies:
