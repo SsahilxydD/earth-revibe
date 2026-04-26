@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { router } from 'expo-router';
+import * as Notifications from 'expo-notifications';
 import { tokenStore, userStore } from '@/lib/secure-store';
 import { api } from '@/lib/api-client';
 import {
@@ -85,6 +87,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
+  }, [user]);
+
+  // Deep-link on notification tap. The API encodes order number in the
+  // notification's data payload (see admin-alert.service.ts pushToAllAdmins).
+  // Also handle the cold-start case via getLastNotificationResponseAsync.
+  useEffect(() => {
+    if (!user) return;
+
+    const handleResponse = (response: Notifications.NotificationResponse) => {
+      const data = response.notification.request.content.data as
+        | { type?: string; orderNumber?: string }
+        | undefined;
+      if (data?.type === 'NEW_ORDER' && data.orderNumber) {
+        router.push(`/orders/${data.orderNumber}`);
+      }
+    };
+
+    // App was launched (cold start) by tapping a notification.
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) handleResponse(response);
+    });
+
+    // App was already running (foreground or background) when notification arrived.
+    const sub = Notifications.addNotificationResponseReceivedListener(handleResponse);
+    return () => sub.remove();
   }, [user]);
 
   const value = useMemo<AuthState>(

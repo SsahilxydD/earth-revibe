@@ -3,6 +3,7 @@ import { logger } from '../config/logger';
 import { getResend } from '../config/resend';
 import { sendNewOrderToDiscord, type NewOrderDiscordInput } from './discord.service';
 import { sendWhatsAppNewOrderAdminAlert } from './whatsapp.service';
+import { pushToAllAdmins } from './expo-push.service';
 
 export interface NewOrderAlertInput {
   orderNumber: string;
@@ -104,6 +105,15 @@ export async function notifyAdminOfNewOrder(input: NewOrderAlertInput): Promise<
     ),
     sendEmailAdminAlert(input).catch((err) =>
       logger.error({ err, orderNumber: input.orderNumber }, 'Email order alert threw')
+    ),
+    pushToAllAdmins({
+      title: `New order · ₹${formatAmount(input.totalAmount)}`,
+      body: `${input.customerName || 'A customer'} · ${input.itemCount} ${
+        input.itemCount === 1 ? 'item' : 'items'
+      } · ${input.paymentMethod}`,
+      data: { type: 'NEW_ORDER', orderNumber: input.orderNumber },
+    }).catch((err) =>
+      logger.error({ err, orderNumber: input.orderNumber }, 'Push order alert threw')
     ),
   ]);
 }
