@@ -5,40 +5,24 @@
     "scheme": "earthrevibe-admin",
     "version": "0.0.1",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0a0a0a"
-    },
     "android": {
       "package": "com.earthrevibe.admin",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0a0a0a"
-      },
       "permissions": ["android.permission.POST_NOTIFICATIONS"]
     },
-    "plugins": [
-      "expo-router",
-      "expo-secure-store",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#0a0a0a"
-        }
-      ]
-    ],
+    "plugins": ["expo-router", "expo-secure-store", "expo-notifications"],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "d994c715-8b1b-4f82-a28e-fe8e199ea743"
       }
-    }
+    },
+    "owner": "sahilxyd"
   }
 }
