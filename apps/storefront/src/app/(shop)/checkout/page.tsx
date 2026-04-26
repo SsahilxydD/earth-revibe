@@ -6,12 +6,16 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ShoppingBag, Loader2, ShieldCheck, CreditCard, Check } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
+import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { formatPrice, getImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
 import { useRazorpay } from '@/hooks/use-razorpay';
 import { trackCheckoutStarted, trackPurchaseCompleted } from '@/lib/analytics';
+import { PaymentMethodModal } from '@/components/checkout/payment-method-modal';
+import { CODCheckoutModal } from '@/components/checkout/cod-checkout-modal';
+import { LoginModal } from '@/components/auth/login-modal';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -20,16 +24,19 @@ export default function CheckoutPage() {
   const clearCart = useCartStore((s) => s.clearCart);
   const { addToast } = useToast();
   const { initiatePayment } = useRazorpay();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [hasLaunched, setHasLaunched] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState<'idle' | 'securing' | 'opening' | 'verifying'>(
     'idle'
   );
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [showCODCheckout, setShowCODCheckout] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingCOD, setPendingCOD] = useState(false);
 
   const launchMagicCheckout = useCallback(async () => {
-    if (hasLaunched || items.length === 0) return;
-    setHasLaunched(true);
+    if (items.length === 0) return;
     setIsCreatingOrder(true);
     setCheckoutStep('securing');
 
@@ -70,7 +77,6 @@ export default function CheckoutPage() {
 
       if (!paymentResponse) {
         addToast('Payment was cancelled. You can try again.', 'info');
-        setHasLaunched(false);
         setCheckoutStep('idle');
         return;
       }
@@ -101,21 +107,22 @@ export default function CheckoutPage() {
     } catch (error: any) {
       addToast(error?.message || 'Something went wrong. Please try again.', 'error');
       setIsCreatingOrder(false);
-      setHasLaunched(false);
       setCheckoutStep('idle');
     }
-  }, [hasLaunched, items, discountCode, initiatePayment, addToast, clearCart, router]);
+  }, [items, discountCode, initiatePayment, addToast, clearCart, router]);
 
-  // Auto-launch Magic Checkout when page loads with items
+  // Auto-open the payment method choice on page load. Magic Checkout's COD
+  // option has been unreliable on the Razorpay side, so we always present the
+  // unified PaymentMethodModal — prepaid routes through Magic, COD goes
+  // through our own createCodOrder API which doesn't depend on Razorpay at all.
   useEffect(() => {
     if (items.length === 0) {
       router.replace('/cart');
       return;
     }
-    // Small delay to let the page render before opening popup
     const timer = setTimeout(() => {
-      launchMagicCheckout();
-    }, 500);
+      setShowPaymentMethodModal(true);
+    }, 200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -238,18 +245,71 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Retry button if popup was dismissed */}
+            {/* Choose payment method button — re-opens the modal if dismissed */}
             <div className="mt-6">
-              <Button fullWidth size="lg" onClick={launchMagicCheckout} disabled={isCreatingOrder}>
-                {isCreatingOrder ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Proceed to Pay'}
+              <Button
+                fullWidth
+                size="lg"
+                onClick={() => setShowPaymentMethodModal(true)}
+                disabled={isCreatingOrder}
+              >
+                {isCreatingOrder ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Choose Payment Method'
+                )}
               </Button>
               <p className="mt-2 text-center text-xs text-[var(--color-muted)]">
-                Address and payment handled securely by Razorpay
+                Pick prepaid (UPI, Cards, Net Banking) or Cash on Delivery
               </p>
             </div>
           </>
         )}
       </div>
+
+      {/* Payment method choice — same sheet used by cart drawer + Buy Now */}
+      <PaymentMethodModal
+        isOpen={showPaymentMethodModal}
+        onClose={() => setShowPaymentMethodModal(false)}
+        onSelectPrepaid={() => {
+          launchMagicCheckout();
+        }}
+        onSelectCOD={() => {
+          if (isAuthenticated) {
+            setShowCODCheckout(true);
+          } else {
+            setPendingCOD(true);
+            setShowLoginModal(true);
+          }
+        }}
+      />
+
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => {
+          setShowLoginModal(false);
+          setPendingCOD(false);
+        }}
+        onSuccess={() => {
+          setShowLoginModal(false);
+          if (pendingCOD) {
+            setPendingCOD(false);
+            setShowCODCheckout(true);
+          } else {
+            launchMagicCheckout();
+          }
+        }}
+        onGuest={
+          pendingCOD
+            ? undefined
+            : () => {
+                setShowLoginModal(false);
+                launchMagicCheckout();
+              }
+        }
+      />
+
+      <CODCheckoutModal isOpen={showCODCheckout} onClose={() => setShowCODCheckout(false)} />
     </div>
   );
 }
