@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Flame } from 'lucide-react';
 import {
   COMBOS,
@@ -14,7 +15,6 @@ import {
 } from '@/lib/flight-mode-data';
 import { useProducts } from '@/hooks/use-products';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
-import type { Product } from '@/types';
 
 type Filter = 'all' | '3-piece' | '5-piece' | 'weekender';
 
@@ -28,12 +28,10 @@ const FILTERS: { value: Filter; label: string }[] = [
 export default function FlightModePage() {
   const [filter, setFilter] = useState<Filter>('all');
 
-  const flagship = useMemo(() => COMBOS.find((c) => c.featured), []);
-  const rest = useMemo(
-    () => COMBOS.filter((c) => !c.featured && (filter === 'all' || c.category === filter)),
+  const visible = useMemo(
+    () => (filter === 'all' ? COMBOS : COMBOS.filter((c) => c.category === filter)),
     [filter]
   );
-  const showFlagship = filter === 'all' || (flagship ? flagship.category === filter : false);
 
   return (
     <div
@@ -95,7 +93,7 @@ export default function FlightModePage() {
           </span>
           <span style={{ fontSize: 10, color: '#CCC' }}>·</span>
           <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 1.5, color: '#22C55E' }}>
-            SAVE UP TO 22%
+            SAVE UP TO 30%
           </span>
         </div>
       </section>
@@ -140,7 +138,7 @@ export default function FlightModePage() {
 
       <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
-      {/* Bundle list */}
+      {/* Bundle list — 4 unified cards (designed: PHOR6, gItM2, IqoOY, puyFf) */}
       <div
         style={{
           padding: '20px 20px 40px 20px',
@@ -149,9 +147,8 @@ export default function FlightModePage() {
           gap: 16,
         }}
       >
-        {showFlagship && flagship && <FlagshipCard combo={flagship} />}
-        {rest.map((combo) => (
-          <HorizontalCard key={combo.slug} combo={combo} />
+        {visible.map((combo, i) => (
+          <ComboCard key={combo.slug} combo={combo} index={i} />
         ))}
       </div>
 
@@ -224,9 +221,9 @@ export default function FlightModePage() {
   );
 }
 
-/* ─── Flagship card — pulls products live by vibe ─────────────────── */
+/* ─── ComboCard — unified card per design (PHOR6, gItM2, IqoOY, puyFf) ─ */
 
-function FlagshipCard({ combo }: { combo: ComboMeta }) {
+function ComboCard({ combo, index }: { combo: ComboMeta; index: number }) {
   const { data, isLoading } = useProducts({
     vibe: combo.vibe,
     limit: combo.pieceCount,
@@ -240,276 +237,200 @@ function FlagshipCard({ combo }: { combo: ComboMeta }) {
   const price = comboPrice(individualTotal, discountPct);
 
   return (
-    <Link
-      href={`/flight-mode/${combo.slug}`}
-      style={{
-        position: 'relative',
-        display: 'block',
-        width: '100%',
-        height: 360,
-        borderRadius: 20,
-        overflow: 'hidden',
-        textDecoration: 'none',
-        backgroundColor: '#1a1a1a',
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.32, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+      whileTap={{ scale: 0.985 }}
+      style={{ width: '100%' }}
     >
-      {hero ? (
-        <Image
-          src={getImageUrl(hero, 720)}
-          alt={combo.name}
-          fill
-          sizes="(max-width: 393px) 100vw, 393px"
-          placeholder="blur"
-          blurDataURL={BLUR_DATA_URL}
-          style={{ objectFit: 'cover' }}
-        />
-      ) : (
-        <div
-          className={isLoading ? 'skeleton' : ''}
-          style={{ position: 'absolute', inset: 0, backgroundColor: '#1a1a1a' }}
-        />
-      )}
-      <div
+      <Link
+        href={`/flight-mode/${combo.slug}`}
         style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.44)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          top: 20,
-          left: 20,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          height: 26,
-          padding: '0 12px',
-          borderRadius: 9999,
+          display: 'block',
+          width: '100%',
           backgroundColor: '#FFF',
+          borderRadius: 16,
+          overflow: 'hidden',
+          border: '1px solid #ECECEC',
+          textDecoration: 'none',
         }}
       >
-        <Flame size={12} color="#000" />
-        <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 2, color: '#000' }}>
-          MOST PACKED
-        </span>
-      </div>
-      <div style={{ position: 'absolute', top: 22, right: 20 }}>
-        <ArrowUpRight size={20} color="#FFF" />
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          left: 20,
-          right: 20,
-          bottom: 28,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 500,
-            letterSpacing: 2,
-            color: 'rgba(255,255,255,0.7)',
-          }}
-        >
-          {combo.kicker}
-        </span>
-        <h3
-          style={{
-            fontSize: 32,
-            fontWeight: 300,
-            fontStyle: 'italic',
-            letterSpacing: -1,
-            lineHeight: 1,
-            color: '#FFF',
-            margin: 0,
-          }}
-        >
-          {combo.name}
-        </h3>
-        <div style={{ width: 24, height: 1, backgroundColor: 'rgba(255,255,255,0.5)' }} />
-        <p
-          style={{
-            fontSize: 12,
-            fontWeight: 300,
-            fontStyle: 'italic',
-            color: 'rgba(255,255,255,0.8)',
-            lineHeight: 1.5,
-            margin: 0,
-          }}
-        >
-          {combo.description}
-        </p>
+        {/* Image area — 340h, F0F0F0 placeholder fills behind product hero */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: 12,
-            paddingTop: 12,
+            position: 'relative',
+            width: '100%',
+            height: 340,
+            backgroundColor: '#F0F0F0',
+            overflow: 'hidden',
           }}
         >
-          {individualTotal > 0 ? (
-            <>
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 300,
-                  color: 'rgba(255,255,255,0.5)',
-                  textDecoration: 'line-through',
-                }}
-              >
-                {formatPrice(individualTotal)}
-              </span>
-              <span
-                style={{
-                  fontSize: 22,
-                  fontWeight: 500,
-                  color: '#FFF',
-                  letterSpacing: -0.4,
-                }}
-              >
-                {formatPrice(price)}
-              </span>
-              <span
-                style={{
-                  height: 22,
-                  padding: '0 8px',
-                  borderRadius: 9999,
-                  backgroundColor: '#22C55E',
-                  color: '#FFF',
-                  fontSize: 9,
-                  fontWeight: 500,
-                  letterSpacing: 1.5,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                }}
-              >
-                SAVE {discountPct}%
-              </span>
-            </>
+          {hero ? (
+            <Image
+              src={getImageUrl(hero, 720)}
+              alt={combo.name}
+              fill
+              sizes="(max-width: 393px) 100vw, 393px"
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
+              style={{ objectFit: 'cover' }}
+            />
           ) : (
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Loading pricing…</span>
+            <div
+              className={isLoading ? 'skeleton' : ''}
+              style={{ position: 'absolute', inset: 0 }}
+            />
           )}
-        </div>
-      </div>
-    </Link>
-  );
-}
 
-/* ─── Horizontal card — pulls products live by vibe ───────────────── */
-
-function HorizontalCard({ combo }: { combo: ComboMeta }) {
-  const { data, isLoading } = useProducts({
-    vibe: combo.vibe,
-    limit: combo.pieceCount,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
-  const products = data?.products ?? [];
-  const mosaic = products.slice(0, 4);
-  const discountPct = comboDiscountPct(combo);
-  const individualTotal = comboIndividualTotal(products, combo.pieceCount);
-  const price = comboPrice(individualTotal, discountPct);
-  const saved = individualTotal - price;
-
-  return (
-    <Link
-      href={`/flight-mode/${combo.slug}`}
-      style={{
-        display: 'flex',
-        width: '100%',
-        height: 200,
-        borderRadius: 16,
-        border: '1px solid #F0F0F0',
-        overflow: 'hidden',
-        textDecoration: 'none',
-        backgroundColor: '#FFF',
-      }}
-    >
-      {/* Adaptive mosaic — shape follows pieceCount so 3-piece kits
-          don't render an awkward empty 4th grey cell. */}
-      <AdaptiveMosaic products={mosaic} pieceCount={combo.pieceCount} isLoading={isLoading} />
-
-      {/* Body */}
-      <div
-        style={{
-          flex: 1,
-          padding: '18px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          gap: 4,
-          minWidth: 0,
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span
+          {/* Pill row — left dark badge, optional right MOST PACKED pill */}
+          <div
             style={{
-              fontSize: 9,
-              fontWeight: 500,
-              letterSpacing: 2,
-              color: '#999',
+              position: 'absolute',
+              top: 20,
+              left: 20,
+              right: 20,
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: combo.featured ? 'space-between' : 'flex-start',
+              gap: 8,
+              zIndex: 2,
             }}
           >
-            {combo.kicker}
-          </span>
-          <span
-            style={{
-              fontSize: 18,
-              fontWeight: 400,
-              letterSpacing: -0.4,
-              color: '#000',
-              lineHeight: 1.1,
-            }}
-          >
-            {combo.name}
-          </span>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 300,
-              fontStyle: 'italic',
-              color: '#999',
-              lineHeight: 1.4,
-            }}
-          >
-            {combo.tagline}
-          </span>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-        >
-          {individualTotal > 0 ? (
-            <>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                height: 28,
+                padding: '0 12px',
+                borderRadius: 9999,
+                backgroundColor: 'rgba(0,0,0,0.7)',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 600,
+                  letterSpacing: 2,
+                  color: '#FFF',
+                }}
+              >
+                {combo.kicker}
+              </span>
+            </div>
+            {combo.featured && (
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  justifyContent: 'space-between',
-                  gap: 8,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  height: 28,
+                  padding: '0 12px',
+                  borderRadius: 9999,
+                  backgroundColor: '#FFF',
                 }}
               >
-                <div
+                <Flame size={12} color="#000" />
+                <span
                   style={{
-                    display: 'flex',
-                    alignItems: 'baseline',
-                    gap: 8,
+                    fontSize: 9,
+                    fontWeight: 600,
+                    letterSpacing: 2,
+                    color: '#000',
                   }}
                 >
+                  MOST PACKED
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Body — 22/24/24/24 padding, gap 14 */}
+        <div
+          style={{
+            padding: '22px 24px 24px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+          }}
+        >
+          {/* Name row */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 500,
+                  letterSpacing: 2,
+                  color: '#999',
+                }}
+              >
+                {combo.vibe.toUpperCase()}
+              </span>
+              <span
+                style={{
+                  fontSize: 30,
+                  fontWeight: 300,
+                  fontStyle: 'italic',
+                  letterSpacing: -0.8,
+                  lineHeight: 1,
+                  color: '#000',
+                }}
+              >
+                {combo.name}
+              </span>
+            </div>
+            <ArrowUpRight size={20} color="#000" style={{ flexShrink: 0, marginTop: 2 }} />
+          </div>
+
+          {/* Tagline */}
+          <p
+            style={{
+              margin: 0,
+              fontSize: 12,
+              fontWeight: 300,
+              color: '#666',
+              lineHeight: 1.55,
+            }}
+          >
+            {combo.description}
+          </p>
+
+          {/* Price row */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              padding: '6px 0 0 0',
+              gap: 12,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+              {individualTotal > 0 ? (
+                <>
                   <span
                     style={{
-                      fontSize: 20,
+                      fontSize: 24,
                       fontWeight: 500,
-                      letterSpacing: -0.4,
+                      letterSpacing: -0.6,
+                      lineHeight: 1,
                       color: '#000',
                     }}
                   >
@@ -519,186 +440,41 @@ function HorizontalCard({ combo }: { combo: ComboMeta }) {
                     style={{
                       fontSize: 11,
                       fontWeight: 300,
-                      color: '#CCC',
+                      color: '#999',
                       textDecoration: 'line-through',
                     }}
                   >
                     {formatPrice(individualTotal)}
                   </span>
-                </div>
-                <ArrowUpRight size={16} color="#000" style={{ flexShrink: 0 }} />
-              </div>
-              <div
+                </>
+              ) : (
+                <span style={{ fontSize: 11, color: '#999' }}>Loading…</span>
+              )}
+            </div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                height: 24,
+                padding: '0 10px',
+                borderRadius: 9999,
+                backgroundColor: '#22C55E',
+              }}
+            >
+              <span
                 style={{
-                  alignSelf: 'flex-start',
-                  height: 22,
-                  padding: '0 8px',
-                  borderRadius: 9999,
-                  backgroundColor: '#22C55E',
-                  color: '#FFF',
                   fontSize: 9,
-                  fontWeight: 500,
+                  fontWeight: 600,
                   letterSpacing: 1.5,
-                  display: 'inline-flex',
-                  alignItems: 'center',
+                  color: '#FFF',
                 }}
               >
-                SAVE {formatPrice(saved)} · {discountPct}%
-              </div>
-            </>
-          ) : (
-            <span style={{ fontSize: 11, color: '#CCC' }}>…</span>
-          )}
+                SAVE {discountPct}%
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
-    </Link>
-  );
-}
-
-/* ─── AdaptiveMosaic — mosaic layout adapts to combo.pieceCount ──── */
-
-function AdaptiveMosaic({
-  products,
-  pieceCount,
-  isLoading,
-}: {
-  products: Product[];
-  pieceCount: number;
-  isLoading: boolean;
-}) {
-  // Wrap for 160×200 mosaic — same dimensions as before so card height doesn't shift.
-  const shell: React.CSSProperties = {
-    position: 'relative',
-    width: 160,
-    height: 200,
-    backgroundColor: '#F5F5F5',
-    flexShrink: 0,
-  };
-
-  // 3-piece layout: 1 tall hero left (80×200), 2 stacked right (80×100 each)
-  if (pieceCount === 3) {
-    return (
-      <div style={shell}>
-        <MosaicTile product={products[0]} x={0} y={0} w={80} h={200} isLoading={isLoading} />
-        <MosaicTile product={products[1]} x={80} y={0} w={80} h={100} isLoading={isLoading} />
-        <MosaicTile product={products[2]} x={80} y={100} w={80} h={100} isLoading={isLoading} />
-      </div>
-    );
-  }
-
-  // 4-piece layout: clean 2×2
-  if (pieceCount === 4) {
-    return (
-      <div style={shell}>
-        {products.slice(0, 4).map((p, i) => (
-          <MosaicTile
-            key={i}
-            product={p}
-            x={i % 2 === 0 ? 0 : 80}
-            y={i < 2 ? 0 : 100}
-            w={80}
-            h={100}
-            isLoading={isLoading}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  // 5+ layout: 2×2 with "+N" overlay on the 4th tile
-  const extra = pieceCount - 4;
-  return (
-    <div style={shell}>
-      {products.slice(0, 3).map((p, i) => (
-        <MosaicTile
-          key={i}
-          product={p}
-          x={i % 2 === 0 ? 0 : 80}
-          y={i < 2 ? 0 : 100}
-          w={80}
-          h={100}
-          isLoading={isLoading}
-        />
-      ))}
-      <div
-        style={{
-          position: 'absolute',
-          top: 100,
-          left: 80,
-          width: 80,
-          height: 100,
-          overflow: 'hidden',
-          backgroundColor: '#F5F5F5',
-        }}
-      >
-        {products[3] && (
-          <MosaicTile product={products[3]} x={0} y={0} w={80} h={100} isLoading={isLoading} />
-        )}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.68)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <span
-            style={{
-              fontSize: 20,
-              fontWeight: 300,
-              fontStyle: 'italic',
-              color: '#FFF',
-              letterSpacing: -0.5,
-            }}
-          >
-            +{extra}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MosaicTile({
-  product,
-  x,
-  y,
-  w,
-  h,
-  isLoading,
-}: {
-  product: Product | undefined;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  isLoading: boolean;
-}) {
-  const src = primaryImageUrl(product);
-  return (
-    <div
-      className={!src && isLoading ? 'skeleton' : ''}
-      style={{
-        position: 'absolute',
-        top: y,
-        left: x,
-        width: w,
-        height: h,
-        overflow: 'hidden',
-        backgroundColor: '#F5F5F5',
-      }}
-    >
-      {src && (
-        <Image
-          src={getImageUrl(src, 300)}
-          alt={product?.name || ''}
-          fill
-          sizes={`${w}px`}
-          style={{ objectFit: 'cover' }}
-        />
-      )}
-    </div>
+      </Link>
+    </motion.div>
   );
 }

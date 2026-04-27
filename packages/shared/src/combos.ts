@@ -38,44 +38,46 @@ export const COMBOS: ComboMeta[] = [
   {
     slug: 'touch-and-go',
     name: 'Touch-and-Go',
-    kicker: '7-PIECE · WEEKENDER',
+    kicker: '7 PIECES · WEEKENDER',
     vibe: 'salt-on-skin',
     category: 'weekender',
     pieceCount: 7,
     featured: true,
     tagline: 'The full runway-to-resort kit.',
-    description:
-      'Everything you need for five days of nothing on the schedule. One kit, one checkout.',
+    description: 'Five days of nothing on the schedule. One kit, one checkout.',
   },
   {
     slug: 'salt-pack',
     name: 'The Salt Pack',
-    kicker: '3-PIECE · BEACH',
+    kicker: '3 PIECES · BEACH',
     vibe: 'salt-on-skin',
     category: '3-piece',
     pieceCount: 3,
     tagline: 'Sun, sand, no layers.',
-    description: 'Three pieces for a 3-day getaway where the agenda is nothing.',
+    description:
+      'Sun, sand, no layers. Three pieces for a 3-day getaway with nothing on the agenda.',
   },
   {
     slug: 'above-the-fold',
     name: 'Above the Fold',
-    kicker: '5-PIECE · MOUNTAIN',
+    kicker: '5 PIECES · MOUNTAIN',
     vibe: 'above-the-clouds',
     category: '5-piece',
     pieceCount: 5,
     tagline: 'Layering set for thin air.',
-    description: 'Five pieces that stack for cold mornings and sun-warm afternoons.',
+    description:
+      'Layering set for thin air. Five pieces that stack for cold mornings and sun-warm afternoons.',
   },
   {
     slug: 'neon-starter',
     name: 'Neon Starter',
-    kicker: '3-PIECE · CITY',
+    kicker: '3 PIECES · CITY',
     vibe: 'neon-nomads',
     category: '3-piece',
     pieceCount: 3,
     tagline: 'Street-ready trio for late nights.',
-    description: 'Three pieces that carry a city trip from coffee to 2am.',
+    description:
+      'Street-ready trio for late nights. Three pieces that carry a city trip from coffee to 2am.',
   },
 ];
 
