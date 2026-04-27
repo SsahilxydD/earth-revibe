@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { comboDiscount } from '@earth-revibe/shared';
 import { api } from '@/lib/api-client';
 
 export interface CartItem {
@@ -16,6 +17,11 @@ export interface CartItem {
   color: string;
   quantity: number;
   maxQuantity: number;
+  // Set when this item was added as part of a Flight Mode combo (curated or
+  // BYO). The server uses these to apply the combo discount; items without
+  // them are à la carte and get no auto-discount.
+  comboSlug?: string;
+  comboGroupId?: string;
 }
 
 interface CartState {
@@ -39,20 +45,21 @@ interface CartState {
   getItemCount: () => number;
   getSubtotal: () => number;
   getTotal: () => number;
-  getAutoBundleDiscount: () => number;
+  getComboDiscount: () => number;
 }
 
 /**
- * Mirror of the server's autoBundleDiscount in apps/api/src/services/checkout.service.ts.
- * Keep these two in sync — the server value is authoritative.
- *   3 or 4 items   → 20%
- *   5+ items       → 22%
- *   anything else  → 0
+ * Detach all sibling items in a combo group from the combo. Used when the
+ * user removes a piece or bumps a piece's quantity — the kit is no longer
+ * intact, so the entire group falls back to à la carte (no discount). The
+ * remaining items stay in the cart at full price.
  */
-function autoBundleDiscountPreview(itemCount: number, subtotal: number): number {
-  if (itemCount >= 5) return subtotal * 0.22;
-  if (itemCount >= 3) return subtotal * 0.2;
-  return 0;
+function detachComboGroup(items: CartItem[], comboGroupId: string): CartItem[] {
+  return items.map((i) => {
+    if (i.comboGroupId !== comboGroupId) return i;
+    const { comboSlug: _slug, comboGroupId: _gid, ...rest } = i;
+    return rest as CartItem;
+  });
 }
 
 // Debounced sync to server — fires for logged-in users (auth cart sync)
@@ -65,7 +72,12 @@ function scheduleSyncToServer(items: CartItem[]) {
     // Try authenticated cart sync first
     try {
       await api.post('/cart/sync', {
-        items: items.map((i) => ({ variantId: i.id, quantity: i.quantity })),
+        items: items.map((i) => ({
+          variantId: i.id,
+          quantity: i.quantity,
+          comboSlug: i.comboSlug,
+          comboGroupId: i.comboGroupId,
+        })),
       });
     } catch {
       // Auth sync failed (not logged in) — try guest snapshot if email exists
@@ -136,14 +148,30 @@ export const useCartStore = create<CartState>()(
       },
 
       removeItem: (id) => {
-        const updatedItems = get().items.filter((i) => i.id !== id);
+        const items = get().items;
+        const removed = items.find((i) => i.id === id);
+        let updatedItems = items.filter((i) => i.id !== id);
+        // Removing a combo piece breaks the kit — strip combo identity from
+        // the remaining siblings so they don't hold a phantom group that
+        // can never re-qualify (and don't get re-discounted on next sync).
+        if (removed?.comboGroupId) {
+          updatedItems = detachComboGroup(updatedItems, removed.comboGroupId);
+        }
         set({ items: updatedItems });
         scheduleSyncToServer(updatedItems);
       },
 
       updateQuantity: (id, quantity) => {
         if (quantity < 1) return;
-        const updatedItems = get().items.map((i) =>
+        const items = get().items;
+        const target = items.find((i) => i.id === id);
+        // Combo identity assumes 1-of-each; bumping a piece's quantity
+        // breaks the kit. Detach the whole group first, then apply qty.
+        let working = items;
+        if (target?.comboGroupId && quantity !== target.quantity) {
+          working = detachComboGroup(working, target.comboGroupId);
+        }
+        const updatedItems = working.map((i) =>
           i.id === id ? { ...i, quantity: Math.min(quantity, i.maxQuantity) } : i
         );
         set({ items: updatedItems });
@@ -167,17 +195,22 @@ export const useCartStore = create<CartState>()(
         return get().items.reduce((sum, i) => sum + i.price * i.quantity, 0);
       },
 
-      getAutoBundleDiscount: () => {
-        const { items } = get();
-        const itemCount = items.reduce((n, i) => n + i.quantity, 0);
-        const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-        return autoBundleDiscountPreview(itemCount, subtotal);
+      getComboDiscount: () => {
+        return comboDiscount(
+          get().items.map((i) => ({
+            price: i.price,
+            quantity: i.quantity,
+            comboSlug: i.comboSlug,
+            comboGroupId: i.comboGroupId,
+          }))
+        ).total;
       },
 
       getTotal: () => {
         const subtotal = get().getSubtotal();
-        // Coupon vs auto-bundle: take whichever saves more (no stacking).
-        const effectiveDiscount = Math.max(get().discountAmount, get().getAutoBundleDiscount());
+        // Coupon vs combo discount: take whichever saves more (no stacking
+        // in v1 — phase 3 may revisit with a 35% cap).
+        const effectiveDiscount = Math.max(get().discountAmount, get().getComboDiscount());
         return Math.max(0, subtotal - effectiveDiscount);
       },
     }),

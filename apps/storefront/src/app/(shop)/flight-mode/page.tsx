@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { ArrowRight, ArrowUpRight, Flame } from 'lucide-react';
 import {
   COMBOS,
+  comboDiscountPct,
   comboIndividualTotal,
   comboPrice,
   primaryImageUrl,
@@ -234,8 +235,9 @@ function FlagshipCard({ combo }: { combo: ComboMeta }) {
   });
   const products = data?.products ?? [];
   const hero = primaryImageUrl(products[0]);
+  const discountPct = comboDiscountPct(combo);
   const individualTotal = comboIndividualTotal(products, combo.pieceCount);
-  const price = comboPrice(individualTotal, combo.discountPct);
+  const price = comboPrice(individualTotal, discountPct);
 
   return (
     <Link
@@ -387,7 +389,7 @@ function FlagshipCard({ combo }: { combo: ComboMeta }) {
                   alignItems: 'center',
                 }}
               >
-                SAVE {combo.discountPct}%
+                SAVE {discountPct}%
               </span>
             </>
           ) : (
@@ -410,8 +412,9 @@ function HorizontalCard({ combo }: { combo: ComboMeta }) {
   });
   const products = data?.products ?? [];
   const mosaic = products.slice(0, 4);
+  const discountPct = comboDiscountPct(combo);
   const individualTotal = comboIndividualTotal(products, combo.pieceCount);
-  const price = comboPrice(individualTotal, combo.discountPct);
+  const price = comboPrice(individualTotal, discountPct);
   const saved = individualTotal - price;
 
   return (
@@ -540,7 +543,7 @@ function HorizontalCard({ combo }: { combo: ComboMeta }) {
                   alignItems: 'center',
                 }}
               >
-                SAVE {formatPrice(saved)} · {combo.discountPct}%
+                SAVE {formatPrice(saved)} · {discountPct}%
               </div>
             </>
           ) : (

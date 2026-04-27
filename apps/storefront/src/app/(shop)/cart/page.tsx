@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { formatPrice, getImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
+import { KitUpsellBanner } from '@/components/cart/kit-upsell-banner';
 
 // Free shipping on all orders
 
@@ -178,6 +179,7 @@ export default function CartPage() {
         <div>
           <FreeShippingBar />
           <div className="mt-6">
+            <KitUpsellBanner variant="page" />
             {items.map((item) => (
               <CartItemRow key={item.id} item={item} />
             ))}

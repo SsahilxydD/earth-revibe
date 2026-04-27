@@ -9,7 +9,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatPrice, getImageUrl } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart-store';
 import { useToast } from '@/providers';
-import { VIBE_META, primaryImageUrl, toNumber, type ComboVibe } from '@/lib/flight-mode-data';
+import {
+  VIBE_META,
+  byoSlugFor,
+  discountPctFor,
+  primaryImageUrl,
+  toNumber,
+  type ComboVibe,
+} from '@/lib/flight-mode-data';
 import { SwapSheet } from '@/components/flight-mode/swap-sheet';
 import { useProducts } from '@/hooks/use-products';
 import type { Product, ProductVariant } from '@/types';
@@ -19,7 +26,6 @@ type VibeSlug = ComboVibe | 'mixed';
 type Duration = 3 | 5 | 7;
 
 const DURATION_TO_PIECES: Record<Duration, number> = { 3: 3, 5: 5, 7: 7 };
-const BUNDLE_DISCOUNT_PCT = 22;
 
 export default function KitBuilderPage() {
   return (
@@ -100,13 +106,15 @@ function KitBuilderInner() {
     [selectedIds, pool]
   );
 
+  const pieceCount = DURATION_TO_PIECES[duration];
+  const discountPct = discountPctFor(pieceCount, 'byo');
   const individualTotal = useMemo(
     () => pieces.reduce((acc, p) => acc + toNumber(p.price), 0),
     [pieces]
   );
   const kitPrice = useMemo(
-    () => Math.round(individualTotal * (1 - BUNDLE_DISCOUNT_PCT / 100)),
-    [individualTotal]
+    () => Math.round(individualTotal * (1 - discountPct / 100)),
+    [individualTotal, discountPct]
   );
 
   const selectedVibeLabel = vibe === 'mixed' ? 'Mixed trip' : VIBE_META[vibe].label.join(' ');
@@ -149,28 +157,46 @@ function KitBuilderInner() {
       addToast('Kit is empty', 'error');
       return;
     }
+    // BYO kits price the same way curated combos do: items go in at full
+    // price tagged with a synthetic byo-{N} slug + a fresh groupId, and
+    // the server applies the discount via comboDiscount. Previously the
+    // page scaled prices client-side, but the server overwrote them back
+    // to full at checkout — silent overcharge.
+    const groupId = mintComboGroupId();
+    const slug = byoSlugFor(pieceCount);
     pieces.forEach((product) => {
       const size = sizes[product.id] || defaultSize(product);
       const variant = findVariant(product.variants, size);
-      const unitPrice = toNumber(product.price);
-      const scaledPrice =
-        individualTotal > 0 ? Math.round((kitPrice / individualTotal) * unitPrice) : unitPrice;
+      if (!variant) {
+        // No matching variant means we can't add a real cart line. Skip
+        // silently rather than push a fake variant id that 404s at checkout.
+        return;
+      }
       const img = primaryImageUrl(product) || '';
       addItem({
-        id: variant?.id || `kit-${product.id}`,
+        id: variant.id,
         productId: product.id,
-        name: `${product.name} · Custom Kit`,
+        name: product.name,
         slug: product.slug,
         image: img,
-        price: scaledPrice,
+        price: toNumber(product.price),
         size,
         color: '',
-        maxQuantity: variant?.stock ?? 99,
+        maxQuantity: variant.stock,
         quantity: 1,
+        comboSlug: slug,
+        comboGroupId: groupId,
       });
     });
     addToast('Kit added to bag', 'success');
   };
+
+  function mintComboGroupId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `cg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  }
 
   return (
     <div
@@ -315,6 +341,7 @@ function KitBuilderInner() {
               sizes={sizes}
               individualTotal={individualTotal}
               kitPrice={kitPrice}
+              discountPct={discountPct}
               onAdd={() => {
                 packKit();
                 router.push('/cart');
@@ -1071,6 +1098,7 @@ function Step4Review({
   sizes,
   individualTotal,
   kitPrice,
+  discountPct,
   onAdd,
   onAddToBagOnly,
 }: {
@@ -1079,6 +1107,7 @@ function Step4Review({
   sizes: Record<string, string>;
   individualTotal: number;
   kitPrice: number;
+  discountPct: number;
   onAdd: () => void;
   onAddToBagOnly: () => void;
 }) {
@@ -1260,7 +1289,7 @@ function Step4Review({
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 12, fontWeight: 300, color: '#22C55E' }}>
-            Bundle discount (−{BUNDLE_DISCOUNT_PCT}%)
+            Bundle discount (−{discountPct}%)
           </span>
           <span style={{ fontSize: 13, fontWeight: 400, color: '#22C55E' }}>
             −{formatPrice(savedAmount)}

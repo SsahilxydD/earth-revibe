@@ -1,9 +1,16 @@
 import { z } from 'zod';
 
-// Client sends cart items to create a Magic Checkout order
+// Client sends cart items to create a Magic Checkout order.
+// comboSlug + comboGroupId mark items added together as a Flight Mode kit;
+// the server uses them to apply the combo discount (see comboDiscount in
+// @earth-revibe/shared/combos). Both fields are required together — a slug
+// without a groupId can't be priced, since two of the same combo would
+// otherwise merge and break.
 export const magicCheckoutLineItemSchema = z.object({
   variantId: z.string().min(1),
   quantity: z.coerce.number().int().min(1),
+  comboSlug: z.string().min(1).max(64).optional(),
+  comboGroupId: z.string().min(1).max(64).optional(),
 });
 
 export const createMagicCheckoutSchema = z.object({

@@ -7,7 +7,8 @@ import { logger } from '../config/logger';
 import { APP_CONSTANTS } from '../config/constants';
 import { maybeLinkReferralAtCheckout, convertReferralOnFirstOrder } from './referral.service';
 import { defaultExpiresAt } from './points-expiry.service';
-import { generateOrderNumber } from '@earth-revibe/shared';
+import { generateOrderNumber, comboDiscount } from '@earth-revibe/shared';
+import type { ComboDiscountInput } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
 import { sendWhatsAppOrderUpdate } from './whatsapp.service';
 import { notifyAdminOfNewOrder } from './admin-alert.service';
@@ -173,11 +174,24 @@ export const checkoutService = {
       loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
     }
 
-    // Take the larger of (coupon discount) vs (auto-bundle tier discount).
+    // Take the larger of (coupon discount) vs (combo bundle discount).
     // No stacking — customer gets whichever saves more.
-    const itemCount = data.items.reduce((n, i) => n + i.quantity, 0);
-    const autoBundle = autoBundleDiscount(itemCount, lineItemsTotal);
-    if (autoBundle > discountAmount) discountAmount = autoBundle;
+    // Combo discount only fires for items added together via Flight Mode
+    // ("Add Pack to Bag" stamps comboSlug + comboGroupId on each piece).
+    // Items without those tokens are à la carte and contribute 0 — no
+    // accidental discount on a 5-item à la carte cart.
+    const comboInputs: ComboDiscountInput[] = data.items.map((it) => {
+      const v = variants.find((x) => x.id === it.variantId);
+      const unitPrice = v ? Number(v.price) || Number(v.product.price) : 0;
+      return {
+        price: unitPrice,
+        quantity: it.quantity,
+        comboSlug: it.comboSlug,
+        comboGroupId: it.comboGroupId,
+      };
+    });
+    const combo = comboDiscount(comboInputs).total;
+    if (combo > discountAmount) discountAmount = combo;
 
     // Cap total discount so the order is at least ₹1 (Razorpay minimum)
     const maxDiscount = lineItemsTotal - 1;
@@ -1174,11 +1188,21 @@ export async function createCodOrder(
     loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
   }
 
-  // Auto-bundle tier discount (see autoBundleDiscount below). No stacking —
-  // take whichever is larger between the coupon and the automatic tier.
-  const itemCount = data.items.reduce((n, i) => n + i.quantity, 0);
-  const autoBundle = autoBundleDiscount(itemCount, subtotal);
-  if (autoBundle > discountAmount) discountAmount = autoBundle;
+  // Combo bundle discount (see comboDiscount in @earth-revibe/shared/combos).
+  // Only fires for items tagged with comboSlug + comboGroupId (Flight Mode
+  // "Add Pack to Bag"). Stacks with coupon? — No, take MAX of the two.
+  const comboInputs: ComboDiscountInput[] = data.items.map((it) => {
+    const v = variants.find((x) => x.id === it.variantId);
+    const unitPrice = v ? Number(v.price) || Number(v.product.price) : 0;
+    return {
+      price: unitPrice,
+      quantity: it.quantity,
+      comboSlug: it.comboSlug,
+      comboGroupId: it.comboGroupId,
+    };
+  });
+  const combo = comboDiscount(comboInputs).total;
+  if (combo > discountAmount) discountAmount = combo;
 
   const codFee = env.COD_FEE || 0;
   const totalAmount = Math.max(subtotal - discountAmount - loyaltyDiscount + codFee, 0);
@@ -1560,21 +1584,6 @@ function mapPaymentMethod(method: string): string | undefined {
     cod: 'COD',
   };
   return map[method];
-}
-
-/**
- * Tier-based automatic bundle discount applied at order creation.
- * Mirrored on the client in cart-store.ts for live preview — keep them in
- * sync. Authority is this function; the client value is only a hint.
- *
- *   itemCount 3 or 4  → 20% off subtotal
- *   itemCount >= 5    → 22% off subtotal
- *   anything else     → 0
- */
-export function autoBundleDiscount(itemCount: number, subtotal: number): number {
-  if (itemCount >= 5) return subtotal * 0.22;
-  if (itemCount >= 3) return subtotal * 0.2;
-  return 0;
 }
 
 /** Helper: calculate discount amount for a given code and subtotal */

@@ -8,6 +8,7 @@ import { ArrowLeft, Bookmark, Share2, Lock, ChevronDown, Shuffle } from 'lucide-
 import { useEffect } from 'react';
 import {
   getCombo,
+  comboDiscountPct,
   comboIndividualTotal,
   comboPrice,
   primaryImageUrl,
@@ -106,13 +107,14 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
     });
   };
 
+  const discountPct = comboDiscountPct(combo);
   const individualTotal = useMemo(
     () => comboIndividualTotal(pieces, combo.pieceCount),
     [pieces, combo.pieceCount]
   );
   const price = useMemo(
-    () => comboPrice(individualTotal, combo.discountPct),
-    [individualTotal, combo.discountPct]
+    () => comboPrice(individualTotal, discountPct),
+    [individualTotal, discountPct]
   );
   const savedAmount = individualTotal - price;
 
@@ -132,14 +134,15 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
       addToast('Bundle is empty right now — try again', 'error');
       return;
     }
-    // Only real variant IDs and real product prices survive the cart-sync /
-    // checkout boundary — the server looks everything up from the variantId
-    // and ignores client-sent price/name. Scaling prices or using
-    // ${combo.slug}-${product.id} as a fallback id here just produced
-    // "product not available" at checkout and silently dropped the combo
-    // discount (customer saw ₹X in cart, paid full price).
-    // The combo discount must be applied server-side (via a coupon/bundle
-    // rule keyed off all pieces being present) — not by mutating cart items.
+    // Items go in at FULL price; the server looks everything up from
+    // variantId and ignores client-sent price. The combo discount is now
+    // applied server-side via comboSlug + comboGroupId tokens (see
+    // comboDiscount in @earth-revibe/shared/combos).
+    //
+    // comboGroupId is minted fresh per "Add Pack" press so two of the same
+    // combo in a cart price independently and one removal doesn't break
+    // the other.
+    const groupId = mintComboGroupId();
     for (const product of pieces) {
       const chosenSize = sizes[product.id] || defaultSize(product);
       const variant = findVariant(product.variants, chosenSize);
@@ -158,6 +161,8 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
         color: '',
         maxQuantity: variant.stock,
         quantity: 1,
+        comboSlug: combo.slug,
+        comboGroupId: groupId,
       });
     }
     addToast(`${combo.name} added to bag`, 'success');
@@ -378,7 +383,7 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
             leftColor="#666"
           />
           <Row
-            left={<span style={{ color: '#22C55E' }}>Bundle discount (−{combo.discountPct}%)</span>}
+            left={<span style={{ color: '#22C55E' }}>Bundle discount (−{discountPct}%)</span>}
             right={<span style={{ color: '#22C55E' }}>−{formatPrice(savedAmount)}</span>}
             leftColor="#22C55E"
           />
@@ -692,6 +697,13 @@ function findVariant(variants: ProductVariant[], size: string): ProductVariant |
 function isSizeOutOfStock(variants: ProductVariant[], size: string): boolean {
   const v = findVariant(variants, size);
   return v ? v.stock <= 0 : true;
+}
+
+function mintComboGroupId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `cg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function defaultSize(product: Product): string {

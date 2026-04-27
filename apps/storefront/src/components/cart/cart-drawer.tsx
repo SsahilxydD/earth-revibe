@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 import { formatPrice, getImageUrl } from '@/lib/utils';
 import { CartItemRow } from './cart-item';
+import { KitUpsellBanner } from './kit-upsell-banner';
 import { LoginModal } from '@/components/auth/login-modal';
 import { PaymentMethodModal } from '@/components/checkout/payment-method-modal';
 import { CODCheckoutModal } from '@/components/checkout/cod-checkout-modal';
@@ -572,6 +573,7 @@ export function CartDrawer() {
                 className="hide-scrollbar"
                 style={{ flex: 1, overflowY: 'auto', padding: '20px 28px' }}
               >
+                <KitUpsellBanner variant="drawer" onClick={closeCart} />
                 {items.map((item, i) => (
                   <div key={item.id}>
                     <div style={{ padding: '16px 0' }}>
