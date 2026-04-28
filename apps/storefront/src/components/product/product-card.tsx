@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -77,78 +77,80 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
     [hasSlider, sortedImages, imageCount]
   );
 
-  const SLIDE_TRANSITION = 'transform 0.35s cubic-bezier(0.25,0.1,0.25,1)';
-  const [slideIndex, setSlideIndex] = useState(hasSlider ? 1 : 0);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef({ startX: 0, dx: 0, dragging: false, width: 0, moved: false });
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const initialScrollSetRef = useRef(false);
 
-  const realIndex = hasSlider
-    ? slideIndex === 0
-      ? imageCount - 1
-      : slideIndex === imageCount + 1
-        ? 0
-        : slideIndex - 1
-    : 0;
-
-  const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
-    if (e.propertyName !== 'transform' || e.target !== e.currentTarget) return;
-    if (!hasSlider) return;
-    const isCloneEnd = slideIndex === 0 || slideIndex === imageCount + 1;
-    if (!isCloneEnd) return;
-    if (trackRef.current) trackRef.current.style.transition = 'none';
-    setSlideIndex(slideIndex === 0 ? imageCount : 1);
-    requestAnimationFrame(() => {
-      if (trackRef.current) trackRef.current.style.transition = SLIDE_TRANSITION;
-    });
-  };
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!hasSlider) return;
-    dragRef.current = {
-      startX: e.clientX,
-      dx: 0,
-      dragging: true,
-      width: e.currentTarget.offsetWidth,
-      moved: false,
+  // Initial scroll position: skip the leading clone so we start on the real first slide.
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el || !hasSlider) return;
+    const setInitial = () => {
+      const w = el.offsetWidth;
+      if (!w) return;
+      el.style.scrollBehavior = 'auto';
+      el.scrollLeft = w;
+      initialScrollSetRef.current = true;
+      requestAnimationFrame(() => {
+        if (el) el.style.scrollBehavior = '';
+      });
     };
-    if (trackRef.current) trackRef.current.style.transition = 'none';
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
+    if (el.offsetWidth > 0) setInitial();
+    else requestAnimationFrame(setInitial);
+  }, [hasSlider, sortedImages]);
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag.dragging) return;
-    const dx = e.clientX - drag.startX;
-    drag.dx = dx;
-    if (Math.abs(dx) > 5) drag.moved = true;
-    if (trackRef.current && drag.width > 0) {
-      trackRef.current.style.transform = `translate3d(${-slideIndex * drag.width + dx}px, 0, 0)`;
+  const handleScroll = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const w = el.offsetWidth;
+    if (!w) return;
+    const idx = Math.round(el.scrollLeft / w);
+    let real = idx;
+    if (hasSlider) {
+      if (idx === 0) real = imageCount - 1;
+      else if (idx === imageCount + 1) real = 0;
+      else real = idx - 1;
     }
-  };
+    setActiveIndex(real);
+  }, [hasSlider, imageCount]);
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag.dragging) return;
-    drag.dragging = false;
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    const dx = drag.dx;
+  // Loop jump: when scroll settles on a clone, jump to its real twin without animation.
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el || !hasSlider) return;
 
-    if (trackRef.current) trackRef.current.style.transition = SLIDE_TRANSITION;
+    const jumpIfOnClone = () => {
+      if (!initialScrollSetRef.current) return;
+      const w = el.offsetWidth;
+      if (!w) return;
+      const idx = Math.round(el.scrollLeft / w);
+      if (idx === 0 || idx === imageCount + 1) {
+        const target = idx === 0 ? imageCount : 1;
+        el.style.scrollBehavior = 'auto';
+        el.scrollLeft = target * w;
+        requestAnimationFrame(() => {
+          if (el) el.style.scrollBehavior = '';
+        });
+      }
+    };
 
-    if (Math.abs(dx) > 50) {
-      setSlideIndex((i) => (dx < 0 ? i + 1 : i - 1));
-    } else if (trackRef.current) {
-      trackRef.current.style.transform = `translate3d(-${slideIndex * 100}%, 0, 0)`;
+    if ('onscrollend' in el) {
+      el.addEventListener('scrollend', jumpIfOnClone);
+      return () => el.removeEventListener('scrollend', jumpIfOnClone);
     }
-  };
+    let t: ReturnType<typeof setTimeout> | null = null;
+    const onScroll = () => {
+      if (t) clearTimeout(t);
+      t = setTimeout(jumpIfOnClone, 140);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      if (t) clearTimeout(t);
+    };
+  }, [hasSlider, imageCount]);
 
-  const suppressClickIfDragged = (e: React.MouseEvent) => {
-    if (dragRef.current.moved) {
-      e.preventDefault();
-      e.stopPropagation();
-      dragRef.current.moved = false;
-    }
-  };
+  const realIndex = activeIndex;
 
   const variants = product.variants ?? [];
   const isOutOfStock = variants.length > 0 && variants.every((v) => v.stock <= 0);
@@ -180,34 +182,31 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
         }}
       >
         <div
-          ref={trackRef}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          onTransitionEnd={handleTransitionEnd}
-          onClickCapture={suppressClickIfDragged}
+          ref={scrollerRef}
+          onScroll={handleScroll}
+          className="hide-scrollbar"
           style={{
             display: 'flex',
             width: '100%',
             height: '100%',
-            transform: `translate3d(-${slideIndex * 100}%, 0, 0)`,
-            transition: SLIDE_TRANSITION,
-            touchAction: 'pan-y',
-            userSelect: 'none',
-            WebkitUserSelect: 'none',
+            overflowX: hasSlider ? 'auto' : 'hidden',
+            overflowY: 'hidden',
+            scrollSnapType: hasSlider ? 'x mandatory' : 'none',
+            WebkitOverflowScrolling: 'touch',
           }}
         >
           {slides.map((img, i) => (
             <Link
-              key={`${img.url}-${i}`}
+              key={`slide-${i}`}
               href={`/products/${product.slug}`}
               draggable={false}
               style={{
-                position: 'relative',
                 flex: '0 0 100%',
                 height: '100%',
+                position: 'relative',
                 display: 'block',
+                scrollSnapAlign: 'start',
+                scrollSnapStop: 'always',
               }}
             >
               <Image
