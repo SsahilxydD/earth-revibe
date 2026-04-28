@@ -1,23 +1,10 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { Inter, Space_Grotesk } from 'next/font/google';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { QueryProvider } from '@/providers/query-provider';
 import { PostHogProvider, PostHogPageview } from '@/providers/posthog-provider';
 import { ToastContainer } from '@/components/ui/toast';
 import './globals.css';
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-body',
-  display: 'swap',
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-heading',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: {
@@ -29,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en">
       <body className="bg-surface text-text-primary antialiased">
         <PostHogProvider>
           <Suspense fallback={null}>

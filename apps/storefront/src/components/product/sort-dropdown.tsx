@@ -54,7 +54,7 @@ export function SortDropdown({ currentSort, onSortChange }: SortDropdownProps) {
           fontSize: 11,
           fontWeight: 300,
           color: '#999',
-          fontFamily: 'var(--font-inter), Inter, sans-serif',
+          fontFamily: 'var(--font-helvetica)',
         }}
       >
         <span>Sort by: {selectedOption.label}</span>

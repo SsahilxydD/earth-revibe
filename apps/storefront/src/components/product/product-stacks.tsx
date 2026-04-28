@@ -134,7 +134,7 @@ function CardContent({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <span
             style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-helvetica)',
               fontSize: 13,
               fontWeight: 500,
               letterSpacing: -0.2,
@@ -148,7 +148,7 @@ function CardContent({
           </span>
           <span
             style={{
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-helvetica)',
               fontSize: 12,
               fontWeight: 500,
               color: '#000000',
@@ -184,7 +184,7 @@ function CardContent({
                   fontSize: 10,
                   fontWeight: 400,
                   color: '#000',
-                  fontFamily: 'Inter, sans-serif',
+                  fontFamily: 'var(--font-helvetica)',
                 }}
               >
                 <span>Size · {size}</span>
@@ -216,7 +216,7 @@ function CardContent({
                   fontSize: 10,
                   fontWeight: 400,
                   color: '#000',
-                  fontFamily: 'Inter, sans-serif',
+                  fontFamily: 'var(--font-helvetica)',
                 }}
               >
                 Swap
@@ -251,7 +251,7 @@ function CardContent({
                     fontWeight: active ? 500 : 400,
                     cursor: oos ? 'not-allowed' : 'pointer',
                     textDecoration: oos ? 'line-through' : 'none',
-                    fontFamily: 'Inter, sans-serif',
+                    fontFamily: 'var(--font-helvetica)',
                   }}
                 >
                   {s}
@@ -602,7 +602,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
             left: 0,
             right: 0,
             textAlign: 'center',
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-helvetica)',
             fontSize: 10,
             fontWeight: 600,
             letterSpacing: 1.5,
@@ -680,7 +680,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span
               style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-helvetica)',
                 fontSize: 20,
                 fontWeight: 500,
                 letterSpacing: -0.5,
@@ -691,7 +691,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
             </span>
             <span
               style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-helvetica)',
                 fontSize: 12,
                 fontWeight: 300,
                 color: '#999',
@@ -713,7 +713,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
           >
             <span
               style={{
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'var(--font-helvetica)',
                 fontSize: 9,
                 fontWeight: 600,
                 letterSpacing: 1.5,
@@ -743,7 +743,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
           letterSpacing: 1.5,
           cursor: allProducts.length === 0 ? 'not-allowed' : 'pointer',
           opacity: allProducts.length === 0 ? 0.4 : 1,
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'var(--font-helvetica)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -759,7 +759,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
         <span
           style={{
             textAlign: 'center',
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'var(--font-helvetica)',
             fontSize: 10,
             fontWeight: 400,
             color: '#22C55E',

@@ -1,34 +1,12 @@
 import { Suspense } from 'react';
 import Script from 'next/script';
 import type { Metadata, Viewport } from 'next';
-import { Archivo_Narrow, Inter, Poppins } from 'next/font/google';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { Providers } from '@/providers';
 import { LenisProvider } from '@/providers/lenis-provider';
 import { PrefetchProvider } from '@/providers/prefetch-provider';
 import { PostHogProvider, PostHogPageview } from '@/providers/posthog-provider';
 import './globals.css';
-
-const archivoNarrow = Archivo_Narrow({
-  subsets: ['latin'],
-  variable: '--font-archivo',
-  display: 'swap',
-  weight: ['400', '500', '600', '700'],
-});
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-  weight: ['300', '400', '500', '600'],
-});
-
-const poppins = Poppins({
-  subsets: ['latin'],
-  variable: '--font-poppins',
-  display: 'swap',
-  weight: ['400', '500', '600', '700'],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.earthrevibe.com'),
@@ -103,11 +81,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${archivoNarrow.variable} ${inter.variable} ${poppins.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"

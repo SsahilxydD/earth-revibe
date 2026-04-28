@@ -4,11 +4,10 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Heart, Plus } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { trackWishlistToggle } from '@/lib/analytics';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/use-wishlist';
-import { QuickAddModal } from './quick-add-modal';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -19,7 +18,6 @@ interface ProductCardProps {
 export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const router = useRouter();
   const prefetched = useRef(false);
-  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [heartBounce, setHeartBounce] = useState(false);
 
   const { data: wishlistItems } = useWishlist({ enabled: typeof window !== 'undefined' });
@@ -82,24 +80,10 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
     img.src = secondaryUrl;
   }, [secondaryUrl]);
 
-  const isOnSale = product.compareAtPrice !== null && product.compareAtPrice > product.price;
   const variants = product.variants ?? [];
   const isOutOfStock = variants.length > 0 && variants.every((v) => v.stock <= 0);
   const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
   const isLowStock = !isOutOfStock && totalStock > 0 && totalStock <= 5;
-
-  const discountPct = isOnSale
-    ? Math.round(((product.compareAtPrice! - product.price) / product.compareAtPrice!) * 100)
-    : 0;
-
-  const savings = isOnSale ? product.compareAtPrice! - product.price : 0;
-
-  const handleQuickAdd = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isOutOfStock) return;
-    setShowQuickAdd(true);
-  };
 
   return (
     <div
@@ -196,24 +180,6 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
                 BESTSELLER
               </span>
             )}
-            {isOnSale && discountPct > 0 && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  height: 20,
-                  padding: '0 8px',
-                  alignItems: 'center',
-                  backgroundColor: '#FFF',
-                  border: '1px solid #E5E5E5',
-                  fontSize: 8,
-                  fontWeight: 400,
-                  color: '#000',
-                  letterSpacing: 0.5,
-                }}
-              >
-                -{discountPct}%
-              </span>
-            )}
           </div>
 
           {/* Urgency — bottom left */}
@@ -285,21 +251,24 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
         </button>
       </div>
 
-      {/* Info section — fixed minHeight for consistent card height */}
+      {/* Info section — YUR-style typography (Helvetica, weight 400) */}
       <Link
         href={`/products/${product.slug}`}
         style={{
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
-          minHeight: 58,
-          paddingTop: 8,
+          paddingTop: 10,
+          paddingLeft: 10,
+          paddingRight: 10,
+          paddingBottom: 4,
           textDecoration: 'none',
+          fontFamily: 'var(--font-helvetica)',
         }}
       >
         <p
           style={{
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 400,
             color: isOutOfStock ? '#999' : '#000',
             overflow: 'hidden',
@@ -307,83 +276,16 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             lineHeight: 1.4,
-            minHeight: 34,
+            minHeight: 36,
           }}
         >
           {product.name}
         </p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, fontWeight: 300, color: isOutOfStock ? '#999' : '#000' }}>
-            {formatPrice(product.price)}
-          </span>
-          {isOnSale && (
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 300,
-                color: '#CCC',
-                textDecoration: 'line-through',
-              }}
-            >
-              {formatPrice(product.compareAtPrice!)}
-            </span>
-          )}
-          {isOnSale && savings > 0 && !isOutOfStock && (
-            <span style={{ fontSize: 9, fontWeight: 400, color: '#22C55E' }}>
-              Save {formatPrice(savings)}
-            </span>
-          )}
-        </div>
+        <span style={{ fontSize: 12, fontWeight: 400, color: isOutOfStock ? '#999' : '#000' }}>
+          {formatPrice(product.price)}
+        </span>
       </Link>
 
-      {/* Quick Add / Notify Me */}
-      {isOutOfStock ? (
-        <button
-          style={{
-            width: '100%',
-            height: 34,
-            marginTop: 8,
-            border: '1px solid #E5E5E5',
-            backgroundColor: 'transparent',
-            fontSize: 9,
-            fontWeight: 400,
-            letterSpacing: 1.5,
-            color: '#999',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-          }}
-        >
-          NOTIFY ME
-        </button>
-      ) : (
-        <button
-          onClick={handleQuickAdd}
-          style={{
-            width: '100%',
-            height: 34,
-            marginTop: 8,
-            border: '1px solid #000',
-            backgroundColor: 'transparent',
-            fontSize: 9,
-            fontWeight: 400,
-            letterSpacing: 1.5,
-            color: '#000',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-          }}
-        >
-          <Plus size={12} />
-          QUICK ADD
-        </button>
-      )}
-
-      {showQuickAdd && <QuickAddModal product={product} onClose={() => setShowQuickAdd(false)} />}
     </div>
   );
 }

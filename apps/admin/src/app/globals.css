@@ -50,8 +50,9 @@
   --color-sage: #22c55e;
 
   /* Font Families */
-  --font-heading: 'Space Grotesk', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  --font-helvetica: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-heading: var(--font-helvetica);
+  --font-body: var(--font-helvetica);
 }
 
 /* Admin base styles */

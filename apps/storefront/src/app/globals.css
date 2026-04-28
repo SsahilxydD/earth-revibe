@@ -10,8 +10,12 @@
   --color-border: #e5e5e5;
   --color-muted: #737373;
   --color-surface: #f5f5f5;
-  --font-body: 'Archivo Narrow', sans-serif;
-  --font-fallback: 'Poppins', sans-serif;
+  --font-helvetica: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-body: var(--font-helvetica);
+  --font-fallback: var(--font-helvetica);
+  --font-inter: var(--font-helvetica);
+  --font-archivo: var(--font-helvetica);
+  --font-poppins: var(--font-helvetica);
   --section-spacing-mobile: 25px;
   --section-spacing-desktop: 40px;
   --product-image-ratio: 2 / 3;
