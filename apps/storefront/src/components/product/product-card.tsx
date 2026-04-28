@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -77,8 +77,8 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
     [hasSlider, sortedImages, imageCount]
   );
 
+  const SLIDE_TRANSITION = 'transform 0.35s cubic-bezier(0.25,0.1,0.25,1)';
   const [slideIndex, setSlideIndex] = useState(hasSlider ? 1 : 0);
-  const [animating, setAnimating] = useState(true);
   const trackRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({ startX: 0, dx: 0, dragging: false, width: 0, moved: false });
 
@@ -90,23 +90,16 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
         : slideIndex - 1
     : 0;
 
-  // After a clone-slide jump, re-enable transitions on next frame.
-  useEffect(() => {
-    if (animating) return;
-    const id = requestAnimationFrame(() => setAnimating(true));
-    return () => cancelAnimationFrame(id);
-  }, [animating]);
-
   const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
     if (e.propertyName !== 'transform' || e.target !== e.currentTarget) return;
     if (!hasSlider) return;
-    if (slideIndex === 0) {
-      setAnimating(false);
-      setSlideIndex(imageCount);
-    } else if (slideIndex === imageCount + 1) {
-      setAnimating(false);
-      setSlideIndex(1);
-    }
+    const isCloneEnd = slideIndex === 0 || slideIndex === imageCount + 1;
+    if (!isCloneEnd) return;
+    if (trackRef.current) trackRef.current.style.transition = 'none';
+    setSlideIndex(slideIndex === 0 ? imageCount : 1);
+    requestAnimationFrame(() => {
+      if (trackRef.current) trackRef.current.style.transition = SLIDE_TRANSITION;
+    });
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -118,7 +111,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
       width: e.currentTarget.offsetWidth,
       moved: false,
     };
-    setAnimating(false);
+    if (trackRef.current) trackRef.current.style.transition = 'none';
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
@@ -139,11 +132,13 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
     drag.dragging = false;
     e.currentTarget.releasePointerCapture(e.pointerId);
     const dx = drag.dx;
-    setAnimating(true);
+
+    if (trackRef.current) trackRef.current.style.transition = SLIDE_TRANSITION;
+
     if (Math.abs(dx) > 50) {
       setSlideIndex((i) => (dx < 0 ? i + 1 : i - 1));
     } else if (trackRef.current) {
-      trackRef.current.style.transform = '';
+      trackRef.current.style.transform = `translate3d(-${slideIndex * 100}%, 0, 0)`;
     }
   };
 
@@ -197,7 +192,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             width: '100%',
             height: '100%',
             transform: `translate3d(-${slideIndex * 100}%, 0, 0)`,
-            transition: animating ? 'transform 0.35s cubic-bezier(0.25,0.1,0.25,1)' : 'none',
+            transition: SLIDE_TRANSITION,
             touchAction: 'pan-y',
             userSelect: 'none',
             WebkitUserSelect: 'none',
