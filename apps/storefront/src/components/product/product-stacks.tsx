@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Shuffle } from 'lucide-react';
 import { useProducts } from '@/hooks/use-products';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
@@ -20,55 +19,23 @@ import { useCartStore } from '@/stores/cart-store';
 import { useToast } from '@/providers';
 import type { Product, ProductVariant } from '@/types';
 
-interface CardPosition {
-  x: number;
-  y: number;
-  rotation: number;
-}
+const CARD_W = 260;
+const CARD_H = 380;
 
-interface StackConfig {
-  combo: ComboMeta;
-  cards: CardPosition[];
-}
+const SLOTS: Record<number, { left: number; scale: number; opacity: number; zIndex: number }> = {
+  [-2]: { left: -194, scale: 0.8, opacity: 0.5, zIndex: 1 },
+  [-1]: { left: -136, scale: 0.9, opacity: 0.75, zIndex: 3 },
+  [0]: { left: 66, scale: 1, opacity: 1, zIndex: 5 },
+  [1]: { left: 269, scale: 0.9, opacity: 0.75, zIndex: 3 },
+  [2]: { left: 327, scale: 0.8, opacity: 0.5, zIndex: 1 },
+};
+const HIDDEN_SLOT = { left: 66, scale: 0, opacity: 0, zIndex: 0 };
 
-const STACKS: StackConfig[] = [
-  {
-    combo: COMBOS[0], // touch-and-go (WEEKENDER)
-    cards: [
-      { x: 30, y: 50, rotation: 6 },
-      { x: 50, y: 40, rotation: -4 },
-      { x: 38, y: 30, rotation: 1.5 },
-    ],
-  },
-  {
-    combo: COMBOS[1], // salt-pack (BEACH)
-    cards: [
-      { x: 25, y: 55, rotation: -5 },
-      { x: 48, y: 42, rotation: 4 },
-      { x: 35, y: 32, rotation: -1.5 },
-    ],
-  },
-  {
-    combo: COMBOS[2], // above-the-fold (MOUNTAIN)
-    cards: [
-      { x: 32, y: 52, rotation: 5 },
-      { x: 45, y: 40, rotation: -3.5 },
-      { x: 36, y: 30, rotation: 1.5 },
-    ],
-  },
-  {
-    combo: COMBOS[3], // neon-starter (CITY)
-    cards: [
-      { x: 28, y: 55, rotation: -6 },
-      { x: 50, y: 44, rotation: 3.5 },
-      { x: 38, y: 34, rotation: -1 },
-    ],
-  },
-];
-
-const SPRING = { type: 'spring' as const, stiffness: 300, damping: 28, mass: 0.8 };
-const SWIPE_THRESHOLD = 80;
-const SWIPE_VELOCITY = 400;
+const EASE = 'cubic-bezier(0.25,0.1,0.25,1)';
+const CARD_TRANSITION = `left 0.6s ${EASE}, transform 0.6s ${EASE}, opacity 0.6s ${EASE}`;
+const SWIPE_THRESHOLD = 50;
+const SWIPE_VELOCITY = 300;
+const DRAG_START_PX = 5;
 
 function uniqueSizes(variants: ProductVariant[]): string[] {
   const seen = new Set<string>();
@@ -100,8 +67,21 @@ function mintComboGroupId(): string {
   return `cg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function getSlotOffset(index: number, activeIndex: number, total: number): number {
+  let offset = index - activeIndex;
+  if (offset > total / 2) offset -= total;
+  if (offset < -total / 2) offset += total;
+  return Math.round(offset);
+}
+
+function getSlot(offset: number) {
+  if (offset < -2 || offset > 2) return HIDDEN_SLOT;
+  return SLOTS[offset];
+}
+
 function CardContent({
   product,
+  isActive,
   size,
   onSizeToggle,
   sizeOpen,
@@ -109,6 +89,7 @@ function CardContent({
   onSwap,
 }: {
   product: Product;
+  isActive: boolean;
   size: string;
   onSizeToggle: () => void;
   sizeOpen: boolean;
@@ -134,7 +115,7 @@ function CardContent({
             src={getImageUrl(imgUrl, 560)}
             alt={product.name}
             fill
-            sizes="280px"
+            sizes="260px"
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
             style={{ objectFit: 'cover' }}
@@ -179,64 +160,73 @@ function CardContent({
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {sizes.length > 0 && (
+        {isActive && (
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {sizes.length > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSizeToggle();
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 6,
+                  height: 26,
+                  flex: 1,
+                  padding: '0 8px',
+                  borderRadius: 6,
+                  border: '1px solid #E5E5E5',
+                  backgroundColor: '#FFF',
+                  cursor: 'pointer',
+                  fontSize: 10,
+                  fontWeight: 400,
+                  color: '#000',
+                  fontFamily: 'Inter, sans-serif',
+                }}
+              >
+                <span>Size · {size}</span>
+                <ChevronDown size={10} color="#000" />
+              </button>
+            )}
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onSizeToggle(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSwap();
+              }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 6,
+                gap: 4,
                 height: 26,
-                flex: 1,
                 padding: '0 8px',
                 borderRadius: 6,
                 border: '1px solid #E5E5E5',
                 backgroundColor: '#FFF',
                 cursor: 'pointer',
-                fontSize: 10,
-                fontWeight: 400,
-                color: '#000',
-                fontFamily: 'Inter, sans-serif',
+                flexShrink: 0,
               }}
             >
-              <span>Size · {size}</span>
-              <ChevronDown size={10} color="#000" />
+              <Shuffle size={10} color="#000" />
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 400,
+                  color: '#000',
+                  fontFamily: 'Inter, sans-serif',
+                }}
+              >
+                Swap
+              </span>
             </button>
-          )}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onSwap(); }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              height: 26,
-              padding: '0 8px',
-              borderRadius: 6,
-              border: '1px solid #E5E5E5',
-              backgroundColor: '#FFF',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
-          >
-            <Shuffle size={10} color="#000" />
-            <span style={{ fontSize: 10, fontWeight: 400, color: '#000', fontFamily: 'Inter, sans-serif' }}>
-              Swap
-            </span>
-          </button>
-        </div>
+          </div>
+        )}
 
-        {sizeOpen && sizes.length > 0 && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-            style={{ display: 'flex', gap: 4, flexWrap: 'wrap', overflow: 'hidden' }}
-          >
+        {isActive && sizeOpen && sizes.length > 0 && (
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {sizes.map((s) => {
               const active = s === size;
               const oos = !product.variants.some((v) => v.size === s && v.stock > 0);
@@ -244,7 +234,10 @@ function CardContent({
                 <button
                   key={s}
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); if (!oos) onSizeChange(s); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!oos) onSizeChange(s);
+                  }}
                   disabled={oos}
                   style={{
                     minWidth: 38,
@@ -265,19 +258,26 @@ function CardContent({
                 </button>
               );
             })}
-          </motion.div>
+          </div>
         )}
       </div>
     </>
   );
 }
 
-function StackCard({
+interface DragState {
+  startX: number;
+  startTime: number;
+  dragging: boolean;
+  pointerId: number;
+}
+
+function CarouselCard({
   product,
-  position,
-  zIndex,
-  isFront,
-  onSwipe,
+  slot,
+  isActive,
+  onPrev,
+  onNext,
   size,
   onSizeToggle,
   sizeOpen,
@@ -285,159 +285,170 @@ function StackCard({
   onSwap,
 }: {
   product: Product;
-  position: CardPosition;
-  zIndex: number;
-  isFront: boolean;
-  onSwipe: () => void;
+  slot: { left: number; scale: number; opacity: number; zIndex: number };
+  isActive: boolean;
+  onPrev: () => void;
+  onNext: () => void;
   size: string;
   onSizeToggle: () => void;
   sizeOpen: boolean;
   onSizeChange: (s: string) => void;
   onSwap: () => void;
 }) {
-  const x = useMotionValue(0);
-  const dragRotate = useTransform(x, [-300, 0, 300], [-12, 0, 12]);
-  const cardRotate = useTransform(dragRotate, (dr) => position.rotation + dr);
-  const cardOpacity = useTransform(x, [-250, -120, 0, 120, 250], [0.4, 0.85, 1, 0.85, 0.4]);
-  const scale = useTransform(x, [-250, 0, 250], [0.95, 1, 0.95]);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<DragState | null>(null);
 
-  const handleDragEnd = (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
-    const swipedFarEnough = Math.abs(info.offset.x) > SWIPE_THRESHOLD;
-    const swipedFastEnough = Math.abs(info.velocity.x) > SWIPE_VELOCITY;
-
-    if (swipedFarEnough || swipedFastEnough) {
-      const direction = info.offset.x > 0 ? 1 : -1;
-      animate(x, direction * 400, {
-        type: 'spring',
-        stiffness: 200,
-        damping: 25,
-        mass: 0.5,
-        onComplete: () => {
-          x.set(0);
-          onSwipe();
-        },
-      });
-    } else {
-      animate(x, 0, SPRING);
-    }
-  };
-
-  const cardStyle: React.CSSProperties = {
-    position: 'absolute',
-    left: position.x,
-    top: position.y,
-    width: 280,
-    height: 420,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    border: '1px solid #ECECEC',
-    boxShadow: '0 4px 16px -2px rgba(0,0,0,0.125)',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    transformOrigin: 'top left',
-    zIndex,
-  };
-
-  if (!isFront) {
-    return (
-      <motion.div
-        style={{
-          ...cardStyle,
-          rotate: position.rotation,
-        }}
-        animate={{
-          left: position.x,
-          top: position.y,
-          rotate: position.rotation,
-        }}
-        transition={SPRING}
-      >
-        <CardContent
-          product={product}
-          size={size}
-          onSizeToggle={onSizeToggle}
-          sizeOpen={false}
-          onSizeChange={onSizeChange}
-          onSwap={onSwap}
-        />
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div
-      style={{
-        ...cardStyle,
-        x,
-        rotate: cardRotate,
-        opacity: cardOpacity,
-        scale,
-        cursor: 'grab',
-        touchAction: 'none',
-      }}
-      animate={{
-        left: position.x,
-        top: position.y,
-      }}
-      transition={SPRING}
-      drag="x"
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.7}
-      onDragEnd={handleDragEnd}
-      whileTap={{ cursor: 'grabbing' }}
-      whileDrag={{ scale: 1.02 }}
-    >
-      <CardContent
-        product={product}
-        size={size}
-        onSizeToggle={onSizeToggle}
-        sizeOpen={sizeOpen}
-        onSizeChange={onSizeChange}
-        onSwap={onSwap}
-      />
-    </motion.div>
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isActive) return;
+      dragRef.current = {
+        startX: e.clientX,
+        startTime: Date.now(),
+        dragging: false,
+        pointerId: e.pointerId,
+      };
+    },
+    [isActive],
   );
-}
 
-function StackCardSkeleton({
-  position,
-  zIndex,
-}: {
-  position: CardPosition;
-  zIndex: number;
-}) {
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag || !cardRef.current) return;
+      const dx = e.clientX - drag.startX;
+
+      if (!drag.dragging && Math.abs(dx) > DRAG_START_PX) {
+        drag.dragging = true;
+        cardRef.current.style.transition = 'none';
+        cardRef.current.setPointerCapture(drag.pointerId);
+      }
+
+      if (drag.dragging) {
+        cardRef.current.style.transform = `translateY(-50%) scale(${slot.scale}) translateX(${dx}px)`;
+      }
+    },
+    [slot.scale],
+  );
+
+  const handlePointerEnd = useCallback(
+    (e: React.PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag || !cardRef.current) return;
+
+      if (drag.dragging) {
+        const dx = e.clientX - drag.startX;
+        const dt = Date.now() - drag.startTime;
+        const velocity = (Math.abs(dx) / Math.max(dt, 1)) * 1000;
+        const swiped =
+          Math.abs(dx) > SWIPE_THRESHOLD || velocity > SWIPE_VELOCITY;
+
+        cardRef.current.style.transition = CARD_TRANSITION;
+
+        if (swiped) {
+          if (dx < 0) onNext();
+          else onPrev();
+        } else {
+          cardRef.current.style.transform = `translateY(-50%) scale(${slot.scale}) translateX(0px)`;
+        }
+      }
+
+      dragRef.current = null;
+    },
+    [slot.scale, onPrev, onNext],
+  );
+
   return (
     <div
+      ref={cardRef}
       style={{
         position: 'absolute',
-        left: position.x,
-        top: position.y,
-        width: 280,
-        height: 420,
+        left: slot.left,
+        top: '50%',
+        width: CARD_W,
+        height: CARD_H,
         borderRadius: 12,
         backgroundColor: '#FFFFFF',
         border: '1px solid #ECECEC',
-        boxShadow: '0 4px 16px -2px rgba(0,0,0,0.125)',
+        boxShadow: isActive
+          ? '0 8px 32px -4px rgba(0,0,0,0.18)'
+          : '0 4px 16px -2px rgba(0,0,0,0.1)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        transform: `rotate(${position.rotation}deg)`,
-        transformOrigin: 'top left',
-        zIndex,
+        transform: `translateY(-50%) scale(${slot.scale}) translateX(0px)`,
+        opacity: slot.opacity,
+        zIndex: slot.zIndex,
+        transition: CARD_TRANSITION,
+        willChange: 'transform, opacity, left',
+        cursor: isActive ? 'grab' : 'default',
+        touchAction: isActive ? 'pan-y' : 'auto',
+        userSelect: 'none',
+        pointerEvents: slot === HIDDEN_SLOT ? 'none' : 'auto',
       }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
     >
-      <div style={{ width: '100%', flex: 1, backgroundColor: '#F0F0F0' }} />
-      <div style={{ padding: '12px 14px 14px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ width: 120, height: 14, borderRadius: 4, backgroundColor: '#F0F0F0' }} />
-        <div style={{ width: 60, height: 12, borderRadius: 4, backgroundColor: '#F0F0F0' }} />
-      </div>
+      <CardContent
+        product={product}
+        isActive={isActive}
+        size={size}
+        onSizeToggle={onSizeToggle}
+        sizeOpen={isActive ? sizeOpen : false}
+        onSizeChange={onSizeChange}
+        onSwap={onSwap}
+      />
     </div>
   );
 }
 
-function CategoryStack({ stack }: { stack: StackConfig }) {
-  const { combo } = stack;
+function CarouselSkeleton() {
+  return (
+    <div style={{ position: 'relative', width: '100%', height: 420, overflow: 'hidden' }}>
+      {([-1, 0, 1] as const).map((offset) => {
+        const slot = SLOTS[offset];
+        return (
+          <div
+            key={offset}
+            style={{
+              position: 'absolute',
+              left: slot.left,
+              top: '50%',
+              width: CARD_W,
+              height: CARD_H,
+              borderRadius: 12,
+              backgroundColor: '#FFF',
+              border: '1px solid #ECECEC',
+              boxShadow: '0 4px 16px -2px rgba(0,0,0,0.1)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              transform: `translateY(-50%) scale(${slot.scale})`,
+              opacity: slot.opacity,
+              zIndex: slot.zIndex,
+            }}
+          >
+            <div style={{ width: '100%', flex: 1, backgroundColor: '#F0F0F0' }} />
+            <div
+              style={{
+                padding: '12px 14px 14px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+              }}
+            >
+              <div style={{ width: 120, height: 14, borderRadius: 4, backgroundColor: '#F0F0F0' }} />
+              <div style={{ width: 60, height: 12, borderRadius: 4, backgroundColor: '#F0F0F0' }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CategoryCarousel({ combo }: { combo: ComboMeta }) {
   const { data, isLoading } = useProducts({
     vibe: combo.vibe,
     limit: combo.pieceCount,
@@ -459,7 +470,10 @@ function CategoryStack({ stack }: { stack: StackConfig }) {
     if (initialProducts.length === 0) return;
     setSelectedIds((prev) => {
       const source = pool.length > 0 ? pool : initialProducts;
-      if (prev.length === combo.pieceCount && prev.every((id) => source.some((p) => p.id === id))) {
+      if (
+        prev.length === combo.pieceCount &&
+        prev.every((id) => source.some((p) => p.id === id))
+      ) {
         return prev;
       }
       return initialProducts.slice(0, combo.pieceCount).map((p) => p.id);
@@ -468,13 +482,12 @@ function CategoryStack({ stack }: { stack: StackConfig }) {
 
   const allProducts: Product[] = useMemo(() => {
     const source = pool.length > 0 ? pool : initialProducts;
-    return selectedIds.map((id) => source.find((p) => p.id === id)).filter((p): p is Product => !!p);
+    return selectedIds
+      .map((id) => source.find((p) => p.id === id))
+      .filter((p): p is Product => !!p);
   }, [selectedIds, pool, initialProducts]);
 
-  // Only the first 3 products are shown in the visual stack
-  const visibleProducts = allProducts.slice(0, 3);
-
-  const [order, setOrder] = useState([0, 1, 2]);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [sizes, setSizes] = useState<Record<string, string>>({});
   const [openSizePicker, setOpenSizePicker] = useState<string | null>(null);
   const [swapSlot, setSwapSlot] = useState<number | null>(null);
@@ -484,31 +497,35 @@ function CategoryStack({ stack }: { stack: StackConfig }) {
   const { addToast } = useToast();
 
   const getSize = (product: Product) => sizes[product.id] || defaultSize(product);
+  const total = allProducts.length;
+
+  const handleNext = useCallback(() => {
+    if (total <= 1) return;
+    setOpenSizePicker(null);
+    setActiveIndex((prev) => (prev + 1) % total);
+  }, [total]);
+
+  const handlePrev = useCallback(() => {
+    if (total <= 1) return;
+    setOpenSizePicker(null);
+    setActiveIndex((prev) => (prev - 1 + total) % total);
+  }, [total]);
 
   const discountPct = comboDiscountPct(combo);
   const individualTotal = useMemo(
     () => comboIndividualTotal(allProducts, combo.pieceCount),
-    [allProducts, combo.pieceCount]
+    [allProducts, combo.pieceCount],
   );
   const bundlePrice = useMemo(
     () => comboPrice(individualTotal, discountPct),
-    [individualTotal, discountPct]
+    [individualTotal, discountPct],
   );
   const savedAmount = individualTotal - bundlePrice;
 
-  const handleSwipe = useCallback(() => {
+  const handleSwap = useCallback(() => {
     setOpenSizePicker(null);
-    setOrder((prev) => {
-      const front = prev[prev.length - 1];
-      return [front, ...prev.slice(0, -1)];
-    });
-  }, []);
-
-  const handleSwap = useCallback((slotIndex: number) => {
-    setOpenSizePicker(null);
-    const productIdx = order[slotIndex];
-    setSwapSlot(productIdx);
-  }, [order]);
+    setSwapSlot(activeIndex);
+  }, [activeIndex]);
 
   const applySwap = useCallback(
     (next: Product) => {
@@ -524,7 +541,9 @@ function CategoryStack({ stack }: { stack: StackConfig }) {
         if (oldId) {
           const oldSize = copy[oldId];
           if (oldSize) {
-            const nextHasSize = next.variants.some((v) => v.size === oldSize && v.stock > 0);
+            const nextHasSize = next.variants.some(
+              (v) => v.size === oldSize && v.stock > 0,
+            );
             if (nextHasSize) copy[next.id] = oldSize;
             delete copy[oldId];
           }
@@ -532,7 +551,7 @@ function CategoryStack({ stack }: { stack: StackConfig }) {
         return copy;
       });
     },
-    [swapSlot, selectedIds]
+    [swapSlot, selectedIds],
   );
 
   const handleAddAll = () => {
@@ -564,17 +583,18 @@ function CategoryStack({ stack }: { stack: StackConfig }) {
     setTimeout(() => openCart(), 200);
   };
 
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <CarouselSkeleton />
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          height: 500,
-          overflow: 'visible',
-        }}
-      >
-        {/* Category label */}
+      {/* Carousel */}
+      <div style={{ position: 'relative', width: '100%', height: 420, overflow: 'hidden' }}>
         <span
           style={{
             position: 'absolute',
@@ -593,24 +613,19 @@ function CategoryStack({ stack }: { stack: StackConfig }) {
           {combo.kicker}
         </span>
 
-        {/* Stacked cards */}
-        {order.map((productIdx, renderIdx) => {
-          const pos = stack.cards[renderIdx];
-          const product = visibleProducts[productIdx];
-          const isFront = renderIdx === order.length - 1;
-
-          if (isLoading || !product) {
-            return <StackCardSkeleton key={renderIdx} position={pos} zIndex={renderIdx + 1} />;
-          }
+        {allProducts.map((product, i) => {
+          const offset = getSlotOffset(i, activeIndex, total);
+          const slot = getSlot(offset);
+          const isActive = offset === 0;
 
           return (
-            <StackCard
+            <CarouselCard
               key={product.id}
               product={product}
-              position={pos}
-              zIndex={renderIdx + 1}
-              isFront={isFront}
-              onSwipe={handleSwipe}
+              slot={slot}
+              isActive={isActive}
+              onPrev={handlePrev}
+              onNext={handleNext}
               size={getSize(product)}
               onSizeToggle={() =>
                 setOpenSizePicker((cur) => (cur === product.id ? null : product.id))
@@ -620,13 +635,39 @@ function CategoryStack({ stack }: { stack: StackConfig }) {
                 setSizes((prev) => ({ ...prev, [product.id]: s }));
                 setOpenSizePicker(null);
               }}
-              onSwap={() => handleSwap(renderIdx)}
+              onSwap={handleSwap}
             />
           );
         })}
       </div>
 
-      {/* Pricing row */}
+      {/* Dots */}
+      {total > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, alignItems: 'center' }}>
+          {allProducts.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                setOpenSizePicker(null);
+                setActiveIndex(i);
+              }}
+              style={{
+                width: i === activeIndex ? 8 : 6,
+                height: i === activeIndex ? 8 : 6,
+                borderRadius: 9999,
+                border: 'none',
+                backgroundColor: i === activeIndex ? '#000' : '#D0D0D0',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'all 0.3s ease',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Pricing */}
       {individualTotal > 0 && (
         <div
           style={{
@@ -685,7 +726,7 @@ function CategoryStack({ stack }: { stack: StackConfig }) {
         </div>
       )}
 
-      {/* Add to Bag button */}
+      {/* Add to Bag */}
       <button
         type="button"
         onClick={handleAddAll}
@@ -713,7 +754,7 @@ function CategoryStack({ stack }: { stack: StackConfig }) {
           : 'LOADING…'}
       </button>
 
-      {/* Save label */}
+      {/* Save hint */}
       {savedAmount > 0 && (
         <span
           style={{
@@ -757,8 +798,8 @@ export function ProductStacks() {
         width: '100%',
       }}
     >
-      {STACKS.map((stack) => (
-        <CategoryStack key={stack.combo.slug} stack={stack} />
+      {COMBOS.map((combo) => (
+        <CategoryCarousel key={combo.slug} combo={combo} />
       ))}
     </div>
   );
