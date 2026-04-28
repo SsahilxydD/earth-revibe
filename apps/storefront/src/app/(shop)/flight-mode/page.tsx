@@ -15,6 +15,7 @@ import {
 } from '@/lib/flight-mode-data';
 import { useProducts } from '@/hooks/use-products';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
+import { ProductStacks } from '@/components/product/product-stacks';
 
 type Filter = 'all' | '3-piece' | '5-piece' | 'weekender';
 
@@ -138,19 +139,8 @@ export default function FlightModePage() {
 
       <div style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
-      {/* Bundle list — 4 unified cards (designed: PHOR6, gItM2, IqoOY, puyFf) */}
-      <div
-        style={{
-          padding: '20px 20px 40px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
-        {visible.map((combo, i) => (
-          <ComboCard key={combo.slug} combo={combo} index={i} />
-        ))}
-      </div>
+      {/* Product stacks — 4 category stacks with rotated cards */}
+      <ProductStacks />
 
       {/* BUILD YOUR OWN closer */}
       <section
