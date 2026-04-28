@@ -123,9 +123,12 @@ export const productService = {
           categoryId: true,
           createdAt: true,
           updatedAt: true,
+          // Up to 4 images per card — enables the tile-level swipe carousel
+          // without ballooning the payload. Order by sortOrder so the slider
+          // matches the merchandiser's intended sequence.
           images: {
-            where: { isPrimary: true },
-            take: 1,
+            orderBy: { sortOrder: 'asc' },
+            take: 4,
           },
           // ProductCard only needs stock, but Flight Mode bundles read
           // variants.{id,size,color} from the same list endpoint to render

@@ -20,7 +20,7 @@ export const searchService = {
         skip,
         take: limit,
         include: {
-          images: { where: { isPrimary: true }, take: 1 },
+          images: { orderBy: { sortOrder: 'asc' }, take: 4 },
           category: { select: { name: true, slug: true } },
         },
         orderBy: { createdAt: 'desc' },

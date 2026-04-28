@@ -5243,7 +5243,7 @@
       "y": 3808,
       "name": "Category — Products",
       "clip": true,
-      "width": 393,
+      "width": 473,
       "height": 1609,
       "fill": "#FFFFFFFF",
       "layout": "vertical",
@@ -5837,119 +5837,128 @@
           "id": "qrELL",
           "name": "Product Grid",
           "width": "fill_container",
-          "height": 612,
+          "fill": "#FFFFFFFF",
           "layout": "vertical",
-          "gap": 20,
           "padding": [
-            14,
-            28,
-            28,
-            28
+            0,
+            0,
+            32,
+            0
           ],
           "children": [
             {
               "type": "frame",
-              "id": "t9f48",
-              "name": "pRow1",
+              "id": "CsncB",
+              "name": "catHeader",
               "width": "fill_container",
-              "gap": 14,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": [
+                20,
+                16,
+                16,
+                16
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "OJJ2i",
+                  "name": "catTitle",
+                  "fill": "#000000FF",
+                  "content": "shirts",
+                  "fontFamily": "Inter",
+                  "fontSize": 22,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "C2mZyk",
+                  "name": "catCount",
+                  "fill": "#999999FF",
+                  "content": "24 products",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "n61IR9",
+              "name": "row1",
+              "width": "fill_container",
               "children": [
                 {
                   "type": "frame",
-                  "id": "6P7Co",
-                  "name": "p1",
+                  "id": "zxaQY",
+                  "name": "tile1",
                   "width": "fill_container",
                   "layout": "vertical",
                   "gap": 8,
+                  "padding": [
+                    0,
+                    1,
+                    0,
+                    0
+                  ],
                   "children": [
                     {
                       "type": "frame",
-                      "id": "jy22M",
-                      "name": "p1Img",
+                      "id": "aqYbE",
+                      "name": "img1",
                       "width": "fill_container",
-                      "height": 210,
-                      "fill": "#F0F0F0FF",
+                      "height": 240,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1777388047815.png",
+                        "mode": "fill"
+                      },
                       "layout": "none",
                       "children": [
                         {
-                          "type": "icon_font",
-                          "id": "lb2AN",
-                          "x": 130,
-                          "y": 10,
-                          "name": "p1Heart",
-                          "width": 16,
-                          "height": 16,
-                          "iconFontName": "heart",
-                          "iconFontFamily": "lucide",
-                          "fill": "#CCCCCCFF"
-                        },
-                        {
                           "type": "frame",
-                          "id": "IKiZw",
-                          "x": 10,
-                          "y": 10,
-                          "name": "newBadge",
-                          "height": 20,
-                          "fill": "#000000FF",
-                          "padding": [
-                            0,
-                            8
-                          ],
+                          "id": "qRhxO",
+                          "x": 60,
+                          "y": 220,
+                          "name": "dots",
+                          "width": 60,
+                          "height": 8,
+                          "gap": 5,
                           "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "AhdsK",
-                              "name": "newText",
-                              "fill": "#FFFFFFFF",
-                              "content": "NEW",
-                              "fontFamily": "Inter",
-                              "fontSize": 8,
-                              "fontWeight": "normal",
-                              "letterSpacing": 1.5
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "1IqaG",
-                          "x": 10,
-                          "y": 182,
-                          "name": "urgency1",
-                          "height": 18,
-                          "fill": "#FFFFFFFF",
-                          "padding": [
-                            0,
-                            8
-                          ],
                           "alignItems": "center",
                           "children": [
                             {
                               "type": "ellipse",
-                              "id": "6pIkF",
-                              "name": "urgency1Dot",
-                              "fill": "#EF4444FF",
-                              "width": 5,
-                              "height": 5
+                              "id": "kLuGv",
+                              "name": "d1",
+                              "fill": "#FFFFFFFF",
+                              "width": 6,
+                              "height": 6
                             },
                             {
-                              "type": "frame",
-                              "id": "eNMdl",
-                              "name": "urgency1Spacer",
-                              "width": 4,
-                              "height": 1
+                              "type": "ellipse",
+                              "id": "Y9xRR",
+                              "name": "d2",
+                              "fill": "#FFFFFF80",
+                              "width": 6,
+                              "height": 6
                             },
                             {
-                              "type": "text",
-                              "id": "C5dHM",
-                              "name": "urgency1Text",
-                              "fill": "#000000FF",
-                              "content": "Only 3 left",
-                              "fontFamily": "Inter",
-                              "fontSize": 8,
-                              "fontWeight": "normal",
-                              "letterSpacing": 0.3
+                              "type": "ellipse",
+                              "id": "TcDce",
+                              "name": "d3",
+                              "fill": "#FFFFFF80",
+                              "width": 6,
+                              "height": 6
+                            },
+                            {
+                              "type": "ellipse",
+                              "id": "dYytq",
+                              "name": "d4",
+                              "fill": "#FFFFFF80",
+                              "width": 6,
+                              "height": 6
                             }
                           ]
                         }
@@ -5957,672 +5966,58 @@
                     },
                     {
                       "type": "text",
-                      "id": "lq5tw",
-                      "name": "p1Name",
+                      "id": "LXDfj",
+                      "name": "n1",
                       "fill": "#000000FF",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Relaxed Linen Shirt",
+                      "content": "100% linen relaxed fit shirt - blush cloud",
+                      "lineHeight": 1.4,
                       "fontFamily": "Inter",
-                      "fontSize": 12,
+                      "fontSize": 13,
                       "fontWeight": "normal"
                     },
                     {
-                      "type": "text",
-                      "id": "HJius",
-                      "name": "mat1",
-                      "fill": "#CCCCCCFF",
-                      "content": "Lightweight linen · Breezy fit",
-                      "fontFamily": "Inter",
-                      "fontSize": 9,
-                      "fontWeight": "300",
-                      "letterSpacing": 0.3
-                    },
-                    {
-                      "type": "text",
-                      "id": "n4xRC",
-                      "name": "p1Price",
-                      "fill": "#000000FF",
-                      "content": "₹1,290",
-                      "fontFamily": "Inter",
-                      "fontSize": 12,
-                      "fontWeight": "300"
-                    },
-                    {
                       "type": "frame",
-                      "id": "LY73T",
-                      "name": "r1",
-                      "gap": 4,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "8gW28",
-                          "name": "r1Stars",
-                          "fill": "#000000FF",
-                          "content": "★★★★★",
-                          "fontFamily": "Inter",
-                          "fontSize": 9,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "HdAMr",
-                          "name": "r1Count",
-                          "fill": "#999999FF",
-                          "content": "(42)",
-                          "fontFamily": "Inter",
-                          "fontSize": 9,
-                          "fontWeight": "300"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "bGjuh",
-                      "name": "sw1",
-                      "gap": 4,
-                      "children": [
-                        {
-                          "type": "ellipse",
-                          "id": "UAHWx",
-                          "name": "sw1a",
-                          "fill": "#D2B48CFF",
-                          "width": 10,
-                          "height": 10
-                        },
-                        {
-                          "type": "ellipse",
-                          "id": "0NfnT",
-                          "name": "sw1b",
-                          "fill": "#FFFFFFFF",
-                          "width": 10,
-                          "height": 10,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "#E5E5E5FF"
-                          }
-                        },
-                        {
-                          "type": "ellipse",
-                          "id": "OvWNA",
-                          "name": "sw1c",
-                          "fill": "#556B2FFF",
-                          "width": 10,
-                          "height": 10
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "WFgvZ",
-                      "name": "deliveryP1",
-                      "fill": "#999999FF",
-                      "content": "Get it by Thursday",
-                      "fontFamily": "Inter",
-                      "fontSize": 9,
-                      "fontWeight": "300"
-                    },
-                    {
-                      "type": "frame",
-                      "id": "yYD5j",
-                      "name": "qaBtn1",
-                      "width": "fill_container",
-                      "height": 34,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#000000FF"
-                      },
-                      "gap": 6,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "s76mQ",
-                          "name": "qaBtn1Icon",
-                          "width": 12,
-                          "height": 12,
-                          "iconFontName": "plus",
-                          "iconFontFamily": "lucide",
-                          "fill": "#000000FF"
-                        },
-                        {
-                          "type": "text",
-                          "id": "hQowS",
-                          "name": "qaBtn1Text",
-                          "fill": "#000000FF",
-                          "content": "QUICK ADD",
-                          "fontFamily": "Inter",
-                          "fontSize": 9,
-                          "fontWeight": "normal",
-                          "letterSpacing": 1.5
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "L5L0c",
-                  "name": "p2",
-                  "width": "fill_container",
-                  "layout": "vertical",
-                  "gap": 8,
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "SKkIy",
-                      "name": "p2Img",
-                      "width": "fill_container",
-                      "height": 210,
-                      "fill": "#E8E8E8FF",
-                      "layout": "none",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "pT0Vy",
-                          "x": 130,
-                          "y": 10,
-                          "name": "p2Heart",
-                          "width": 16,
-                          "height": 16,
-                          "iconFontName": "heart",
-                          "iconFontFamily": "lucide",
-                          "fill": "#CCCCCCFF"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "Rm1MP",
-                          "x": 10,
-                          "y": 10,
-                          "name": "saleBadge",
-                          "height": 20,
-                          "fill": "#FFFFFFFF",
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "#E5E5E5FF"
-                          },
-                          "padding": [
-                            0,
-                            8
-                          ],
-                          "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "2nYPZ",
-                              "name": "saleText",
-                              "fill": "#000000FF",
-                              "content": "-34%",
-                              "fontFamily": "Inter",
-                              "fontSize": 8,
-                              "fontWeight": "normal",
-                              "letterSpacing": 0.5
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "CQ050",
-                      "name": "p2Name",
-                      "fill": "#000000FF",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "Breezy Polo — Olive",
-                      "fontFamily": "Inter",
-                      "fontSize": 12,
-                      "fontWeight": "normal"
-                    },
-                    {
-                      "type": "text",
-                      "id": "UKaqU",
-                      "name": "mat2",
-                      "fill": "#CCCCCCFF",
-                      "content": "Soft cotton · Resort collar",
-                      "fontFamily": "Inter",
-                      "fontSize": 9,
-                      "fontWeight": "300",
-                      "letterSpacing": 0.3
-                    },
-                    {
-                      "type": "frame",
-                      "id": "gMUo1",
-                      "name": "p2PriceRow",
-                      "width": "fill_container",
+                      "id": "m8uv0",
+                      "name": "priceRow1",
                       "gap": 6,
                       "alignItems": "center",
                       "children": [
                         {
                           "type": "text",
-                          "id": "sBYB3",
-                          "name": "p2Sale",
+                          "id": "rUflE",
+                          "name": "newP1",
                           "fill": "#000000FF",
-                          "content": "₹990",
+                          "content": "₹ 2,284.00",
                           "fontFamily": "Inter",
                           "fontSize": 12,
-                          "fontWeight": "300"
-                        },
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "FcJEk",
+                      "name": "addBtn1",
+                      "width": "fill_container",
+                      "height": 38,
+                      "fill": "#000000FF",
+                      "padding": [
+                        0,
+                        8
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
                         {
                           "type": "text",
-                          "id": "GpBi6",
-                          "name": "p2Old",
-                          "fill": "#CCCCCCFF",
-                          "content": "₹1,490",
+                          "id": "yvKlu",
+                          "name": "b1Lbl",
+                          "fill": "#FFFFFFFF",
+                          "content": "ADD TO BAG",
                           "fontFamily": "Inter",
                           "fontSize": 11,
-                          "fontWeight": "300"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "DKdrD",
-                      "name": "savingsText",
-                      "fill": "#22C55EFF",
-                      "content": "You save ₹500",
-                      "fontFamily": "Inter",
-                      "fontSize": 9,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.3
-                    },
-                    {
-                      "type": "frame",
-                      "id": "8clCG",
-                      "name": "r2",
-                      "gap": 4,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "0uau2",
-                          "name": "r2Stars",
-                          "fill": "#000000FF",
-                          "content": "★★★★☆",
-                          "fontFamily": "Inter",
-                          "fontSize": 9,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "kfq8V",
-                          "name": "r2Count",
-                          "fill": "#999999FF",
-                          "content": "(18)",
-                          "fontFamily": "Inter",
-                          "fontSize": 9,
-                          "fontWeight": "300"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "E3d4h",
-                      "name": "sw2",
-                      "gap": 4,
-                      "children": [
-                        {
-                          "type": "ellipse",
-                          "id": "gCcWK",
-                          "name": "sw2a",
-                          "fill": "#556B2FFF",
-                          "width": 10,
-                          "height": 10
-                        },
-                        {
-                          "type": "ellipse",
-                          "id": "AhUr3",
-                          "name": "sw2b",
-                          "fill": "#1C1C1CFF",
-                          "width": 10,
-                          "height": 10
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "HhtKO",
-                      "name": "deliveryP2",
-                      "fill": "#999999FF",
-                      "content": "Get it by Thursday",
-                      "fontFamily": "Inter",
-                      "fontSize": 9,
-                      "fontWeight": "300"
-                    },
-                    {
-                      "type": "frame",
-                      "id": "aYJMD",
-                      "name": "qaBtn2",
-                      "width": "fill_container",
-                      "height": 34,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#000000FF"
-                      },
-                      "gap": 6,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "gDLBV",
-                          "name": "qaBtn2Icon",
-                          "width": 12,
-                          "height": 12,
-                          "iconFontName": "plus",
-                          "iconFontFamily": "lucide",
-                          "fill": "#000000FF"
-                        },
-                        {
-                          "type": "text",
-                          "id": "jyqvt",
-                          "name": "qaBtn2Text",
-                          "fill": "#000000FF",
-                          "content": "QUICK ADD",
-                          "fontFamily": "Inter",
-                          "fontSize": 9,
-                          "fontWeight": "normal",
-                          "letterSpacing": 1.5
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "0GeGq",
-              "name": "Vacation Story",
-              "width": "fill_container",
-              "height": 80,
-              "layout": "vertical",
-              "gap": 8,
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "line",
-                  "id": "kTpkL",
-                  "name": "vacLine1",
-                  "width": 24,
-                  "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#CCCCCCFF"
-                  }
-                },
-                {
-                  "type": "text",
-                  "id": "5dIEF",
-                  "name": "vacQuote",
-                  "fill": "#999999FF",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "Ever heard of a brand who pays you back for your clothes ?",
-                  "textAlign": "center",
-                  "fontFamily": "Inter",
-                  "fontSize": 13,
-                  "fontWeight": "300",
-                  "fontStyle": "italic"
-                },
-                {
-                  "type": "line",
-                  "id": "xfi44",
-                  "name": "vacLine2",
-                  "width": 24,
-                  "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#CCCCCCFF"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "YM7kn",
-              "name": "pRow2",
-              "width": "fill_container",
-              "gap": 14,
-              "children": [
-                {
-                  "type": "frame",
-                  "id": "LqOhM",
-                  "name": "p3",
-                  "width": "fill_container",
-                  "layout": "vertical",
-                  "gap": 8,
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "Ljxu3",
-                      "name": "p3Img",
-                      "width": "fill_container",
-                      "height": 210,
-                      "fill": "#E0E0E0FF",
-                      "layout": "none",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "L4BQM",
-                          "x": 130,
-                          "y": 10,
-                          "name": "p3Heart",
-                          "width": 16,
-                          "height": 16,
-                          "iconFontName": "heart",
-                          "iconFontFamily": "lucide",
-                          "fill": "#CCCCCCFF"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "hpM8Z",
-                          "x": 10,
-                          "y": 10,
-                          "name": "bestBadge",
-                          "height": 20,
-                          "fill": "#000000FF",
-                          "padding": [
-                            0,
-                            8
-                          ],
-                          "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "tGgIQ",
-                              "name": "bestText",
-                              "fill": "#FFFFFFFF",
-                              "content": "BESTSELLER",
-                              "fontFamily": "Inter",
-                              "fontSize": 8,
-                              "fontWeight": "normal",
-                              "letterSpacing": 1.5
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "s9vOm",
-                      "name": "p3Name",
-                      "fill": "#000000FF",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "Vacation Shirt — Sky",
-                      "fontFamily": "Inter",
-                      "fontSize": 12,
-                      "fontWeight": "normal"
-                    },
-                    {
-                      "type": "text",
-                      "id": "JInxx",
-                      "name": "mat3",
-                      "fill": "#CCCCCCFF",
-                      "content": "Airy blend · Relaxed drape",
-                      "fontFamily": "Inter",
-                      "fontSize": 9,
-                      "fontWeight": "300",
-                      "letterSpacing": 0.3
-                    },
-                    {
-                      "type": "text",
-                      "id": "GFRjv",
-                      "name": "p3Price",
-                      "fill": "#000000FF",
-                      "content": "₹1,490",
-                      "fontFamily": "Inter",
-                      "fontSize": 12,
-                      "fontWeight": "300"
-                    },
-                    {
-                      "type": "frame",
-                      "id": "Z29xE",
-                      "name": "r3",
-                      "gap": 4,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "Aqjll",
-                          "name": "r3Stars",
-                          "fill": "#000000FF",
-                          "content": "★★★★★",
-                          "fontFamily": "Inter",
-                          "fontSize": 9,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "qUjwY",
-                          "name": "r3Count",
-                          "fill": "#999999FF",
-                          "content": "(67)",
-                          "fontFamily": "Inter",
-                          "fontSize": 9,
-                          "fontWeight": "300"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "PLHMD",
-                      "name": "viewerRow",
-                      "gap": 4,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "ellipse",
-                          "id": "l9tJV",
-                          "name": "viewerDot",
-                          "fill": "#22C55EFF",
-                          "width": 5,
-                          "height": 5
-                        },
-                        {
-                          "type": "text",
-                          "id": "JJnED",
-                          "name": "viewerText",
-                          "fill": "#999999FF",
-                          "content": "12 people viewing",
-                          "fontFamily": "Inter",
-                          "fontSize": 9,
-                          "fontWeight": "300"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "aZGZx",
-                      "name": "sw3",
-                      "gap": 4,
-                      "children": [
-                        {
-                          "type": "ellipse",
-                          "id": "QXoBw",
-                          "name": "sw3a",
-                          "fill": "#87CEEBFF",
-                          "width": 10,
-                          "height": 10
-                        },
-                        {
-                          "type": "ellipse",
-                          "id": "pBmho",
-                          "name": "sw3b",
-                          "fill": "#F5F5DCFF",
-                          "width": 10,
-                          "height": 10,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "#E5E5E5FF"
-                          }
-                        },
-                        {
-                          "type": "ellipse",
-                          "id": "Pkd9m",
-                          "name": "sw3c",
-                          "fill": "#1C1C1CFF",
-                          "width": 10,
-                          "height": 10
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "12Sza",
-                      "name": "deliveryP3",
-                      "fill": "#999999FF",
-                      "content": "Get it by Thursday",
-                      "fontFamily": "Inter",
-                      "fontSize": 9,
-                      "fontWeight": "300"
-                    },
-                    {
-                      "type": "frame",
-                      "id": "Li8Ow",
-                      "name": "qaBtn3",
-                      "width": "fill_container",
-                      "height": 34,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#000000FF"
-                      },
-                      "gap": 6,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "8szm2",
-                          "name": "qaBtn3Icon",
-                          "width": 12,
-                          "height": 12,
-                          "iconFontName": "plus",
-                          "iconFontFamily": "lucide",
-                          "fill": "#000000FF"
-                        },
-                        {
-                          "type": "text",
-                          "id": "M74yL",
-                          "name": "qaBtn3Text",
-                          "fill": "#000000FF",
-                          "content": "QUICK ADD",
-                          "fontFamily": "Inter",
-                          "fontSize": 9,
                           "fontWeight": "normal",
                           "letterSpacing": 1.5
                         }
@@ -6632,116 +6027,85 @@
                 },
                 {
                   "type": "frame",
-                  "id": "D1Olr",
-                  "name": "p4",
+                  "id": "ioMVA",
+                  "name": "tile2",
                   "width": "fill_container",
                   "layout": "vertical",
                   "gap": 8,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    1
+                  ],
                   "children": [
                     {
                       "type": "frame",
-                      "id": "pqPJf",
-                      "name": "p4Img",
+                      "id": "Ij8EK",
+                      "name": "img2",
                       "width": "fill_container",
-                      "height": 210,
-                      "fill": "#D8D8D8FF",
-                      "layout": "none",
+                      "height": 240,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1777388035681.png",
+                        "mode": "fill"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "rxf97",
+                      "name": "n2",
+                      "fill": "#000000FF",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "100% linen relaxed fit shirt - blue rain",
+                      "lineHeight": 1.4,
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Y60h3j",
+                      "name": "priceRow2",
+                      "gap": 6,
+                      "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
-                          "id": "Lmb80",
-                          "x": 130,
-                          "y": 10,
-                          "name": "p4Heart",
-                          "width": 16,
-                          "height": 16,
-                          "iconFontName": "heart",
-                          "iconFontFamily": "lucide",
-                          "fill": "#CCCCCCFF"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "ZA74W",
-                          "x": 0,
-                          "y": 0,
-                          "name": "p4SoldOut",
-                          "width": "fill_container(0)",
-                          "height": "fill_container(0)",
-                          "fill": "#00000066",
-                          "layout": "vertical",
-                          "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "Z92a8",
-                              "name": "p4SoldText",
-                              "fill": "#FFFFFFFF",
-                              "content": "SOLD OUT",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal",
-                              "letterSpacing": 1.5
-                            }
-                          ]
+                          "type": "text",
+                          "id": "sLZkQ",
+                          "name": "newP2",
+                          "fill": "#000000FF",
+                          "content": "₹ 2,125.00",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
                     {
-                      "type": "text",
-                      "id": "NhnUM",
-                      "name": "p4Name",
-                      "fill": "#999999FF",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "Resort Shorts — Beige",
-                      "fontFamily": "Inter",
-                      "fontSize": 12,
-                      "fontWeight": "normal"
-                    },
-                    {
-                      "type": "text",
-                      "id": "Xdswn",
-                      "name": "p4Price",
-                      "fill": "#999999FF",
-                      "content": "₹890",
-                      "fontFamily": "Inter",
-                      "fontSize": 12,
-                      "fontWeight": "300"
-                    },
-                    {
                       "type": "frame",
-                      "id": "gRZU2",
-                      "name": "notifyBtn",
+                      "id": "WoImY",
+                      "name": "addBtn2",
                       "width": "fill_container",
-                      "height": 34,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
-                      "gap": 6,
+                      "height": 38,
+                      "fill": "#000000FF",
+                      "padding": [
+                        0,
+                        8
+                      ],
                       "justifyContent": "center",
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
-                          "id": "gzX0Z",
-                          "name": "notifyIcon",
-                          "width": 12,
-                          "height": 12,
-                          "iconFontName": "bell",
-                          "iconFontFamily": "lucide",
-                          "fill": "#999999FF"
-                        },
-                        {
                           "type": "text",
-                          "id": "GTLOL",
-                          "name": "notifyText",
-                          "fill": "#999999FF",
-                          "content": "NOTIFY ME",
+                          "id": "B3qevY",
+                          "name": "b2Lbl",
+                          "fill": "#FFFFFFFF",
+                          "content": "ADD TO BAG",
                           "fontFamily": "Inter",
-                          "fontSize": 9,
+                          "fontSize": 11,
                           "fontWeight": "normal",
                           "letterSpacing": 1.5
                         }
@@ -6753,150 +6117,189 @@
             },
             {
               "type": "frame",
-              "id": "0pfXv",
-              "name": "trustStrip",
+              "id": "OpUOv",
+              "name": "row2",
               "width": "fill_container",
               "padding": [
-                20,
+                16,
                 0,
                 0,
                 0
               ],
-              "justifyContent": "space_between",
               "children": [
                 {
                   "type": "frame",
-                  "id": "9HfLy",
-                  "name": "t1",
+                  "id": "Z4NK0",
+                  "name": "tile3",
+                  "width": "fill_container",
                   "layout": "vertical",
-                  "gap": 4,
-                  "alignItems": "center",
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    1,
+                    0,
+                    0
+                  ],
                   "children": [
                     {
-                      "type": "icon_font",
-                      "id": "SNmy5",
-                      "name": "t1Icon",
-                      "width": 16,
-                      "height": 16,
-                      "iconFontName": "shield-check",
-                      "iconFontFamily": "lucide",
-                      "fill": "#CCCCCCFF"
+                      "type": "frame",
+                      "id": "VMvCY",
+                      "name": "img3",
+                      "width": "fill_container",
+                      "height": 240,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1777388049685.png",
+                        "mode": "fill"
+                      }
                     },
                     {
                       "type": "text",
-                      "id": "RoHm3",
-                      "name": "t1Text",
-                      "fill": "#CCCCCCFF",
+                      "id": "vSurh",
+                      "name": "n3",
+                      "fill": "#000000FF",
                       "textGrowth": "fixed-width",
-                      "width": 50,
-                      "content": "Secure\nPayment",
-                      "lineHeight": 1.3,
-                      "textAlign": "center",
+                      "width": "fill_container",
+                      "content": "100% linen relaxed fit shirt - vanila",
+                      "lineHeight": 1.4,
                       "fontFamily": "Inter",
-                      "fontSize": 8,
-                      "fontWeight": "300"
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "W4C6A",
+                      "name": "priceRow3",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Q61uo",
+                          "name": "newP3",
+                          "fill": "#000000FF",
+                          "content": "₹ 2,285.00",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "JtHPe",
+                      "name": "addBtn3",
+                      "width": "fill_container",
+                      "height": 38,
+                      "fill": "#000000FF",
+                      "padding": [
+                        0,
+                        8
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "BBQMZ",
+                          "name": "b3Lbl",
+                          "fill": "#FFFFFFFF",
+                          "content": "ADD TO BAG",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal",
+                          "letterSpacing": 1.5
+                        }
+                      ]
                     }
                   ]
                 },
                 {
                   "type": "frame",
-                  "id": "UwJvY",
-                  "name": "t2",
+                  "id": "CeHGG",
+                  "name": "tile4",
+                  "width": "fill_container",
                   "layout": "vertical",
-                  "gap": 4,
-                  "alignItems": "center",
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    1
+                  ],
                   "children": [
                     {
-                      "type": "icon_font",
-                      "id": "6p5p5",
-                      "name": "t2Icon",
-                      "width": 16,
-                      "height": 16,
-                      "iconFontName": "refresh-cw",
-                      "iconFontFamily": "lucide",
-                      "fill": "#CCCCCCFF"
+                      "type": "frame",
+                      "id": "oltdp",
+                      "name": "img4",
+                      "width": "fill_container",
+                      "height": 240,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1777388049737.png",
+                        "mode": "fill"
+                      }
                     },
                     {
                       "type": "text",
-                      "id": "lops6",
-                      "name": "t2Text",
-                      "fill": "#CCCCCCFF",
+                      "id": "Py1Ki",
+                      "name": "n4",
+                      "fill": "#000000FF",
                       "textGrowth": "fixed-width",
-                      "width": 50,
-                      "content": "Easy\nReturns",
-                      "lineHeight": 1.3,
-                      "textAlign": "center",
+                      "width": "fill_container",
+                      "content": "100% linen relaxed fit shirt - brown",
+                      "lineHeight": 1.4,
                       "fontFamily": "Inter",
-                      "fontSize": 8,
-                      "fontWeight": "300"
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "w9Sv0",
-                  "name": "t3",
-                  "layout": "vertical",
-                  "gap": 4,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "icon_font",
-                      "id": "rAQO3",
-                      "name": "t3Icon",
-                      "width": 16,
-                      "height": 16,
-                      "iconFontName": "truck",
-                      "iconFontFamily": "lucide",
-                      "fill": "#CCCCCCFF"
+                      "fontSize": 13,
+                      "fontWeight": "normal"
                     },
                     {
-                      "type": "text",
-                      "id": "L8Y71",
-                      "name": "t3Text",
-                      "fill": "#CCCCCCFF",
-                      "textGrowth": "fixed-width",
-                      "width": 50,
-                      "content": "Free\nShipping",
-                      "lineHeight": 1.3,
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 8,
-                      "fontWeight": "300"
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "atD7z",
-                  "name": "t4",
-                  "layout": "vertical",
-                  "gap": 4,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "icon_font",
-                      "id": "FXb9X",
-                      "name": "t4Icon",
-                      "width": 16,
-                      "height": 16,
-                      "iconFontName": "headphones",
-                      "iconFontFamily": "lucide",
-                      "fill": "#CCCCCCFF"
+                      "type": "frame",
+                      "id": "Ewdxn",
+                      "name": "priceRow4",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "MoVXQ",
+                          "name": "newP4",
+                          "fill": "#000000FF",
+                          "content": "₹ 2,094.00",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "id": "VekwL",
-                      "name": "t4Text",
-                      "fill": "#CCCCCCFF",
-                      "textGrowth": "fixed-width",
-                      "width": 50,
-                      "content": "24/7\nSupport",
-                      "lineHeight": 1.3,
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 8,
-                      "fontWeight": "300"
+                      "type": "frame",
+                      "id": "aLRGV",
+                      "name": "addBtn4",
+                      "width": "fill_container",
+                      "height": 38,
+                      "fill": "#000000FF",
+                      "padding": [
+                        0,
+                        8
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "PN26U",
+                          "name": "b4Lbl",
+                          "fill": "#FFFFFFFF",
+                          "content": "ADD TO BAG",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal",
+                          "letterSpacing": 1.5
+                        }
+                      ]
                     }
                   ]
                 }
@@ -12855,7 +12258,7 @@
       "name": "Combos — Flight Mode v3",
       "clip": true,
       "width": 393,
-      "height": 2750,
+      "height": 2593,
       "fill": "#FFFFFFFF",
       "layout": "vertical",
       "children": [
@@ -12956,345 +12359,957 @@
           "children": [
             {
               "type": "frame",
-              "id": "n9NrRJ",
-              "name": "stackWeekender",
+              "id": "Z32YTd",
+              "name": "carouselWeekender",
               "width": "fill_container",
-              "height": 500,
-              "layout": "none",
+              "layout": "vertical",
+              "gap": 10,
               "children": [
                 {
-                  "id": "BB5oL",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 30,
-                  "y": 50,
-                  "rotation": 6.000000000000001,
-                  "name": "w-1",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Canvas Tote",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹1,490",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
-                  "id": "PcB6r",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 50,
-                  "y": 40,
-                  "rotation": -4,
-                  "name": "w-2",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Chino Shorts",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹2,190",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
-                  "id": "JthkA",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 38,
-                  "y": 30,
-                  "rotation": 1.5000000000000002,
-                  "name": "w-3",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Linen Shirt",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹1,890",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
                   "type": "text",
-                  "id": "uA4fI",
-                  "x": 150,
-                  "y": 8,
-                  "name": "labelWeekender",
+                  "id": "y1bLiM",
+                  "name": "l1",
                   "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
                   "content": "WEEKENDER",
+                  "textAlign": "center",
                   "fontFamily": "Inter",
                   "fontSize": 10,
                   "fontWeight": "600",
                   "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "F1Zgw",
+                  "name": "c1",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "FSlCJ",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 208,
+                      "height": 304,
+                      "x": -165,
+                      "y": 58,
+                      "opacity": 0.5,
+                      "name": "farL",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381976325.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Canvas Tote",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,490",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "wpdYB",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 208,
+                      "height": 304,
+                      "x": 350,
+                      "y": 58,
+                      "opacity": 0.5,
+                      "name": "farR",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381962780.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Slip-Ons",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "xcVTY",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 234,
+                      "height": 342,
+                      "x": -110,
+                      "y": 39,
+                      "opacity": 0.75,
+                      "name": "nearL",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381962854.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Chino Shorts",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹2,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "S7xddM",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 234,
+                      "height": 342,
+                      "x": 269,
+                      "y": 39,
+                      "opacity": 0.75,
+                      "name": "nearR",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381973073.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Linen Shirt",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,890",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "isA1b",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 260,
+                      "height": 380,
+                      "x": 66,
+                      "y": 20,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "name": "active",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381968974.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Weekender Duffel"
+                        },
+                        "WBlD4": {
+                          "content": "₹3,490"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Vqycg",
+                  "name": "d1",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "cacMI",
+                      "name": "d1",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "c9hsA",
+                      "name": "d2",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "F2iQa9",
+                      "name": "d3",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "cgxsy",
+                      "name": "d4",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "AHQG0",
+                      "name": "d5",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
                 }
               ]
             },
             {
               "type": "frame",
-              "id": "dqv3w",
-              "name": "stackBeach",
+              "id": "M0aiHB",
+              "name": "carouselBeach",
               "width": "fill_container",
-              "height": 500,
-              "layout": "none",
+              "layout": "vertical",
+              "gap": 10,
               "children": [
                 {
-                  "id": "JU6mO",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 25,
-                  "y": 55,
-                  "rotation": -5,
-                  "name": "b-1",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Flip Flops",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹890",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
-                  "id": "Y3DjQ2",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 48,
-                  "y": 42,
-                  "rotation": 4,
-                  "name": "b-2",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Rash Guard",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹1,590",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
-                  "id": "Lf8sd",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 35,
-                  "y": 32,
-                  "rotation": -1.5000000000000002,
-                  "name": "b-3",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Board Shorts",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹1,290",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
                   "type": "text",
-                  "id": "Bzirx",
-                  "x": 155,
-                  "y": 8,
-                  "name": "labelBeach",
+                  "id": "zPLpO",
+                  "name": "l2",
                   "fill": "#999999FF",
-                  "content": "BEACH",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "BEACH ESCAPE",
+                  "textAlign": "center",
                   "fontFamily": "Inter",
                   "fontSize": 10,
                   "fontWeight": "600",
                   "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "i6XThR",
+                  "name": "c2",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "z7f5od",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 208,
+                      "height": 304,
+                      "x": -165,
+                      "y": 58,
+                      "opacity": 0.5,
+                      "name": "farL",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381976325.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Canvas Tote",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,490",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "GEVql",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 208,
+                      "height": 304,
+                      "x": 350,
+                      "y": 58,
+                      "opacity": 0.5,
+                      "name": "farR",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381962780.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Slip-Ons",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "q6Qui",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 234,
+                      "height": 342,
+                      "x": -110,
+                      "y": 39,
+                      "opacity": 0.75,
+                      "name": "nearL",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381962854.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Chino Shorts",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹2,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "ZQN7y",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 234,
+                      "height": 342,
+                      "x": 269,
+                      "y": 39,
+                      "opacity": 0.75,
+                      "name": "nearR",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381973073.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Linen Shirt",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,890",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "qg02j",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 260,
+                      "height": 380,
+                      "x": 66,
+                      "y": 20,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "name": "active",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381968974.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Weekender Duffel"
+                        },
+                        "WBlD4": {
+                          "content": "₹3,490"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "JrSAQ",
+                  "name": "d2",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "yjK1T",
+                      "name": "d1",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "oD4u6",
+                      "name": "d2",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "QmDmi",
+                      "name": "d3",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "JZeV4",
+                      "name": "d4",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "irzZM",
+                      "name": "d5",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
                 }
               ]
             },
             {
               "type": "frame",
-              "id": "UuMo5",
-              "name": "stackMountain",
+              "id": "gUDpT",
+              "name": "carouselMountain",
               "width": "fill_container",
-              "height": 500,
-              "layout": "none",
+              "layout": "vertical",
+              "gap": 10,
               "children": [
                 {
-                  "id": "H48MRW",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 32,
-                  "y": 52,
-                  "rotation": 5,
-                  "name": "m-1",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Base Layer",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹1,490",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
-                  "id": "OP29d",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 45,
-                  "y": 40,
-                  "rotation": -3.5,
-                  "name": "m-2",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Hiking Pants",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹2,690",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
-                  "id": "Q50Jr",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 36,
-                  "y": 30,
-                  "rotation": 1.5000000000000002,
-                  "name": "m-3",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Down Jacket",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹4,290",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
                   "type": "text",
-                  "id": "M6XWI",
-                  "x": 140,
-                  "y": 8,
-                  "name": "labelMountain",
+                  "id": "P4h38k",
+                  "name": "l3",
                   "fill": "#999999FF",
-                  "content": "MOUNTAIN",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "MOUNTAIN TREK",
+                  "textAlign": "center",
                   "fontFamily": "Inter",
                   "fontSize": 10,
                   "fontWeight": "600",
                   "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "M8KcW",
+                  "name": "c3",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "XzTAU",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 208,
+                      "height": 304,
+                      "x": -165,
+                      "y": 58,
+                      "opacity": 0.5,
+                      "name": "farL",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381976325.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Canvas Tote",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,490",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "T4sWm",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 208,
+                      "height": 304,
+                      "x": 350,
+                      "y": 58,
+                      "opacity": 0.5,
+                      "name": "farR",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381962780.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Slip-Ons",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "QNPBQ",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 234,
+                      "height": 342,
+                      "x": -110,
+                      "y": 39,
+                      "opacity": 0.75,
+                      "name": "nearL",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381962854.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Chino Shorts",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹2,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "vZcQT",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 234,
+                      "height": 342,
+                      "x": 269,
+                      "y": 39,
+                      "opacity": 0.75,
+                      "name": "nearR",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381973073.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Linen Shirt",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,890",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "UUzmz",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 260,
+                      "height": 380,
+                      "x": 66,
+                      "y": 20,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "name": "active",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381968974.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Weekender Duffel"
+                        },
+                        "WBlD4": {
+                          "content": "₹3,490"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fJyhe",
+                  "name": "d3",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "J05Vlb",
+                      "name": "d1",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "jFHBj",
+                      "name": "d2",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Pwray",
+                      "name": "d3",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "LM4Tf",
+                      "name": "d4",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "URgFW",
+                      "name": "d5",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
                 }
               ]
             },
             {
               "type": "frame",
-              "id": "dekhb",
-              "name": "stackCity",
+              "id": "n90RwM",
+              "name": "carouselCity",
               "width": "fill_container",
-              "height": 500,
-              "layout": "none",
+              "layout": "vertical",
+              "gap": 10,
               "children": [
                 {
-                  "id": "HT8EM",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 28,
-                  "y": 55,
-                  "rotation": -6.000000000000001,
-                  "name": "c-1",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Sneakers",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹3,490",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
-                  "id": "U9tQX",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 50,
-                  "y": 44,
-                  "rotation": 3.5,
-                  "name": "c-2",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Slim Jeans",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹2,190",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
-                  "id": "YqOyE",
-                  "type": "ref",
-                  "ref": "E92VR",
-                  "width": 280,
-                  "height": 420,
-                  "x": 38,
-                  "y": 34,
-                  "rotation": -1,
-                  "name": "c-3",
-                  "descendants": {
-                    "mEuX9": {
-                      "content": "Bomber Jacket",
-                      "fontSize": 13
-                    },
-                    "WBlD4": {
-                      "content": "₹3,890",
-                      "fontSize": 12
-                    }
-                  }
-                },
-                {
                   "type": "text",
-                  "id": "KIgfR",
-                  "x": 162,
-                  "y": 8,
-                  "name": "labelCity",
+                  "id": "A2yRL",
+                  "name": "l4",
                   "fill": "#999999FF",
-                  "content": "CITY",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "CITY DRIFT",
+                  "textAlign": "center",
                   "fontFamily": "Inter",
                   "fontSize": 10,
                   "fontWeight": "600",
                   "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "l5ph1j",
+                  "name": "c4",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "p1ZVER",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 208,
+                      "height": 304,
+                      "x": -165,
+                      "y": 58,
+                      "opacity": 0.5,
+                      "name": "farL",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381976325.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Canvas Tote",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,490",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "Hq1Z7",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 208,
+                      "height": 304,
+                      "x": 350,
+                      "y": 58,
+                      "opacity": 0.5,
+                      "name": "farR",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381962780.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Slip-Ons",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "UhB3g",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 234,
+                      "height": 342,
+                      "x": -110,
+                      "y": 39,
+                      "opacity": 0.75,
+                      "name": "nearL",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381962854.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Chino Shorts",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹2,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "IeFSj",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 234,
+                      "height": 342,
+                      "x": 269,
+                      "y": 39,
+                      "opacity": 0.75,
+                      "name": "nearR",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381973073.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Linen Shirt",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,890",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "L9UkR",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "width": 260,
+                      "height": 380,
+                      "x": 66,
+                      "y": 20,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "name": "active",
+                      "descendants": {
+                        "scplJ": {
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "images/generated-1777381968974.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "mEuX9": {
+                          "content": "Weekender Duffel"
+                        },
+                        "WBlD4": {
+                          "content": "₹3,490"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "LwFfs",
+                  "name": "d4",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "UtlNG",
+                      "name": "d1",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "x2cKe",
+                      "name": "d2",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "lmlZx",
+                      "name": "d3",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Brcx5",
+                      "name": "d4",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "i9A0A",
+                      "name": "d5",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
                 }
               ]
             }
@@ -13489,9 +13504,364 @@
               "fill": "#666666FF",
               "content": "₹1,990",
               "fontFamily": "Inter",
-              "fontSize": 12
+              "fontSize": 12,
+              "fontWeight": "normal"
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "uSdLJ",
+      "x": 5672,
+      "y": 0,
+      "name": "3D Carousel — Bluorng Style",
+      "width": 393,
+      "fill": "#FFFFFFFF",
+      "layout": "vertical",
+      "gap": 16,
+      "padding": [
+        24,
+        0
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "xseON",
+          "name": "kicker",
+          "fill": "#999999FF",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "WEEKENDER",
+          "textAlign": "center",
+          "fontFamily": "Inter",
+          "fontSize": 10,
+          "fontWeight": "600",
+          "letterSpacing": 1.5
+        },
+        {
+          "type": "frame",
+          "id": "t2nLf",
+          "name": "carousel",
+          "clip": true,
+          "width": "fill_container",
+          "height": 420,
+          "layout": "none",
+          "children": [
+            {
+              "id": "KGv7L",
+              "type": "ref",
+              "ref": "E92VR",
+              "width": 208,
+              "height": 304,
+              "x": -165,
+              "y": 58,
+              "opacity": 0.5,
+              "name": "farL",
+              "descendants": {
+                "scplJ": {
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1777381976325.png",
+                    "mode": "fill"
+                  }
+                },
+                "mEuX9": {
+                  "content": "Canvas Tote",
+                  "fontSize": 11
+                },
+                "WBlD4": {
+                  "content": "₹1,490",
+                  "fontSize": 10
+                }
+              }
+            },
+            {
+              "id": "T0i1MS",
+              "type": "ref",
+              "ref": "E92VR",
+              "width": 208,
+              "height": 304,
+              "x": 350,
+              "y": 58,
+              "opacity": 0.5,
+              "name": "farR",
+              "descendants": {
+                "scplJ": {
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1777381962780.png",
+                    "mode": "fill"
+                  }
+                },
+                "mEuX9": {
+                  "content": "Slip-Ons",
+                  "fontSize": 11
+                },
+                "WBlD4": {
+                  "content": "₹1,790",
+                  "fontSize": 10
+                }
+              }
+            },
+            {
+              "id": "Fl6ej",
+              "type": "ref",
+              "ref": "E92VR",
+              "width": 234,
+              "height": 342,
+              "x": -110,
+              "y": 39,
+              "opacity": 0.75,
+              "name": "nearL",
+              "descendants": {
+                "scplJ": {
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1777381962854.png",
+                    "mode": "fill"
+                  }
+                },
+                "mEuX9": {
+                  "content": "Chino Shorts",
+                  "fontSize": 12
+                },
+                "WBlD4": {
+                  "content": "₹2,190",
+                  "fontSize": 11
+                }
+              }
+            },
+            {
+              "id": "lhJRA",
+              "type": "ref",
+              "ref": "E92VR",
+              "width": 234,
+              "height": 342,
+              "x": 269,
+              "y": 39,
+              "opacity": 0.75,
+              "name": "nearR",
+              "descendants": {
+                "scplJ": {
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1777381973073.png",
+                    "mode": "fill"
+                  }
+                },
+                "mEuX9": {
+                  "content": "Linen Shirt",
+                  "fontSize": 12
+                },
+                "WBlD4": {
+                  "content": "₹1,890",
+                  "fontSize": 11
+                }
+              }
+            },
+            {
+              "id": "b7jGB",
+              "type": "ref",
+              "ref": "E92VR",
+              "width": 260,
+              "height": 380,
+              "x": 66,
+              "y": 20,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#00000030",
+                "offset": {
+                  "x": 0,
+                  "y": 8
+                },
+                "blur": 24,
+                "spread": -4
+              },
+              "name": "active",
+              "descendants": {
+                "scplJ": {
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1777381968974.png",
+                    "mode": "fill"
+                  }
+                },
+                "mEuX9": {
+                  "content": "Weekender Duffel"
+                },
+                "WBlD4": {
+                  "content": "₹3,490"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "D8Fwl",
+          "name": "dots",
+          "width": "fill_container",
+          "gap": 6,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "ellipse",
+              "id": "sguR4",
+              "name": "d1",
+              "fill": "#D0D0D0FF",
+              "width": 6,
+              "height": 6
+            },
+            {
+              "type": "ellipse",
+              "id": "wc7Fo",
+              "name": "d2",
+              "fill": "#D0D0D0FF",
+              "width": 6,
+              "height": 6
+            },
+            {
+              "type": "ellipse",
+              "id": "V3yfW",
+              "name": "d3",
+              "fill": "#000000FF",
+              "width": 8,
+              "height": 8
+            },
+            {
+              "type": "ellipse",
+              "id": "RlH1p",
+              "name": "d4",
+              "fill": "#D0D0D0FF",
+              "width": 6,
+              "height": 6
+            },
+            {
+              "type": "ellipse",
+              "id": "Wfzqp",
+              "name": "d5",
+              "fill": "#D0D0D0FF",
+              "width": 6,
+              "height": 6
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "hVKYK",
+          "name": "priceRow",
+          "width": "fill_container",
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "NMf3X",
+              "name": "priceGrp",
+              "gap": 8,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "FUWlR",
+                  "name": "priceAmt",
+                  "fill": "#000000FF",
+                  "content": "₹4,290",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "500",
+                  "letterSpacing": -0.5
+                },
+                {
+                  "type": "text",
+                  "id": "jEUuE",
+                  "name": "priceOrig",
+                  "fill": "#999999FF",
+                  "content": "₹5,370",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "300"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "jd22o",
+              "name": "saveBadge",
+              "fill": "#22C55EFF",
+              "cornerRadius": 9999,
+              "padding": [
+                4,
+                10
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "k42F78",
+                  "name": "saveText",
+                  "fill": "#FFFFFFFF",
+                  "content": "SAVE 20%",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "SUNEn",
+          "name": "btn",
+          "width": "fill_container",
+          "height": 48,
+          "fill": "#000000FF",
+          "cornerRadius": 9999,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "c699iw",
+              "name": "btnText",
+              "fill": "#FFFFFFFF",
+              "content": "ADD PACK TO BAG · ₹4,290",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "500",
+              "letterSpacing": 1.5
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "YSDlc",
+          "name": "saveHint",
+          "fill": "#22C55EFF",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "You save ₹1,080 with this bundle",
+          "textAlign": "center",
+          "fontFamily": "Inter",
+          "fontSize": 10,
+          "fontWeight": "normal",
+          "letterSpacing": 0.5
         }
       ]
     }
