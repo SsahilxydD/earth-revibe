@@ -1,0 +1,57 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens — Earth Revibe minimal palette (mirrors apps/storefront).
+ * Black on white, hairline borders, generous whitespace.
+ */
+@theme {
+  --color-primary: #121212;
+  --color-background: #ffffff;
+  --color-text: #121212;
+  --color-border: #e5e5e5;
+  --color-muted: #737373;
+  --color-surface: #f5f5f5;
+  --color-warn: #cf2929;
+  --font-helvetica: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  /* Belt + suspenders: kill horizontal scroll at both html and body so a
+     stray wide child can never make the whole page swipe-scroll on mobile.
+     body alone isn't enough on iOS Safari when html is the scroll container. */
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  html {
+    background: #ffffff;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Disable pinch-zoom + horizontal pan on the page itself; the prompt
+       <pre> block opts into its own horizontal scroll via overscroll-x-contain. */
+    touch-action: pan-y;
+    -ms-touch-action: pan-y;
+  }
+
+  body {
+    font-family: var(--font-inter), var(--font-helvetica);
+    color: var(--color-text);
+    background: var(--color-background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: #121212;
+    color: #fff;
+  }
+}

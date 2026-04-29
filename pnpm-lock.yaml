@@ -534,6 +534,52 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  apps/try-on-guide:
+    dependencies:
+      '@earth-revibe/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      next:
+        specifier: '>=15.5.15'
+        version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.4
+        version: 19.2.4(react@19.2.4)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+      zustand:
+        specifier: ^5.0.11
+        version: 5.0.11(@types/react@19.0.10)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
+    devDependencies:
+      '@earth-revibe/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      '@tailwindcss/postcss':
+        specifier: ^4.2.1
+        version: 4.2.1
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.13
+      '@types/react':
+        specifier: 19.0.10
+        version: 19.0.10
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.0.10)
+      postcss:
+        specifier: '>=8.5.10'
+        version: 8.5.12
+      tailwindcss:
+        specifier: ^4.2.1
+        version: 4.2.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/db:
     dependencies:
       '@earth-revibe/shared':
@@ -1394,7 +1440,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {'0': node >=0.10.0}
+    engines: {node: '>=0.10.0'}
 
   '@expo/cli@0.24.24':
     resolution: {integrity: sha512-XybHfF2QNPJNnHoUKHcG796iEkX5126UuTAs6MSpZuvZRRQRj/sGCLX+driCOVHbDOpcCOusMuHrhxHbtTApyg==}
