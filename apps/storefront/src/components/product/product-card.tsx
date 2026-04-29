@@ -393,11 +393,12 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             fontSize: 13,
             fontWeight: 400,
             color: isOutOfStock ? '#999' : '#000',
-            lineHeight: 1.4,
-            height: 18,
-            whiteSpace: 'nowrap',
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: 'vertical',
+            lineHeight: 1.4,
+            minHeight: 18,
           }}
         >
           {product.name}
