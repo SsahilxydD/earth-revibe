@@ -272,7 +272,12 @@ export default function CheckoutPage() {
         isOpen={showPaymentMethodModal}
         onClose={() => setShowPaymentMethodModal(false)}
         onSelectPrepaid={() => {
-          launchMagicCheckout();
+          if (isAuthenticated) {
+            launchMagicCheckout();
+          } else {
+            setPendingCOD(false);
+            setShowLoginModal(true);
+          }
         }}
         onSelectCOD={() => {
           if (isAuthenticated) {
