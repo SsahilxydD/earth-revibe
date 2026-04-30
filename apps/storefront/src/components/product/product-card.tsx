@@ -408,26 +408,28 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
         </span>
       </Link>
 
-      <button
-        onClick={handleAddToBag}
-        disabled={isOutOfStock}
-        style={{
-          width: 'calc(100% - 20px)',
-          margin: '10px',
-          height: 38,
-          backgroundColor: 'transparent',
-          color: isOutOfStock ? '#999' : '#000',
-          border: isOutOfStock ? '0.5px solid #E5E5E5' : '0.5px solid #000',
-          borderRadius: 0,
-          fontSize: 11,
-          fontWeight: 400,
-          letterSpacing: 1.5,
-          fontFamily: 'var(--font-helvetica)',
-          cursor: isOutOfStock ? 'default' : 'pointer',
-        }}
-      >
-        {isOutOfStock ? 'NOTIFY ME' : 'ADD TO BAG'}
-      </button>
+      <div style={{ padding: '0 10px 10px 10px' }}>
+        <button
+          onClick={handleAddToBag}
+          disabled={isOutOfStock}
+          style={{
+            width: '100%',
+            height: 38,
+            boxSizing: 'border-box',
+            backgroundColor: 'transparent',
+            color: isOutOfStock ? '#999' : '#000',
+            border: isOutOfStock ? '0.5px solid #E5E5E5' : '0.5px solid #000',
+            borderRadius: 0,
+            fontSize: 11,
+            fontWeight: 400,
+            letterSpacing: 1.5,
+            fontFamily: 'var(--font-helvetica)',
+            cursor: isOutOfStock ? 'default' : 'pointer',
+          }}
+        >
+          {isOutOfStock ? 'NOTIFY ME' : 'ADD TO BAG'}
+        </button>
+      </div>
 
       {showQuickAdd && <QuickAddModal product={product} onClose={() => setShowQuickAdd(false)} />}
     </div>
