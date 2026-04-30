@@ -689,8 +689,8 @@ function ProductsContent() {
             )}
           </div>
         ) : (
-          <div style={{ padding: '14px 0 28px 0' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 1px' }}>
+          <div style={{ padding: '14px 12px 28px 12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 8px' }}>
               {allProducts.map((product, i) => {
                 const items = [];
                 items.push(<ProductCard key={product.id} product={product} index={i} />);
