@@ -5911,7 +5911,7 @@
                       "fill": {
                         "type": "image",
                         "enabled": true,
-                        "url": "./images/generated-1777388047815.png",
+                        "url": "images/generated-1777388047815.png",
                         "mode": "fill"
                       },
                       "layout": "none",
@@ -6048,7 +6048,7 @@
                       "fill": {
                         "type": "image",
                         "enabled": true,
-                        "url": "./images/generated-1777388035681.png",
+                        "url": "images/generated-1777388035681.png",
                         "mode": "fill"
                       }
                     },
@@ -6150,7 +6150,7 @@
                       "fill": {
                         "type": "image",
                         "enabled": true,
-                        "url": "./images/generated-1777388049685.png",
+                        "url": "images/generated-1777388049685.png",
                         "mode": "fill"
                       }
                     },
@@ -6238,7 +6238,7 @@
                       "fill": {
                         "type": "image",
                         "enabled": true,
-                        "url": "./images/generated-1777388049737.png",
+                        "url": "images/generated-1777388049737.png",
                         "mode": "fill"
                       }
                     },
@@ -8502,7 +8502,7 @@
               "name": "pImg1",
               "clip": true,
               "width": "fill_container",
-              "height": 440,
+              "height": 470,
               "fill": "#E8E4DFFF",
               "cornerRadius": 20,
               "stroke": {
