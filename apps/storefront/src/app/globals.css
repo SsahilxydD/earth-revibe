@@ -23,7 +23,7 @@
   --badge-radius: 6px;
 }
 
-/* Scoped to @layer base so Tailwind's utility-layer mt-*/mb-*/m-* classes
+/* Scoped to @layer base so Tailwind's utility-layer margin classes (mt, mb, m)
    can override it. Previously this rule lived outside any layer, which put
    it above utility layers in the cascade (unlayered > layered) and
    silently zeroed every Tailwind margin utility across the site. */

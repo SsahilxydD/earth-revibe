@@ -4,7 +4,8 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Bookmark, Share2, Plus, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Bookmark, Share2, Plus, Loader2, Wallet, Users, Recycle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import {
@@ -1220,6 +1221,114 @@ export function ProductDetail({ product }: ProductDetailProps) {
           >
             {isBuying ? <Loader2 size={16} className="animate-spin" /> : 'BUY NOW'}
           </button>
+        </div>
+
+        {/* ===== Offer banner — links to /offers ===== */}
+        <div style={{ padding: '0 20px', marginBottom: 24 }}>
+          <Link
+            href="/offers"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 28,
+              padding: '40px 20px 32px',
+              backgroundColor: '#F5F2ED',
+              borderRadius: 14,
+              textDecoration: 'none',
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                letterSpacing: 1.5,
+                color: '#000',
+                textAlign: 'center',
+                lineHeight: 1.25,
+                margin: 0,
+              }}
+            >
+              WE PAY YOU BACK.
+              <br />
+              THREE WAYS.
+            </h2>
+            <div style={{ display: 'flex', width: '100%', gap: 8 }}>
+              {[
+                {
+                  Icon: Wallet,
+                  eyebrow: 'TODAY',
+                  title: 'First-Order Cashback',
+                  desc: '100% of your first order, as loyalty points',
+                },
+                {
+                  Icon: Users,
+                  eyebrow: 'PER FRIEND',
+                  title: 'Cash for Referrals',
+                  desc: "20% cash to your bank, per friend's first order",
+                },
+                {
+                  Icon: Recycle,
+                  eyebrow: 'YEAR 1+',
+                  title: 'Forever Buyback',
+                  desc: '33% back, any time after a year',
+                },
+              ].map(({ Icon, eyebrow, title, desc }) => (
+                <div
+                  key={eyebrow}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '0 4px',
+                  }}
+                >
+                  <Icon size={32} color="#2A2419" strokeWidth={1.5} />
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 500,
+                      letterSpacing: 2.2,
+                      color: '#999',
+                    }}
+                  >
+                    {eyebrow}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: '#000',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {title}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: '#5C5247',
+                      textAlign: 'center',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {desc}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <span
+              style={{
+                fontSize: 10,
+                color: '#5C5247',
+                textAlign: 'center',
+              }}
+            >
+              Always on. No code. No expiry.
+            </span>
+          </Link>
         </div>
 
         {/* ===== p8hDz — stacked image cards (staggered sticky) =====
