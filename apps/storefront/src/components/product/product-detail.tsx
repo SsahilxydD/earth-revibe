@@ -687,11 +687,11 @@ function MoodSection({ excludeId }: { excludeId: string }) {
                   textDecoration: 'none',
                 }}
               >
-                {/* image — h220, rounded 8 */}
+                {/* image — 3:4, rounded 8 */}
                 <div
                   style={{
                     position: 'relative',
-                    height: 220,
+                    aspectRatio: '3 / 4',
                     borderRadius: 8,
                     backgroundColor: '#F0F0F0',
                     overflow: 'hidden',
@@ -987,14 +987,14 @@ export function ProductDetail({ product }: ProductDetailProps) {
         position: 'relative',
       }}
     >
-      {/* ===== JDMjn — Hero Image carousel, h500, sticky below header (56px) ===== */}
+      {/* ===== JDMjn — Hero Image carousel, 3:4, sticky below header (56px) ===== */}
       {images[0] && (
         <div
           style={{
             position: 'sticky',
             top: 56,
             zIndex: 0,
-            height: 500,
+            aspectRatio: '3 / 4',
             backgroundColor: '#E8E4DF',
             overflow: 'hidden',
           }}
@@ -1242,7 +1242,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
                 style={{
                   position: 'sticky',
                   top: 72 + i * 16,
-                  height: 440,
+                  aspectRatio: '3 / 4',
                   borderRadius: 20,
                   border: '1px solid #F0F0F0',
                   backgroundColor: '#F5F5F5',

@@ -22,7 +22,7 @@ function CartItemRow({ item }: { item: CartItem }) {
     <div className="flex gap-4 border-b border-[var(--color-border)] py-5">
       <Link
         href={`/products/${item.slug}`}
-        className="relative h-28 w-20 shrink-0 overflow-hidden rounded-[var(--badge-radius)] bg-[var(--color-surface)] sm:h-32 sm:w-24"
+        className="relative aspect-[3/4] w-20 shrink-0 overflow-hidden rounded-[var(--badge-radius)] bg-[var(--color-surface)] sm:w-24"
       >
         <Image
           src={getImageUrl(item.image, 200)}

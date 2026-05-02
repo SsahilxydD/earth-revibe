@@ -15,11 +15,11 @@ export function CartItemRow({ item }: CartItemRowProps) {
 
   return (
     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-      {/* Image — 64x84 */}
+      {/* Image — w64, 3:4 */}
       <div
         style={{
           width: 64,
-          height: 84,
+          aspectRatio: '3 / 4',
           flexShrink: 0,
           position: 'relative',
           overflow: 'hidden',

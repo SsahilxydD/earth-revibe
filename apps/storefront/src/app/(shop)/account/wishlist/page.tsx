@@ -137,14 +137,14 @@ export default function WishlistPage() {
       <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         {items.map((item) => (
           <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* Image — 220px height */}
+            {/* Image — 3:4 */}
             <Link
               href={`/products/${item.slug}`}
               style={{
                 display: 'block',
                 position: 'relative',
                 width: '100%',
-                height: 220,
+                aspectRatio: '3 / 4',
                 backgroundColor: '#F5F5F5',
                 overflow: 'hidden',
               }}

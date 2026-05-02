@@ -223,7 +223,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <div
                   style={{
                     width: 56,
-                    height: 72,
+                    aspectRatio: '3 / 4',
                     backgroundColor: '#F5F5F5',
                     flexShrink: 0,
                     overflow: 'hidden',

@@ -531,7 +531,7 @@ function PieceRow({
           style={{
             position: 'relative',
             width: 60,
-            height: 72,
+            aspectRatio: '3 / 4',
             borderRadius: 6,
             overflow: 'hidden',
             flexShrink: 0,

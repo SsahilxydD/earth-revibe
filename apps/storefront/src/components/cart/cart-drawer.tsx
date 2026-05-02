@@ -408,7 +408,7 @@ export function CartDrawer() {
                         style={{
                           position: 'relative',
                           width: 128,
-                          height: 172,
+                          aspectRatio: '3 / 4',
                           flexShrink: 0,
                           borderRadius: 14,
                           overflow: 'hidden',
@@ -466,7 +466,7 @@ export function CartDrawer() {
                         style={{
                           position: 'relative',
                           width: 52,
-                          height: 72,
+                          aspectRatio: '3 / 4',
                           borderRadius: 8,
                           overflow: 'hidden',
                           backgroundColor: '#F5F5F5',
