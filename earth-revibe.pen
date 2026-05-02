@@ -2773,7 +2773,7 @@
                       "id": "JXwQn",
                       "name": "wCard1Img",
                       "width": "fill_container",
-                      "height": 220,
+                      "height": 215,
                       "fill": "#F5F5F5FF"
                     },
                     {
@@ -2840,7 +2840,7 @@
                       "id": "LhZ03",
                       "name": "wCard2Img",
                       "width": "fill_container",
-                      "height": 220,
+                      "height": 215,
                       "fill": "#F5F5F5FF"
                     },
                     {
@@ -2916,7 +2916,7 @@
                       "id": "4rkD4",
                       "name": "wCard3Img",
                       "width": "fill_container",
-                      "height": 220,
+                      "height": 215,
                       "fill": "#F5F5F5FF"
                     },
                     {
@@ -2983,7 +2983,7 @@
                       "id": "2dEoB",
                       "name": "wCard4Img",
                       "width": "fill_container",
-                      "height": 220,
+                      "height": 215,
                       "fill": "#F5F5F5FF"
                     },
                     {
@@ -5907,7 +5907,7 @@
                       "id": "aqYbE",
                       "name": "img1",
                       "width": "fill_container",
-                      "height": 240,
+                      "height": 314,
                       "fill": {
                         "type": "image",
                         "enabled": true,
@@ -6044,7 +6044,7 @@
                       "id": "Ij8EK",
                       "name": "img2",
                       "width": "fill_container",
-                      "height": 240,
+                      "height": 314,
                       "fill": {
                         "type": "image",
                         "enabled": true,
@@ -6146,7 +6146,7 @@
                       "id": "VMvCY",
                       "name": "img3",
                       "width": "fill_container",
-                      "height": 240,
+                      "height": 314,
                       "fill": {
                         "type": "image",
                         "enabled": true,
@@ -6234,7 +6234,7 @@
                       "id": "oltdp",
                       "name": "img4",
                       "width": "fill_container",
-                      "height": 240,
+                      "height": 314,
                       "fill": {
                         "type": "image",
                         "enabled": true,
@@ -7521,12 +7521,12 @@
     {
       "type": "frame",
       "id": "ALtU6",
-      "x": 946,
-      "y": 3821,
+      "x": 936,
+      "y": 3763,
       "name": "PDP — Bluorng Style",
       "clip": true,
       "width": 393,
-      "height": 2958,
+      "height": 3450,
       "fill": "#FFFFFFFF",
       "layout": "none",
       "children": [
@@ -7907,6 +7907,252 @@
                   ]
                 }
               ]
+            },
+            {
+              "type": "frame",
+              "id": "Us4HM",
+              "name": "offerBannerWrap",
+              "width": "fill_container",
+              "layout": "vertical",
+              "padding": [
+                0,
+                20,
+                24,
+                20
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "q5GSJh",
+                  "name": "pdpOfferBanner",
+                  "width": "fill_container",
+                  "fill": "#F5F2ED",
+                  "cornerRadius": 14,
+                  "layout": "vertical",
+                  "gap": 28,
+                  "padding": [
+                    40,
+                    20,
+                    32,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "mdphh",
+                      "fill": "#000000",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "WE PAY YOU BACK.\nTHREE WAYS.",
+                      "lineHeight": 1.25,
+                      "textAlign": "center",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "700",
+                      "letterSpacing": 1.5
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rfMbs",
+                      "name": "s6cols",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "A4d8N3",
+                          "name": "c1f",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 10,
+                          "padding": [
+                            0,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "baxCP",
+                              "width": 32,
+                              "height": 32,
+                              "iconFontName": "wallet",
+                              "iconFontFamily": "lucide",
+                              "fill": "#2A2419"
+                            },
+                            {
+                              "type": "text",
+                              "id": "EXnhO",
+                              "fill": "#999999",
+                              "content": "TODAY",
+                              "fontFamily": "Inter",
+                              "fontSize": 9,
+                              "fontWeight": "500",
+                              "letterSpacing": 2.2
+                            },
+                            {
+                              "type": "text",
+                              "id": "I8Uc63",
+                              "fill": "#000000",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "First-Order Cashback",
+                              "textAlign": "center",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "M6X5P",
+                              "fill": "#5C5247",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "100% of your first order, as loyalty points",
+                              "lineHeight": 1.5,
+                              "textAlign": "center",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Wa8Fx",
+                          "name": "c2f",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 10,
+                          "padding": [
+                            0,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "eqx2d",
+                              "width": 32,
+                              "height": 32,
+                              "iconFontName": "users",
+                              "iconFontFamily": "lucide",
+                              "fill": "#2A2419"
+                            },
+                            {
+                              "type": "text",
+                              "id": "NS5VG",
+                              "fill": "#999999",
+                              "content": "PER FRIEND",
+                              "fontFamily": "Inter",
+                              "fontSize": 9,
+                              "fontWeight": "500",
+                              "letterSpacing": 2.2
+                            },
+                            {
+                              "type": "text",
+                              "id": "gpvrd",
+                              "fill": "#000000",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Cash for Referrals",
+                              "textAlign": "center",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "TatJO",
+                              "fill": "#5C5247",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "20% cash to your bank, per friend's first order",
+                              "lineHeight": 1.5,
+                              "textAlign": "center",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "jzGRZ",
+                          "name": "c3f",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 10,
+                          "padding": [
+                            0,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "PBCkT",
+                              "width": 32,
+                              "height": 32,
+                              "iconFontName": "recycle",
+                              "iconFontFamily": "lucide",
+                              "fill": "#2A2419"
+                            },
+                            {
+                              "type": "text",
+                              "id": "d7e9CK",
+                              "fill": "#999999",
+                              "content": "YEAR 1+",
+                              "fontFamily": "Inter",
+                              "fontSize": 9,
+                              "fontWeight": "500",
+                              "letterSpacing": 2.2
+                            },
+                            {
+                              "type": "text",
+                              "id": "A2cZr",
+                              "fill": "#000000",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Forever Buyback",
+                              "textAlign": "center",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "r0sV6",
+                              "fill": "#5C5247",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "33% back, any time after a year",
+                              "lineHeight": 1.5,
+                              "textAlign": "center",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "kLAbB",
+                      "fill": "#5C5247",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Always on. No code. No expiry.",
+                      "textAlign": "center",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -7914,7 +8160,7 @@
           "type": "frame",
           "id": "Mzs7t",
           "x": 20,
-          "y": 2145,
+          "y": 2599,
           "name": "tabSec",
           "width": 353,
           "fill": "#e7e4e4",
@@ -8131,7 +8377,7 @@
           "type": "frame",
           "id": "e6Y3o",
           "x": 0,
-          "y": 2552,
+          "y": 3006,
           "name": "relSec",
           "width": 393,
           "layout": "vertical",
@@ -8318,7 +8564,7 @@
                       "id": "Cs5xQ",
                       "name": "r1Img",
                       "width": "fill_container",
-                      "height": 220,
+                      "height": 229,
                       "fill": "#F0F0F0FF",
                       "cornerRadius": 8,
                       "layout": "none",
@@ -8406,7 +8652,7 @@
                       "id": "yhPD7",
                       "name": "r2Img",
                       "width": "fill_container",
-                      "height": 220,
+                      "height": 229,
                       "fill": "#E8E8E8FF",
                       "cornerRadius": 8,
                       "layout": "none",
@@ -8490,7 +8736,7 @@
           "type": "frame",
           "id": "p8hDz",
           "x": 20,
-          "y": 777,
+          "y": 1125,
           "name": "imageSec",
           "width": 353,
           "layout": "vertical",
@@ -8517,7 +8763,7 @@
               "name": "pImg2",
               "clip": true,
               "width": "fill_container",
-              "height": 440,
+              "height": 470,
               "fill": "#D4C8BDFF",
               "cornerRadius": 20,
               "stroke": {
@@ -8532,7 +8778,7 @@
               "name": "pImg3",
               "clip": true,
               "width": "fill_container",
-              "height": 440,
+              "height": 470,
               "fill": "#C4B8ADFF",
               "cornerRadius": 20,
               "stroke": {
@@ -13862,6 +14108,1587 @@
           "fontSize": 10,
           "fontWeight": "normal",
           "letterSpacing": 0.5
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "LAtR3",
+      "x": 0,
+      "y": 6900,
+      "name": "PDPOfferBanners",
+      "width": 473,
+      "layout": "vertical",
+      "gap": 48,
+      "padding": [
+        48,
+        0,
+        80,
+        0
+      ],
+      "children": [
+        {
+          "type": "frame",
+          "id": "iurLp",
+          "name": "hdr",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            0,
+            40
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "yCQmB",
+              "fill": "#999999",
+              "content": "PDP OFFER BANNER",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "500",
+              "letterSpacing": 2.5
+            },
+            {
+              "type": "text",
+              "id": "qAZLe",
+              "fill": "#000000",
+              "content": "5 sample variations",
+              "fontFamily": "Inter",
+              "fontSize": 22,
+              "fontWeight": "500"
+            },
+            {
+              "type": "text",
+              "id": "Y2LI4",
+              "fill": "#666666",
+              "content": "5 reference-style variants · same 3-step layout · different copy psychology per sample",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Ktdz6",
+          "name": "s1Wrap",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            0,
+            40
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "cNjwT",
+              "fill": "#999999",
+              "content": "SAMPLE 1  ·  ANCHORING + MENTAL ACCOUNTING  ·  rupees in, more rupees back",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500",
+              "letterSpacing": 1.8
+            },
+            {
+              "type": "frame",
+              "id": "ULptN",
+              "name": "sample1",
+              "width": 393,
+              "fill": "#F5F2ED",
+              "cornerRadius": 14,
+              "layout": "vertical",
+              "gap": 28,
+              "padding": [
+                40,
+                20,
+                32,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "C3ia1c",
+                  "fill": "#000000",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "EVERY RUPEE COMES BACK",
+                  "lineHeight": 1.25,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "700",
+                  "letterSpacing": 1.6
+                },
+                {
+                  "type": "frame",
+                  "id": "aYwQJ",
+                  "name": "s1cols",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "nryCS",
+                      "name": "c1",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "y9jiw",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "wallet",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "i0hgC",
+                          "fill": "#999999",
+                          "content": "STEP 01",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "mXq7c",
+                          "fill": "#000000",
+                          "content": "First Order",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "RdQ34",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "₹1,990 back as loyalty points the day it ships",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "lEqJD",
+                      "name": "c2",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "y51vO",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "users",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "tmXbv",
+                          "fill": "#999999",
+                          "content": "STEP 02",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "PNP5r",
+                          "fill": "#000000",
+                          "content": "Refer a Friend",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Jqe1B",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "₹400 cash to your bank, per friend's first order",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "zQCuT",
+                      "name": "c3",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "W8VgW",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "recycle",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "ntpAC",
+                          "fill": "#999999",
+                          "content": "STEP 03",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "N0eKq",
+                          "fill": "#000000",
+                          "content": "Send It Back",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "PinPP",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "₹657 buyback, any time after a year",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "BPyAk",
+                  "fill": "#5C5247",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Three offers, always on. Up to ₹3,047 returned.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "mpPoc",
+          "name": "s2Wrap",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            0,
+            40
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "f7cMg",
+              "fill": "#999999",
+              "content": "SAMPLE 2  ·  LOSS AVERSION + FRAMING  ·  what you stop losing",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500",
+              "letterSpacing": 1.8
+            },
+            {
+              "type": "frame",
+              "id": "v0SvI",
+              "name": "sample2",
+              "width": 393,
+              "fill": "#F5F2ED",
+              "cornerRadius": 14,
+              "layout": "vertical",
+              "gap": 28,
+              "padding": [
+                40,
+                20,
+                32,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "xH4F6",
+                  "fill": "#000000",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "DON'T PAY RETAIL.",
+                  "lineHeight": 1.25,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 22,
+                  "fontWeight": "700",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "MchWB",
+                  "name": "s2cols",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "G5bY9V",
+                      "name": "c1b",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "zDVgs",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "wallet",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "FPYan",
+                          "fill": "#999999",
+                          "content": "OFFER 01",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "XoLJr",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Stop Paying Full",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Q8OrFe",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "100% of your first order, back as points",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UqEjO",
+                      "name": "c2b",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "DLhmp",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "users",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "V8Pmnq",
+                          "fill": "#999999",
+                          "content": "OFFER 02",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "nh6wZ",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Stop Buying Alone",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "GalUQ",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "20% cash to your bank, per friend you bring",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "hsHao",
+                      "name": "c3b",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "iYmdA",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "recycle",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "j9tjDJ",
+                          "fill": "#999999",
+                          "content": "OFFER 03",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "a2pwLT",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Stop Throwing Out",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "OOuai",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "33% buyback, any time after a year",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "jrVIu",
+                  "fill": "#5C5247",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Three always-on offers. Stop leaving money on the table.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "KwRCw",
+          "name": "s3Wrap",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            0,
+            40
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "b5ePlf",
+              "fill": "#999999",
+              "content": "SAMPLE 3  ·  RECIPROCITY + UNITY  ·  brand-pays-you-back, insider voice",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500",
+              "letterSpacing": 1.8
+            },
+            {
+              "type": "frame",
+              "id": "Z9uIND",
+              "name": "sample3",
+              "width": 393,
+              "fill": "#F5F2ED",
+              "cornerRadius": 14,
+              "layout": "vertical",
+              "gap": 28,
+              "padding": [
+                40,
+                20,
+                32,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "H29QI",
+                  "fill": "#000000",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "WE PAY YOU BACK.\nTHREE WAYS.",
+                  "lineHeight": 1.25,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "700",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "nvKni",
+                  "name": "s3cols",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "QKDOi",
+                      "name": "c1c",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "yKi6L",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "wallet",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "RmJlk",
+                          "fill": "#999999",
+                          "content": "FIRST",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "M7hd8d",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "We refund you",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "N9d7xr",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "100% of your first order, as loyalty points",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "XLzrt",
+                      "name": "c2c",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "RyptO",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "users",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "onyuu",
+                          "fill": "#999999",
+                          "content": "EVERY TIME",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "T0OZJ",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "We pay your friends",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "MHQ6r",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "20% cash to your bank, per friend's first order",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "w2L1b",
+                      "name": "c3c",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "GIEVf",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "recycle",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "wtULN",
+                          "fill": "#999999",
+                          "content": "FOREVER",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "N0tAcE",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "We buy it back",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "oVtjh",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "33% back, any time after a year",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "z17Gf",
+                  "fill": "#5C5247",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Always on. No code. No expiry.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "vyt5h",
+          "name": "s4Wrap",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            0,
+            40
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "q9QT7s",
+              "fill": "#999999",
+              "content": "SAMPLE 4  ·  HYPERBOLIC DISCOUNTING + ZERO-PRICE EFFECT  ·  immediacy framing",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500",
+              "letterSpacing": 1.8
+            },
+            {
+              "type": "frame",
+              "id": "VprCK",
+              "name": "sample4",
+              "width": 393,
+              "fill": "#F5F2ED",
+              "cornerRadius": 14,
+              "layout": "vertical",
+              "gap": 28,
+              "padding": [
+                40,
+                20,
+                32,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Nr3wM",
+                  "fill": "#000000",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "EARN BACK FROM DAY ONE",
+                  "lineHeight": 1.25,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "700",
+                  "letterSpacing": 1.6
+                },
+                {
+                  "type": "frame",
+                  "id": "YJ0Yr",
+                  "name": "s4cols",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "TS0bv",
+                      "name": "c1d",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "LhRg7",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "wallet",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "nuJdW",
+                          "fill": "#999999",
+                          "content": "TODAY",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "A77uiV",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "First-Order Cashback",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "cuUhm",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "₹1,990 in points the moment it ships",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "E0E4RL",
+                      "name": "c2d",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "kZB5s",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "users",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "d2BNOZ",
+                          "fill": "#999999",
+                          "content": "PER FRIEND",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "IOnxv",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Cash for Referrals",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "e9kcB",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "₹400 to your bank, per friend's first order",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "GOIt5",
+                      "name": "c3d",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "AwcCj",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "recycle",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "f4GOW",
+                          "fill": "#999999",
+                          "content": "YEAR 1+",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "cWY9J",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Forever Buyback",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "FH6jE",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "₹657 back any time, no upper limit",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "A41q5T",
+                  "fill": "#5C5247",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Three offers, always on. They stack.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "tHWuM",
+          "name": "s5Wrap",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            0,
+            40
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "UqfHw",
+              "fill": "#999999",
+              "content": "SAMPLE 5  ·  GOAL-GRADIENT + COMMITMENT  ·  buyer is already step 1 of 3",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500",
+              "letterSpacing": 1.8
+            },
+            {
+              "type": "frame",
+              "id": "PM7QE",
+              "name": "sample5",
+              "width": 393,
+              "fill": "#F5F2ED",
+              "cornerRadius": 14,
+              "layout": "vertical",
+              "gap": 28,
+              "padding": [
+                40,
+                20,
+                32,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "vpSPK",
+                  "fill": "#000000",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "JOIN THE LOOP",
+                  "lineHeight": 1.25,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 22,
+                  "fontWeight": "700",
+                  "letterSpacing": 1.8
+                },
+                {
+                  "type": "frame",
+                  "id": "jq4kR",
+                  "name": "s5cols",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "xj9Kg",
+                      "name": "c1e",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "UB7fy",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "wallet",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "ZWJ4Q",
+                          "fill": "#999999",
+                          "content": "STEP 1",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "KkQZ6",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Buy",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "s0mue1",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "100% back as loyalty points the day it ships",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "wM3lB",
+                      "name": "c2e",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "SVvE0",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "users",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "PrwsH",
+                          "fill": "#999999",
+                          "content": "STEP 2",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "K1C6y",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Refer",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "OcM48",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "20% cash to your bank, per friend you bring",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "xEBvp",
+                      "name": "c3e",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "gGWJX",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "recycle",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "tiueR",
+                          "fill": "#999999",
+                          "content": "STEP 3",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "Y4HJaR",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Return",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "bUXQi",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "33% buyback after a year, forever",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "oXXZN",
+                  "fill": "#5C5247",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Three steps. One always-on loop.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "KhBAD",
+          "name": "s6Wrap",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            0,
+            40
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "RA66N",
+              "fill": "#999999",
+              "content": "SAMPLE 6  ·  CLIENT-PICKED COMBO  ·  S3 heading + S3 eyebrows + S4 titles + S3 descriptions + S3 footer",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500",
+              "letterSpacing": 1.8
+            },
+            {
+              "type": "frame",
+              "id": "XgGOU",
+              "name": "sample6",
+              "width": 393,
+              "fill": "#F5F2ED",
+              "cornerRadius": 14,
+              "layout": "vertical",
+              "gap": 28,
+              "padding": [
+                40,
+                20,
+                32,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "c8LkYu",
+                  "fill": "#000000",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "WE PAY YOU BACK.\nTHREE WAYS.",
+                  "lineHeight": 1.25,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "700",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "DJusM",
+                  "name": "s6cols",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ORNnw",
+                      "name": "c1f",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "uhF23",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "wallet",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "TgSvx",
+                          "fill": "#999999",
+                          "content": "TODAY",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "piWH2",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "First-Order Cashback",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "iOc8T",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "100% of your first order, as loyalty points",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "KneTh",
+                      "name": "c2f",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "EWJE0",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "users",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "WEKu4",
+                          "fill": "#999999",
+                          "content": "PER FRIEND",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "LuYrC",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Cash for Referrals",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "oLQsh",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "20% cash to your bank, per friend's first order",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "F6WLg",
+                      "name": "c3f",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        4
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "QsAWu",
+                          "width": 32,
+                          "height": 32,
+                          "iconFontName": "recycle",
+                          "iconFontFamily": "lucide",
+                          "fill": "#2A2419"
+                        },
+                        {
+                          "type": "text",
+                          "id": "aUdgz",
+                          "fill": "#999999",
+                          "content": "YEAR 1+",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "P0kFOc",
+                          "fill": "#000000",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Forever Buyback",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "xiHkn",
+                          "fill": "#5C5247",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "33% back, any time after a year",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "Fw1h0",
+                  "fill": "#5C5247",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Always on. No code. No expiry.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
         }
       ]
     }
