@@ -1166,13 +1166,13 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </div>
         )}
 
-        {/* ===== ByiXm — btnSec, padding 20 all sides, gap 10, vertical ===== */}
+        {/* ===== ByiXm — btnSec, padding 20, gap 6, vertical ===== */}
         <div
           style={{
             padding: 20,
             display: 'flex',
             flexDirection: 'column',
-            gap: 10,
+            gap: 6,
           }}
         >
           {/* 6IZXY — addBtn, h50, rounded pill, stroke #E5E5E5 */}
@@ -1224,15 +1224,15 @@ export function ProductDetail({ product }: ProductDetailProps) {
         </div>
 
         {/* ===== Offer banner — links to /offers ===== */}
-        <div style={{ padding: '0 20px', marginBottom: 24 }}>
+        <div style={{ padding: '0 20px', marginBottom: 8 }}>
           <Link
             href="/offers"
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 28,
-              padding: '40px 20px 32px',
+              gap: 12,
+              padding: '16px 20px',
               backgroundColor: '#F5F2ED',
               borderRadius: 14,
               textDecoration: 'none',
@@ -1240,18 +1240,16 @@ export function ProductDetail({ product }: ProductDetailProps) {
           >
             <h2
               style={{
-                fontSize: 20,
+                fontSize: 13,
                 fontWeight: 700,
-                letterSpacing: 1.5,
+                letterSpacing: 1.0,
                 color: '#000',
                 textAlign: 'center',
-                lineHeight: 1.25,
+                lineHeight: 1.2,
                 margin: 0,
               }}
             >
-              WE PAY YOU BACK.
-              <br />
-              THREE WAYS.
+              WE PAY YOU BACK. THREE WAYS.
             </h2>
             <div style={{ display: 'flex', width: '100%', gap: 8 }}>
               {[
@@ -1281,11 +1279,11 @@ export function ProductDetail({ product }: ProductDetailProps) {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: 10,
+                    gap: 6,
                     padding: '0 4px',
                   }}
                 >
-                  <Icon size={32} color="#2A2419" strokeWidth={1.5} />
+                  <Icon size={22} color="#2A2419" strokeWidth={1.5} />
                   <span
                     style={{
                       fontSize: 9,
@@ -1298,7 +1296,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
                   </span>
                   <span
                     style={{
-                      fontSize: 13,
+                      fontSize: 11,
                       fontWeight: 700,
                       color: '#000',
                       textAlign: 'center',
@@ -1308,10 +1306,10 @@ export function ProductDetail({ product }: ProductDetailProps) {
                   </span>
                   <span
                     style={{
-                      fontSize: 10,
+                      fontSize: 9,
                       color: '#5C5247',
                       textAlign: 'center',
-                      lineHeight: 1.5,
+                      lineHeight: 1.4,
                     }}
                   >
                     {desc}
@@ -1319,15 +1317,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
                 </div>
               ))}
             </div>
-            <span
-              style={{
-                fontSize: 10,
-                color: '#5C5247',
-                textAlign: 'center',
-              }}
-            >
-              Always on. No code. No expiry.
-            </span>
           </Link>
         </div>
 

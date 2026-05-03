@@ -7851,7 +7851,7 @@
               "name": "btnSec",
               "width": 393,
               "layout": "vertical",
-              "gap": 10,
+              "gap": 6,
               "padding": 20,
               "children": [
                 {
@@ -7917,7 +7917,7 @@
               "padding": [
                 0,
                 20,
-                24,
+                8,
                 20
               ],
               "children": [
@@ -7929,11 +7929,11 @@
                   "fill": "#F5F2ED",
                   "cornerRadius": 14,
                   "layout": "vertical",
-                  "gap": 28,
+                  "gap": 12,
                   "padding": [
-                    40,
+                    16,
                     20,
-                    32,
+                    16,
                     20
                   ],
                   "alignItems": "center",
@@ -7944,13 +7944,13 @@
                       "fill": "#000000",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "WE PAY YOU BACK.\nTHREE WAYS.",
-                      "lineHeight": 1.25,
+                      "content": "WE PAY YOU BACK. THREE WAYS.",
+                      "lineHeight": 1.2,
                       "textAlign": "center",
                       "fontFamily": "Inter",
-                      "fontSize": 20,
+                      "fontSize": 13,
                       "fontWeight": "700",
-                      "letterSpacing": 1.5
+                      "letterSpacing": 1.0
                     },
                     {
                       "type": "frame",
@@ -7965,7 +7965,7 @@
                           "name": "c1f",
                           "width": "fill_container",
                           "layout": "vertical",
-                          "gap": 10,
+                          "gap": 6,
                           "padding": [
                             0,
                             4
@@ -7975,8 +7975,8 @@
                             {
                               "type": "icon_font",
                               "id": "baxCP",
-                              "width": 32,
-                              "height": 32,
+                              "width": 22,
+                              "height": 22,
                               "iconFontName": "wallet",
                               "iconFontFamily": "lucide",
                               "fill": "#2A2419"
@@ -8000,7 +8000,7 @@
                               "content": "First-Order Cashback",
                               "textAlign": "center",
                               "fontFamily": "Inter",
-                              "fontSize": 13,
+                              "fontSize": 11,
                               "fontWeight": "700"
                             },
                             {
@@ -8010,10 +8010,10 @@
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
                               "content": "100% of your first order, as loyalty points",
-                              "lineHeight": 1.5,
+                              "lineHeight": 1.4,
                               "textAlign": "center",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
+                              "fontSize": 9,
                               "fontWeight": "normal"
                             }
                           ]
@@ -8024,7 +8024,7 @@
                           "name": "c2f",
                           "width": "fill_container",
                           "layout": "vertical",
-                          "gap": 10,
+                          "gap": 6,
                           "padding": [
                             0,
                             4
@@ -8034,8 +8034,8 @@
                             {
                               "type": "icon_font",
                               "id": "eqx2d",
-                              "width": 32,
-                              "height": 32,
+                              "width": 22,
+                              "height": 22,
                               "iconFontName": "users",
                               "iconFontFamily": "lucide",
                               "fill": "#2A2419"
@@ -8059,7 +8059,7 @@
                               "content": "Cash for Referrals",
                               "textAlign": "center",
                               "fontFamily": "Inter",
-                              "fontSize": 13,
+                              "fontSize": 11,
                               "fontWeight": "700"
                             },
                             {
@@ -8069,10 +8069,10 @@
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
                               "content": "20% cash to your bank, per friend's first order",
-                              "lineHeight": 1.5,
+                              "lineHeight": 1.4,
                               "textAlign": "center",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
+                              "fontSize": 9,
                               "fontWeight": "normal"
                             }
                           ]
@@ -8083,7 +8083,7 @@
                           "name": "c3f",
                           "width": "fill_container",
                           "layout": "vertical",
-                          "gap": 10,
+                          "gap": 6,
                           "padding": [
                             0,
                             4
@@ -8093,8 +8093,8 @@
                             {
                               "type": "icon_font",
                               "id": "PBCkT",
-                              "width": 32,
-                              "height": 32,
+                              "width": 22,
+                              "height": 22,
                               "iconFontName": "recycle",
                               "iconFontFamily": "lucide",
                               "fill": "#2A2419"
@@ -8118,7 +8118,7 @@
                               "content": "Forever Buyback",
                               "textAlign": "center",
                               "fontFamily": "Inter",
-                              "fontSize": 13,
+                              "fontSize": 11,
                               "fontWeight": "700"
                             },
                             {
@@ -8128,27 +8128,15 @@
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
                               "content": "33% back, any time after a year",
-                              "lineHeight": 1.5,
+                              "lineHeight": 1.4,
                               "textAlign": "center",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
+                              "fontSize": 9,
                               "fontWeight": "normal"
                             }
                           ]
                         }
                       ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "kLAbB",
-                      "fill": "#5C5247",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "Always on. No code. No expiry.",
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal"
                     }
                   ]
                 }
