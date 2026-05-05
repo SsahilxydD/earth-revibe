@@ -788,6 +788,56 @@ export function ProductDetail({ product }: ProductDetailProps) {
     });
   }, [product.id, product.name, product.price, product.category?.name]);
 
+  // Re-map horizontal swipes to vertical scroll: swipe left → page scrolls
+  // down, swipe right → page scrolls up. Vertical swipes pass through to
+  // native scroll. Touch-only (pointer/mouse/trackpad untouched).
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let axis: 'h' | 'v' | null = null;
+    const LOCK_THRESHOLD = 8;
+
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      lastX = startX;
+      axis = null;
+    };
+
+    const onMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const x = e.touches[0].clientX;
+      const y = e.touches[0].clientY;
+
+      if (axis === null) {
+        const dx = x - startX;
+        const dy = y - startY;
+        if (Math.abs(dx) < LOCK_THRESHOLD && Math.abs(dy) < LOCK_THRESHOLD) return;
+        axis = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+      }
+
+      if (axis === 'h') {
+        e.preventDefault();
+        const frameDx = x - lastX;
+        window.scrollBy(0, -frameDx);
+        lastX = x;
+      }
+    };
+
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+    };
+  }, []);
+
   const addItem = useCartStore((s) => s.addItem);
   const { addToast } = useToast();
 
@@ -837,10 +887,12 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
   return (
     <div
+      ref={rootRef}
       className="font-[family-name:var(--font-inter)]"
       style={{
         backgroundColor: '#FFF',
         position: 'relative',
+        touchAction: 'pan-y',
       }}
     >
       {/* ===== JDMjn — Hero Image carousel, 3:4, sticky below header (56px) ===== */}
@@ -1230,7 +1282,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
           <SizeGuideSheet open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />,
           document.body
         )}
-
     </div>
   );
 }
