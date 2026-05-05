@@ -404,6 +404,62 @@ model WhatsAppInboundMessage {
   @@map("whatsapp_inbound_messages")
 }
 
+/// CRM engagement rules — declarative escalation ladder.
+///
+/// PR 7: when a customer reads our outbound message but doesn't act on it,
+/// fire an action after `delayHours`. v1 supports two safe action types
+/// (manual-outreach flag, transactional email). WhatsApp template send was
+/// deliberately omitted: the Meta fair-use guard rail that killed the
+/// broadcast UIs (see feedback_meta_fair_use.md memory) extends to any
+/// cron-driven template send.
+model EngagementRule {
+  id            String                   @id @default(cuid())
+  name          String
+  trigger       EngagementRuleTrigger
+  delayHours    Int
+  actionType    EngagementRuleActionType
+  /// Schema varies by actionType:
+  /// - FLAG_FOR_MANUAL_OUTREACH: { reason: string }
+  /// - SEND_EMAIL: { subject: string, body: string }
+  actionPayload Json
+  isActive      Boolean                  @default(false)
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  fires         EngagementRuleFire[]
+
+  @@index([isActive, trigger])
+  @@map("engagement_rules")
+}
+
+/// One row per (rule, target) pair that has already fired. The unique key
+/// is the dedupe primitive — the cron evaluator skips targets that already
+/// have a fire row for this rule, so re-running the cron is safe.
+model EngagementRuleFire {
+  id         String         @id @default(cuid())
+  ruleId     String
+  rule       EngagementRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  targetType String         @db.VarChar(32) // 'cart' | 'guest_cart' (+ more as triggers grow)
+  targetId   String
+  firedAt    DateTime       @default(now())
+  /// Best-effort note for the CRM/audit log: what the cron observed when
+  /// it fired (e.g. "read at 2026-05-06T..., no order in 24h").
+  context    Json?
+
+  @@unique([ruleId, targetType, targetId])
+  @@index([ruleId])
+  @@index([firedAt])
+  @@map("engagement_rule_fires")
+}
+
+enum EngagementRuleTrigger {
+  CART_ABANDONED_READ_NO_PURCHASE
+}
+
+enum EngagementRuleActionType {
+  FLAG_FOR_MANUAL_OUTREACH
+  SEND_EMAIL
+}
+
 // ==========================================
 // ORDERS & PAYMENTS
 // ==========================================

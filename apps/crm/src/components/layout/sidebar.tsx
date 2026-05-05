@@ -8,6 +8,7 @@ import {
   ShoppingBag,
   MessageSquare,
   Sparkles,
+  Workflow,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { label: 'Customers', href: '/customers', icon: Users },
   { label: 'Abandoned Carts', href: '/abandoned-carts', icon: ShoppingBag },
   { label: 'Inbox', href: '/inbox', icon: MessageSquare },
+  { label: 'Rules', href: '/rules', icon: Workflow },
   { label: 'Templates', href: '/templates', icon: Sparkles, disabled: true },
   { label: 'Settings', href: '/settings', icon: Settings, disabled: true },
 ];

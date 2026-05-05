@@ -45,6 +45,7 @@ import { adminTravelApplicationRouter } from './routes/admin-travel-application.
 import { catalogFeedRouter } from './routes/catalog-feed.routes';
 import { adminLoyaltyRouter } from './routes/admin-loyalty.routes';
 import { adminWhatsAppInboundRouter } from './routes/admin-whatsapp-inbound.routes';
+import { adminEngagementRuleRouter } from './routes/admin-engagement-rule.routes';
 import { sanitize } from './middleware/sanitize';
 import { adminAbandonedCartRouter } from './routes/admin-abandoned-cart.routes';
 
@@ -447,6 +448,7 @@ app.use('/api/v1/catalog', catalogFeedRouter);
 app.use('/api/v1/admin/loyalty', adminLoyaltyRouter);
 app.use('/api/v1/admin/abandoned-carts', adminAbandonedCartRouter);
 app.use('/api/v1/admin/whatsapp-inbound', adminWhatsAppInboundRouter);
+app.use('/api/v1/admin/engagement-rules', adminEngagementRuleRouter);
 
 // Sentry error handler (must be before custom error handler)
 Sentry.setupExpressErrorHandler(app);
