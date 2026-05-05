@@ -809,7 +809,15 @@ export async function sendWhatsAppTripOpening(args: {
 /**
  * Send an abandoned cart recovery message via WhatsApp Cloud API.
  * Uses the pre-approved "earth_revibe_abandoned_cart" template.
- * @param phone       E.164 phone number (e.g. "+919876543210")
+ *
+ * Returns a structured result so the caller can distinguish transient failures
+ * (network/5xx — safe to retry next cycle) from permanent ones (invalid phone,
+ * paused template, recipient opted out — no point retrying). The cron uses
+ * this to decide whether to mark the cart as "sent" or leave it for retry.
+ *
+ * @param phone       Phone in any common form ("+919876543210", "9876543210",
+ *                    "+91 98765 43210"). Normalized internally to digits-only
+ *                    with a 91 prefix for bare 10-digit Indian numbers.
  * @param firstName   Customer's first name (template {{1}})
  * @param cartItems   Comma-separated product names (template {{2}})
  */
@@ -817,8 +825,17 @@ export async function sendWhatsAppAbandonedCart(
   phone: string,
   firstName: string,
   cartItems: string
-): Promise<boolean> {
-  const to = phone.replace(/^\+/, '');
+): Promise<{ ok: boolean; retryable: boolean; status: number; messageId?: string }> {
+  // Normalize phone the same way every other transactional helper here does.
+  const digits = phone.replace(/\D/g, '');
+  const to = /^\d{10}$/.test(digits) ? `91${digits}` : digits;
+  const masked = to.length >= 6 ? to.slice(0, 4) + '****' + to.slice(-2) : to;
+
+  // Empty/garbage phone — permanent, not worth retrying.
+  if (!to) {
+    logger.warn({ phone: masked }, 'WhatsApp abandoned cart: invalid phone, skipping');
+    return { ok: false, retryable: false, status: 0 };
+  }
 
   const body = {
     messaging_product: 'whatsapp',
@@ -831,7 +848,7 @@ export async function sendWhatsAppAbandonedCart(
         {
           type: 'body',
           parameters: [
-            { type: 'text', text: firstName },
+            { type: 'text', text: firstName || 'there' },
             { type: 'text', text: cartItems },
           ],
         },
@@ -839,8 +856,9 @@ export async function sendWhatsAppAbandonedCart(
     },
   };
 
+  let res: Response;
   try {
-    const res = await fetch(GRAPH_API_URL, {
+    res = await fetch(GRAPH_API_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
@@ -848,23 +866,41 @@ export async function sendWhatsAppAbandonedCart(
       },
       body: JSON.stringify(body),
     });
-
-    if (!res.ok) {
-      const text = await res.text();
-      logger.error(
-        { status: res.status, body: text, phone: phone.slice(0, 6) + '****' },
-        'WhatsApp abandoned cart API error'
-      );
-      return false;
-    }
-
-    logger.info({ phone: phone.slice(0, 6) + '****' }, 'WhatsApp abandoned cart message sent');
-    return true;
   } catch (err) {
-    logger.error(
-      { err, phone: phone.slice(0, 6) + '****' },
-      'WhatsApp abandoned cart network error'
-    );
-    return false;
+    // Network / DNS / timeout — definitely retryable.
+    logger.error({ err, phone: masked }, 'WhatsApp abandoned cart network error');
+    return { ok: false, retryable: true, status: 0 };
   }
+
+  const bodyText = await res.text();
+
+  if (!res.ok) {
+    logger.error(
+      { status: res.status, body: bodyText, phone: masked },
+      'WhatsApp abandoned cart API error'
+    );
+    // 5xx = transient on Meta's side. 4xx = permanent (bad phone, template
+    // paused, recipient blocked, language mismatch). Don't retry 4xx — it
+    // won't fix itself and we'd just hammer Meta with the same payload.
+    return { ok: false, retryable: res.status >= 500, status: res.status };
+  }
+
+  let messageId: string | undefined;
+  let waId: string | undefined;
+  try {
+    const parsed = JSON.parse(bodyText) as {
+      messages?: { id: string }[];
+      contacts?: { wa_id: string }[];
+    };
+    messageId = parsed.messages?.[0]?.id;
+    waId = parsed.contacts?.[0]?.wa_id;
+  } catch {
+    // bodyText is still logged below.
+  }
+
+  logger.info(
+    { phone: masked, messageId, wa_id: waId, rawResponse: bodyText },
+    'WhatsApp abandoned cart message accepted by Meta'
+  );
+  return { ok: true, retryable: false, status: res.status, messageId };
 }

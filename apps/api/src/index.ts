@@ -1,4 +1,5 @@
 import './config/sentry';
+import cron from 'node-cron';
 import { app } from './app';
 import { env } from './config/env';
 import { logger } from './config/logger';
@@ -13,24 +14,34 @@ const start = async () => {
       logger.info({ port: env.PORT, env: env.NODE_ENV }, 'Earth Revibe API running');
     });
 
-    // Run abandoned cart check every 30 minutes
-    const THIRTY_MINUTES = 30 * 60 * 1000;
-    const abandonedCartInterval = setInterval(() => {
-      runAbandonedCartCheck().catch((err) => {
-        logger.error({ err }, 'Abandoned cart job failed');
-      });
-    }, THIRTY_MINUTES);
-    // Run once on startup after a short delay
+    // Abandoned cart sweep — every 15 minutes via node-cron.
+    // The mutex inside runAbandonedCartCheck prevents overlap with admin
+    // "Run sweep now" clicks. We use cron (not setInterval) for the same
+    // reason every other scheduled job uses cron: explicit schedule, no drift,
+    // and it's the standard the rest of the codebase will use going forward.
+    const abandonedCartTask = cron.schedule(
+      '*/15 * * * *',
+      () => {
+        runAbandonedCartCheck().catch((err) => {
+          logger.error({ err }, 'Scheduled abandoned cart sweep failed');
+        });
+      },
+      { timezone: 'Asia/Kolkata' }
+    );
+
+    // Run once on startup (after a short delay so the DB pool is warm)
     setTimeout(() => {
       runAbandonedCartCheck().catch((err) => {
-        logger.error({ err }, 'Initial abandoned cart check failed');
+        logger.error({ err }, 'Initial abandoned cart sweep failed');
       });
     }, 10_000);
+
+    logger.info('Abandoned cart cron scheduled: every 15 min (Asia/Kolkata)');
 
     // Graceful shutdown
     const shutdown = async (signal: string) => {
       logger.info({ signal }, 'Shutting down gracefully');
-      clearInterval(abandonedCartInterval);
+      abandonedCartTask.stop();
       server.close(async () => {
         logger.info('HTTP server closed');
         await shutdownPostHog();
