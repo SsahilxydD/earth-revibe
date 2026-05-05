@@ -5,12 +5,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag, X } from 'lucide-react';
 import { useCartStore, type CartItem } from '@/stores/cart-store';
+import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatPrice, getImageUrl } from '@/lib/utils';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
 import { KitUpsellBanner } from '@/components/cart/kit-upsell-banner';
+import { LoginModal } from '@/components/auth/login-modal';
 
 // Free shipping on all orders
 
@@ -132,6 +134,8 @@ export default function CartPage() {
   const [couponInput, setCouponInput] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { addToast } = useToast();
 
   const subtotal = getSubtotal();
@@ -141,6 +145,12 @@ export default function CartPage() {
   const handleApplyDiscount = async () => {
     const code = couponInput.trim();
     if (!code) return;
+
+    if (!isAuthenticated && /^REVIBE-/i.test(code)) {
+      setCouponError('');
+      setShowLoginModal(true);
+      return;
+    }
 
     setCouponError('');
     setCouponLoading(true);
@@ -189,129 +199,136 @@ export default function CartPage() {
   }
 
   return (
-    <div className="px-4 py-8 md:px-8 lg:px-12 xl:px-20">
-      <h1 className="text-2xl font-bold uppercase tracking-wider">Shopping Cart</h1>
-      <p className="mt-1 text-sm text-[var(--color-muted)]">
-        {items.length} {items.length === 1 ? 'item' : 'items'} in your cart
-      </p>
+    <>
+      <div className="px-4 py-8 md:px-8 lg:px-12 xl:px-20">
+        <h1 className="text-2xl font-bold uppercase tracking-wider">Shopping Cart</h1>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          {items.length} {items.length === 1 ? 'item' : 'items'} in your cart
+        </p>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_400px]">
-        {/* Left: Cart Items */}
-        <div>
-          <FreeShippingBar />
-          <div className="mt-6">
-            <KitUpsellBanner variant="page" />
-            {items.map((item) => (
-              <CartItemRow key={item.id} item={item} />
-            ))}
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_400px]">
+          {/* Left: Cart Items */}
+          <div>
+            <FreeShippingBar />
+            <div className="mt-6">
+              <KitUpsellBanner variant="page" />
+              {items.map((item) => (
+                <CartItemRow key={item.id} item={item} />
+              ))}
+            </div>
+            <Link
+              href="/products"
+              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+            >
+              Continue Shopping
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-          <Link
-            href="/products"
-            className="mt-6 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-          >
-            Continue Shopping
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
 
-        {/* Right: Order Summary */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-[var(--button-radius)] border border-[var(--color-border)] p-6">
-            <h2 className="text-sm font-bold uppercase tracking-wider">Order Summary</h2>
+          {/* Right: Order Summary */}
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <div className="rounded-[var(--button-radius)] border border-[var(--color-border)] p-6">
+              <h2 className="text-sm font-bold uppercase tracking-wider">Order Summary</h2>
 
-            <div className="mt-5 space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-[var(--color-muted)]">Subtotal</span>
-                <span className="font-semibold">{formatPrice(subtotal)}</span>
+              <div className="mt-5 space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-[var(--color-muted)]">Subtotal</span>
+                  <span className="font-semibold">{formatPrice(subtotal)}</span>
+                </div>
+
+                {discountCode && discountAmount > 0 && (
+                  <div className="flex items-center justify-between text-green-600">
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-3.5 w-3.5" />
+                      <span>{discountCode}</span>
+                      <button
+                        onClick={removeDiscount}
+                        className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-[var(--color-surface)]"
+                        aria-label="Remove discount"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <span className="font-semibold">-{formatPrice(discountAmount)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between">
+                  <span className="text-[var(--color-muted)]">Shipping estimate</span>
+                  <span className="font-semibold">
+                    {shippingEstimate === 0 ? 'FREE' : formatPrice(shippingEstimate)}
+                  </span>
+                </div>
+
+                <div className="border-t border-[var(--color-border)] pt-3">
+                  <div className="flex justify-between text-base">
+                    <span className="font-bold">Total</span>
+                    <span className="font-bold">{formatPrice(total + shippingEstimate)}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-[var(--color-muted)]">
+                    Tax included. Shipping calculated at checkout.
+                  </p>
+                </div>
               </div>
 
-              {discountCode && discountAmount > 0 && (
-                <div className="flex items-center justify-between text-green-600">
-                  <div className="flex items-center gap-2">
-                    <Tag className="h-3.5 w-3.5" />
-                    <span>{discountCode}</span>
-                    <button
-                      onClick={removeDiscount}
-                      className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-[var(--color-surface)]"
-                      aria-label="Remove discount"
+              {/* Discount Code */}
+              {!discountCode && (
+                <div className="mt-5">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Discount code"
+                      value={couponInput}
+                      onChange={(e) => {
+                        setCouponInput(e.target.value);
+                        setCouponError('');
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleApplyDiscount();
+                      }}
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleApplyDiscount}
+                      loading={couponLoading}
+                      disabled={!couponInput.trim()}
                     >
-                      <X className="h-3 w-3" />
-                    </button>
+                      Apply
+                    </Button>
                   </div>
-                  <span className="font-semibold">-{formatPrice(discountAmount)}</span>
+                  {couponError && (
+                    <p className="mt-1.5 text-xs text-[var(--color-sale)]">{couponError}</p>
+                  )}
                 </div>
               )}
 
-              <div className="flex justify-between">
-                <span className="text-[var(--color-muted)]">Shipping estimate</span>
-                <span className="font-semibold">
-                  {shippingEstimate === 0 ? 'FREE' : formatPrice(shippingEstimate)}
-                </span>
-              </div>
+              <Link href="/checkout" className="mt-6 block">
+                <Button fullWidth size="lg">
+                  Checkout
+                </Button>
+              </Link>
 
-              <div className="border-t border-[var(--color-border)] pt-3">
-                <div className="flex justify-between text-base">
-                  <span className="font-bold">Total</span>
-                  <span className="font-bold">{formatPrice(total + shippingEstimate)}</span>
-                </div>
-                <p className="mt-1 text-xs text-[var(--color-muted)]">
-                  Tax included. Shipping calculated at checkout.
-                </p>
-              </div>
-            </div>
-
-            {/* Discount Code */}
-            {!discountCode && (
-              <div className="mt-5">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Discount code"
-                    value={couponInput}
-                    onChange={(e) => {
-                      setCouponInput(e.target.value);
-                      setCouponError('');
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleApplyDiscount();
-                    }}
-                    className="flex-1"
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[var(--color-muted)]">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                   />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleApplyDiscount}
-                    loading={couponLoading}
-                    disabled={!couponInput.trim()}
-                  >
-                    Apply
-                  </Button>
-                </div>
-                {couponError && (
-                  <p className="mt-1.5 text-xs text-[var(--color-sale)]">{couponError}</p>
-                )}
+                </svg>
+                <span>Secure checkout</span>
               </div>
-            )}
-
-            <Link href="/checkout" className="mt-6 block">
-              <Button fullWidth size="lg">
-                Checkout
-              </Button>
-            </Link>
-
-            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[var(--color-muted)]">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-              <span>Secure checkout</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={() => setShowLoginModal(false)}
+      />
+    </>
   );
 }

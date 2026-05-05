@@ -145,10 +145,19 @@ export function CartDrawer() {
   const handleApplyDiscount = async () => {
     const code = discountInput.trim();
     if (!code) return;
+
+    // Referral codes can only attach to a logged-in cart (refereeId is the FK).
+    // Catch this before hitting the API so guests get a clear "sign in" prompt
+    // instead of the misleading "Invalid discount code" toast.
+    if (!isAuthenticated && /^REVIBE-/i.test(code)) {
+      setDiscountError('');
+      setShowLoginModal(true);
+      return;
+    }
+
     setApplyingDiscount(true);
     setDiscountError('');
     try {
-      // Try as a discount code first.
       const result = await api.post<{ code: string; discountAmount: number }>(
         '/discounts/validate',
         { code, orderTotal: subtotal }
@@ -156,15 +165,11 @@ export function CartDrawer() {
       applyDiscount(result.code, result.discountAmount);
       setDiscountInput('');
     } catch (discountErr: any) {
-      // Fall back to referral. Logged-in users only — the referral table keys
-      // on refereeId so guest carts can't attribute anything.
       try {
         const ref = await api.get<{ valid: boolean; reason?: string; referrerName?: string }>(
           `/referrals/validate?code=${encodeURIComponent(code)}`
         );
         if (ref.valid) {
-          // Referee gets a flat 15% off their first order. Backend recomputes
-          // authoritatively at order creation; this is purely for cart display.
           const refereeDiscount = Math.floor(subtotal * 0.15);
           applyDiscount(code, refereeDiscount);
           setDiscountInput('');
