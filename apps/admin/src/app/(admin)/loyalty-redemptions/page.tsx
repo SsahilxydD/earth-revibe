@@ -151,9 +151,7 @@ export default function LoyaltyRedemptionsPage() {
     mutationFn: () =>
       api.post<{ scanned: number; expiredPoints: number }>('/admin/loyalty/expire-points'),
     onSuccess: (res) => {
-      toast.success(
-        `Expiry sweep: ${res.scanned} rows scanned, ${res.expiredPoints} pts removed`
-      );
+      toast.success(`Expiry sweep: ${res.scanned} rows scanned, ${res.expiredPoints} pts removed`);
     },
     onError: (err: Error) => toast.error(err.message || 'Expiry failed'),
   });
@@ -187,7 +185,7 @@ export default function LoyaltyRedemptionsPage() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={() => expireMutation.mutate()}
             disabled={expireMutation.isPending}
           >
@@ -212,9 +210,23 @@ export default function LoyaltyRedemptionsPage() {
           background: '#FAFAFA',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+          }}
+        >
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: 1,
+                textTransform: 'uppercase',
+              }}
+            >
               Customers by balance
             </div>
             <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
@@ -269,9 +281,7 @@ export default function LoyaltyRedemptionsPage() {
                   <tr key={c.id} style={{ borderBottom: '1px solid #F0F0F0' }}>
                     <td style={{ padding: '8px 6px' }}>
                       <div style={{ fontWeight: 500 }}>{name || '—'}</div>
-                      {c.phone && (
-                        <div style={{ fontSize: 11, color: '#999' }}>{c.phone}</div>
-                      )}
+                      {c.phone && <div style={{ fontSize: 11, color: '#999' }}>{c.phone}</div>}
                     </td>
                     <td style={{ padding: '8px 6px', fontSize: 12, color: '#444' }}>{c.email}</td>
                     <td style={{ padding: '8px 6px', fontFamily: 'monospace' }}>
@@ -313,7 +323,15 @@ export default function LoyaltyRedemptionsPage() {
         )}
       </div>
 
-      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 700,
+          letterSpacing: 1,
+          textTransform: 'uppercase',
+          marginBottom: 12,
+        }}
+      >
         Redemption requests
       </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
@@ -447,16 +465,25 @@ export default function LoyaltyRedemptionsPage() {
         isOpen={showCreate}
         onClose={() => setShowCreate(false)}
         title="New redemption request"
-        maxWidth="max-w-lg"
       >
-        <form onSubmit={onCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ padding: 10, background: '#FEF9E7', fontSize: 11, color: '#7A5901', border: '1px solid #F5E7A8' }}>
-            Fill EITHER email OR order number. Order number is more reliable for phone-signup customers whose email was auto-generated.
+        <form
+          onSubmit={onCreateSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
+          <div
+            style={{
+              padding: 10,
+              background: '#FEF9E7',
+              fontSize: 11,
+              color: '#7A5901',
+              border: '1px solid #F5E7A8',
+            }}
+          >
+            Fill EITHER email OR order number. Order number is more reliable for phone-signup
+            customers whose email was auto-generated.
           </div>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1 }}>
-              ORDER NUMBER
-            </label>
+            <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1 }}>ORDER NUMBER</label>
             <input
               type="text"
               value={form.orderNumber}
@@ -513,10 +540,13 @@ export default function LoyaltyRedemptionsPage() {
             />
           </div>
           <div style={{ padding: 12, background: '#F5F5F5', fontSize: 11, color: '#666' }}>
-            Balance check happens on submit — if the customer has insufficient points, the backend rejects with the current balance.
+            Balance check happens on submit — if the customer has insufficient points, the backend
+            rejects with the current balance.
           </div>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1 }}>NOTES (optional)</label>
+            <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1 }}>
+              NOTES (optional)
+            </label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -532,7 +562,7 @@ export default function LoyaltyRedemptionsPage() {
             />
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
+            <Button type="button" variant="secondary" onClick={() => setShowCreate(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
