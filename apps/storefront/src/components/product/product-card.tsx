@@ -71,9 +71,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
   // Clone last + first for seamless infinite loop. Internal index 1..N = real slides.
   const slides = useMemo(
     () =>
-      hasSlider
-        ? [sortedImages[imageCount - 1], ...sortedImages, sortedImages[0]]
-        : sortedImages,
+      hasSlider ? [sortedImages[imageCount - 1], ...sortedImages, sortedImages[0]] : sortedImages,
     [hasSlider, sortedImages, imageCount]
   );
 
@@ -134,7 +132,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
       }
     };
 
-    if ('onscrollend' in el) {
+    if (typeof window !== 'undefined' && 'onscrollend' in window) {
       el.addEventListener('scrollend', jumpIfOnClone);
       return () => el.removeEventListener('scrollend', jumpIfOnClone);
     }
@@ -238,7 +236,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             pointerEvents: 'none',
           }}
         >
-          {product.tags?.includes('new-arrival') && (
+          {product.tags?.some((t) => t.tag.name === 'new-arrival') && (
             <span
               style={{
                 display: 'inline-flex',
@@ -255,7 +253,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               NEW
             </span>
           )}
-          {product.tags?.includes('bestseller') && (
+          {product.tags?.some((t) => t.tag.name === 'bestseller') && (
             <span
               style={{
                 display: 'inline-flex',

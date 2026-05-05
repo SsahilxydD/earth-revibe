@@ -23,7 +23,7 @@ export function MapplsAddressInput({ onSelect }: MapplsAddressInputProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [locating, setLocating] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const fetchSuggestions = useCallback(async (q: string) => {

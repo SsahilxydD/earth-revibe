@@ -327,7 +327,7 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
                     variant="primary"
                     fullWidth
                     onClick={handleSaveAddress}
-                    isLoading={createAddress.isPending}
+                    loading={createAddress.isPending}
                   >
                     Save & Use This Address
                   </Button>

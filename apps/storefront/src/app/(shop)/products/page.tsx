@@ -198,7 +198,7 @@ function ProductsContent() {
 
   const allProducts = rawProducts;
 
-  const totalCount = data?.pages?.[0]?.total ?? allProducts.length;
+  const totalCount = data?.pages?.[0]?.pagination?.total ?? allProducts.length;
 
   const setNavContext = useProductNavStore((s) => s.setNavContext);
   useEffect(() => {

@@ -44,13 +44,11 @@ function TapePanel({
   slotIndex,
   tapeOffset,
   vw,
-  isCenter,
 }: {
   slug: string;
   slotIndex: number;
   tapeOffset: ReturnType<typeof useMotionValue<number>>;
   vw: number;
-  isCenter: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const x = useTransform(tapeOffset, (offset) => (slotIndex - 2) * vw + offset);
@@ -76,7 +74,7 @@ function TapePanel({
 
   return (
     <motion.div ref={panelRef} className="absolute inset-0 overflow-y-auto bg-white" style={{ x }}>
-      <ProductDetail product={product} isPreview={!isCenter} />
+      <ProductDetail product={product} />
     </motion.div>
   );
 }
@@ -310,14 +308,7 @@ export function SwipePanelContainer({ initialProduct, initialSlug }: SwipePanelC
       onTouchEnd={handleTouchEnd}
     >
       {currentWindow.map((slug, i) => (
-        <TapePanel
-          key={i}
-          slug={slug}
-          slotIndex={i}
-          tapeOffset={tapeOffset}
-          vw={vw}
-          isCenter={i === 2}
-        />
+        <TapePanel key={i} slug={slug} slotIndex={i} tapeOffset={tapeOffset} vw={vw} />
       ))}
     </div>
   );
