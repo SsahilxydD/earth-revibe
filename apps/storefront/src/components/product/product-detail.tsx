@@ -800,7 +800,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
     if (!el) return;
 
     const LOCK_THRESHOLD = 8;
-    const MULT = 1.7;
+    const MULT = 2.0;
 
     let startX = 0;
     let startY = 0;
@@ -858,20 +858,26 @@ export function ProductDetail({ product }: ProductDetailProps) {
       }
     };
 
-    const onEnd = () => {
+    const onEnd = (e: TouchEvent) => {
       if (axis === 'h' && samples.length >= 2) {
-        const a = samples[0];
-        const b = samples[samples.length - 1];
+        // Velocity only from the last ~80ms of motion: ignores pre-pause
+        // speed if the finger slowed down before lifting, and works for
+        // long swipes (the previous full-window <120ms gate was rejecting
+        // most flicks outright).
+        const endT = e.timeStamp;
+        const recent = samples.filter((s) => endT - s.t < 80);
+        const window2 = recent.length >= 2 ? recent : samples.slice(-2);
+        const a = window2[0];
+        const b = window2[window2.length - 1];
         const dt = b.t - a.t;
-        if (dt > 0 && dt < 120) {
-          // px/sec, negated so left swipe → positive (scroll down)
+        if (dt > 0) {
           const velocity = (-(b.x - a.x) / dt) * 1000 * MULT;
-          if (Math.abs(velocity) > 80) {
+          if (Math.abs(velocity) > 40) {
             momentum = animate(window.scrollY, window.scrollY, {
               type: 'inertia',
               velocity,
-              power: 0.7,
-              timeConstant: 350,
+              power: 1.1,
+              timeConstant: 550,
               restDelta: 0.5,
               onUpdate: (v) => window.scrollTo(0, v),
             });
