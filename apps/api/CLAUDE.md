@@ -26,6 +26,7 @@ index.ts # server listen entry point
 - **Pagination:** all list endpoints accept page + limit query params, return { data, pagination: { page, limit, total, totalPages } }
 - **File uploads:** multer for multipart, then immediately upload to Cloudinary in the service — never store files locally
 - **Razorpay webhooks:** always verify X-Razorpay-Signature header before processing
+- **Schema changes:** never edit `packages/db/prisma/schema.prisma` and push code that references new fields without a paired migration. Workflow: edit schema → `pnpm db:migrate -- --name <foo>` → commit migration file alongside schema change → push. Railway runs `prisma migrate deploy` before app boots, so schema and code stay in lockstep. See `packages/db/prisma/migrations/README.md`. **`pnpm db:push` is for emergencies only — caused the 2026-05-05 payment outage.**
 
 ## Existing Routes
 
