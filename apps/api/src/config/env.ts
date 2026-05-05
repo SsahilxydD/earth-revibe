@@ -28,6 +28,18 @@ const envSchema = z.object({
   WHATSAPP_ACCESS_TOKEN: z.string().min(1),
   WHATSAPP_TEMPLATE_NAME: z.string().default('earth_revibe_login_otp'),
   WHATSAPP_ORDER_UPDATE_TEMPLATE: z.string().default('earth_revibe_order_update'),
+  // WhatsApp delivery webhook (Meta → us). Configure in Meta Business Manager →
+  // WhatsApp → Configuration → Webhook. Verify token is what Meta echoes during
+  // the GET handshake. App secret is your Meta App's "App Secret" — used to
+  // verify X-Hub-Signature-256 on every incoming POST. Both optional so dev
+  // doesn't break, but the webhook returns 503 if unset.
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: z.string().optional(),
+  WHATSAPP_APP_SECRET: z.string().optional(),
+  // Per-cycle cap on abandoned-cart sweep. The Meta tier on this account is
+  // 2000 business-initiated msg/24h shared with OTP/order/loyalty/trip — keep
+  // headroom. Default of 30 × 96 cycles/day = 2880 ceiling, but in practice
+  // we burn well below the cap because OTP+order updates already use most.
+  WHATSAPP_ABANDONED_CART_SWEEP_CAP: z.coerce.number().default(30),
   // Supabase Storage (image uploads only — auth is handled by JWT)
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),

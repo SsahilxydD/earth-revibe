@@ -879,10 +879,31 @@ export async function sendWhatsAppAbandonedCart(
       { status: res.status, body: bodyText, phone: masked },
       'WhatsApp abandoned cart API error'
     );
-    // 5xx = transient on Meta's side. 4xx = permanent (bad phone, template
-    // paused, recipient blocked, language mismatch). Don't retry 4xx — it
-    // won't fix itself and we'd just hammer Meta with the same payload.
-    return { ok: false, retryable: res.status >= 500, status: res.status };
+    // Retryability:
+    //   - 5xx = transient on Meta's side
+    //   - 429 = rate-limited (per-second cap or daily tier ceiling — refreshes)
+    //   - Meta's documented rate-limit error codes inside a 4xx body:
+    //       80007  = rate limit hit
+    //       130429 = rate limit hit (some Graph API surfaces use this)
+    //       131048 = spam rate limit hit (per-recipient cooldown — also
+    //                refreshes, treat as transient)
+    //   - Other 4xx = permanent (bad phone, template paused, recipient
+    //     blocked, language mismatch). Don't retry — same payload would fail.
+    let retryable = res.status >= 500 || res.status === 429;
+    if (!retryable && res.status >= 400 && res.status < 500) {
+      try {
+        const parsed = JSON.parse(bodyText) as {
+          error?: { code?: number; error_subcode?: number };
+        };
+        const code = parsed.error?.code;
+        const subcode = parsed.error?.error_subcode;
+        if (code === 80007 || code === 130429 || code === 131048) retryable = true;
+        if (subcode === 2494055) retryable = true; // recipient cap
+      } catch {
+        // ignore — keep retryable=false on unparseable bodies
+      }
+    }
+    return { ok: false, retryable, status: res.status };
   }
 
   let messageId: string | undefined;

@@ -308,4 +308,203 @@ function mapPaymentMethod(method: string): string | undefined {
   return map[method];
 }
 
+// ====================================================================
+// WhatsApp Cloud API webhook
+// ====================================================================
+// Meta sends:
+//   - GET handshake when you save the webhook URL in Business Manager
+//     (echo back hub.challenge if hub.verify_token matches our secret)
+//   - POST events for every status transition on every outbound template
+//     (sent → delivered → read; or → failed). HMAC-SHA256 over the raw body
+//     using the App Secret, header X-Hub-Signature-256.
+//
+// We persist every event to whatsapp_message_events for audit/queryability,
+// and close the loop on abandoned-cart deliverability: if a message we sent
+// for cart recovery comes back as "failed", we clear `abandonedEmailSentAt`
+// (or `emailSent` for a guest) so the next 15-min sweep retries that user.
+
+router.get('/whatsapp', (req, res) => {
+  const verifyToken = env.WHATSAPP_WEBHOOK_VERIFY_TOKEN;
+  if (!verifyToken) {
+    logger.warn('WHATSAPP_WEBHOOK_VERIFY_TOKEN not configured — rejecting handshake');
+    res.status(503).send('webhook not configured');
+    return;
+  }
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+  if (mode === 'subscribe' && token === verifyToken && typeof challenge === 'string') {
+    logger.info('WhatsApp webhook verified by Meta');
+    res.status(200).send(challenge);
+    return;
+  }
+  logger.warn(
+    { mode, hasToken: !!token, tokenMatch: token === verifyToken },
+    'WhatsApp webhook handshake rejected'
+  );
+  res.status(403).send('Forbidden');
+});
+
+router.post(
+  '/whatsapp',
+  webhookLimiter,
+  asyncHandler(async (req, res) => {
+    const appSecret = env.WHATSAPP_APP_SECRET;
+    if (!appSecret) {
+      logger.warn('WHATSAPP_APP_SECRET not configured — accepting webhook unsigned (DEV ONLY)');
+      // In production we want a hard fail rather than silently process
+      // unverified payloads.
+      if (env.NODE_ENV === 'production') {
+        res.status(503).json({ success: false });
+        return;
+      }
+    } else {
+      const signature = req.headers['x-hub-signature-256'] as string | undefined;
+      const rawBody: string | undefined = (req as any).rawBody;
+      if (!rawBody) {
+        logger.warn('WhatsApp webhook missing rawBody — cannot verify signature');
+        res.status(400).json({ success: false });
+        return;
+      }
+      const expected =
+        'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
+      const sigBuf = Buffer.from(signature || '', 'utf8');
+      const expBuf = Buffer.from(expected, 'utf8');
+      if (
+        !signature ||
+        sigBuf.length !== expBuf.length ||
+        !crypto.timingSafeEqual(sigBuf, expBuf)
+      ) {
+        logger.warn(
+          { hasSignature: !!signature, sigLen: sigBuf.length, expLen: expBuf.length },
+          'WhatsApp webhook signature mismatch'
+        );
+        res.status(401).json({ success: false });
+        return;
+      }
+    }
+
+    // Acknowledge fast — Meta retries aggressively if we don't 200 quickly,
+    // and the per-event work is best-effort. Process inline anyway since the
+    // payloads are tiny; if Meta starts seeing 5xx we can move to a queue.
+    const body = req.body as {
+      object?: string;
+      entry?: {
+        id?: string;
+        changes?: {
+          field?: string;
+          value?: {
+            messaging_product?: string;
+            metadata?: { display_phone_number?: string; phone_number_id?: string };
+            statuses?: Array<{
+              id: string; // message id
+              recipient_id?: string; // wa_id
+              status: 'sent' | 'delivered' | 'read' | 'failed';
+              timestamp?: string; // unix seconds, string
+              conversation?: { id?: string; origin?: { type?: string } };
+              pricing?: { pricing_model?: string; category?: string };
+              errors?: Array<{ code?: number; title?: string; message?: string }>;
+            }>;
+          };
+        }[];
+      }[];
+    };
+
+    if (body.object !== 'whatsapp_business_account') {
+      // Not a WhatsApp event — silently ack so Meta doesn't keep retrying.
+      res.status(200).json({ success: true });
+      return;
+    }
+
+    const allStatuses = (body.entry ?? []).flatMap(
+      (e) => e.changes?.flatMap((c) => c.value?.statuses ?? []) ?? []
+    );
+
+    if (allStatuses.length === 0) {
+      // Could be a "messages" inbound event we don't care about (incoming
+      // user replies). Ack and move on.
+      res.status(200).json({ success: true });
+      return;
+    }
+
+    for (const s of allStatuses) {
+      const eventAt = s.timestamp ? new Date(Number(s.timestamp) * 1000) : new Date();
+      const error = s.errors?.[0];
+
+      try {
+        await prisma.whatsAppMessageEvent.create({
+          data: {
+            messageId: s.id,
+            waId: s.recipient_id,
+            status: s.status,
+            errorCode: error?.code,
+            errorTitle: error?.title?.slice(0, 255),
+            errorMessage: error?.message,
+            conversationId: s.conversation?.id,
+            conversationCategory: s.conversation?.origin?.type,
+            pricingModel: s.pricing?.pricing_model,
+            pricingCategory: s.pricing?.category,
+            rawPayload: s as unknown as object,
+            eventAt,
+          },
+        });
+      } catch (err) {
+        // Don't let a DB write hiccup turn into a 5xx — Meta retries are
+        // expensive (and out of order). Log and move on.
+        logger.error({ err, messageId: s.id }, 'Failed to persist WhatsApp message event');
+      }
+
+      logger.info(
+        {
+          messageId: s.id,
+          waId: s.recipient_id,
+          status: s.status,
+          errorCode: error?.code,
+          errorTitle: error?.title,
+          errorMessage: error?.message,
+          conversationCategory: s.conversation?.origin?.type,
+        },
+        'WhatsApp delivery status'
+      );
+
+      // ── Close the loop on abandoned-cart recovery ────────────────
+      // If Meta accepted our message but later reports it failed (template
+      // paused mid-cycle, recipient blocked, undeliverable number, etc.),
+      // un-mark the cart so the next sweep retries via email.
+      if (s.status === 'failed') {
+        try {
+          const [cartHit, guestHit] = await Promise.all([
+            prisma.cart.updateMany({
+              where: { lastRecoveryMessageId: s.id },
+              data: { abandonedEmailSentAt: null },
+            }),
+            prisma.guestAbandonedCart.updateMany({
+              where: { lastRecoveryMessageId: s.id },
+              data: { emailSent: false },
+            }),
+          ]);
+          if (cartHit.count + guestHit.count > 0) {
+            logger.warn(
+              {
+                messageId: s.id,
+                userCartsReopened: cartHit.count,
+                guestCartsReopened: guestHit.count,
+                errorCode: error?.code,
+              },
+              'Abandoned-cart recovery message failed at Meta — cart reopened for retry'
+            );
+          }
+        } catch (err) {
+          logger.error(
+            { err, messageId: s.id },
+            'Failed to reopen abandoned cart on Meta failure event'
+          );
+        }
+      }
+    }
+
+    res.status(200).json({ success: true });
+  })
+);
+
 export { router as webhookRouter };

@@ -46,6 +46,7 @@ interface ProcessResult {
   emailed: boolean;
   marked: boolean; // whether abandonedEmailSentAt was stamped
   deferred: boolean; // true when no channel succeeded but at least one is retryable
+  rateLimited?: boolean; // true if Meta returned a rate-limit response on this send
 }
 
 /**
@@ -82,12 +83,16 @@ export async function processOneAbandonedCart(cart: AbandonedCartCart): Promise<
   let emailTransient = false;
 
   // 1. WhatsApp (preferred — higher open rate)
+  let waMessageId: string | undefined;
+  let waRateLimited = false;
   if (cart.user?.phone) {
     waAttempted = true;
     const itemNames = cartItems.map((i) => i.name).join(', ');
     const result = await sendWhatsAppAbandonedCart(cart.user.phone, firstName, itemNames);
     waSucceeded = result.ok;
     waTransient = !result.ok && result.retryable;
+    waMessageId = result.messageId;
+    waRateLimited = !result.ok && (result.status === 429 || result.retryable);
   }
 
   // 2. Email
@@ -154,9 +159,15 @@ export async function processOneAbandonedCart(cart: AbandonedCartCart): Promise<
   const shouldMark = anySucceeded || (!anyTransient && (waAttempted || emailAttempted));
 
   if (shouldMark) {
+    // Persist the WhatsApp messageId alongside the sent timestamp so the
+    // /api/v1/webhooks/whatsapp handler can correlate failure events back
+    // to this cart and clear `abandonedEmailSentAt` for retry.
     await prisma.cart.update({
       where: { id: cart.id },
-      data: { abandonedEmailSentAt: new Date() },
+      data: {
+        abandonedEmailSentAt: new Date(),
+        ...(waMessageId ? { lastRecoveryMessageId: waMessageId } : {}),
+      },
     });
 
     if (ph && anySucceeded) {
@@ -172,6 +183,7 @@ export async function processOneAbandonedCart(cart: AbandonedCartCart): Promise<
           cart_items: cartItems,
           channel_whatsapp: waSucceeded,
           channel_email: emailSucceeded,
+          message_id: waMessageId,
         },
       });
     }
@@ -196,6 +208,7 @@ export async function processOneAbandonedCart(cart: AbandonedCartCart): Promise<
     emailed: emailSucceeded,
     marked: shouldMark,
     deferred: !shouldMark,
+    rateLimited: waRateLimited,
   };
 }
 
@@ -328,16 +341,31 @@ export async function runAbandonedCartCheck(): Promise<{
   whatsapped: number;
   guestEmailed: number;
   deferred: number;
+  capped: boolean;
+  rateLimited: boolean;
 }> {
   if (sweepInFlight) {
     logger.info('Abandoned cart sweep already in flight — skipping');
-    return { ran: false, tracked: 0, emailed: 0, whatsapped: 0, guestEmailed: 0, deferred: 0 };
+    return {
+      ran: false,
+      tracked: 0,
+      emailed: 0,
+      whatsapped: 0,
+      guestEmailed: 0,
+      deferred: 0,
+      capped: false,
+      rateLimited: false,
+    };
   }
   sweepInFlight = true;
   try {
     const ph = getPostHog();
     const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // Per-cycle cap protects the shared 2000/24h Meta budget. Anything beyond
+    // the cap is left for the next 15-min cycle.
+    const cap = env.WHATSAPP_ABANDONED_CART_SWEEP_CAP;
 
     // ── Logged-in carts ──────────────────────────────────────────
     const abandonedCarts = await prisma.cart.findMany({
@@ -352,12 +380,17 @@ export async function runAbandonedCartCheck(): Promise<{
         },
       },
       include: userCartInclude,
+      take: cap,
+      orderBy: { updatedAt: 'asc' }, // oldest-pending-first so nothing starves
     });
+
+    const capped = abandonedCarts.length === cap;
 
     let tracked = 0;
     let emailed = 0;
     let whatsapped = 0;
     let deferred = 0;
+    let rateLimited = false;
 
     for (const cart of abandonedCarts) {
       const r = await processOneAbandonedCart(cart);
@@ -365,14 +398,26 @@ export async function runAbandonedCartCheck(): Promise<{
       if (r.whatsapped) whatsapped++;
       if (r.marked) tracked++;
       if (r.deferred) deferred++;
+      // First rate-limit hit = no point burning the rest of the cycle on
+      // requests that are guaranteed to fail. Bail out and let the next 15-min
+      // tick try again. Email-only carts still process below.
+      if (r.rateLimited) {
+        rateLimited = true;
+        logger.warn(
+          'Meta rate-limit detected — stopping WhatsApp sends this cycle to preserve daily budget'
+        );
+        break;
+      }
     }
 
-    // ── Guest carts ──────────────────────────────────────────────
+    // ── Guest carts (email-only, not affected by Meta rate limits) ──
     const guestCarts = await prisma.guestAbandonedCart.findMany({
       where: {
         emailSent: false,
         updatedAt: { lte: thirtyMinAgo },
       },
+      take: cap,
+      orderBy: { updatedAt: 'asc' },
     });
 
     let guestEmailed = 0;
@@ -393,10 +438,22 @@ export async function runAbandonedCartCheck(): Promise<{
       whatsapped > 0 ||
       guestEmailed > 0 ||
       deferred > 0 ||
-      guestDeferred > 0
+      guestDeferred > 0 ||
+      capped ||
+      rateLimited
     ) {
       logger.info(
-        { tracked, emailed, whatsapped, guestEmailed, deferred, guestDeferred },
+        {
+          tracked,
+          emailed,
+          whatsapped,
+          guestEmailed,
+          deferred,
+          guestDeferred,
+          capped,
+          rateLimited,
+          cap,
+        },
         'Abandoned cart sweep completed'
       );
     }
@@ -408,6 +465,8 @@ export async function runAbandonedCartCheck(): Promise<{
       whatsapped,
       guestEmailed,
       deferred: deferred + guestDeferred,
+      capped,
+      rateLimited,
     };
   } finally {
     sweepInFlight = false;

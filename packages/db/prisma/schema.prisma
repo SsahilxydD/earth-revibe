@@ -297,14 +297,19 @@ model ProductTag {
 // ==========================================
 
 model Cart {
-  id                   String     @id @default(cuid())
-  userId               String     @unique
-  user                 User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items                CartItem[]
-  abandonedEmailSentAt DateTime?
-  createdAt            DateTime   @default(now())
-  updatedAt            DateTime   @updatedAt
+  id                       String     @id @default(cuid())
+  userId                   String     @unique
+  user                     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items                    CartItem[]
+  abandonedEmailSentAt     DateTime?
+  // Most recent WhatsApp recovery message id Meta returned. Used by the
+  // /api/v1/webhooks/whatsapp handler to clear `abandonedEmailSentAt` if Meta
+  // later reports the message as failed — closes the loop on accepted-but-undelivered.
+  lastRecoveryMessageId    String?    @db.VarChar(255)
+  createdAt                DateTime   @default(now())
+  updatedAt                DateTime   @updatedAt
 
+  @@index([lastRecoveryMessageId])
   @@map("carts")
 }
 
@@ -324,17 +329,49 @@ model CartItem {
 }
 
 model GuestAbandonedCart {
-  id        String   @id @default(cuid())
-  email     String
-  firstName String?
-  items     Json     // [{ variantId, productName, slug, price, quantity }]
-  cartTotal Float    @default(0)
-  emailSent Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  email                 String
+  firstName             String?
+  items                 Json     // [{ variantId, productName, slug, price, quantity }]
+  cartTotal             Float    @default(0)
+  emailSent             Boolean  @default(false)
+  // Reserved for symmetry with Cart — guests don't have phones today, but if
+  // we ever capture phone via the popup we'll want the same webhook closure.
+  lastRecoveryMessageId String?  @db.VarChar(255)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@unique([email])
+  @@index([lastRecoveryMessageId])
   @@map("guest_abandoned_carts")
+}
+
+/// Persistent log of every Meta WhatsApp delivery-status event we receive on
+/// the /api/v1/webhooks/whatsapp endpoint. Source of truth for "did this
+/// template actually reach the user" — Meta's 200 OK on send only means
+/// "accepted by Meta", not delivered. Useful for audits and for the
+/// abandoned-cart auto-retry loop (failure events clear the sent flag).
+model WhatsAppMessageEvent {
+  id                   String    @id @default(cuid())
+  messageId            String    @db.VarChar(255)
+  waId                 String?   @db.VarChar(20)
+  status               String    @db.VarChar(20) // sent | delivered | read | failed
+  errorCode            Int?
+  errorTitle           String?   @db.VarChar(255)
+  errorMessage         String?
+  conversationId       String?   @db.VarChar(64)
+  conversationCategory String?   @db.VarChar(32)
+  pricingModel         String?   @db.VarChar(16)
+  pricingCategory      String?   @db.VarChar(32)
+  rawPayload           Json
+  eventAt              DateTime
+  receivedAt           DateTime  @default(now())
+
+  @@index([messageId])
+  @@index([waId])
+  @@index([status, eventAt])
+  @@index([eventAt])
+  @@map("whatsapp_message_events")
 }
 
 // ==========================================
