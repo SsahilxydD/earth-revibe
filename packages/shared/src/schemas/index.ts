@@ -15,3 +15,4 @@ export * from './settings.schema';
 export * from './checkout.schema';
 export * from './travel-application.schema';
 export * from './admin-device.schema';
+export * from './customer-timeline.schema';

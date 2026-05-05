@@ -57,8 +57,7 @@ export default function CrmCustomersPage() {
       <div>
         <h1 className="text-2xl font-semibold text-charcoal">Customers</h1>
         <p className="text-sm text-medium-gray mt-1">
-          Search by name, email, or phone. Click a row to open the engagement timeline (lands in the
-          next commit).
+          Search by name, email, or phone. Click a row to open the customer 360 timeline.
         </p>
       </div>
 
@@ -125,7 +124,14 @@ export default function CrmCustomersPage() {
                   const fullName = `${row.firstName ?? ''} ${row.lastName ?? ''}`.trim() || '—';
                   return (
                     <tr key={row.id} className="border-b border-border hover:bg-surface-tint/30">
-                      <td className="px-2 py-3 font-medium">{fullName}</td>
+                      <td className="px-2 py-3 font-medium">
+                        <Link
+                          href={`/customers/${row.id}`}
+                          className="hover:text-accent transition-colors"
+                        >
+                          {fullName}
+                        </Link>
+                      </td>
                       <td className="px-2 py-3">
                         <div className="text-xs">{row.email}</div>
                         {row.phone && <div className="text-xs text-text-muted">{row.phone}</div>}

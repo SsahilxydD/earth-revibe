@@ -12,6 +12,7 @@ router.use(authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 router.get('/', asyncHandler(adminCustomerController.listCustomers));
 router.get('/export-csv', asyncHandler(adminCustomerController.exportCSV));
 router.get('/:id', asyncHandler(adminCustomerController.getCustomer));
+router.get('/:id/timeline', asyncHandler(adminCustomerController.getTimeline));
 router.put('/:id/toggle-active', asyncHandler(adminCustomerController.toggleActive));
 
 export { router as adminCustomerRouter };

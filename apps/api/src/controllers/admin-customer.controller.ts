@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
+import { timelineQuerySchema } from '@earth-revibe/shared';
 import { adminCustomerService } from '../services/admin-customer.service';
+import { customerTimelineService } from '../services/customer-timeline.service';
 
 export const adminCustomerController = {
   async listCustomers(req: Request, res: Response) {
@@ -38,6 +40,13 @@ export const adminCustomerController = {
   async toggleActive(req: Request, res: Response) {
     const id = req.params.id as string;
     const result = await adminCustomerService.toggleActive(id);
+    res.json({ success: true, data: result });
+  },
+
+  async getTimeline(req: Request, res: Response) {
+    const id = req.params.id as string;
+    const query = timelineQuerySchema.parse(req.query);
+    const result = await customerTimelineService.getTimeline(id, query);
     res.json({ success: true, data: result });
   },
 };
