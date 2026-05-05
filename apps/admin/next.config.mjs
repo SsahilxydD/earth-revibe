@@ -50,6 +50,26 @@ const nextConfig = {
         destination: `${CRM_URL}/abandoned-carts/:path*`,
         permanent: true,
       },
+      {
+        source: '/whatsapp-broadcast',
+        destination: `${CRM_URL}/whatsapp-broadcast`,
+        permanent: true,
+      },
+      {
+        source: '/whatsapp-broadcast/:path*',
+        destination: `${CRM_URL}/whatsapp-broadcast/:path*`,
+        permanent: true,
+      },
+      {
+        source: '/trip-opening-broadcast',
+        destination: `${CRM_URL}/trip-opening-broadcast`,
+        permanent: true,
+      },
+      {
+        source: '/trip-opening-broadcast/:path*',
+        destination: `${CRM_URL}/trip-opening-broadcast/:path*`,
+        permanent: true,
+      },
     ];
   },
 };
