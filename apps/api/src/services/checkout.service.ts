@@ -676,109 +676,129 @@ export async function finalizeOrderFromPending(
     accountAutoCreated: boolean;
     effectiveUserId: string | null;
     isGuest: boolean;
+    subtotal: number;
   };
 
   let txResult: TxResult;
   try {
-    txResult = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Idempotency guard inside transaction — catches most races
-      const existingPaymentInTx = await tx.payment.findUnique({
-        where: { razorpayOrderId: paymentInfo.razorpayOrderId },
-      });
-      if (existingPaymentInTx) {
-        return {
-          orderId: '',
-          orderNumber: pending.orderNumber,
-          pointsEarned: 0,
-          accountAutoCreated: false,
-          effectiveUserId: pending.userId,
-          isGuest: !pending.userId,
-        };
-      }
-
-      // ── 1. Resolve user (inside transaction) ──
-      let isGuest = !pending.userId;
-      let effectiveUserId = pending.userId;
-      let accountAutoCreated = false;
-
-      if (isGuest && customerEmail) {
-        let existingUser = await tx.user.findUnique({ where: { email: customerEmail } });
-        if (!existingUser && customerPhone) {
-          existingUser = await tx.user.findFirst({ where: { phone: customerPhone } });
-        }
-
-        if (existingUser) {
-          effectiveUserId = existingUser.id;
-          isGuest = false;
-          if (customerPhone && !existingUser.phone) {
-            await tx.user.update({
-              where: { id: existingUser.id },
-              data: { phone: `+91${customerPhone}` },
-            });
-          }
-        } else {
-          const nameParts = customerName.split(' ');
-          try {
-            const newUser = await tx.user.create({
-              data: {
-                email: customerEmail,
-                phone: customerPhone ? `+91${customerPhone}` : undefined,
-                firstName: nameParts[0] || 'Customer',
-                lastName: nameParts.slice(1).join(' ') || '',
-                role: 'CUSTOMER',
-                emailVerified: true,
-                phoneVerified: !!customerPhone,
-                isActive: true,
-              },
-            });
-            effectiveUserId = newUser.id;
-            isGuest = false;
-            accountAutoCreated = true;
-            logger.info(
-              { userId: newUser.id, email: customerEmail },
-              'Auto-created user from checkout finalization'
-            );
-          } catch (err) {
-            logger.warn(
-              { err, email: customerEmail },
-              'Failed to auto-create user, continuing as guest'
-            );
-          }
-        }
-      } else if (!isGuest && effectiveUserId && customerPhone) {
-        const user = await tx.user.findUnique({
-          where: { id: effectiveUserId },
-          select: { phone: true },
+    txResult = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // Idempotency guard inside transaction — catches most races
+        const existingPaymentInTx = await tx.payment.findUnique({
+          where: { razorpayOrderId: paymentInfo.razorpayOrderId },
         });
-        if (!user?.phone) {
-          await tx.user.update({
-            where: { id: effectiveUserId },
-            data: { phone: customerPhone },
-          });
+        if (existingPaymentInTx) {
+          return {
+            orderId: '',
+            orderNumber: pending.orderNumber,
+            pointsEarned: 0,
+            accountAutoCreated: false,
+            effectiveUserId: pending.userId,
+            isGuest: !pending.userId,
+            subtotal: 0,
+          };
         }
-      }
 
-      // ── 2. Save shipping address (inside transaction) ──
-      let addressId: string;
+        // ── 1. Resolve user (inside transaction) ──
+        let isGuest = !pending.userId;
+        let effectiveUserId = pending.userId;
+        let accountAutoCreated = false;
 
-      if (rzpAddress) {
-        const pinCode = rzpAddress.zipcode || rzpAddress.zip_code || '';
-        const line1 = rzpAddress.line1 || rzpAddress.address || '';
-        const fullName =
-          rzpAddress.name || `${rzpAddress.first_name || ''} ${rzpAddress.last_name || ''}`.trim();
-        const phone = customerDetails.contact || '';
+        if (isGuest && customerEmail) {
+          let existingUser = await tx.user.findUnique({ where: { email: customerEmail } });
+          if (!existingUser && customerPhone) {
+            existingUser = await tx.user.findFirst({ where: { phone: customerPhone } });
+          }
 
-        if (!isGuest && effectiveUserId) {
-          const existingAddr = await tx.address.findFirst({
-            where: { userId: effectiveUserId, pinCode, line1 },
-          });
-          if (existingAddr) {
-            addressId = existingAddr.id;
+          if (existingUser) {
+            effectiveUserId = existingUser.id;
+            isGuest = false;
+            if (customerPhone && !existingUser.phone) {
+              await tx.user.update({
+                where: { id: existingUser.id },
+                data: { phone: `+91${customerPhone}` },
+              });
+            }
           } else {
-            const addressCount = await tx.address.count({ where: { userId: effectiveUserId } });
+            const nameParts = customerName.split(' ');
+            try {
+              const newUser = await tx.user.create({
+                data: {
+                  email: customerEmail,
+                  phone: customerPhone ? `+91${customerPhone}` : undefined,
+                  firstName: nameParts[0] || 'Customer',
+                  lastName: nameParts.slice(1).join(' ') || '',
+                  role: 'CUSTOMER',
+                  emailVerified: true,
+                  phoneVerified: !!customerPhone,
+                  isActive: true,
+                },
+              });
+              effectiveUserId = newUser.id;
+              isGuest = false;
+              accountAutoCreated = true;
+              logger.info(
+                { userId: newUser.id, email: customerEmail },
+                'Auto-created user from checkout finalization'
+              );
+            } catch (err) {
+              logger.warn(
+                { err, email: customerEmail },
+                'Failed to auto-create user, continuing as guest'
+              );
+            }
+          }
+        } else if (!isGuest && effectiveUserId && customerPhone) {
+          const user = await tx.user.findUnique({
+            where: { id: effectiveUserId },
+            select: { phone: true },
+          });
+          if (!user?.phone) {
+            await tx.user.update({
+              where: { id: effectiveUserId },
+              data: { phone: customerPhone },
+            });
+          }
+        }
+
+        // ── 2. Save shipping address (inside transaction) ──
+        let addressId: string;
+
+        if (rzpAddress) {
+          const pinCode = rzpAddress.zipcode || rzpAddress.zip_code || '';
+          const line1 = rzpAddress.line1 || rzpAddress.address || '';
+          const fullName =
+            rzpAddress.name ||
+            `${rzpAddress.first_name || ''} ${rzpAddress.last_name || ''}`.trim();
+          const phone = customerDetails.contact || '';
+
+          if (!isGuest && effectiveUserId) {
+            const existingAddr = await tx.address.findFirst({
+              where: { userId: effectiveUserId, pinCode, line1 },
+            });
+            if (existingAddr) {
+              addressId = existingAddr.id;
+            } else {
+              const addressCount = await tx.address.count({ where: { userId: effectiveUserId } });
+              const address = await tx.address.create({
+                data: {
+                  userId: effectiveUserId,
+                  label: rzpAddress.tag || 'Home',
+                  fullName,
+                  phone,
+                  line1,
+                  line2: rzpAddress.line2 || '',
+                  city: rzpAddress.city || '',
+                  state: rzpAddress.state || '',
+                  pinCode,
+                  isDefault: addressCount === 0,
+                },
+              });
+              addressId = address.id;
+            }
+          } else {
             const address = await tx.address.create({
               data: {
-                userId: effectiveUserId,
                 label: rzpAddress.tag || 'Home',
                 fullName,
                 phone,
@@ -787,175 +807,162 @@ export async function finalizeOrderFromPending(
                 city: rzpAddress.city || '',
                 state: rzpAddress.state || '',
                 pinCode,
-                isDefault: addressCount === 0,
+                isDefault: false,
               },
             });
             addressId = address.id;
           }
         } else {
-          const address = await tx.address.create({
-            data: {
-              label: rzpAddress.tag || 'Home',
-              fullName,
-              phone,
-              line1,
-              line2: rzpAddress.line2 || '',
-              city: rzpAddress.city || '',
-              state: rzpAddress.state || '',
-              pinCode,
-              isDefault: false,
-            },
-          });
-          addressId = address.id;
+          if (!isGuest && effectiveUserId) {
+            const defaultAddr = await tx.address.findFirst({
+              where: { userId: effectiveUserId, isDefault: true },
+            });
+            if (!defaultAddr) {
+              throw ApiError.badRequest('No shipping address found');
+            }
+            addressId = defaultAddr.id;
+          } else {
+            throw ApiError.badRequest('No shipping address provided for guest checkout');
+          }
         }
-      } else {
+
+        // ── 3. Create order ──
+        const order = await tx.order.create({
+          data: {
+            orderNumber: pending.orderNumber,
+            userId: effectiveUserId || undefined,
+            guestEmail: isGuest ? guestEmail : undefined,
+            addressId,
+            subtotal,
+            discountAmount,
+            shippingAmount,
+            taxAmount: 0,
+            totalAmount,
+            loyaltyPointsUsed: pending.loyaltyPointsToUse,
+            discountCodeId,
+            items: { create: orderItems },
+            payment: {
+              create: {
+                razorpayOrderId: paymentInfo.razorpayOrderId,
+                razorpayPaymentId: paymentInfo.razorpayPaymentId,
+                razorpaySignature: paymentInfo.razorpaySignature || '',
+                amount: totalAmount,
+                status: 'CAPTURED',
+                method: paymentInfo.method as any,
+                paidAt: new Date(),
+              },
+            },
+            status: 'CONFIRMED',
+            statusHistory: {
+              create: {
+                status: 'CONFIRMED',
+                note: isGuest
+                  ? 'Payment received via Magic Checkout (guest)'
+                  : 'Payment received via Magic Checkout',
+              },
+            },
+          },
+        });
+
+        if (discountCodeId) {
+          await tx.discountCode.update({
+            where: { id: discountCodeId },
+            data: { usageCount: { increment: 1 } },
+          });
+        }
+
+        if (!pending.stockReserved) {
+          for (const ci of cartItems) {
+            const result = await tx.productVariant.updateMany({
+              where: { id: ci.variantId, stock: { gte: ci.quantity } },
+              data: { stock: { decrement: ci.quantity } },
+            });
+            if (result.count === 0) {
+              throw ApiError.badRequest(`Insufficient stock for variant ${ci.variantId}`);
+            }
+          }
+        }
+
+        let pointsEarned = 0;
         if (!isGuest && effectiveUserId) {
-          const defaultAddr = await tx.address.findFirst({
-            where: { userId: effectiveUserId, isDefault: true },
-          });
-          if (!defaultAddr) {
-            throw ApiError.badRequest('No shipping address found');
+          if (pending.loyaltyPointsToUse > 0) {
+            await tx.user.update({
+              where: { id: effectiveUserId },
+              data: { loyaltyPoints: { decrement: pending.loyaltyPointsToUse } },
+            });
+            await tx.loyaltyTransaction.create({
+              data: {
+                userId: effectiveUserId,
+                type: 'REDEEMED',
+                points: -pending.loyaltyPointsToUse,
+                description: `Redeemed for order #${pending.orderNumber}`,
+                orderId: order.id,
+              },
+            });
           }
-          addressId = defaultAddr.id;
-        } else {
-          throw ApiError.badRequest('No shipping address provided for guest checkout');
-        }
-      }
 
-      // ── 3. Create order ──
-      const order = await tx.order.create({
-        data: {
+          // 100% cashback on the first order as a hook; 20% on repeat orders.
+          // Redemption is email-gated (admin approval required) so the realised
+          // liability is far less than face value thanks to breakage.
+          const priorOrderCount = await tx.order.count({
+            where: {
+              userId: effectiveUserId,
+              status: { not: 'CANCELLED' },
+              id: { not: order.id },
+            },
+          });
+          const isFirstOrder = priorOrderCount === 0;
+          pointsEarned = Math.floor(isFirstOrder ? totalAmount : totalAmount / 5);
+          if (pointsEarned > 0) {
+            await tx.user.update({
+              where: { id: effectiveUserId },
+              data: { loyaltyPoints: { increment: pointsEarned } },
+            });
+            await tx.order.update({
+              where: { id: order.id },
+              data: { loyaltyPointsEarned: pointsEarned },
+            });
+            await tx.loyaltyTransaction.create({
+              data: {
+                userId: effectiveUserId,
+                type: 'EARNED',
+                points: pointsEarned,
+                description: isFirstOrder
+                  ? `100% cashback — first order #${pending.orderNumber}`
+                  : `20% cashback — order #${pending.orderNumber}`,
+                orderId: order.id,
+                expiresAt: defaultExpiresAt(),
+              },
+            });
+          }
+        }
+
+        // NOTE: cart clear, referral conversion, and pendingCheckout delete are
+        // intentionally NOT inside this transaction. On Supabase's pgbouncer in
+        // transaction-pool mode, long-running interactive transactions can have
+        // their underlying connection rotated mid-flight, which Postgres reports
+        // as "Transaction not found." That would silently kill payment finalization
+        // for every captured order. We keep the safety-critical writes (Order +
+        // OrderItems + Payment + StatusHistory + loyalty awards) in this tx and
+        // run the cleanup ops below in a small follow-up transaction.
+
+        return {
+          orderId: order.id,
           orderNumber: pending.orderNumber,
-          userId: effectiveUserId || undefined,
-          guestEmail: isGuest ? guestEmail : undefined,
-          addressId,
-          subtotal,
-          discountAmount,
-          shippingAmount,
-          taxAmount: 0,
-          totalAmount,
-          loyaltyPointsUsed: pending.loyaltyPointsToUse,
-          discountCodeId,
-          items: { create: orderItems },
-          payment: {
-            create: {
-              razorpayOrderId: paymentInfo.razorpayOrderId,
-              razorpayPaymentId: paymentInfo.razorpayPaymentId,
-              razorpaySignature: paymentInfo.razorpaySignature || '',
-              amount: totalAmount,
-              status: 'CAPTURED',
-              method: paymentInfo.method as any,
-              paidAt: new Date(),
-            },
-          },
-          status: 'CONFIRMED',
-          statusHistory: {
-            create: {
-              status: 'CONFIRMED',
-              note: isGuest
-                ? 'Payment received via Magic Checkout (guest)'
-                : 'Payment received via Magic Checkout',
-            },
-          },
-        },
-      });
-
-      if (discountCodeId) {
-        await tx.discountCode.update({
-          where: { id: discountCodeId },
-          data: { usageCount: { increment: 1 } },
-        });
-      }
-
-      if (!pending.stockReserved) {
-        for (const ci of cartItems) {
-          const result = await tx.productVariant.updateMany({
-            where: { id: ci.variantId, stock: { gte: ci.quantity } },
-            data: { stock: { decrement: ci.quantity } },
-          });
-          if (result.count === 0) {
-            throw ApiError.badRequest(`Insufficient stock for variant ${ci.variantId}`);
-          }
-        }
-      }
-
-      let pointsEarned = 0;
-      if (!isGuest && effectiveUserId) {
-        if (pending.loyaltyPointsToUse > 0) {
-          await tx.user.update({
-            where: { id: effectiveUserId },
-            data: { loyaltyPoints: { decrement: pending.loyaltyPointsToUse } },
-          });
-          await tx.loyaltyTransaction.create({
-            data: {
-              userId: effectiveUserId,
-              type: 'REDEEMED',
-              points: -pending.loyaltyPointsToUse,
-              description: `Redeemed for order #${pending.orderNumber}`,
-              orderId: order.id,
-            },
-          });
-        }
-
-        // 100% cashback on the first order as a hook; 20% on repeat orders.
-        // Redemption is email-gated (admin approval required) so the realised
-        // liability is far less than face value thanks to breakage.
-        const priorOrderCount = await tx.order.count({
-          where: {
-            userId: effectiveUserId,
-            status: { not: 'CANCELLED' },
-            id: { not: order.id },
-          },
-        });
-        const isFirstOrder = priorOrderCount === 0;
-        pointsEarned = Math.floor(isFirstOrder ? totalAmount : totalAmount / 5);
-        if (pointsEarned > 0) {
-          await tx.user.update({
-            where: { id: effectiveUserId },
-            data: { loyaltyPoints: { increment: pointsEarned } },
-          });
-          await tx.order.update({
-            where: { id: order.id },
-            data: { loyaltyPointsEarned: pointsEarned },
-          });
-          await tx.loyaltyTransaction.create({
-            data: {
-              userId: effectiveUserId,
-              type: 'EARNED',
-              points: pointsEarned,
-              description: isFirstOrder
-                ? `100% cashback — first order #${pending.orderNumber}`
-                : `20% cashback — order #${pending.orderNumber}`,
-              orderId: order.id,
-              expiresAt: defaultExpiresAt(),
-            },
-          });
-        }
-
-        await convertReferralOnFirstOrder(
-          tx,
+          pointsEarned,
+          accountAutoCreated,
           effectiveUserId,
-          Number(order.subtotal),
-          pending.orderNumber
-        );
-
-        const cart = await tx.cart.findUnique({ where: { userId: effectiveUserId } });
-        if (cart) {
-          await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-        }
+          isGuest,
+          subtotal: Number(order.subtotal),
+        };
+      },
+      {
+        // Generous timeout in case the customer has many addresses, the
+        // discount-code lookup is cold, etc. Default 5s is too tight under load.
+        timeout: 30_000,
+        maxWait: 10_000,
       }
-
-      await tx.pendingCheckout.delete({ where: { id: pending.id } });
-
-      return {
-        orderId: order.id,
-        orderNumber: pending.orderNumber,
-        pointsEarned,
-        accountAutoCreated,
-        effectiveUserId,
-        isGuest,
-      };
-    });
+    );
   } catch (err) {
     // Handle the concurrent race: both webhook and client entered the
     // transaction before either inserted a payment row. The loser hits a
@@ -1000,10 +1007,38 @@ export async function finalizeOrderFromPending(
     accountAutoCreated,
     effectiveUserId,
     isGuest,
+    subtotal: orderSubtotal,
   } = txResult;
 
   // Skip post-transaction work if this was a no-op (idempotency guard inside tx)
   if (!orderId) return null;
+
+  // Cleanup ops moved out of the main transaction (see note above). Wrapped
+  // in their own short transaction so they're still atomic with each other,
+  // but small enough to avoid pgbouncer rotation. Best-effort: a failure here
+  // logs a warning but does NOT undo the order. Worst case, a stale
+  // pendingCheckout sits around until the next reconcile sweep cleans it up
+  // (the existingPayment check there is idempotent).
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        if (!isGuest && effectiveUserId) {
+          await convertReferralOnFirstOrder(tx, effectiveUserId, orderSubtotal, finalOrderNumber);
+          const cart = await tx.cart.findUnique({ where: { userId: effectiveUserId } });
+          if (cart) {
+            await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+          }
+        }
+        await tx.pendingCheckout.delete({ where: { id: pending.id } });
+      },
+      { timeout: 15_000, maxWait: 5_000 }
+    );
+  } catch (cleanupErr) {
+    logger.warn(
+      { err: cleanupErr, orderNumber: finalOrderNumber, pendingId: pending.id },
+      'Post-finalize cleanup failed (non-critical) — order is safe; reconcile sweep will handle the rest'
+    );
+  }
 
   // Fire-and-forget side effects
   shiprocketService.createShiprocketOrder(orderId).catch((sErr) => {
