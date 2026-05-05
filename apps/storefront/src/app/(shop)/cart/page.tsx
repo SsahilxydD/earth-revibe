@@ -139,20 +139,41 @@ export default function CartPage() {
   const shippingEstimate = 0; // Always free shipping
 
   const handleApplyDiscount = async () => {
-    if (!couponInput.trim()) return;
+    const code = couponInput.trim();
+    if (!code) return;
 
     setCouponError('');
     setCouponLoading(true);
     try {
       const result = await api.post<{ code: string; discountAmount: number }>(
         '/discounts/validate',
-        { code: couponInput.trim(), orderTotal: subtotal }
+        { code, orderTotal: subtotal }
       );
       applyDiscount(result.code, result.discountAmount);
       setCouponInput('');
       addToast('Discount applied!', 'success');
-    } catch (error: any) {
-      setCouponError(error?.message || 'Invalid discount code');
+    } catch (discountErr: any) {
+      try {
+        const ref = await api.get<{ valid: boolean; reason?: string; referrerName?: string }>(
+          `/referrals/validate?code=${encodeURIComponent(code)}`
+        );
+        if (ref.valid) {
+          const refereeDiscount = Math.floor(subtotal * 0.15);
+          applyDiscount(code, refereeDiscount);
+          setCouponInput('');
+          addToast('Referral code applied! 15% off your first order.', 'success');
+        } else {
+          const messages: Record<string, string> = {
+            'not-found': 'Invalid code',
+            self: "You can't use your own referral code",
+            'not-first-order': 'Referral codes only work on your first order',
+            'different-referrer': 'You have already used a different referral code',
+          };
+          setCouponError(messages[ref.reason ?? ''] ?? discountErr?.message ?? 'Invalid code');
+        }
+      } catch {
+        setCouponError(discountErr?.message || 'Invalid code');
+      }
     } finally {
       setCouponLoading(false);
     }
