@@ -12,11 +12,13 @@ apps/
   admin-mobile    Expo SDK 53 + Expo Router v4 + RN 0.79 + NativeWind v4 — real native Android, not WebView
   trip-form       Next 15      · port 3002 · WhatsApp-OTP-gated Travel Circle application form (deployed at earthrevibe.info)
   try-on-guide    Next 15      · port 3003
+  crm             Next 15.5.15 · port 3004 · customer engagement (WhatsApp, abandoned carts, broadcasts) — see PRD in docs/plans/
 
 packages/
   shared          Zod 4 schemas, enums, types, utilities — imported by every app
   db              Prisma client + schema — imported only by api
   tsconfig        Shared TS config base — devDep'd by every workspace
+  ui              Shared design primitives (Button, Input, Card, Modal, Toast, etc.) — used by admin + crm
 ```
 
 No cross-app imports. Apps share code only through `packages/`.
@@ -62,7 +64,7 @@ Razorpay (payments + webhooks) · Supabase (auth) · Cloudflare Images (CDN) · 
 - Data model (~30 models, ~975 lines): `packages/db/prisma/schema.prisma`
 - API mount, CORS, cron, webhooks: `apps/api/src/app.ts`
 - API server entry + signal handling: `apps/api/src/index.ts`
-- Per-app conventions: `apps/{storefront,admin,api,admin-mobile}/CLAUDE.md`
+- Per-app conventions: `apps/{storefront,admin,api,admin-mobile,crm}/CLAUDE.md`
 - Domain spec: `docs/01-PRD.md`, `docs/02-APP-FLOW.md`, `docs/05-BACKEND-SCHEMA.md`
 - Implementation history: `docs/plans/2026-03-05-phase{1..11}-*.md`
 - Pre-computed code graph (snapshot 2026-04-18): `graphify-out/` — `GRAPH_REPORT.md`, `graph.json` (1944 nodes / 2497 edges), `graph.html`

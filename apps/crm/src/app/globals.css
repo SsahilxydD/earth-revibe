@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+
+/* Scan @earth-revibe/ui source so primitives' Tailwind classes get generated. */
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
+
+/* Earth Revibe CRM — Mirror admin's design tokens so primitives render identically. */
+@theme {
+  /* Primary */
+  --color-primary: #0d0d0d;
+  --color-primary-light: #fafafa;
+  --color-accent: #22c55e;
+  --color-accent-light: #f0fdf4;
+
+  /* Text */
+  --color-text-primary: #0d0d0d;
+  --color-text-secondary: #7a7a7a;
+  --color-text-muted: #999999;
+  --color-text-on-dark: #fafafa;
+
+  /* Surfaces */
+  --color-surface: #ffffff;
+  --color-surface-tint: #fafafa;
+  --color-surface-hover: #f5f5f5;
+
+  /* Borders */
+  --color-border: #e8e8e8;
+
+  /* Semantic */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #dc2626;
+  --color-info: #3b82f6;
+
+  /* Semantic Backgrounds */
+  --color-success-bg: #f0fdf4;
+  --color-warning-bg: #fef3c7;
+  --color-error-bg: #fee2e2;
+  --color-info-bg: #eff6ff;
+
+  /* Legacy token aliases (consumed by some primitives) */
+  --color-deep-earth: #0d0d0d;
+  --color-charcoal: #0d0d0d;
+  --color-dark-gray: #7a7a7a;
+  --color-medium-gray: #999999;
+  --color-light-gray: #e8e8e8;
+  --color-off-white: #f5f5f5;
+  --color-cream: #fafafa;
+  --color-warm-white: #ffffff;
+
+  /* Font Families */
+  --font-helvetica: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-heading: var(--font-helvetica);
+  --font-body: var(--font-helvetica);
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+}
