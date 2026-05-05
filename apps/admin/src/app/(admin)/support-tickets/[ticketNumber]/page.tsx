@@ -46,7 +46,7 @@ export default function AdminTicketDetailPage({
   const [reply, setReply] = useState('');
   const [newStatus, setNewStatus] = useState('');
 
-  const ticket = data?.ticket;
+  const ticket = data;
 
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
