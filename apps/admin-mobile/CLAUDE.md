@@ -34,7 +34,7 @@ assets/ # icons, splash images
 ```bash
 pnpm --filter @earth-revibe/admin-mobile dev # start Metro
 pnpm --filter @earth-revibe/admin-mobile android # build & run on connected device/emulator
-pnpm --filter @earth-revibe/admin-mobile build # EAS preview build (.apk)
+pnpm --filter @earth-revibe/admin-mobile build:eas # EAS preview build (.apk)
 ```
 
 ## Monorepo gotchas

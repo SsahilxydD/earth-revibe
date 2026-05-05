@@ -35,7 +35,8 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
+      "passThroughEnv": ["DATABASE_URL", "JWT_SECRET", "NODE_ENV"]
     }
   }
 }

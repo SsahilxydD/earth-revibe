@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "expo start --dev-client",
     "android": "expo run:android",
-    "build": "eas build --platform android --profile preview",
+    "build:eas": "eas build --platform android --profile preview",
     "lint": "eslint . && tsc --noEmit",
     "eas-build-post-install": "cd ../.. && pnpm --filter @earth-revibe/shared build",
     "ios": "expo run:ios"
