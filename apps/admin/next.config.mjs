@@ -6,7 +6,7 @@ const API_ORIGIN = 'https://earth-revibeapi-production.up.railway.app';
 const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
-  transpilePackages: ['@earth-revibe/shared'],
+  transpilePackages: ['@earth-revibe/shared', '@earth-revibe/ui'],
   images: {
     remotePatterns: [
       {

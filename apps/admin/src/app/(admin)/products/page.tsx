@@ -12,9 +12,9 @@ import {
   CheckSquare,
   FolderInput,
 } from 'lucide-react';
-import { Button, Badge, Card, Select, Modal } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button, Badge, Card, Select, Modal } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
+import { Skeleton } from '@earth-revibe/ui/skeleton';
 import {
   useProducts,
   useDeleteProduct,

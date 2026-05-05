@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { toast } from '@/components/ui';
+import { toast } from '@earth-revibe/ui';
 import { revalidateStorefront } from '@/lib/revalidate-storefront';
 
 export function useBlogPosts(page: number = 1, status?: string, search?: string) {

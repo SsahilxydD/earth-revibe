@@ -5,9 +5,9 @@ import { Plus, Pencil, Trash2, Package, Search } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createCategorySchema, type CreateCategoryInput } from '@earth-revibe/shared';
-import { Button, Input, Textarea, Card, Badge, Modal } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button, Input, Textarea, Card, Badge, Modal } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
+import { Skeleton } from '@earth-revibe/ui/skeleton';
 import {
   useCategories,
   useCreateCategory,

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { Search, Send, RefreshCw, Mail, MessageCircle, ChevronDown } from 'lucide-react';
-import { Button, Badge, Card } from '@/components/ui';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/toast';
+import { Button, Badge, Card } from '@earth-revibe/ui';
+import { Skeleton } from '@earth-revibe/ui/skeleton';
+import { toast } from '@earth-revibe/ui/toast';
 import {
   useAbandonedCarts,
   useRunAbandonedCartSweep,

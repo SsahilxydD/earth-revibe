@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { Plus, Search, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
-import { Button, Badge, Card, Select } from '@/components/ui';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/toast';
-import { Modal } from '@/components/ui/modal';
-import { CalendarPicker } from '@/components/ui/calendar';
+import { Button, Badge, Card, Select } from '@earth-revibe/ui';
+import { Skeleton } from '@earth-revibe/ui/skeleton';
+import { toast } from '@earth-revibe/ui/toast';
+import { Modal } from '@earth-revibe/ui/modal';
+import { CalendarPicker } from '@earth-revibe/ui/calendar';
 import {
   useDiscounts,
   useCreateDiscount,

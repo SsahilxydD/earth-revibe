@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Card, Skeleton } from '@/components/ui';
+import { Card, Skeleton } from '@earth-revibe/ui';
 
 function formatINR(value: number) {
   return new Intl.NumberFormat('en-IN', {

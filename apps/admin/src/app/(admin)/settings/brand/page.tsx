@@ -11,8 +11,8 @@ import {
   Eye,
   Save,
 } from 'lucide-react';
-import { Card, Button, Input, Badge } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
+import { Card, Button, Input, Badge } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
 
 const BRAND_COLORS = [
   { name: 'Forest Green', hex: '#2D5A3D', token: 'primary' },

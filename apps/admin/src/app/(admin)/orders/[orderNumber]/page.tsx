@@ -15,10 +15,10 @@ import {
   FileText,
   ExternalLink,
 } from 'lucide-react';
-import { Button, Badge, Card, Select } from '@/components/ui';
-import { Modal } from '@/components/ui/modal';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/toast';
+import { Button, Badge, Card, Select } from '@earth-revibe/ui';
+import { Modal } from '@earth-revibe/ui/modal';
+import { Skeleton } from '@earth-revibe/ui/skeleton';
+import { toast } from '@earth-revibe/ui/toast';
 import {
   useOrder,
   useUpdateOrderStatus,

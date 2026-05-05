@@ -10,7 +10,7 @@ import {
   VIBE_LABELS,
 } from '@earth-revibe/shared';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Input, Select, Textarea, Card } from '@/components/ui';
+import { Button, Input, Select, Textarea, Card } from '@earth-revibe/ui';
 import { api } from '@/lib/api-client';
 import { VariantEditor } from './variant-editor';
 import { ImageManager } from './image-manager';

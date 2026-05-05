@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { MessageSquare } from 'lucide-react';
-import { Button, Badge, Card, Input, Select, Skeleton } from '@/components/ui';
+import { Button, Badge, Card, Input, Select, Skeleton } from '@earth-revibe/ui';
 import { useAdminTickets } from '@/hooks/use-support-tickets';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'info' | 'error' | 'default'> = {

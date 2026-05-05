@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Search, Eye, RefreshCw } from 'lucide-react';
-import { Button, Badge, Card, Select } from '@/components/ui';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button, Badge, Card, Select } from '@earth-revibe/ui';
+import { Skeleton } from '@earth-revibe/ui/skeleton';
 import { useOrders } from '@/hooks/use-orders';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { toast } from '@/components/ui';
+import { toast } from '@earth-revibe/ui';
 
 const statusOptions = [
   { value: '', label: 'All Statuses' },

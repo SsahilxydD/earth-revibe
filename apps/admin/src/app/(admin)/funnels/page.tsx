@@ -12,7 +12,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { useFunnelStore, type SavedFunnel } from '@/stores/funnel-store';
-import { Button } from '@/components/ui';
+import { Button } from '@earth-revibe/ui';
 
 export default function FunnelsPage() {
   const funnels = useFunnelStore((s) => s.funnels);

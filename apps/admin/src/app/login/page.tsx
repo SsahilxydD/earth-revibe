@@ -6,8 +6,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginInput } from '@earth-revibe/shared';
 import { Leaf } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
+import { Button, Input } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
 import { api } from '@/lib/api-client';
 
 export default function AdminLoginPage() {

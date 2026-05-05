@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Undo2, Truck, Shield, FileText, Save } from 'lucide-react';
-import { Card, Button, Textarea } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
+import { Card, Button, Textarea } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
 
 interface Policy {
   key: string;

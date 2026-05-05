@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Receipt, IndianRupee, FileText, Calculator, CheckCircle, Save } from 'lucide-react';
-import { Card, Button, Input, Select } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
+import { Card, Button, Input, Select } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
 
 export default function TaxesSettingsPage() {
   // Tax settings

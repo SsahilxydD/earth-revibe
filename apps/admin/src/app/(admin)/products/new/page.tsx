@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { ProductForm } from '@/components/products/product-form';
 import { useCreateProduct } from '@/hooks/use-products';
-import { toast } from '@/components/ui/toast';
+import { toast } from '@earth-revibe/ui/toast';
 import type { CreateProductInput } from '@earth-revibe/shared';
 
 export default function NewProductPage() {
