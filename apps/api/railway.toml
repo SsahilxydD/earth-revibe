@@ -3,7 +3,14 @@ builder = "nixpacks"
 buildCommand = "pnpm install --frozen-lockfile && pnpm turbo build --filter=@earth-revibe/api"
 
 [deploy]
-startCommand = "node apps/api/dist/index.js"
+# Regenerate the Prisma client + apply pending migrations before app boot.
+# Mirrors the package.json `start` script — Railway uses this railway.toml
+# override instead of `pnpm start`, so the chain has to live here too.
+# Without this, schema migrations land in git but never get applied to prod
+# (recovered manually on 2026-05-06; see project_railway_migration_silent_skip
+# memory entry). The && short-circuits if migrate fails — node never starts,
+# so prior healthy state is preserved.
+startCommand = "pnpm -F @earth-revibe/db db:generate && pnpm -F @earth-revibe/db db:migrate:deploy && node apps/api/dist/index.js"
 healthcheckPath = "/api/v1/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
