@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bookmark, Share2, Plus, Loader2, Wallet, Users, Recycle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, animate } from 'framer-motion';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { trackProductViewed, trackAddToCart } from '@/lib/analytics';
 import { useCartStore } from '@/stores/cart-store';
@@ -791,23 +791,49 @@ export function ProductDetail({ product }: ProductDetailProps) {
   // Re-map horizontal swipes to vertical scroll: swipe left → page scrolls
   // down, swipe right → page scrolls up. Vertical swipes pass through to
   // native scroll. Touch-only (pointer/mouse/trackpad untouched).
+  // Drag tracks the finger via rAF-batched scrollBy; release hands off to
+  // framer-motion's inertia animation so flicks coast with spring physics
+  // instead of stopping dead.
   const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
 
+    const LOCK_THRESHOLD = 8;
+    const MULT = 1.7;
+
     let startX = 0;
     let startY = 0;
     let lastX = 0;
     let axis: 'h' | 'v' | null = null;
-    const LOCK_THRESHOLD = 8;
+    let pendingDy = 0;
+    let raf = 0;
+    let momentum: ReturnType<typeof animate> | null = null;
+    let samples: { x: number; t: number }[] = [];
+
+    const flushScroll = () => {
+      if (pendingDy !== 0) {
+        window.scrollBy(0, pendingDy);
+        pendingDy = 0;
+      }
+      raf = 0;
+    };
+
+    const stopMomentum = () => {
+      if (momentum) {
+        momentum.stop();
+        momentum = null;
+      }
+    };
 
     const onStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
+      stopMomentum();
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       lastX = startX;
       axis = null;
+      samples = [{ x: startX, t: e.timeStamp }];
     };
 
     const onMove = (e: TouchEvent) => {
@@ -824,17 +850,49 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
       if (axis === 'h') {
         e.preventDefault();
-        const frameDx = x - lastX;
-        window.scrollBy(0, -frameDx);
+        pendingDy += -(x - lastX) * MULT;
+        if (!raf) raf = requestAnimationFrame(flushScroll);
         lastX = x;
+        samples.push({ x, t: e.timeStamp });
+        if (samples.length > 6) samples.shift();
       }
+    };
+
+    const onEnd = () => {
+      if (axis === 'h' && samples.length >= 2) {
+        const a = samples[0];
+        const b = samples[samples.length - 1];
+        const dt = b.t - a.t;
+        if (dt > 0 && dt < 120) {
+          // px/sec, negated so left swipe → positive (scroll down)
+          const velocity = (-(b.x - a.x) / dt) * 1000 * MULT;
+          if (Math.abs(velocity) > 80) {
+            momentum = animate(window.scrollY, window.scrollY, {
+              type: 'inertia',
+              velocity,
+              power: 0.7,
+              timeConstant: 350,
+              restDelta: 0.5,
+              onUpdate: (v) => window.scrollTo(0, v),
+            });
+          }
+        }
+      }
+      axis = null;
+      samples = [];
     };
 
     el.addEventListener('touchstart', onStart, { passive: true });
     el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd, { passive: true });
+    el.addEventListener('touchcancel', onEnd, { passive: true });
     return () => {
       el.removeEventListener('touchstart', onStart);
       el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchcancel', onEnd);
+      if (raf) cancelAnimationFrame(raf);
+      stopMomentum();
     };
   }, []);
 
