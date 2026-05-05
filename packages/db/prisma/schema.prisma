@@ -289,6 +289,7 @@ model ProductTag {
   tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([productId, tagId])
+  @@index([tagId])
   @@map("product_tags")
 }
 
@@ -325,6 +326,7 @@ model CartItem {
 
   @@unique([cartId, variantId])
   @@index([cartId])
+  @@index([variantId])
   @@map("cart_items")
 }
 
@@ -413,6 +415,8 @@ model Order {
   @@index([userId])
   @@index([orderNumber])
   @@index([status])
+  @@index([addressId])
+  @@index([discountCodeId])
   @@map("orders")
 }
 
@@ -443,6 +447,7 @@ model OrderItem {
   variantColor   String
 
   @@index([orderId])
+  @@index([variantId])
   @@map("order_items")
 }
 
@@ -470,6 +475,7 @@ model OrderNote {
   createdAt DateTime @default(now())
 
   @@index([orderId])
+  @@index([userId])
   @@map("order_notes")
 }
 
@@ -561,6 +567,7 @@ model Review {
 
   @@unique([productId, userId])
   @@index([productId])
+  @@index([userId])
   @@map("reviews")
 }
 
@@ -578,6 +585,7 @@ model WishlistItem {
 
   @@unique([userId, productId])
   @@index([userId])
+  @@index([productId])
   @@map("wishlist_items")
 }
 
@@ -783,6 +791,7 @@ model BlogPostCategory {
   category   BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@id([postId, categoryId])
+  @@index([categoryId])
   @@map("blog_post_categories")
 }
 
@@ -802,6 +811,7 @@ model BlogPostTag {
   tag    BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([postId, tagId])
+  @@index([tagId])
   @@map("blog_post_tags")
 }
 
@@ -854,6 +864,7 @@ model TicketMessage {
   createdAt DateTime      @default(now())
 
   @@index([ticketId])
+  @@index([userId])
   @@map("ticket_messages")
 }
 
