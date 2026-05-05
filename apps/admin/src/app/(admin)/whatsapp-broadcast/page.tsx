@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
-import { Button, Card } from '@/components/ui';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/components/ui/toast';
+import { Button, Card } from '@earth-revibe/ui';
+import { Textarea } from '@earth-revibe/ui/textarea';
+import { toast } from '@earth-revibe/ui/toast';
 import {
   useBroadcastQuota,
   useTripBroadcast,

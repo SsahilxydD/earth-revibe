@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Plus, Trash2, Save, X, Pencil } from 'lucide-react';
-import { Button, Card } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
+import { Button, Card } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
 import {
   useAddProductVariants,
   useUpdateProductVariant,

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Card, Badge, Skeleton } from '@/components/ui';
+import { Card, Badge, Skeleton } from '@earth-revibe/ui';
 import { ShoppingCart } from 'lucide-react';
 
 const statusVariant: Record<string, 'success' | 'info' | 'warning' | 'default' | 'error'> = {

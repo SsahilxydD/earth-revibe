@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { TrendingUp, ShoppingBag, Users, Headset } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Card, Badge, Skeleton } from '@/components/ui';
+import { Card, Badge, Skeleton } from '@earth-revibe/ui';
 import { formatPrice } from '@earth-revibe/shared';
 import { StatCard } from '@/components/dashboard/stat-card';
 

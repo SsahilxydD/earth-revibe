@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { Button, Badge, Card, Input, Select, Skeleton } from '@/components/ui';
+import { Button, Badge, Card, Input, Select, Skeleton } from '@earth-revibe/ui';
 import { useBlogPosts, useDeleteBlogPost } from '@/hooks/use-blog';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'default'> = {

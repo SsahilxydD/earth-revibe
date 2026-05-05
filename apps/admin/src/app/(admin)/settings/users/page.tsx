@@ -15,8 +15,8 @@ import {
   KeyRound,
   Clock,
 } from 'lucide-react';
-import { Card, Button, Input, Select, Badge, Modal } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
+import { Card, Button, Input, Select, Badge, Modal } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
 
 interface StaffMember {
   id: string;

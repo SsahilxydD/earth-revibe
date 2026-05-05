@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { Upload, Loader2, ExternalLink, Plus, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
-import { toast } from '@/components/ui/toast';
+import { toast } from '@earth-revibe/ui/toast';
 import {
   useHomepageSections,
   useUpdateHomepageSection,

@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { api } from '@/lib/api-client';
-import { Card, Skeleton } from '@/components/ui';
+import { Card, Skeleton } from '@earth-revibe/ui';
 
 function formatINR(value: number) {
   return new Intl.NumberFormat('en-IN', {

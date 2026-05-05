@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Save, UserCheck, Phone, Settings, Languages, Heart } from 'lucide-react';
-import { Card, Button, Input, Select } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
+import { Card, Button, Input, Select } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
 import { api } from '@/lib/api-client';
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (val: boolean) => void }) {

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { QueryProvider } from '@/providers/query-provider';
 import { PostHogProvider, PostHogPageview } from '@/providers/posthog-provider';
-import { ToastContainer } from '@/components/ui/toast';
+import { ToastContainer } from '@earth-revibe/ui/toast';
 import './globals.css';
 
 export const metadata: Metadata = {

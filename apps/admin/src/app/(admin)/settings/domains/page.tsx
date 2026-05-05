@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Globe, Lock, Search, Share2, FileCode, ExternalLink, Copy, Eye, Save } from 'lucide-react';
-import { Card, Button, Input, Badge, Textarea } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
+import { Card, Button, Input, Badge, Textarea } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (val: boolean) => void }) {
   return (

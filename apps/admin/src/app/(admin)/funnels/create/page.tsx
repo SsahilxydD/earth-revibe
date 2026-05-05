@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, GitBranchPlus, ShoppingCart, Layout, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useFunnelStore } from '@/stores/funnel-store';
-import { Button } from '@/components/ui';
+import { Button } from '@earth-revibe/ui';
 
 const TEMPLATES = [
   {

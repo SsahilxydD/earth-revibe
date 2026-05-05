@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Search, Eye, UserCheck, UserX, Download } from 'lucide-react';
-import { Button, Badge, Card, Select } from '@/components/ui';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/toast';
+import { Button, Badge, Card, Select } from '@earth-revibe/ui';
+import { Skeleton } from '@earth-revibe/ui/skeleton';
+import { toast } from '@earth-revibe/ui/toast';
 import {
   useCustomers,
   useToggleCustomerActive,

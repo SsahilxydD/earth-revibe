@@ -3,7 +3,7 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Send, User } from 'lucide-react';
-import { Button, Badge, Card, Select, Textarea, Spinner } from '@/components/ui';
+import { Button, Badge, Card, Select, Textarea, Spinner } from '@earth-revibe/ui';
 import {
   useAdminTicket,
   useUpdateTicketStatus,

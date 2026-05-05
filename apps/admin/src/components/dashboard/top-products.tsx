@@ -1,6 +1,6 @@
 'use client';
 
-import { Card } from '@/components/ui';
+import { Card } from '@earth-revibe/ui';
 
 interface Product {
   name: string;

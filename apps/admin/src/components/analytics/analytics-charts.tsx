@@ -11,7 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Card } from '@/components/ui';
+import { Card } from '@earth-revibe/ui';
 
 function formatINR(value: number) {
   return new Intl.NumberFormat('en-IN', {

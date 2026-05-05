@@ -1,7 +1,7 @@
 'use client';
 
 import type { LucideIcon } from 'lucide-react';
-import { Card } from '@/components/ui';
+import { Card } from '@earth-revibe/ui';
 
 interface StatCardProps {
   title: string;

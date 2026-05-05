@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Scan @earth-revibe/ui source so primitives' Tailwind classes get generated. */
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
+
 /* Earth Revibe Admin — New Design System */
 @theme {
   /* Primary */

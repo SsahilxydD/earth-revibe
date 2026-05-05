@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Save, Eye, Pencil, RefreshCw, Calendar } from 'lucide-react';
 import { useFunnelStore } from '@/stores/funnel-store';
 import { useFunnelAnalytics } from '@/hooks/use-funnel-analytics';
-import { Button } from '@/components/ui';
+import { Button } from '@earth-revibe/ui';
 import { FunnelStatsPanel } from '@/components/funnels/funnel-stats-panel';
 import { NodeConfigPanel } from '@/components/funnels/node-config-panel';
 

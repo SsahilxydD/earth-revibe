@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
-import { Button, Card, Input } from '@/components/ui';
-import { toast } from '@/components/ui/toast';
+import { Button, Card, Input } from '@earth-revibe/ui';
+import { toast } from '@earth-revibe/ui/toast';
 import {
   useBroadcastQuota,
   useTripOpeningBroadcast,

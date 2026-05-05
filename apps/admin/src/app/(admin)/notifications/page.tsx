@@ -10,8 +10,8 @@ import {
   AlertTriangle,
   ArrowRight,
 } from 'lucide-react';
-import { Card, Badge } from '@/components/ui';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, Badge } from '@earth-revibe/ui';
+import { Skeleton } from '@earth-revibe/ui/skeleton';
 import { useNotifications, type AdminNotification } from '@/hooks/use-notifications';
 
 const notificationConfig: Record<

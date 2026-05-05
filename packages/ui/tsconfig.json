@@ -1,0 +1,4 @@
+{
+  "extends": "@earth-revibe/tsconfig/nextjs.json",
+  "include": ["src/**/*"]
+}

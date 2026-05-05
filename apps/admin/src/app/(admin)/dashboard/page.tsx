@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Skeleton } from '@/components/ui';
+import { Skeleton } from '@earth-revibe/ui';
 import { FilterBar } from '@/components/dashboard/filter-bar';
 import { MetricsStrip } from '@/components/dashboard/metrics-strip';
 import { ActionCards } from '@/components/dashboard/action-cards';

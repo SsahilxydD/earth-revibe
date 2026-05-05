@@ -4,7 +4,7 @@ import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { Button, Card, Input, Select, Textarea, Spinner } from '@/components/ui';
+import { Button, Card, Input, Select, Textarea, Spinner } from '@earth-revibe/ui';
 import { useBlogPost, useUpdateBlogPost, useBlogCategories, useBlogTags } from '@/hooks/use-blog';
 
 export default function EditBlogPostPage({ params }: { params: Promise<{ id: string }> }) {

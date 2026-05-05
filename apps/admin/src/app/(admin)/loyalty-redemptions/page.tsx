@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, X, Loader2, Plus, Search } from 'lucide-react';
 import { api } from '@/lib/api-client';
-import { Button } from '@/components/ui';
-import { Modal } from '@/components/ui/modal';
-import { toast } from '@/components/ui/toast';
+import { Button } from '@earth-revibe/ui';
+import { Modal } from '@earth-revibe/ui/modal';
+import { toast } from '@earth-revibe/ui/toast';
 
 type RedemptionStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
