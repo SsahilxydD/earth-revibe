@@ -405,6 +405,34 @@ router.post(
               pricing?: { pricing_model?: string; category?: string };
               errors?: Array<{ code?: number; title?: string; message?: string }>;
             }>;
+            messages?: Array<{
+              id: string; // Meta's message id
+              from?: string; // sender's wa_id (digits-only)
+              timestamp?: string; // unix seconds, string
+              type?:
+                | 'text'
+                | 'image'
+                | 'audio'
+                | 'video'
+                | 'document'
+                | 'sticker'
+                | 'location'
+                | 'contacts'
+                | 'interactive'
+                | 'reaction'
+                | 'unknown';
+              text?: { body?: string };
+              image?: { id?: string; mime_type?: string; sha256?: string; caption?: string };
+              audio?: { id?: string; mime_type?: string };
+              video?: { id?: string; mime_type?: string; caption?: string };
+              document?: { id?: string; mime_type?: string; filename?: string };
+              interactive?: {
+                type?: string;
+                button_reply?: { id?: string; title?: string };
+                list_reply?: { id?: string; title?: string; description?: string };
+              };
+              context?: { id?: string; from?: string }; // present when this message is a reply
+            }>;
           };
         }[];
       }[];
@@ -420,9 +448,12 @@ router.post(
       (e) => e.changes?.flatMap((c) => c.value?.statuses ?? []) ?? []
     );
 
-    if (allStatuses.length === 0) {
-      // Could be a "messages" inbound event we don't care about (incoming
-      // user replies). Ack and move on.
+    const allMessages = (body.entry ?? []).flatMap(
+      (e) => e.changes?.flatMap((c) => c.value?.messages ?? []) ?? []
+    );
+
+    if (allStatuses.length === 0 && allMessages.length === 0) {
+      // Empty payload (e.g. a reactions-only delivery we don't store). Ack.
       res.status(200).json({ success: true });
       return;
     }
@@ -501,6 +532,66 @@ router.post(
           );
         }
       }
+    }
+
+    // ── Inbound messages (customer replies, support questions) ───────────
+    // Persist for the CRM /inbox view. Soft-link to a User by phone-digit
+    // match against the sender's wa_id; nullable userId is fine — most
+    // first-touch inbound messages are from prospects who aren't users yet.
+    for (const m of allMessages) {
+      if (!m.from || !m.id) continue;
+
+      const matchedUser = await prisma.user
+        .findFirst({ where: { phone: { endsWith: m.from.slice(-10) } }, select: { id: true } })
+        .catch(() => null);
+
+      const text =
+        m.text?.body ??
+        m.interactive?.button_reply?.title ??
+        m.interactive?.list_reply?.title ??
+        m.image?.caption ??
+        m.video?.caption ??
+        null;
+
+      const mediaId = m.image?.id ?? m.audio?.id ?? m.video?.id ?? m.document?.id ?? null;
+      // Meta returns media as IDs; fetching the actual URL is a separate API
+      // call that returns a short-lived URL. Defer that to v2 — store the id
+      // as a stub for now; the inbox UI can render "media attached" without
+      // the actual file.
+      const mediaUrl = mediaId ? `meta-media://${mediaId}` : null;
+
+      try {
+        await prisma.whatsAppInboundMessage.upsert({
+          where: { messageId: m.id },
+          create: {
+            messageId: m.id,
+            fromWaId: m.from,
+            userId: matchedUser?.id,
+            messageType: m.type ?? 'unknown',
+            text,
+            mediaUrl,
+            repliedTo: m.context?.id,
+            rawPayload: m as unknown as object,
+          },
+          update: {}, // duplicate webhook delivery: keep first-write wins
+        });
+      } catch (err) {
+        logger.error(
+          { err, messageId: m.id, fromWaId: m.from },
+          'Failed to persist inbound WhatsApp message'
+        );
+      }
+
+      logger.info(
+        {
+          messageId: m.id,
+          fromWaId: m.from,
+          messageType: m.type,
+          matchedUserId: matchedUser?.id,
+          isReply: Boolean(m.context?.id),
+        },
+        'WhatsApp inbound message received'
+      );
     }
 
     res.status(200).json({ success: true });

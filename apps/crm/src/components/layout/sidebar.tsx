@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Customers', href: '/customers', icon: Users },
   { label: 'Abandoned Carts', href: '/abandoned-carts', icon: ShoppingBag },
-  { label: 'Inbox', href: '/inbox', icon: MessageSquare, disabled: true },
+  { label: 'Inbox', href: '/inbox', icon: MessageSquare },
   { label: 'Templates', href: '/templates', icon: Sparkles, disabled: true },
   { label: 'Settings', href: '/settings', icon: Settings, disabled: true },
 ];

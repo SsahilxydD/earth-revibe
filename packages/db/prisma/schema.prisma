@@ -45,6 +45,7 @@ model User {
   notifications     Notification[]
   orderNotes        OrderNote[]
   adminDevices      AdminDevice[]
+  whatsappInbound   WhatsAppInboundMessage[]
 
   @@map("users")
 }
@@ -374,6 +375,33 @@ model WhatsAppMessageEvent {
   @@index([status, eventAt])
   @@index([eventAt])
   @@map("whatsapp_message_events")
+}
+
+/// Inbound WhatsApp messages from customers — replies to our outbound
+/// templates, support requests, etc. Captured from the same /webhooks/whatsapp
+/// endpoint that handles delivery statuses; PR 6 of the CRM migration.
+///
+/// userId is soft-mapped: we resolve it at write time by matching the
+/// inbound `fromWaId` to a User.phone (digits-only). Nullable because plenty
+/// of inbound messages come from people who aren't registered users yet.
+model WhatsAppInboundMessage {
+  id          String   @id @default(cuid())
+  messageId   String   @unique @db.VarChar(255) // Meta's message id — dedupe key
+  fromWaId    String   @db.VarChar(20) // sender's wa.me id (digits-only phone)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  messageType String   @db.VarChar(32) // text | image | audio | video | document | sticker | location | contacts | interactive | reaction | unknown
+  text        String? // text body if messageType=text or interactive button reply
+  mediaUrl    String? // Meta media URL (short-lived; download to Cloudflare if we want to keep it)
+  repliedTo   String? @db.VarChar(255) // the messageId we sent that this is a reply to (Meta's context.id)
+  rawPayload  Json
+  receivedAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([fromWaId])
+  @@index([receivedAt])
+  @@index([repliedTo])
+  @@map("whatsapp_inbound_messages")
 }
 
 // ==========================================
