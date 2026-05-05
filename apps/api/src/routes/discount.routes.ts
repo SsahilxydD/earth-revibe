@@ -21,15 +21,9 @@ router.post(
 // Docs: https://razorpay.com/docs/payments/magic-checkout/coupons/
 
 // GET promotions — Razorpay calls this to list available coupons
-router.post(
-  '/razorpay/get-promotions',
-  asyncHandler(discountController.razorpayGetPromotions)
-);
+router.post('/razorpay/get-promotions', asyncHandler(discountController.razorpayGetPromotions));
 
 // APPLY promotion — Razorpay calls this when user applies a coupon
-router.post(
-  '/razorpay/apply-promotion',
-  asyncHandler(discountController.razorpayApplyPromotion)
-);
+router.post('/razorpay/apply-promotion', asyncHandler(discountController.razorpayApplyPromotion));
 
 export { router as discountRouter };

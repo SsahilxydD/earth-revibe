@@ -17,10 +17,7 @@ import { defaultExpiresAt } from './points-expiry.service';
  * Throws on validation failures (self-referral, already referred, etc.) so the
  * user gets clear feedback instead of a silent no-op.
  */
-export async function maybeLinkReferralAtCheckout(
-  userId: string,
-  code: string
-): Promise<boolean> {
+export async function maybeLinkReferralAtCheckout(userId: string, code: string): Promise<boolean> {
   if (!code) return false;
 
   // Users carry their own invite code on `users.referralCode`.
@@ -40,9 +37,7 @@ export async function maybeLinkReferralAtCheckout(
     where: { userId, status: { not: 'CANCELLED' } },
   });
   if (completedOrderCount > 0) {
-    throw ApiError.badRequest(
-      'Referral codes can only be used on your first order'
-    );
+    throw ApiError.badRequest('Referral codes can only be used on your first order');
   }
 
   // One Referral row per referee (enforced by the unique constraint on
@@ -76,7 +71,7 @@ export async function maybeLinkReferralAtCheckout(
  * of truth for the percentage.
  */
 export function computeReferrerReward(subtotal: number): number {
-  const pct = 0.20;
+  const pct = 0.2;
   return Math.max(0, Math.floor(subtotal * pct));
 }
 

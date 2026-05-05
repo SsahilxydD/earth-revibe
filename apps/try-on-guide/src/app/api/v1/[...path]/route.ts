@@ -47,9 +47,7 @@ function buildResponseHeaders(upstream: Response): Headers {
   // joined value. We need to preserve them split because each cookie is its
   // own header. Use upstream.headers.getSetCookie() when available.
   const setCookies =
-    typeof upstream.headers.getSetCookie === 'function'
-      ? upstream.headers.getSetCookie()
-      : [];
+    typeof upstream.headers.getSetCookie === 'function' ? upstream.headers.getSetCookie() : [];
 
   upstream.headers.forEach((value, key) => {
     const k = key.toLowerCase();
@@ -62,8 +60,7 @@ function buildResponseHeaders(upstream: Response): Headers {
   // Strip the `Secure` attribute on HTTP dev so the cookie sticks on
   // http://<lan-ip>:3003. Production deploys are HTTPS so this branch
   // is a no-op there.
-  const isHttpsRequest =
-    typeof process !== 'undefined' && process.env.NODE_ENV === 'production';
+  const isHttpsRequest = typeof process !== 'undefined' && process.env.NODE_ENV === 'production';
   for (const c of setCookies) {
     out.append('set-cookie', isHttpsRequest ? c : c.replace(/;\s*Secure/gi, ''));
   }

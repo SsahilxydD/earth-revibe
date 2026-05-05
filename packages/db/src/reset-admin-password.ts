@@ -11,10 +11,7 @@ function hashPassword(password: string): Promise<string> {
   });
 }
 
-const ADMINS = [
-  { email: 'admin@earthrevibe.com' },
-  { email: 'ysahil816@gmail.com' },
-];
+const ADMINS = [{ email: 'admin@earthrevibe.com' }, { email: 'ysahil816@gmail.com' }];
 
 async function main() {
   const password = process.env.ADMIN_PASSWORD;

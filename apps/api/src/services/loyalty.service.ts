@@ -85,9 +85,7 @@ export const loyaltyService = {
 
     // Drop codes that have hit their usage limit (single-use redemption codes
     // will have usageLimit=1 and usageCount=1 once used).
-    const stillUsable = codes.filter(
-      (c) => c.usageLimit == null || c.usageCount < c.usageLimit
-    );
+    const stillUsable = codes.filter((c) => c.usageLimit == null || c.usageCount < c.usageLimit);
 
     return {
       codes: stillUsable.map((c) => ({

@@ -183,9 +183,7 @@ export function OtpScreen() {
             })}
           </div>
 
-          {error ? (
-            <p className="mt-4 text-xs text-[var(--color-warn)]">{error}</p>
-          ) : null}
+          {error ? <p className="mt-4 text-xs text-[var(--color-warn)]">{error}</p> : null}
 
           <div className="mt-6 flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-[var(--color-muted)]">
             <span>Waiting for the ping…</span>

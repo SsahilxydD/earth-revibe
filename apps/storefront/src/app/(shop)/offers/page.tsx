@@ -38,7 +38,7 @@ const OFFERS: Offer[] = [
     big: '20%',
     headline: 'For every friend you bring in',
     description:
-      "Share your referral link. When a friend places their first order, you earn 20% of their order value — paid directly to your bank account, not as points. They get a 15% discount off their first order. Both of you win.",
+      'Share your referral link. When a friend places their first order, you earn 20% of their order value — paid directly to your bank account, not as points. They get a 15% discount off their first order. Both of you win.',
     fine: [
       'Friend must be a new Earth Revibe customer.',
       'Cash transferred to your bank once their first order ships.',

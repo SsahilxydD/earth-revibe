@@ -12,14 +12,21 @@ function storefrontBase(): string {
 
 function csvEscape(value: string | null | undefined): string {
   if (value == null) return '';
-  const s = String(value).replace(/\r\n|\r|\n/g, ' ').replace(/\s+/g, ' ').trim();
+  const s = String(value)
+    .replace(/\r\n|\r|\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (/[",]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }
 
 function stripHtml(html: string | null | undefined): string {
   if (!html) return '';
-  return html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function truncate(s: string, max: number): string {
@@ -93,7 +100,10 @@ export async function generateMetaCatalogFeed(): Promise<string> {
     const desc = truncate(stripHtml(p.description) || p.shortDescription || p.name, 5000);
     const link = `${base}/products/${p.slug}`;
     const primaryImage = p.images[0]?.url ?? '';
-    const additionalImages = p.images.slice(1, 11).map((i) => i.url).join(',');
+    const additionalImages = p.images
+      .slice(1, 11)
+      .map((i) => i.url)
+      .join(',');
     const productType = p.category?.name ?? '';
 
     for (const v of p.variants) {

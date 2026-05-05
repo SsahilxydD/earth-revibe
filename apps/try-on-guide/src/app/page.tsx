@@ -62,143 +62,145 @@ const STEPS = [
 export default function Page() {
   return (
     <Gate>
-    <main className="min-h-dvh w-full max-w-full overflow-x-hidden bg-white">
-      {/* Top bar */}
-      <header className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--color-primary)]">
-            Earth Revibe
-          </span>
-          <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-[var(--color-muted)]">
-            AI Try-On Guide
-          </span>
-        </div>
-      </header>
+      <main className="min-h-dvh w-full max-w-full overflow-x-hidden bg-white">
+        {/* Top bar */}
+        <header className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-white/95 backdrop-blur">
+          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--color-primary)]">
+              Earth Revibe
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-[var(--color-muted)]">
+              AI Try-On Guide
+            </span>
+          </div>
+        </header>
 
-      {/* Hero */}
-      <section className="border-b border-[var(--color-border)]">
-        <div className="mx-auto max-w-3xl px-6 py-20 md:py-28">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--color-muted)]">
-            Tutorial &mdash; Higgsfield &times; Kling 3.0
-          </p>
-          <h1 className="mt-5 text-3xl font-bold uppercase leading-[1.1] tracking-[0.05em] text-[var(--color-primary)] md:text-5xl">
-            Make your own
-            <br />
-            try-on reel.
-          </h1>
-          <p className="mt-6 max-w-xl text-sm leading-[1.8] text-[var(--color-muted)] md:text-base">
-            Upload one photo of yourself wearing the shirt. Get a 5-second cinematic walking
-            POV clip. The whole flow takes about three minutes once your reference image is ready.
-          </p>
-        </div>
-      </section>
-
-      {/* Critical callout — 9:16 warning */}
-      <section className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="mx-auto max-w-3xl px-6 py-10 md:py-12">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
-            <p className="shrink-0 text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--color-warn)] md:w-32">
-              Critical
+        {/* Hero */}
+        <section className="border-b border-[var(--color-border)]">
+          <div className="mx-auto max-w-3xl px-6 py-20 md:py-28">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--color-muted)]">
+              Tutorial &mdash; Higgsfield &times; Kling 3.0
             </p>
-            <div className="flex-1">
-              <h2 className="break-words text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-primary)] sm:text-base md:text-lg">
-                Your reference image must be 9:16
-              </h2>
-              <p className="mt-3 text-sm leading-[1.8] text-[var(--color-muted)]">
-                Higgsfield&apos;s Kling integration uses your start frame&apos;s aspect ratio for
-                the entire clip. If your photo is 1:1 or 4:5, the output will be too. Crop to{' '}
-                <span className="font-medium text-[var(--color-primary)]">1080&times;1920 (9:16)</span>{' '}
-                before uploading &mdash; this is the single most common failure point.
+            <h1 className="mt-5 text-3xl font-bold uppercase leading-[1.1] tracking-[0.05em] text-[var(--color-primary)] md:text-5xl">
+              Make your own
+              <br />
+              try-on reel.
+            </h1>
+            <p className="mt-6 max-w-xl text-sm leading-[1.8] text-[var(--color-muted)] md:text-base">
+              Upload one photo of yourself wearing the shirt. Get a 5-second cinematic walking POV
+              clip. The whole flow takes about three minutes once your reference image is ready.
+            </p>
+          </div>
+        </section>
+
+        {/* Critical callout — 9:16 warning */}
+        <section className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+          <div className="mx-auto max-w-3xl px-6 py-10 md:py-12">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
+              <p className="shrink-0 text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--color-warn)] md:w-32">
+                Critical
               </p>
+              <div className="flex-1">
+                <h2 className="break-words text-sm font-bold uppercase tracking-[0.1em] text-[var(--color-primary)] sm:text-base md:text-lg">
+                  Your reference image must be 9:16
+                </h2>
+                <p className="mt-3 text-sm leading-[1.8] text-[var(--color-muted)]">
+                  Higgsfield&apos;s Kling integration uses your start frame&apos;s aspect ratio for
+                  the entire clip. If your photo is 1:1 or 4:5, the output will be too. Crop to{' '}
+                  <span className="font-medium text-[var(--color-primary)]">
+                    1080&times;1920 (9:16)
+                  </span>{' '}
+                  before uploading &mdash; this is the single most common failure point.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Steps */}
-      <section>
-        <div className="mx-auto max-w-3xl px-6 py-16 md:py-20">
-          <ol className="space-y-14 md:space-y-20">
-            {STEPS.map((step) => (
-              <li
-                key={step.n}
-                className="grid grid-cols-1 gap-5 md:grid-cols-[120px_minmax(0,1fr)] md:gap-10"
-              >
-                <div className="text-4xl font-bold leading-none tracking-tight text-[var(--color-primary)] md:text-6xl">
-                  {step.n}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-[var(--color-primary)] md:text-base">
-                    {step.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-[1.8] text-[var(--color-muted)]">
-                    {step.body}
-                  </p>
+        {/* Steps */}
+        <section>
+          <div className="mx-auto max-w-3xl px-6 py-16 md:py-20">
+            <ol className="space-y-14 md:space-y-20">
+              {STEPS.map((step) => (
+                <li
+                  key={step.n}
+                  className="grid grid-cols-1 gap-5 md:grid-cols-[120px_minmax(0,1fr)] md:gap-10"
+                >
+                  <div className="text-4xl font-bold leading-none tracking-tight text-[var(--color-primary)] md:text-6xl">
+                    {step.n}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-[var(--color-primary)] md:text-base">
+                      {step.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-[1.8] text-[var(--color-muted)]">
+                      {step.body}
+                    </p>
 
-                  {step.link ? (
-                    <a
-                      href={step.link.href}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="mt-5 inline-block border-b border-[var(--color-primary)] pb-0.5 text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] transition-opacity hover:opacity-60"
-                    >
-                      {step.link.label} &rarr;
-                    </a>
-                  ) : null}
+                    {step.link ? (
+                      <a
+                        href={step.link.href}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="mt-5 inline-block border-b border-[var(--color-primary)] pb-0.5 text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] transition-opacity hover:opacity-60"
+                      >
+                        {step.link.label} &rarr;
+                      </a>
+                    ) : null}
 
-                  {step.controls ? (
-                    <div className="mt-6 grid w-full max-w-full grid-cols-2 border-l border-t border-[var(--color-border)] md:grid-cols-4">
-                      {OUTPUT_CONTROLS.map((c) => (
-                        <div
-                          key={c.label}
-                          className="min-w-0 border-b border-r border-[var(--color-border)] p-3 md:p-4"
-                        >
-                          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-muted)]">
-                            {c.label}
-                          </p>
-                          <p className="mt-2 text-base font-bold tracking-tight text-[var(--color-primary)]">
-                            {c.value}
-                          </p>
-                          <p className="mt-1 break-words text-[11px] leading-snug text-[var(--color-muted)]">
-                            {c.note}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {step.prompt ? (
-                    <div className="mt-6 w-full min-w-0">
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5">
-                        <span className="min-w-0 shrink text-[9px] font-bold uppercase tracking-[0.25em] text-[var(--color-muted)]">
-                          Prompt
-                        </span>
-                        <CopyButton text={PROMPT_JSON} />
+                    {step.controls ? (
+                      <div className="mt-6 grid w-full max-w-full grid-cols-2 border-l border-t border-[var(--color-border)] md:grid-cols-4">
+                        {OUTPUT_CONTROLS.map((c) => (
+                          <div
+                            key={c.label}
+                            className="min-w-0 border-b border-r border-[var(--color-border)] p-3 md:p-4"
+                          >
+                            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-muted)]">
+                              {c.label}
+                            </p>
+                            <p className="mt-2 text-base font-bold tracking-tight text-[var(--color-primary)]">
+                              {c.value}
+                            </p>
+                            <p className="mt-1 break-words text-[11px] leading-snug text-[var(--color-muted)]">
+                              {c.note}
+                            </p>
+                          </div>
+                        ))}
                       </div>
-                      <pre className="w-full max-w-full overflow-x-auto overscroll-x-contain border border-t-0 border-[var(--color-border)] bg-white p-4 text-[12px] leading-[1.7] text-[var(--color-primary)]">
-                        <code className="font-mono">{PROMPT_JSON}</code>
-                      </pre>
-                    </div>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
+                    ) : null}
 
-      {/* Footer */}
-      <footer className="border-t border-[var(--color-border)]">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-6 py-8 text-center md:flex-row md:text-left">
-          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--color-primary)]">
-            Earth Revibe
-          </p>
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--color-muted)]">
-            Render time: ~30&ndash;90 seconds &middot; Higgsfield + Kling 3.0
-          </p>
-        </div>
-      </footer>
-    </main>
+                    {step.prompt ? (
+                      <div className="mt-6 w-full min-w-0">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5">
+                          <span className="min-w-0 shrink text-[9px] font-bold uppercase tracking-[0.25em] text-[var(--color-muted)]">
+                            Prompt
+                          </span>
+                          <CopyButton text={PROMPT_JSON} />
+                        </div>
+                        <pre className="w-full max-w-full overflow-x-auto overscroll-x-contain border border-t-0 border-[var(--color-border)] bg-white p-4 text-[12px] leading-[1.7] text-[var(--color-primary)]">
+                          <code className="font-mono">{PROMPT_JSON}</code>
+                        </pre>
+                      </div>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="border-t border-[var(--color-border)]">
+          <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-6 py-8 text-center md:flex-row md:text-left">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--color-primary)]">
+              Earth Revibe
+            </p>
+            <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--color-muted)]">
+              Render time: ~30&ndash;90 seconds &middot; Higgsfield + Kling 3.0
+            </p>
+          </div>
+        </footer>
+      </main>
     </Gate>
   );
 }

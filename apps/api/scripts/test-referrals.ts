@@ -348,14 +348,12 @@ async function testConcurrentCreditsOnlyFireOnce() {
   // Fire two converts in parallel. The serializable isolation + status guard
   // means at most one should credit. If both credit we'd end up at 400 pts.
   const [a, b] = await Promise.allSettled([
-    prisma.$transaction(
-      async (tx) => convertReferralOnFirstOrder(tx, u.id, 1000, 'TEST-ORD'),
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
-    ),
-    prisma.$transaction(
-      async (tx) => convertReferralOnFirstOrder(tx, u.id, 1000, 'TEST-ORD'),
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
-    ),
+    prisma.$transaction(async (tx) => convertReferralOnFirstOrder(tx, u.id, 1000, 'TEST-ORD'), {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    }),
+    prisma.$transaction(async (tx) => convertReferralOnFirstOrder(tx, u.id, 1000, 'TEST-ORD'), {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    }),
   ]);
   const outcomes = [a, b].map((s) =>
     s.status === 'fulfilled' ? (s.value as any).credited : 'rejected'
@@ -385,17 +383,29 @@ async function main() {
   await run('validate: self-referral rejected', testValidateCodeSelfReferral);
   await run('validate: invalid code', testValidateCodeInvalid);
   await run('validate: rejected after prior order', testValidateCodeAfterPriorOrder);
-  await run('validate: rejected when different referrer already linked', testValidateCodeDifferentReferrer);
+  await run(
+    'validate: rejected when different referrer already linked',
+    testValidateCodeDifferentReferrer
+  );
   await run('link: happy path creates Referral row', testLinkHappyPath);
-  await run('link: invalid code returns false (caller tries discount)', testLinkInvalidReturnsFalse);
+  await run(
+    'link: invalid code returns false (caller tries discount)',
+    testLinkInvalidReturnsFalse
+  );
   await run('link: self-referral throws', testLinkSelfReferralThrows);
   await run('link: idempotent when same code retried', testLinkTwiceIsIdempotent);
   await run('link: rejects second different referrer', testLinkRejectsSecondDifferentReferrer);
   await run('convert: credits both parties on first order', testConvertCreditsBothParties);
   await run('convert: no-op when past first order', testConvertNoOpOnSecondOrder);
-  await run('convert: idempotent (status guard prevents double-credit)', testConvertIdempotentWithinSameOrder);
+  await run(
+    'convert: idempotent (status guard prevents double-credit)',
+    testConvertIdempotentWithinSameOrder
+  );
   await run('convert: no-op when no Referral row exists', testConvertWithoutLinkedReferral);
-  await run('convert: cancelled prior order excluded from count', testCancelledOrderDoesNotBlockFirstOrder);
+  await run(
+    'convert: cancelled prior order excluded from count',
+    testCancelledOrderDoesNotBlockFirstOrder
+  );
   await run('convert: concurrent converts credit at most once', testConcurrentCreditsOnlyFireOnce);
 
   await cleanup();

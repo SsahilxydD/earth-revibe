@@ -221,7 +221,9 @@ export async function approveRedemption(redemptionId: string, adminId: string) {
       .then((ok) =>
         logger.info(
           { redemptionId: result.redemption.id, delivered: ok },
-          ok ? 'Redemption code WhatsApped' : 'WhatsApp template not accepted — email is the fallback'
+          ok
+            ? 'Redemption code WhatsApped'
+            : 'WhatsApp template not accepted — email is the fallback'
         )
       )
       .catch((err) =>

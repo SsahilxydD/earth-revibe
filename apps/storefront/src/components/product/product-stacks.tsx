@@ -52,12 +52,15 @@ function uniqueSizes(variants: ProductVariant[]): string[] {
 function defaultSize(product: Product): string {
   const sizes = uniqueSizes(product.variants);
   if (sizes.length === 0) return '';
-  if (sizes.includes('M') && product.variants.some((v) => v.size === 'M' && v.stock > 0)) return 'M';
+  if (sizes.includes('M') && product.variants.some((v) => v.size === 'M' && v.stock > 0))
+    return 'M';
   return sizes.find((s) => product.variants.some((v) => v.size === s && v.stock > 0)) || sizes[0];
 }
 
 function findVariant(variants: ProductVariant[], size: string): ProductVariant | undefined {
-  return variants.find((v) => v.size === size && v.stock > 0) || variants.find((v) => v.size === size);
+  return (
+    variants.find((v) => v.size === size && v.stock > 0) || variants.find((v) => v.size === size)
+  );
 }
 
 function mintComboGroupId(): string {
@@ -308,7 +311,7 @@ function CarouselCard({
         pointerId: e.pointerId,
       };
     },
-    [isActive],
+    [isActive]
   );
 
   const handlePointerMove = useCallback(
@@ -327,7 +330,7 @@ function CarouselCard({
         cardRef.current.style.transform = `translateY(-50%) scale(${slot.scale}) translateX(${dx}px)`;
       }
     },
-    [slot.scale],
+    [slot.scale]
   );
 
   const handlePointerEnd = useCallback(
@@ -339,8 +342,7 @@ function CarouselCard({
         const dx = e.clientX - drag.startX;
         const dt = Date.now() - drag.startTime;
         const velocity = (Math.abs(dx) / Math.max(dt, 1)) * 1000;
-        const swiped =
-          Math.abs(dx) > SWIPE_THRESHOLD || velocity > SWIPE_VELOCITY;
+        const swiped = Math.abs(dx) > SWIPE_THRESHOLD || velocity > SWIPE_VELOCITY;
 
         cardRef.current.style.transition = CARD_TRANSITION;
 
@@ -354,7 +356,7 @@ function CarouselCard({
 
       dragRef.current = null;
     },
-    [slot.scale, onPrev, onNext],
+    [slot.scale, onPrev, onNext]
   );
 
   return (
@@ -438,7 +440,9 @@ function CarouselSkeleton() {
                 gap: 8,
               }}
             >
-              <div style={{ width: 120, height: 14, borderRadius: 4, backgroundColor: '#F0F0F0' }} />
+              <div
+                style={{ width: 120, height: 14, borderRadius: 4, backgroundColor: '#F0F0F0' }}
+              />
               <div style={{ width: 60, height: 12, borderRadius: 4, backgroundColor: '#F0F0F0' }} />
             </div>
           </div>
@@ -470,10 +474,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
     if (initialProducts.length === 0) return;
     setSelectedIds((prev) => {
       const source = pool.length > 0 ? pool : initialProducts;
-      if (
-        prev.length === combo.pieceCount &&
-        prev.every((id) => source.some((p) => p.id === id))
-      ) {
+      if (prev.length === combo.pieceCount && prev.every((id) => source.some((p) => p.id === id))) {
         return prev;
       }
       return initialProducts.slice(0, combo.pieceCount).map((p) => p.id);
@@ -514,11 +515,11 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
   const discountPct = comboDiscountPct(combo);
   const individualTotal = useMemo(
     () => comboIndividualTotal(allProducts, combo.pieceCount),
-    [allProducts, combo.pieceCount],
+    [allProducts, combo.pieceCount]
   );
   const bundlePrice = useMemo(
     () => comboPrice(individualTotal, discountPct),
-    [individualTotal, discountPct],
+    [individualTotal, discountPct]
   );
   const savedAmount = individualTotal - bundlePrice;
 
@@ -541,9 +542,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
         if (oldId) {
           const oldSize = copy[oldId];
           if (oldSize) {
-            const nextHasSize = next.variants.some(
-              (v) => v.size === oldSize && v.stock > 0,
-            );
+            const nextHasSize = next.variants.some((v) => v.size === oldSize && v.stock > 0);
             if (nextHasSize) copy[next.id] = oldSize;
             delete copy[oldId];
           }
@@ -551,7 +550,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
         return copy;
       });
     },
-    [swapSlot, selectedIds],
+    [swapSlot, selectedIds]
   );
 
   const handleAddAll = () => {
@@ -749,9 +748,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
           justifyContent: 'center',
         }}
       >
-        {allProducts.length > 0
-          ? `ADD PACK TO BAG · ${formatPrice(bundlePrice)}`
-          : 'LOADING…'}
+        {allProducts.length > 0 ? `ADD PACK TO BAG · ${formatPrice(bundlePrice)}` : 'LOADING…'}
       </button>
 
       {/* Save hint */}

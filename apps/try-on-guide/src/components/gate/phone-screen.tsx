@@ -63,10 +63,7 @@ export function PhoneScreen() {
               Mobile number
             </span>
             <span className="mt-2 flex items-center gap-3 border-b-2 border-[var(--color-primary)] pb-2">
-              <span
-                aria-hidden
-                className="text-base font-medium text-[var(--color-primary)]"
-              >
+              <span aria-hidden className="text-base font-medium text-[var(--color-primary)]">
                 +91
               </span>
               <span aria-hidden className="block h-5 w-px bg-[var(--color-border)]" />
@@ -82,9 +79,7 @@ export function PhoneScreen() {
             </span>
           </label>
 
-          {error ? (
-            <p className="mt-4 text-xs text-[var(--color-warn)]">{error}</p>
-          ) : null}
+          {error ? <p className="mt-4 text-xs text-[var(--color-warn)]">{error}</p> : null}
 
           {/* Send button */}
           <button
@@ -97,8 +92,8 @@ export function PhoneScreen() {
           </button>
 
           <p className="mt-4 text-[10px] leading-relaxed text-[var(--color-muted)]">
-            By continuing you agree to receive a one-time WhatsApp message from Earth Revibe
-            via Meta. Standard WhatsApp privacy applies.
+            By continuing you agree to receive a one-time WhatsApp message from Earth Revibe via
+            Meta. Standard WhatsApp privacy applies.
           </p>
         </div>
       </div>
