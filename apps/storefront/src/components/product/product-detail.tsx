@@ -860,24 +860,32 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
     const onEnd = (e: TouchEvent) => {
       if (axis === 'h' && samples.length >= 2) {
-        // Velocity only from the last ~80ms of motion: ignores pre-pause
-        // speed if the finger slowed down before lifting, and works for
-        // long swipes (the previous full-window <120ms gate was rejecting
-        // most flicks outright).
+        // Velocity only from the last ~80ms of motion — captures the flick,
+        // not the average over the whole drag. If finger slowed before lift,
+        // recent samples reflect that and momentum scales accordingly.
         const endT = e.timeStamp;
         const recent = samples.filter((s) => endT - s.t < 80);
-        const window2 = recent.length >= 2 ? recent : samples.slice(-2);
-        const a = window2[0];
-        const b = window2[window2.length - 1];
+        const win = recent.length >= 2 ? recent : samples.slice(-2);
+        const a = win[0];
+        const b = win[win.length - 1];
         const dt = b.t - a.t;
         if (dt > 0) {
           const velocity = (-(b.x - a.x) / dt) * 1000 * MULT;
           if (Math.abs(velocity) > 40) {
-            momentum = animate(window.scrollY, window.scrollY, {
+            // Inertia animation — exponential velocity decay (iOS Core
+            // Animation model), not a duration-bound tween. The "to" value
+            // is the natural endpoint of pure decay (from + v * power *
+            // timeConstant / 1000); the inertia options drive the curve.
+            const POWER = 1.0;
+            const TIME_CONSTANT = 750;
+            const start = window.scrollY;
+            const target = start + velocity * POWER * (TIME_CONSTANT / 1000);
+            momentum = animate(start, target, {
               type: 'inertia',
               velocity,
-              power: 1.1,
-              timeConstant: 550,
+              power: POWER,
+              timeConstant: TIME_CONSTANT,
+              restSpeed: 0.5,
               restDelta: 0.5,
               onUpdate: (v) => window.scrollTo(0, v),
             });
