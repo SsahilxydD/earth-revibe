@@ -34,6 +34,24 @@ const nextConfig = {
       },
     ];
   },
+  // Pages that have moved to apps/crm. 301 sends bookmarks + cached search
+  // results to the new home. NEXT_PUBLIC_CRM_URL is set in Vercel; the
+  // fallback covers local dev so nothing breaks if a developer hasn't set it.
+  async redirects() {
+    const CRM_URL = process.env.NEXT_PUBLIC_CRM_URL || 'https://earth-revibe-crm.vercel.app';
+    return [
+      {
+        source: '/abandoned-carts',
+        destination: `${CRM_URL}/abandoned-carts`,
+        permanent: true,
+      },
+      {
+        source: '/abandoned-carts/:path*',
+        destination: `${CRM_URL}/abandoned-carts/:path*`,
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {

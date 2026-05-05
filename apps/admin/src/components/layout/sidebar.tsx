@@ -24,7 +24,6 @@ import {
   Coins,
   MessageCircle,
   Send,
-  ShoppingBag,
 } from 'lucide-react';
 import { useUIStore } from '@/stores/ui-store';
 
@@ -38,7 +37,6 @@ const navItems = [
   { label: 'Discounts', href: '/discounts', icon: Tags },
   { label: 'Loyalty Redemptions', href: '/loyalty-redemptions', icon: Coins },
   { label: 'Customers', href: '/customers', icon: Users },
-  { label: 'Abandoned Carts', href: '/abandoned-carts', icon: ShoppingBag },
   { label: 'Travel Applications', href: '/travel-applications', icon: Plane },
   { label: 'WhatsApp Broadcast', href: '/whatsapp-broadcast', icon: MessageCircle },
   { label: 'Trip Opening Broadcast', href: '/trip-opening-broadcast', icon: Send },
