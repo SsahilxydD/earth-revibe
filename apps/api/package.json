@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc",
-    "start": "pnpm -F @earth-revibe/db db:migrate:deploy && node dist/index.js",
+    "start": "pnpm -F @earth-revibe/db db:generate && pnpm -F @earth-revibe/db db:migrate:deploy && node dist/index.js",
     "lint": "eslint . && tsc --noEmit",
     "clean": "rm -rf dist",
     "test": "vitest run",
