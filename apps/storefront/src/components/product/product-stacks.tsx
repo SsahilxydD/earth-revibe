@@ -440,24 +440,36 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
   });
   const pool: Product[] = poolData?.products ?? [];
 
+  // Union of bundle products + vibe pool. The bundle's slug-fetched items
+  // must always be resolvable: pool is by vibe and may not contain every
+  // bundle product (e.g. cargo pants tagged differently than the polo
+  // they pair with), so pool-only lookup silently dropped most cards.
+  const sourcePool: Product[] = useMemo(() => {
+    const map = new Map<string, Product>();
+    for (const p of initialProducts) map.set(p.id, p);
+    for (const p of pool) if (!map.has(p.id)) map.set(p.id, p);
+    return Array.from(map.values());
+  }, [initialProducts, pool]);
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   useEffect(() => {
     if (initialProducts.length === 0) return;
     setSelectedIds((prev) => {
-      const source = pool.length > 0 ? pool : initialProducts;
-      if (prev.length === combo.pieceCount && prev.every((id) => source.some((p) => p.id === id))) {
+      if (
+        prev.length === combo.pieceCount &&
+        prev.every((id) => sourcePool.some((p) => p.id === id))
+      ) {
         return prev;
       }
       return initialProducts.slice(0, combo.pieceCount).map((p) => p.id);
     });
-  }, [initialProducts, pool, combo.pieceCount]);
+  }, [initialProducts, sourcePool, combo.pieceCount]);
 
   const allProducts: Product[] = useMemo(() => {
-    const source = pool.length > 0 ? pool : initialProducts;
     return selectedIds
-      .map((id) => source.find((p) => p.id === id))
+      .map((id) => sourcePool.find((p) => p.id === id))
       .filter((p): p is Product => !!p);
-  }, [selectedIds, pool, initialProducts]);
+  }, [selectedIds, sourcePool]);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [sizes, setSizes] = useState<Record<string, string>>({});
