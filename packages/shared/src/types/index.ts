@@ -387,6 +387,8 @@ export interface ProductListParams {
   limit?: number;
   search?: string;
   category?: string | string[];
+  /** Bulk-fetch by slug (Flight Mode combos). */
+  slugs?: string[];
   vibe?: string;
   minPrice?: number;
   maxPrice?: number;

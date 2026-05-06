@@ -409,14 +409,29 @@ function CarouselSkeleton() {
 }
 
 function CategoryCarousel({ combo }: { combo: ComboMeta }) {
+  // Pull the bundle's exact products by slug (deck source of truth) instead
+  // of by vibe — vibe-fetch was returning whichever top-N products matched
+  // the tag, often skipping bottomwear entirely. Reorder by productSlugs
+  // because Prisma `slug: { in: [...] }` doesn't preserve input order, and
+  // the carousel relies on products[0] being the hero card.
   const { data, isLoading } = useProducts({
-    vibe: combo.vibe,
+    slugs: combo.productSlugs,
     limit: combo.pieceCount,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
   });
-  const initialProducts = data?.products ?? [];
+  const slugIndex = useMemo(
+    () => new Map(combo.productSlugs.map((s, i) => [s, i] as const)),
+    [combo.productSlugs]
+  );
+  const initialProducts = useMemo(
+    () =>
+      [...(data?.products ?? [])].sort(
+        (a, b) => (slugIndex.get(a.slug) ?? 99) - (slugIndex.get(b.slug) ?? 99)
+      ),
+    [data, slugIndex]
+  );
 
+  // Swap-sheet pool stays vibe-based — users browse alternatives within the
+  // same aesthetic, not just the deck list.
   const { data: poolData } = useProducts({
     vibe: combo.vibe,
     limit: 24,
