@@ -97,6 +97,7 @@ function CardContent({
   sizeOpen,
   onSizeChange,
   onSwap,
+  priority,
 }: {
   product: Product;
   isActive: boolean;
@@ -105,9 +106,14 @@ function CardContent({
   sizeOpen: boolean;
   onSizeChange: (s: string) => void;
   onSwap: () => void;
+  /** Eager-load this image instead of waiting for IntersectionObserver. Set
+   * for the active card of above-the-fold bundles so users don't stare at
+   * the BLUR_DATA_URL tan placeholder. */
+  priority?: boolean;
 }) {
   const imgUrl = primaryImageUrl(product);
   const sizes = useMemo(() => uniqueSizes(product.variants), [product.variants]);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
     <>
@@ -115,7 +121,7 @@ function CardContent({
         style={{
           width: '100%',
           flex: 1,
-          backgroundColor: '#F0F0F0',
+          backgroundColor: '#EFEAE3',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -128,8 +134,36 @@ function CardContent({
             sizes="260px"
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
-            style={{ objectFit: 'cover' }}
+            priority={priority}
+            onLoad={() => setImgLoaded(true)}
+            style={{
+              objectFit: 'cover',
+              opacity: imgLoaded ? 1 : 0,
+              transition: 'opacity 0.4s ease',
+            }}
           />
+        )}
+        {!imgLoaded && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'var(--font-helvetica)',
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: 1.4,
+              color: '#A89B89',
+              textTransform: 'uppercase',
+              padding: 20,
+              textAlign: 'center',
+              lineHeight: 1.3,
+            }}
+          >
+            {product.name.split(' ').slice(0, 2).join(' ')}
+          </div>
         )}
       </div>
 
@@ -288,6 +322,7 @@ function CarouselCard({
   sizeOpen,
   onSizeChange,
   onSwap,
+  priority,
 }: {
   product: Product;
   slot: { left: number; scale: number; opacity: number; zIndex: number };
@@ -299,6 +334,7 @@ function CarouselCard({
   sizeOpen: boolean;
   onSizeChange: (s: string) => void;
   onSwap: () => void;
+  priority?: boolean;
 }) {
   // Drag is enabled only on the active card. Framer's `drag` handles the
   // pointer/touch tracking; we just decide on dragEnd whether the gesture
@@ -363,6 +399,7 @@ function CarouselCard({
         sizeOpen={isActive ? sizeOpen : false}
         onSizeChange={onSizeChange}
         onSwap={onSwap}
+        priority={priority}
       />
     </motion.div>
   );
@@ -644,6 +681,10 @@ function CategoryCarousel({ combo, index }: { combo: ComboMeta; index: number })
           const offset = getSlotOffset(i, activeIndex, total);
           const slot = getSlot(offset);
           const isActive = offset === 0;
+          // Eager-load images for the first ~4 bundles' active + adjacent
+          // cards. Below that, lazy-load takes over. This is the band the
+          // user sees on first paint and immediate scroll.
+          const eagerLoad = index < 4 && offset >= -1 && offset <= 1;
 
           return (
             <CarouselCard
@@ -651,6 +692,7 @@ function CategoryCarousel({ combo, index }: { combo: ComboMeta; index: number })
               product={product}
               slot={slot}
               isActive={isActive}
+              priority={eagerLoad}
               onPrev={handlePrev}
               onNext={handleNext}
               size={getSize(product)}
