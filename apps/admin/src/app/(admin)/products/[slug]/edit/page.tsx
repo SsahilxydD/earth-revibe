@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { ProductForm } from '@/components/products/product-form';
+import { DropAlertButton } from '@/components/products/drop-alert-button';
 import { useProduct, useUpdateProduct } from '@/hooks/use-products';
 import { toast } from '@earth-revibe/ui/toast';
 import { Spinner } from '@earth-revibe/ui/spinner';
@@ -69,10 +70,11 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
         <Link href="/products" className="p-2 rounded-lg hover:bg-off-white transition-colors">
           <ArrowLeft size={20} className="text-dark-gray" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold text-charcoal">Edit Product</h1>
           <p className="text-sm text-medium-gray mt-1">{product.name}</p>
         </div>
+        {product.status === 'ACTIVE' && <DropAlertButton product={product} />}
       </div>
 
       <ProductForm
