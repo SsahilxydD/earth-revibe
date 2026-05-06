@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import Image from 'next/image';
+import { motion, type PanInfo } from 'framer-motion';
 import { ChevronDown, Shuffle } from 'lucide-react';
 import { useProducts } from '@/hooks/use-products';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
@@ -31,11 +32,12 @@ const SLOTS: Record<number, { left: number; scale: number; opacity: number; zInd
 };
 const HIDDEN_SLOT = { left: 66, scale: 0, opacity: 0, zIndex: 0 };
 
-const EASE = 'cubic-bezier(0.25,0.1,0.25,1)';
-const CARD_TRANSITION = `left 0.6s ${EASE}, transform 0.6s ${EASE}, opacity 0.6s ${EASE}`;
-const SWIPE_THRESHOLD = 50;
-const SWIPE_VELOCITY = 300;
-const DRAG_START_PX = 5;
+// Spring physics for slot transitions and drag snap-back. Tuned to match
+// the natural-feel of native scroll inertia: snappy at small drags,
+// elastic at the edges, consistent across slow/fast flicks.
+const SLOT_SPRING = { type: 'spring' as const, stiffness: 280, damping: 32, mass: 0.9 };
+const SWIPE_OFFSET_THRESHOLD = 60;
+const SWIPE_VELOCITY_THRESHOLD = 350;
 
 function uniqueSizes(variants: ProductVariant[]): string[] {
   const seen = new Set<string>();
@@ -268,13 +270,6 @@ function CardContent({
   );
 }
 
-interface DragState {
-  startX: number;
-  startTime: number;
-  dragging: boolean;
-  pointerId: number;
-}
-
 function CarouselCard({
   product,
   slot,
@@ -298,76 +293,44 @@ function CarouselCard({
   onSizeChange: (s: string) => void;
   onSwap: () => void;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<DragState | null>(null);
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if (!isActive) return;
-      dragRef.current = {
-        startX: e.clientX,
-        startTime: Date.now(),
-        dragging: false,
-        pointerId: e.pointerId,
-      };
+  // Drag is enabled only on the active card. Framer's `drag` handles the
+  // pointer/touch tracking; we just decide on dragEnd whether the gesture
+  // crossed the swipe threshold (offset OR velocity). If it did, advance
+  // the active index and let the spring animation in `animate` carry every
+  // card to its new slot. If it didn't, framer auto-snaps back to slot.left.
+  const handleDragEnd = useCallback(
+    (_: unknown, info: PanInfo) => {
+      const dx = info.offset.x;
+      const vx = info.velocity.x;
+      const passed =
+        Math.abs(dx) > SWIPE_OFFSET_THRESHOLD || Math.abs(vx) > SWIPE_VELOCITY_THRESHOLD;
+      if (!passed) return;
+      if (dx < 0) onNext();
+      else onPrev();
     },
-    [isActive]
-  );
-
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      const drag = dragRef.current;
-      if (!drag || !cardRef.current) return;
-      const dx = e.clientX - drag.startX;
-
-      if (!drag.dragging && Math.abs(dx) > DRAG_START_PX) {
-        drag.dragging = true;
-        cardRef.current.style.transition = 'none';
-        cardRef.current.setPointerCapture(drag.pointerId);
-      }
-
-      if (drag.dragging) {
-        cardRef.current.style.transform = `translateY(-50%) scale(${slot.scale}) translateX(${dx}px)`;
-      }
-    },
-    [slot.scale]
-  );
-
-  const handlePointerEnd = useCallback(
-    (e: React.PointerEvent) => {
-      const drag = dragRef.current;
-      if (!drag || !cardRef.current) return;
-
-      if (drag.dragging) {
-        const dx = e.clientX - drag.startX;
-        const dt = Date.now() - drag.startTime;
-        const velocity = (Math.abs(dx) / Math.max(dt, 1)) * 1000;
-        const swiped = Math.abs(dx) > SWIPE_THRESHOLD || velocity > SWIPE_VELOCITY;
-
-        cardRef.current.style.transition = CARD_TRANSITION;
-
-        if (swiped) {
-          if (dx < 0) onNext();
-          else onPrev();
-        } else {
-          cardRef.current.style.transform = `translateY(-50%) scale(${slot.scale}) translateX(0px)`;
-        }
-      }
-
-      dragRef.current = null;
-    },
-    [slot.scale, onPrev, onNext]
+    [onPrev, onNext]
   );
 
   return (
-    <div
-      ref={cardRef}
+    <motion.div
+      initial={false}
+      animate={{
+        x: slot.left,
+        scale: slot.scale,
+        opacity: slot.opacity,
+      }}
+      transition={SLOT_SPRING}
+      drag={isActive ? 'x' : false}
+      dragElastic={0.18}
+      dragMomentum={false}
+      onDragEnd={handleDragEnd}
       style={{
         position: 'absolute',
-        left: slot.left,
+        left: 0,
         top: '50%',
         width: CARD_W,
         height: CARD_H,
+        marginTop: -CARD_H / 2,
         borderRadius: 12,
         backgroundColor: '#FFFFFF',
         border: '1px solid #ECECEC',
@@ -377,20 +340,13 @@ function CarouselCard({
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        transform: `translateY(-50%) scale(${slot.scale}) translateX(0px)`,
-        opacity: slot.opacity,
         zIndex: slot.zIndex,
-        transition: CARD_TRANSITION,
-        willChange: 'transform, opacity, left',
+        willChange: 'transform, opacity',
         cursor: isActive ? 'grab' : 'default',
         touchAction: isActive ? 'pan-y' : 'auto',
         userSelect: 'none',
         pointerEvents: slot === HIDDEN_SLOT ? 'none' : 'auto',
       }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerEnd}
-      onPointerCancel={handlePointerEnd}
     >
       <CardContent
         product={product}
@@ -401,7 +357,7 @@ function CarouselCard({
         onSizeChange={onSizeChange}
         onSwap={onSwap}
       />
-    </div>
+    </motion.div>
   );
 }
 
