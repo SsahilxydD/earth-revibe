@@ -497,6 +497,32 @@ enum EngagementRuleActionType {
   SEND_EMAIL
 }
 
+/// CRM customer segments — saved cohort definitions for dashboard filters
+/// and (later) for scoping engagement rules. PR 9.
+///
+/// `definition` holds a Zod-validated query DSL — see
+/// customer-segment.schema.ts in @earth-revibe/shared. v1 supports a flat
+/// list of (field, op, value) filters ANDed together.
+///
+/// `memberCount` is the result of the most recent evaluation; rebuilt
+/// nightly by cron and on-demand via the CRM "Refresh" button. We do NOT
+/// cache the actual user-id list yet — for v1 it's recomputed on demand
+/// from the segment definition. Cheaper than maintaining a sync, and the
+/// dashboard only reads the count.
+model CustomerSegment {
+  id              String    @id @default(cuid())
+  name            String
+  definition      Json
+  memberCount     Int       @default(0)
+  lastEvaluatedAt DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([isActive])
+  @@map("customer_segments")
+}
+
 // ==========================================
 // ORDERS & PAYMENTS
 // ==========================================

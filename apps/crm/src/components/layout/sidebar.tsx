@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Sparkles,
   Workflow,
+  Layers,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -33,6 +34,7 @@ const navItems: NavItem[] = [
   { label: 'Inbox', href: '/inbox', icon: MessageSquare },
   { label: 'Rules', href: '/rules', icon: Workflow },
   { label: 'Templates', href: '/templates', icon: Sparkles },
+  { label: 'Segments', href: '/segments', icon: Layers },
   { label: 'Settings', href: '/settings', icon: Settings, disabled: true },
 ];
 

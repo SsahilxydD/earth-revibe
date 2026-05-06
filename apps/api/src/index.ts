@@ -8,6 +8,7 @@ import { prisma } from '@earth-revibe/db';
 import { shutdownPostHog } from './config/posthog';
 import { runAbandonedCartCheck } from './jobs/abandoned-cart-job';
 import { engagementRuleService } from './services/engagement-rule.service';
+import { customerSegmentService } from './services/customer-segment.service';
 
 const start = async () => {
   try {
@@ -60,11 +61,32 @@ const start = async () => {
 
     logger.info('Engagement rule cron scheduled: every 30 min (Asia/Kolkata)');
 
+    // Customer-segment refresh — once a day at 03:17 local. Off-peak so the
+    // groupBy passes don't fight admin-dashboard reads. The refresh()
+    // endpoint is the on-demand path; this is just the slow safety net.
+    const customerSegmentTask = cron.schedule(
+      '17 3 * * *',
+      () => {
+        customerSegmentService
+          .runCron()
+          .then((result) => {
+            logger.info(result, 'Customer segment cron complete');
+          })
+          .catch((err) => {
+            logger.error({ err }, 'Customer segment cron failed');
+          });
+      },
+      { timezone: 'Asia/Kolkata' }
+    );
+
+    logger.info('Customer segment cron scheduled: 03:17 daily (Asia/Kolkata)');
+
     // Graceful shutdown
     const shutdown = async (signal: string) => {
       logger.info({ signal }, 'Shutting down gracefully');
       abandonedCartTask.stop();
       engagementRuleTask.stop();
+      customerSegmentTask.stop();
       server.close(async () => {
         logger.info('HTTP server closed');
         await shutdownPostHog();
