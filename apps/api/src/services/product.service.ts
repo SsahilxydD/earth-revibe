@@ -19,6 +19,7 @@ export const productService = {
   async listProducts(query: ProductQuery, adminMode = false) {
     const {
       category,
+      slugs,
       vibe,
       status,
       minPrice,
@@ -57,6 +58,10 @@ export const productService = {
         ],
       };
       where.AND = [...((where.AND as Prisma.ProductWhereInput[]) || []), categoryFilter];
+    }
+
+    if (slugs && slugs.length > 0) {
+      where.slug = { in: slugs };
     }
 
     if (vibe) {

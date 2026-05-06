@@ -39,6 +39,13 @@ export const productQuerySchema = z.object({
     (v) => (typeof v === 'string' && v.includes(',') ? v.split(',').filter(Boolean) : v),
     z.union([z.string(), z.array(z.string())]).optional()
   ),
+  // Bulk-fetch by slug — used by Flight Mode to pull the curated combo
+  // products (multiple categories at once) without falling back to the
+  // vibe filter, which can't enforce category mix.
+  slugs: z.preprocess(
+    (v) => (typeof v === 'string' ? v.split(',').filter(Boolean) : v),
+    z.array(z.string()).optional()
+  ),
   vibe: z.enum(VIBES).optional(),
   status: z.nativeEnum(ProductStatus).optional(),
   minPrice: z.coerce.number().optional(),

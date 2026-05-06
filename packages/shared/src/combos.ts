@@ -32,6 +32,12 @@ export interface ComboMeta {
   featured?: boolean;
   tagline: string;
   description: string;
+  /**
+   * Exact product slugs in the bundle, in display order. The first slug is
+   * the hero card; the rest fill the carousel. Storefront and API both
+   * trust this list — pieceCount must equal productSlugs.length.
+   */
+  productSlugs: string[];
 }
 
 export const COMBOS: ComboMeta[] = [
@@ -46,6 +52,11 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Sun. Sand. Sorted.',
     description:
       'A 3-day Goa trip with zero planning stress. One breezy polo for the beach shack, one camp shirt for the sunset cruise, one tee for the morning walk.',
+    productSlugs: [
+      'poolside-retreat-polo',
+      'solstice-check-camp-shirt',
+      'water-color-wave-graphic-boxy-tee',
+    ],
   },
   {
     slug: 'manali-morning-kit',
@@ -57,6 +68,11 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Layer up, chill out.',
     description:
       'Manali mornings are cold, afternoons are golden. A layerable shacket over a minimal tee, with cargo pants for the trek to Jogini Falls.',
+    productSlugs: [
+      'white-black-twill-zipper-shacket',
+      'two-panel-minimal-branding-boxy-tee',
+      'black-twill-straight-fit-cargo-pants',
+    ],
   },
   {
     slug: 'udaipur-royal',
@@ -68,6 +84,11 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Palace vibes, street prices.',
     description:
       'Walking through the City of Lakes needs outfits that feel regal but relaxed. Heritage plaid for the rooftop dinner, golden polo for the palace visit, cream trousers tying it all together.',
+    productSlugs: [
+      'fireside-heritage-plaid-shirt',
+      'golden-sands-polo',
+      'twill-off-white-cotton-formal-trousers',
+    ],
   },
   {
     slug: '5-day-drifter',
@@ -80,6 +101,13 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'One bag. Five days. Zero repeats.',
     description:
       'The ultimate capsule wardrobe for any 5-day trip across India. Mix-and-match perfection — 2 shirts, 2 tees, 1 pant. Every combo works.',
+    productSlugs: [
+      'tidewater-stripe-shirt',
+      'earthstone-relaxed-shirt',
+      'olive-herbal-cotton-reflective-boxy-tee',
+      'cream-cotton-puff-print-boxy-tee',
+      'vintage-print-twill-straight-fit-pants',
+    ],
   },
   {
     slug: 'kashmir-wanderer',
@@ -91,6 +119,12 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'From Dal Lake to Pahalgam.',
     description:
       'Kashmir demands layers and warmth without losing style. A shacket for the shikara ride, a plaid shirt for the bonfire, a cozy tee underneath, and cargos for every terrain.',
+    productSlugs: [
+      'khakhi-shadow-twill-block-print-shacket',
+      'ember-grid-plaid-shirt',
+      'grey-contrast-stitch-puff-print-boxy-tee',
+      'black-twill-straight-fit-cargo-pants',
+    ],
   },
   {
     slug: 'beach-bum-essentials',
@@ -102,6 +136,11 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Tan lines & good times.',
     description:
       "Whether it's Varkala, Gokarna, or Pondicherry — the only trio you need. A stripe shirt thrown open over a graphic tee, relaxed pants for the coastal walk.",
+    productSlugs: [
+      'blu-skin-cotton-oversized-stripe-boxy-fit-shirt',
+      'a-to-a-maroon-graphic-tee',
+      'green-twill-bellbottom-utility-pants',
+    ],
   },
   {
     slug: 'brunch-date',
@@ -113,6 +152,10 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Effortlessly put together.',
     description:
       "That cafe in Jaipur, the rooftop in Bandra, the bistro in Pondicherry. Two pieces that make you look like you tried hard when you didn't.",
+    productSlugs: [
+      'skin-conscious-embroidered-collar-boxy-shirt',
+      'twill-off-white-cotton-formal-trousers',
+    ],
   },
   {
     slug: 'hostel-hopper',
@@ -124,6 +167,12 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Pack light. Live loud.',
     description:
       'Backpacking through India? Pieces that wash easy, dry fast, and look good in every hostel selfie. Four essentials, endless combinations.',
+    productSlugs: [
+      'shoreline-drift-polo',
+      'plain-blue-word-hunt-boxy-tee',
+      'herbal-white-all-over-print-boxy-tee',
+      'vintage-print-twill-straight-fit-pants',
+    ],
   },
   {
     slug: 'south-indian-soul',
@@ -135,6 +184,11 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Temple runs & filter coffee.',
     description:
       "From Hampi's ruins to Kerala's backwaters. A relaxed camp shirt in earthy tones, a herbal tee for the humidity, and easy-going trousers that breathe.",
+    productSlugs: [
+      'aqua-trail-check-camp-shirt',
+      'olive-herbal-cotton-reflective-boxy-tee',
+      'twill-off-white-cotton-formal-trousers',
+    ],
   },
   {
     slug: 'sunset-chaser',
@@ -146,6 +200,7 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Golden hour ready.',
     description:
       'That magic moment when the sky turns orange and you need to look effortlessly iconic. A sand-toned polo with art-printed pants — sunset-ready in seconds.',
+    productSlugs: ['golden-sands-polo', 'vintage-print-twill-straight-fit-pants'],
   },
   {
     slug: 'road-trip-capsule',
@@ -157,6 +212,12 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Windows down. Music up.',
     description:
       'Delhi to Jaipur. Bangalore to Coorg. Mumbai to Lonavala. A 4-piece capsule that handles highway dhabas and hilltop viewpoints equally well.',
+    productSlugs: [
+      'countryside-calm-polo',
+      'void-passage-pocket-shirt',
+      'water-color-wave-graphic-boxy-tee',
+      'black-twill-straight-fit-cargo-pants',
+    ],
   },
   {
     slug: 'mountain-lodge',
@@ -168,6 +229,11 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Bonfire-approved fits.',
     description:
       "Sitting by a bonfire in Kasol, Tosh, or Bir with a warm overshirt, earthy tee, and sturdy cargos. That's this bundle.",
+    productSlugs: [
+      'cloudweave-overshirt',
+      'cream-cotton-puff-print-boxy-tee',
+      'black-twill-straight-fit-cargo-pants',
+    ],
   },
   {
     slug: 'heritage-walk',
@@ -179,6 +245,11 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Old city. New style.',
     description:
       "Exploring Lucknow's Chowk, Ahmedabad's Pol, or Old Delhi's lanes. A check shirt, a clean minimal tee, and formal trousers that keep you cool in crowded gullies.",
+    productSlugs: [
+      'dustroad-glen-check-shirt',
+      'two-panel-minimal-branding-boxy-tee',
+      'twill-off-white-cotton-formal-trousers',
+    ],
   },
   {
     slug: 'polo-and-chill',
@@ -190,6 +261,7 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Three polos. Three moods.',
     description:
       'The polo tripack for the guy who loves versatile basics. One for the pool, one for the town walk, one for the dinner. Three vibes, one vibe-check.',
+    productSlugs: ['poolside-retreat-polo', 'summit-escape-polo', 'wildflower-valley-polo'],
   },
   {
     slug: 'jungle-book',
@@ -201,6 +273,11 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Safari-ready. City-approved.',
     description:
       'Heading to Jim Corbett, Ranthambore, or Kaziranga? Olive and earthy tones that blend with nature but still turn heads at the resort dinner.',
+    productSlugs: [
+      'olive-herbal-cotton-reflective-boxy-tee',
+      'khakhi-shadow-twill-block-print-shacket',
+      'green-twill-bellbottom-utility-pants',
+    ],
   },
   {
     slug: 'weekend-getaway',
@@ -212,6 +289,7 @@ export const COMBOS: ComboMeta[] = [
     tagline: '48 hours. 2 pieces. Done.',
     description:
       'A quick weekend escape — Lonavala, Mahabaleshwar, Coorg. One versatile shirt and one great pair of pants. Mix with what you already own.',
+    productSlugs: ['terra-drift-pocket-shirt', 'vintage-print-twill-straight-fit-pants'],
   },
   {
     slug: 'full-nomad',
@@ -223,6 +301,13 @@ export const COMBOS: ComboMeta[] = [
     tagline: '15 days. One backpack. Legend status.',
     description:
       'The ultimate travel wardrobe for the extended trip. 2 tees, 1 shirt, 1 shacket, 1 pant — mix and match for 15+ unique looks. From hostels to homestays.',
+    productSlugs: [
+      'herbal-white-all-over-print-boxy-tee',
+      'grey-contrast-stitch-puff-print-boxy-tee',
+      'windpath-pinstripe-shirt',
+      'aqua-blue-twill-cactus-printed-shacket',
+      'vintage-print-twill-straight-fit-pants',
+    ],
   },
   {
     slug: 'coastal-drift',
@@ -234,6 +319,11 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Salt air & easy wear.',
     description:
       'For the ones who chase coastlines — from Goa to Gokarna to Kanyakumari. A marine-themed shirt, a wave-inspired tee, and bellbottoms that catch the sea breeze.',
+    productSlugs: [
+      'marine-folklore',
+      'water-color-wave-graphic-boxy-tee',
+      'green-twill-bellbottom-utility-pants',
+    ],
   },
   {
     slug: 'night-market-navigator',
@@ -245,6 +335,11 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'From bazaar to bar.',
     description:
       "Goa's Saturday Night Market, Jaipur's Johari Bazaar, Delhi's Hauz Khas. A statement polo, star-printed shirt on top, cool cargo pants underneath.",
+    productSlugs: [
+      'contrast-oversized-polo-with-unique-collar-branding',
+      'cream-twill-all-over-star-print-boxy-shirt',
+      'black-twill-straight-fit-cargo-pants',
+    ],
   },
   {
     slug: 'farewell-flex',
@@ -256,8 +351,25 @@ export const COMBOS: ComboMeta[] = [
     tagline: 'Last night. Best night.',
     description:
       'The last night of every trip is the most memorable. Dress like it. A blooming oversized shirt, a graphic tee layered under, premium trousers, a shacket tied around the waist.',
+    productSlugs: [
+      'ether-bloom-oversized-shirt',
+      'a-to-a-maroon-graphic-tee',
+      'twill-off-white-cotton-formal-trousers',
+      'aqua-blue-twill-cactus-printed-shacket',
+    ],
   },
 ];
+
+// Invariant: pieceCount must equal productSlugs.length for every combo.
+// Caught at module load so a typo in the data fails fast in dev/CI rather
+// than silently rendering the wrong number of cards in production.
+for (const combo of COMBOS) {
+  if (combo.productSlugs.length !== combo.pieceCount) {
+    throw new Error(
+      `Combo "${combo.slug}" has pieceCount=${combo.pieceCount} but productSlugs.length=${combo.productSlugs.length}`
+    );
+  }
+}
 
 export function getCombo(slug: string): ComboMeta | undefined {
   return COMBOS.find((c) => c.slug === slug);
