@@ -358,7 +358,13 @@ model WhatsAppMessageEvent {
   id                   String    @id @default(cuid())
   messageId            String    @db.VarChar(255)
   waId                 String?   @db.VarChar(20)
-  status               String    @db.VarChar(20) // sent | delivered | read | failed
+  status               String    @db.VarChar(20) // queued | sent | delivered | read | failed
+  /// PR 8: template + variant key for A/B funnel analytics. Set at send time
+  /// on the `queued` row, then copied onto subsequent webhook event rows so
+  /// dashboard queries can group by (templateKey, variantKey, status) without
+  /// a join. Null for older events that predate variant tracking.
+  templateKey          String?   @db.VarChar(64)
+  variantKey           String?   @db.VarChar(64)
   errorCode            Int?
   errorTitle           String?   @db.VarChar(255)
   errorMessage         String?
@@ -374,7 +380,38 @@ model WhatsAppMessageEvent {
   @@index([waId])
   @@index([status, eventAt])
   @@index([eventAt])
+  @@index([templateKey, variantKey, status])
   @@map("whatsapp_message_events")
+}
+
+/// CRM template-variants registry. Each row defines a Meta-approved template
+/// name plus a weight, grouped under a logical templateKey (e.g. all variants
+/// of the abandoned-cart recovery message share templateKey
+/// `ABANDONED_CART_RECOVERY`). At send time the API picks one variant by
+/// weighted random selection from active rows for the given templateKey, sends
+/// via that variant's templateName, and tags the resulting event with the
+/// variantKey for funnel analytics.
+///
+/// Only the templateName column reaches Meta — body text and parameters are
+/// fixed by Meta's approval. Adjust performance via weight, not content.
+model WhatsAppTemplateVariant {
+  id           String   @id @default(cuid())
+  templateKey  String   @db.VarChar(64) // e.g. ABANDONED_CART_RECOVERY
+  variantKey   String   @db.VarChar(64) // e.g. v1, v2, holiday-2026, …
+  templateName String   @db.VarChar(255) // Meta-approved template name (the actual API payload)
+  /// Human-readable preview of the body shown in CRM editor. Not sent to Meta.
+  bodyPreview  String?
+  /// Weighted random selection across the active set for the same templateKey.
+  /// Sum of weights for active variants doesn't have to be 100; the picker
+  /// normalises. A 0-weight variant never fires (alternative to isActive=false).
+  weight       Int      @default(1)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([templateKey, variantKey])
+  @@index([templateKey, isActive])
+  @@map("whatsapp_template_variants")
 }
 
 /// Inbound WhatsApp messages from customers — replies to our outbound

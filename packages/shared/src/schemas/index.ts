@@ -18,3 +18,4 @@ export * from './admin-device.schema';
 export * from './customer-timeline.schema';
 export * from './whatsapp-inbound.schema';
 export * from './engagement-rule.schema';
+export * from './whatsapp-template-variant.schema';

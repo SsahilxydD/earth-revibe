@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
   { label: 'Abandoned Carts', href: '/abandoned-carts', icon: ShoppingBag },
   { label: 'Inbox', href: '/inbox', icon: MessageSquare },
   { label: 'Rules', href: '/rules', icon: Workflow },
-  { label: 'Templates', href: '/templates', icon: Sparkles, disabled: true },
+  { label: 'Templates', href: '/templates', icon: Sparkles },
   { label: 'Settings', href: '/settings', icon: Settings, disabled: true },
 ];
 

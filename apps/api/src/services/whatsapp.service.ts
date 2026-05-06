@@ -1,6 +1,7 @@
 import { env } from '../config/env';
 import { logger } from '../config/logger';
 import { ApiError } from '../utils/api-error';
+import { pickVariant, recordVariantSend } from './whatsapp-template-variant.service';
 
 const GRAPH_API_URL = `https://graph.facebook.com/v22.0/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
@@ -837,12 +838,19 @@ export async function sendWhatsAppAbandonedCart(
     return { ok: false, retryable: false, status: 0 };
   }
 
+  // PR 8: pick a Meta-approved template variant if any are configured for
+  // this template key. Falls back to the hardcoded default so absence of
+  // variant rows doesn't break sending. The variantKey is recorded against
+  // the resulting messageId for funnel analytics.
+  const picked = await pickVariant('ABANDONED_CART_RECOVERY');
+  const templateName = picked?.templateName ?? 'earth_revibe_abandoned_cart';
+
   const body = {
     messaging_product: 'whatsapp',
     to,
     type: 'template',
     template: {
-      name: 'earth_revibe_abandoned_cart',
+      name: templateName,
       language: { code: 'en' },
       components: [
         {
@@ -920,8 +928,25 @@ export async function sendWhatsAppAbandonedCart(
   }
 
   logger.info(
-    { phone: masked, messageId, wa_id: waId, rawResponse: bodyText },
+    {
+      phone: masked,
+      messageId,
+      wa_id: waId,
+      templateName,
+      variantKey: picked?.variantKey,
+      rawResponse: bodyText,
+    },
     'WhatsApp abandoned cart message accepted by Meta'
   );
+
+  if (messageId && picked) {
+    await recordVariantSend({
+      messageId,
+      waId,
+      templateKey: picked.templateKey,
+      variantKey: picked.variantKey,
+    });
+  }
+
   return { ok: true, retryable: false, status: res.status, messageId };
 }

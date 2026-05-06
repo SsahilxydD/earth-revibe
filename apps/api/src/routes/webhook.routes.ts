@@ -462,12 +462,26 @@ router.post(
       const eventAt = s.timestamp ? new Date(Number(s.timestamp) * 1000) : new Date();
       const error = s.errors?.[0];
 
+      // PR 8: copy templateKey/variantKey from the send-time `queued` row so
+      // every subsequent webhook event for this messageId carries the same
+      // variant tag. Lets the CRM funnel dashboard groupBy without a join.
+      // Cheap (single PK lookup) and degrades gracefully — pre-PR-8 messages
+      // simply have null variant fields.
+      const sendRow = await prisma.whatsAppMessageEvent
+        .findFirst({
+          where: { messageId: s.id, status: 'queued' },
+          select: { templateKey: true, variantKey: true },
+        })
+        .catch(() => null);
+
       try {
         await prisma.whatsAppMessageEvent.create({
           data: {
             messageId: s.id,
             waId: s.recipient_id,
             status: s.status,
+            templateKey: sendRow?.templateKey,
+            variantKey: sendRow?.variantKey,
             errorCode: error?.code,
             errorTitle: error?.title?.slice(0, 255),
             errorMessage: error?.message,
