@@ -47,6 +47,8 @@ model User {
   adminDevices      AdminDevice[]
   whatsappInbound   WhatsAppInboundMessage[]
   backInStockSubs   BackInStockSubscription[]
+  dropSubscription  DropSubscription?
+  dropAlertSends    DropAlertSend[]
 
   @@map("users")
 }
@@ -547,6 +549,64 @@ model BackInStockSubscription {
   @@index([variantId, notifiedAt])
   @@index([userId])
   @@map("back_in_stock_subscriptions")
+}
+
+/// New-drop marketing alert subscriptions. Distinct from BackInStockSubscription
+/// (utility category) — Meta classifies drop alerts as marketing, so the
+/// posture is stricter: explicit opt-in, frequency cap, daily marketing-send
+/// budget, easy unsubscribe. See docs/plans/2026-05-06-new-drop-alerts-design.md.
+model DropSubscription {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  optInAt         DateTime  @default(now())
+  /// Most recent drop-alert send timestamp. Frequency cap (≤1 / 7d) compares against this.
+  lastNotifiedAt  DateTime?
+  /// Set when the user clicks the unsubscribe link or replies STOP via WhatsApp.
+  /// Non-null = paused. Re-opt-in clears it AND writes a fresh optInAt.
+  unsubscribedAt  DateTime?
+  /// Single-purpose token for the WhatsApp unsubscribe deep-link
+  /// (https://earthrevibe.com/u/<token>). Rotated on each opt-in.
+  unsubToken      String    @unique @default(cuid())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([unsubscribedAt, lastNotifiedAt])
+  @@map("drop_subscriptions")
+}
+
+/// Audit log of every drop alert sent. Compliance + frequency-cap enforcement.
+model DropAlertSend {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// The product whose release triggered this alert (the carousel hero).
+  productId   String
+  /// Meta template + variant used (joins to whatsapp_message_events).
+  templateKey String   @db.VarChar(64)
+  variantKey  String   @db.VarChar(64)
+  /// Meta's outbound message id — joins to whatsapp_message_events for status.
+  messageId   String?  @unique @db.VarChar(255)
+  sentAt      DateTime @default(now())
+
+  @@index([userId, sentAt])
+  @@index([productId, sentAt])
+  @@map("drop_alert_sends")
+}
+
+/// Daily marketing-send budget tracker. One row per day per Asia/Kolkata
+/// calendar day. Drop dispatcher reads/increments transactionally to enforce
+/// the per-day marketing cap WITHOUT eating utility headroom.
+model MarketingSendBudget {
+  id        String   @id @default(cuid())
+  /// YYYY-MM-DD in Asia/Kolkata. Unique — one row per day.
+  day       String   @unique @db.VarChar(10)
+  sentCount Int      @default(0)
+  cap       Int      @default(500)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("marketing_send_budgets")
 }
 
 // ==========================================

@@ -110,6 +110,16 @@ const envSchema = z.object({
   // (e.g. /products/<slug>) lives inside the template, not in the API
   // payload — keeps the send call free of ad-hoc URL injection.
   WHATSAPP_BACK_IN_STOCK_TEMPLATE: z.string().default('earth_revibe_back_in_stock'),
+  // New-drop alert carousel (PR 10b — see docs/plans/2026-05-06-new-drop-alerts-design.md).
+  // MARKETING-category template with N cards. Body params: {{1}} firstName,
+  // {{2}} drop name. Per-card body params: {{1}} product name, {{2}} price.
+  // Card image header is filled at send time. Default targets the 3-card
+  // approval; multi-card variants land via the WhatsAppTemplateVariant
+  // infrastructure in PR 8.
+  WHATSAPP_DROP_ALERT_TEMPLATE: z.string().default('earth_revibe_drop_alert_3card'),
+  // Public storefront base URL — used for the /u/<token> unsubscribe deep
+  // link in marketing templates. Falls back to FRONTEND_URL.
+  STOREFRONT_PUBLIC_URL: z.string().optional(),
   // Broadcast announcement for new trips — MARKETING-category template, must be
   // approved in Meta Business Manager before first use. Admin can override the
   // template name per-request via the broadcast API.

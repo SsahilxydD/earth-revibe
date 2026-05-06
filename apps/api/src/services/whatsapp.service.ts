@@ -1026,3 +1026,146 @@ export async function sendWhatsAppBackInStock(
     return { ok: false, status: 0 };
   }
 }
+
+export interface DropAlertCard {
+  /// Public image URL for the card header. Cloudflare Images, Supabase storage,
+  /// etc. — must be reachable by Meta's fetcher.
+  imageUrl: string;
+  productName: string;
+  /// Pre-formatted price string, e.g. "₹2,499". Locale formatting happens at
+  /// the call site, not here.
+  priceFormatted: string;
+  /// Storefront slug — Meta-approved template should embed `/products/{{N}}`
+  /// in each card's button URL parameter.
+  productSlug: string;
+}
+
+/**
+ * Send a new-drop carousel WhatsApp alert (PR 10b — marketing category).
+ *
+ * Caller MUST have already verified:
+ *   - User opted in (DropSubscription.unsubscribedAt IS NULL)
+ *   - Frequency cap not breached (lastNotifiedAt < now - 7 days)
+ *   - Daily marketing budget has headroom
+ *
+ * This helper does NOT enforce any of the above — it's a thin Meta API
+ * wrapper. The dispatcher service is responsible for compliance.
+ *
+ * Carousel structure: 3 cards in v1 (template-approved). Caller passes
+ * exactly 3 entries; fewer/more is rejected.
+ */
+export async function sendWhatsAppDropAlert(args: {
+  phone: string;
+  firstName: string;
+  dropName: string;
+  cards: DropAlertCard[];
+  unsubscribeToken: string;
+  templateName?: string;
+}): Promise<{ ok: boolean; status: number; messageId?: string }> {
+  if (args.cards.length !== 3) {
+    logger.warn(
+      { cardCount: args.cards.length },
+      'WhatsApp drop alert requires exactly 3 cards (v1 template constraint)'
+    );
+    return { ok: false, status: 0 };
+  }
+  const digits = args.phone.replace(/\D/g, '');
+  const to = /^\d{10}$/.test(digits) ? `91${digits}` : digits;
+  if (!to) return { ok: false, status: 0 };
+
+  const templateName = args.templateName ?? env.WHATSAPP_DROP_ALERT_TEMPLATE;
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: 'en' },
+      components: [
+        // Header carousel-level body params (firstName + drop name).
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: args.firstName || 'there' },
+            { type: 'text', text: args.dropName },
+          ],
+        },
+        // The carousel itself — Meta's structure: components → carousel →
+        // cards[]. Each card has its own header image + body params + CTA
+        // button URL parameter (the product slug).
+        {
+          type: 'carousel',
+          cards: args.cards.map((card, idx) => ({
+            card_index: idx,
+            components: [
+              {
+                type: 'header',
+                parameters: [{ type: 'image', image: { link: card.imageUrl } }],
+              },
+              {
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: card.productName },
+                  { type: 'text', text: card.priceFormatted },
+                ],
+              },
+              {
+                type: 'button',
+                sub_type: 'url',
+                index: '0',
+                parameters: [{ type: 'text', text: card.productSlug }],
+              },
+            ],
+          })),
+        },
+        // Footer button: token-based unsubscribe deep-link. The template's
+        // approved structure carries `https://earthrevibe.com/u/{{1}}` as
+        // the URL; we just pass the token.
+        {
+          type: 'button',
+          sub_type: 'url',
+          index: '1',
+          parameters: [{ type: 'text', text: args.unsubscribeToken }],
+        },
+      ],
+    },
+  };
+
+  try {
+    const res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const bodyText = await res.text();
+    if (!res.ok) {
+      logger.warn(
+        { status: res.status, body: bodyText, dropName: args.dropName, templateName },
+        'WhatsApp drop alert send failed (non-2xx)'
+      );
+      return { ok: false, status: res.status };
+    }
+    let messageId: string | undefined;
+    try {
+      const parsed = JSON.parse(bodyText) as { messages?: { id: string }[] };
+      messageId = parsed.messages?.[0]?.id;
+    } catch {
+      // ignore — bodyText already logged
+    }
+    logger.info(
+      { messageId, dropName: args.dropName, templateName, phoneTail: to.slice(-4) },
+      'WhatsApp drop alert accepted by Meta'
+    );
+    return { ok: true, status: res.status, messageId };
+  } catch (err) {
+    logger.error(
+      { err, dropName: args.dropName, templateName },
+      'WhatsApp drop alert network error'
+    );
+    return { ok: false, status: 0 };
+  }
+}

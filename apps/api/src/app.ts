@@ -48,6 +48,11 @@ import { adminWhatsAppInboundRouter } from './routes/admin-whatsapp-inbound.rout
 import { adminEngagementRuleRouter } from './routes/admin-engagement-rule.routes';
 import { adminTemplateVariantRouter } from './routes/admin-template-variant.routes';
 import { adminCustomerSegmentRouter } from './routes/admin-customer-segment.routes';
+import {
+  meDropSubscriptionRouter,
+  tokenUnsubRouter,
+  adminDropAlertRouter,
+} from './routes/drop-alert.routes';
 import { sanitize } from './middleware/sanitize';
 import { adminAbandonedCartRouter } from './routes/admin-abandoned-cart.routes';
 
@@ -453,6 +458,12 @@ app.use('/api/v1/admin/whatsapp-inbound', adminWhatsAppInboundRouter);
 app.use('/api/v1/admin/engagement-rules', adminEngagementRuleRouter);
 app.use('/api/v1/admin/template-variants', adminTemplateVariantRouter);
 app.use('/api/v1/admin/customer-segments', adminCustomerSegmentRouter);
+app.use('/api/v1/me/drop-subscription', meDropSubscriptionRouter);
+app.use('/api/v1/u', tokenUnsubRouter);
+// Admin drop-alert dispatch lives at /api/v1/admin/products/:id/drop-alert/*.
+// Mounted on the /admin/products path so we share the URL space with the
+// existing product router but keep the auth gating distinct.
+app.use('/api/v1/admin/products', adminDropAlertRouter);
 
 // Sentry error handler (must be before custom error handler)
 Sentry.setupExpressErrorHandler(app);

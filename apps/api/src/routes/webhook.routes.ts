@@ -9,6 +9,7 @@ import { sendMetaEvent } from '../utils/meta-conversions';
 import { webhookLimiter } from '../middleware/rate-limit';
 import { asyncHandler } from '../utils/async-handler';
 import { finalizeOrderFromPending } from '../services/checkout.service';
+import { dropAlertService } from '../services/drop-alert.service';
 
 const router: RouterType = Router();
 
@@ -606,6 +607,16 @@ router.post(
         },
         'WhatsApp inbound message received'
       );
+
+      // PR 10b: STOP-keyword auto-unsubscribe from drop alerts. Required
+      // by Meta marketing-category compliance — users who reply STOP must
+      // be unsubscribed immediately, no manual review. We fire-and-forget
+      // so the webhook stays fast (Meta retries aggressively on slow ACK).
+      if (text && /^\s*stop\s*$/i.test(text)) {
+        dropAlertService.unsubscribeByPhone(m.from).catch((err) => {
+          logger.warn({ err, fromWaId: m.from }, 'STOP-text drop unsubscribe failed');
+        });
+      }
     }
 
     res.status(200).json({ success: true });
