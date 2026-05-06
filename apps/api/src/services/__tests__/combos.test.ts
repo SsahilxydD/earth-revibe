@@ -80,24 +80,19 @@ describe('comboDiscount — à la carte cart leak prevention', () => {
 });
 
 describe('comboDiscount — curated combos use curated ladder', () => {
-  it('applies 20% to a complete 3-piece Salt Pack', () => {
-    const items = Array.from({ length: 3 }, () => comboItem(1000, 'salt-pack', 'g1'));
+  it('applies 20% to a complete 3-piece Goa Starter Pack', () => {
+    const items = Array.from({ length: 3 }, () => comboItem(1000, 'goa-starter-pack', 'g1'));
     expect(comboDiscount(items).total).toBe(600); // 20% of 3000
   });
 
-  it('applies 25% to a complete 5-piece Above the Fold', () => {
-    const items = Array.from({ length: 5 }, () => comboItem(2000, 'above-the-fold', 'g2'));
+  it('applies 25% to a complete 5-piece 5-Day Drifter', () => {
+    const items = Array.from({ length: 5 }, () => comboItem(2000, '5-day-drifter', 'g2'));
     expect(comboDiscount(items).total).toBe(2500); // 25% of 10000
   });
 
-  it('applies 30% to a complete 7-piece Touch-and-Go', () => {
-    const items = Array.from({ length: 7 }, () => comboItem(1500, 'touch-and-go', 'g3'));
-    expect(comboDiscount(items).total).toBeCloseTo(3150); // 30% of 10500
-  });
-
   it('drops the discount when a piece is missing (broken kit)', () => {
-    // Salt Pack expects 3 pieces; cart has 2 with the salt-pack token
-    const items = Array.from({ length: 2 }, () => comboItem(1000, 'salt-pack', 'g1'));
+    // Goa Starter Pack expects 3 pieces; cart has 2 with the slug
+    const items = Array.from({ length: 2 }, () => comboItem(1000, 'goa-starter-pack', 'g1'));
     expect(comboDiscount(items).total).toBe(0);
   });
 
@@ -108,12 +103,12 @@ describe('comboDiscount — curated combos use curated ladder', () => {
 
   it('prices two of the same combo independently when groupIds differ', () => {
     const items = [
-      comboItem(1000, 'salt-pack', 'gA'),
-      comboItem(1000, 'salt-pack', 'gA'),
-      comboItem(1000, 'salt-pack', 'gA'),
-      comboItem(1200, 'salt-pack', 'gB'),
-      comboItem(1200, 'salt-pack', 'gB'),
-      comboItem(1200, 'salt-pack', 'gB'),
+      comboItem(1000, 'goa-starter-pack', 'gA'),
+      comboItem(1000, 'goa-starter-pack', 'gA'),
+      comboItem(1000, 'goa-starter-pack', 'gA'),
+      comboItem(1200, 'goa-starter-pack', 'gB'),
+      comboItem(1200, 'goa-starter-pack', 'gB'),
+      comboItem(1200, 'goa-starter-pack', 'gB'),
     ];
     const r = comboDiscount(items);
     // 20% of 3000 + 20% of 3600 = 600 + 720 = 1320
@@ -151,8 +146,8 @@ describe('comboDiscount — BYO kits use BYO ladder', () => {
 describe('comboDiscount — mixed cart', () => {
   it('discounts only the combo group, leaves à la carte items at full price', () => {
     const items = [
-      // Complete Salt Pack
-      ...Array.from({ length: 3 }, () => comboItem(1000, 'salt-pack', 'g1')),
+      // Complete Goa Starter Pack
+      ...Array.from({ length: 3 }, () => comboItem(1000, 'goa-starter-pack', 'g1')),
       // À la carte additions
       aLaCarte(2000),
       aLaCarte(500),
@@ -161,7 +156,7 @@ describe('comboDiscount — mixed cart', () => {
   });
 
   it('a curated 5-piece kit beats a BYO 5-piece kit at the same prices', () => {
-    const curated = Array.from({ length: 5 }, () => comboItem(1000, 'above-the-fold', 'gC'));
+    const curated = Array.from({ length: 5 }, () => comboItem(1000, '5-day-drifter', 'gC'));
     const byo = Array.from({ length: 5 }, () => comboItem(1000, byoSlugFor(5), 'gB'));
     const curatedTotal = comboDiscount(curated).total;
     const byoTotal = comboDiscount(byo).total;
