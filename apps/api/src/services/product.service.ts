@@ -2,6 +2,8 @@ import slugify from 'slugify';
 import { prisma, Prisma } from '@earth-revibe/db';
 import { ApiError } from '../utils/api-error';
 import { notifyIndexNow } from '../utils/indexnow';
+import { logger } from '../config/logger';
+import { backInStockService } from './back-in-stock.service';
 import type {
   CreateProductInput,
   UpdateProductInput,
@@ -360,6 +362,19 @@ export const productService = {
       where: { id: variantId },
       data,
     });
+
+    // PR 10: fire back-in-stock alerts on a 0 → >0 stock transition. The
+    // service no-ops for any other transition, so this is cheap to call
+    // unconditionally. Async dispatched — admin update returns immediately;
+    // the WhatsApp sends happen in the background. Errors are swallowed
+    // so a Meta hiccup can't fail the inventory update.
+    if (existing.stock !== variant.stock) {
+      backInStockService
+        .processStockTransition(variantId, existing.stock, variant.stock)
+        .catch((err) => {
+          logger.error({ err, variantId }, 'Back-in-stock dispatch failed');
+        });
+    }
 
     return variant;
   },

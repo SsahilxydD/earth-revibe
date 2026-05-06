@@ -105,6 +105,11 @@ const envSchema = z.object({
   // Loyalty redemption code delivery — pre-approved Meta template required.
   // If unset, WhatsApp delivery is skipped silently and only email is sent.
   WHATSAPP_LOYALTY_REDEMPTION_TEMPLATE: z.string().default('earth_revibe_redemption_ready'),
+  // Back-in-stock alert (PR 10). Utility-category template, must include
+  // {{1}} firstName + {{2}} productName in the body. The destination URL
+  // (e.g. /products/<slug>) lives inside the template, not in the API
+  // payload — keeps the send call free of ad-hoc URL injection.
+  WHATSAPP_BACK_IN_STOCK_TEMPLATE: z.string().default('earth_revibe_back_in_stock'),
   // Broadcast announcement for new trips — MARKETING-category template, must be
   // approved in Meta Business Manager before first use. Admin can override the
   // template name per-request via the broadcast API.

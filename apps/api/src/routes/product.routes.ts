@@ -46,6 +46,15 @@ router.delete(
   asyncHandler(productController.deleteProductVariant)
 );
 
+// PR 10: subscribe to back-in-stock alerts. Customer-facing — only requires
+// auth (not admin). Storefront PDP "Notify me" calls this when a variant
+// is out of stock.
+router.post(
+  '/variants/:variantId/notify-me',
+  authenticate,
+  asyncHandler(productController.subscribeBackInStock)
+);
+
 // Image routes (admin only) — "/images/:imageId" must precede "/:id"
 router.delete(
   '/images/:imageId',

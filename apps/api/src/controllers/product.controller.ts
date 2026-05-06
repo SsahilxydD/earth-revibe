@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { productService } from '../services/product.service';
+import { backInStockService } from '../services/back-in-stock.service';
 
 export const productController = {
   async listProducts(req: Request, res: Response) {
@@ -69,5 +70,11 @@ export const productController = {
       req.body.imageIds
     );
     res.json({ success: true, data: images });
+  },
+
+  async subscribeBackInStock(req: Request, res: Response) {
+    const variantId = req.params.variantId as string;
+    const result = await backInStockService.subscribe(req.user!.id, variantId);
+    res.status(201).json({ success: true, data: result });
   },
 };

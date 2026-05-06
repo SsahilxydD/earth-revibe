@@ -950,3 +950,79 @@ export async function sendWhatsAppAbandonedCart(
 
   return { ok: true, retryable: false, status: res.status, messageId };
 }
+
+/**
+ * Send a back-in-stock WhatsApp utility template (PR 10). 1:1 transactional
+ * send to a user who explicitly subscribed via the storefront "Notify me"
+ * button — this is opt-in, event-driven, and Meta-categorised as utility,
+ * which keeps it clear of the fair-use guard rail that killed the broadcast
+ * UIs (see feedback_meta_fair_use.md memory).
+ *
+ * Template params: {{1}} = first name, {{2}} = product name. Stock-link
+ * destination URL is inside the template (Meta-approved); we don't pass it
+ * per-send to avoid ad-hoc URL injection.
+ */
+export async function sendWhatsAppBackInStock(
+  phone: string,
+  firstName: string,
+  productName: string
+): Promise<{ ok: boolean; status: number; messageId?: string }> {
+  const digits = phone.replace(/\D/g, '');
+  const to = /^\d{10}$/.test(digits) ? `91${digits}` : digits;
+  if (!to) return { ok: false, status: 0 };
+
+  const templateName = env.WHATSAPP_BACK_IN_STOCK_TEMPLATE ?? 'earth_revibe_back_in_stock';
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: 'en' },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: firstName || 'there' },
+            { type: 'text', text: productName },
+          ],
+        },
+      ],
+    },
+  };
+
+  try {
+    const res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const bodyText = await res.text();
+    if (!res.ok) {
+      logger.warn(
+        { status: res.status, body: bodyText, productName, templateName },
+        'WhatsApp back-in-stock send failed (non-2xx)'
+      );
+      return { ok: false, status: res.status };
+    }
+    let messageId: string | undefined;
+    try {
+      const parsed = JSON.parse(bodyText) as { messages?: { id: string }[] };
+      messageId = parsed.messages?.[0]?.id;
+    } catch {
+      // ignore — bodyText is already in logs
+    }
+    logger.info(
+      { messageId, productName, templateName, phoneTail: to.slice(-4) },
+      'WhatsApp back-in-stock message accepted by Meta'
+    );
+    return { ok: true, status: res.status, messageId };
+  } catch (err) {
+    logger.error({ err, productName, templateName }, 'WhatsApp back-in-stock network error');
+    return { ok: false, status: 0 };
+  }
+}
