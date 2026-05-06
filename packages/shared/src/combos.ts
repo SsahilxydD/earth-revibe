@@ -289,7 +289,7 @@ export const COMBOS: ComboMeta[] = [
     tagline: '48 hours. 2 pieces. Done.',
     description:
       'A quick weekend escape — Lonavala, Mahabaleshwar, Coorg. One versatile shirt and one great pair of pants. Mix with what you already own.',
-    productSlugs: ['terra-drift-pocket-shirt', 'vintage-print-twill-straight-fit-pants'],
+    productSlugs: ['terra-drift-linen-shirt', 'vintage-print-twill-straight-fit-pants'],
   },
   {
     slug: 'full-nomad',
@@ -352,7 +352,7 @@ export const COMBOS: ComboMeta[] = [
     description:
       'The last night of every trip is the most memorable. Dress like it. A blooming oversized shirt, a graphic tee layered under, premium trousers, a shacket tied around the waist.',
     productSlugs: [
-      'ether-bloom-oversized-shirt',
+      'ether-bloom-linen-shirt',
       'a-to-a-maroon-graphic-tee',
       'twill-off-white-cotton-formal-trousers',
       'aqua-blue-twill-cactus-printed-shacket',
