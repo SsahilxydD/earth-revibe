@@ -19,6 +19,7 @@ import {
   useUpdateTemplateVariant,
   useDeleteTemplateVariant,
 } from '@/hooks/use-template-variants';
+import { compareProportions, formatPValue } from '@/lib/stats';
 
 const TEMPLATE_LABELS: Record<TemplateKey, string> = {
   ABANDONED_CART_RECOVERY: 'Abandoned cart recovery',
@@ -177,12 +178,27 @@ export default function TemplatesPage() {
           const list = grouped.get(key) ?? [];
           if (list.length === 0) return null;
           const totalWeight = list.filter((v) => v.isActive).reduce((sum, v) => sum + v.weight, 0);
+
+          // Pick the highest-volume variant as the implicit control. Every
+          // other variant is compared against it via two-proportion z-test.
+          // Sample size below 30 leaves the comparison as "—" with a tooltip.
+          const withCounts = list.map((v) => {
+            const c = v.counts ?? ZERO_COUNTS;
+            const sent = c.queued || c.sent;
+            return { v, c, sent };
+          });
+          const control = withCounts.reduce<(typeof withCounts)[number] | null>(
+            (best, cur) => (best === null || cur.sent > best.sent ? cur : best),
+            null
+          );
+
           return (
             <Card key={key}>
               <div className="flex items-baseline justify-between gap-2 mb-3">
                 <h2 className="text-base font-semibold text-charcoal">{TEMPLATE_LABELS[key]}</h2>
                 <span className="text-xs text-text-muted">
-                  {list.filter((v) => v.isActive).length} active · weight {totalWeight}
+                  {list.filter((v) => v.isActive).length} active · weight {totalWeight} · control:{' '}
+                  {control ? control.v.variantKey : '—'}
                 </span>
               </div>
               <div className="overflow-x-auto -mx-4 px-4">
@@ -213,6 +229,9 @@ export default function TemplatesPage() {
                       <th className="px-2 py-2 font-medium text-xs uppercase tracking-wide text-right">
                         Read rate
                       </th>
+                      <th className="px-2 py-2 font-medium text-xs uppercase tracking-wide text-right">
+                        vs control
+                      </th>
                       <th className="px-2 py-2 font-medium text-xs uppercase tracking-wide">
                         Status
                       </th>
@@ -222,17 +241,29 @@ export default function TemplatesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {list.map((v) => {
-                      const c = v.counts ?? ZERO_COUNTS;
-                      // "Sent" surfaced to operators is the send-attempt count
-                      // (queued events); read rate is read/queued so it
-                      // accounts for delivery loss too.
-                      const sent = c.queued || c.sent;
+                    {withCounts.map(({ v, c, sent }) => {
                       const readRate = rate(c.read, sent);
                       const deliveryRate = rate(c.delivered, sent);
+                      const isControl = control !== null && control.v.id === v.id;
+                      const cmp =
+                        control !== null && !isControl
+                          ? compareProportions({
+                              trialsA: control.sent,
+                              successesA: control.c.read,
+                              trialsB: sent,
+                              successesB: c.read,
+                            })
+                          : null;
                       return (
                         <tr key={v.id} className="border-b border-border hover:bg-surface-tint/30">
-                          <td className="px-2 py-2 font-medium">{v.variantKey}</td>
+                          <td className="px-2 py-2 font-medium">
+                            {v.variantKey}
+                            {isControl && (
+                              <span className="ml-2 text-[10px] uppercase tracking-wide text-text-muted">
+                                control
+                              </span>
+                            )}
+                          </td>
                           <td className="px-2 py-2 text-xs text-text-muted">{v.templateName}</td>
                           <td className="px-2 py-2 text-right">{v.weight}</td>
                           <td className="px-2 py-2 text-right">{sent}</td>
@@ -245,6 +276,33 @@ export default function TemplatesPage() {
                           <td className="px-2 py-2 text-right">{c.read}</td>
                           <td className="px-2 py-2 text-right">{c.failed}</td>
                           <td className="px-2 py-2 text-right font-medium">{readRate}</td>
+                          <td className="px-2 py-2 text-right">
+                            {isControl ? (
+                              <span className="text-[11px] text-text-muted">—</span>
+                            ) : cmp === null || cmp.pValue === null ? (
+                              <span
+                                className="text-[11px] text-text-muted"
+                                title="Need ≥30 sends per variant to test"
+                              >
+                                n&lt;30
+                              </span>
+                            ) : cmp.significant ? (
+                              <span title={formatPValue(cmp.pValue)}>
+                                <Badge variant={(cmp.lift ?? 0) >= 0 ? 'success' : 'error'}>
+                                  {(cmp.lift ?? 0) >= 0 ? '+' : ''}
+                                  {((cmp.lift ?? 0) * 100).toFixed(1)}pp ({formatPValue(cmp.pValue)}
+                                  )
+                                </Badge>
+                              </span>
+                            ) : (
+                              <span
+                                className="text-[11px] text-text-muted"
+                                title={formatPValue(cmp.pValue)}
+                              >
+                                ns
+                              </span>
+                            )}
+                          </td>
                           <td className="px-2 py-2">
                             {v.isActive ? (
                               <Badge variant="success">Active</Badge>
