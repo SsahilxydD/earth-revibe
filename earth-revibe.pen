@@ -7932,8 +7932,6 @@
                   "gap": 12,
                   "padding": [
                     16,
-                    20,
-                    16,
                     20
                   ],
                   "alignItems": "center",
@@ -7950,7 +7948,7 @@
                       "fontFamily": "Inter",
                       "fontSize": 13,
                       "fontWeight": "700",
-                      "letterSpacing": 1.0
+                      "letterSpacing": 1
                     },
                     {
                       "type": "frame",
@@ -12492,7 +12490,6 @@
       "name": "Combos — Flight Mode v3",
       "clip": true,
       "width": 393,
-      "height": 2593,
       "fill": "#FFFFFFFF",
       "layout": "vertical",
       "children": [
@@ -12593,20 +12590,19 @@
           "children": [
             {
               "type": "frame",
-              "id": "Z32YTd",
-              "name": "carouselWeekender",
+              "id": "axNeM",
+              "name": "carouselGoa",
               "width": "fill_container",
               "layout": "vertical",
               "gap": 10,
               "children": [
                 {
                   "type": "text",
-                  "id": "y1bLiM",
-                  "name": "l1",
+                  "id": "FKhoR",
                   "fill": "#999999FF",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "WEEKENDER",
+                  "content": "GOA STARTER PACK",
                   "textAlign": "center",
                   "fontFamily": "Inter",
                   "fontSize": 10,
@@ -12615,137 +12611,100 @@
                 },
                 {
                   "type": "frame",
-                  "id": "F1Zgw",
-                  "name": "c1",
+                  "id": "wuDI7",
                   "clip": true,
                   "width": "fill_container",
                   "height": 420,
                   "layout": "none",
                   "children": [
                     {
-                      "id": "FSlCJ",
+                      "id": "OqGYP",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 208,
-                      "height": 304,
                       "x": -165,
                       "y": 58,
-                      "opacity": 0.5,
-                      "name": "farL",
-                      "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381976325.png",
-                            "mode": "fill"
-                          }
-                        },
-                        "mEuX9": {
-                          "content": "Canvas Tote",
-                          "fontSize": 11
-                        },
-                        "WBlD4": {
-                          "content": "₹1,490",
-                          "fontSize": 10
-                        }
-                      }
-                    },
-                    {
-                      "id": "wpdYB",
-                      "type": "ref",
-                      "ref": "E92VR",
                       "width": 208,
                       "height": 304,
-                      "x": 350,
-                      "y": 58,
                       "opacity": 0.5,
-                      "name": "farR",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381962780.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Slip-Ons",
+                          "content": "Solstice Check Camp Shirt",
                           "fontSize": 11
                         },
                         "WBlD4": {
-                          "content": "₹1,790",
+                          "content": "₹1,449",
                           "fontSize": 10
                         }
                       }
                     },
                     {
-                      "id": "xcVTY",
+                      "id": "rbQI6",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 234,
-                      "height": 342,
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Water Color Wave Tee",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "ZC07Q",
+                      "type": "ref",
+                      "ref": "E92VR",
                       "x": -110,
                       "y": 39,
-                      "opacity": 0.75,
-                      "name": "nearL",
-                      "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381962854.png",
-                            "mode": "fill"
-                          }
-                        },
-                        "mEuX9": {
-                          "content": "Chino Shorts",
-                          "fontSize": 12
-                        },
-                        "WBlD4": {
-                          "content": "₹2,190",
-                          "fontSize": 11
-                        }
-                      }
-                    },
-                    {
-                      "id": "S7xddM",
-                      "type": "ref",
-                      "ref": "E92VR",
                       "width": 234,
                       "height": 342,
-                      "x": 269,
-                      "y": 39,
                       "opacity": 0.75,
-                      "name": "nearR",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381973073.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Linen Shirt",
+                          "content": "Solstice Check Camp Shirt",
                           "fontSize": 12
                         },
                         "WBlD4": {
-                          "content": "₹1,890",
+                          "content": "₹1,449",
                           "fontSize": 11
                         }
                       }
                     },
                     {
-                      "id": "isA1b",
+                      "id": "EzKpo",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 260,
-                      "height": 380,
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Water Color Wave Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "ZfFtM",
+                      "type": "ref",
+                      "ref": "E92VR",
                       "x": 66,
                       "y": 20,
+                      "width": 260,
+                      "height": 380,
                       "effect": {
                         "type": "shadow",
                         "shadowType": "outer",
@@ -12757,21 +12716,12 @@
                         "blur": 24,
                         "spread": -4
                       },
-                      "name": "active",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381968974.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Weekender Duffel"
+                          "content": "Poolside Retreat Polo"
                         },
                         "WBlD4": {
-                          "content": "₹3,490"
+                          "content": "₹1,290"
                         }
                       }
                     }
@@ -12779,8 +12729,7 @@
                 },
                 {
                   "type": "frame",
-                  "id": "Vqycg",
-                  "name": "d1",
+                  "id": "Uvncb",
                   "width": "fill_container",
                   "gap": 6,
                   "justifyContent": "center",
@@ -12788,40 +12737,35 @@
                   "children": [
                     {
                       "type": "ellipse",
-                      "id": "cacMI",
-                      "name": "d1",
+                      "id": "ehThr",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "c9hsA",
-                      "name": "d2",
+                      "id": "CPZe9",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "F2iQa9",
-                      "name": "d3",
+                      "id": "bcHvj",
                       "fill": "#000000FF",
                       "width": 8,
                       "height": 8
                     },
                     {
                       "type": "ellipse",
-                      "id": "cgxsy",
-                      "name": "d4",
+                      "id": "KoJkO",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "AHQG0",
-                      "name": "d5",
+                      "id": "K65lDL",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
@@ -12832,20 +12776,19 @@
             },
             {
               "type": "frame",
-              "id": "M0aiHB",
-              "name": "carouselBeach",
+              "id": "DJK2q",
+              "name": "carouselManali",
               "width": "fill_container",
               "layout": "vertical",
               "gap": 10,
               "children": [
                 {
                   "type": "text",
-                  "id": "zPLpO",
-                  "name": "l2",
+                  "id": "P9IJzA",
                   "fill": "#999999FF",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "BEACH ESCAPE",
+                  "content": "MANALI MORNING KIT",
                   "textAlign": "center",
                   "fontFamily": "Inter",
                   "fontSize": 10,
@@ -12854,63 +12797,44 @@
                 },
                 {
                   "type": "frame",
-                  "id": "i6XThR",
-                  "name": "c2",
+                  "id": "Z2Fzv",
                   "clip": true,
                   "width": "fill_container",
                   "height": 420,
                   "layout": "none",
                   "children": [
                     {
-                      "id": "z7f5od",
+                      "id": "YZzd7",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 208,
-                      "height": 304,
                       "x": -165,
                       "y": 58,
+                      "width": 208,
+                      "height": 304,
                       "opacity": 0.5,
-                      "name": "farL",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381976325.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Canvas Tote",
+                          "content": "Minimal Branding Boxy Tee",
                           "fontSize": 11
                         },
                         "WBlD4": {
-                          "content": "₹1,490",
+                          "content": "₹1,190",
                           "fontSize": 10
                         }
                       }
                     },
                     {
-                      "id": "GEVql",
+                      "id": "z6eQ1W",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 208,
-                      "height": 304,
                       "x": 350,
                       "y": 58,
+                      "width": 208,
+                      "height": 304,
                       "opacity": 0.5,
-                      "name": "farR",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381962780.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Slip-Ons",
+                          "content": "Black Twill Cargo Pants",
                           "fontSize": 11
                         },
                         "WBlD4": {
@@ -12920,71 +12844,53 @@
                       }
                     },
                     {
-                      "id": "q6Qui",
+                      "id": "edO5k",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 234,
-                      "height": 342,
                       "x": -110,
                       "y": 39,
-                      "opacity": 0.75,
-                      "name": "nearL",
-                      "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381962854.png",
-                            "mode": "fill"
-                          }
-                        },
-                        "mEuX9": {
-                          "content": "Chino Shorts",
-                          "fontSize": 12
-                        },
-                        "WBlD4": {
-                          "content": "₹2,190",
-                          "fontSize": 11
-                        }
-                      }
-                    },
-                    {
-                      "id": "ZQN7y",
-                      "type": "ref",
-                      "ref": "E92VR",
                       "width": 234,
                       "height": 342,
-                      "x": 269,
-                      "y": 39,
                       "opacity": 0.75,
-                      "name": "nearR",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381973073.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Linen Shirt",
+                          "content": "Minimal Branding Boxy Tee",
                           "fontSize": 12
                         },
                         "WBlD4": {
-                          "content": "₹1,890",
+                          "content": "₹1,190",
                           "fontSize": 11
                         }
                       }
                     },
                     {
-                      "id": "qg02j",
+                      "id": "i6Dvm",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 260,
-                      "height": 380,
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Black Twill Cargo Pants",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "h67oCH",
+                      "type": "ref",
+                      "ref": "E92VR",
                       "x": 66,
                       "y": 20,
+                      "width": 260,
+                      "height": 380,
                       "effect": {
                         "type": "shadow",
                         "shadowType": "outer",
@@ -12996,21 +12902,12 @@
                         "blur": 24,
                         "spread": -4
                       },
-                      "name": "active",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381968974.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Weekender Duffel"
+                          "content": "White & Black Zipper Shacket"
                         },
                         "WBlD4": {
-                          "content": "₹3,490"
+                          "content": "₹1,990"
                         }
                       }
                     }
@@ -13018,8 +12915,7 @@
                 },
                 {
                   "type": "frame",
-                  "id": "JrSAQ",
-                  "name": "d2",
+                  "id": "S0f3Hc",
                   "width": "fill_container",
                   "gap": 6,
                   "justifyContent": "center",
@@ -13027,40 +12923,35 @@
                   "children": [
                     {
                       "type": "ellipse",
-                      "id": "yjK1T",
-                      "name": "d1",
+                      "id": "LbJ0g",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "oD4u6",
-                      "name": "d2",
+                      "id": "Z7Fwh",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "QmDmi",
-                      "name": "d3",
+                      "id": "HfgDh",
                       "fill": "#000000FF",
                       "width": 8,
                       "height": 8
                     },
                     {
                       "type": "ellipse",
-                      "id": "JZeV4",
-                      "name": "d4",
+                      "id": "ZSAAo",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "irzZM",
-                      "name": "d5",
+                      "id": "SqZ9p",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
@@ -13071,20 +12962,19 @@
             },
             {
               "type": "frame",
-              "id": "gUDpT",
-              "name": "carouselMountain",
+              "id": "CryrT",
+              "name": "carouselUdaipur",
               "width": "fill_container",
               "layout": "vertical",
               "gap": 10,
               "children": [
                 {
                   "type": "text",
-                  "id": "P4h38k",
-                  "name": "l3",
+                  "id": "FykWK",
                   "fill": "#999999FF",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "MOUNTAIN TREK",
+                  "content": "UDAIPUR ROYAL",
                   "textAlign": "center",
                   "fontFamily": "Inter",
                   "fontSize": 10,
@@ -13093,63 +12983,44 @@
                 },
                 {
                   "type": "frame",
-                  "id": "M8KcW",
-                  "name": "c3",
+                  "id": "b9Ild",
                   "clip": true,
                   "width": "fill_container",
                   "height": 420,
                   "layout": "none",
                   "children": [
                     {
-                      "id": "XzTAU",
+                      "id": "l5bU7",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 208,
-                      "height": 304,
                       "x": -165,
                       "y": 58,
+                      "width": 208,
+                      "height": 304,
                       "opacity": 0.5,
-                      "name": "farL",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381976325.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Canvas Tote",
+                          "content": "Golden Sands Polo",
                           "fontSize": 11
                         },
                         "WBlD4": {
-                          "content": "₹1,490",
+                          "content": "₹1,290",
                           "fontSize": 10
                         }
                       }
                     },
                     {
-                      "id": "T4sWm",
+                      "id": "E203p",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 208,
-                      "height": 304,
                       "x": 350,
                       "y": 58,
+                      "width": 208,
+                      "height": 304,
                       "opacity": 0.5,
-                      "name": "farR",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381962780.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Slip-Ons",
+                          "content": "Off-White Formal Trousers",
                           "fontSize": 11
                         },
                         "WBlD4": {
@@ -13159,71 +13030,53 @@
                       }
                     },
                     {
-                      "id": "QNPBQ",
+                      "id": "OVFZz",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 234,
-                      "height": 342,
                       "x": -110,
                       "y": 39,
-                      "opacity": 0.75,
-                      "name": "nearL",
-                      "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381962854.png",
-                            "mode": "fill"
-                          }
-                        },
-                        "mEuX9": {
-                          "content": "Chino Shorts",
-                          "fontSize": 12
-                        },
-                        "WBlD4": {
-                          "content": "₹2,190",
-                          "fontSize": 11
-                        }
-                      }
-                    },
-                    {
-                      "id": "vZcQT",
-                      "type": "ref",
-                      "ref": "E92VR",
                       "width": 234,
                       "height": 342,
-                      "x": 269,
-                      "y": 39,
                       "opacity": 0.75,
-                      "name": "nearR",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381973073.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Linen Shirt",
+                          "content": "Golden Sands Polo",
                           "fontSize": 12
                         },
                         "WBlD4": {
-                          "content": "₹1,890",
+                          "content": "₹1,290",
                           "fontSize": 11
                         }
                       }
                     },
                     {
-                      "id": "UUzmz",
+                      "id": "K7DiII",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 260,
-                      "height": 380,
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Off-White Formal Trousers",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "I87W4x",
+                      "type": "ref",
+                      "ref": "E92VR",
                       "x": 66,
                       "y": 20,
+                      "width": 260,
+                      "height": 380,
                       "effect": {
                         "type": "shadow",
                         "shadowType": "outer",
@@ -13235,21 +13088,12 @@
                         "blur": 24,
                         "spread": -4
                       },
-                      "name": "active",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381968974.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Weekender Duffel"
+                          "content": "Fireside Heritage Plaid Shirt"
                         },
                         "WBlD4": {
-                          "content": "₹3,490"
+                          "content": "₹1,449"
                         }
                       }
                     }
@@ -13257,8 +13101,7 @@
                 },
                 {
                   "type": "frame",
-                  "id": "fJyhe",
-                  "name": "d3",
+                  "id": "VWhOl",
                   "width": "fill_container",
                   "gap": 6,
                   "justifyContent": "center",
@@ -13266,40 +13109,35 @@
                   "children": [
                     {
                       "type": "ellipse",
-                      "id": "J05Vlb",
-                      "name": "d1",
+                      "id": "S2fmG",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "jFHBj",
-                      "name": "d2",
+                      "id": "Gkgb9",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "Pwray",
-                      "name": "d3",
+                      "id": "BB8I8",
                       "fill": "#000000FF",
                       "width": 8,
                       "height": 8
                     },
                     {
                       "type": "ellipse",
-                      "id": "LM4Tf",
-                      "name": "d4",
+                      "id": "fdHKs",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "URgFW",
-                      "name": "d5",
+                      "id": "CzuPc",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
@@ -13310,20 +13148,19 @@
             },
             {
               "type": "frame",
-              "id": "n90RwM",
-              "name": "carouselCity",
+              "id": "p0trx6",
+              "name": "carousel5DayDrifter",
               "width": "fill_container",
               "layout": "vertical",
               "gap": 10,
               "children": [
                 {
                   "type": "text",
-                  "id": "A2yRL",
-                  "name": "l4",
+                  "id": "EAJmT",
                   "fill": "#999999FF",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "CITY DRIFT",
+                  "content": "THE 5-DAY DRIFTER",
                   "textAlign": "center",
                   "fontFamily": "Inter",
                   "fontSize": 10,
@@ -13332,63 +13169,44 @@
                 },
                 {
                   "type": "frame",
-                  "id": "l5ph1j",
-                  "name": "c4",
+                  "id": "PdkeX",
                   "clip": true,
                   "width": "fill_container",
                   "height": 420,
                   "layout": "none",
                   "children": [
                     {
-                      "id": "p1ZVER",
+                      "id": "a6Hmq9",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 208,
-                      "height": 304,
                       "x": -165,
                       "y": 58,
+                      "width": 208,
+                      "height": 304,
                       "opacity": 0.5,
-                      "name": "farL",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381976325.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Canvas Tote",
+                          "content": "Cream Puff Print Boxy Tee",
                           "fontSize": 11
                         },
                         "WBlD4": {
-                          "content": "₹1,490",
+                          "content": "₹1,190",
                           "fontSize": 10
                         }
                       }
                     },
                     {
-                      "id": "Hq1Z7",
+                      "id": "aVtmn",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 208,
-                      "height": 304,
                       "x": 350,
                       "y": 58,
+                      "width": 208,
+                      "height": 304,
                       "opacity": 0.5,
-                      "name": "farR",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381962780.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Slip-Ons",
+                          "content": "Vintage Print Straight-Fit Pants",
                           "fontSize": 11
                         },
                         "WBlD4": {
@@ -13398,71 +13216,53 @@
                       }
                     },
                     {
-                      "id": "UhB3g",
+                      "id": "SOcfK",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 234,
-                      "height": 342,
                       "x": -110,
                       "y": 39,
-                      "opacity": 0.75,
-                      "name": "nearL",
-                      "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381962854.png",
-                            "mode": "fill"
-                          }
-                        },
-                        "mEuX9": {
-                          "content": "Chino Shorts",
-                          "fontSize": 12
-                        },
-                        "WBlD4": {
-                          "content": "₹2,190",
-                          "fontSize": 11
-                        }
-                      }
-                    },
-                    {
-                      "id": "IeFSj",
-                      "type": "ref",
-                      "ref": "E92VR",
                       "width": 234,
                       "height": 342,
-                      "x": 269,
-                      "y": 39,
                       "opacity": 0.75,
-                      "name": "nearR",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381973073.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Linen Shirt",
+                          "content": "Earthstone Relaxed Shirt",
                           "fontSize": 12
                         },
                         "WBlD4": {
-                          "content": "₹1,890",
+                          "content": "₹1,449",
                           "fontSize": 11
                         }
                       }
                     },
                     {
-                      "id": "L9UkR",
+                      "id": "ZayYb",
                       "type": "ref",
                       "ref": "E92VR",
-                      "width": 260,
-                      "height": 380,
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Olive Herbal Reflective Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "R9NZnb",
+                      "type": "ref",
+                      "ref": "E92VR",
                       "x": 66,
                       "y": 20,
+                      "width": 260,
+                      "height": 380,
                       "effect": {
                         "type": "shadow",
                         "shadowType": "outer",
@@ -13474,21 +13274,12 @@
                         "blur": 24,
                         "spread": -4
                       },
-                      "name": "active",
                       "descendants": {
-                        "scplJ": {
-                          "fill": {
-                            "type": "image",
-                            "enabled": true,
-                            "url": "images/generated-1777381968974.png",
-                            "mode": "fill"
-                          }
-                        },
                         "mEuX9": {
-                          "content": "Weekender Duffel"
+                          "content": "Tidewater Stripe Shirt"
                         },
                         "WBlD4": {
-                          "content": "₹3,490"
+                          "content": "₹1,449"
                         }
                       }
                     }
@@ -13496,8 +13287,7 @@
                 },
                 {
                   "type": "frame",
-                  "id": "LwFfs",
-                  "name": "d4",
+                  "id": "PNBSZ",
                   "width": "fill_container",
                   "gap": 6,
                   "justifyContent": "center",
@@ -13505,40 +13295,3011 @@
                   "children": [
                     {
                       "type": "ellipse",
-                      "id": "UtlNG",
-                      "name": "d1",
+                      "id": "m38OTw",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "x2cKe",
-                      "name": "d2",
+                      "id": "GlDZK",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "lmlZx",
-                      "name": "d3",
+                      "id": "kBhb6",
                       "fill": "#000000FF",
                       "width": 8,
                       "height": 8
                     },
                     {
                       "type": "ellipse",
-                      "id": "Brcx5",
-                      "name": "d4",
+                      "id": "H781IU",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
                     },
                     {
                       "type": "ellipse",
-                      "id": "i9A0A",
-                      "name": "d5",
+                      "id": "p34jT",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "e6sbN4",
+              "name": "carouselKashmir",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "dKAnX",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "KASHMIR WANDERER",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "kVahU",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "Wns5i",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Ember Grid Plaid Shirt",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "C5m8ZU",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Black Twill Cargo Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "NxtNA",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Ember Grid Plaid Shirt",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "QmOVh",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Grey Stitch Puff Print Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "iJKpA",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Khakhi Block Print Shacket"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,549"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "JvJTZ",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "FSR6t",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "TfH1c",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "VFlCO",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "zaUHI",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "s4osR1",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "k1xoA",
+              "name": "carouselBeachBum",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ylAN7",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "BEACH BUM ESSENTIALS",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "U7RI4",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "q8QBYH",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "A-to-A Maroon Graphic Tee",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "KsEuo",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Green Bellbottom Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "BLVJW",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "A-to-A Maroon Graphic Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "kEXjd",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Green Bellbottom Pants",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "UBhUd",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Blu Oversized Stripe Shirt"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "N8gSY",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "Vnqdn",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "V8x4M8",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "F4PjXk",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "R9zz4",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "p2hJgB",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wSxYb",
+              "name": "carouselBrunch",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "enddG",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "THE BRUNCH DATE",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "Nwop5",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "Gpmqq",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Off-White Formal Trousers",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "t438X",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Embroidered Collar Shirt",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "NOqLr",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Off-White Formal Trousers",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "y3Xna",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Off-White Formal Trousers",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "GaMuk",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Embroidered Collar Boxy Shirt"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "R41y6",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "dTA2r",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "v3mIYe",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "TTczh",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "f1pOB",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "YRlpV",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "bpsDm",
+              "name": "carouselHostel",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "C934JH",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "HOSTEL HOPPER",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "mhBY1",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "riL9S",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Vintage Print Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "W5fjPu",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Plain Blue Word Hunt Tee",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "p6IHl",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Plain Blue Word Hunt Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "Q82xOy",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Herbal White Print Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "QaUxN",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Shoreline Drift Polo"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "pB6A3",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "vLLDW",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "RMKZf",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Gg2jn",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "q16dS",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "b4blKS",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "CsH1Z",
+              "name": "carouselSouthIndian",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "bkr1d",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "SOUTH INDIAN SOUL",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "pfemL",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "vmGh4",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Olive Herbal Reflective Tee",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "Jyajb",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Off-White Formal Trousers",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "Fr9wJ",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Olive Herbal Reflective Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "X6tE3",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Off-White Formal Trousers",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "oVz8b",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Aqua Trail Check Camp Shirt"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "iHeNZ",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "OZPNw",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "nejo5",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "j2mn3",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "h6i4hT",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "L2m4J",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "fd72T",
+              "name": "carouselSunset",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "jydHW",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "SUNSET CHASER",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "X9D2S",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "e1l1f3",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Vintage Print Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "OYU8G",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Golden Sands Polo",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "ALkLg",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Vintage Print Pants",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "mueRh",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Vintage Print Pants",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "uzP7G",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Golden Sands Polo"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "x2yaW6",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "ZCp4O",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Oyy47",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "PYrQi",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "H6Rz0",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "dIEuy",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nsry4",
+              "name": "carouselRoadTrip",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "CN4xW",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "THE ROAD TRIP CAPSULE",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "kRTVS",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "w0RJGo",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Black Twill Cargo Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "R7JA2",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Void Passage Pocket Shirt",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "uCyzc",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Void Passage Pocket Shirt",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "wF8fc",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Water Color Wave Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "PXQQP",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Countryside Calm Polo"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "np0hD",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "f5ALM",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "jFt3j",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "g6OGU",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "AnIq4",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "AAbsl",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "IG7KC",
+              "name": "carouselMountainLodge",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "sVfJW",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "MOUNTAIN LODGE",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "wOBmW",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "SUpUz",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Cream Puff Print Boxy Tee",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "jNBqF",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Black Twill Cargo Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "Sw9Hk",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Cream Puff Print Boxy Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "Dg2rr",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Black Twill Cargo Pants",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "SpJR9",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Cloudweave Overshirt"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "t23rR",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "o5bW0",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "aYMZ2",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "vgtUE",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "RSZ90",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "eoJq3",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "rKUKm",
+              "name": "carouselHeritage",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "TYiKX",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "HERITAGE WALK",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "HMcqM",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "g43IWk",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Minimal Branding Boxy Tee",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "Q7D5c",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Off-White Formal Trousers",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "r3PVs",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Minimal Branding Boxy Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "yIgry",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Off-White Formal Trousers",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "Oqgiy",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Dustroad Glen Check Shirt"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "O0NX9",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "A6BZ7",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "f3cdH",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "vb3Du",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "u2QVQ",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "SHVPK",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "bJvBM",
+              "name": "carouselPoloChill",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "uD4g0",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "POLO & CHILL",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "QCZQZ",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "L2MXm",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Summit Escape Polo",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "O3FSgx",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Wildflower Valley Polo",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "LrPYo",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Summit Escape Polo",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "IerqE",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Wildflower Valley Polo",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "yopI7",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Poolside Retreat Polo"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Y4mo16",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "wx1TC",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Nj9Vk",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "AzF5B",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "YNqBx",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "DUIve",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "dcov2",
+              "name": "carouselJungle",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "nE513",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "THE JUNGLE BOOK",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "Ci7Ws",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "M4Wfie",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Khakhi Block Print Shacket",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,549",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "cWsc5",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Green Bellbottom Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "vylpQ",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Khakhi Block Print Shacket",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,549",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "CzvWz",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Green Bellbottom Pants",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "xQdYF",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Olive Herbal Reflective Tee"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "D9AwS",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "YWiD4",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Oqmm6",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "cajS1",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Z1YmSg",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "QiPRI",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "t34AM4",
+              "name": "carouselWeekendGetaway",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "rc8Mf",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "WEEKEND GETAWAY",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "E8qsy8",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "Y5lRYv",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Vintage Print Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "e6wsGV",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Terra Drift Pocket Shirt",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "VkcmS",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Vintage Print Pants",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "X8fbX",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Vintage Print Pants",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "pwDyh",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Terra Drift Pocket Shirt"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fZ8l5",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "Y8iup",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "b8xVKw",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "V12q0i",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "dGRnR",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Hw7N8",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "i85qt",
+              "name": "carouselFullNomad",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "m7LEt",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "THE FULL NOMAD",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "RiWEP",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "Lmhwv",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Vintage Print Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "C8Uav",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Aqua Cactus Shacket",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,990",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "Ersqy",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Windpath Pinstripe Shirt",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "uenGf",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Grey Stitch Puff Print Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "O5slc",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Herbal White Print Tee"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "HWKQh",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "JqIJ9",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "b2H2oJ",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "QGvBy",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "E8n9go",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "vNVVQ",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "cfKq6",
+              "name": "carouselCoastal",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "n7PHs",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "COASTAL DRIFT",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "lZuos",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "UBa5M",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Water Color Wave Tee",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "wxLsa",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Green Bellbottom Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "NCmAb",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Water Color Wave Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "glSLq",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Green Bellbottom Pants",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "BvH6L",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Marine Folklore"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "LEgbi",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "N0Oj3j",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "L3mQew",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "xeQWO",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "zyTAG",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Hdu7i",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "yYVj6",
+              "name": "carouselNightMarket",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "pkerR",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "NIGHT MARKET NAVIGATOR",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "TrXd6",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "igEyf",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Star Print Boxy Shirt",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,549",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "Xr9zq",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Black Twill Cargo Pants",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "gBnNz",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Star Print Boxy Shirt",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,549",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "i34DvC",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Black Twill Cargo Pants",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "f3zFQ",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Contrast Oversized Polo"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,290"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "K9YOHn",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "l1r3N",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "jv7ck",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Pc621",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "otHj0",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "awiVl",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "sdAvM",
+              "name": "carouselFarewell",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "L9z42N",
+                  "fill": "#999999FF",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "THE FAREWELL FLEX",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "nHId3",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 420,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "id": "SrlJg",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -165,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Aqua Cactus Shacket",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,990",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "R91VG2",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 350,
+                      "y": 58,
+                      "width": 208,
+                      "height": 304,
+                      "opacity": 0.5,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "A-to-A Maroon Graphic Tee",
+                          "fontSize": 11
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 10
+                        }
+                      }
+                    },
+                    {
+                      "id": "CSvSA",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": -110,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "A-to-A Maroon Graphic Tee",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,190",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "GQXG8",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 269,
+                      "y": 39,
+                      "width": 234,
+                      "height": 342,
+                      "opacity": 0.75,
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Off-White Formal Trousers",
+                          "fontSize": 12
+                        },
+                        "WBlD4": {
+                          "content": "₹1,790",
+                          "fontSize": 11
+                        }
+                      }
+                    },
+                    {
+                      "id": "HBPxh",
+                      "type": "ref",
+                      "ref": "E92VR",
+                      "x": 66,
+                      "y": 20,
+                      "width": 260,
+                      "height": 380,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#00000030",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24,
+                        "spread": -4
+                      },
+                      "descendants": {
+                        "mEuX9": {
+                          "content": "Ether Bloom Oversized Shirt"
+                        },
+                        "WBlD4": {
+                          "content": "₹1,449"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "j7VGrl",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "u8NyoR",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "hj4b2",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Cq8MO",
+                      "fill": "#000000FF",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "SzSO3",
+                      "fill": "#D0D0D0FF",
+                      "width": 6,
+                      "height": 6
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "EsLyv",
                       "fill": "#D0D0D0FF",
                       "width": 6,
                       "height": 6
