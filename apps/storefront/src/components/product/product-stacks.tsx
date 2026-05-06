@@ -575,26 +575,60 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Carousel */}
-      <div style={{ position: 'relative', width: '100%', height: 420, overflow: 'hidden' }}>
+      {/* Bundle name + kicker (piece count · vibe) */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 4,
+          padding: '0 20px',
+        }}
+      >
         <span
           style={{
-            position: 'absolute',
-            top: 8,
-            left: 0,
-            right: 0,
-            textAlign: 'center',
             fontFamily: 'var(--font-helvetica)',
-            fontSize: 10,
+            fontSize: 9,
             fontWeight: 600,
             letterSpacing: 1.5,
             color: '#999999',
-            zIndex: 10,
+            textTransform: 'uppercase',
           }}
         >
           {combo.kicker}
         </span>
+        <h2
+          style={{
+            fontFamily: 'var(--font-helvetica)',
+            fontSize: 22,
+            fontWeight: 500,
+            letterSpacing: -0.4,
+            color: '#000',
+            margin: 0,
+            textAlign: 'center',
+            lineHeight: 1.15,
+          }}
+        >
+          {combo.name}
+        </h2>
+        {combo.tagline && (
+          <span
+            style={{
+              fontFamily: 'var(--font-helvetica)',
+              fontSize: 12,
+              fontWeight: 300,
+              fontStyle: 'italic',
+              color: '#666',
+              textAlign: 'center',
+            }}
+          >
+            {combo.tagline}
+          </span>
+        )}
+      </div>
 
+      {/* Carousel */}
+      <div style={{ position: 'relative', width: '100%', height: 420, overflow: 'hidden' }}>
         {allProducts.map((product, i) => {
           const offset = getSlotOffset(i, activeIndex, total);
           const slot = getSlot(offset);
