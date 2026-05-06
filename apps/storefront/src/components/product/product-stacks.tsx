@@ -23,14 +23,19 @@ import type { Product, ProductVariant } from '@/types';
 const CARD_W = 260;
 const CARD_H = 380;
 
+// Three-slot peek (was five). Far peeks at ±2 added visual noise without
+// communication value on a 390px viewport — they were barely visible AND
+// fought the active card's shadow. Now: visible peek only at ±1.
 const SLOTS: Record<number, { left: number; scale: number; opacity: number; zIndex: number }> = {
-  [-2]: { left: -194, scale: 0.8, opacity: 0.5, zIndex: 1 },
-  [-1]: { left: -136, scale: 0.9, opacity: 0.75, zIndex: 3 },
-  [0]: { left: 66, scale: 1, opacity: 1, zIndex: 5 },
-  [1]: { left: 269, scale: 0.9, opacity: 0.75, zIndex: 3 },
-  [2]: { left: 327, scale: 0.8, opacity: 0.5, zIndex: 1 },
+  [-1]: { left: -120, scale: 0.92, opacity: 0.55, zIndex: 3 },
+  [0]: { left: 65, scale: 1, opacity: 1, zIndex: 5 },
+  [1]: { left: 250, scale: 0.92, opacity: 0.55, zIndex: 3 },
 };
-const HIDDEN_SLOT = { left: 66, scale: 0, opacity: 0, zIndex: 0 };
+const HIDDEN_SLOT = { left: 65, scale: 0, opacity: 0, zIndex: 0 };
+
+// Shared horizontal gutter so title, cards, dots, pricing and CTA all align
+// to the same 16px column on either side of the viewport.
+const BUNDLE_PADDING_X = 16;
 
 // Spring physics for slot transitions and drag snap-back. Tuned to match
 // the natural-feel of native scroll inertia: snappy at small drags,
@@ -80,7 +85,7 @@ function getSlotOffset(index: number, activeIndex: number, total: number): numbe
 }
 
 function getSlot(offset: number) {
-  if (offset < -2 || offset > 2) return HIDDEN_SLOT;
+  if (offset < -1 || offset > 1) return HIDDEN_SLOT;
   return SLOTS[offset];
 }
 
@@ -130,23 +135,26 @@ function CardContent({
 
       <div
         style={{
-          padding: '12px 14px 14px 14px',
+          padding: '14px 16px 16px 16px',
           display: 'flex',
           flexDirection: 'column',
-          gap: 8,
+          gap: 10,
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span
             style={{
               fontFamily: 'var(--font-helvetica)',
               fontSize: 13,
               fontWeight: 500,
               letterSpacing: -0.2,
-              lineHeight: 1.2,
+              lineHeight: 1.25,
               color: '#000000',
-              flex: 1,
-              minWidth: 0,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              minHeight: 32,
             }}
           >
             {product.name}
@@ -157,8 +165,6 @@ function CardContent({
               fontSize: 12,
               fontWeight: 500,
               color: '#000000',
-              flexShrink: 0,
-              marginLeft: 8,
             }}
           >
             {formatPrice(product.price)}
@@ -166,7 +172,7 @@ function CardContent({
         </div>
 
         {isActive && (
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
             {sizes.length > 0 && (
               <button
                 type="button"
@@ -179,21 +185,21 @@ function CardContent({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: 6,
-                  height: 26,
+                  height: 36,
                   flex: 1,
-                  padding: '0 8px',
-                  borderRadius: 6,
+                  padding: '0 10px',
+                  borderRadius: 8,
                   border: '1px solid #E5E5E5',
                   backgroundColor: '#FFF',
                   cursor: 'pointer',
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: 400,
                   color: '#000',
                   fontFamily: 'var(--font-helvetica)',
                 }}
               >
                 <span>Size · {size}</span>
-                <ChevronDown size={10} color="#000" />
+                <ChevronDown size={12} color="#000" />
               </button>
             )}
             <button
@@ -205,20 +211,21 @@ function CardContent({
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 4,
-                height: 26,
-                padding: '0 8px',
-                borderRadius: 6,
+                justifyContent: 'center',
+                gap: 6,
+                height: 36,
+                flex: 1,
+                padding: '0 10px',
+                borderRadius: 8,
                 border: '1px solid #E5E5E5',
                 backgroundColor: '#FFF',
                 cursor: 'pointer',
-                flexShrink: 0,
               }}
             >
-              <Shuffle size={10} color="#000" />
+              <Shuffle size={12} color="#000" />
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: 400,
                   color: '#000',
                   fontFamily: 'var(--font-helvetica)',
@@ -335,8 +342,8 @@ function CarouselCard({
         backgroundColor: '#FFFFFF',
         border: '1px solid #ECECEC',
         boxShadow: isActive
-          ? '0 8px 32px -4px rgba(0,0,0,0.18)'
-          : '0 4px 16px -2px rgba(0,0,0,0.1)',
+          ? '0 4px 14px -4px rgba(0,0,0,0.10)'
+          : '0 2px 8px -2px rgba(0,0,0,0.06)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
@@ -378,7 +385,7 @@ function CarouselSkeleton() {
               borderRadius: 12,
               backgroundColor: '#FFF',
               border: '1px solid #ECECEC',
-              boxShadow: '0 4px 16px -2px rgba(0,0,0,0.1)',
+              boxShadow: '0 2px 8px -2px rgba(0,0,0,0.06)',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
@@ -408,7 +415,7 @@ function CarouselSkeleton() {
   );
 }
 
-function CategoryCarousel({ combo }: { combo: ComboMeta }) {
+function CategoryCarousel({ combo, index }: { combo: ComboMeta; index: number }) {
   // Pull the bundle's exact products by slug (deck source of truth) instead
   // of by vibe — vibe-fetch was returning whichever top-N products matched
   // the tag, often skipping bottomwear entirely. Reorder by productSlugs
@@ -565,34 +572,40 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
     setTimeout(() => openCart(), 200);
   };
 
+  // Section wrapper — every bundle gets the same horizontal gutter and a
+  // hairline divider above (skipped for the first one) so bundles read as
+  // discrete cards instead of bleeding into each other.
+  const sectionStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+    paddingLeft: BUNDLE_PADDING_X,
+    paddingRight: BUNDLE_PADDING_X,
+    paddingTop: 36,
+    paddingBottom: 36,
+    borderTop: index > 0 ? '1px solid #F0F0F0' : 'none',
+  };
+
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <section style={sectionStyle}>
         <CarouselSkeleton />
-      </div>
+      </section>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Bundle name + kicker (piece count · vibe) */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 4,
-          padding: '0 20px',
-        }}
-      >
+    <section style={sectionStyle}>
+      {/* Title block — kicker → name → tagline. Tight gaps; left-aligned to
+          match the rest of the section instead of floating centered. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span
           style={{
             fontFamily: 'var(--font-helvetica)',
             fontSize: 9,
             fontWeight: 600,
-            letterSpacing: 1.5,
-            color: '#999999',
-            textTransform: 'uppercase',
+            letterSpacing: 1.6,
+            color: '#999',
           }}
         >
           {combo.kicker}
@@ -600,12 +613,11 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
         <h2
           style={{
             fontFamily: 'var(--font-helvetica)',
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: 500,
-            letterSpacing: -0.4,
+            letterSpacing: -0.5,
             color: '#000',
             margin: 0,
-            textAlign: 'center',
             lineHeight: 1.15,
           }}
         >
@@ -619,7 +631,6 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
               fontWeight: 300,
               fontStyle: 'italic',
               color: '#666',
-              textAlign: 'center',
             }}
           >
             {combo.tagline}
@@ -627,8 +638,8 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
         )}
       </div>
 
-      {/* Carousel */}
-      <div style={{ position: 'relative', width: '100%', height: 420, overflow: 'hidden' }}>
+      {/* Carousel — height clamped to card height + breathing room. */}
+      <div style={{ position: 'relative', width: '100%', height: 400, overflow: 'hidden' }}>
         {allProducts.map((product, i) => {
           const offset = getSlotOffset(i, activeIndex, total);
           const slot = getSlot(offset);
@@ -676,29 +687,29 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
                 backgroundColor: i === activeIndex ? '#000' : '#D0D0D0',
                 cursor: 'pointer',
                 padding: 0,
-                transition: 'all 0.3s ease',
+                transition: 'all 0.25s ease',
               }}
             />
           ))}
         </div>
       )}
 
-      {/* Pricing */}
+      {/* Pricing strip — bundle price + strikethrough on left, SAVE pill
+          on right. Both share the section gutter (no extra inner padding). */}
       {individualTotal > 0 && (
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 4px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span
               style={{
                 fontFamily: 'var(--font-helvetica)',
-                fontSize: 20,
-                fontWeight: 500,
+                fontSize: 22,
+                fontWeight: 600,
                 letterSpacing: -0.5,
                 color: '#000',
               }}
@@ -708,7 +719,7 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
             <span
               style={{
                 fontFamily: 'var(--font-helvetica)',
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 300,
                 color: '#999',
                 textDecoration: 'line-through',
@@ -717,46 +728,65 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
               {formatPrice(individualTotal)}
             </span>
           </div>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              height: 24,
-              padding: '0 10px',
-              borderRadius: 9999,
-              backgroundColor: '#22C55E',
-            }}
-          >
-            <span
+          {discountPct > 0 && (
+            <div
               style={{
-                fontFamily: 'var(--font-helvetica)',
-                fontSize: 9,
-                fontWeight: 600,
-                letterSpacing: 1.5,
-                color: '#FFF',
+                display: 'inline-flex',
+                alignItems: 'center',
+                height: 24,
+                padding: '0 10px',
+                borderRadius: 9999,
+                backgroundColor: '#22C55E',
               }}
             >
-              SAVE {discountPct}%
-            </span>
-          </div>
+              <span
+                style={{
+                  fontFamily: 'var(--font-helvetica)',
+                  fontSize: 9,
+                  fontWeight: 600,
+                  letterSpacing: 1.5,
+                  color: '#FFF',
+                }}
+              >
+                SAVE {discountPct}%
+              </span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Add to Bag */}
+      {/* Savings hint sits ABOVE the CTA so users see the win before they
+          tap. Only shown when there's actually a discount (skips 2-piece
+          bundles that fall below the tier floor). */}
+      {savedAmount > 0 && (
+        <span
+          style={{
+            fontFamily: 'var(--font-helvetica)',
+            fontSize: 11,
+            fontWeight: 500,
+            color: '#22C55E',
+            letterSpacing: 0.3,
+          }}
+        >
+          You save {formatPrice(savedAmount)} with this bundle
+        </span>
+      )}
+
+      {/* CTA */}
       <button
         type="button"
         onClick={handleAddAll}
         disabled={allProducts.length === 0}
         style={{
           width: '100%',
-          height: 48,
+          height: 52,
           borderRadius: 9999,
           backgroundColor: '#000',
           border: 'none',
           color: '#FFF',
-          fontSize: 11,
-          fontWeight: 500,
-          letterSpacing: 1.5,
+          fontSize: 12,
+          fontWeight: 600,
+          letterSpacing: 1.4,
           cursor: allProducts.length === 0 ? 'not-allowed' : 'pointer',
           opacity: allProducts.length === 0 ? 0.4 : 1,
           fontFamily: 'var(--font-helvetica)',
@@ -765,24 +795,8 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
           justifyContent: 'center',
         }}
       >
-        {allProducts.length > 0 ? `ADD PACK TO BAG · ${formatPrice(bundlePrice)}` : 'LOADING…'}
+        {allProducts.length > 0 ? `ADD PACK · ${formatPrice(bundlePrice)}` : 'LOADING…'}
       </button>
-
-      {/* Save hint */}
-      {savedAmount > 0 && (
-        <span
-          style={{
-            textAlign: 'center',
-            fontFamily: 'var(--font-helvetica)',
-            fontSize: 10,
-            fontWeight: 400,
-            color: '#22C55E',
-            letterSpacing: 0.5,
-          }}
-        >
-          You save {formatPrice(savedAmount)} with this bundle
-        </span>
-      )}
 
       {/* Swap sheet */}
       <SwapSheet
@@ -797,23 +811,18 @@ function CategoryCarousel({ combo }: { combo: ComboMeta }) {
           setSwapSlot(null);
         }}
       />
-    </div>
+    </section>
   );
 }
 
 export function ProductStacks() {
+  // No outer padding or gap — each <section> handles its own padding and
+  // the top-border divider provides separation. Keeps spacing predictable
+  // and lets sections sit edge-to-edge when needed (e.g. alternate bg).
   return (
-    <div
-      style={{
-        padding: '20px 20px 30px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 32,
-        width: '100%',
-      }}
-    >
-      {COMBOS.map((combo) => (
-        <CategoryCarousel key={combo.slug} combo={combo} />
+    <div style={{ width: '100%' }}>
+      {COMBOS.map((combo, i) => (
+        <CategoryCarousel key={combo.slug} combo={combo} index={i} />
       ))}
     </div>
   );
