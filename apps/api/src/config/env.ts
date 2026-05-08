@@ -40,6 +40,12 @@ const envSchema = z.object({
   // headroom. Default of 30 × 96 cycles/day = 2880 ceiling, but in practice
   // we burn well below the cap because OTP+order updates already use most.
   WHATSAPP_ABANDONED_CART_SWEEP_CAP: z.coerce.number().default(30),
+  // Public HTTPS URL for the abandoned-cart template's IMAGE header. Required
+  // if the approved Meta template carries an image header — Meta validates
+  // the send-time payload against the template's component shape and returns
+  // 132012 ("header: Format mismatch, expected IMAGE, received UNKNOWN") when
+  // the header is missing. Leave unset only if the template has no header.
+  WHATSAPP_ABANDONED_CART_HEADER_IMAGE_URL: z.string().url().optional(),
   // Supabase Storage (image uploads only — auth is handled by JWT)
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),

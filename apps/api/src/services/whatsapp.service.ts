@@ -845,6 +845,32 @@ export async function sendWhatsAppAbandonedCart(
   const picked = await pickVariant('ABANDONED_CART_RECOVERY');
   const templateName = picked?.templateName ?? 'earth_revibe_abandoned_cart';
 
+  // Meta validates the send-time payload against the approved template's
+  // component shape. If the template has an IMAGE header, every send must
+  // include a header component pointing to a public image URL — otherwise
+  // Meta returns 132012 (header format mismatch) and the message never
+  // leaves their queue. Skip the header component when the env var is unset
+  // so templates without an image header keep working.
+  const components: unknown[] = [];
+  if (env.WHATSAPP_ABANDONED_CART_HEADER_IMAGE_URL) {
+    components.push({
+      type: 'header',
+      parameters: [
+        {
+          type: 'image',
+          image: { link: env.WHATSAPP_ABANDONED_CART_HEADER_IMAGE_URL },
+        },
+      ],
+    });
+  }
+  components.push({
+    type: 'body',
+    parameters: [
+      { type: 'text', text: firstName || 'there' },
+      { type: 'text', text: cartItems },
+    ],
+  });
+
   const body = {
     messaging_product: 'whatsapp',
     to,
@@ -852,15 +878,7 @@ export async function sendWhatsAppAbandonedCart(
     template: {
       name: templateName,
       language: { code: 'en' },
-      components: [
-        {
-          type: 'body',
-          parameters: [
-            { type: 'text', text: firstName || 'there' },
-            { type: 'text', text: cartItems },
-          ],
-        },
-      ],
+      components,
     },
   };
 
