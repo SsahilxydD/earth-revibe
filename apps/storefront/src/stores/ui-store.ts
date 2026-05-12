@@ -4,14 +4,18 @@ import { create } from 'zustand';
 
 /* ------------------------------------------------------------------ */
 /*  Body overflow lock — reference counted so overlapping modals       */
-/*  (cart + search + mobile menu) don't clobber each other             */
+/*  (cart + search + mobile menu) don't clobber each other.            */
+/*  Also exposes a subscription so floating chrome (e.g. ContactFab)   */
+/*  can collapse itself while any overlay is open.                     */
 /* ------------------------------------------------------------------ */
 let overflowLockCount = 0;
+const overlayListeners = new Set<(active: boolean) => void>();
 
 export function lockBodyScroll() {
   overflowLockCount++;
   if (overflowLockCount === 1) {
     document.body.style.overflow = 'hidden';
+    overlayListeners.forEach((fn) => fn(true));
   }
 }
 
@@ -19,7 +23,16 @@ export function unlockBodyScroll() {
   overflowLockCount = Math.max(0, overflowLockCount - 1);
   if (overflowLockCount === 0) {
     document.body.style.overflow = '';
+    overlayListeners.forEach((fn) => fn(false));
   }
+}
+
+export function subscribeOverlayActive(fn: (active: boolean) => void): () => void {
+  overlayListeners.add(fn);
+  fn(overflowLockCount > 0);
+  return () => {
+    overlayListeners.delete(fn);
+  };
 }
 
 /* ------------------------------------------------------------------ */

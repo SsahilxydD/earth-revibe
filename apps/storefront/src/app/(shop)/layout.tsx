@@ -1,4 +1,5 @@
 import { AnnouncementBar } from '@/components/layout/announcement-bar';
+import { ContactFab } from '@/components/layout/contact-fab';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { MobileBottomBar } from '@/components/layout/mobile-bottom-bar';
@@ -15,6 +16,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       </main>
       <Footer />
       <MobileBottomBar />
+      <ContactFab />
       <NewsletterPopup />
     </div>
   );
