@@ -18,10 +18,11 @@ import { ProductCard } from '@/components/product/product-card';
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
 import { FilterSidebar, type FilterState } from '@/components/product/filter-sidebar';
 import { SortDropdown } from '@/components/product/sort-dropdown';
-import { useInfiniteProducts, productKeys } from '@/hooks/use-products';
+import { useInfiniteProducts, productKeys, buildProductQuery } from '@/hooks/use-products';
 import { api } from '@/lib/api-client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { normalizePaginated } from '@earth-revibe/shared';
+import type { Product } from '@/types';
 import { useProductNavStore } from '@/stores/product-nav-store';
 import { Spinner } from '@/components/ui/spinner';
 import { motion } from 'framer-motion';
@@ -131,6 +132,32 @@ function ProductsContent() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
     useInfiniteProducts(queryParams);
 
+  // First-product image per category — turns the category circles into photo
+  // avatars (like the vibe row) instead of flat colour chips. One tiny
+  // ?category=<slug>&limit=1 call per category, cached for the session; the
+  // solid `c.color` stays as the load/empty fallback. "All" (value '') has
+  // no category filter, so it shows the newest product overall.
+  const { data: categoryThumbs } = useQuery({
+    queryKey: ['category-thumbnails'],
+    enabled: !search,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    queryFn: async ({ signal }) => {
+      const entries = await Promise.all(
+        CATEGORIES.map(async (c) => {
+          const q = buildProductQuery({ category: c.value || undefined, limit: 1 });
+          const pageData = normalizePaginated<Product, 'products'>(
+            await api.get(`/products${q}`, signal)
+          );
+          const p = pageData.products?.[0];
+          const img = p?.images?.find((i) => i.isPrimary) ?? p?.images?.[0];
+          return [c.value, img?.thumbnailUrl || img?.url || null] as const;
+        })
+      );
+      return Object.fromEntries(entries) as Record<string, string | null>;
+    },
+  });
+
   // Prefetch the other 4 vibes in the background a moment after first paint.
   // Switching vibes then resolves from cache (instant) instead of round-tripping.
   const queryClient = useQueryClient();
@@ -142,14 +169,18 @@ function ProductsContent() {
         queryClient.prefetchInfiniteQuery({
           queryKey: [...productKeys.lists(), 'infinite', prefetchParams],
           queryFn: async ({ pageParam, signal }) => {
-            const sp = new URLSearchParams();
-            sp.set('page', String(pageParam ?? 1));
-            sp.set('limit', String(prefetchParams.limit ?? 48));
-            sp.set('vibe', vibe);
-            if (prefetchParams.sortBy) sp.set('sortBy', prefetchParams.sortBy);
-            if (prefetchParams.sortOrder) sp.set('sortOrder', prefetchParams.sortOrder);
+            // Fetch with the SAME params as this entry's queryKey (category +
+            // price/size/color/search + vibe). Building the URL by hand here
+            // and dropping `category` is what poisoned the cache: the entry
+            // was keyed with the category but fetched vibe-only, so switching
+            // vibes with a category active served all-category results.
+            const query = buildProductQuery({
+              ...prefetchParams,
+              page: pageParam as number,
+              limit: prefetchParams.limit ?? 48,
+            });
             return normalizePaginated<unknown, 'products'>(
-              await api.get(`/products?${sp.toString()}`, signal)
+              await api.get(`/products${query}`, signal)
             );
           },
           initialPageParam: 1,
@@ -417,6 +448,7 @@ function ProductsContent() {
           >
             {CATEGORIES.map((c) => {
               const isActive = category === c.value;
+              const thumb = categoryThumbs?.[c.value];
               return (
                 <button
                   key={c.label}
@@ -439,6 +471,9 @@ function ProductsContent() {
                       height: 48,
                       borderRadius: 9999,
                       backgroundColor: c.color,
+                      backgroundImage: thumb ? `url(${thumb})` : undefined,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
                       outline: isActive ? '2px solid #000' : 'none',
                       outlineOffset: 2,
                     }}

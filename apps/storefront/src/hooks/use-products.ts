@@ -21,7 +21,7 @@ import { normalizePaginated } from '@earth-revibe/shared';
 
 // ─── Build Query String ─────────────────────────────────────────────────────
 
-function buildProductQuery(params: ProductListParams): string {
+export function buildProductQuery(params: ProductListParams): string {
   const searchParams = new URLSearchParams();
 
   if (params.page) searchParams.set('page', String(params.page));
