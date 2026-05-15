@@ -13,6 +13,7 @@ import {
   Headphones,
   ArrowRight,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ProductCard } from '@/components/product/product-card';
 import { ProductGridSkeleton } from '@/components/product/product-grid-skeleton';
@@ -467,17 +468,20 @@ function ProductsContent() {
                 >
                   <div
                     style={{
+                      position: 'relative',
                       width: 48,
                       height: 48,
                       borderRadius: 9999,
+                      overflow: 'hidden',
                       backgroundColor: c.color,
-                      backgroundImage: thumb ? `url(${thumb})` : undefined,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
                       outline: isActive ? '2px solid #000' : 'none',
                       outlineOffset: 2,
                     }}
-                  />
+                  >
+                    {thumb && (
+                      <Image src={thumb} alt="" fill sizes="48px" style={{ objectFit: 'cover' }} />
+                    )}
+                  </div>
                   <span style={{ fontSize: 9, fontWeight: isActive ? 400 : 300, color: '#000' }}>
                     {c.label}
                   </span>
