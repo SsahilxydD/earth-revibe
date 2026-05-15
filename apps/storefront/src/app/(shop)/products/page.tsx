@@ -59,6 +59,18 @@ const VIBES = [
   },
 ] as const;
 
+// Product-category quick filters — solid-tone circles sitting above the vibe
+// row. "All" (value '') clears the category filter; the rest map to
+// ?category=<slug>, slugs matching the header nav + product taxonomy.
+const CATEGORIES = [
+  { label: 'All', value: '', color: '#D4A574' },
+  { label: 'Shirt', value: 'shirts', color: '#E8C9A0' },
+  { label: 'Polo', value: 'polos', color: '#F0A868' },
+  { label: 'Tshirt', value: 't-shirts', color: '#7BB8D0' },
+  { label: 'Bottomwear', value: 'bottomwear', color: '#4A8B5C' },
+  { label: 'Shackets', value: 'shackets', color: '#C97B63' },
+] as const;
+
 function parseSort(sort: string | null): { sortBy: string; sortOrder: 'asc' | 'desc' } {
   switch (sort) {
     case 'price-asc':
@@ -389,6 +401,57 @@ function ProductsContent() {
           borderTopRightRadius: 16,
         }}
       >
+        {/* Category circles — quick product-category filters (?category=<slug>).
+            Mirrors the vibe-circle row below; solid tones since categories
+            have no imagery. "All" is active when no category is selected. */}
+        {!search && (
+          <div
+            style={{
+              height: 100,
+              padding: '16px 8px 10px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+              gap: 0,
+            }}
+          >
+            {CATEGORIES.map((c) => {
+              const isActive = category === c.value;
+              return (
+                <button
+                  key={c.label}
+                  onClick={() => updateParams({ category: c.value || undefined })}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 6,
+                    flexShrink: 0,
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 9999,
+                      backgroundColor: c.color,
+                      outline: isActive ? '2px solid #000' : 'none',
+                      outlineOffset: 2,
+                    }}
+                  />
+                  <span style={{ fontSize: 9, fontWeight: isActive ? 400 : 300, color: '#000' }}>
+                    {c.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Trip Vibe circles — 5 vibes + Flight shortcut to bundles */}
         {!search && (
           <div
