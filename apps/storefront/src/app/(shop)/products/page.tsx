@@ -21,9 +21,8 @@ import { FilterSidebar, type FilterState } from '@/components/product/filter-sid
 import { SortDropdown } from '@/components/product/sort-dropdown';
 import { useInfiniteProducts, productKeys, buildProductQuery } from '@/hooks/use-products';
 import { api } from '@/lib/api-client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { normalizePaginated } from '@earth-revibe/shared';
-import type { Product } from '@/types';
 import { useProductNavStore } from '@/stores/product-nav-store';
 import { Spinner } from '@/components/ui/spinner';
 import { motion } from 'framer-motion';
@@ -61,16 +60,22 @@ const VIBES = [
   },
 ] as const;
 
-// Product-category quick filters — solid-tone circles sitting above the vibe
-// row. "All" (value '') clears the category filter; the rest map to
-// ?category=<slug>, slugs matching the header nav + product taxonomy.
+// Product-category quick filters sitting above the vibe row. "All" (value '')
+// clears the category filter; the rest map to ?category=<slug>, slugs matching
+// the header nav + product taxonomy. Each circle shows a flat-lay mockup
+// (public/categories/<slug>.webp, 144px retina); `color` is the load fallback.
 const CATEGORIES = [
-  { label: 'All', value: '', color: '#D4A574' },
-  { label: 'Shirt', value: 'shirts', color: '#E8C9A0' },
-  { label: 'Polo', value: 'polos', color: '#F0A868' },
-  { label: 'Tshirt', value: 't-shirts', color: '#7BB8D0' },
-  { label: 'Bottomwear', value: 'bottomwear', color: '#4A8B5C' },
-  { label: 'Shackets', value: 'shackets', color: '#C97B63' },
+  { label: 'All', value: '', color: '#D4A574', img: '/categories/all.webp' },
+  { label: 'Shirt', value: 'shirts', color: '#E8C9A0', img: '/categories/shirts.webp' },
+  { label: 'Polo', value: 'polos', color: '#F0A868', img: '/categories/polos.webp' },
+  { label: 'Tshirt', value: 't-shirts', color: '#7BB8D0', img: '/categories/t-shirts.webp' },
+  {
+    label: 'Bottomwear',
+    value: 'bottomwear',
+    color: '#4A8B5C',
+    img: '/categories/bottomwear.webp',
+  },
+  { label: 'Shackets', value: 'shackets', color: '#C97B63', img: '/categories/shackets.webp' },
 ] as const;
 
 function parseSort(sort: string | null): { sortBy: string; sortOrder: 'asc' | 'desc' } {
@@ -132,32 +137,6 @@ function ProductsContent() {
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
     useInfiniteProducts(queryParams);
-
-  // First-product image per category — turns the category circles into photo
-  // avatars (like the vibe row) instead of flat colour chips. One tiny
-  // ?category=<slug>&limit=1 call per category, cached for the session; the
-  // solid `c.color` stays as the load/empty fallback. "All" (value '') has
-  // no category filter, so it shows the newest product overall.
-  const { data: categoryThumbs } = useQuery({
-    queryKey: ['category-thumbnails'],
-    enabled: !search,
-    staleTime: 30 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-    queryFn: async ({ signal }) => {
-      const entries = await Promise.all(
-        CATEGORIES.map(async (c) => {
-          const q = buildProductQuery({ category: c.value || undefined, limit: 1 });
-          const pageData = normalizePaginated<Product, 'products'>(
-            await api.get(`/products${q}`, signal)
-          );
-          const p = pageData.products?.[0];
-          const img = p?.images?.find((i) => i.isPrimary) ?? p?.images?.[0];
-          return [c.value, img?.thumbnailUrl || img?.url || null] as const;
-        })
-      );
-      return Object.fromEntries(entries) as Record<string, string | null>;
-    },
-  });
 
   // Prefetch the other 4 vibes in the background a moment after first paint.
   // Switching vibes then resolves from cache (instant) instead of round-tripping.
@@ -434,8 +413,8 @@ function ProductsContent() {
         }}
       >
         {/* Category circles — quick product-category filters (?category=<slug>).
-            Mirrors the vibe-circle row below; solid tones since categories
-            have no imagery. "All" is active when no category is selected. */}
+            Mirrors the vibe-circle row below; flat-lay mockups per category.
+            "All" is active when no category is selected. */}
         {!search && (
           <div
             style={{
@@ -449,7 +428,6 @@ function ProductsContent() {
           >
             {CATEGORIES.map((c) => {
               const isActive = category === c.value;
-              const thumb = categoryThumbs?.[c.value];
               return (
                 <button
                   key={c.label}
@@ -478,9 +456,7 @@ function ProductsContent() {
                       outlineOffset: 2,
                     }}
                   >
-                    {thumb && (
-                      <Image src={thumb} alt="" fill sizes="48px" style={{ objectFit: 'cover' }} />
-                    )}
+                    <Image src={c.img} alt="" fill sizes="48px" style={{ objectFit: 'cover' }} />
                   </div>
                   <span style={{ fontSize: 9, fontWeight: isActive ? 400 : 300, color: '#000' }}>
                     {c.label}
