@@ -14,6 +14,9 @@ import {
   Printer,
   FileText,
   ExternalLink,
+  Trash2,
+  ArchiveRestore,
+  AlertCircle,
 } from 'lucide-react';
 import { Button, Badge, Card, Select } from '@earth-revibe/ui';
 import { Modal } from '@earth-revibe/ui/modal';
@@ -29,6 +32,8 @@ import {
   useGenerateManifest,
   useOrderTracking,
   useRefundOrder,
+  useArchiveOrder,
+  useRestoreOrder,
 } from '@/hooks/use-orders';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
@@ -78,12 +83,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const generateLabel = useGenerateLabel();
   const generateManifest = useGenerateManifest();
   const refundOrder = useRefundOrder();
+  const archiveOrder = useArchiveOrder();
+  const restoreOrder = useRestoreOrder();
 
   const [newStatus, setNewStatus] = useState('');
   const [statusNote, setStatusNote] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState('');
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [archiveReason, setArchiveReason] = useState('');
 
   const order = (data as any)?.order ?? data;
 
@@ -164,6 +173,29 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     }
   };
 
+  const handleArchive = async () => {
+    try {
+      await archiveOrder.mutateAsync({
+        orderNumber,
+        reason: archiveReason || undefined,
+      });
+      toast.success(`Order archived`);
+      setShowArchiveModal(false);
+      setArchiveReason('');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to archive order');
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      await restoreOrder.mutateAsync(orderNumber);
+      toast.success('Order restored');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to restore order');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -185,24 +217,52 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     );
   }
 
+  const isArchived = !!order.deletedAt;
+  const isOffline = order.source === 'OFFLINE';
   // DELIVERED stays out of the "final" bucket so admin can still approve a
   // post-delivery return → RETURNED.
   const cancelledOrFinal = ['CANCELLED', 'RETURNED'].includes(order.status);
-  const canFulfill = ['CONFIRMED'].includes(order.status);
-  const canRefund = order.payment?.status === 'CAPTURED' && order.status !== 'CANCELLED';
+  const canFulfill = ['CONFIRMED'].includes(order.status) && !isOffline;
+  const canRefund =
+    !isOffline && order.payment?.status === 'CAPTURED' && order.status !== 'CANCELLED';
 
   return (
     <div className="space-y-6">
+      {/* Archived banner */}
+      {isArchived && (
+        <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-amber-200 bg-amber-50">
+          <div className="flex items-center gap-2 text-sm text-amber-900">
+            <AlertCircle size={16} className="flex-shrink-0" />
+            <span>
+              This order is <strong>archived</strong> and hidden from lists, customer history, and
+              analytics. Data is retained.
+            </span>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleRestore}
+            disabled={restoreOrder.isPending}
+          >
+            <ArchiveRestore size={14} className="mr-1" />
+            {restoreOrder.isPending ? 'Restoring…' : 'Restore'}
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Link href="/orders" className="p-2 rounded-lg hover:bg-off-white transition-colors">
           <ArrowLeft size={20} className="text-dark-gray" />
         </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-semibold text-charcoal">#{order.orderNumber}</h1>
             <Badge variant={statusVariant[order.status] || 'default'}>
               {order.status.replace(/_/g, ' ')}
+            </Badge>
+            <Badge variant={isOffline ? 'warning' : 'info'}>
+              {isOffline ? 'Offline (manual)' : 'Online'}
             </Badge>
           </div>
           <p className="text-sm text-medium-gray mt-1">
@@ -218,6 +278,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             className="text-red-600 hover:bg-red-50"
           >
             <Undo2 size={16} className="mr-1" /> Refund
+          </Button>
+        )}
+        {!isArchived && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowArchiveModal(true)}
+            className="text-red-600 hover:bg-red-50"
+          >
+            <Trash2 size={16} className="mr-1" /> Archive
           </Button>
         )}
       </div>
@@ -645,6 +715,62 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               className="bg-red-600 hover:bg-red-700"
             >
               {refundOrder.isPending ? 'Processing...' : 'Confirm Refund'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Archive Modal */}
+      <Modal
+        isOpen={showArchiveModal}
+        onClose={() => {
+          setShowArchiveModal(false);
+          setArchiveReason('');
+        }}
+        title="Archive order"
+        size="sm"
+      >
+        <div className="flex gap-3 mb-4">
+          <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-charcoal">
+            Archive order <span className="font-mono">#{order.orderNumber}</span>? It will be hidden
+            from lists, customer history, and analytics. Payment and status history are retained —
+            you can restore it later.
+            <br />
+            <span className="text-medium-gray text-xs mt-1 inline-block">
+              Archiving is not a refund. If money was charged, initiate a refund first.
+            </span>
+          </p>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-charcoal mb-1">
+              Reason (optional)
+            </label>
+            <input
+              type="text"
+              value={archiveReason}
+              onChange={(e) => setArchiveReason(e.target.value)}
+              placeholder="e.g. test order, duplicate"
+              className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowArchiveModal(false);
+                setArchiveReason('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleArchive}
+              disabled={archiveOrder.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {archiveOrder.isPending ? 'Archiving…' : 'Confirm Archive'}
             </Button>
           </div>
         </div>
