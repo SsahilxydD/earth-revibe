@@ -643,71 +643,77 @@ router.post(
 // cron sweep handles persistence, activities, and the carrier-terminal
 // Discord alert.
 
-router.post(
-  '/shiprocket',
-  webhookLimiter,
-  asyncHandler(async (req, res) => {
-    const expected = env.SHIPROCKET_WEBHOOK_TOKEN;
-    if (!expected) {
-      logger.warn('SHIPROCKET_WEBHOOK_TOKEN not configured — rejecting webhook');
-      res.status(503).json({ success: false });
+// Note on the path: Shiprocket's dashboard URL validator REJECTS any webhook
+// URL containing the keywords "shiprocket", "kartrocket", "sr", or "kr". The
+// Save button stays disabled until those substrings are gone. We expose the
+// same handler under TWO paths — /shiprocket (kept for backward compat /
+// internal docs) and /carrier-tracking (the one we actually paste into the
+// Shiprocket dashboard). Both delegate to the same anonymous handler below.
+
+const shiprocketWebhookHandler = asyncHandler(async (req: any, res: any) => {
+  const expected = env.SHIPROCKET_WEBHOOK_TOKEN;
+  if (!expected) {
+    logger.warn('SHIPROCKET_WEBHOOK_TOKEN not configured — rejecting webhook');
+    res.status(503).json({ success: false });
+    return;
+  }
+  const received = req.headers['x-api-key'];
+  const receivedStr = Array.isArray(received) ? received[0] : received;
+  if (!receivedStr) {
+    res.status(401).json({ success: false });
+    return;
+  }
+  const a = Buffer.from(receivedStr, 'utf8');
+  const b = Buffer.from(expected, 'utf8');
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    logger.warn({ ip: req.ip, hasHeader: !!receivedStr }, 'Shiprocket webhook token mismatch');
+    res.status(401).json({ success: false });
+    return;
+  }
+
+  const body = req.body as {
+    order_id?: string | number;
+    awb?: string;
+    current_status?: string;
+    current_status_id?: number;
+    shipment_status?: string;
+    etd?: string;
+  };
+  const awbCode = typeof body.awb === 'string' ? body.awb.trim() : '';
+
+  logger.info(
+    {
+      awb: awbCode,
+      orderIdHint: body.order_id,
+      currentStatus: body.current_status ?? body.shipment_status,
+    },
+    'Shiprocket webhook received'
+  );
+
+  if (!awbCode) {
+    // Empty payload (handshake / test). Ack so Shiprocket doesn't retry.
+    res.status(200).json({ success: true });
+    return;
+  }
+
+  try {
+    const result = await shiprocketService.refreshByAwb(awbCode);
+    if (!result) {
+      // Unknown AWB — likely a test event or an order from before this
+      // integration existed. Ack 200 so Shiprocket stops retrying.
+      res.status(200).json({ success: true, data: { matched: false } });
       return;
     }
-    const received = req.headers['x-api-key'];
-    const receivedStr = Array.isArray(received) ? received[0] : received;
-    if (!receivedStr) {
-      res.status(401).json({ success: false });
-      return;
-    }
-    const a = Buffer.from(receivedStr, 'utf8');
-    const b = Buffer.from(expected, 'utf8');
-    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
-      logger.warn({ ip: req.ip, hasHeader: !!receivedStr }, 'Shiprocket webhook token mismatch');
-      res.status(401).json({ success: false });
-      return;
-    }
+    res.status(200).json({ success: true, data: { matched: true, changed: result.changed } });
+  } catch (err) {
+    logger.error({ err, awb: awbCode }, 'Shiprocket webhook processing failed');
+    // 500 → Shiprocket retries (their docs claim exponential backoff). The
+    // /refresh-shipment-status cron is the ultimate safety net.
+    res.status(500).json({ success: false });
+  }
+});
 
-    const body = req.body as {
-      order_id?: string | number;
-      awb?: string;
-      current_status?: string;
-      current_status_id?: number;
-      shipment_status?: string;
-      etd?: string;
-    };
-    const awbCode = typeof body.awb === 'string' ? body.awb.trim() : '';
-
-    logger.info(
-      {
-        awb: awbCode,
-        orderIdHint: body.order_id,
-        currentStatus: body.current_status ?? body.shipment_status,
-      },
-      'Shiprocket webhook received'
-    );
-
-    if (!awbCode) {
-      // Empty payload (handshake / test). Ack so Shiprocket doesn't retry.
-      res.status(200).json({ success: true });
-      return;
-    }
-
-    try {
-      const result = await shiprocketService.refreshByAwb(awbCode);
-      if (!result) {
-        // Unknown AWB — likely a test event or an order from before this
-        // integration existed. Ack 200 so Shiprocket stops retrying.
-        res.status(200).json({ success: true, data: { matched: false } });
-        return;
-      }
-      res.status(200).json({ success: true, data: { matched: true, changed: result.changed } });
-    } catch (err) {
-      logger.error({ err, awb: awbCode }, 'Shiprocket webhook processing failed');
-      // 500 → Shiprocket retries (their docs claim exponential backoff). The
-      // /refresh-shipment-status cron is the ultimate safety net.
-      res.status(500).json({ success: false });
-    }
-  })
-);
+router.post('/shiprocket', webhookLimiter, shiprocketWebhookHandler);
+router.post('/carrier-tracking', webhookLimiter, shiprocketWebhookHandler);
 
 export { router as webhookRouter };
