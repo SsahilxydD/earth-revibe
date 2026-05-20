@@ -188,49 +188,64 @@ export const adminOrderService = {
    */
   async createManualOrder(adminId: string, data: CreateManualOrderInput) {
     const variantIds = [...new Set(data.items.map((i) => i.variantId))];
-    const variants = await prisma.productVariant.findMany({
-      where: { id: { in: variantIds } },
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            price: true,
-            images: { where: { isPrimary: true }, take: 1 },
-          },
-        },
-      },
-    });
-    const variantMap = new Map(variants.map((v) => [v.id, v]));
-
-    let subtotal = 0;
-    const orderItems = data.items.map((item) => {
-      const v = variantMap.get(item.variantId);
-      if (!v) throw ApiError.badRequest(`Product variant ${item.variantId} not found`);
-      const unitPrice = item.unitPrice ?? (Number(v.price) || Number(v.product.price));
-      const totalPrice = unitPrice * item.quantity;
-      subtotal += totalPrice;
-      return {
-        variantId: v.id,
-        quantity: item.quantity,
-        unitPrice,
-        totalPrice,
-        productName: v.product.name,
-        productImage: v.product.images[0]?.url || null,
-        variantSize: v.size,
-        variantColor: v.color,
-      };
-    });
-
-    const discountAmount = data.discountAmount || 0;
-    const shippingAmount = data.shippingAmount || 0;
-    const taxAmount = data.taxAmount || 0;
-    const totalAmount = Math.max(subtotal - discountAmount + shippingAmount + taxAmount, 0);
     const orderNumber = generateOrderNumber();
 
     const order = await prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
-        // Reserve stock by decrementing inside the transaction (race-safe).
+        // Read variants INSIDE the transaction so prices + names reflect
+        // what's in the DB at commit time — not a snapshot from before the
+        // txn started. Under Serializable isolation, any concurrent write
+        // to one of these rows will roll us back.
+        const variants = await tx.productVariant.findMany({
+          where: { id: { in: variantIds } },
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                images: { where: { isPrimary: true }, take: 1 },
+              },
+            },
+          },
+        });
+        const variantMap = new Map(variants.map((v) => [v.id, v]));
+
+        let subtotal = 0;
+        const orderItems = data.items.map((item) => {
+          const v = variantMap.get(item.variantId);
+          if (!v) throw ApiError.badRequest(`Product variant ${item.variantId} not found`);
+          const unitPrice = item.unitPrice ?? (Number(v.price) || Number(v.product.price));
+          const totalPrice = unitPrice * item.quantity;
+          subtotal += totalPrice;
+          return {
+            variantId: v.id,
+            quantity: item.quantity,
+            unitPrice,
+            totalPrice,
+            productName: v.product.name,
+            productImage: v.product.images[0]?.url || null,
+            variantSize: v.size,
+            variantColor: v.color,
+          };
+        });
+
+        const discountAmount = data.discountAmount || 0;
+        const shippingAmount = data.shippingAmount || 0;
+        const taxAmount = data.taxAmount || 0;
+
+        // Refuse impossible discounts so the audit trail doesn't store a
+        // bigger discount than the items themselves. `Math.max(...,0)` on
+        // totalAmount would silently mask this otherwise.
+        if (discountAmount > subtotal) {
+          throw ApiError.badRequest(
+            `Discount (₹${discountAmount}) exceeds subtotal (₹${subtotal})`
+          );
+        }
+
+        const totalAmount = subtotal - discountAmount + shippingAmount + taxAmount;
+
+        // Reserve stock by decrementing with a race-safe predicate.
         for (const item of data.items) {
           const result = await tx.productVariant.updateMany({
             where: { id: item.variantId, stock: { gte: item.quantity } },
@@ -310,6 +325,18 @@ export const adminOrderService = {
     const order = await prisma.order.findUnique({ where: { orderNumber } });
     if (!order) throw ApiError.notFound('Order not found');
     if (order.deletedAt) throw ApiError.badRequest('Order is already archived');
+
+    // Active carrier-tracked shipments must not be archived — the package is
+    // still in flight and we still need to receive Shiprocket status updates
+    // into THIS row. Archive after delivery / cancel first if the customer
+    // is refusing it. (Offline-source SHIPPING orders have no AWB, so the
+    // gate is awbCode + status together, not status alone.)
+    if (order.status === 'SHIPPING' && order.awbCode) {
+      throw ApiError.badRequest(
+        `Cannot archive order with active AWB (${order.awbCode}) — wait for delivery ` +
+          `or cancel via PUT /:orderNumber/status first.`
+      );
+    }
 
     const deletedAt = new Date();
     await prisma.$transaction([
