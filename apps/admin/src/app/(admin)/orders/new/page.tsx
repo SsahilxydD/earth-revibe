@@ -17,6 +17,7 @@ import { Button, Badge, Card, Select } from '@earth-revibe/ui';
 import { toast } from '@earth-revibe/ui/toast';
 import { useInventory } from '@/hooks/use-inventory';
 import { useCreateManualOrder, useSendCustomerOtp, useVerifyCustomerOtp } from '@/hooks/use-orders';
+import { useCustomerSearch, type CustomerSearchHit } from '@/hooks/use-customers';
 import type { CreateManualOrderInput, OfflinePaymentMethod } from '@/types';
 
 type VerifiedCustomer = {
@@ -72,6 +73,15 @@ export default function NewManualOrderPage() {
   // of the form unlocks. This is the only way Order.userId gets populated,
   // which is how the offline order shows up in the customer's account when
   // they later log in via OTP.
+  //
+  // Two paths to "verified":
+  //   1. Pick an existing customer from autocomplete (skip OTP if their phone
+  //      is already verified — they're a real, known person)
+  //   2. Type a new phone, send WhatsApp OTP, verify → User created
+  const [customerSearch, setCustomerSearch] = useState('');
+  // mode controls which card body shows: 'search' (autocomplete, default),
+  // 'otp' (admin chose to add a new customer or fell through to OTP).
+  const [mode, setMode] = useState<'search' | 'otp'>('search');
   const [phone, setPhone] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
@@ -80,6 +90,9 @@ export default function NewManualOrderPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [verified, setVerified] = useState<VerifiedCustomer | null>(null);
+
+  const customerSearchResults = useCustomerSearch(customerSearch);
+  const searchHits: CustomerSearchHit[] = customerSearchResults.data?.customers ?? [];
 
   const [items, setItems] = useState<LineItem[]>([]);
   const [discountAmount, setDiscountAmount] = useState('0');
@@ -205,6 +218,53 @@ export default function NewManualOrderPage() {
     setLastName('');
     setIsExistingCustomer(false);
     setHasNameOnFile(false);
+    setPhone('');
+    setCustomerSearch('');
+    setMode('search');
+  };
+
+  /**
+   * Pick an existing customer from the autocomplete dropdown.
+   * Skips the OTP step if the customer's phone is already verified
+   * (they signed up via OTP at some point — re-verifying would just
+   * be friction for the in-person sale). For unverified customers
+   * (e.g. legacy email/password signups), we still require OTP so
+   * we don't bind an order to an unconfirmed phone.
+   */
+  const handlePickExistingCustomer = (hit: CustomerSearchHit) => {
+    if (!hit.phone) {
+      // No phone on the User row — can't verify them. Fall through to
+      // OTP flow with empty phone so admin types it in.
+      setMode('otp');
+      return;
+    }
+    if (hit.phoneVerified) {
+      // Trusted shortcut — skip OTP. The User row already exists with a
+      // verified phone, so we can link the order straight away.
+      setVerified({
+        userId: hit.id,
+        phone: hit.phone,
+        firstName: hit.firstName ?? '',
+        lastName: hit.lastName ?? '',
+        email: hit.email ?? '',
+        isNewCustomer: false,
+      });
+      toast.success('Existing customer selected — OTP skipped');
+    } else {
+      // Customer is in DB but never OTP-verified. Force them through OTP
+      // so we don't create an order against an unconfirmed phone.
+      setPhone(hit.phone);
+      setMode('otp');
+      // Pre-fill name so admin doesn't have to retype it on verify.
+      setFirstName(hit.firstName ?? '');
+      setLastName(hit.lastName ?? '');
+    }
+  };
+
+  const handleAddNewCustomer = () => {
+    setMode('otp');
+    setPhone('');
+    setCustomerSearch('');
   };
 
   const validate = (): string | null => {
@@ -517,6 +577,79 @@ export default function NewManualOrderPage() {
                   className="text-xs text-medium-gray hover:text-charcoal underline"
                 >
                   Change customer
+                </button>
+              </div>
+            ) : mode === 'search' ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1">
+                    Find existing customer
+                  </label>
+                  <div className="relative">
+                    <Search
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray"
+                    />
+                    <input
+                      type="text"
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      placeholder="Name or phone…"
+                      autoFocus
+                      className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                    />
+                  </div>
+                </div>
+
+                {customerSearch.trim().length >= 2 && (
+                  <div className="border border-light-gray rounded-lg overflow-hidden bg-white">
+                    {customerSearchResults.isLoading && (
+                      <p className="text-sm text-medium-gray p-3">Searching…</p>
+                    )}
+                    {!customerSearchResults.isLoading && searchHits.length === 0 && (
+                      <p className="text-sm text-medium-gray p-3">No customer matches.</p>
+                    )}
+                    {searchHits.map((hit) => {
+                      const displayName =
+                        `${hit.firstName} ${hit.lastName}`.trim() || hit.email || 'Customer';
+                      return (
+                        <button
+                          key={hit.id}
+                          type="button"
+                          onClick={() => handlePickExistingCustomer(hit)}
+                          className="w-full text-left px-3 py-2 hover:bg-off-white transition-colors border-b border-light-gray last:border-b-0 disabled:opacity-50"
+                          disabled={!hit.isActive}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium text-charcoal truncate">
+                              {displayName}
+                            </span>
+                            {hit.phoneVerified ? (
+                              <span className="text-xs text-green-700 flex items-center gap-1 flex-shrink-0">
+                                <CheckCircle2 size={12} /> verified
+                              </span>
+                            ) : (
+                              <span className="text-xs text-medium-gray flex-shrink-0">
+                                needs OTP
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-medium-gray mt-0.5">
+                            {hit.phone ? `+91 ${hit.phone}` : 'no phone on file'}
+                            {!hit.isActive && ' · deactivated'}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleAddNewCustomer}
+                  className="text-xs text-deep-earth hover:underline flex items-center gap-1"
+                >
+                  <Plus size={12} /> Add new customer (send OTP)
                 </button>
               </div>
             ) : (

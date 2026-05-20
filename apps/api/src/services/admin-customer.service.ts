@@ -43,6 +43,10 @@ export const adminCustomerService = {
           firstName: true,
           lastName: true,
           phone: true,
+          // Picker UIs (manual order creation) skip the OTP step when the
+          // selected customer is already verified — surfacing this flag
+          // here saves a second round-trip.
+          phoneVerified: true,
           isActive: true,
           loyaltyPoints: true,
           createdAt: true,

@@ -31,6 +31,31 @@ export function useCustomer(id: string) {
   });
 }
 
+/**
+ * Autocomplete-friendly customer search for picker UIs (e.g. manual-order
+ * creation). Skips firing until the query is at least 2 chars to keep
+ * keystroke-thrash off the API. Returns the top 5 matches by name or phone.
+ */
+export type CustomerSearchHit = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  email: string;
+  phoneVerified: boolean;
+  isActive: boolean;
+};
+
+export function useCustomerSearch(query: string) {
+  const trimmed = query.trim();
+  return useQuery<{ customers: CustomerSearchHit[]; total: number }>({
+    queryKey: ['admin-customer-search', trimmed],
+    queryFn: () => api.get(`/admin/customers?search=${encodeURIComponent(trimmed)}&limit=5`),
+    enabled: trimmed.length >= 2,
+    staleTime: 30_000,
+  });
+}
+
 export function useExportCustomersCSV() {
   return useMutation({
     mutationFn: async () => {
