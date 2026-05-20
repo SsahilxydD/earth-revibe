@@ -51,6 +51,31 @@ function formatDate(date: string) {
   });
 }
 
+const IN_FLIGHT_STATUSES = new Set(['PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY']);
+
+/**
+ * Returns a "synced 8m ago" label + a `stale` flag when the row is in-flight
+ * and hasn't been refreshed from Shiprocket in >15 min. Null when there's
+ * no AWB to track yet.
+ */
+function syncIndicator(order: {
+  awbCode?: string | null;
+  status: string;
+  lastShipmentSyncAt?: string | null;
+}): { text: string; stale: boolean } | null {
+  if (!order.awbCode) return null;
+  if (!order.lastShipmentSyncAt) {
+    return { text: 'never synced', stale: IN_FLIGHT_STATUSES.has(order.status) };
+  }
+  const ageMs = Date.now() - new Date(order.lastShipmentSyncAt).getTime();
+  const ageMin = Math.floor(ageMs / 60_000);
+  const stale = IN_FLIGHT_STATUSES.has(order.status) && ageMin > 15;
+  if (ageMin < 1) return { text: 'synced just now', stale: false };
+  if (ageMin < 60) return { text: `synced ${ageMin}m ago`, stale };
+  const ageHr = Math.floor(ageMin / 60);
+  return { text: `synced ${ageHr}h ago`, stale };
+}
+
 export default function OrdersPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -228,9 +253,31 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-6 py-3 text-dark-gray">{formatDate(order.createdAt)}</td>
                       <td className="px-6 py-3">
-                        <Badge variant={statusVariant[order.status] || 'default'}>
-                          {order.status.replace(/_/g, ' ')}
-                        </Badge>
+                        <div className="flex flex-col gap-0.5">
+                          <Badge variant={statusVariant[order.status] || 'default'}>
+                            {order.status.replace(/_/g, ' ')}
+                          </Badge>
+                          {(() => {
+                            const ind = syncIndicator(order);
+                            if (!ind) return null;
+                            return (
+                              <span
+                                className={
+                                  'text-[10px] leading-tight ' +
+                                  (ind.stale ? 'text-red-600 font-medium' : 'text-medium-gray')
+                                }
+                                title={
+                                  ind.stale
+                                    ? 'No Shiprocket sync in over 15 minutes — status may be out of date'
+                                    : 'Last refresh from Shiprocket'
+                                }
+                              >
+                                {ind.stale ? '⚠ ' : ''}
+                                {ind.text}
+                              </span>
+                            );
+                          })()}
+                        </div>
                       </td>
                       <td className="px-6 py-3">
                         <Badge

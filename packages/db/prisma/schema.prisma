@@ -636,21 +636,51 @@ model Order {
   awbCode              String?
   courierName          String?
   trackingUrl          String?
+  /// Last time we refreshed shipment status from Shiprocket. Drives the
+  /// "synced N min ago" badge in the admin orders list and lets us tell
+  /// stale rows apart from genuinely-unchanged ones. Stamped on every
+  /// successful tracking call regardless of whether the status changed.
+  lastShipmentSyncAt   DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  items           OrderItem[]
-  payment         Payment?
-  statusHistory   OrderStatusHistory[]
-  notes           OrderNote[]
-  returnRequest   ReturnRequest?
+  items              OrderItem[]
+  payment            Payment?
+  statusHistory      OrderStatusHistory[]
+  notes              OrderNote[]
+  returnRequest      ReturnRequest?
+  trackingActivities OrderTrackingActivity[]
 
   @@index([userId])
   @@index([orderNumber])
   @@index([status])
   @@index([addressId])
   @@index([discountCodeId])
+  @@index([lastShipmentSyncAt])
   @@map("orders")
+}
+
+/// One row per Shiprocket tracking event for an order. Persisted on every
+/// refresh so the customer tracking page can render history when Shiprocket
+/// is unreachable, and so the admin has an auditable timeline beyond just
+/// OrderStatusHistory (which only records OUR status transitions).
+model OrderTrackingActivity {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// When the carrier reports this event happened (not when we fetched it).
+  occurredAt DateTime
+  /// Shiprocket's `sr-status-label` field — e.g. "Out For Delivery", "In Transit".
+  status    String
+  /// Free-text activity description from Shiprocket (e.g. "Shipment Picked Up").
+  activity  String?
+  /// City or hub name where the event occurred.
+  location  String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId, occurredAt])
+  @@unique([orderId, occurredAt, status])
+  @@map("order_tracking_activities")
 }
 
 enum OrderStatus {

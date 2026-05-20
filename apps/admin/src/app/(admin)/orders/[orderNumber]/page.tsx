@@ -488,11 +488,33 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <Card>
               <h3 className="text-base font-semibold text-charcoal mb-4">Update Status</h3>
               <div className="space-y-3">
-                <Select
-                  options={[{ value: '', label: 'Select new status' }, ...statusFlow]}
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                />
+                {(() => {
+                  // Carrier-owned-status lock: once an AWB exists, Shiprocket drives
+                  // SHIPPED / OUT_FOR_DELIVERY / DELIVERED — hide those options
+                  // and surface the canonical source. CANCELLED stays available
+                  // because admin can still cancel pre-pickup orders.
+                  const CARRIER_OWNED = new Set(['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED']);
+                  const carrierLocked = !!order.awbCode;
+                  const availableOptions = carrierLocked
+                    ? statusFlow.filter((opt) => !CARRIER_OWNED.has(opt.value))
+                    : statusFlow;
+                  return (
+                    <>
+                      {carrierLocked && (
+                        <p className="text-xs text-medium-gray bg-off-white border border-light-gray rounded-md px-2.5 py-2 leading-snug">
+                          AWB <span className="font-medium text-charcoal">{order.awbCode}</span> is
+                          assigned — Shiprocket owns Shipped / Out-for-Delivery / Delivered
+                          transitions. Cancel is the only manual override available.
+                        </p>
+                      )}
+                      <Select
+                        options={[{ value: '', label: 'Select new status' }, ...availableOptions]}
+                        value={newStatus}
+                        onChange={(e) => setNewStatus(e.target.value)}
+                      />
+                    </>
+                  );
+                })()}
                 <input
                   type="text"
                   value={statusNote}

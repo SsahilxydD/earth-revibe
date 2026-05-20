@@ -20,15 +20,22 @@ interface ServiceabilityResult {
   cod: boolean;
 }
 
-// Shiprocket shipment_status_id → our OrderStatus. Only forward-flow values
-// auto-transition; cancellations and RTO need admin review and are returned
-// as `null` so the caller leaves order.status alone.
+// Shiprocket shipment_status_id → our OrderStatus.
 // IDs from Shiprocket docs; the text fallback matches their `shipment_status`
 // label in case an account's ID table drifts.
+//
+// Forward-flow (6/17/7) auto-applies. Carrier-driven terminal states
+// (CANCELLED, RTO_DELIVERED → RETURNED) also auto-apply but trigger a Discord
+// alert (notifyCarrierTerminalEvent below) so ops sees them — historically
+// these required manual admin review and would silently stall.
 const SR_ID_TO_STATUS: Record<number, OrderStatus> = {
   6: OrderStatus.SHIPPED,
   17: OrderStatus.OUT_FOR_DELIVERY,
   7: OrderStatus.DELIVERED,
+  8: OrderStatus.CANCELLED, // Cancelled
+  13: OrderStatus.CANCELLED, // Lost
+  22: OrderStatus.CANCELLED, // Damaged
+  19: OrderStatus.RETURNED, // RTO Delivered (back to seller)
 };
 
 const SR_TEXT_TO_STATUS: Record<string, OrderStatus> = {
@@ -36,7 +43,26 @@ const SR_TEXT_TO_STATUS: Record<string, OrderStatus> = {
   'in transit': OrderStatus.SHIPPED,
   'out for delivery': OrderStatus.OUT_FOR_DELIVERY,
   delivered: OrderStatus.DELIVERED,
+  canceled: OrderStatus.CANCELLED,
+  cancelled: OrderStatus.CANCELLED,
+  'rto delivered': OrderStatus.RETURNED,
 };
+
+// Statuses that are "carrier-driven" — once Shiprocket owns them, admin
+// shouldn't manually overwrite (see admin-order.service updateStatus guard).
+const CARRIER_OWNED_STATUSES: OrderStatus[] = [
+  OrderStatus.SHIPPED,
+  OrderStatus.OUT_FOR_DELIVERY,
+  OrderStatus.DELIVERED,
+];
+
+// Carrier-terminal events that warrant a Discord ping (so ops sees CANCELLED
+// or RETURNED transitions that didn't come from an admin click).
+const CARRIER_NOTIFY_STATUSES = new Set<OrderStatus>([OrderStatus.CANCELLED, OrderStatus.RETURNED]);
+
+export function isCarrierOwnedStatus(status: OrderStatus): boolean {
+  return CARRIER_OWNED_STATUSES.includes(status);
+}
 
 function mapShiprocketStatus(
   id: number | string | undefined,
@@ -253,11 +279,25 @@ export const shiprocketService = {
   async getTracking(orderId: string): Promise<TrackingResult> {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      select: { awbCode: true, courierName: true, trackingUrl: true, status: true },
+      select: {
+        awbCode: true,
+        courierName: true,
+        trackingUrl: true,
+        status: true,
+        orderNumber: true,
+        lastShipmentSyncAt: true,
+      },
     });
 
     if (!order?.awbCode) {
-      return { available: true, tracked: false, awbCode: null, activities: [] };
+      // No AWB yet — return persisted activities (none expected) and bail.
+      return {
+        available: true,
+        tracked: false,
+        awbCode: null,
+        activities: [],
+        lastSyncAt: order?.lastShipmentSyncAt ?? null,
+      };
     }
 
     let result: any;
@@ -266,16 +306,29 @@ export const shiprocketService = {
     } catch (err) {
       logger.warn(
         { err, orderId, awbCode: order.awbCode },
-        'Shiprocket tracking lookup failed — returning stale DB state'
+        'Shiprocket tracking lookup failed — returning persisted activities'
       );
+      // Fall back to persisted activities so customer/admin still see the last
+      // known state instead of an empty UI.
+      const persisted = await prisma.orderTrackingActivity.findMany({
+        where: { orderId },
+        orderBy: { occurredAt: 'desc' },
+        take: 20,
+      });
       return {
         available: false,
         tracked: true,
         awbCode: order.awbCode,
         courierName: order.courierName,
         trackingUrl: order.trackingUrl,
-        activities: [],
+        activities: persisted.map((a) => ({
+          date: a.occurredAt.toISOString(),
+          status: a.status,
+          activity: a.activity ?? '',
+          location: a.location ?? '',
+        })),
         error: 'shiprocket_api_failed',
+        lastSyncAt: order.lastShipmentSyncAt,
       };
     }
 
@@ -284,14 +337,17 @@ export const shiprocketService = {
       trackingData.shipment_status_id,
       trackingData.shipment_status
     );
+    const activities = parseActivities(trackingData.shipment_track_activities);
 
-    if (newStatus && newStatus !== order.status) {
-      await persistStatusChange(orderId, newStatus, {
-        source: 'tracking-read',
-        shipmentStatusId: trackingData.shipment_status_id,
-        shipmentStatusText: trackingData.shipment_status,
-      });
-    }
+    await syncTrackingState(orderId, {
+      newStatus,
+      currentStatus: order.status as OrderStatus,
+      activities,
+      shipmentStatusId: trackingData.shipment_status_id,
+      shipmentStatusText: trackingData.shipment_status,
+      source: 'tracking-read',
+      orderNumber: order.orderNumber,
+    });
 
     return {
       available: true,
@@ -302,12 +358,13 @@ export const shiprocketService = {
       currentStatus: trackingData.shipment_status_id,
       currentStatusDescription: trackingData.shipment_status,
       etd: trackingData.etd,
-      activities: (trackingData.shipment_track_activities || []).map((a: any) => ({
-        date: a.date,
-        status: a['sr-status-label'],
+      activities: activities.map((a) => ({
+        date: a.occurredAt.toISOString(),
+        status: a.status,
         activity: a.activity,
         location: a.location,
       })),
+      lastSyncAt: new Date(),
     };
   },
 
@@ -349,17 +406,19 @@ export const shiprocketService = {
           trackingData.shipment_status_id,
           trackingData.shipment_status
         );
+        const activities = parseActivities(trackingData.shipment_track_activities);
 
-        if (newStatus && newStatus !== order.status) {
-          await persistStatusChange(order.id, newStatus, {
-            source: 'cron-refresh',
-            shipmentStatusId: trackingData.shipment_status_id,
-            shipmentStatusText: trackingData.shipment_status,
-          });
-          updated++;
-        } else {
-          unchanged++;
-        }
+        const changed = await syncTrackingState(order.id, {
+          newStatus,
+          currentStatus: order.status as OrderStatus,
+          activities,
+          shipmentStatusId: trackingData.shipment_status_id,
+          shipmentStatusText: trackingData.shipment_status,
+          source: 'cron-refresh',
+          orderNumber: order.orderNumber,
+        });
+        if (changed) updated++;
+        else unchanged++;
       } catch (err) {
         failed++;
         logger.warn(
@@ -423,6 +482,43 @@ export const shiprocketService = {
 
     return { scanned: orders.length, recovered, failed };
   },
+
+  /**
+   * Refresh a single order's shipment state by AWB. Used by the Shiprocket
+   * webhook handler — payload arrives with an AWB and we fan out the same
+   * sync logic that powers /refresh-shipment-status. Returns null if no
+   * order in our DB matches the AWB.
+   */
+  async refreshByAwb(awbCode: string): Promise<{ changed: boolean; orderId: string } | null> {
+    const order = await prisma.order.findFirst({
+      where: { awbCode },
+      select: { id: true, orderNumber: true, status: true },
+    });
+    if (!order) {
+      logger.warn({ awbCode }, 'Shiprocket webhook: AWB not found in our DB');
+      return null;
+    }
+
+    const result = await shiprocketRequest<any>(`/courier/track/awb/${awbCode}`);
+    const trackingData = result.tracking_data || {};
+    const newStatus = mapShiprocketStatus(
+      trackingData.shipment_status_id,
+      trackingData.shipment_status
+    );
+    const activities = parseActivities(trackingData.shipment_track_activities);
+
+    const changed = await syncTrackingState(order.id, {
+      newStatus,
+      currentStatus: order.status as OrderStatus,
+      activities,
+      shipmentStatusId: trackingData.shipment_status_id,
+      shipmentStatusText: trackingData.shipment_status,
+      source: 'webhook',
+      orderNumber: order.orderNumber,
+    });
+
+    return { changed, orderId: order.id };
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -445,6 +541,7 @@ interface TrackingResult {
     location: string;
   }>;
   error?: string;
+  lastSyncAt: Date | null;
 }
 
 interface RefreshSweepResult {
@@ -461,36 +558,143 @@ interface ReconcileResult {
   failed: number;
 }
 
-async function persistStatusChange(
+interface ParsedActivity {
+  occurredAt: Date;
+  status: string;
+  activity: string;
+  location: string;
+}
+
+function parseActivities(raw: unknown): ParsedActivity[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((a: any) => {
+      // Shiprocket dates can be "2026-05-20 12:34:56" or ISO; Date can handle both,
+      // but bail if it's invalid to avoid writing garbage rows.
+      const d = a?.date ? new Date(a.date) : null;
+      if (!d || Number.isNaN(d.getTime())) return null;
+      const status = typeof a['sr-status-label'] === 'string' ? a['sr-status-label'].trim() : '';
+      if (!status) return null;
+      return {
+        occurredAt: d,
+        status,
+        activity: typeof a.activity === 'string' ? a.activity : '',
+        location: typeof a.location === 'string' ? a.location : '',
+      };
+    })
+    .filter((a): a is ParsedActivity => a !== null);
+}
+
+/**
+ * Single point of persistence for every Shiprocket refresh — from
+ * getTracking, the cron sweep, AND the webhook. Stamps lastShipmentSyncAt
+ * unconditionally, upserts activities, persists status change when applicable,
+ * and fires a Discord alert when the carrier reports a terminal CANCELLED
+ * or RETURNED event (so ops doesn't miss carrier-driven cancellations).
+ *
+ * Returns true if order.status changed, false otherwise.
+ */
+async function syncTrackingState(
   orderId: string,
-  newStatus: OrderStatus,
-  meta: {
-    source: 'tracking-read' | 'cron-refresh';
-    shipmentStatusId?: number;
-    shipmentStatusText?: string;
+  args: {
+    newStatus: OrderStatus | null;
+    currentStatus: OrderStatus;
+    activities: ParsedActivity[];
+    shipmentStatusId?: number | string;
+    shipmentStatusText?: string | number;
+    source: 'tracking-read' | 'cron-refresh' | 'webhook';
+    orderNumber: string;
   }
-): Promise<void> {
-  await prisma.$transaction([
-    prisma.order.update({
-      where: { id: orderId },
-      data: { status: newStatus },
-    }),
-    prisma.orderStatusHistory.create({
-      data: {
+): Promise<boolean> {
+  const statusChanged = args.newStatus !== null && args.newStatus !== args.currentStatus;
+  const now = new Date();
+
+  const orderUpdate = statusChanged
+    ? { status: args.newStatus as OrderStatus, lastShipmentSyncAt: now }
+    : { lastShipmentSyncAt: now };
+
+  const ops: any[] = [prisma.order.update({ where: { id: orderId }, data: orderUpdate })];
+
+  if (statusChanged) {
+    ops.push(
+      prisma.orderStatusHistory.create({
+        data: {
+          orderId,
+          status: args.newStatus as OrderStatus,
+          note: `Shiprocket ${args.source}: ${args.shipmentStatusText ?? `status_id=${args.shipmentStatusId ?? '?'}`}`,
+        },
+      })
+    );
+  }
+
+  // Idempotent activity upsert — schema has @@unique([orderId, occurredAt, status])
+  // so re-fetching the same Shiprocket response is a no-op for the timeline.
+  for (const a of args.activities) {
+    ops.push(
+      prisma.orderTrackingActivity.upsert({
+        where: {
+          orderId_occurredAt_status: {
+            orderId,
+            occurredAt: a.occurredAt,
+            status: a.status,
+          },
+        },
+        create: {
+          orderId,
+          occurredAt: a.occurredAt,
+          status: a.status,
+          activity: a.activity || null,
+          location: a.location || null,
+        },
+        update: {}, // first-write wins
+      })
+    );
+  }
+
+  await prisma.$transaction(ops);
+
+  if (statusChanged) {
+    logger.info(
+      {
         orderId,
-        status: newStatus,
-        note: `Shiprocket ${meta.source}: ${meta.shipmentStatusText ?? `status_id=${meta.shipmentStatusId ?? '?'}`}`,
+        orderNumber: args.orderNumber,
+        newStatus: args.newStatus,
+        source: args.source,
+        srStatusId: args.shipmentStatusId,
+        srStatusText: args.shipmentStatusText,
       },
-    }),
-  ]);
-  logger.info(
-    {
-      orderId,
-      newStatus,
-      source: meta.source,
-      srStatusId: meta.shipmentStatusId,
-      srStatusText: meta.shipmentStatusText,
-    },
-    'Order status updated from Shiprocket'
-  );
+      'Order status updated from Shiprocket'
+    );
+
+    if (args.newStatus && CARRIER_NOTIFY_STATUSES.has(args.newStatus)) {
+      // Fire-and-forget: notification failure should not roll back the sync.
+      void notifyCarrierTerminalEvent(args.orderNumber, args.newStatus, args.source);
+    }
+  }
+
+  return statusChanged;
+}
+
+/**
+ * Discord webhook alert for carrier-driven CANCELLED / RETURNED — gives ops
+ * visibility into transitions that bypassed the admin "Update status" flow.
+ */
+async function notifyCarrierTerminalEvent(
+  orderNumber: string,
+  status: OrderStatus,
+  source: 'tracking-read' | 'cron-refresh' | 'webhook'
+): Promise<void> {
+  const webhookUrl = env.DISCORD_ORDER_WEBHOOK_URL;
+  if (!webhookUrl) return;
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: `:rotating_light: Carrier-reported **${status}** for order \`${orderNumber}\` (via Shiprocket ${source}). No admin click triggered this — please review.`,
+      }),
+    });
+  } catch (err) {
+    logger.warn({ err, orderNumber, status }, 'Failed to post carrier-terminal Discord alert');
+  }
 }

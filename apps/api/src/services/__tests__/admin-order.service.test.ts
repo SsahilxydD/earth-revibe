@@ -554,6 +554,53 @@ describe('adminOrderService', () => {
       });
     });
 
+    // --- Carrier-owned-status lock (Shiprocket source of truth) -------------
+
+    it('blocks manual SHIPPED write when AWB exists (carrier owns the lifecycle)', async () => {
+      const order = makeOrder({ status: 'PROCESSING', awbCode: 'AWB-LOCKED' });
+      mockOrderFindUnique.mockResolvedValue(order);
+
+      await expect(
+        adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'SHIPPED' as any })
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: expect.stringContaining('owned by Shiprocket'),
+      });
+    });
+
+    it('blocks manual DELIVERED write when AWB exists', async () => {
+      const order = makeOrder({ status: 'SHIPPED', awbCode: 'AWB-LOCKED' });
+      mockOrderFindUnique.mockResolvedValue(order);
+
+      await expect(
+        adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'DELIVERED' as any })
+      ).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('allows manual CANCELLED even when AWB exists (admin override pre-pickup)', async () => {
+      const order = makeOrder({ status: 'PROCESSING', awbCode: 'AWB-LOCKED' });
+      mockOrderFindUnique.mockResolvedValue(order);
+      mockOrderUpdate.mockResolvedValue({});
+      mockOrderStatusHistoryCreate.mockResolvedValue({});
+
+      const result = await adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, {
+        status: 'CANCELLED' as any,
+      });
+      expect(result.status).toBe('CANCELLED');
+    });
+
+    it('allows manual SHIPPED write when AWB is not yet assigned (pre-pickup flow)', async () => {
+      const order = makeOrder({ status: 'PROCESSING', awbCode: null });
+      mockOrderFindUnique.mockResolvedValue(order);
+      mockOrderUpdate.mockResolvedValue({});
+      mockOrderStatusHistoryCreate.mockResolvedValue({});
+
+      const result = await adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, {
+        status: 'SHIPPED' as any,
+      });
+      expect(result.status).toBe('SHIPPED');
+    });
+
     // --- Persistence checks -------------------------------------------------
 
     it('updates the order status in the database', async () => {
