@@ -66,6 +66,11 @@ const envSchema = z.object({
   SHIPROCKET_PASSWORD: z.string().optional(),
   SHIPROCKET_PICKUP_PINCODE: z.string().default('380014'),
   SHIPROCKET_PICKUP_LOCATION: z.string().default('Earthrevibe'),
+  // Shared secret for the Shiprocket webhook receiver — Shiprocket's dashboard
+  // requires a token rather than HMAC, so this is sent in the `x-api-key`
+  // header and we constant-time-compare it. Optional so dev doesn't break;
+  // when unset, the webhook endpoint returns 503.
+  SHIPROCKET_WEBHOOK_TOKEN: z.string().optional(),
   // Meta Conversions API (server-side pixel)
   META_PIXEL_ID: z.string().default('1263879098593572'),
   META_CONVERSIONS_API_TOKEN: z.string().optional(),

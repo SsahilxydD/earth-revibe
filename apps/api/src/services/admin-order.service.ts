@@ -2,6 +2,7 @@ import { prisma, Prisma } from '@earth-revibe/db';
 import { ApiError } from '../utils/api-error';
 import { sendWhatsAppOrderUpdate } from './whatsapp.service';
 import { logger } from '../config/logger';
+import { isCarrierOwnedStatus } from './shiprocket.service';
 import type {
   AdminOrderQuery,
   UpdateOrderStatusInput,
@@ -97,6 +98,19 @@ export const adminOrderService = {
     if (!allowedTransitions.includes(data.status)) {
       throw ApiError.badRequest(
         `Cannot transition from ${order.status} to ${data.status}. Allowed: ${allowedTransitions.join(', ') || 'none'}`
+      );
+    }
+
+    // Carrier-owned-status lock: once an AWB is assigned, Shiprocket drives
+    // SHIPPED/OUT_FOR_DELIVERY/DELIVERED. Admin manual writes to those values
+    // would race the next /refresh-shipment-status sweep and either silently
+    // get overwritten or fight the source-of-truth contract. CANCELLED is
+    // intentionally still allowed (admin can cancel pre-pickup) and
+    // RETURNED/REFUNDED handle post-delivery flows.
+    if (order.awbCode && isCarrierOwnedStatus(data.status)) {
+      throw ApiError.badRequest(
+        `Order has an AWB (${order.awbCode}) — ${data.status} is owned by Shiprocket. ` +
+          `Wait for the next status sweep (≤10 min) or trigger /refresh-shipment-status manually.`
       );
     }
 

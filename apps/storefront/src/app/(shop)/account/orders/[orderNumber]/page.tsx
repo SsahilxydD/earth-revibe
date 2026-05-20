@@ -211,6 +211,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         </div>
       )}
 
+      {/* Shiprocket tracking activity feed (only when the order has been picked up
+          and the carrier started reporting). Falls back to persisted activities
+          when Shiprocket is unreachable. */}
+      {!isCancelled && <ShipmentTracking orderNumber={order.orderNumber} />}
+
       {/* Items */}
       <div>
         <p style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>ITEMS</p>
@@ -331,6 +336,132 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         >
           TRACK PACKAGE
         </button>
+      )}
+    </div>
+  );
+}
+
+interface TrackingResponse {
+  available: boolean;
+  tracked: boolean;
+  awbCode: string | null;
+  courierName?: string | null;
+  trackingUrl?: string | null;
+  currentStatusDescription?: string;
+  etd?: string;
+  activities: Array<{
+    date: string;
+    status: string;
+    activity: string;
+    location: string;
+  }>;
+  error?: string;
+  lastSyncAt?: string | null;
+}
+
+function formatRelative(iso: string | null | undefined): string {
+  if (!iso) return 'never';
+  const ms = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(ms / 60_000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min} min ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  return `${Math.floor(hr / 24)}d ago`;
+}
+
+function ShipmentTracking({ orderNumber }: { orderNumber: string }) {
+  const { data, isLoading } = useQuery<TrackingResponse>({
+    queryKey: ['order-tracking', orderNumber],
+    queryFn: async () => {
+      // Server-truth: hitting /shipping/track triggers a live Shiprocket fetch
+      // that also persists status + activities into our DB, so this page is
+      // always either current or shows persisted history as the fallback.
+      const res = await api.get<{ data: TrackingResponse } | TrackingResponse>(
+        `/shipping/track/${orderNumber}`
+      );
+      // Controller wraps in { success, data } — unwrap both shapes for safety.
+      return 'data' in res && (res as any).data ? (res as any).data : (res as TrackingResponse);
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
+  });
+
+  if (isLoading) {
+    return (
+      <div style={{ paddingTop: 8 }}>
+        <p style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>TRACKING</p>
+        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Spinner />
+          <span style={{ fontSize: 11, color: '#999' }}>Checking Shiprocket…</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data || !data.tracked) return null; // No AWB yet — nothing to show.
+
+  const isStale = !data.available;
+  const fallbackNote = isStale
+    ? `Carrier system temporarily unavailable. Showing last known activity (synced ${formatRelative(data.lastSyncAt)}).`
+    : `Synced from Shiprocket ${formatRelative(data.lastSyncAt)}.`;
+
+  return (
+    <div style={{ paddingTop: 8 }}>
+      <p style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>TRACKING</p>
+      <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {data.courierName && (
+          <span style={{ fontSize: 12, fontWeight: 400, color: '#000' }}>
+            {data.courierName} · AWB {data.awbCode}
+          </span>
+        )}
+        <span style={{ fontSize: 10, fontWeight: 300, color: isStale ? '#B45309' : '#999' }}>
+          {fallbackNote}
+        </span>
+      </div>
+
+      {data.activities.length === 0 ? (
+        <p style={{ marginTop: 12, fontSize: 11, fontWeight: 300, color: '#999' }}>
+          No carrier scans yet — your package will start appearing here once it's picked up.
+        </p>
+      ) : (
+        <ol
+          style={{
+            marginTop: 16,
+            paddingLeft: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+            listStyle: 'none',
+          }}
+        >
+          {data.activities.slice(0, 12).map((a, i) => (
+            <li key={`${a.date}-${a.status}-${i}`} style={{ display: 'flex', gap: 12 }}>
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 9999,
+                  marginTop: 6,
+                  backgroundColor: i === 0 ? '#000' : '#CCC',
+                  flexShrink: 0,
+                }}
+              />
+              <div
+                style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}
+              >
+                <span style={{ fontSize: 12, fontWeight: 400, color: '#000' }}>{a.status}</span>
+                {a.activity && (
+                  <span style={{ fontSize: 11, fontWeight: 300, color: '#666' }}>{a.activity}</span>
+                )}
+                <span style={{ fontSize: 10, fontWeight: 300, color: '#999' }}>
+                  {formatDate(a.date)}
+                  {a.location && ` · ${a.location}`}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ol>
       )}
     </div>
   );

@@ -10,6 +10,7 @@ import { webhookLimiter } from '../middleware/rate-limit';
 import { asyncHandler } from '../utils/async-handler';
 import { finalizeOrderFromPending } from '../services/checkout.service';
 import { dropAlertService } from '../services/drop-alert.service';
+import { shiprocketService } from '../services/shiprocket.service';
 
 const router: RouterType = Router();
 
@@ -620,6 +621,92 @@ router.post(
     }
 
     res.status(200).json({ success: true });
+  })
+);
+
+// ====================================================================
+// Shiprocket webhook
+// ====================================================================
+// Shiprocket pushes shipment-status events as JSON when a tracked AWB moves
+// state (Shipped → Out for Delivery → Delivered, RTO transitions, etc).
+//
+// Auth: Shiprocket's webhook UI doesn't support HMAC signing — they only
+// allow setting a static "x-api-key" token via the dashboard. We require
+// it to be present, non-empty, and constant-time-equal to our env value.
+// When the env value is unset, we return 503 so dev doesn't accidentally
+// accept unsigned events.
+//
+// Body: { order_id, awb, current_status, current_status_id, ... }. We
+// trust `awb` as the join key, ignore the inline status (Shiprocket
+// sometimes lags the body vs the canonical track API), and re-fetch via
+// shiprocketService.refreshByAwb so the same code path that powers the
+// cron sweep handles persistence, activities, and the carrier-terminal
+// Discord alert.
+
+router.post(
+  '/shiprocket',
+  webhookLimiter,
+  asyncHandler(async (req, res) => {
+    const expected = env.SHIPROCKET_WEBHOOK_TOKEN;
+    if (!expected) {
+      logger.warn('SHIPROCKET_WEBHOOK_TOKEN not configured — rejecting webhook');
+      res.status(503).json({ success: false });
+      return;
+    }
+    const received = req.headers['x-api-key'];
+    const receivedStr = Array.isArray(received) ? received[0] : received;
+    if (!receivedStr) {
+      res.status(401).json({ success: false });
+      return;
+    }
+    const a = Buffer.from(receivedStr, 'utf8');
+    const b = Buffer.from(expected, 'utf8');
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      logger.warn({ ip: req.ip, hasHeader: !!receivedStr }, 'Shiprocket webhook token mismatch');
+      res.status(401).json({ success: false });
+      return;
+    }
+
+    const body = req.body as {
+      order_id?: string | number;
+      awb?: string;
+      current_status?: string;
+      current_status_id?: number;
+      shipment_status?: string;
+      etd?: string;
+    };
+    const awbCode = typeof body.awb === 'string' ? body.awb.trim() : '';
+
+    logger.info(
+      {
+        awb: awbCode,
+        orderIdHint: body.order_id,
+        currentStatus: body.current_status ?? body.shipment_status,
+      },
+      'Shiprocket webhook received'
+    );
+
+    if (!awbCode) {
+      // Empty payload (handshake / test). Ack so Shiprocket doesn't retry.
+      res.status(200).json({ success: true });
+      return;
+    }
+
+    try {
+      const result = await shiprocketService.refreshByAwb(awbCode);
+      if (!result) {
+        // Unknown AWB — likely a test event or an order from before this
+        // integration existed. Ack 200 so Shiprocket stops retrying.
+        res.status(200).json({ success: true, data: { matched: false } });
+        return;
+      }
+      res.status(200).json({ success: true, data: { matched: true, changed: result.changed } });
+    } catch (err) {
+      logger.error({ err, awb: awbCode }, 'Shiprocket webhook processing failed');
+      // 500 → Shiprocket retries (their docs claim exponential backoff). The
+      // /refresh-shipment-status cron is the ultimate safety net.
+      res.status(500).json({ success: false });
+    }
   })
 );
 
