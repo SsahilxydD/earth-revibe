@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Eye, RefreshCw } from 'lucide-react';
+import { Search, Eye, RefreshCw, Plus } from 'lucide-react';
 import { Button, Badge, Card, Select } from '@earth-revibe/ui';
 import { Skeleton } from '@earth-revibe/ui/skeleton';
 import { useOrders } from '@/hooks/use-orders';
@@ -111,15 +111,23 @@ export default function OrdersPage() {
           <h1 className="text-2xl font-semibold text-charcoal">Orders</h1>
           <p className="text-sm text-medium-gray mt-1">Manage and track customer orders</p>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => syncMutation.mutate()}
-          isLoading={syncMutation.isPending}
-        >
-          <RefreshCw size={14} />
-          Sync Orders
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href="/orders/new">
+            <Button variant="primary" size="sm">
+              <Plus size={14} />
+              New offline order
+            </Button>
+          </Link>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => syncMutation.mutate()}
+            isLoading={syncMutation.isPending}
+          >
+            <RefreshCw size={14} />
+            Sync Orders
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
