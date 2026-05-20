@@ -53,6 +53,10 @@ vectors.db
 graphify-out/cache/
 graphify-out/.graphify_*
 graphify-out/manifest.json
+graphify-out/cost.json
+graphify-out/memory/
+# Stray cache if graphify is accidentally run from a subdirectory
+apps/graphify-out/
 
 # Claude local settings (machine-specific permissions)
 .claude/settings.local.json
