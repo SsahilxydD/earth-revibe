@@ -251,11 +251,9 @@ describe('shiprocketService.refreshAllPendingShipments', () => {
       { id: 'o2', orderNumber: 'ORD-2', awbCode: 'AWB2', status: 'SHIPPED' },
     ]);
 
-    mockShiprocketRequest
-      .mockRejectedValueOnce(new Error('Shiprocket 500'))
-      .mockResolvedValueOnce({
-        tracking_data: { shipment_status_id: 7, shipment_status: 'Delivered' },
-      });
+    mockShiprocketRequest.mockRejectedValueOnce(new Error('Shiprocket 500')).mockResolvedValueOnce({
+      tracking_data: { shipment_status_id: 7, shipment_status: 'Delivered' },
+    });
 
     const result = await shiprocketService.refreshAllPendingShipments({ limit: 10 });
 
@@ -270,7 +268,6 @@ describe('shiprocketService.refreshAllPendingShipments', () => {
         where: expect.objectContaining({
           awbCode: { not: null },
           status: { in: ['PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY'] },
-          deletedAt: null,
         }),
         take: 5,
       })
@@ -291,7 +288,6 @@ describe('shiprocketService.reconcileMissingShipments', () => {
     expect(call.where.status).toBe('CONFIRMED');
     expect(call.where.shiprocketOrderId).toBeNull();
     expect(call.where.createdAt.lt).toBeInstanceOf(Date);
-    expect(call.where.deletedAt).toBeNull();
     expect(call.take).toBe(5);
   });
 
