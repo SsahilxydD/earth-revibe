@@ -227,6 +227,8 @@ model Product {
   @@index([categoryId])
   @@index([status])
   @@index([slug])
+  @@index([status, categoryId])
+  @@index([status, createdAt(sort: Desc)])
   @@map("products")
 }
 
