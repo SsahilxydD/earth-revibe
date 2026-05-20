@@ -12,27 +12,21 @@ import { toast } from '@earth-revibe/ui';
 
 const statusOptions = [
   { value: '', label: 'All Statuses' },
-  { value: 'PLACED', label: 'Placed' },
+  { value: 'PENDING', label: 'Pending' },
   { value: 'CONFIRMED', label: 'Confirmed' },
-  { value: 'PROCESSING', label: 'Processing' },
-  { value: 'SHIPPED', label: 'Shipped' },
-  { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
+  { value: 'SHIPPING', label: 'Shipping' },
   { value: 'DELIVERED', label: 'Delivered' },
   { value: 'CANCELLED', label: 'Cancelled' },
   { value: 'RETURNED', label: 'Returned' },
-  { value: 'REFUNDED', label: 'Refunded' },
 ];
 
 const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
-  PLACED: 'info',
+  PENDING: 'info',
   CONFIRMED: 'info',
-  PROCESSING: 'warning',
-  SHIPPED: 'warning',
-  OUT_FOR_DELIVERY: 'warning',
+  SHIPPING: 'warning',
   DELIVERED: 'success',
   CANCELLED: 'error',
   RETURNED: 'error',
-  REFUNDED: 'default',
 };
 
 function formatPrice(amount: number | string) {
@@ -51,7 +45,10 @@ function formatDate(date: string) {
   });
 }
 
-const IN_FLIGHT_STATUSES = new Set(['PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY']);
+// Orders we expect Shiprocket to be tracking: CONFIRMED (AWB possibly
+// assigned, awaiting first scan) or SHIPPING (in transit). Used to decide
+// when the "stale" badge fires.
+const IN_FLIGHT_STATUSES = new Set(['CONFIRMED', 'SHIPPING']);
 
 /**
  * Returns a "synced 8m ago" label + a `stale` flag when the row is in-flight

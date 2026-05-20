@@ -204,8 +204,12 @@ describe('adminRefundController.initiateRefund — order / payment guards', () =
     });
   });
 
-  it('throws badRequest when order status is REFUNDED', async () => {
-    vi.mocked(prisma.order.findUnique).mockResolvedValue(buildOrder({ status: 'REFUNDED' }));
+  it('throws badRequest when order status is CANCELLED', async () => {
+    // In the six-status model, REFUNDED is no longer an order status — refund
+    // state lives on Payment.status. The only order-status rejection now is
+    // CANCELLED (refunding a cancelled order doesn't make sense; refund
+    // happens at cancel time via the cancel flow).
+    vi.mocked(prisma.order.findUnique).mockResolvedValue(buildOrder({ status: 'CANCELLED' }));
     const req = buildRequest() as Request;
     const res = buildResponse() as Response;
 
@@ -290,7 +294,7 @@ describe('adminRefundController.initiateRefund — full refund flow', () => {
     );
   });
 
-  it('sets order status to REFUNDED on full refund', async () => {
+  it('does not change order.status on full refund (refund lives on Payment in 6-status model)', async () => {
     const order = buildOrder();
     vi.mocked(prisma.order.findUnique).mockResolvedValue(order);
     vi.mocked(getRazorpay).mockReturnValue({
@@ -306,12 +310,9 @@ describe('adminRefundController.initiateRefund — full refund flow', () => {
 
     await adminRefundController.initiateRefund(req, res);
 
-    expect(mockTx.order.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: 'order-1' },
-        data: { status: 'REFUNDED' },
-      })
-    );
+    // Order.status should NOT be mutated by the refund — Payment.status carries
+    // the REFUNDED truth (verified by the earlier payment.update assertion).
+    expect(mockTx.order.update).not.toHaveBeenCalled();
   });
 
   it('restores stock for each line item on full refund', async () => {
@@ -405,7 +406,9 @@ describe('adminRefundController.initiateRefund — full refund flow', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           orderId: 'order-1',
-          status: 'REFUNDED',
+          // History row keeps the current order.status — the refund is
+          // captured by the note + by Payment.status, not by mutating Order.
+          status: 'DELIVERED',
           changedBy: 'admin-1',
         }),
       })

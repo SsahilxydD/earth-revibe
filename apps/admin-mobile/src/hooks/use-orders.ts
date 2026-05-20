@@ -151,13 +151,10 @@ export function useUpdateOrderStatus() {
 // Mirrors the API's VALID_TRANSITIONS state machine so the UI doesn't offer
 // transitions the server will reject.
 export const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  PLACED: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['PROCESSING', 'CANCELLED'],
-  PROCESSING: ['SHIPPED', 'CANCELLED'],
-  SHIPPED: ['OUT_FOR_DELIVERY', 'DELIVERED'],
-  OUT_FOR_DELIVERY: ['DELIVERED'],
-  DELIVERED: ['RETURNED', 'REFUNDED'],
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['SHIPPING', 'CANCELLED'],
+  SHIPPING: ['DELIVERED', 'RETURNED', 'CANCELLED'],
+  DELIVERED: ['RETURNED'],
   CANCELLED: [],
-  RETURNED: ['REFUNDED'],
-  REFUNDED: [],
+  RETURNED: [],
 } as Record<OrderStatus, OrderStatus[]>;

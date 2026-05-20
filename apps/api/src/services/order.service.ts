@@ -257,7 +257,7 @@ export const orderService = {
             },
             statusHistory: {
               create: {
-                status: 'PLACED',
+                status: 'PENDING',
                 note: 'Order placed, awaiting payment',
               },
             },
@@ -461,7 +461,10 @@ export const orderService = {
 
     if (!order) throw ApiError.notFound('Order not found');
 
-    const cancellableStatuses = ['PLACED', 'CONFIRMED', 'PROCESSING'];
+    // Customers/admins can cancel anything that hasn't yet been handed to the
+    // carrier. Once SHIPPING (AWB issued, in transit) we no longer accept
+    // customer cancellation — they have to use the return flow post-delivery.
+    const cancellableStatuses = ['PENDING', 'CONFIRMED'];
     if (!cancellableStatuses.includes(order.status)) {
       throw ApiError.badRequest('Order cannot be cancelled at this stage');
     }

@@ -574,7 +574,7 @@ describe('adminNotificationController.getNotifications', () => {
   // Prisma query correctness
   // -------------------------------------------------------------------------
   describe('prisma query arguments', () => {
-    it('queries orders with PLACED and CONFIRMED statuses and 24-hour window', async () => {
+    it('queries orders with PENDING and CONFIRMED statuses and 24-hour window', async () => {
       setupGetNotificationsMocks({
         newOrder: 1,
         lowStock: 0,
@@ -590,7 +590,7 @@ describe('adminNotificationController.getNotifications', () => {
 
       expect(orderCount).toHaveBeenCalledOnce();
       const [args] = orderCount.mock.calls[0];
-      expect(args.where.status).toEqual({ in: ['PLACED', 'CONFIRMED'] });
+      expect(args.where.status).toEqual({ in: ['PENDING', 'CONFIRMED'] });
 
       const gte: Date = args.where.createdAt.gte;
       const windowMs = 24 * 60 * 60 * 1000;
@@ -872,7 +872,7 @@ describe('adminNotificationController.getNotificationCount', () => {
       expect(args.where.stock).toBe(0);
     });
 
-    it('queries orders with PLACED and CONFIRMED statuses', async () => {
+    it('queries orders with PENDING and CONFIRMED statuses', async () => {
       setupGetNotificationCountMocks({
         newOrder: 1,
         outOfStock: 0,
@@ -883,7 +883,7 @@ describe('adminNotificationController.getNotificationCount', () => {
       await adminNotificationController.getNotificationCount(mockReq(), res);
 
       const [args] = orderCount.mock.calls[0];
-      expect(args.where.status).toEqual({ in: ['PLACED', 'CONFIRMED'] });
+      expect(args.where.status).toEqual({ in: ['PENDING', 'CONFIRMED'] });
     });
 
     it('queries payments with FAILED status', async () => {

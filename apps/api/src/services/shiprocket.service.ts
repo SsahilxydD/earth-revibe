@@ -20,17 +20,17 @@ interface ServiceabilityResult {
   cod: boolean;
 }
 
-// Shiprocket shipment_status_id → our OrderStatus.
+// Shiprocket shipment_status_id → our OrderStatus (6-value enum).
 // IDs from Shiprocket docs; the text fallback matches their `shipment_status`
 // label in case an account's ID table drifts.
 //
-// Forward-flow (6/17/7) auto-applies. Carrier-driven terminal states
-// (CANCELLED, RTO_DELIVERED → RETURNED) also auto-apply but trigger a Discord
-// alert (notifyCarrierTerminalEvent below) so ops sees them — historically
-// these required manual admin review and would silently stall.
+// Multiple carrier sub-states (Shipped / In Transit / Out For Delivery) all
+// collapse to our single SHIPPING bucket. Carrier-driven terminal states
+// (CANCELLED, RTO_DELIVERED → RETURNED) auto-apply and trigger a Discord
+// alert (notifyCarrierTerminalEvent below) so ops sees them.
 const SR_ID_TO_STATUS: Record<number, OrderStatus> = {
-  6: OrderStatus.SHIPPED,
-  17: OrderStatus.OUT_FOR_DELIVERY,
+  6: OrderStatus.SHIPPING,
+  17: OrderStatus.SHIPPING, // Out For Delivery — still in flight
   7: OrderStatus.DELIVERED,
   8: OrderStatus.CANCELLED, // Cancelled
   13: OrderStatus.CANCELLED, // Lost
@@ -39,9 +39,9 @@ const SR_ID_TO_STATUS: Record<number, OrderStatus> = {
 };
 
 const SR_TEXT_TO_STATUS: Record<string, OrderStatus> = {
-  shipped: OrderStatus.SHIPPED,
-  'in transit': OrderStatus.SHIPPED,
-  'out for delivery': OrderStatus.OUT_FOR_DELIVERY,
+  shipped: OrderStatus.SHIPPING,
+  'in transit': OrderStatus.SHIPPING,
+  'out for delivery': OrderStatus.SHIPPING,
   delivered: OrderStatus.DELIVERED,
   canceled: OrderStatus.CANCELLED,
   cancelled: OrderStatus.CANCELLED,
@@ -50,11 +50,9 @@ const SR_TEXT_TO_STATUS: Record<string, OrderStatus> = {
 
 // Statuses that are "carrier-driven" — once Shiprocket owns them, admin
 // shouldn't manually overwrite (see admin-order.service updateStatus guard).
-const CARRIER_OWNED_STATUSES: OrderStatus[] = [
-  OrderStatus.SHIPPED,
-  OrderStatus.OUT_FOR_DELIVERY,
-  OrderStatus.DELIVERED,
-];
+// SHIPPING and DELIVERED are both downstream of the AWB; only the carrier
+// can legitimately move an order through them.
+const CARRIER_OWNED_STATUSES: OrderStatus[] = [OrderStatus.SHIPPING, OrderStatus.DELIVERED];
 
 // Carrier-terminal events that warrant a Discord ping (so ops sees CANCELLED
 // or RETURNED transitions that didn't come from an admin click).
@@ -182,21 +180,15 @@ export const shiprocketService = {
       },
     });
 
-    // Save Shiprocket order ID to our DB
+    // Save Shiprocket order ID + shipment ID. Order.status stays CONFIRMED
+    // until the carrier reports actual shipping movement — the AWB existence
+    // (`shiprocketOrderId != null && awbCode == null`) is the "created on
+    // Shiprocket, awaiting pickup" signal in the new six-state model.
     await prisma.order.update({
       where: { id: orderId },
       data: {
         shiprocketOrderId: srOrder.order_id,
         shiprocketShipmentId: srOrder.shipment_id,
-        status: 'PROCESSING',
-      },
-    });
-
-    await prisma.orderStatusHistory.create({
-      data: {
-        orderId,
-        status: 'PROCESSING',
-        note: `Shiprocket order created (ID: ${srOrder.order_id})`,
       },
     });
 
@@ -387,7 +379,10 @@ export const shiprocketService = {
     const orders = await prisma.order.findMany({
       where: {
         awbCode: { not: null },
-        status: { in: [OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.OUT_FOR_DELIVERY] },
+        // Sweep CONFIRMED orders (AWB assigned, waiting for first carrier scan
+        // to flip to SHIPPING) and SHIPPING orders (in-flight). Anything
+        // DELIVERED/CANCELLED/RETURNED is terminal and we stop refreshing.
+        status: { in: [OrderStatus.CONFIRMED, OrderStatus.SHIPPING] },
       },
       select: { id: true, orderNumber: true, awbCode: true, status: true },
       orderBy: { updatedAt: 'asc' },

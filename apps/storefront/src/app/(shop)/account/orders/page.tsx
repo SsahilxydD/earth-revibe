@@ -16,15 +16,12 @@ interface Order {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  PLACED: '#EAB308',
+  PENDING: '#EAB308',
   CONFIRMED: '#3B82F6',
-  PROCESSING: '#3B82F6',
-  SHIPPED: '#8B5CF6',
-  OUT_FOR_DELIVERY: '#8B5CF6',
+  SHIPPING: '#8B5CF6',
   DELIVERED: '#22C55E',
   CANCELLED: '#999',
   RETURNED: '#999',
-  REFUNDED: '#999',
 };
 
 export default function OrdersPage() {

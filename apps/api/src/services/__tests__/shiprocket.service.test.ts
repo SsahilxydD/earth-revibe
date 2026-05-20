@@ -76,7 +76,7 @@ const trackedOrder = {
   awbCode: 'AWB123',
   courierName: 'BlueDart',
   trackingUrl: 'https://shiprocket.co/tracking/AWB123',
-  status: 'SHIPPED',
+  status: 'SHIPPING',
   orderNumber: 'ORD-001',
   lastShipmentSyncAt: null,
 };
@@ -110,16 +110,15 @@ describe('shiprocketService.checkServiceability', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('isCarrierOwnedStatus', () => {
   it('identifies carrier-owned forward-flow states', () => {
-    expect(isCarrierOwnedStatus('SHIPPED' as any)).toBe(true);
-    expect(isCarrierOwnedStatus('OUT_FOR_DELIVERY' as any)).toBe(true);
+    expect(isCarrierOwnedStatus('SHIPPING' as any)).toBe(true);
     expect(isCarrierOwnedStatus('DELIVERED' as any)).toBe(true);
   });
 
-  it('does not lock CANCELLED — admin can still cancel pre-pickup', () => {
+  it('does not lock pre-pickup or terminal-cancel statuses', () => {
     expect(isCarrierOwnedStatus('CANCELLED' as any)).toBe(false);
-    expect(isCarrierOwnedStatus('PLACED' as any)).toBe(false);
+    expect(isCarrierOwnedStatus('PENDING' as any)).toBe(false);
     expect(isCarrierOwnedStatus('CONFIRMED' as any)).toBe(false);
-    expect(isCarrierOwnedStatus('PROCESSING' as any)).toBe(false);
+    expect(isCarrierOwnedStatus('RETURNED' as any)).toBe(false);
   });
 });
 
@@ -132,7 +131,7 @@ describe('shiprocketService.getTracking', () => {
       awbCode: null,
       courierName: null,
       trackingUrl: null,
-      status: 'PROCESSING',
+      status: 'PENDING',
       orderNumber: 'ORD-NEW',
       lastShipmentSyncAt: null,
     });
@@ -288,7 +287,9 @@ describe('shiprocketService.getTracking', () => {
   });
 
   it('maps text fallback when shipment_status_id is missing', async () => {
-    mockOrderFindUnique.mockResolvedValue({ ...trackedOrder, status: 'PROCESSING' });
+    // Carrier reports "Out for Delivery" via text; in the six-status model
+    // this collapses to SHIPPING (still in flight, not yet delivered).
+    mockOrderFindUnique.mockResolvedValue({ ...trackedOrder, status: 'CONFIRMED' });
     mockShiprocketRequest.mockResolvedValue({
       tracking_data: { shipment_status: 'Out for Delivery', shipment_track_activities: [] },
     });
@@ -297,7 +298,7 @@ describe('shiprocketService.getTracking', () => {
 
     expect(mockOrderUpdate).toHaveBeenCalledWith({
       where: { id: 'order-1' },
-      data: { status: 'OUT_FOR_DELIVERY', lastShipmentSyncAt: expect.any(Date) },
+      data: { status: 'SHIPPING', lastShipmentSyncAt: expect.any(Date) },
     });
   });
 
@@ -333,8 +334,8 @@ describe('shiprocketService.refreshAllPendingShipments', () => {
 
   it('updates orders whose Shiprocket status advanced and leaves unchanged ones alone', async () => {
     mockOrderFindMany.mockResolvedValue([
-      { id: 'o1', orderNumber: 'ORD-1', awbCode: 'AWB1', status: 'SHIPPED' },
-      { id: 'o2', orderNumber: 'ORD-2', awbCode: 'AWB2', status: 'SHIPPED' },
+      { id: 'o1', orderNumber: 'ORD-1', awbCode: 'AWB1', status: 'SHIPPING' },
+      { id: 'o2', orderNumber: 'ORD-2', awbCode: 'AWB2', status: 'SHIPPING' },
     ]);
 
     mockShiprocketRequest
@@ -371,8 +372,8 @@ describe('shiprocketService.refreshAllPendingShipments', () => {
 
   it('counts failures and keeps going when one AWB lookup throws', async () => {
     mockOrderFindMany.mockResolvedValue([
-      { id: 'o1', orderNumber: 'ORD-1', awbCode: 'AWB1', status: 'SHIPPED' },
-      { id: 'o2', orderNumber: 'ORD-2', awbCode: 'AWB2', status: 'SHIPPED' },
+      { id: 'o1', orderNumber: 'ORD-1', awbCode: 'AWB1', status: 'SHIPPING' },
+      { id: 'o2', orderNumber: 'ORD-2', awbCode: 'AWB2', status: 'SHIPPING' },
     ]);
 
     mockShiprocketRequest.mockRejectedValueOnce(new Error('Shiprocket 500')).mockResolvedValueOnce({
@@ -388,14 +389,14 @@ describe('shiprocketService.refreshAllPendingShipments', () => {
     expect(result).toMatchObject({ scanned: 2, updated: 1, unchanged: 0, failed: 1 });
   });
 
-  it('filters to in-flight statuses', async () => {
+  it('filters to in-flight statuses (CONFIRMED awaiting first scan + SHIPPING)', async () => {
     mockOrderFindMany.mockResolvedValue([]);
     await shiprocketService.refreshAllPendingShipments({ limit: 5 });
     expect(mockOrderFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           awbCode: { not: null },
-          status: { in: ['PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY'] },
+          status: { in: ['CONFIRMED', 'SHIPPING'] },
         }),
         take: 5,
       })
@@ -418,7 +419,7 @@ describe('shiprocketService.refreshByAwb', () => {
     mockOrderFindFirst.mockResolvedValue({
       id: 'order-1',
       orderNumber: 'ORD-1',
-      status: 'SHIPPED',
+      status: 'SHIPPING',
     });
     mockShiprocketRequest.mockResolvedValue({
       tracking_data: {

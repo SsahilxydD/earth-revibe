@@ -41,8 +41,10 @@ export const adminRefundController = {
       );
     }
 
-    if (order.status === 'CANCELLED' || order.status === 'REFUNDED') {
-      throw ApiError.badRequest(`Cannot refund an order with status "${order.status}"`);
+    // payment.status REFUNDED / PARTIALLY_REFUNDED are already excluded by the
+    // CAPTURED check above; only block the order-side cancellation case.
+    if (order.status === 'CANCELLED') {
+      throw ApiError.badRequest('Cannot refund a cancelled order');
     }
 
     if (!order.payment.razorpayPaymentId) {
@@ -82,19 +84,16 @@ export const adminRefundController = {
         },
       });
 
-      // Update order status — only set REFUNDED on full refund
-      if (isFullRefund) {
-        await tx.order.update({
-          where: { id: order.id },
-          data: { status: 'REFUNDED' },
-        });
-      }
-
-      // Create order status history entry
+      // Refund is a Payment-level event in the six-status model — order.status
+      // stays where it was (DELIVERED / RETURNED / CANCELLED). Payment.status
+      // carries the REFUNDED / PARTIALLY_REFUNDED truth (set above). The
+      // status-history row uses the unchanged order.status but records the
+      // refund as a note so the admin order detail still shows it in the
+      // timeline.
       await tx.orderStatusHistory.create({
         data: {
           orderId: order.id,
-          status: isFullRefund ? 'REFUNDED' : order.status,
+          status: order.status,
           note: isFullRefund
             ? `Full refund of ₹${refundAmountDecimal.toFixed(2)} issued. Reason: ${reason.trim()}`
             : `Partial refund of ₹${refundAmountDecimal.toFixed(2)} issued. Reason: ${reason.trim()}`,

@@ -338,7 +338,7 @@ describe('adminCustomerService.getCustomer', () => {
 
     const aggregateCall = mockPrismaOrder.aggregate.mock.calls[0][0];
     expect(aggregateCall.where.userId).toBe('user-1');
-    expect(aggregateCall.where.status.notIn).toEqual(['CANCELLED', 'REFUNDED']);
+    expect(aggregateCall.where.status.notIn).toEqual(['CANCELLED', 'RETURNED']);
     expect(aggregateCall._sum.totalAmount).toBe(true);
   });
 
@@ -624,7 +624,7 @@ describe('adminCustomerService.exportCustomersCSV', () => {
 
     const groupByCall = mockPrismaOrder.groupBy.mock.calls[0][0];
     expect(groupByCall.where.userId.in).toEqual(['u1', 'u2']);
-    expect(groupByCall.where.status.notIn).toEqual(['CANCELLED', 'REFUNDED']);
+    expect(groupByCall.where.status.notIn).toEqual(['CANCELLED', 'RETURNED']);
   });
 
   // --- escapeCsv RFC 4180 compliance ---

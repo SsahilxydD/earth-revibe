@@ -84,7 +84,7 @@ function makeOrder(overrides: Record<string, unknown> = {}) {
   return {
     id: 'order-id-1',
     orderNumber: 'ORD-001',
-    status: 'PLACED',
+    status: 'PENDING',
     totalAmount: 999,
     createdAt: new Date('2024-01-15T10:00:00Z'),
     guestEmail: null,
@@ -168,14 +168,14 @@ describe('adminOrderService', () => {
       mockOrderFindMany.mockResolvedValue([]);
       mockOrderCount.mockResolvedValue(0);
 
-      const query: AdminOrderQuery = { ...BASE_QUERY, status: 'PLACED' as any };
+      const query: AdminOrderQuery = { ...BASE_QUERY, status: 'PENDING' as any };
       await adminOrderService.listOrders(query);
 
       expect(mockOrderFindMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ status: 'PLACED' }) })
+        expect.objectContaining({ where: expect.objectContaining({ status: 'PENDING' }) })
       );
       expect(mockOrderCount).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ status: 'PLACED' }) })
+        expect.objectContaining({ where: expect.objectContaining({ status: 'PENDING' }) })
       );
     });
 
@@ -310,7 +310,7 @@ describe('adminOrderService', () => {
 
       const query: AdminOrderQuery = {
         ...BASE_QUERY,
-        status: 'SHIPPED' as any,
+        status: 'SHIPPING' as any,
         search: 'bob',
         startDate: '2024-06-01',
         endDate: '2024-06-30',
@@ -318,7 +318,7 @@ describe('adminOrderService', () => {
       await adminOrderService.listOrders(query);
 
       const where = mockOrderFindMany.mock.calls[0][0].where;
-      expect(where.status).toBe('SHIPPED');
+      expect(where.status).toBe('SHIPPING');
       expect(where.OR).toBeDefined();
       expect(where.createdAt.gte).toEqual(new Date('2024-06-01'));
       expect(where.createdAt.lte).toEqual(new Date('2024-06-30'));
@@ -415,19 +415,19 @@ describe('adminOrderService', () => {
 
     // --- Happy path: all valid transitions ----------------------------------
 
-    it('transitions PLACED -> CONFIRMED', async () => {
-      const result = await performUpdate('PLACED', 'CONFIRMED');
+    it('transitions PENDING -> CONFIRMED', async () => {
+      const result = await performUpdate('PENDING', 'CONFIRMED');
       expect(result.status).toBe('CONFIRMED');
     });
 
-    it('transitions PLACED -> CANCELLED', async () => {
-      const result = await performUpdate('PLACED', 'CANCELLED');
+    it('transitions PENDING -> CANCELLED', async () => {
+      const result = await performUpdate('PENDING', 'CANCELLED');
       expect(result.status).toBe('CANCELLED');
     });
 
-    it('transitions CONFIRMED -> PROCESSING', async () => {
-      const result = await performUpdate('CONFIRMED', 'PROCESSING');
-      expect(result.status).toBe('PROCESSING');
+    it('transitions CONFIRMED -> SHIPPING', async () => {
+      const result = await performUpdate('CONFIRMED', 'SHIPPING');
+      expect(result.status).toBe('SHIPPING');
     });
 
     it('transitions CONFIRMED -> CANCELLED', async () => {
@@ -435,79 +435,51 @@ describe('adminOrderService', () => {
       expect(result.status).toBe('CANCELLED');
     });
 
-    it('transitions PROCESSING -> SHIPPED', async () => {
-      const result = await performUpdate('PROCESSING', 'SHIPPED');
-      expect(result.status).toBe('SHIPPED');
-    });
-
-    it('transitions PROCESSING -> CANCELLED', async () => {
-      const result = await performUpdate('PROCESSING', 'CANCELLED');
-      expect(result.status).toBe('CANCELLED');
-    });
-
-    it('transitions SHIPPED -> OUT_FOR_DELIVERY', async () => {
-      const result = await performUpdate('SHIPPED', 'OUT_FOR_DELIVERY');
-      expect(result.status).toBe('OUT_FOR_DELIVERY');
-    });
-
-    it('transitions SHIPPED -> DELIVERED', async () => {
-      const result = await performUpdate('SHIPPED', 'DELIVERED');
+    it('transitions SHIPPING -> DELIVERED', async () => {
+      const result = await performUpdate('SHIPPING', 'DELIVERED');
       expect(result.status).toBe('DELIVERED');
     });
 
-    it('transitions OUT_FOR_DELIVERY -> DELIVERED', async () => {
-      const result = await performUpdate('OUT_FOR_DELIVERY', 'DELIVERED');
-      expect(result.status).toBe('DELIVERED');
-    });
-
-    it('transitions DELIVERED -> RETURNED', async () => {
-      const result = await performUpdate('DELIVERED', 'RETURNED');
+    it('transitions SHIPPING -> RETURNED (carrier RTO)', async () => {
+      const result = await performUpdate('SHIPPING', 'RETURNED');
       expect(result.status).toBe('RETURNED');
     });
 
-    it('transitions DELIVERED -> REFUNDED', async () => {
-      const result = await performUpdate('DELIVERED', 'REFUNDED');
-      expect(result.status).toBe('REFUNDED');
+    it('transitions SHIPPING -> CANCELLED', async () => {
+      const result = await performUpdate('SHIPPING', 'CANCELLED');
+      expect(result.status).toBe('CANCELLED');
     });
 
-    it('transitions RETURNED -> REFUNDED', async () => {
-      const result = await performUpdate('RETURNED', 'REFUNDED');
-      expect(result.status).toBe('REFUNDED');
+    it('transitions DELIVERED -> RETURNED (admin-approved return)', async () => {
+      const result = await performUpdate('DELIVERED', 'RETURNED');
+      expect(result.status).toBe('RETURNED');
     });
 
     // --- Invalid transitions ------------------------------------------------
 
     const invalidTransitions: Array<[string, string]> = [
-      ['PLACED', 'PROCESSING'],
-      ['PLACED', 'SHIPPED'],
-      ['PLACED', 'DELIVERED'],
-      ['PLACED', 'RETURNED'],
-      ['PLACED', 'REFUNDED'],
-      ['CONFIRMED', 'PLACED'],
-      ['CONFIRMED', 'SHIPPED'],
+      ['PENDING', 'SHIPPING'],
+      ['PENDING', 'DELIVERED'],
+      ['PENDING', 'RETURNED'],
+      ['CONFIRMED', 'PENDING'],
       ['CONFIRMED', 'DELIVERED'],
-      ['PROCESSING', 'PLACED'],
-      ['PROCESSING', 'CONFIRMED'],
-      ['PROCESSING', 'DELIVERED'],
-      ['SHIPPED', 'PLACED'],
-      ['SHIPPED', 'CONFIRMED'],
-      ['SHIPPED', 'CANCELLED'],
-      ['OUT_FOR_DELIVERY', 'SHIPPED'],
-      ['OUT_FOR_DELIVERY', 'RETURNED'],
-      ['OUT_FOR_DELIVERY', 'REFUNDED'],
-      ['DELIVERED', 'PLACED'],
+      ['CONFIRMED', 'RETURNED'],
+      ['SHIPPING', 'PENDING'],
+      ['SHIPPING', 'CONFIRMED'],
+      ['DELIVERED', 'PENDING'],
+      ['DELIVERED', 'CONFIRMED'],
+      ['DELIVERED', 'SHIPPING'],
       ['DELIVERED', 'CANCELLED'],
-      ['CANCELLED', 'PLACED'],
+      ['CANCELLED', 'PENDING'],
       ['CANCELLED', 'CONFIRMED'],
-      ['CANCELLED', 'PROCESSING'],
-      ['CANCELLED', 'SHIPPED'],
+      ['CANCELLED', 'SHIPPING'],
       ['CANCELLED', 'DELIVERED'],
       ['CANCELLED', 'RETURNED'],
-      ['CANCELLED', 'REFUNDED'],
-      ['RETURNED', 'PLACED'],
+      ['RETURNED', 'PENDING'],
+      ['RETURNED', 'CONFIRMED'],
+      ['RETURNED', 'SHIPPING'],
+      ['RETURNED', 'DELIVERED'],
       ['RETURNED', 'CANCELLED'],
-      ['REFUNDED', 'PLACED'],
-      ['REFUNDED', 'RETURNED'],
     ];
 
     it.each(invalidTransitions)(
@@ -529,25 +501,25 @@ describe('adminOrderService', () => {
       }
     );
 
-    // Terminal states — CANCELLED, REFUNDED have no allowed targets
+    // Terminal states — CANCELLED, RETURNED have no allowed targets
     it("throws 400 for any transition from CANCELLED and mentions 'none'", async () => {
       const order = makeOrder({ status: 'CANCELLED' });
       mockOrderFindUnique.mockResolvedValue(order);
 
       await expect(
-        adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'PLACED' as any })
+        adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'PENDING' as any })
       ).rejects.toMatchObject({
         statusCode: 400,
         message: expect.stringContaining('none'),
       });
     });
 
-    it("throws 400 for any transition from REFUNDED and mentions 'none'", async () => {
-      const order = makeOrder({ status: 'REFUNDED' });
+    it("throws 400 for any transition from RETURNED and mentions 'none'", async () => {
+      const order = makeOrder({ status: 'RETURNED' });
       mockOrderFindUnique.mockResolvedValue(order);
 
       await expect(
-        adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'RETURNED' as any })
+        adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'DELIVERED' as any })
       ).rejects.toMatchObject({
         statusCode: 400,
         message: expect.stringContaining('none'),
@@ -556,12 +528,12 @@ describe('adminOrderService', () => {
 
     // --- Carrier-owned-status lock (Shiprocket source of truth) -------------
 
-    it('blocks manual SHIPPED write when AWB exists (carrier owns the lifecycle)', async () => {
-      const order = makeOrder({ status: 'PROCESSING', awbCode: 'AWB-LOCKED' });
+    it('blocks manual SHIPPING write when AWB exists (carrier owns the lifecycle)', async () => {
+      const order = makeOrder({ status: 'CONFIRMED', awbCode: 'AWB-LOCKED' });
       mockOrderFindUnique.mockResolvedValue(order);
 
       await expect(
-        adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'SHIPPED' as any })
+        adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'SHIPPING' as any })
       ).rejects.toMatchObject({
         statusCode: 400,
         message: expect.stringContaining('owned by Shiprocket'),
@@ -569,7 +541,7 @@ describe('adminOrderService', () => {
     });
 
     it('blocks manual DELIVERED write when AWB exists', async () => {
-      const order = makeOrder({ status: 'SHIPPED', awbCode: 'AWB-LOCKED' });
+      const order = makeOrder({ status: 'SHIPPING', awbCode: 'AWB-LOCKED' });
       mockOrderFindUnique.mockResolvedValue(order);
 
       await expect(
@@ -578,7 +550,7 @@ describe('adminOrderService', () => {
     });
 
     it('allows manual CANCELLED even when AWB exists (admin override pre-pickup)', async () => {
-      const order = makeOrder({ status: 'PROCESSING', awbCode: 'AWB-LOCKED' });
+      const order = makeOrder({ status: 'CONFIRMED', awbCode: 'AWB-LOCKED' });
       mockOrderFindUnique.mockResolvedValue(order);
       mockOrderUpdate.mockResolvedValue({});
       mockOrderStatusHistoryCreate.mockResolvedValue({});
@@ -589,22 +561,22 @@ describe('adminOrderService', () => {
       expect(result.status).toBe('CANCELLED');
     });
 
-    it('allows manual SHIPPED write when AWB is not yet assigned (pre-pickup flow)', async () => {
-      const order = makeOrder({ status: 'PROCESSING', awbCode: null });
+    it('allows manual SHIPPING write when AWB is not yet assigned (pre-pickup flow)', async () => {
+      const order = makeOrder({ status: 'CONFIRMED', awbCode: null });
       mockOrderFindUnique.mockResolvedValue(order);
       mockOrderUpdate.mockResolvedValue({});
       mockOrderStatusHistoryCreate.mockResolvedValue({});
 
       const result = await adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, {
-        status: 'SHIPPED' as any,
+        status: 'SHIPPING' as any,
       });
-      expect(result.status).toBe('SHIPPED');
+      expect(result.status).toBe('SHIPPING');
     });
 
     // --- Persistence checks -------------------------------------------------
 
     it('updates the order status in the database', async () => {
-      const order = makeOrder({ status: 'PLACED' });
+      const order = makeOrder({ status: 'PENDING' });
       mockOrderFindUnique.mockResolvedValue(order);
       mockOrderUpdate.mockResolvedValue({});
       mockOrderStatusHistoryCreate.mockResolvedValue({});
@@ -620,7 +592,7 @@ describe('adminOrderService', () => {
     });
 
     it('creates an OrderStatusHistory entry with the admin id', async () => {
-      const order = makeOrder({ status: 'PLACED' });
+      const order = makeOrder({ status: 'PENDING' });
       mockOrderFindUnique.mockResolvedValue(order);
       mockOrderUpdate.mockResolvedValue({});
       mockOrderStatusHistoryCreate.mockResolvedValue({});
@@ -639,7 +611,7 @@ describe('adminOrderService', () => {
     });
 
     it('uses a default note when no note is supplied', async () => {
-      const order = makeOrder({ status: 'PLACED' });
+      const order = makeOrder({ status: 'PENDING' });
       mockOrderFindUnique.mockResolvedValue(order);
       mockOrderUpdate.mockResolvedValue({});
       mockOrderStatusHistoryCreate.mockResolvedValue({});
@@ -653,7 +625,7 @@ describe('adminOrderService', () => {
     });
 
     it('uses the caller-supplied note when provided', async () => {
-      const order = makeOrder({ status: 'PLACED' });
+      const order = makeOrder({ status: 'PENDING' });
       mockOrderFindUnique.mockResolvedValue(order);
       mockOrderUpdate.mockResolvedValue({});
       mockOrderStatusHistoryCreate.mockResolvedValue({});
@@ -668,7 +640,7 @@ describe('adminOrderService', () => {
     });
 
     it('returns the orderNumber and new status', async () => {
-      const order = makeOrder({ status: 'PLACED' });
+      const order = makeOrder({ status: 'PENDING' });
       mockOrderFindUnique.mockResolvedValue(order);
       mockOrderUpdate.mockResolvedValue({});
       mockOrderStatusHistoryCreate.mockResolvedValue({});
@@ -692,7 +664,7 @@ describe('adminOrderService', () => {
     });
 
     it('propagates database errors from order.update', async () => {
-      const order = makeOrder({ status: 'PLACED' });
+      const order = makeOrder({ status: 'PENDING' });
       mockOrderFindUnique.mockResolvedValue(order);
       mockOrderUpdate.mockRejectedValue(new Error('Write failed'));
       mockOrderStatusHistoryCreate.mockResolvedValue({});
@@ -703,7 +675,7 @@ describe('adminOrderService', () => {
     });
 
     it('propagates database errors from orderStatusHistory.create', async () => {
-      const order = makeOrder({ status: 'PLACED' });
+      const order = makeOrder({ status: 'PENDING' });
       mockOrderFindUnique.mockResolvedValue(order);
       mockOrderUpdate.mockResolvedValue({});
       mockOrderStatusHistoryCreate.mockRejectedValue(new Error('History write failed'));
@@ -714,13 +686,13 @@ describe('adminOrderService', () => {
     });
 
     it('includes current and target statuses in the error message', async () => {
-      const order = makeOrder({ status: 'PROCESSING' });
+      const order = makeOrder({ status: 'SHIPPING' });
       mockOrderFindUnique.mockResolvedValue(order);
 
       await expect(
-        adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'PLACED' as any })
+        adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'PENDING' as any })
       ).rejects.toMatchObject({
-        message: expect.stringContaining('PROCESSING'),
+        message: expect.stringContaining('SHIPPING'),
       });
     });
   });

@@ -19,7 +19,7 @@ export const adminNotificationController = {
         // New orders (PLACED or CONFIRMED) in last 24 hours
         prisma.order.count({
           where: {
-            status: { in: ['PLACED', 'CONFIRMED'] },
+            status: { in: ['PENDING', 'CONFIRMED'] },
             createdAt: { gte: twentyFourHoursAgo },
           },
         }),
@@ -113,7 +113,7 @@ export const adminNotificationController = {
       // New orders (PLACED or CONFIRMED) in last 24 hours — high priority
       prisma.order.count({
         where: {
-          status: { in: ['PLACED', 'CONFIRMED'] },
+          status: { in: ['PENDING', 'CONFIRMED'] },
           createdAt: { gte: twentyFourHoursAgo },
         },
       }),

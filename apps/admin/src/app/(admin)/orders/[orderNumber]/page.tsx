@@ -32,24 +32,21 @@ import {
 } from '@/hooks/use-orders';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
-  PLACED: 'info',
+  PENDING: 'info',
   CONFIRMED: 'info',
-  PROCESSING: 'warning',
-  SHIPPED: 'warning',
-  OUT_FOR_DELIVERY: 'warning',
+  SHIPPING: 'warning',
   DELIVERED: 'success',
   CANCELLED: 'error',
   RETURNED: 'error',
-  REFUNDED: 'default',
 };
 
 const statusFlow = [
-  { value: 'PLACED', label: 'Placed' },
+  { value: 'PENDING', label: 'Pending' },
   { value: 'CONFIRMED', label: 'Confirmed' },
-  { value: 'PROCESSING', label: 'Processing' },
-  { value: 'SHIPPED', label: 'Shipped' },
-  { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
+  { value: 'SHIPPING', label: 'Shipping' },
   { value: 'DELIVERED', label: 'Delivered' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'RETURNED', label: 'Returned' },
 ];
 
 function formatPrice(amount: number | string) {
@@ -188,12 +185,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     );
   }
 
-  const cancelledOrFinal = ['CANCELLED', 'RETURNED', 'REFUNDED', 'DELIVERED'].includes(
-    order.status
-  );
-  const canFulfill = ['CONFIRMED', 'PROCESSING'].includes(order.status);
-  const canRefund =
-    order.payment?.status === 'CAPTURED' && !['CANCELLED', 'REFUNDED'].includes(order.status);
+  // DELIVERED stays out of the "final" bucket so admin can still approve a
+  // post-delivery return → RETURNED.
+  const cancelledOrFinal = ['CANCELLED', 'RETURNED'].includes(order.status);
+  const canFulfill = ['CONFIRMED'].includes(order.status);
+  const canRefund = order.payment?.status === 'CAPTURED' && order.status !== 'CANCELLED';
 
   return (
     <div className="space-y-6">
@@ -407,7 +403,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               </div>
             ) : (
               <p className="text-sm text-medium-gray py-4">
-                {order.status === 'PLACED'
+                {order.status === 'PENDING'
                   ? 'Confirm the order before creating a shipment.'
                   : 'No shipment for this order.'}
               </p>
@@ -489,11 +485,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <h3 className="text-base font-semibold text-charcoal mb-4">Update Status</h3>
               <div className="space-y-3">
                 {(() => {
-                  // Carrier-owned-status lock: once an AWB exists, Shiprocket drives
-                  // SHIPPED / OUT_FOR_DELIVERY / DELIVERED — hide those options
-                  // and surface the canonical source. CANCELLED stays available
-                  // because admin can still cancel pre-pickup orders.
-                  const CARRIER_OWNED = new Set(['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED']);
+                  // Carrier-owned-status lock: once an AWB exists, Shiprocket
+                  // drives SHIPPING and DELIVERED. Admin can still cancel
+                  // pre-pickup or approve a post-delivery return.
+                  const CARRIER_OWNED = new Set(['SHIPPING', 'DELIVERED']);
                   const carrierLocked = !!order.awbCode;
                   const availableOptions = carrierLocked
                     ? statusFlow.filter((opt) => !CARRIER_OWNED.has(opt.value))
@@ -503,8 +498,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                       {carrierLocked && (
                         <p className="text-xs text-medium-gray bg-off-white border border-light-gray rounded-md px-2.5 py-2 leading-snug">
                           AWB <span className="font-medium text-charcoal">{order.awbCode}</span> is
-                          assigned — Shiprocket owns Shipped / Out-for-Delivery / Delivered
-                          transitions. Cancel is the only manual override available.
+                          assigned — Shiprocket owns Shipping / Delivered transitions. Cancel and
+                          Returned remain available for manual override.
                         </p>
                       )}
                       <Select

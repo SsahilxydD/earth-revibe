@@ -314,7 +314,7 @@ function makeCreatedOrder(overrides: Record<string, unknown> = {}) {
     id: 'order-db-001',
     orderNumber: ORDER_NUMBER,
     userId: USER_ID,
-    status: 'PLACED',
+    status: 'PENDING',
     subtotal: 1000,
     discountAmount: 0,
     shippingAmount: 0,
@@ -333,7 +333,7 @@ function makeFullOrder(overrides: Record<string, unknown> = {}) {
     id: 'order-db-001',
     orderNumber: ORDER_NUMBER,
     userId: USER_ID,
-    status: 'PLACED',
+    status: 'PENDING',
     subtotal: 1000,
     discountAmount: 0,
     shippingAmount: 0,
@@ -1748,10 +1748,10 @@ describe('orderService', () => {
       mockOrderFindMany.mockResolvedValueOnce([]);
       mockOrderCount.mockResolvedValueOnce(0);
 
-      await orderService.listOrders(USER_ID, { page: 1, limit: 10, status: 'PLACED' as any });
+      await orderService.listOrders(USER_ID, { page: 1, limit: 10, status: 'PENDING' as any });
 
       expect(mockOrderFindMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ status: 'PLACED' }) })
+        expect.objectContaining({ where: expect.objectContaining({ status: 'PENDING' }) })
       );
     });
 
@@ -1909,7 +1909,7 @@ describe('orderService', () => {
         ).rejects.toMatchObject({ statusCode: 404, code: 'NOT_FOUND' });
       });
 
-      it.each([['SHIPPED'], ['DELIVERED'], ['RETURNED'], ['REFUNDED'], ['CANCELLED']])(
+      it.each([['SHIPPING'], ['DELIVERED'], ['RETURNED'], ['CANCELLED']])(
         "throws 400 when order status is '%s' (not cancellable)",
         async (status) => {
           mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ status }));
@@ -1923,7 +1923,7 @@ describe('orderService', () => {
         }
       );
 
-      it.each([['PLACED'], ['CONFIRMED'], ['PROCESSING']])(
+      it.each([['PENDING'], ['CONFIRMED']])(
         "allows cancellation when order status is '%s'",
         async (status) => {
           mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ status }));
