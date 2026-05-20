@@ -1,3 +1,4 @@
+# redeploy-marker: 2026-05-20 (PR #26 webhook dropped during Railway incident)
 [build]
 builder = "nixpacks"
 buildCommand = "pnpm install --frozen-lockfile && pnpm turbo build --filter=@earth-revibe/api"
