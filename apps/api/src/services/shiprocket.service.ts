@@ -79,6 +79,55 @@ function mapShiprocketStatus(
   return null;
 }
 
+/**
+ * Pull the "current carrier-reported status" out of Shiprocket's tracking_data.
+ *
+ * BUG HISTORY: I originally read tracking_data.shipment_status_id / .shipment_status
+ * directly. Those fields are a stale top-level rollup — for AWB 369342447516 the
+ * top-level showed SHIPPED (id 6) for hours after the order had been Delivered
+ * (the public tracking page and the activities log both said DELIVERED). Net
+ * effect: the sweep saw the same value as the DB, called it "unchanged", and
+ * never advanced the order.
+ *
+ * The canonical "what does the carrier say *right now*" lives in
+ * tracking_data.shipment_track[0].current_status_id / .current_status. We try
+ * that first; fall back to the most-recent shipment_track_activity entry; fall
+ * back to the legacy top-level fields only if everything else is missing.
+ */
+function extractCurrentStatus(trackingData: any): {
+  id: number | string | undefined;
+  text: string | number | undefined;
+} {
+  const track = Array.isArray(trackingData?.shipment_track)
+    ? trackingData.shipment_track[0]
+    : undefined;
+  if (track && (track.current_status_id || track.current_status)) {
+    return { id: track.current_status_id, text: track.current_status };
+  }
+
+  // Fallback: the most recent activity carries an `sr-status-label`. Sort by
+  // `date` desc so a non-chronological array still surfaces the latest.
+  const activities = Array.isArray(trackingData?.shipment_track_activities)
+    ? trackingData.shipment_track_activities
+    : [];
+  if (activities.length > 0) {
+    const latest = activities
+      .filter((a: any) => a?.date)
+      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    const label = latest?.['sr-status-label'];
+    if (typeof label === 'string' && label.length > 0) {
+      return { id: undefined, text: label };
+    }
+  }
+
+  // Last resort — the original (buggy) location. Kept so partial responses
+  // don't regress to "null status" when the top-level *is* meaningful.
+  return {
+    id: trackingData?.shipment_status_id,
+    text: trackingData?.shipment_status,
+  };
+}
+
 export const shiprocketService = {
   /**
    * Check courier serviceability and rates for a pincode.
@@ -325,18 +374,16 @@ export const shiprocketService = {
     }
 
     const trackingData = result.tracking_data || {};
-    const newStatus = mapShiprocketStatus(
-      trackingData.shipment_status_id,
-      trackingData.shipment_status
-    );
+    const { id: srStatusId, text: srStatusText } = extractCurrentStatus(trackingData);
+    const newStatus = mapShiprocketStatus(srStatusId, srStatusText);
     const activities = parseActivities(trackingData.shipment_track_activities);
 
     await syncTrackingState(orderId, {
       newStatus,
       currentStatus: order.status as OrderStatus,
       activities,
-      shipmentStatusId: trackingData.shipment_status_id,
-      shipmentStatusText: trackingData.shipment_status,
+      shipmentStatusId: typeof srStatusId === 'number' ? srStatusId : undefined,
+      shipmentStatusText: typeof srStatusText === 'string' ? srStatusText : undefined,
       source: 'tracking-read',
       orderNumber: order.orderNumber,
     });
@@ -347,8 +394,8 @@ export const shiprocketService = {
       awbCode: order.awbCode,
       courierName: order.courierName,
       trackingUrl: order.trackingUrl,
-      currentStatus: trackingData.shipment_status_id,
-      currentStatusDescription: trackingData.shipment_status,
+      currentStatus: typeof srStatusId === 'number' ? srStatusId : undefined,
+      currentStatusDescription: typeof srStatusText === 'string' ? srStatusText : undefined,
       etd: trackingData.etd,
       activities: activities.map((a) => ({
         date: a.occurredAt.toISOString(),
@@ -397,18 +444,16 @@ export const shiprocketService = {
       try {
         const result = await shiprocketRequest<any>(`/courier/track/awb/${order.awbCode}`);
         const trackingData = result.tracking_data || {};
-        const newStatus = mapShiprocketStatus(
-          trackingData.shipment_status_id,
-          trackingData.shipment_status
-        );
+        const { id: srStatusId, text: srStatusText } = extractCurrentStatus(trackingData);
+        const newStatus = mapShiprocketStatus(srStatusId, srStatusText);
         const activities = parseActivities(trackingData.shipment_track_activities);
 
         const changed = await syncTrackingState(order.id, {
           newStatus,
           currentStatus: order.status as OrderStatus,
           activities,
-          shipmentStatusId: trackingData.shipment_status_id,
-          shipmentStatusText: trackingData.shipment_status,
+          shipmentStatusId: typeof srStatusId === 'number' ? srStatusId : undefined,
+          shipmentStatusText: typeof srStatusText === 'string' ? srStatusText : undefined,
           source: 'cron-refresh',
           orderNumber: order.orderNumber,
         });
@@ -496,18 +541,16 @@ export const shiprocketService = {
 
     const result = await shiprocketRequest<any>(`/courier/track/awb/${awbCode}`);
     const trackingData = result.tracking_data || {};
-    const newStatus = mapShiprocketStatus(
-      trackingData.shipment_status_id,
-      trackingData.shipment_status
-    );
+    const { id: srStatusId, text: srStatusText } = extractCurrentStatus(trackingData);
+    const newStatus = mapShiprocketStatus(srStatusId, srStatusText);
     const activities = parseActivities(trackingData.shipment_track_activities);
 
     const changed = await syncTrackingState(order.id, {
       newStatus,
       currentStatus: order.status as OrderStatus,
       activities,
-      shipmentStatusId: trackingData.shipment_status_id,
-      shipmentStatusText: trackingData.shipment_status,
+      shipmentStatusId: typeof srStatusId === 'number' ? srStatusId : undefined,
+      shipmentStatusText: typeof srStatusText === 'string' ? srStatusText : undefined,
       source: 'webhook',
       orderNumber: order.orderNumber,
     });
