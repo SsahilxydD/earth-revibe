@@ -215,10 +215,17 @@ app.post('/api/v1/internal/cleanup', async (req, res) => {
       where: { expiresAt: { lt: new Date() } },
     });
 
+    // 3. Reconcile CONFIRMED orders missing a Shiprocket order — retries the
+    // post-payment fire-and-forget createShiprocketOrder for any that failed.
+    // See apps/api/src/services/shiprocket.service.ts:reconcileMissingShipments.
+    const { shiprocketService } = await import('./services/shiprocket.service.js');
+    const shiprocketReconciled = await shiprocketService.reconcileMissingShipments();
+
     logger.info(
       {
         reconciled,
         idempotencyKeysDeleted: idempotencyResult.count,
+        shiprocketReconciled,
       },
       'Cleanup completed'
     );
@@ -228,6 +235,7 @@ app.post('/api/v1/internal/cleanup', async (req, res) => {
       data: {
         reconciled,
         idempotencyKeysDeleted: idempotencyResult.count,
+        shiprocketReconciled,
       },
     });
   } catch (err) {
@@ -235,6 +243,50 @@ app.post('/api/v1/internal/cleanup', async (req, res) => {
     res
       .status(500)
       .json({ success: false, error: { code: 'CLEANUP_FAILED', message: 'Cleanup failed' } });
+  }
+});
+
+// Shiprocket shipment-status refresh cron.
+// cron-job.org should hit this every ~10 minutes with x-cron-secret.
+// Sweeps orders in flight (awbCode set + non-terminal status) and updates
+// order.status from Shiprocket's tracking API. Bounded to
+// APP_CONSTANTS.SHIPROCKET_REFRESH_BATCH_SIZE per call by default.
+// Accepts ?limit=N to cap the batch — useful for the first manual call after
+// deploy so a single curl can be limited to one order while we verify the
+// mapping against live Shiprocket data.
+app.post('/api/v1/internal/refresh-shipment-status', async (req, res) => {
+  if (env.CRON_SECRET && req.headers['x-cron-secret'] !== env.CRON_SECRET) {
+    res
+      .status(401)
+      .json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid cron secret' } });
+    return;
+  }
+  const limitParam = req.query.limit;
+  let limit: number | undefined;
+  if (typeof limitParam === 'string' && limitParam.length > 0) {
+    const parsed = Number(limitParam);
+    if (!Number.isFinite(parsed) || parsed < 1 || parsed > 500) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_LIMIT', message: 'limit must be an integer between 1 and 500' },
+      });
+      return;
+    }
+    limit = Math.floor(parsed);
+  }
+  try {
+    const { shiprocketService } = await import('./services/shiprocket.service.js');
+    const result = await shiprocketService.refreshAllPendingShipments(
+      limit !== undefined ? { limit } : {}
+    );
+    logger.info(result, 'Shiprocket status sweep complete');
+    res.json({ success: true, data: result });
+  } catch (err) {
+    logger.error({ err }, 'Shiprocket status sweep failed');
+    res.status(500).json({
+      success: false,
+      error: { code: 'REFRESH_FAILED', message: 'Shiprocket status sweep failed' },
+    });
   }
 });
 
