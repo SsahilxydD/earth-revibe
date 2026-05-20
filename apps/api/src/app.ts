@@ -290,6 +290,47 @@ app.post('/api/v1/internal/refresh-shipment-status', async (req, res) => {
   }
 });
 
+// Backfill awbCode for orders that have shiprocketOrderId but missing awbCode.
+// Caused by a historical bug in assignAWB where Shiprocket's response shape
+// wasn't parsed correctly and the AWB silently never landed in our DB.
+// Calls Shiprocket's /orders/show/{id} for each affected order and saves
+// the AWB + status. Run-as-needed; safe to repeat.
+app.post('/api/v1/internal/reconcile-shiprocket-awbs', async (req, res) => {
+  if (env.CRON_SECRET && req.headers['x-cron-secret'] !== env.CRON_SECRET) {
+    res
+      .status(401)
+      .json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid cron secret' } });
+    return;
+  }
+  const limitParam = req.query.limit;
+  let limit: number | undefined;
+  if (typeof limitParam === 'string' && limitParam.length > 0) {
+    const parsed = Number(limitParam);
+    if (!Number.isFinite(parsed) || parsed < 1 || parsed > 500) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_LIMIT', message: 'limit must be an integer between 1 and 500' },
+      });
+      return;
+    }
+    limit = Math.floor(parsed);
+  }
+  try {
+    const { shiprocketService } = await import('./services/shiprocket.service.js');
+    const result = await shiprocketService.reconcileMissingAwbs(
+      limit !== undefined ? { limit } : {}
+    );
+    logger.info(result, 'Shiprocket AWB backfill complete');
+    res.json({ success: true, data: result });
+  } catch (err) {
+    logger.error({ err }, 'Shiprocket AWB backfill failed');
+    res.status(500).json({
+      success: false,
+      error: { code: 'RECONCILE_FAILED', message: 'Shiprocket AWB backfill failed' },
+    });
+  }
+});
+
 // Guest cart snapshot — called when newsletter popup captures an email
 // Stores the guest's email + cart items so abandoned cart emails work for non-logged-in visitors
 app.post('/api/v1/cart/guest-snapshot', async (req, res) => {

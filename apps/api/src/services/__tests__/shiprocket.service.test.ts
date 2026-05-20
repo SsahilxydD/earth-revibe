@@ -462,6 +462,127 @@ describe('shiprocketService.refreshAllPendingShipments', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// reconcileMissingAwbs (backfill)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('shiprocketService.reconcileMissingAwbs', () => {
+  it('selects orders with shiprocketOrderId but null awbCode', async () => {
+    mockOrderFindMany.mockResolvedValue([]);
+    await shiprocketService.reconcileMissingAwbs({ limit: 20 });
+    const call = mockOrderFindMany.mock.calls[0][0];
+    expect(call.where.shiprocketOrderId).toEqual({ not: null });
+    expect(call.where.awbCode).toBeNull();
+    expect(call.where.status.in).toEqual(['CONFIRMED', 'SHIPPING', 'DELIVERED']);
+    expect(call.take).toBe(20);
+  });
+
+  it('backfills awbCode + status when Shiprocket /orders/show returns the assigned AWB', async () => {
+    mockOrderFindMany.mockResolvedValue([
+      {
+        id: 'o-stale',
+        orderNumber: 'ER-STALE',
+        shiprocketOrderId: 12345,
+        status: 'SHIPPING',
+      },
+    ]);
+    mockShiprocketRequest.mockResolvedValue({
+      data: {
+        id: 12345,
+        status: 'Delivered',
+        status_code: 7,
+        shipments: [{ id: 99, awb: '369342447516', courier_name: 'BlueDart', status: 'Delivered' }],
+      },
+    });
+
+    const result = await shiprocketService.reconcileMissingAwbs({ limit: 10 });
+
+    expect(result).toMatchObject({ scanned: 1, backfilled: 1, still_missing: 0, failed: 0 });
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'o-stale' },
+      data: expect.objectContaining({
+        awbCode: '369342447516',
+        courierName: 'BlueDart',
+        trackingUrl: 'https://shiprocket.co/tracking/369342447516',
+        lastShipmentSyncAt: expect.any(Date),
+        status: 'DELIVERED',
+      }),
+    });
+    expect(mockOrderStatusHistoryCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ orderId: 'o-stale', status: 'DELIVERED' }),
+    });
+  });
+
+  it('counts still_missing when Shiprocket has no AWB assigned yet', async () => {
+    mockOrderFindMany.mockResolvedValue([
+      { id: 'o-pending', orderNumber: 'ER-PENDING', shiprocketOrderId: 99, status: 'CONFIRMED' },
+    ]);
+    mockShiprocketRequest.mockResolvedValue({
+      data: { id: 99, status: 'NEW', shipments: [] },
+    });
+
+    const result = await shiprocketService.reconcileMissingAwbs({ limit: 10 });
+
+    expect(result).toMatchObject({ scanned: 1, backfilled: 0, still_missing: 1, failed: 0 });
+    expect(mockOrderUpdate).not.toHaveBeenCalled();
+  });
+
+  it('counts failures and keeps going when one order errors', async () => {
+    mockOrderFindMany.mockResolvedValue([
+      { id: 'o1', orderNumber: 'ER-1', shiprocketOrderId: 1, status: 'SHIPPING' },
+      { id: 'o2', orderNumber: 'ER-2', shiprocketOrderId: 2, status: 'SHIPPING' },
+    ]);
+    mockShiprocketRequest.mockRejectedValueOnce(new Error('500')).mockResolvedValueOnce({
+      data: { shipments: [{ awb: 'AWB-B', courier_name: 'Delhivery' }] },
+    });
+
+    const result = await shiprocketService.reconcileMissingAwbs({ limit: 10 });
+    expect(result).toMatchObject({ scanned: 2, backfilled: 1, still_missing: 0, failed: 1 });
+  });
+
+  it('handles the historical assign-awb response shape (data nested under .response.data)', async () => {
+    // Smoke check of extractAwbFromAssignResponse via the assignAWB path —
+    // covered here because reconcile and assign share the helper family.
+    mockOrderFindUnique.mockResolvedValue({ shiprocketShipmentId: 12345 });
+    mockShiprocketRequest.mockResolvedValue({
+      response: { data: { awb_code: '111122223333', courier_name: 'BlueDart' } },
+    });
+
+    const r = await shiprocketService.assignAWB('o-1');
+
+    expect(r).toEqual({ awbCode: '111122223333', courierName: 'BlueDart' });
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'o-1' },
+      data: expect.objectContaining({
+        awbCode: '111122223333',
+        courierName: 'BlueDart',
+        trackingUrl: 'https://shiprocket.co/tracking/111122223333',
+      }),
+    });
+  });
+
+  it('handles assign-awb response when awb_code is at the top level (real-world variant)', async () => {
+    mockOrderFindUnique.mockResolvedValue({ shiprocketShipmentId: 12345 });
+    mockShiprocketRequest.mockResolvedValue({
+      awb_code: 'TOP-LEVEL-AWB',
+      courier_name: 'Delhivery',
+    });
+
+    const r = await shiprocketService.assignAWB('o-1');
+
+    expect(r.awbCode).toBe('TOP-LEVEL-AWB');
+  });
+
+  it('THROWS when assign-awb response has no extractable awb_code (no more silent failures)', async () => {
+    mockOrderFindUnique.mockResolvedValue({ shiprocketShipmentId: 12345 });
+    mockShiprocketRequest.mockResolvedValue({
+      response: 'AWB Assignment Failed', // string instead of object — historical silent-fail trigger
+    });
+
+    await expect(shiprocketService.assignAWB('o-1')).rejects.toThrow('unrecognised');
+    expect(mockOrderUpdate).not.toHaveBeenCalled();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // refreshByAwb (webhook handler entry point)
 // ─────────────────────────────────────────────────────────────────────────────
 describe('shiprocketService.refreshByAwb', () => {
