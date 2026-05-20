@@ -315,11 +315,14 @@ export const shiprocketService = {
    */
   async refreshAllPendingShipments(options: { limit?: number } = {}): Promise<RefreshSweepResult> {
     const limit = options.limit ?? APP_CONSTANTS.SHIPROCKET_REFRESH_BATCH_SIZE;
+    // TODO: once the offline-sales-cluster soft-delete column lands on main,
+    // wrap this in the `notArchived` helper from utils/order-filters.ts so the
+    // sweep skips archived orders. The deletedAt field isn't in the committed
+    // Prisma schema yet, so referencing it here breaks CI's generated typings.
     const orders = await prisma.order.findMany({
       where: {
         awbCode: { not: null },
         status: { in: [OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.OUT_FOR_DELIVERY] },
-        deletedAt: null,
       },
       select: { id: true, orderNumber: true, awbCode: true, status: true },
       orderBy: { updatedAt: 'asc' },
@@ -381,12 +384,13 @@ export const shiprocketService = {
     // would have cleared (avoids racing the post-payment fire-and-forget).
     const cutoff = new Date(Date.now() - APP_CONSTANTS.SHIPROCKET_RECONCILE_MIN_AGE_MS);
 
+    // TODO: add `deletedAt: null` (via notArchived helper) once the
+    // offline-sales-cluster migration is on main — see same TODO above.
     const orders = await prisma.order.findMany({
       where: {
         status: OrderStatus.CONFIRMED,
         shiprocketOrderId: null,
         createdAt: { lt: cutoff },
-        deletedAt: null,
       },
       select: { id: true, orderNumber: true },
       orderBy: { createdAt: 'asc' },
