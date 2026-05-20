@@ -302,6 +302,63 @@ describe('shiprocketService.getTracking', () => {
     });
   });
 
+  it('reads shipment_track[0].current_status, NOT the stale top-level shipment_status (real-prod bug)', async () => {
+    // Reproduced from production: AWB 369342447516. Shiprocket left the top-level
+    // shipment_status at "Shipped"/6 for hours after delivery; the canonical
+    // current status lived in shipment_track[0].current_status_id = 7. Reading
+    // the wrong field made every sweep silently call it "unchanged".
+    mockOrderFindUnique.mockResolvedValue(trackedOrder);
+    mockShiprocketRequest.mockResolvedValue({
+      tracking_data: {
+        shipment_status_id: 6, // stale top-level says SHIPPED
+        shipment_status: 'Shipped',
+        shipment_track: [
+          { current_status_id: 7, current_status: 'Delivered' }, // truth
+        ],
+        shipment_track_activities: [],
+      },
+    });
+
+    await shiprocketService.getTracking('order-1');
+
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'order-1' },
+      data: { status: 'DELIVERED', lastShipmentSyncAt: expect.any(Date) },
+    });
+  });
+
+  it('falls back to most-recent activity sr-status-label when shipment_track is missing', async () => {
+    mockOrderFindUnique.mockResolvedValue(trackedOrder);
+    mockShiprocketRequest.mockResolvedValue({
+      tracking_data: {
+        // No shipment_track and the top-level fields lie or are absent.
+        shipment_status_id: 6,
+        shipment_status: 'Shipped',
+        shipment_track_activities: [
+          {
+            date: '2026-05-16 12:00:00',
+            'sr-status-label': 'PICKED UP',
+            activity: '',
+            location: '',
+          },
+          {
+            date: '2026-05-20 13:20:00',
+            'sr-status-label': 'Delivered',
+            activity: '',
+            location: '',
+          },
+        ],
+      },
+    });
+
+    await shiprocketService.getTracking('order-1');
+
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'order-1' },
+      data: { status: 'DELIVERED', lastShipmentSyncAt: expect.any(Date) },
+    });
+  });
+
   it('maps Shiprocket cancellation/RTO to CANCELLED/RETURNED (carrier-driven terminal)', async () => {
     mockOrderFindUnique.mockResolvedValue(trackedOrder);
     mockShiprocketRequest.mockResolvedValue({
