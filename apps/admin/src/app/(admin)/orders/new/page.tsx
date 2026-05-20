@@ -62,8 +62,13 @@ export default function NewManualOrderPage() {
   const [pickerSearch, setPickerSearch] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  // Picker UX: we want the variants the admin can actually sell first.
+  // The inventory endpoint's default sort is stock_asc (good for the
+  // restock dashboard, bad here) and would otherwise return only the
+  // worst-stocked variants in the first page.
   const { data: pickerData, isLoading: pickerLoading } = useInventory({
     search: pickerSearch || undefined,
+    sortBy: 'stock_desc',
     limit: 8,
   });
 

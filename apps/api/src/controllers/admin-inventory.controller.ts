@@ -53,6 +53,11 @@ export const adminInventoryController = {
               name: true,
               slug: true,
               status: true,
+              // Picker UIs (e.g. manual-order /orders/new) fall back to
+              // product.price when the variant doesn't carry its own price.
+              // Without this select the fallback collapses to 0 and every
+              // row in the picker reads "₹0".
+              price: true,
               images: {
                 where: { isPrimary: true },
                 take: 1,
