@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Eye, RefreshCw, Plus } from 'lucide-react';
+import { Search, Eye, RefreshCw, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { Button, Badge, Card, Select } from '@earth-revibe/ui';
+import { Modal } from '@earth-revibe/ui/modal';
 import { Skeleton } from '@earth-revibe/ui/skeleton';
-import { useOrders } from '@/hooks/use-orders';
+import { useOrders, useArchiveOrder } from '@/hooks/use-orders';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { toast } from '@earth-revibe/ui';
@@ -78,7 +79,14 @@ export default function OrdersPage() {
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
 
+  // Archive-confirmation modal state. We collect the orderNumber from the
+  // row the admin clicked and an optional reason — the same shape the
+  // detail-page archive flow uses, so the audit-trail entry is consistent.
+  const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
+  const [archiveReason, setArchiveReason] = useState('');
+
   const qc = useQueryClient();
+  const archiveOrder = useArchiveOrder();
 
   const { data, isLoading, isError } = useOrders({
     page,
@@ -86,6 +94,21 @@ export default function OrdersPage() {
     status: status || undefined,
     search: search || undefined,
   });
+
+  const handleConfirmArchive = async () => {
+    if (!archiveTarget) return;
+    try {
+      await archiveOrder.mutateAsync({
+        orderNumber: archiveTarget,
+        reason: archiveReason.trim() || undefined,
+      });
+      toast.success(`Order ${archiveTarget} archived`);
+      setArchiveTarget(null);
+      setArchiveReason('');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to archive order');
+    }
+  };
 
   const syncMutation = useMutation({
     mutationFn: () =>
@@ -301,7 +324,7 @@ export default function OrdersPage() {
                         {formatPrice(order.totalAmount)}
                       </td>
                       <td className="px-6 py-3">
-                        <div className="flex justify-end">
+                        <div className="flex justify-end gap-1">
                           <Link
                             href={`/orders/${order.orderNumber}`}
                             className="p-1.5 rounded-md hover:bg-off-white transition-colors"
@@ -309,6 +332,14 @@ export default function OrdersPage() {
                           >
                             <Eye size={16} className="text-dark-gray" />
                           </Link>
+                          <button
+                            type="button"
+                            onClick={() => setArchiveTarget(order.orderNumber)}
+                            className="p-1.5 rounded-md hover:bg-red-50 transition-colors"
+                            title="Archive (soft-delete)"
+                          >
+                            <Trash2 size={16} className="text-red-600" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -346,6 +377,64 @@ export default function OrdersPage() {
           </>
         )}
       </Card>
+
+      {/* Archive confirmation — soft-delete only. Order disappears from this
+          list + analytics aggregates, but the row + history + payment are
+          retained and the order can be restored from the detail page. */}
+      <Modal
+        isOpen={archiveTarget !== null}
+        onClose={() => {
+          setArchiveTarget(null);
+          setArchiveReason('');
+        }}
+        title="Archive order"
+        size="sm"
+      >
+        <div className="flex gap-3 mb-4">
+          <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-charcoal">
+            Archive order <span className="font-mono">#{archiveTarget}</span>? It will be hidden
+            from this list, customer history, and ALL analytics aggregates. Payment and status
+            history are retained — you can restore it from the order detail page.
+            <br />
+            <span className="text-medium-gray text-xs mt-1 inline-block">
+              Archiving is not a refund. If money was charged, initiate a refund first.
+            </span>
+          </p>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-charcoal mb-1">
+              Reason (optional)
+            </label>
+            <input
+              type="text"
+              value={archiveReason}
+              onChange={(e) => setArchiveReason(e.target.value)}
+              placeholder="e.g. test order, duplicate"
+              className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setArchiveTarget(null);
+                setArchiveReason('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmArchive}
+              disabled={archiveOrder.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {archiveOrder.isPending ? 'Archiving…' : 'Confirm Archive'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
