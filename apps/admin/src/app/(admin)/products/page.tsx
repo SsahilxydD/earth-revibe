@@ -11,6 +11,7 @@ import {
   Upload,
   CheckSquare,
   FolderInput,
+  Package,
 } from 'lucide-react';
 import { Button, Badge, Card, Select, Modal } from '@earth-revibe/ui';
 import { toast } from '@earth-revibe/ui/toast';
@@ -353,9 +354,26 @@ export default function ProductsPage() {
                         />
                       </td>
                       <td className="px-6 py-3">
-                        <div>
-                          <p className="font-medium text-charcoal">{product.name}</p>
-                          <p className="text-xs text-medium-gray">{product.slug}</p>
+                        <div className="flex items-center gap-3">
+                          {/* Primary image — falls back to Package icon when a
+                              product has no images yet (in-draft or just-created
+                              listings). Same pattern as the Inventory tab so
+                              the two pages feel consistent. */}
+                          {product.images?.[0] ? (
+                            <img
+                              src={product.images[0].url}
+                              alt={product.images[0].altText || product.name}
+                              className="w-9 h-9 rounded-md object-cover bg-off-white flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-md bg-off-white flex items-center justify-center flex-shrink-0">
+                              <Package size={16} className="text-medium-gray" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-medium text-charcoal truncate">{product.name}</p>
+                            <p className="text-xs text-medium-gray truncate">{product.slug}</p>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-3 text-dark-gray">

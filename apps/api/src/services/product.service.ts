@@ -15,6 +15,22 @@ function generateSlug(name: string): string {
   return slugify(name, { lower: true, strict: true });
 }
 
+const listCache = new Map<string, { data: unknown; expiresAt: number }>();
+const LIST_CACHE_TTL_MS = 60_000;
+
+function getListCacheKey(query: ProductQuery): string {
+  const sorted = Object.fromEntries(
+    Object.entries(query)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b))
+  );
+  return JSON.stringify(sorted);
+}
+
+function invalidateListCache() {
+  listCache.clear();
+}
+
 export const productService = {
   async listProducts(query: ProductQuery, adminMode = false) {
     const {
@@ -36,6 +52,14 @@ export const productService = {
       sortOrder,
     } = query;
 
+    if (!adminMode) {
+      const cacheKey = getListCacheKey(query);
+      const cached = listCache.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        return cached.data as Awaited<ReturnType<typeof productService.listProducts>>;
+      }
+    }
+
     // Build where clause dynamically
     const where: Prisma.ProductWhereInput = {};
 
@@ -48,16 +72,25 @@ export const productService = {
     }
 
     if (category) {
-      // Match products by primary category OR via the many-to-many join table.
-      // `category` is `string` (single slug) or `string[]` (vibe → multi-category).
-      const slugFilter = Array.isArray(category) ? { in: category } : category;
-      const categoryFilter: Prisma.ProductWhereInput = {
-        OR: [
-          { category: { slug: slugFilter } },
-          { productCategories: { some: { category: { slug: slugFilter } } } },
-        ],
-      };
-      where.AND = [...((where.AND as Prisma.ProductWhereInput[]) || []), categoryFilter];
+      // Resolve slugs → IDs first (one indexed lookup on categories.slug @@unique)
+      // so the main query filters by FK directly, enabling the (status, categoryId)
+      // composite index instead of joining through the categories table on every row.
+      const slugList = Array.isArray(category) ? category : [category];
+      const matchedCategories = await prisma.category.findMany({
+        where: { slug: { in: slugList } },
+        select: { id: true },
+      });
+      const categoryIds = matchedCategories.map((c) => c.id);
+
+      if (categoryIds.length > 0) {
+        const categoryFilter: Prisma.ProductWhereInput = {
+          OR: [
+            { categoryId: { in: categoryIds } },
+            { productCategories: { some: { categoryId: { in: categoryIds } } } },
+          ],
+        };
+        where.AND = [...((where.AND as Prisma.ProductWhereInput[]) || []), categoryFilter];
+      }
     }
 
     if (slugs && slugs.length > 0) {
@@ -155,13 +188,22 @@ export const productService = {
       prisma.product.count({ where }),
     ]);
 
-    return {
+    const result = {
       products,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
     };
+
+    if (!adminMode) {
+      listCache.set(getListCacheKey(query), {
+        data: result,
+        expiresAt: Date.now() + LIST_CACHE_TTL_MS,
+      });
+    }
+
+    return result;
   },
 
   async getProductBySlug(slug: string, includeAll = false) {
@@ -251,7 +293,7 @@ export const productService = {
       },
     });
 
-    // Notify search engines about new product
+    invalidateListCache();
     notifyIndexNow([`/products/${product.slug}`]).catch(() => {});
 
     return product;
@@ -307,7 +349,7 @@ export const productService = {
       },
     });
 
-    // Notify search engines about updated product
+    invalidateListCache();
     notifyIndexNow([`/products/${product.slug}`]).catch(() => {});
 
     return product;
@@ -325,6 +367,7 @@ export const productService = {
       data: { status: 'ARCHIVED' },
     });
 
+    invalidateListCache();
     return product;
   },
 

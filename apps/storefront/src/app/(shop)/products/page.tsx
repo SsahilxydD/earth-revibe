@@ -135,7 +135,7 @@ function ProductsContent() {
     [activeVibe, category, sortBy, sortOrder, minPrice, maxPrice, size, color, search]
   );
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching, isError } =
     useInfiniteProducts(queryParams);
 
   // Prefetch the other 4 vibes in the background a moment after first paint.
@@ -220,6 +220,10 @@ function ProductsContent() {
   }, [data]);
 
   const allProducts = rawProducts;
+
+  const prevProductsRef = useRef<typeof rawProducts>([]);
+  if (rawProducts.length > 0) prevProductsRef.current = rawProducts;
+  const displayProducts = rawProducts.length > 0 ? rawProducts : prevProductsRef.current;
 
   const totalCount = data?.pages?.[0]?.pagination?.total ?? allProducts.length;
 
@@ -724,8 +728,24 @@ function ProductsContent() {
           </div>
         )}
 
+        {isFetching && !isLoading && (
+          <motion.div
+            key="loading-bar"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1.8, ease: 'easeInOut' }}
+            style={{
+              height: 2,
+              backgroundColor: '#000',
+              margin: '0 28px',
+              opacity: 0.18,
+              transformOrigin: '0% 50%',
+            }}
+          />
+        )}
+
         {/* Product grid */}
-        {isLoading ? (
+        {isLoading && displayProducts.length === 0 ? (
           <div style={{ padding: '14px 28px 28px 28px' }}>
             <ProductGridSkeleton />
           </div>
@@ -735,7 +755,7 @@ function ProductsContent() {
               Something went wrong. Please try again.
             </p>
           </div>
-        ) : allProducts.length === 0 ? (
+        ) : displayProducts.length === 0 ? (
           <div
             style={{
               padding: '80px 28px',
@@ -767,9 +787,15 @@ function ProductsContent() {
             )}
           </div>
         ) : (
-          <div style={{ padding: '14px 4px 28px 4px' }}>
+          <div
+            style={{
+              padding: '14px 4px 28px 4px',
+              opacity: isFetching ? 0.45 : 1,
+              transition: 'opacity 0.2s ease',
+            }}
+          >
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 4px' }}>
-              {allProducts.map((product, i) => {
+              {displayProducts.map((product, i) => {
                 const items = [];
                 items.push(<ProductCard key={product.id} product={product} index={i} />);
                 if (i === 1) {
