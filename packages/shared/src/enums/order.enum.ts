@@ -20,6 +20,11 @@ export enum OrderStatus {
   RETURNED = 'RETURNED',
 }
 
+export enum OrderSource {
+  ONLINE = 'ONLINE',
+  OFFLINE = 'OFFLINE',
+}
+
 export enum ReturnStatus {
   REQUESTED = 'REQUESTED',
   APPROVED = 'APPROVED',

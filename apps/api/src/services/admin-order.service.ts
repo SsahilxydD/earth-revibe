@@ -3,10 +3,13 @@ import { ApiError } from '../utils/api-error';
 import { sendWhatsAppOrderUpdate } from './whatsapp.service';
 import { logger } from '../config/logger';
 import { isCarrierOwnedStatus } from './shiprocket.service';
+import { generateOrderNumber } from '@earth-revibe/shared';
 import type {
   AdminOrderQuery,
   UpdateOrderStatusInput,
   AddOrderNoteInput,
+  CreateManualOrderInput,
+  ArchiveOrderInput,
 } from '@earth-revibe/shared';
 
 /**
@@ -30,10 +33,17 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 
 export const adminOrderService = {
   async listOrders(query: AdminOrderQuery) {
-    const { status, search, startDate, endDate, page, limit, sortBy, sortOrder } = query;
+    const { status, source, view, search, startDate, endDate, page, limit, sortBy, sortOrder } =
+      query;
     const where: Prisma.OrderWhereInput = {};
 
+    // Soft-delete view: 'active' hides archived (default), 'archived' shows
+    // only archived, 'all' shows everything.
+    if (view === 'active') where.deletedAt = null;
+    else if (view === 'archived') where.deletedAt = { not: null };
+
     if (status) where.status = status;
+    if (source) where.source = source;
     if (search) {
       where.OR = [
         { orderNumber: { contains: search, mode: 'insensitive' } },
@@ -41,6 +51,8 @@ export const adminOrderService = {
         { user: { email: { contains: search, mode: 'insensitive' } } },
         { user: { firstName: { contains: search, mode: 'insensitive' } } },
         { user: { lastName: { contains: search, mode: 'insensitive' } } },
+        { address: { fullName: { contains: search, mode: 'insensitive' } } },
+        { address: { phone: { contains: search, mode: 'insensitive' } } },
       ];
     }
     if (startDate || endDate) {
@@ -58,6 +70,7 @@ export const adminOrderService = {
         orderBy: { [sortBy]: sortOrder },
         include: {
           user: { select: { id: true, firstName: true, lastName: true, email: true } },
+          address: { select: { fullName: true, phone: true } },
           items: true,
           payment: { select: { status: true, method: true, paidAt: true } },
         },
@@ -69,6 +82,8 @@ export const adminOrderService = {
   },
 
   async getOrder(orderNumber: string) {
+    // Note: NOT filtered by deletedAt — the detail page must be able to open
+    // an archived order to view it and restore it.
     const order = await prisma.order.findUnique({
       where: { orderNumber },
       include: {
@@ -161,5 +176,175 @@ export const adminOrderService = {
     });
 
     return note;
+  },
+
+  /**
+   * Create a manual order for an offline / in-person sale.
+   * - source = OFFLINE, no Razorpay Payment row is created.
+   * - Stock is decremented atomically (same race-safe pattern as checkout).
+   * - A throwaway Address row is created from the customer details because
+   *   Order.addressId is required by the schema.
+   * - The offline payment method (cash/UPI/etc.) is recorded as an internal note.
+   */
+  async createManualOrder(adminId: string, data: CreateManualOrderInput) {
+    const variantIds = [...new Set(data.items.map((i) => i.variantId))];
+    const variants = await prisma.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            images: { where: { isPrimary: true }, take: 1 },
+          },
+        },
+      },
+    });
+    const variantMap = new Map(variants.map((v) => [v.id, v]));
+
+    let subtotal = 0;
+    const orderItems = data.items.map((item) => {
+      const v = variantMap.get(item.variantId);
+      if (!v) throw ApiError.badRequest(`Product variant ${item.variantId} not found`);
+      const unitPrice = item.unitPrice ?? (Number(v.price) || Number(v.product.price));
+      const totalPrice = unitPrice * item.quantity;
+      subtotal += totalPrice;
+      return {
+        variantId: v.id,
+        quantity: item.quantity,
+        unitPrice,
+        totalPrice,
+        productName: v.product.name,
+        productImage: v.product.images[0]?.url || null,
+        variantSize: v.size,
+        variantColor: v.color,
+      };
+    });
+
+    const discountAmount = data.discountAmount || 0;
+    const shippingAmount = data.shippingAmount || 0;
+    const taxAmount = data.taxAmount || 0;
+    const totalAmount = Math.max(subtotal - discountAmount + shippingAmount + taxAmount, 0);
+    const orderNumber = generateOrderNumber();
+
+    const order = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // Reserve stock by decrementing inside the transaction (race-safe).
+        for (const item of data.items) {
+          const result = await tx.productVariant.updateMany({
+            where: { id: item.variantId, stock: { gte: item.quantity } },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (result.count === 0) {
+            const v = variantMap.get(item.variantId);
+            throw ApiError.conflict(`Insufficient stock for ${v?.product.name ?? item.variantId}`);
+          }
+        }
+
+        // Order.addressId is required → create an address from offline details.
+        const address = await tx.address.create({
+          data: {
+            label: 'Offline',
+            fullName: data.customerName,
+            phone: data.customerPhone,
+            line1: 'Offline / in-person sale',
+            city: '-',
+            state: '-',
+            pinCode: '000000',
+          },
+        });
+
+        const created = await tx.order.create({
+          data: {
+            orderNumber,
+            guestEmail: data.customerEmail || null,
+            addressId: address.id,
+            source: 'OFFLINE',
+            status: data.status,
+            subtotal,
+            discountAmount,
+            shippingAmount,
+            taxAmount,
+            totalAmount,
+            items: { create: orderItems },
+            statusHistory: {
+              create: {
+                status: data.status,
+                note: 'Manual offline order created',
+                changedBy: adminId,
+              },
+            },
+          },
+          include: { items: true },
+        });
+
+        const noteParts: string[] = [];
+        if (data.paymentMethod) noteParts.push(`Offline payment method: ${data.paymentMethod}`);
+        if (data.note) noteParts.push(data.note);
+        if (noteParts.length > 0) {
+          await tx.orderNote.create({
+            data: {
+              orderId: created.id,
+              userId: adminId,
+              content: noteParts.join('\n'),
+              isInternal: true,
+            },
+          });
+        }
+
+        return created;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
+
+    return order;
+  },
+
+  /**
+   * Soft-delete (archive) an order. Data is retained and restorable; the
+   * order is hidden from lists/history/analytics. Distinct from CANCELLED
+   * (which is an order-status with refund/restock side-effects).
+   */
+  async archiveOrder(orderNumber: string, adminId: string, data: ArchiveOrderInput) {
+    const order = await prisma.order.findUnique({ where: { orderNumber } });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.deletedAt) throw ApiError.badRequest('Order is already archived');
+
+    const deletedAt = new Date();
+    await prisma.$transaction([
+      prisma.order.update({ where: { id: order.id }, data: { deletedAt } }),
+      prisma.orderStatusHistory.create({
+        data: {
+          orderId: order.id,
+          status: order.status,
+          note: data.reason ? `Archived: ${data.reason}` : 'Order archived by admin',
+          changedBy: adminId,
+        },
+      }),
+    ]);
+
+    return { orderNumber: order.orderNumber, deletedAt };
+  },
+
+  /** Restore a previously archived order. */
+  async restoreOrder(orderNumber: string, adminId: string) {
+    const order = await prisma.order.findUnique({ where: { orderNumber } });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (!order.deletedAt) throw ApiError.badRequest('Order is not archived');
+
+    await prisma.$transaction([
+      prisma.order.update({ where: { id: order.id }, data: { deletedAt: null } }),
+      prisma.orderStatusHistory.create({
+        data: {
+          orderId: order.id,
+          status: order.status,
+          note: 'Order restored from archive',
+          changedBy: adminId,
+        },
+      }),
+    ]);
+
+    return { orderNumber: order.orderNumber };
   },
 };

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import type { OrderListParams } from '@/types';
+import { revalidateStorefront } from '@/lib/revalidate-storefront';
+import type { OrderListParams, CreateManualOrderInput } from '@/types';
 
 export function useOrders(params: OrderListParams = {}) {
   const searchParams = new URLSearchParams();
@@ -158,6 +159,51 @@ export function useRefundOrder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-order'] });
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+    },
+  });
+}
+
+// ---- Manual / offline orders + archive ----
+
+/** Create a manual offline order (in-person sale entered by an admin). */
+export function useCreateManualOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateManualOrderInput) => api.post('/admin/orders/manual', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      // Stock changed → storefront product pages may show new availability.
+      revalidateStorefront(['products']);
+    },
+  });
+}
+
+/** Soft-delete (archive) an order. Distinct from cancelling. */
+export function useArchiveOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderNumber, reason }: { orderNumber: string; reason?: string }) =>
+      api.delete(`/admin/orders/${orderNumber}`, reason ? { reason } : {}),
+    onSuccess: (_data, { orderNumber }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-order', orderNumber] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+    },
+  });
+}
+
+/** Restore a previously archived order. */
+export function useRestoreOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderNumber: string) => api.post(`/admin/orders/${orderNumber}/restore`),
+    onSuccess: (_data, orderNumber) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-order', orderNumber] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
     },
   });
 }

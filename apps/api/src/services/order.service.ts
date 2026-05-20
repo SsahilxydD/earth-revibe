@@ -416,7 +416,8 @@ export const orderService = {
 
   async listOrders(userId: string, query: OrderQuery) {
     const { status, page, limit } = query;
-    const where: Prisma.OrderWhereInput = { userId };
+    // deletedAt: null — archived orders are hidden from customer history.
+    const where: Prisma.OrderWhereInput = { userId, deletedAt: null };
     if (status) where.status = status;
 
     const [orders, total] = await Promise.all([
@@ -438,7 +439,7 @@ export const orderService = {
 
   async getOrder(userId: string, orderNumber: string) {
     const order = await prisma.order.findFirst({
-      where: { orderNumber, userId },
+      where: { orderNumber, userId, deletedAt: null },
       include: {
         items: true,
         payment: true,

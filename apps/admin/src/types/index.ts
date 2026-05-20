@@ -79,4 +79,13 @@ export type {
 export type { ClientApiError as ApiError } from '@earth-revibe/shared';
 
 // Re-export enums
-export type { ProductStatus, OrderStatus, PaymentStatus } from '@earth-revibe/shared';
+export type { ProductStatus, OrderStatus, PaymentStatus, OrderSource } from '@earth-revibe/shared';
+
+// Manual / offline order types
+export type {
+  CreateManualOrderInput,
+  ManualOrderItemInput,
+  OfflinePaymentMethod,
+  ArchiveOrderInput,
+  AdminOrderQuery,
+} from '@earth-revibe/shared';

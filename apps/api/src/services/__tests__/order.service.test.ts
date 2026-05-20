@@ -1863,8 +1863,12 @@ describe('orderService', () => {
 
       await orderService.getOrder(USER_ID, 'ORD-XYZ').catch(() => {});
 
+      // deletedAt:null is added by the soft-delete exclusion — archived orders
+      // must not be visible in customer history.
       expect(mockOrderFindFirst).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { orderNumber: 'ORD-XYZ', userId: USER_ID } })
+        expect.objectContaining({
+          where: { orderNumber: 'ORD-XYZ', userId: USER_ID, deletedAt: null },
+        })
       );
     });
 

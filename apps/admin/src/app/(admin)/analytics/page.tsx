@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { TrendingUp, ShoppingBag, Users, Headset } from 'lucide-react';
+import { TrendingUp, ShoppingBag, Users, Headset, Globe, Store } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Card, Badge, Skeleton } from '@earth-revibe/ui';
@@ -98,6 +98,84 @@ export default function AnalyticsPage() {
         </div>
       )}
 
+      {/* Sales by channel — online (storefront) vs offline (manual / in-person) */}
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold text-charcoal">Sales by channel</h3>
+          <span className="text-xs text-medium-gray">Excludes cancelled and archived orders</span>
+        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        ) : !data?.salesBySource ? (
+          <p className="text-sm text-medium-gray">No data yet</p>
+        ) : (
+          (() => {
+            const online = data.salesBySource.online ?? { revenue: 0, orders: 0 };
+            const offline = data.salesBySource.offline ?? { revenue: 0, orders: 0 };
+            const totalRev = Number(online.revenue) + Number(offline.revenue);
+            const onlinePct = totalRev > 0 ? (Number(online.revenue) / totalRev) * 100 : 0;
+            const offlinePct = totalRev > 0 ? 100 - onlinePct : 0;
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3 p-4 rounded-lg border border-light-gray">
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                      <Globe size={18} className="text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-medium-gray">Online (storefront)</p>
+                      <p className="text-xl font-semibold text-charcoal">
+                        {formatPrice(online.revenue)}
+                      </p>
+                      <p className="text-xs text-medium-gray mt-0.5">
+                        {online.orders} order{online.orders !== 1 ? 's' : ''} &middot;{' '}
+                        {onlinePct.toFixed(0)}%
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-4 rounded-lg border border-light-gray">
+                    <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                      <Store size={18} className="text-amber-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-medium-gray">Offline (manual)</p>
+                      <p className="text-xl font-semibold text-charcoal">
+                        {formatPrice(offline.revenue)}
+                      </p>
+                      <p className="text-xs text-medium-gray mt-0.5">
+                        {offline.orders} order{offline.orders !== 1 ? 's' : ''} &middot;{' '}
+                        {offlinePct.toFixed(0)}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {/* Stacked split bar */}
+                {totalRev > 0 && (
+                  <div
+                    className="h-2 w-full rounded-full overflow-hidden bg-light-gray flex"
+                    aria-label="Online vs offline revenue split"
+                  >
+                    <div
+                      className="bg-blue-500"
+                      style={{ width: `${onlinePct}%` }}
+                      title={`Online ${onlinePct.toFixed(0)}%`}
+                    />
+                    <div
+                      className="bg-amber-500"
+                      style={{ width: `${offlinePct}%` }}
+                      title={`Offline ${offlinePct.toFixed(0)}%`}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })()
+        )}
+      </Card>
+
       {!isLoading && data && <AnalyticsCharts data={data} />}
 
       <Card>
@@ -150,7 +228,7 @@ export default function AnalyticsPage() {
                       ? 'success'
                       : s.status === 'CANCELLED'
                         ? 'error'
-                        : s.status === 'PROCESSING' || s.status === 'SHIPPED'
+                        : s.status === 'SHIPPING'
                           ? 'warning'
                           : 'default'
                   }

@@ -622,6 +622,9 @@ model Order {
   addressId       String
   address         Address       @relation(fields: [addressId], references: [id])
   status          OrderStatus   @default(PENDING)
+  /// Where the order originated. ONLINE = storefront checkout (Razorpay).
+  /// OFFLINE = manual entry by admin for in-person / offline sales (no Payment row).
+  source          OrderSource   @default(ONLINE)
   subtotal        Decimal       @db.Decimal(10, 2)
   discountAmount  Decimal       @default(0) @db.Decimal(10, 2)
   shippingAmount  Decimal       @default(0) @db.Decimal(10, 2)
@@ -641,6 +644,10 @@ model Order {
   /// stale rows apart from genuinely-unchanged ones. Stamped on every
   /// successful tracking call regardless of whether the status changed.
   lastShipmentSyncAt   DateTime?
+  /// Soft-delete / archive marker. When set, the order is hidden from admin
+  /// lists, customer history, and ALL analytics aggregates, but retained
+  /// (payment, history, audit trail) and restorable. Never hard-deleted.
+  deletedAt       DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -657,6 +664,8 @@ model Order {
   @@index([addressId])
   @@index([discountCodeId])
   @@index([lastShipmentSyncAt])
+  @@index([source])
+  @@index([deletedAt])
   @@map("orders")
 }
 
@@ -690,6 +699,11 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   RETURNED
+}
+
+enum OrderSource {
+  ONLINE
+  OFFLINE
 }
 
 model OrderItem {

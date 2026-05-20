@@ -411,7 +411,12 @@ export interface OrderListParams {
   page?: number;
   limit?: number;
   status?: string;
+  source?: string;
+  /** Soft-delete view: 'active' hides archived (default), 'archived', or 'all'. */
+  view?: 'active' | 'archived' | 'all';
   search?: string;
+  startDate?: string;
+  endDate?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }

@@ -74,6 +74,7 @@ import type {
 // ---------------------------------------------------------------------------
 
 const BASE_QUERY: AdminOrderQuery = {
+  view: 'active',
   page: 1,
   limit: 20,
   sortBy: 'createdAt',
@@ -189,7 +190,9 @@ describe('adminOrderService', () => {
       const [call] = mockOrderFindMany.mock.calls;
       const where = call[0].where;
 
-      expect(where.OR).toHaveLength(5);
+      // OR clause covers order, guest email, user (email/first/last), and
+      // shipping-address (name/phone) for offline / manual orders.
+      expect(where.OR).toHaveLength(7);
       expect(where.OR).toEqual(
         expect.arrayContaining([
           { orderNumber: { contains: 'alice', mode: 'insensitive' } },
@@ -197,6 +200,8 @@ describe('adminOrderService', () => {
           { user: { email: { contains: 'alice', mode: 'insensitive' } } },
           { user: { firstName: { contains: 'alice', mode: 'insensitive' } } },
           { user: { lastName: { contains: 'alice', mode: 'insensitive' } } },
+          { address: { fullName: { contains: 'alice', mode: 'insensitive' } } },
+          { address: { phone: { contains: 'alice', mode: 'insensitive' } } },
         ])
       );
     });

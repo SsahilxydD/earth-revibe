@@ -30,4 +30,21 @@ export const adminOrderController = {
     const result = await reconcileStaleCheckouts();
     res.json({ success: true, data: result });
   },
+
+  async createManualOrder(req: Request, res: Response) {
+    const order = await adminOrderService.createManualOrder(req.user!.id, req.body);
+    res.status(201).json({ success: true, data: order });
+  },
+
+  async archiveOrder(req: Request, res: Response) {
+    const orderNumber = req.params.orderNumber as string;
+    const result = await adminOrderService.archiveOrder(orderNumber, req.user!.id, req.body ?? {});
+    res.json({ success: true, data: result });
+  },
+
+  async restoreOrder(req: Request, res: Response) {
+    const orderNumber = req.params.orderNumber as string;
+    const result = await adminOrderService.restoreOrder(orderNumber, req.user!.id);
+    res.json({ success: true, data: result });
+  },
 };
