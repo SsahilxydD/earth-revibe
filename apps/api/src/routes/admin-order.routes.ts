@@ -10,6 +10,8 @@ import {
   addOrderNoteSchema,
   createManualOrderSchema,
   archiveOrderSchema,
+  sendCustomerOtpSchema,
+  verifyCustomerOtpSchema,
 } from '@earth-revibe/shared';
 import { UserRole } from '@earth-revibe/shared';
 
@@ -19,6 +21,16 @@ router.use(authenticate);
 router.use(authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 
 router.post('/sync', asyncHandler(adminOrderController.syncOrders));
+router.post(
+  '/manual/send-otp',
+  validate({ body: sendCustomerOtpSchema }),
+  asyncHandler(adminOrderController.sendCustomerOtp)
+);
+router.post(
+  '/manual/verify-otp',
+  validate({ body: verifyCustomerOtpSchema }),
+  asyncHandler(adminOrderController.verifyCustomerOtp)
+);
 router.post(
   '/manual',
   validate({ body: createManualOrderSchema }),
