@@ -80,6 +80,96 @@ function mapShiprocketStatus(
 }
 
 /**
+ * Defensive extraction for /courier/assign/awb. Shiprocket has at least three
+ * documented + observed shapes for this endpoint:
+ *
+ *   1. `result.response.data.awb_code` (documented happy path)
+ *   2. `result.awb_code` (sometimes returned on re-assign / partial update)
+ *   3. `result.data.awb_code` (older accounts, undocumented variant)
+ *
+ * Returning undefined silently — as the original code did — meant the admin
+ * UI showed success while the DB never recorded the AWB. Now the caller
+ * throws when extraction fails so the failure surfaces.
+ */
+function extractAwbFromAssignResponse(result: any): {
+  awbCode: string | undefined;
+  courierName: string | undefined;
+} {
+  const candidates: any[] = [result?.response?.data, result?.data, result];
+  for (const c of candidates) {
+    if (c && typeof c.awb_code === 'string' && c.awb_code.trim().length > 0) {
+      return {
+        awbCode: c.awb_code.trim(),
+        courierName: typeof c.courier_name === 'string' ? c.courier_name : undefined,
+      };
+    }
+  }
+  return { awbCode: undefined, courierName: undefined };
+}
+
+/**
+ * Defensive extraction for /orders/show/{id}. The endpoint returns the order
+ * object with a nested `shipments` array; the first shipment's `awb` field
+ * is the canonical assigned AWB. Status lives at `status_code` (numeric) or
+ * `status` (text). Real responses sometimes nest under `data`, sometimes not.
+ */
+function extractFromOrderShow(result: any): {
+  awbCode: string | undefined;
+  courierName: string | undefined;
+  statusId: number | string | undefined;
+  statusText: string | undefined;
+} {
+  // Order object may be at result.data or at result directly.
+  const order = result?.data ?? result;
+  if (!order)
+    return {
+      awbCode: undefined,
+      courierName: undefined,
+      statusId: undefined,
+      statusText: undefined,
+    };
+
+  // Shipments may be at order.shipments (most common) or order.shipments[0] = single object.
+  const shipmentsRaw = order.shipments;
+  const shipment: any = Array.isArray(shipmentsRaw)
+    ? shipmentsRaw[0]
+    : shipmentsRaw && typeof shipmentsRaw === 'object'
+      ? shipmentsRaw
+      : undefined;
+
+  const awb =
+    typeof shipment?.awb === 'string' && shipment.awb.trim().length > 0
+      ? shipment.awb.trim()
+      : typeof shipment?.awb_code === 'string' && shipment.awb_code.trim().length > 0
+        ? shipment.awb_code.trim()
+        : undefined;
+
+  const courier =
+    typeof shipment?.courier_name === 'string'
+      ? shipment.courier_name
+      : typeof shipment?.courier === 'string'
+        ? shipment.courier
+        : undefined;
+
+  // Status may be at order.status (text), order.status_code (numeric), or
+  // shipment.status. Try in that order.
+  const statusId =
+    typeof order.status_code === 'number'
+      ? order.status_code
+      : typeof shipment?.status_code === 'number'
+        ? shipment.status_code
+        : undefined;
+  const statusText =
+    typeof order.status === 'string'
+      ? order.status
+      : typeof shipment?.status === 'string'
+        ? shipment.status
+        : undefined;
+
+  return { awbCode: awb, courierName: courier, statusId, statusText };
+}
+
+/**
  * Pull the "current carrier-reported status" out of Shiprocket's tracking_data.
  *
  * BUG HISTORY: I originally read tracking_data.shipment_status_id / .shipment_status
@@ -271,21 +361,40 @@ export const shiprocketService = {
       body,
     });
 
-    const awbCode = result.response?.data?.awb_code;
-    const courierName = result.response?.data?.courier_name;
+    // Shiprocket returns three different response shapes for this endpoint
+    // depending on whether the AWB was newly assigned, was already assigned,
+    // or hit a partial-failure (e.g., courier returned an error). The
+    // documented shape is `result.response.data.awb_code`, but real responses
+    // sometimes put it at `result.awb_code` or `result.data.awb_code`.
+    // Walk all three before giving up.
+    const extracted = extractAwbFromAssignResponse(result);
 
-    if (awbCode) {
-      await prisma.order.update({
-        where: { id: orderId },
-        data: {
-          awbCode,
-          courierName,
-          trackingUrl: `https://shiprocket.co/tracking/${awbCode}`,
-        },
-      });
+    if (!extracted.awbCode) {
+      // Historical bug: if extraction returned undefined we silently swallowed
+      // it and returned `{ awbCode: undefined }`, leaving the admin UI to show
+      // success while the DB stayed empty. We've since accumulated 23+ orders
+      // with shiprocketOrderId set but awbCode null. Now we throw — let the
+      // caller decide. The reconcile/backfill flow below recovers the AWB via
+      // /orders/show without going through this endpoint.
+      logger.error(
+        { orderId, shipmentId: order.shiprocketShipmentId, rawResponse: result },
+        'Shiprocket assign-awb returned a response we could not parse'
+      );
+      throw new Error(
+        'Shiprocket assigned AWB but the response shape was unrecognised — backfill via reconcile-awbs.'
+      );
     }
 
-    return { awbCode, courierName };
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        awbCode: extracted.awbCode,
+        courierName: extracted.courierName ?? null,
+        trackingUrl: `https://shiprocket.co/tracking/${extracted.awbCode}`,
+      },
+    });
+
+    return { awbCode: extracted.awbCode, courierName: extracted.courierName };
   },
 
   /**
@@ -524,6 +633,117 @@ export const shiprocketService = {
   },
 
   /**
+   * Backfill missing awbCodes from Shiprocket. For each order with
+   * shiprocketOrderId set but awbCode null, query /orders/show/{id} to read
+   * the assigned AWB and current carrier status, then persist both. This
+   * recovers from the historical assignAWB bug where the response wasn't
+   * parsed correctly and the AWB never landed in our DB.
+   *
+   * Returns counts: scanned (eligible), backfilled (awb saved), still_missing
+   * (Shiprocket says no AWB yet), failed (API error).
+   */
+  async reconcileMissingAwbs(options: { limit?: number } = {}): Promise<ReconcileAwbsResult> {
+    const limit = options.limit ?? APP_CONSTANTS.SHIPROCKET_RECONCILE_BATCH_SIZE;
+
+    const orders = await prisma.order.findMany({
+      where: {
+        shiprocketOrderId: { not: null },
+        awbCode: null,
+        // Don't bother with terminal-state orders — refunding a cancelled order
+        // doesn't help, and missing-AWB on a CANCELLED order is expected.
+        status: {
+          in: [OrderStatus.CONFIRMED, OrderStatus.SHIPPING, OrderStatus.DELIVERED],
+        },
+      },
+      select: {
+        id: true,
+        orderNumber: true,
+        shiprocketOrderId: true,
+        status: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    let backfilled = 0;
+    let still_missing = 0;
+    let failed = 0;
+
+    for (const order of orders) {
+      try {
+        // Shiprocket's /orders/show/{id} returns the order plus its shipments
+        // array. The first shipment's `awb` field is the canonical AWB.
+        const result = await shiprocketRequest<any>(`/orders/show/${order.shiprocketOrderId}`);
+        const extracted = extractFromOrderShow(result);
+
+        if (!extracted.awbCode) {
+          still_missing++;
+          logger.info(
+            {
+              orderId: order.id,
+              orderNumber: order.orderNumber,
+              shiprocketOrderId: order.shiprocketOrderId,
+            },
+            'Reconcile: Shiprocket has no AWB assigned for this order yet'
+          );
+        } else {
+          // Atomic update: save AWB, courier, tracking URL, sync timestamp,
+          // and (if Shiprocket also reports a status that maps to a forward
+          // state) the order status.
+          const newStatus =
+            extracted.statusId || extracted.statusText
+              ? mapShiprocketStatus(extracted.statusId, extracted.statusText)
+              : null;
+          const statusChanged = newStatus !== null && newStatus !== order.status;
+
+          const data: any = {
+            awbCode: extracted.awbCode,
+            courierName: extracted.courierName ?? null,
+            trackingUrl: `https://shiprocket.co/tracking/${extracted.awbCode}`,
+            lastShipmentSyncAt: new Date(),
+          };
+          if (statusChanged) data.status = newStatus;
+
+          const ops: any[] = [prisma.order.update({ where: { id: order.id }, data })];
+          if (statusChanged) {
+            ops.push(
+              prisma.orderStatusHistory.create({
+                data: {
+                  orderId: order.id,
+                  status: newStatus as OrderStatus,
+                  note: `Shiprocket reconcile (orders/show): awb=${extracted.awbCode}, status=${extracted.statusText ?? extracted.statusId}`,
+                },
+              })
+            );
+          }
+          await prisma.$transaction(ops);
+          backfilled++;
+          logger.info(
+            {
+              orderId: order.id,
+              orderNumber: order.orderNumber,
+              awbCode: extracted.awbCode,
+              statusChange: statusChanged ? `${order.status} → ${newStatus}` : 'unchanged',
+            },
+            'Reconcile: backfilled AWB from Shiprocket'
+          );
+        }
+      } catch (err) {
+        failed++;
+        logger.warn(
+          { err, orderId: order.id, shiprocketOrderId: order.shiprocketOrderId },
+          'Reconcile: /orders/show call failed for one order — continuing'
+        );
+      }
+
+      // Polite inter-call pause.
+      await new Promise((r) => setTimeout(r, APP_CONSTANTS.SHIPROCKET_REFRESH_DELAY_MS));
+    }
+
+    return { scanned: orders.length, backfilled, still_missing, failed, limit };
+  },
+
+  /**
    * Refresh a single order's shipment state by AWB. Used by the Shiprocket
    * webhook handler — payload arrives with an AWB and we fan out the same
    * sync logic that powers /refresh-shipment-status. Returns null if no
@@ -594,6 +814,14 @@ interface ReconcileResult {
   scanned: number;
   recovered: number;
   failed: number;
+}
+
+interface ReconcileAwbsResult {
+  scanned: number;
+  backfilled: number;
+  still_missing: number;
+  failed: number;
+  limit: number;
 }
 
 interface ParsedActivity {
