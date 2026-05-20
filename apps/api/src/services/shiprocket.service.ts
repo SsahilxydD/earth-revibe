@@ -38,9 +38,17 @@ const SR_TEXT_TO_STATUS: Record<string, OrderStatus> = {
   delivered: OrderStatus.DELIVERED,
 };
 
-function mapShiprocketStatus(id: number | undefined, text: string | undefined): OrderStatus | null {
-  if (id && SR_ID_TO_STATUS[id]) return SR_ID_TO_STATUS[id];
-  if (text) {
+function mapShiprocketStatus(
+  id: number | string | undefined,
+  text: string | number | undefined
+): OrderStatus | null {
+  // Shiprocket sometimes returns shipment_status as a numeric string or even a number
+  // instead of the human label — be tolerant of both shapes in both arguments.
+  const numericId = typeof id === 'number' ? id : typeof id === 'string' ? Number(id) : NaN;
+  if (Number.isFinite(numericId) && SR_ID_TO_STATUS[numericId]) {
+    return SR_ID_TO_STATUS[numericId];
+  }
+  if (typeof text === 'string' && text.length > 0) {
     const normalized = text.trim().toLowerCase();
     if (SR_TEXT_TO_STATUS[normalized]) return SR_TEXT_TO_STATUS[normalized];
   }

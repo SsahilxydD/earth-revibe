@@ -190,6 +190,25 @@ describe('shiprocketService.getTracking', () => {
     expect(mockTransaction).not.toHaveBeenCalled();
   });
 
+  it('does not crash when Shiprocket returns shipment_status as a number (real-world response)', async () => {
+    // Production smoke caught this: Shiprocket sometimes returns shipment_status as
+    // a numeric string or number instead of the label. text.trim() then throws.
+    mockOrderFindUnique.mockResolvedValue({
+      awbCode: 'AWB123',
+      courierName: 'BlueDart',
+      trackingUrl: 'https://shiprocket.co/tracking/AWB123',
+      status: 'SHIPPED',
+    });
+    mockShiprocketRequest.mockResolvedValue({
+      tracking_data: { shipment_status_id: 6, shipment_status: 6, shipment_track_activities: [] },
+    });
+
+    const result = await shiprocketService.getTracking('order-1');
+    expect(result.available).toBe(true);
+    // Still maps via the numeric id even when text is a number
+    expect(mockTransaction).not.toHaveBeenCalled(); // SHIPPED → SHIPPED no-op
+  });
+
   it('falls back to status text when shipment_status_id is missing', async () => {
     mockOrderFindUnique.mockResolvedValue({
       awbCode: 'AWB123',
