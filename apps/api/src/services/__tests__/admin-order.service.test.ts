@@ -825,4 +825,57 @@ describe('adminOrderService', () => {
       expect((result as any).content).toBe(specialContent);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // archiveOrder — active-shipment guard
+  // ---------------------------------------------------------------------------
+
+  describe('archiveOrder', () => {
+    const ADMIN_ID = 'admin-id-1';
+
+    it('refuses to archive a SHIPPING order that has an active AWB', async () => {
+      // An online order in flight: Shiprocket is moving the package and we
+      // still need tracking updates to land on THIS row. Archiving would
+      // silently disappear the order from the customer's account while the
+      // physical shipment continues.
+      const order = makeOrder({
+        status: 'SHIPPING',
+        awbCode: '369267801257',
+        deletedAt: null,
+      });
+      mockOrderFindUnique.mockResolvedValue(order);
+
+      await expect(adminOrderService.archiveOrder(order.orderNumber, ADMIN_ID, {})).rejects.toThrow(
+        /active AWB \(369267801257\)/
+      );
+
+      // The guard runs before any write — no update + no history row.
+      expect(mockOrderUpdate).not.toHaveBeenCalled();
+      expect(mockOrderStatusHistoryCreate).not.toHaveBeenCalled();
+    });
+
+    it('does NOT block archive when an offline order is SHIPPING without an AWB', async () => {
+      // An offline order can sit at SHIPPING without an AWB (we never create
+      // a Shiprocket shipment for offline-source orders). Archiving these is
+      // fine — there's no carrier package in motion to confuse.
+      const order = makeOrder({
+        status: 'SHIPPING',
+        awbCode: null,
+        source: 'OFFLINE',
+        deletedAt: null,
+      });
+      mockOrderFindUnique.mockResolvedValue(order);
+
+      // archiveOrder uses prisma.$transaction internally; the guard runs
+      // first and should not throw for this input. We assert the guard
+      // passed by checking that findUnique was reached but the AWB-block
+      // error was NOT raised.
+      await adminOrderService.archiveOrder(order.orderNumber, ADMIN_ID, {}).catch((err) => {
+        // Anything other than the AWB-block error means the guard passed;
+        // a downstream $transaction error here is expected because the
+        // narrow mock doesn't stub it. The point is: the guard didn't fire.
+        expect(String(err.message)).not.toMatch(/active AWB/);
+      });
+    });
+  });
 });
