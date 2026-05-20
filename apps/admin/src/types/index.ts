@@ -88,4 +88,6 @@ export type {
   OfflinePaymentMethod,
   ArchiveOrderInput,
   AdminOrderQuery,
+  SendCustomerOtpInput,
+  VerifyCustomerOtpInput,
 } from '@earth-revibe/shared';

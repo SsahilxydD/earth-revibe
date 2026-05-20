@@ -1,7 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { revalidateStorefront } from '@/lib/revalidate-storefront';
-import type { OrderListParams, CreateManualOrderInput } from '@/types';
+import type {
+  OrderListParams,
+  CreateManualOrderInput,
+  SendCustomerOtpInput,
+  VerifyCustomerOtpInput,
+} from '@/types';
+
+type SendCustomerOtpResult = { isExistingCustomer: boolean; hasName: boolean };
+type VerifyCustomerOtpResult = {
+  userId: string;
+  phone: string | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+  isNewCustomer: boolean;
+};
 
 export function useOrders(params: OrderListParams = {}) {
   const searchParams = new URLSearchParams();
@@ -164,6 +179,20 @@ export function useRefundOrder() {
 }
 
 // ---- Manual / offline orders + archive ----
+
+/** Send a WhatsApp OTP to a customer's phone before creating a manual order. */
+export function useSendCustomerOtp() {
+  return useMutation<SendCustomerOtpResult, Error, SendCustomerOtpInput>({
+    mutationFn: (data) => api.post('/admin/orders/manual/send-otp', data),
+  });
+}
+
+/** Verify the customer's OTP — creates/finds the User and returns userId. */
+export function useVerifyCustomerOtp() {
+  return useMutation<VerifyCustomerOtpResult, Error, VerifyCustomerOtpInput>({
+    mutationFn: (data) => api.post('/admin/orders/manual/verify-otp', data),
+  });
+}
 
 /** Create a manual offline order (in-person sale entered by an admin). */
 export function useCreateManualOrder() {

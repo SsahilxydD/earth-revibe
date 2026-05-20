@@ -1,8 +1,9 @@
 import { prisma, Prisma } from '@earth-revibe/db';
 import { ApiError } from '../utils/api-error';
-import { sendWhatsAppOrderUpdate } from './whatsapp.service';
+import { sendWhatsAppOrderUpdate, sendWhatsAppOtp } from './whatsapp.service';
 import { logger } from '../config/logger';
 import { isCarrierOwnedStatus } from './shiprocket.service';
+import { generateOtp, hashOtp, generateReferralCode } from './auth.service';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import type {
   AdminOrderQuery,
@@ -10,6 +11,8 @@ import type {
   AddOrderNoteInput,
   CreateManualOrderInput,
   ArchiveOrderInput,
+  SendCustomerOtpInput,
+  VerifyCustomerOtpInput,
 } from '@earth-revibe/shared';
 
 /**
@@ -179,16 +182,158 @@ export const adminOrderService = {
   },
 
   /**
+   * Send a WhatsApp OTP to a customer's phone so the admin can verify
+   * the number before creating a manual order. Reuses the storefront
+   * OTP storage (OtpCode table) + rate limit (3 per 10 min) but does NOT
+   * issue a JWT — the admin's session must not be swapped with the
+   * customer's. Returns hints for the UI: whether this phone matches an
+   * existing customer + whether we already have a name on file.
+   */
+  async sendCustomerOtp({ phone }: SendCustomerOtpInput) {
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const recentCount = await prisma.otpCode.count({
+      where: { phone, createdAt: { gte: tenMinutesAgo } },
+    });
+    if (recentCount >= 3) {
+      throw ApiError.tooManyRequests(
+        'Too many OTP requests for this phone. Try again in a few minutes.'
+      );
+    }
+
+    await prisma.otpCode.deleteMany({
+      where: {
+        phone,
+        OR: [{ expiresAt: { lt: new Date() } }, { verified: true }],
+      },
+    });
+
+    const code = generateOtp();
+    const codeHash = hashOtp(code);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    await prisma.otpCode.create({ data: { phone, codeHash, expiresAt } });
+    await sendWhatsAppOtp(phone, code);
+
+    logger.info(
+      { phone: phone.slice(0, 6) + '****', source: 'offline-order' },
+      'Customer OTP sent'
+    );
+
+    const existing = await prisma.user.findUnique({
+      where: { phone },
+      select: { id: true, firstName: true, lastName: true },
+    });
+    const hasName = !!(existing && (existing.firstName?.trim() || existing.lastName?.trim()));
+    return { isExistingCustomer: !!existing, hasName };
+  },
+
+  /**
+   * Verify the OTP and return a userId the admin can pass to
+   * createManualOrder. If the customer doesn't yet have an account,
+   * create one (same shape as storefront auto-signup via OTP login).
+   * Name fields backfill the User if it existed without one.
+   * Does NOT log the customer in (no cookies, no JWT).
+   */
+  async verifyCustomerOtp({ phone, code, firstName, lastName }: VerifyCustomerOtpInput) {
+    const otp = await prisma.otpCode.findFirst({
+      where: { phone, verified: false, expiresAt: { gte: new Date() } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!otp) {
+      throw ApiError.badRequest('OTP expired or not found. Send a new one.');
+    }
+    if (otp.attempts >= 5) {
+      throw ApiError.tooManyRequests('Too many attempts. Send a new OTP.');
+    }
+    if (hashOtp(code) !== otp.codeHash) {
+      await prisma.otpCode.update({
+        where: { id: otp.id },
+        data: { attempts: { increment: 1 } },
+      });
+      throw ApiError.badRequest('Invalid OTP');
+    }
+
+    await prisma.otpCode.update({ where: { id: otp.id }, data: { verified: true } });
+
+    const incomingFirst = firstName?.trim() ?? '';
+    const incomingLast = lastName?.trim() ?? '';
+    let user = await prisma.user.findUnique({ where: { phone } });
+    const isNewCustomer = !user;
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          phone,
+          email: `${phone.replace('+', '')}@phone.earthrevibe.com`,
+          firstName: incomingFirst,
+          lastName: incomingLast,
+          phoneVerified: true,
+          isActive: true,
+        },
+      });
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { referralCode: generateReferralCode(user.id) },
+      });
+    } else {
+      const shouldBackfillFirst = !user.firstName?.trim() && incomingFirst;
+      const shouldBackfillLast = !user.lastName?.trim() && incomingLast;
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          phoneVerified: true,
+          ...(shouldBackfillFirst && { firstName: incomingFirst }),
+          ...(shouldBackfillLast && { lastName: incomingLast }),
+        },
+      });
+    }
+
+    return {
+      userId: user.id,
+      phone: user.phone,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      isNewCustomer,
+    };
+  },
+
+  /**
    * Create a manual order for an offline / in-person sale.
    * - source = OFFLINE, no Razorpay Payment row is created.
+   * - REQUIRES a verified `userId` (caller must have completed
+   *   verifyCustomerOtp first). The order is linked to that User so
+   *   the customer sees it the next time they log in.
    * - Stock is decremented atomically (same race-safe pattern as checkout).
-   * - A throwaway Address row is created from the customer details because
-   *   Order.addressId is required by the schema.
+   * - An Address row is created from the verified User so the order has
+   *   the schema-required addressId.
    * - The offline payment method (cash/UPI/etc.) is recorded as an internal note.
    */
   async createManualOrder(adminId: string, data: CreateManualOrderInput) {
     const variantIds = [...new Set(data.items.map((i) => i.variantId))];
     const orderNumber = generateOrderNumber();
+
+    // Verify the caller actually completed verifyCustomerOtp first.
+    // The schema requires userId, but a hostile client could pass a
+    // random uuid — confirm the User row exists AND has phoneVerified=true
+    // before we link the order to it. Otherwise the "verification step"
+    // would be cosmetic.
+    const customer = await prisma.user.findUnique({
+      where: { id: data.userId },
+      select: {
+        id: true,
+        phone: true,
+        phoneVerified: true,
+        firstName: true,
+        lastName: true,
+        isActive: true,
+      },
+    });
+    if (!customer || !customer.isActive) {
+      throw ApiError.badRequest('Verified customer not found. Re-verify the phone number.');
+    }
+    if (!customer.phoneVerified) {
+      throw ApiError.badRequest('Customer phone is not verified. Send and verify an OTP first.');
+    }
 
     const order = await prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
@@ -257,12 +402,18 @@ export const adminOrderService = {
           }
         }
 
-        // Order.addressId is required → create an address from offline details.
+        // Order.addressId is required → create an address from the verified
+        // customer's profile. Offline sales don't have a real delivery
+        // address, but the schema needs one and the verified phone/name
+        // give us a meaningful record.
+        const customerName =
+          `${customer.firstName ?? ''} ${customer.lastName ?? ''}`.trim() || 'Offline customer';
         const address = await tx.address.create({
           data: {
+            userId: customer.id,
             label: 'Offline',
-            fullName: data.customerName,
-            phone: data.customerPhone,
+            fullName: customerName,
+            phone: customer.phone || '',
             line1: 'Offline / in-person sale',
             city: '-',
             state: '-',
@@ -273,7 +424,7 @@ export const adminOrderService = {
         const created = await tx.order.create({
           data: {
             orderNumber,
-            guestEmail: data.customerEmail || null,
+            userId: customer.id,
             addressId: address.id,
             source: 'OFFLINE',
             status: data.status,

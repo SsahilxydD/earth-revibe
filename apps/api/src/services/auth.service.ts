@@ -64,18 +64,22 @@ async function verifyPassword(
   return { valid, isBcrypt: false };
 }
 
-/** Hash an OTP code with SHA-256 for storage. */
-function hashOtp(code: string): string {
+/**
+ * Hash an OTP code with SHA-256 for storage.
+ * Exported so the admin offline-order flow can verify customer OTPs
+ * without going through the JWT-issuing login path.
+ */
+export function hashOtp(code: string): string {
   return crypto.createHash('sha256').update(code).digest('hex');
 }
 
 /** Generate a cryptographically random 6-digit OTP. */
-function generateOtp(): string {
+export function generateOtp(): string {
   return String(crypto.randomInt(100_000, 999_999));
 }
 
 /** Generate a referral code from a user ID. */
-function generateReferralCode(userId: string): string {
+export function generateReferralCode(userId: string): string {
   return `REVIBE-${userId.slice(-6).toUpperCase()}`;
 }
 

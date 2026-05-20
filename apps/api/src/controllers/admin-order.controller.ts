@@ -36,6 +36,16 @@ export const adminOrderController = {
     res.status(201).json({ success: true, data: order });
   },
 
+  async sendCustomerOtp(req: Request, res: Response) {
+    const result = await adminOrderService.sendCustomerOtp(req.body);
+    res.json({ success: true, data: result });
+  },
+
+  async verifyCustomerOtp(req: Request, res: Response) {
+    const result = await adminOrderService.verifyCustomerOtp(req.body);
+    res.json({ success: true, data: result });
+  },
+
   async archiveOrder(req: Request, res: Response) {
     const orderNumber = req.params.orderNumber as string;
     const result = await adminOrderService.archiveOrder(orderNumber, req.user!.id, req.body ?? {});

@@ -71,12 +71,10 @@ export const manualOrderItemSchema = z.object({
 export const offlinePaymentMethodSchema = z.enum(['CASH', 'UPI', 'CARD', 'BANK_TRANSFER', 'OTHER']);
 
 export const createManualOrderSchema = z.object({
-  customerName: z.string().trim().min(1).max(120),
-  customerPhone: z
-    .string()
-    .trim()
-    .regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number (10 digits)'),
-  customerEmail: z.string().email().optional().or(z.literal('')),
+  // The User row of the verified customer (returned by verify-customer-otp).
+  // Required — the customer must be OTP-verified before we'll record the sale.
+  // This is what lets the customer see the order when they later log in via OTP.
+  userId: z.string().min(1, 'Customer must be verified before creating the order'),
   items: z.array(manualOrderItemSchema).min(1, 'At least one item is required'),
   discountAmount: z.coerce.number().min(0).default(0),
   shippingAmount: z.coerce.number().min(0).default(0),
@@ -87,6 +85,32 @@ export const createManualOrderSchema = z.object({
     .default(OrderStatus.DELIVERED),
   paymentMethod: offlinePaymentMethodSchema.optional(),
   note: z.string().max(1000).optional(),
+});
+
+// ── Offline-order customer verification (admin) ────────────────────
+// Two-step OTP gate before the admin can create a manual order. The
+// admin enters the customer's phone, we send a WhatsApp OTP, the
+// customer reads it out, the admin types it in. On success, the User
+// is created or found and its userId becomes the input to
+// createManualOrderSchema.
+
+export const sendCustomerOtpSchema = z.object({
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number (10 digits)'),
+});
+
+export const verifyCustomerOtpSchema = z.object({
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number (10 digits)'),
+  code: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits'),
+  // Optional name fields used to backfill the User on first-time signup
+  // (or fill in a User that was created without a name from a prior order).
+  firstName: z.string().trim().max(60).optional(),
+  lastName: z.string().trim().max(60).optional(),
 });
 
 // Archiving (soft-delete). Reason is optional but recorded in status history.
@@ -110,3 +134,5 @@ export type ManualOrderItemInput = z.infer<typeof manualOrderItemSchema>;
 export type OfflinePaymentMethod = z.infer<typeof offlinePaymentMethodSchema>;
 export type CreateManualOrderInput = z.infer<typeof createManualOrderSchema>;
 export type ArchiveOrderInput = z.infer<typeof archiveOrderSchema>;
+export type SendCustomerOtpInput = z.infer<typeof sendCustomerOtpSchema>;
+export type VerifyCustomerOtpInput = z.infer<typeof verifyCustomerOtpSchema>;
