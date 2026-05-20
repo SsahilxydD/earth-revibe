@@ -23,6 +23,19 @@ export const APP_CONSTANTS = {
   /** Shiprocket token cache duration (9 days; tokens last 10 days) */
   SHIPROCKET_TOKEN_CACHE_MS: 9 * 24 * 60 * 60 * 1000,
 
+  /** Max orders to refresh per cron sweep — bounded so one call can't drag on */
+  SHIPROCKET_REFRESH_BATCH_SIZE: 50,
+
+  /** Inter-call pause in the refresh sweep (politeness toward Shiprocket rate limiter) */
+  SHIPROCKET_REFRESH_DELAY_MS: 250,
+
+  /** Max orders to reconcile (retry create) per cleanup run */
+  SHIPROCKET_RECONCILE_BATCH_SIZE: 20,
+
+  /** Only retry create for orders confirmed at least this long ago — avoids racing
+   * the post-payment fire-and-forget createShiprocketOrder call. */
+  SHIPROCKET_RECONCILE_MIN_AGE_MS: 10 * 60 * 1000,
+
   /** Refresh token expiry duration (30 days) */
   REFRESH_TOKEN_EXPIRY_MS: 30 * 24 * 60 * 60 * 1000,
 
