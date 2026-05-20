@@ -2,15 +2,12 @@ import { Text, View } from 'react-native';
 import type { OrderStatus } from '@earth-revibe/shared';
 
 const styles: Record<OrderStatus, { bg: string; text: string; label: string }> = {
-  PLACED: { bg: 'bg-warning/10', text: 'text-warning', label: 'Placed' },
+  PENDING: { bg: 'bg-warning/10', text: 'text-warning', label: 'Pending' },
   CONFIRMED: { bg: 'bg-success/10', text: 'text-success', label: 'Confirmed' },
-  PROCESSING: { bg: 'bg-warning/10', text: 'text-warning', label: 'Processing' },
-  SHIPPED: { bg: 'bg-primary/10', text: 'text-primary', label: 'Shipped' },
-  OUT_FOR_DELIVERY: { bg: 'bg-primary/10', text: 'text-primary', label: 'Out for delivery' },
+  SHIPPING: { bg: 'bg-primary/10', text: 'text-primary', label: 'Shipping' },
   DELIVERED: { bg: 'bg-success/10', text: 'text-success', label: 'Delivered' },
   CANCELLED: { bg: 'bg-danger/10', text: 'text-danger', label: 'Cancelled' },
   RETURNED: { bg: 'bg-warning/10', text: 'text-warning', label: 'Returned' },
-  REFUNDED: { bg: 'bg-muted/20', text: 'text-muted', label: 'Refunded' },
 };
 
 interface Props {

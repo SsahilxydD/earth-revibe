@@ -87,7 +87,7 @@ export const adminCustomerService = {
     if (!customer) throw ApiError.notFound('Customer not found');
 
     const totalSpent = await prisma.order.aggregate({
-      where: { userId: id, status: { notIn: ['CANCELLED', 'REFUNDED'] } },
+      where: { userId: id, status: { notIn: ['CANCELLED', 'RETURNED'] } },
       _sum: { totalAmount: true },
     });
 
@@ -151,7 +151,7 @@ export const adminCustomerService = {
       by: ['userId'],
       where: {
         userId: { in: customers.map((c) => c.id) },
-        status: { notIn: ['CANCELLED', 'REFUNDED'] },
+        status: { notIn: ['CANCELLED', 'RETURNED'] },
       },
       _sum: { totalAmount: true },
     });

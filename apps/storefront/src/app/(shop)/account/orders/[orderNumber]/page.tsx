@@ -46,27 +46,22 @@ interface OrderDetail {
 }
 
 const STATUS_ORDER: Record<string, number> = {
-  PLACED: 0,
+  PENDING: 0,
   CONFIRMED: 1,
-  PROCESSING: 2,
-  SHIPPED: 3,
-  OUT_FOR_DELIVERY: 3,
-  DELIVERED: 4,
+  SHIPPING: 2,
+  DELIVERED: 3,
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  PLACED: '#EAB308',
+  PENDING: '#EAB308',
   CONFIRMED: '#3B82F6',
-  PROCESSING: '#3B82F6',
-  SHIPPED: '#8B5CF6',
-  OUT_FOR_DELIVERY: '#8B5CF6',
+  SHIPPING: '#8B5CF6',
   DELIVERED: '#22C55E',
   CANCELLED: '#999',
   RETURNED: '#999',
-  REFUNDED: '#999',
 };
 
-const TIMELINE_LABELS = ['Confirmed', 'Shipped', 'Delivered'];
+const TIMELINE_LABELS = ['Confirmed', 'Shipping', 'Delivered'];
 
 function formatStatus(status: string) {
   return status
@@ -128,9 +123,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   }
 
   const currentStep = STATUS_ORDER[order.status] ?? 0;
-  const isCancelled = order.status === 'CANCELLED';
-  // Map to 3-step: Confirmed(1), Shipped(3), Delivered(4)
-  const timelineProgress = [currentStep >= 1, currentStep >= 3, currentStep >= 4];
+  const isCancelled = order.status === 'CANCELLED' || order.status === 'RETURNED';
+  // Three-step timeline: Confirmed (1), Shipping (2), Delivered (3).
+  const timelineProgress = [currentStep >= 1, currentStep >= 2, currentStep >= 3];
 
   return (
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 32 }}>

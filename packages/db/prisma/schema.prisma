@@ -621,7 +621,7 @@ model Order {
   guestEmail      String?
   addressId       String
   address         Address       @relation(fields: [addressId], references: [id])
-  status          OrderStatus   @default(PLACED)
+  status          OrderStatus   @default(PENDING)
   subtotal        Decimal       @db.Decimal(10, 2)
   discountAmount  Decimal       @default(0) @db.Decimal(10, 2)
   shippingAmount  Decimal       @default(0) @db.Decimal(10, 2)
@@ -684,15 +684,12 @@ model OrderTrackingActivity {
 }
 
 enum OrderStatus {
-  PLACED
+  PENDING
   CONFIRMED
-  PROCESSING
-  SHIPPED
-  OUT_FOR_DELIVERY
+  SHIPPING
   DELIVERED
   CANCELLED
   RETURNED
-  REFUNDED
 }
 
 model OrderItem {

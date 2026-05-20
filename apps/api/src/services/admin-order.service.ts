@@ -9,17 +9,23 @@ import type {
   AddOrderNoteInput,
 } from '@earth-revibe/shared';
 
-/** Valid order status transitions — enforces a state machine */
+/**
+ * Six-status state machine.
+ *
+ * - PENDING / CONFIRMED → CANCELLED is the pre-pickup customer/admin cancel path.
+ * - CONFIRMED → SHIPPING is normally carrier-driven (via shiprocketService.syncTrackingState).
+ *   Admin manual override is only allowed when there's no AWB (no carrier source-of-truth yet).
+ * - SHIPPING → DELIVERED / RETURNED are carrier-driven.
+ * - DELIVERED → RETURNED is admin-approved on a customer return request.
+ * - CANCELLED and RETURNED are terminal here; refund accounting lives on Payment.status.
+ */
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  PLACED: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['PROCESSING', 'CANCELLED'],
-  PROCESSING: ['SHIPPED', 'CANCELLED'],
-  SHIPPED: ['OUT_FOR_DELIVERY', 'DELIVERED'],
-  OUT_FOR_DELIVERY: ['DELIVERED'],
-  DELIVERED: ['RETURNED', 'REFUNDED'],
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['SHIPPING', 'CANCELLED'],
+  SHIPPING: ['DELIVERED', 'RETURNED', 'CANCELLED'],
+  DELIVERED: ['RETURNED'],
   CANCELLED: [],
-  RETURNED: ['REFUNDED'],
-  REFUNDED: [],
+  RETURNED: [],
 };
 
 export const adminOrderService = {

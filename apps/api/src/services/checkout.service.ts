@@ -1387,7 +1387,7 @@ export async function createCodOrder(
     totalAmount,
     itemCount: data.items.length,
     paymentMethod: 'COD',
-    status: 'PLACED',
+    status: 'PENDING',
   }).catch((err) => logger.error({ err, orderNumber }, 'COD admin new-order alert fanout threw'));
 
   const ph = getPostHog();

@@ -273,12 +273,10 @@ router.post(
                 refundAmount,
               },
             });
-            if (isFullRefund) {
-              await prisma.order.update({
-                where: { id: payment.orderId },
-                data: { status: 'REFUNDED' },
-              });
-            }
+            // Note: in the six-status model, refunds don't change order.status.
+            // Payment.status above carries the REFUNDED truth; the order stays
+            // at whatever lifecycle state it was in (DELIVERED / RETURNED /
+            // CANCELLED). The admin UI surfaces refund state via Payment.
           }
           break;
         }
