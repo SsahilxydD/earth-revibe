@@ -56,7 +56,7 @@ export const productService = {
       const cacheKey = getListCacheKey(query);
       const cached = listCache.get(cacheKey);
       if (cached && cached.expiresAt > Date.now()) {
-        return cached.data as Awaited<ReturnType<typeof productService.listProducts>>;
+        return cached.data as any; // eslint-disable-line @typescript-eslint/no-explicit-any
       }
     }
 
