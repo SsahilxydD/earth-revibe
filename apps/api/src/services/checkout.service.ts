@@ -307,9 +307,12 @@ export const checkoutService = {
     if (prefillUser) {
       let phone = prefillUser.phone || '';
       if (phone && !phone.startsWith('+')) phone = `+91${phone}`;
+      const realEmail = prefillUser.email?.endsWith('@phone.earthrevibe.com')
+        ? ''
+        : (prefillUser.email ?? '');
       prefill = {
         name: `${prefillUser.firstName} ${prefillUser.lastName}`.trim(),
-        email: prefillUser.email,
+        email: realEmail,
         contact: phone,
       };
     }
@@ -748,16 +751,17 @@ export async function finalizeOrderFromPending(
               );
             }
           }
-        } else if (!isGuest && effectiveUserId && customerPhone) {
+        } else if (!isGuest && effectiveUserId) {
           const user = await tx.user.findUnique({
             where: { id: effectiveUserId },
-            select: { phone: true },
+            select: { phone: true, email: true },
           });
-          if (!user?.phone) {
-            await tx.user.update({
-              where: { id: effectiveUserId },
-              data: { phone: customerPhone },
-            });
+          const updates: Record<string, unknown> = {};
+          if (customerPhone && !user?.phone) updates.phone = customerPhone;
+          if (customerEmail && user?.email?.endsWith('@phone.earthrevibe.com'))
+            updates.email = customerEmail;
+          if (Object.keys(updates).length > 0) {
+            await tx.user.update({ where: { id: effectiveUserId }, data: updates });
           }
         }
 

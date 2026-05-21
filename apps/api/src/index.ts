@@ -9,6 +9,45 @@ import { shutdownPostHog } from './config/posthog';
 import { runAbandonedCartCheck } from './jobs/abandoned-cart-job';
 import { engagementRuleService } from './services/engagement-rule.service';
 import { customerSegmentService } from './services/customer-segment.service';
+import { shiprocketService } from './services/shiprocket.service';
+
+// Prevents a slow Shiprocket sweep from overlapping the next 10-min tick.
+let shiprocketSweepInProgress = false;
+
+/**
+ * One Shiprocket sweep: backfill missing AWBs (pass 1), then refresh
+ * in-flight statuses (pass 2). Mirrors the /refresh-shipment-status
+ * endpoint so the in-app cron and the manual curl do the exact same work.
+ * Pass 1 is fault-isolated so a backfill failure still lets the status
+ * sweep run for already-AWB'd orders.
+ */
+async function runShiprocketSweep() {
+  if (shiprocketSweepInProgress) {
+    logger.warn('Shiprocket sweep still running from the previous tick — skipping');
+    return;
+  }
+  shiprocketSweepInProgress = true;
+  try {
+    let reconciled = null;
+    try {
+      reconciled = await shiprocketService.reconcileMissingAwbs({});
+    } catch (err) {
+      logger.error({ err }, 'Shiprocket AWB backfill pass failed — continuing to status sweep');
+    }
+    const refreshed = await shiprocketService.refreshAllPendingShipments({});
+    if (
+      (reconciled && reconciled.backfilled > 0) ||
+      refreshed.updated > 0 ||
+      refreshed.failed > 0
+    ) {
+      logger.info({ reconciled, refreshed }, 'Shiprocket sweep complete');
+    }
+  } catch (err) {
+    logger.error({ err }, 'Shiprocket sweep failed');
+  } finally {
+    shiprocketSweepInProgress = false;
+  }
+}
 
 const start = async () => {
   try {
@@ -81,12 +120,37 @@ const start = async () => {
 
     logger.info('Customer segment cron scheduled: 03:17 daily (Asia/Kolkata)');
 
+    // Shiprocket sweep — every 10 minutes. Pass 1 backfills AWBs (incl. ones
+    // assigned directly on the Shiprocket dashboard), pass 2 refreshes
+    // in-flight statuses. The in-progress mutex prevents overlap if a sweep
+    // runs long. This replaces the external cron-job.org trigger — the sync
+    // is now fully self-contained on our backend.
+    const shiprocketTask = cron.schedule(
+      '*/10 * * * *',
+      () => {
+        runShiprocketSweep().catch((err) => {
+          logger.error({ err }, 'Scheduled Shiprocket sweep failed');
+        });
+      },
+      { timezone: 'Asia/Kolkata' }
+    );
+
+    // Run once on startup, after a delay so the DB pool + migrations settle.
+    setTimeout(() => {
+      runShiprocketSweep().catch((err) => {
+        logger.error({ err }, 'Initial Shiprocket sweep failed');
+      });
+    }, 30_000);
+
+    logger.info('Shiprocket sweep cron scheduled: every 10 min (Asia/Kolkata)');
+
     // Graceful shutdown
     const shutdown = async (signal: string) => {
       logger.info({ signal }, 'Shutting down gracefully');
       abandonedCartTask.stop();
       engagementRuleTask.stop();
       customerSegmentTask.stop();
+      shiprocketTask.stop();
       server.close(async () => {
         logger.info('HTTP server closed');
         await shutdownPostHog();
