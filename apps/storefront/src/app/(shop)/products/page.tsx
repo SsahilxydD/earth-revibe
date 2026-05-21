@@ -446,6 +446,8 @@ function ProductsContent() {
                     border: 'none',
                     cursor: 'pointer',
                     padding: 0,
+                    opacity: category && !isActive ? 0.45 : 1,
+                    transition: 'opacity 0.2s ease',
                   }}
                 >
                   <div
@@ -456,8 +458,8 @@ function ProductsContent() {
                       borderRadius: 9999,
                       overflow: 'hidden',
                       backgroundColor: c.color,
-                      outline: isActive ? '2px solid #000' : 'none',
-                      outlineOffset: 2,
+                      boxShadow: isActive ? '0 0 0 2px #000' : '0 0 0 0px #000',
+                      transition: 'box-shadow 0.2s ease',
                     }}
                   >
                     <Image src={c.img} alt="" fill sizes="48px" style={{ objectFit: 'cover' }} />
@@ -499,20 +501,29 @@ function ProductsContent() {
                     border: 'none',
                     cursor: 'pointer',
                     padding: 0,
+                    opacity: activeVibe && !isActive ? 0.45 : 1,
+                    transition: 'opacity 0.2s ease',
                   }}
                 >
                   <div
                     style={{
+                      position: 'relative',
                       width: 48,
                       height: 48,
                       borderRadius: 9999,
-                      backgroundImage: `url(${v.img})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      outline: isActive ? '2px solid #000' : 'none',
-                      outlineOffset: 2,
+                      overflow: 'hidden',
+                      boxShadow: isActive ? '0 0 0 2px #000' : '0 0 0 0px #000',
+                      transition: 'box-shadow 0.2s ease',
                     }}
-                  />
+                  >
+                    <Image
+                      src={v.img}
+                      alt={v.label}
+                      fill
+                      sizes="48px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  </div>
                   <span style={{ fontSize: 9, fontWeight: isActive ? 400 : 300, color: '#000' }}>
                     {v.label}
                   </span>
