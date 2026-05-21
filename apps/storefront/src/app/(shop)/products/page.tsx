@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   X,
@@ -137,6 +137,24 @@ function ProductsContent() {
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching, isError } =
     useInfiniteProducts(queryParams);
+
+  // Show the sweep bar + grid dim on vibe/category changes even when the new
+  // data is already cached (isFetching stays false for cache hits, so without
+  // this the UI gives zero feedback on instant vibe switches).
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const prevVibeRef = useRef(activeVibe);
+  const prevCategoryRef = useRef(category);
+  useEffect(() => {
+    if (prevVibeRef.current !== activeVibe || prevCategoryRef.current !== category) {
+      prevVibeRef.current = activeVibe;
+      prevCategoryRef.current = category;
+      setIsTransitioning(true);
+      const t = setTimeout(() => setIsTransitioning(false), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [activeVibe, category]);
+
+  const showLoadingFeedback = isFetching || isTransitioning;
 
   // Prefetch the other 4 vibes in the background a moment after first paint.
   // Switching vibes then resolves from cache (instant) instead of round-tripping.
@@ -739,7 +757,7 @@ function ProductsContent() {
           </div>
         )}
 
-        {isFetching && !isLoading && (
+        {showLoadingFeedback && (
           <motion.div
             key="loading-bar"
             initial={{ scaleX: 0 }}
@@ -801,7 +819,7 @@ function ProductsContent() {
           <div
             style={{
               padding: '14px 4px 28px 4px',
-              opacity: isFetching ? 0.45 : 1,
+              opacity: showLoadingFeedback ? 0.45 : 1,
               transition: 'opacity 0.2s ease',
             }}
           >
