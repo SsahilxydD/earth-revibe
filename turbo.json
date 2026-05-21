@@ -12,7 +12,8 @@
         "package.json",
         "prisma/**"
       ],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "passThroughEnv": ["SENTRY_AUTH_TOKEN", "REVALIDATION_SECRET"]
     },
     "dev": {
       "cache": false,
