@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   X,
@@ -137,6 +137,24 @@ function ProductsContent() {
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching, isError } =
     useInfiniteProducts(queryParams);
+
+  // Show the sweep bar + grid dim on vibe/category changes even when the new
+  // data is already cached (isFetching stays false for cache hits, so without
+  // this the UI gives zero feedback on instant vibe switches).
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const prevVibeRef = useRef(activeVibe);
+  const prevCategoryRef = useRef(category);
+  useEffect(() => {
+    if (prevVibeRef.current !== activeVibe || prevCategoryRef.current !== category) {
+      prevVibeRef.current = activeVibe;
+      prevCategoryRef.current = category;
+      setIsTransitioning(true);
+      const t = setTimeout(() => setIsTransitioning(false), 350);
+      return () => clearTimeout(t);
+    }
+  }, [activeVibe, category]);
+
+  const showLoadingFeedback = isFetching || isTransitioning;
 
   // Prefetch the other 4 vibes in the background a moment after first paint.
   // Switching vibes then resolves from cache (instant) instead of round-tripping.
@@ -446,6 +464,8 @@ function ProductsContent() {
                     border: 'none',
                     cursor: 'pointer',
                     padding: 0,
+                    opacity: category && !isActive ? 0.45 : 1,
+                    transition: 'opacity 0.2s ease',
                   }}
                 >
                   <div
@@ -456,8 +476,8 @@ function ProductsContent() {
                       borderRadius: 9999,
                       overflow: 'hidden',
                       backgroundColor: c.color,
-                      outline: isActive ? '2px solid #000' : 'none',
-                      outlineOffset: 2,
+                      boxShadow: isActive ? '0 0 0 2px #000' : '0 0 0 0px #000',
+                      transition: 'box-shadow 0.2s ease',
                     }}
                   >
                     <Image src={c.img} alt="" fill sizes="48px" style={{ objectFit: 'cover' }} />
@@ -499,20 +519,29 @@ function ProductsContent() {
                     border: 'none',
                     cursor: 'pointer',
                     padding: 0,
+                    opacity: activeVibe && !isActive ? 0.45 : 1,
+                    transition: 'opacity 0.2s ease',
                   }}
                 >
                   <div
                     style={{
+                      position: 'relative',
                       width: 48,
                       height: 48,
                       borderRadius: 9999,
-                      backgroundImage: `url(${v.img})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      outline: isActive ? '2px solid #000' : 'none',
-                      outlineOffset: 2,
+                      overflow: 'hidden',
+                      boxShadow: isActive ? '0 0 0 2px #000' : '0 0 0 0px #000',
+                      transition: 'box-shadow 0.2s ease',
                     }}
-                  />
+                  >
+                    <Image
+                      src={v.img}
+                      alt={v.label}
+                      fill
+                      sizes="48px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  </div>
                   <span style={{ fontSize: 9, fontWeight: isActive ? 400 : 300, color: '#000' }}>
                     {v.label}
                   </span>
@@ -728,7 +757,7 @@ function ProductsContent() {
           </div>
         )}
 
-        {isFetching && !isLoading && (
+        {showLoadingFeedback && !isLoading && (
           <motion.div
             key="loading-bar"
             initial={{ scaleX: 0 }}
@@ -790,7 +819,7 @@ function ProductsContent() {
           <div
             style={{
               padding: '14px 4px 28px 4px',
-              opacity: isFetching ? 0.45 : 1,
+              opacity: showLoadingFeedback ? 0.45 : 1,
               transition: 'opacity 0.2s ease',
             }}
           >
