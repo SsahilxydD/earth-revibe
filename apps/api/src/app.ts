@@ -248,12 +248,23 @@ app.post('/api/v1/internal/cleanup', async (req, res) => {
 
 // Shiprocket shipment-status refresh cron.
 // cron-job.org should hit this every ~10 minutes with x-cron-secret.
-// Sweeps orders in flight (awbCode set + non-terminal status) and updates
-// order.status from Shiprocket's tracking API. Bounded to
-// APP_CONSTANTS.SHIPROCKET_REFRESH_BATCH_SIZE per call by default.
-// Accepts ?limit=N to cap the batch — useful for the first manual call after
-// deploy so a single curl can be limited to one order while we verify the
-// mapping against live Shiprocket data.
+//
+// Runs two passes, in order:
+//   1. reconcileMissingAwbs — backfills awbCode for orders that have a
+//      shiprocketOrderId but no awbCode yet. This catches AWBs assigned
+//      directly on the Shiprocket dashboard (the webhook can't link those
+//      because it joins on awbCode, which we don't have until this runs)
+//      as well as any historical silent-fail from the old assignAWB bug.
+//      Joins on shiprocketOrderId via /orders/show/{id}.
+//   2. refreshAllPendingShipments — sweeps orders in flight (awbCode set +
+//      non-terminal status) and updates order.status from Shiprocket's
+//      tracking API. Runs AFTER reconcile so an AWB backfilled this cycle
+//      also gets its status synced in the same pass.
+//
+// Bounded to APP_CONSTANTS.SHIPROCKET_REFRESH_BATCH_SIZE per call by default.
+// Accepts ?limit=N to cap each pass — useful for the first manual call after
+// deploy so a single curl can be limited while we verify mapping against
+// live Shiprocket data.
 app.post('/api/v1/internal/refresh-shipment-status', async (req, res) => {
   if (env.CRON_SECRET && req.headers['x-cron-secret'] !== env.CRON_SECRET) {
     res
@@ -276,11 +287,27 @@ app.post('/api/v1/internal/refresh-shipment-status', async (req, res) => {
   }
   try {
     const { shiprocketService } = await import('./services/shiprocket.service.js');
-    const result = await shiprocketService.refreshAllPendingShipments(
-      limit !== undefined ? { limit } : {}
-    );
-    logger.info(result, 'Shiprocket status sweep complete');
-    res.json({ success: true, data: result });
+    const opts = limit !== undefined ? { limit } : {};
+
+    // Pass 1: self-heal missing AWBs (incl. those assigned on Shiprocket
+    // directly). Non-fatal — if it throws, we still want the status sweep
+    // to run for orders that already have AWBs.
+    let reconciled: Awaited<ReturnType<typeof shiprocketService.reconcileMissingAwbs>> | null =
+      null;
+    try {
+      reconciled = await shiprocketService.reconcileMissingAwbs(opts);
+    } catch (reconcileErr) {
+      logger.error(
+        { err: reconcileErr },
+        'Shiprocket AWB backfill pass failed — continuing to status sweep'
+      );
+    }
+
+    // Pass 2: status sweep (now including any AWBs backfilled above).
+    const refreshed = await shiprocketService.refreshAllPendingShipments(opts);
+
+    logger.info({ reconciled, refreshed }, 'Shiprocket sweep complete');
+    res.json({ success: true, data: { reconciled, refreshed } });
   } catch (err) {
     logger.error({ err }, 'Shiprocket status sweep failed');
     res.status(500).json({
@@ -291,10 +318,14 @@ app.post('/api/v1/internal/refresh-shipment-status', async (req, res) => {
 });
 
 // Backfill awbCode for orders that have shiprocketOrderId but missing awbCode.
-// Caused by a historical bug in assignAWB where Shiprocket's response shape
-// wasn't parsed correctly and the AWB silently never landed in our DB.
 // Calls Shiprocket's /orders/show/{id} for each affected order and saves
-// the AWB + status. Run-as-needed; safe to repeat.
+// the AWB + status. Safe to repeat.
+//
+// NOTE: this same logic now also runs automatically as pass 1 of the
+// /refresh-shipment-status cron, so the recurring sweep self-heals missing
+// AWBs. This standalone endpoint is kept for manual one-off backfills (e.g.
+// a large historical sweep with a custom ?limit, or an ad-hoc run after
+// bulk-assigning AWBs on the Shiprocket dashboard).
 app.post('/api/v1/internal/reconcile-shiprocket-awbs', async (req, res) => {
   if (env.CRON_SECRET && req.headers['x-cron-secret'] !== env.CRON_SECRET) {
     res
