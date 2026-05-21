@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Instagram, LifeBuoy, MessageCircle, Ticket, X } from 'lucide-react';
+import { Headphones, Instagram, MessageCircle, Ticket, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { subscribeOverlayActive } from '@/stores/ui-store';
 
@@ -112,7 +112,7 @@ export function ContactFab() {
             transition={{ duration: 0.15 }}
             className="flex"
           >
-            {open ? <X className="h-5 w-5" /> : <LifeBuoy className="h-5 w-5" />}
+            {open ? <X className="h-5 w-5" /> : <Headphones className="h-5 w-5" />}
           </motion.span>
         </AnimatePresence>
       </button>
