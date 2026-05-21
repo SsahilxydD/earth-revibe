@@ -879,9 +879,44 @@ function ProductsContent() {
   );
 }
 
+function ProductsPageFallback() {
+  return (
+    <div style={{ backgroundColor: '#FFF', position: 'relative' }}>
+      <div style={{ position: 'sticky', top: 56, zIndex: 0, backgroundColor: '#FFF' }}>
+        <div
+          style={{
+            padding: '24px 28px 16px 28px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+        >
+          <div style={{ height: 10, width: 80, backgroundColor: '#F0F0F0', borderRadius: 4 }} />
+          <div style={{ height: 28, width: 160, backgroundColor: '#F0F0F0', borderRadius: 4 }} />
+          <div style={{ height: 10, width: 60, backgroundColor: '#F0F0F0', borderRadius: 4 }} />
+        </div>
+        <div style={{ height: 220, backgroundColor: '#EDE8DF' }} />
+      </div>
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          marginTop: -16,
+          backgroundColor: '#FFF',
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          padding: '14px 28px 28px 28px',
+        }}
+      >
+        <ProductGridSkeleton />
+      </div>
+    </div>
+  );
+}
+
 export default function ProductsPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<ProductsPageFallback />}>
       <ProductsContent />
     </Suspense>
   );
