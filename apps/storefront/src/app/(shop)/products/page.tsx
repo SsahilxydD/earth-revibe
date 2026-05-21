@@ -149,7 +149,7 @@ function ProductsContent() {
       prevVibeRef.current = activeVibe;
       prevCategoryRef.current = category;
       setIsTransitioning(true);
-      const t = setTimeout(() => setIsTransitioning(false), 350);
+      const t = setTimeout(() => setIsTransitioning(false), 1200);
       return () => clearTimeout(t);
     }
   }, [activeVibe, category]);
@@ -757,7 +757,7 @@ function ProductsContent() {
           </div>
         )}
 
-        {showLoadingFeedback && !isLoading && (
+        {showLoadingFeedback && (
           <motion.div
             key="loading-bar"
             initial={{ scaleX: 0 }}
