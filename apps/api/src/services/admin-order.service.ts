@@ -10,6 +10,9 @@ import type {
   UpdateOrderStatusInput,
   AddOrderNoteInput,
   CreateManualOrderInput,
+  CreateDraftOrderInput,
+  VerifyDraftCustomerInput,
+  ConfirmOfflineOrderInput,
   ArchiveOrderInput,
   SendCustomerOtpInput,
   VerifyCustomerOtpInput,
@@ -460,6 +463,275 @@ export const adminOrderService = {
         }
 
         return created;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
+
+    return order;
+  },
+
+  /**
+   * Create a DRAFT offline order for a sale that hasn't been paid yet.
+   * Two-phase counterpart to createManualOrder:
+   * - Captures a TEMP customer (name + phone) on the order itself
+   *   (guestName/guestPhone). No User row is created and no OTP is sent yet —
+   *   the customer is verified later, at confirm time.
+   * - status = DRAFT, source = OFFLINE. NO stock is reserved (the cart is just
+   *   parked) and the order is excluded from revenue / counts / customer
+   *   history until confirmed.
+   * - A placeholder Address is still created because Order.addressId is required.
+   * - A tentative payment method / note is stored as an internal note.
+   */
+  async createDraftOrder(adminId: string, data: CreateDraftOrderInput) {
+    const variantIds = [...new Set(data.items.map((i) => i.variantId))];
+    const orderNumber = generateOrderNumber();
+
+    const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const variants = await tx.productVariant.findMany({
+        where: { id: { in: variantIds } },
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              images: { where: { isPrimary: true }, take: 1 },
+            },
+          },
+        },
+      });
+      const variantMap = new Map(variants.map((v) => [v.id, v]));
+
+      let subtotal = 0;
+      const orderItems = data.items.map((item) => {
+        const v = variantMap.get(item.variantId);
+        if (!v) throw ApiError.badRequest(`Product variant ${item.variantId} not found`);
+        const unitPrice = item.unitPrice ?? (Number(v.price) || Number(v.product.price));
+        const totalPrice = unitPrice * item.quantity;
+        subtotal += totalPrice;
+        return {
+          variantId: v.id,
+          quantity: item.quantity,
+          unitPrice,
+          totalPrice,
+          productName: v.product.name,
+          productImage: v.product.images[0]?.url || null,
+          variantSize: v.size,
+          variantColor: v.color,
+        };
+      });
+
+      const discountAmount = data.discountAmount || 0;
+      const shippingAmount = data.shippingAmount || 0;
+      const taxAmount = data.taxAmount || 0;
+      if (discountAmount > subtotal) {
+        throw ApiError.badRequest(`Discount (₹${discountAmount}) exceeds subtotal (₹${subtotal})`);
+      }
+      const totalAmount = subtotal - discountAmount + shippingAmount + taxAmount;
+
+      // Placeholder address — no real delivery address for an offline draft,
+      // but Order.addressId is required. userId is null until verification.
+      const address = await tx.address.create({
+        data: {
+          label: 'Offline',
+          fullName: data.guestName,
+          phone: data.guestPhone,
+          line1: 'Offline / in-person sale',
+          city: '-',
+          state: '-',
+          pinCode: '000000',
+        },
+      });
+
+      const created = await tx.order.create({
+        data: {
+          orderNumber,
+          // userId intentionally null — the temp customer isn't a User yet.
+          guestName: data.guestName,
+          guestPhone: data.guestPhone,
+          addressId: address.id,
+          source: 'OFFLINE',
+          status: 'DRAFT',
+          subtotal,
+          discountAmount,
+          shippingAmount,
+          taxAmount,
+          totalAmount,
+          items: { create: orderItems },
+          statusHistory: {
+            create: {
+              status: 'DRAFT',
+              note: 'Draft offline order created (awaiting payment + verification)',
+              changedBy: adminId,
+            },
+          },
+        },
+        include: { items: true },
+      });
+
+      const noteParts: string[] = [];
+      if (data.paymentMethod) noteParts.push(`Tentative payment method: ${data.paymentMethod}`);
+      if (data.note) noteParts.push(data.note);
+      if (noteParts.length > 0) {
+        await tx.orderNote.create({
+          data: {
+            orderId: created.id,
+            userId: adminId,
+            content: noteParts.join('\n'),
+            isInternal: true,
+          },
+        });
+      }
+
+      return created;
+    });
+
+    return order;
+  },
+
+  /**
+   * Send a WhatsApp OTP to the temp customer on a DRAFT order. The phone is
+   * read from the order's guestPhone server-side (the admin can't retarget it).
+   */
+  async sendDraftCustomerOtp(orderNumber: string) {
+    const order = await prisma.order.findUnique({
+      where: { orderNumber },
+      select: { status: true, source: true, guestPhone: true },
+    });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.status !== 'DRAFT' || order.source !== 'OFFLINE') {
+      throw ApiError.badRequest('Only draft offline orders have a customer to verify.');
+    }
+    if (!order.guestPhone) {
+      throw ApiError.badRequest('This draft has no customer phone on file.');
+    }
+    return this.sendCustomerOtp({ phone: order.guestPhone });
+  },
+
+  /**
+   * Verify the temp customer on a DRAFT order and attach the resulting User.
+   * Reuses verifyCustomerOtp (creates/finds the User, marks phoneVerified) then
+   * links it to the order. Name falls back to the guestName captured at draft
+   * time when the admin doesn't re-enter it. Does NOT confirm the order.
+   */
+  async verifyDraftCustomer(orderNumber: string, data: VerifyDraftCustomerInput) {
+    const order = await prisma.order.findUnique({
+      where: { orderNumber },
+      select: { id: true, status: true, source: true, guestPhone: true, guestName: true },
+    });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.status !== 'DRAFT' || order.source !== 'OFFLINE') {
+      throw ApiError.badRequest('Only draft offline orders can be verified.');
+    }
+    if (!order.guestPhone) {
+      throw ApiError.badRequest('This draft has no customer phone on file.');
+    }
+
+    // Fall back to the name captured at draft time if not re-entered.
+    const [guestFirst, ...guestRest] = (order.guestName ?? '').trim().split(/\s+/);
+    const firstName = data.firstName?.trim() || guestFirst || undefined;
+    const lastName = data.lastName?.trim() || guestRest.join(' ') || undefined;
+
+    const result = await this.verifyCustomerOtp({
+      phone: order.guestPhone,
+      code: data.code,
+      firstName,
+      lastName,
+    });
+
+    // Link the verified customer to the draft (and to the placeholder address).
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: { userId: result.userId },
+      include: { user: { select: { id: true, firstName: true, lastName: true, phone: true } } },
+    });
+    await prisma.address
+      .updateMany({
+        where: { orders: { some: { id: order.id } } },
+        data: { userId: result.userId },
+      })
+      .catch(() => undefined);
+
+    return { ...result, order: updated };
+  },
+
+  /**
+   * Confirm a DRAFT offline order into a real OFFLINE order once payment has
+   * been received. REQUIRES the customer to be OTP-verified first (userId set +
+   * phoneVerified). Reserves stock atomically (same race-safe pattern as
+   * checkout / createManualOrder) and sets the final status. The offline
+   * payment method is recorded as an internal note.
+   */
+  async confirmOfflineOrder(adminId: string, orderNumber: string, data: ConfirmOfflineOrderInput) {
+    const existing = await prisma.order.findUnique({
+      where: { orderNumber },
+      include: { items: true, user: { select: { id: true, phoneVerified: true, isActive: true } } },
+    });
+    if (!existing) throw ApiError.notFound('Order not found');
+    if (existing.deletedAt) throw ApiError.badRequest('Order is archived. Restore it first.');
+    if (existing.status !== 'DRAFT' || existing.source !== 'OFFLINE') {
+      throw ApiError.badRequest('Only draft offline orders can be confirmed.');
+    }
+    // Verification gate — every confirmed OFFLINE order links to a verified
+    // customer so it surfaces in their account when they log in via OTP.
+    if (!existing.userId || !existing.user) {
+      throw ApiError.badRequest('Verify the customer (OTP) before confirming this order.');
+    }
+    if (!existing.user.isActive) {
+      throw ApiError.badRequest('Customer account is inactive. Re-verify the phone number.');
+    }
+    if (!existing.user.phoneVerified) {
+      throw ApiError.badRequest(
+        'Customer phone is not verified. Verify via OTP before confirming.'
+      );
+    }
+    if (existing.items.length === 0) {
+      throw ApiError.badRequest('Draft has no items to confirm.');
+    }
+
+    const order = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // Reserve stock now (it was deliberately not reserved at draft time).
+        for (const item of existing.items) {
+          const result = await tx.productVariant.updateMany({
+            where: { id: item.variantId, stock: { gte: item.quantity } },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (result.count === 0) {
+            throw ApiError.conflict(`Insufficient stock for ${item.productName}`);
+          }
+        }
+
+        const updated = await tx.order.update({
+          where: { id: existing.id },
+          data: {
+            status: data.status,
+            statusHistory: {
+              create: {
+                status: data.status,
+                note: 'Offline order confirmed (payment received)',
+                changedBy: adminId,
+              },
+            },
+          },
+          include: { items: true },
+        });
+
+        const noteParts: string[] = [];
+        if (data.paymentMethod) noteParts.push(`Offline payment method: ${data.paymentMethod}`);
+        if (data.note) noteParts.push(data.note);
+        if (noteParts.length > 0) {
+          await tx.orderNote.create({
+            data: {
+              orderId: existing.id,
+              userId: adminId,
+              content: noteParts.join('\n'),
+              isInternal: true,
+            },
+          });
+        }
+
+        return updated;
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
     );

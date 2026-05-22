@@ -1,6 +1,6 @@
 import { prisma } from '@earth-revibe/db';
 import { APP_CONSTANTS } from '../config/constants';
-import { notArchived } from '../utils/order-filters';
+import { realOrders } from '../utils/order-filters';
 
 export const analyticsService = {
   async getDashboardStats() {
@@ -23,7 +23,7 @@ export const analyticsService = {
     ] = await Promise.all([
       prisma.order.aggregate({
         where: {
-          ...notArchived,
+          ...realOrders,
           status: { notIn: ['CANCELLED'] },
           createdAt: { gte: startOfMonth },
         },
@@ -31,17 +31,17 @@ export const analyticsService = {
       }),
       prisma.order.aggregate({
         where: {
-          ...notArchived,
+          ...realOrders,
           status: { notIn: ['CANCELLED'] },
           createdAt: { gte: startOfLastMonth, lte: endOfLastMonth },
         },
         _sum: { totalAmount: true },
       }),
       prisma.order.count({
-        where: { ...notArchived, createdAt: { gte: startOfMonth } },
+        where: { ...realOrders, createdAt: { gte: startOfMonth } },
       }),
       prisma.order.count({
-        where: { ...notArchived, createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
+        where: { ...realOrders, createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
       }),
       prisma.user.count({ where: { role: 'CUSTOMER' } }),
       prisma.user.count({
@@ -83,7 +83,7 @@ export const analyticsService = {
       const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
       const result = await prisma.order.aggregate({
         where: {
-          ...notArchived,
+          ...realOrders,
           status: { notIn: ['CANCELLED'] },
           createdAt: { gte: start, lte: end },
         },
@@ -100,7 +100,7 @@ export const analyticsService = {
 
   async getRecentOrders(limit: number = 5) {
     const orders = await prisma.order.findMany({
-      where: notArchived,
+      where: realOrders,
       take: limit,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -163,29 +163,29 @@ export const analyticsService = {
       ordersByStatus,
     ] = await Promise.all([
       prisma.order.aggregate({
-        where: { ...notArchived, status: { notIn: ['CANCELLED'] }, createdAt: { gte: startDate } },
+        where: { ...realOrders, status: { notIn: ['CANCELLED'] }, createdAt: { gte: startDate } },
         _sum: { totalAmount: true },
       }),
       prisma.order.aggregate({
         where: {
-          ...notArchived,
+          ...realOrders,
           status: { notIn: ['CANCELLED'] },
           createdAt: { gte: prevStartDate, lt: prevEndDate },
         },
         _sum: { totalAmount: true },
       }),
-      prisma.order.count({ where: { ...notArchived, createdAt: { gte: startDate } } }),
+      prisma.order.count({ where: { ...realOrders, createdAt: { gte: startDate } } }),
       prisma.order.count({
-        where: { ...notArchived, createdAt: { gte: prevStartDate, lt: prevEndDate } },
+        where: { ...realOrders, createdAt: { gte: prevStartDate, lt: prevEndDate } },
       }),
       prisma.order.aggregate({
-        where: { ...notArchived, status: { notIn: ['CANCELLED'] }, createdAt: { gte: startDate } },
+        where: { ...realOrders, status: { notIn: ['CANCELLED'] }, createdAt: { gte: startDate } },
         _avg: { totalAmount: true },
         _count: true,
       }),
       prisma.order.aggregate({
         where: {
-          ...notArchived,
+          ...realOrders,
           status: { notIn: ['CANCELLED'] },
           createdAt: { gte: prevStartDate, lt: prevEndDate },
         },
@@ -196,15 +196,17 @@ export const analyticsService = {
         FROM orders
         WHERE "createdAt" >= ${startDate}
         AND "deletedAt" IS NULL
+        AND status != 'DRAFT'
         AND "userId" IN (
           SELECT "userId" FROM orders
           WHERE "createdAt" < ${startDate}
           AND "deletedAt" IS NULL
+          AND status != 'DRAFT'
           GROUP BY "userId"
         )
       `,
       prisma.order.findMany({
-        where: { ...notArchived, createdAt: { gte: startDate } },
+        where: { ...realOrders, createdAt: { gte: startDate } },
         select: { userId: true },
         distinct: ['userId'],
       }),
@@ -214,7 +216,7 @@ export const analyticsService = {
         JOIN product_variants pv ON pv.id = oi."variantId"
         JOIN products p ON p.id = pv."productId"
         JOIN orders o ON o.id = oi."orderId"
-        WHERE o."createdAt" >= ${startDate} AND o.status != 'CANCELLED' AND o."deletedAt" IS NULL
+        WHERE o."createdAt" >= ${startDate} AND o.status NOT IN ('CANCELLED', 'DRAFT') AND o."deletedAt" IS NULL
         GROUP BY p.id, p.name
         ORDER BY quantity DESC
         LIMIT 5
@@ -224,13 +226,13 @@ export const analyticsService = {
         : prisma.$queryRaw<{ date: string; revenue: number }[]>`
             SELECT DATE("createdAt") as date, SUM("totalAmount") as revenue
             FROM orders
-            WHERE "createdAt" >= ${startDate} AND status != 'CANCELLED' AND "deletedAt" IS NULL
+            WHERE "createdAt" >= ${startDate} AND status NOT IN ('CANCELLED', 'DRAFT') AND "deletedAt" IS NULL
             GROUP BY DATE("createdAt")
             ORDER BY date ASC
           `,
       prisma.order.groupBy({
         by: ['status'],
-        where: { ...notArchived, createdAt: { gte: startDate } },
+        where: { ...realOrders, createdAt: { gte: startDate } },
         _count: true,
       }),
     ]);
@@ -293,13 +295,13 @@ export const analyticsService = {
     ] = await Promise.all([
       prisma.order.groupBy({
         by: ['status'],
-        where: { ...notArchived, createdAt: { gte: startDate } },
+        where: { ...realOrders, createdAt: { gte: startDate } },
         _count: true,
       }),
       prisma.$queryRaw<{ date: string; revenue: number }[]>`
         SELECT DATE("createdAt") as date, SUM("totalAmount") as revenue
         FROM orders
-        WHERE "createdAt" >= ${startDate} AND status != 'CANCELLED' AND "deletedAt" IS NULL
+        WHERE "createdAt" >= ${startDate} AND status NOT IN ('CANCELLED', 'DRAFT') AND "deletedAt" IS NULL
         GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `,
@@ -309,7 +311,7 @@ export const analyticsService = {
         JOIN product_variants pv ON pv.id = oi."variantId"
         JOIN products p ON p.id = pv."productId"
         JOIN orders o ON o.id = oi."orderId"
-        WHERE o."createdAt" >= ${startDate} AND o.status != 'CANCELLED' AND o."deletedAt" IS NULL
+        WHERE o."createdAt" >= ${startDate} AND o.status NOT IN ('CANCELLED', 'DRAFT') AND o."deletedAt" IS NULL
         GROUP BY p.id, p.name
         ORDER BY quantity DESC
         LIMIT 5
@@ -322,14 +324,14 @@ export const analyticsService = {
         ORDER BY DATE_TRUNC('month', "createdAt") ASC
       `,
       prisma.order.aggregate({
-        where: { ...notArchived, createdAt: { gte: startDate }, status: { notIn: ['CANCELLED'] } },
+        where: { ...realOrders, createdAt: { gte: startDate }, status: { notIn: ['CANCELLED'] } },
         _avg: { totalAmount: true },
         _count: true,
       }),
       // #5 — split sales by channel (online storefront vs offline/manual)
       prisma.order.groupBy({
         by: ['source'],
-        where: { ...notArchived, createdAt: { gte: startDate }, status: { notIn: ['CANCELLED'] } },
+        where: { ...realOrders, createdAt: { gte: startDate }, status: { notIn: ['CANCELLED'] } },
         _sum: { totalAmount: true },
         _count: true,
       }),

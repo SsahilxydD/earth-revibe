@@ -113,6 +113,48 @@ export const verifyCustomerOtpSchema = z.object({
   lastName: z.string().trim().max(60).optional(),
 });
 
+// ── Draft offline orders (two-phase) ───────────────────────────────
+// For offline sales that aren't paid on the spot. The admin captures a
+// temp customer (name + phone, UNVERIFIED) and the cart, and saves a
+// DRAFT order — no stock is reserved and it's excluded from revenue /
+// counts / customer history. Later, once payment lands, the customer is
+// OTP-verified and the draft is confirmed into a real OFFLINE order.
+
+export const createDraftOrderSchema = z.object({
+  // Temp customer — captured up front, verified later. Name first, then phone.
+  guestName: z.string().trim().min(1, 'Customer name is required').max(120),
+  guestPhone: z
+    .string()
+    .trim()
+    .regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number (10 digits)'),
+  items: z.array(manualOrderItemSchema).min(1, 'At least one item is required'),
+  discountAmount: z.coerce.number().min(0).default(0),
+  shippingAmount: z.coerce.number().min(0).default(0),
+  taxAmount: z.coerce.number().min(0).default(0),
+  // Tentative payment method; can be changed at confirm time.
+  paymentMethod: offlinePaymentMethodSchema.optional(),
+  note: z.string().max(1000).optional(),
+});
+
+// Verify the temp customer on a DRAFT order via WhatsApp OTP. The phone is
+// taken from the order's guestPhone server-side, so it's not in the body.
+export const verifyDraftCustomerSchema = z.object({
+  code: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits'),
+  // Optional override of the name captured at draft time.
+  firstName: z.string().trim().max(60).optional(),
+  lastName: z.string().trim().max(60).optional(),
+});
+
+// Confirm a DRAFT into a real OFFLINE order. Requires the customer to already
+// be OTP-verified (userId populated). Reserves stock and sets the final status.
+export const confirmOfflineOrderSchema = z.object({
+  status: z
+    .enum([OrderStatus.CONFIRMED, OrderStatus.SHIPPING, OrderStatus.DELIVERED])
+    .default(OrderStatus.DELIVERED),
+  paymentMethod: offlinePaymentMethodSchema.optional(),
+  note: z.string().max(1000).optional(),
+});
+
 // Archiving (soft-delete). Reason is optional but recorded in status history.
 // Tolerates an empty / absent request body (DELETE with no payload).
 export const archiveOrderSchema = z
@@ -133,6 +175,9 @@ export type AddOrderNoteInput = z.infer<typeof addOrderNoteSchema>;
 export type ManualOrderItemInput = z.infer<typeof manualOrderItemSchema>;
 export type OfflinePaymentMethod = z.infer<typeof offlinePaymentMethodSchema>;
 export type CreateManualOrderInput = z.infer<typeof createManualOrderSchema>;
+export type CreateDraftOrderInput = z.infer<typeof createDraftOrderSchema>;
+export type VerifyDraftCustomerInput = z.infer<typeof verifyDraftCustomerSchema>;
+export type ConfirmOfflineOrderInput = z.infer<typeof confirmOfflineOrderSchema>;
 export type ArchiveOrderInput = z.infer<typeof archiveOrderSchema>;
 export type SendCustomerOtpInput = z.infer<typeof sendCustomerOtpSchema>;
 export type VerifyCustomerOtpInput = z.infer<typeof verifyCustomerOtpSchema>;

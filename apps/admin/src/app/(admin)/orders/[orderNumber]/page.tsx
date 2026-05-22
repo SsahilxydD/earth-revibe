@@ -17,6 +17,9 @@ import {
   Trash2,
   ArchiveRestore,
   AlertCircle,
+  CheckCircle2,
+  ShieldCheck,
+  RefreshCw,
 } from 'lucide-react';
 import { Button, Badge, Card, Select } from '@earth-revibe/ui';
 import { Modal } from '@earth-revibe/ui/modal';
@@ -34,9 +37,14 @@ import {
   useRefundOrder,
   useArchiveOrder,
   useRestoreOrder,
+  useSendDraftOtp,
+  useVerifyDraftCustomer,
+  useConfirmOfflineOrder,
 } from '@/hooks/use-orders';
+import type { ConfirmOfflineOrderInput, OfflinePaymentMethod } from '@/types';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+  DRAFT: 'default',
   PENDING: 'info',
   CONFIRMED: 'info',
   SHIPPING: 'warning',
@@ -44,6 +52,21 @@ const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' 
   CANCELLED: 'error',
   RETURNED: 'error',
 };
+
+const confirmStatusOptions = [
+  { value: 'DELIVERED', label: 'Delivered (handed over in person)' },
+  { value: 'CONFIRMED', label: 'Confirmed (will ship later)' },
+  { value: 'SHIPPING', label: 'Shipping' },
+];
+
+const confirmPaymentOptions = [
+  { value: '', label: 'Payment method (optional)' },
+  { value: 'CASH', label: 'Cash' },
+  { value: 'UPI', label: 'UPI' },
+  { value: 'CARD', label: 'Card' },
+  { value: 'BANK_TRANSFER', label: 'Bank transfer' },
+  { value: 'OTHER', label: 'Other' },
+];
 
 const statusFlow = [
   { value: 'PENDING', label: 'Pending' },
@@ -85,6 +108,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const refundOrder = useRefundOrder();
   const archiveOrder = useArchiveOrder();
   const restoreOrder = useRestoreOrder();
+  const sendDraftOtp = useSendDraftOtp();
+  const verifyDraftCustomer = useVerifyDraftCustomer();
+  const confirmOfflineOrder = useConfirmOfflineOrder();
 
   const [newStatus, setNewStatus] = useState('');
   const [statusNote, setStatusNote] = useState('');
@@ -93,6 +119,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const [refundReason, setRefundReason] = useState('');
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [archiveReason, setArchiveReason] = useState('');
+
+  // Draft offline-order flow: verify the temp customer, then confirm.
+  const [draftOtpSent, setDraftOtpSent] = useState(false);
+  const [draftOtpCode, setDraftOtpCode] = useState('');
+  const [draftFirstName, setDraftFirstName] = useState('');
+  const [draftLastName, setDraftLastName] = useState('');
+  const [confirmStatus, setConfirmStatus] = useState('DELIVERED');
+  const [confirmPayment, setConfirmPayment] = useState('');
+  const [confirmNote, setConfirmNote] = useState('');
 
   const order = (data as any)?.order ?? data;
 
@@ -196,6 +231,50 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     }
   };
 
+  const handleSendDraftOtp = async () => {
+    try {
+      await sendDraftOtp.mutateAsync({ orderNumber });
+      setDraftOtpSent(true);
+      toast.success('OTP sent to the customer on WhatsApp');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to send OTP');
+    }
+  };
+
+  const handleVerifyDraft = async () => {
+    if (!/^\d{6}$/.test(draftOtpCode.trim())) {
+      toast.error('Enter the 6-digit OTP');
+      return;
+    }
+    try {
+      await verifyDraftCustomer.mutateAsync({
+        orderNumber,
+        code: draftOtpCode.trim(),
+        firstName: draftFirstName.trim() || undefined,
+        lastName: draftLastName.trim() || undefined,
+      });
+      toast.success('Customer verified');
+      setDraftOtpSent(false);
+      setDraftOtpCode('');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to verify OTP');
+    }
+  };
+
+  const handleConfirmOrder = async () => {
+    try {
+      await confirmOfflineOrder.mutateAsync({
+        orderNumber,
+        status: confirmStatus as ConfirmOfflineOrderInput['status'],
+        paymentMethod: (confirmPayment || undefined) as OfflinePaymentMethod | undefined,
+        note: confirmNote.trim() || undefined,
+      });
+      toast.success('Offline order confirmed');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to confirm order');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -219,6 +298,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 
   const isArchived = !!order.deletedAt;
   const isOffline = order.source === 'OFFLINE';
+  // Unconfirmed offline draft: customer captured but payment not received and
+  // stock not reserved. Verify the customer (OTP) then confirm to finalize.
+  const isDraft = order.status === 'DRAFT';
+  const customerVerified = !!order.user;
   // DELIVERED stays out of the "final" bucket so admin can still approve a
   // post-delivery return → RETURNED.
   const cancelledOrFinal = ['CANCELLED', 'RETURNED'].includes(order.status);
@@ -549,8 +632,147 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Draft offline order: verify the temp customer, then confirm */}
+          {isDraft && !isArchived && (
+            <Card>
+              <div className="flex items-center gap-2 mb-1">
+                <ShieldCheck size={18} className="text-deep-earth" />
+                <h3 className="text-base font-semibold text-charcoal">Confirm offline order</h3>
+              </div>
+              <p className="text-xs text-medium-gray mb-4">
+                Unconfirmed draft — no stock is held yet. Verify the customer by OTP, then confirm
+                once payment has been received.
+              </p>
+
+              {/* Step 1 — verify the customer */}
+              {customerVerified ? (
+                <div className="flex items-start gap-2 p-3 mb-4 rounded-lg bg-green-50 border border-green-200">
+                  <CheckCircle2 size={18} className="text-green-700 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm min-w-0">
+                    <p className="font-medium text-charcoal">Customer verified</p>
+                    <p className="text-xs text-medium-gray mt-0.5 truncate">
+                      {`${order.user?.firstName ?? ''} ${order.user?.lastName ?? ''}`.trim()}
+                      {order.user?.phone ? ` · +91 ${order.user.phone}` : ''}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 mb-4">
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900">
+                    <p className="font-medium">Unverified customer</p>
+                    <p className="text-xs mt-0.5">
+                      {order.guestName || '—'}
+                      {order.guestPhone ? ` · +91 ${order.guestPhone}` : ''}
+                    </p>
+                  </div>
+                  {!draftOtpSent ? (
+                    <Button
+                      size="sm"
+                      onClick={handleSendDraftOtp}
+                      disabled={sendDraftOtp.isPending}
+                    >
+                      {sendDraftOtp.isPending ? 'Sending…' : 'Send verification OTP'}
+                    </Button>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={draftOtpCode}
+                        onChange={(e) =>
+                          setDraftOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+                        }
+                        placeholder="6-digit code from WhatsApp"
+                        className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20 tracking-widest"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={draftFirstName}
+                          onChange={(e) => setDraftFirstName(e.target.value)}
+                          placeholder="First name (opt.)"
+                          className="px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                        />
+                        <input
+                          type="text"
+                          value={draftLastName}
+                          onChange={(e) => setDraftLastName(e.target.value)}
+                          placeholder="Last name"
+                          className="px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                        />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <Button
+                          size="sm"
+                          onClick={handleVerifyDraft}
+                          disabled={verifyDraftCustomer.isPending || draftOtpCode.length !== 6}
+                        >
+                          {verifyDraftCustomer.isPending ? 'Verifying…' : 'Verify'}
+                        </Button>
+                        <button
+                          type="button"
+                          onClick={handleSendDraftOtp}
+                          disabled={sendDraftOtp.isPending}
+                          className="text-xs text-medium-gray hover:text-charcoal underline flex items-center gap-1"
+                        >
+                          <RefreshCw size={12} /> Resend
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Step 2 — confirm into a real offline order */}
+              <div className="space-y-3 pt-4 border-t border-light-gray">
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1">
+                    Final status
+                  </label>
+                  <Select
+                    options={confirmStatusOptions}
+                    value={confirmStatus}
+                    onChange={(e) => setConfirmStatus(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1">
+                    Payment method
+                  </label>
+                  <Select
+                    options={confirmPaymentOptions}
+                    value={confirmPayment}
+                    onChange={(e) => setConfirmPayment(e.target.value)}
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={confirmNote}
+                  onChange={(e) => setConfirmNote(e.target.value)}
+                  placeholder="Note (optional)"
+                  className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                />
+                <Button
+                  className="w-full"
+                  onClick={handleConfirmOrder}
+                  disabled={!customerVerified || confirmOfflineOrder.isPending}
+                >
+                  {confirmOfflineOrder.isPending
+                    ? 'Confirming…'
+                    : customerVerified
+                      ? 'Confirm order'
+                      : 'Verify customer to confirm'}
+                </Button>
+                <p className="text-xs text-medium-gray">
+                  Confirming reserves stock and records the sale. The order then appears in the
+                  customer&apos;s account.
+                </p>
+              </div>
+            </Card>
+          )}
+
           {/* Update Status */}
-          {!cancelledOrFinal && (
+          {!cancelledOrFinal && !isDraft && (
             <Card>
               <h3 className="text-base font-semibold text-charcoal mb-4">Update Status</h3>
               <div className="space-y-3">
@@ -603,19 +825,27 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <div className="flex items-center gap-2 mb-4">
               <h3 className="text-base font-semibold text-charcoal">Customer</h3>
             </div>
-            <div className="space-y-2 text-sm">
-              <p className="font-medium text-charcoal">
-                {order.user?.firstName} {order.user?.lastName}
-              </p>
-              <p className="text-medium-gray">{order.user?.email}</p>
-              {order.user?.phone && <p className="text-medium-gray">{order.user.phone}</p>}
-              <Link
-                href={`/customers/${order.user?.id}`}
-                className="text-deep-earth hover:underline text-xs inline-block mt-1"
-              >
-                View customer
-              </Link>
-            </div>
+            {order.user ? (
+              <div className="space-y-2 text-sm">
+                <p className="font-medium text-charcoal">
+                  {order.user.firstName} {order.user.lastName}
+                </p>
+                <p className="text-medium-gray">{order.user.email}</p>
+                {order.user.phone && <p className="text-medium-gray">{order.user.phone}</p>}
+                <Link
+                  href={`/customers/${order.user.id}`}
+                  className="text-deep-earth hover:underline text-xs inline-block mt-1"
+                >
+                  View customer
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-1 text-sm">
+                <p className="font-medium text-charcoal">{order.guestName || 'Guest'}</p>
+                {order.guestPhone && <p className="text-medium-gray">+91 {order.guestPhone}</p>}
+                <p className="text-xs text-amber-600 mt-1">Unverified — no customer account yet</p>
+              </div>
+            )}
           </Card>
 
           {/* Shipping address */}

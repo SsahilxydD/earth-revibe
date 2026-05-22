@@ -97,7 +97,7 @@ export const orderService = {
 
       // Per-user limit check
       const userUsageCount = await prisma.order.count({
-        where: { userId, discountCodeId: discount.id, status: { not: 'CANCELLED' } },
+        where: { userId, discountCodeId: discount.id, status: { notIn: ['CANCELLED', 'DRAFT'] } },
       });
       if (userUsageCount >= discount.perUserLimit) {
         throw ApiError.badRequest(
@@ -417,7 +417,9 @@ export const orderService = {
   async listOrders(userId: string, query: OrderQuery) {
     const { status, page, limit } = query;
     // deletedAt: null — archived orders are hidden from customer history.
-    const where: Prisma.OrderWhereInput = { userId, deletedAt: null };
+    // NOT DRAFT — unconfirmed offline drafts (which may already be linked to a
+    // verified customer) must not surface in the customer's account.
+    const where: Prisma.OrderWhereInput = { userId, deletedAt: null, NOT: { status: 'DRAFT' } };
     if (status) where.status = status;
 
     const [orders, total] = await Promise.all([
@@ -439,7 +441,7 @@ export const orderService = {
 
   async getOrder(userId: string, orderNumber: string) {
     const order = await prisma.order.findFirst({
-      where: { orderNumber, userId, deletedAt: null },
+      where: { orderNumber, userId, deletedAt: null, NOT: { status: 'DRAFT' } },
       include: {
         items: true,
         payment: true,
@@ -535,7 +537,7 @@ export const orderService = {
       if (referral && referral.status === 'CONVERTED') {
         // Check if user has any other non-cancelled orders
         const otherOrders = await tx.order.count({
-          where: { userId, status: { not: 'CANCELLED' }, id: { not: order.id } },
+          where: { userId, status: { notIn: ['CANCELLED', 'DRAFT'] }, id: { not: order.id } },
         });
         if (otherOrders === 0) {
           // Revert referral status and claw back rewards

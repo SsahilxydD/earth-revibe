@@ -12,6 +12,14 @@
  *   REFUNDED        → RETURNED   (financial refund tracked on Payment.status)
  */
 export enum OrderStatus {
+  /**
+   * Unconfirmed offline draft. Created by an admin for an in-person sale whose
+   * payment hasn't landed yet. Stock is NOT reserved and the order is excluded
+   * from revenue, order counts, and customer history until it's confirmed via
+   * adminOrderService.confirmOfflineOrder (which requires a phone-verified
+   * customer). DRAFT only ever pairs with source=OFFLINE.
+   */
+  DRAFT = 'DRAFT',
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
   SHIPPING = 'SHIPPING',

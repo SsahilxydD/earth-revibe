@@ -16,8 +16,13 @@ import {
 import { Button, Badge, Card, Select } from '@earth-revibe/ui';
 import { toast } from '@earth-revibe/ui/toast';
 import { useInventory } from '@/hooks/use-inventory';
-import { useCreateManualOrder, useSendCustomerOtp, useVerifyCustomerOtp } from '@/hooks/use-orders';
-import type { CreateManualOrderInput, OfflinePaymentMethod } from '@/types';
+import {
+  useCreateManualOrder,
+  useCreateDraftOrder,
+  useSendCustomerOtp,
+  useVerifyCustomerOtp,
+} from '@/hooks/use-orders';
+import type { CreateManualOrderInput, CreateDraftOrderInput, OfflinePaymentMethod } from '@/types';
 
 type VerifiedCustomer = {
   userId: string;
@@ -65,8 +70,16 @@ function formatPrice(amount: number | string) {
 export default function NewManualOrderPage() {
   const router = useRouter();
   const createManualOrder = useCreateManualOrder();
+  const createDraftOrder = useCreateDraftOrder();
   const sendCustomerOtp = useSendCustomerOtp();
   const verifyCustomerOtp = useVerifyCustomerOtp();
+
+  // Two ways to capture the customer:
+  //  'verify' — OTP-verify now, then create a confirmed offline order (original flow).
+  //  'draft'  — capture name + phone unverified, save a DRAFT to confirm later.
+  const [customerMode, setCustomerMode] = useState<'verify' | 'draft'>('verify');
+  const [draftName, setDraftName] = useState('');
+  const [draftPhone, setDraftPhone] = useState('');
 
   // Customer verification gate — phone + OTP must be verified BEFORE the rest
   // of the form unlocks. This is the only way Order.userId gets populated,
@@ -247,6 +260,47 @@ export default function NewManualOrderPage() {
     }
   };
 
+  const draftValid =
+    draftName.trim().length > 0 && /^[6-9]\d{9}$/.test(draftPhone.trim()) && items.length > 0;
+
+  const handleSaveDraft = async () => {
+    if (!draftName.trim()) {
+      toast.error('Enter the customer name');
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(draftPhone.trim())) {
+      toast.error('Enter a valid 10-digit Indian mobile number');
+      return;
+    }
+    if (items.length === 0) {
+      toast.error('Add at least one item');
+      return;
+    }
+    // Note: stock is NOT validated/reserved for a draft — it's checked again
+    // when the draft is confirmed (after payment).
+    const payload: CreateDraftOrderInput = {
+      guestName: draftName.trim(),
+      guestPhone: draftPhone.trim(),
+      items: items.map((i) => ({
+        variantId: i.variantId,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+      })),
+      discountAmount: discountNum,
+      shippingAmount: shippingNum,
+      taxAmount: taxNum,
+      paymentMethod: paymentMethod || undefined,
+      note: note.trim() || undefined,
+    };
+    try {
+      const created = await createDraftOrder.mutateAsync(payload);
+      toast.success(`Draft order #${created.orderNumber} saved`);
+      router.push(`/orders/${created.orderNumber}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save draft');
+    }
+  };
+
   const pickerVariants: any[] = pickerData?.variants ?? [];
 
   return (
@@ -257,10 +311,10 @@ export default function NewManualOrderPage() {
           <ArrowLeft size={20} className="text-dark-gray" />
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-semibold text-charcoal">New manual order</h1>
+          <h1 className="text-2xl font-semibold text-charcoal">New offline order</h1>
           <p className="text-sm text-medium-gray mt-1">
-            Record an offline / in-person sale. Stock will be decremented; no Razorpay payment is
-            created.
+            Record an offline / in-person sale. Verify the customer now to create a confirmed order
+            (stock decremented), or save a draft to confirm later once payment lands.
           </p>
         </div>
       </div>
@@ -490,142 +544,204 @@ export default function NewManualOrderPage() {
         <div className="space-y-6">
           {/* Customer — OTP-gated verification */}
           <Card>
-            <h3 className="text-base font-semibold text-charcoal mb-4">Customer</h3>
+            <h3 className="text-base font-semibold text-charcoal mb-3">Customer</h3>
 
-            {verified ? (
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-green-50 border border-green-200">
-                  <CheckCircle2 size={20} className="text-green-700 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-charcoal">
-                      {`${verified.firstName} ${verified.lastName}`.trim() || 'Customer'}
-                      {verified.isNewCustomer && (
-                        <span className="ml-2 text-xs font-normal text-green-700">(new)</span>
-                      )}
-                    </p>
-                    <p className="text-xs text-medium-gray mt-0.5">
-                      +91 {verified.phone}
-                      {verified.email && !verified.email.endsWith('@phone.earthrevibe.com') && (
-                        <span> · {verified.email}</span>
-                      )}
-                    </p>
+            <div className="flex gap-1 p-1 mb-4 rounded-lg bg-off-white border border-light-gray">
+              <button
+                type="button"
+                onClick={() => setCustomerMode('verify')}
+                className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
+                  customerMode === 'verify'
+                    ? 'bg-white text-charcoal shadow-sm'
+                    : 'text-medium-gray hover:text-charcoal'
+                }`}
+              >
+                Verify now
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomerMode('draft')}
+                className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
+                  customerMode === 'draft'
+                    ? 'bg-white text-charcoal shadow-sm'
+                    : 'text-medium-gray hover:text-charcoal'
+                }`}
+              >
+                Save as draft
+              </button>
+            </div>
+
+            {customerMode === 'verify' ? (
+              verified ? (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-green-50 border border-green-200">
+                    <CheckCircle2 size={20} className="text-green-700 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-charcoal">
+                        {`${verified.firstName} ${verified.lastName}`.trim() || 'Customer'}
+                        {verified.isNewCustomer && (
+                          <span className="ml-2 text-xs font-normal text-green-700">(new)</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-medium-gray mt-0.5">
+                        +91 {verified.phone}
+                        {verified.email && !verified.email.endsWith('@phone.earthrevibe.com') && (
+                          <span> · {verified.email}</span>
+                        )}
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleResetVerification}
+                    className="text-xs text-medium-gray hover:text-charcoal underline"
+                  >
+                    Change customer
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleResetVerification}
-                  className="text-xs text-medium-gray hover:text-charcoal underline"
-                >
-                  Change customer
-                </button>
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-charcoal mb-1">
+                      Phone <span className="text-red-600">*</span>
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="10-digit Indian mobile"
+                        disabled={otpSent}
+                        className="flex-1 px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20 disabled:bg-light-gray/40 disabled:cursor-not-allowed"
+                      />
+                      {!otpSent && (
+                        <Button
+                          size="sm"
+                          onClick={handleSendOtp}
+                          disabled={sendCustomerOtp.isPending || phone.length !== 10}
+                        >
+                          {sendCustomerOtp.isPending ? 'Sending…' : 'Send OTP'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {otpSent && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-charcoal mb-1">
+                          OTP <span className="text-red-600">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={otpCode}
+                          onChange={(e) =>
+                            setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+                          }
+                          placeholder="6-digit code from WhatsApp"
+                          autoFocus
+                          className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20 tracking-widest"
+                        />
+                      </div>
+
+                      {!hasNameOnFile && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-charcoal mb-1">
+                              First name <span className="text-red-600">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={firstName}
+                              onChange={(e) => setFirstName(e.target.value)}
+                              placeholder={
+                                isExistingCustomer
+                                  ? 'Add to fill in profile'
+                                  : 'Customer first name'
+                              }
+                              className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-charcoal mb-1">
+                              Last name
+                            </label>
+                            <input
+                              type="text"
+                              value={lastName}
+                              onChange={(e) => setLastName(e.target.value)}
+                              placeholder="optional"
+                              className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={handleVerifyOtp}
+                          disabled={verifyCustomerOtp.isPending || otpCode.length !== 6}
+                        >
+                          {verifyCustomerOtp.isPending ? 'Verifying…' : 'Verify'}
+                        </Button>
+                        <button
+                          type="button"
+                          onClick={handleSendOtp}
+                          disabled={sendCustomerOtp.isPending}
+                          className="text-xs text-medium-gray hover:text-charcoal underline flex items-center gap-1"
+                        >
+                          <RefreshCw size={12} /> Resend
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleResetVerification}
+                          className="text-xs text-medium-gray hover:text-charcoal underline ml-auto"
+                        >
+                          Change number
+                        </button>
+                      </div>
+
+                      <p className="text-xs text-medium-gray">
+                        {isExistingCustomer
+                          ? 'Customer has an existing account — order will appear in their history.'
+                          : 'New customer — an account will be created. They can log in via OTP later.'}
+                      </p>
+                    </>
+                  )}
+                </div>
+              )
             ) : (
               <div className="space-y-3">
+                <p className="text-xs text-medium-gray">
+                  Capture the customer now and verify by OTP later, after payment. No account is
+                  created and no stock is held until you confirm the order.
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1">
+                    Name <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={draftName}
+                    onChange={(e) => setDraftName(e.target.value)}
+                    placeholder="Customer name"
+                    className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-charcoal mb-1">
                     Phone <span className="text-red-600">*</span>
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      placeholder="10-digit Indian mobile"
-                      disabled={otpSent}
-                      className="flex-1 px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20 disabled:bg-light-gray/40 disabled:cursor-not-allowed"
-                    />
-                    {!otpSent && (
-                      <Button
-                        size="sm"
-                        onClick={handleSendOtp}
-                        disabled={sendCustomerOtp.isPending || phone.length !== 10}
-                      >
-                        {sendCustomerOtp.isPending ? 'Sending…' : 'Send OTP'}
-                      </Button>
-                    )}
-                  </div>
+                  <input
+                    type="tel"
+                    value={draftPhone}
+                    onChange={(e) => setDraftPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="10-digit Indian mobile"
+                    className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                  />
                 </div>
-
-                {otpSent && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-charcoal mb-1">
-                        OTP <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        placeholder="6-digit code from WhatsApp"
-                        autoFocus
-                        className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20 tracking-widest"
-                      />
-                    </div>
-
-                    {!hasNameOnFile && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium text-charcoal mb-1">
-                            First name <span className="text-red-600">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            placeholder={
-                              isExistingCustomer ? 'Add to fill in profile' : 'Customer first name'
-                            }
-                            className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-charcoal mb-1">
-                            Last name
-                          </label>
-                          <input
-                            type="text"
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            placeholder="optional"
-                            className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={handleVerifyOtp}
-                        disabled={verifyCustomerOtp.isPending || otpCode.length !== 6}
-                      >
-                        {verifyCustomerOtp.isPending ? 'Verifying…' : 'Verify'}
-                      </Button>
-                      <button
-                        type="button"
-                        onClick={handleSendOtp}
-                        disabled={sendCustomerOtp.isPending}
-                        className="text-xs text-medium-gray hover:text-charcoal underline flex items-center gap-1"
-                      >
-                        <RefreshCw size={12} /> Resend
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleResetVerification}
-                        className="text-xs text-medium-gray hover:text-charcoal underline ml-auto"
-                      >
-                        Change number
-                      </button>
-                    </div>
-
-                    <p className="text-xs text-medium-gray">
-                      {isExistingCustomer
-                        ? 'Customer has an existing account — order will appear in their history.'
-                        : 'New customer — an account will be created. They can log in via OTP later.'}
-                    </p>
-                  </>
-                )}
               </div>
             )}
           </Card>
@@ -634,17 +750,24 @@ export default function NewManualOrderPage() {
           <Card>
             <h3 className="text-base font-semibold text-charcoal mb-4">Order</h3>
             <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Status</label>
-                <Select
-                  options={statusOptions}
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                />
-              </div>
+              {customerMode === 'verify' ? (
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Status</label>
+                  <Select
+                    options={statusOptions}
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                  />
+                </div>
+              ) : (
+                <p className="text-xs text-medium-gray">
+                  Saved as a <strong>draft</strong>. You&apos;ll pick the final status when you
+                  confirm the order after payment.
+                </p>
+              )}
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-1">
-                  Payment method
+                  Payment method{customerMode === 'draft' ? ' (tentative)' : ''}
                 </label>
                 <Select
                   options={paymentOptions as { value: string; label: string }[]}
@@ -663,22 +786,42 @@ export default function NewManualOrderPage() {
                   className="w-full px-3 py-2 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20 min-h-[80px]"
                 />
               </div>
-              <Badge variant="warning">Offline (manual) order</Badge>
+              <Badge variant="warning">
+                {customerMode === 'draft'
+                  ? 'Offline draft (confirm later)'
+                  : 'Offline (manual) order'}
+              </Badge>
             </div>
           </Card>
 
           {/* Submit */}
-          <Button
-            className="w-full"
-            onClick={handleSubmit}
-            disabled={createManualOrder.isPending || items.length === 0 || !verified}
-          >
-            {createManualOrder.isPending
-              ? 'Creating…'
-              : !verified
-                ? 'Verify customer to continue'
-                : `Create order · ${formatPrice(total)}`}
-          </Button>
+          {customerMode === 'verify' ? (
+            <Button
+              className="w-full"
+              onClick={handleSubmit}
+              disabled={createManualOrder.isPending || items.length === 0 || !verified}
+            >
+              {createManualOrder.isPending
+                ? 'Creating…'
+                : !verified
+                  ? 'Verify customer to continue'
+                  : `Create order · ${formatPrice(total)}`}
+            </Button>
+          ) : (
+            <Button
+              className="w-full"
+              onClick={handleSaveDraft}
+              disabled={createDraftOrder.isPending || !draftValid}
+            >
+              {createDraftOrder.isPending
+                ? 'Saving…'
+                : items.length === 0
+                  ? 'Add at least one item'
+                  : !draftValid
+                    ? 'Add customer name & phone'
+                    : `Save draft · ${formatPrice(total)}`}
+            </Button>
+          )}
         </div>
       </div>
     </div>

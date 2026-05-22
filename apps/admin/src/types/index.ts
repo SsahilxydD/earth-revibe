@@ -90,4 +90,7 @@ export type {
   AdminOrderQuery,
   SendCustomerOtpInput,
   VerifyCustomerOtpInput,
+  CreateDraftOrderInput,
+  VerifyDraftCustomerInput,
+  ConfirmOfflineOrderInput,
 } from '@earth-revibe/shared';
