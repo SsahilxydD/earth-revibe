@@ -9,16 +9,48 @@ const {
   mockOrderCount,
   mockOrderFindUnique,
   mockOrderUpdate,
+  mockOrderCreate,
   mockOrderStatusHistoryCreate,
   mockOrderNoteCreate,
-} = vi.hoisted(() => ({
-  mockOrderFindMany: vi.fn(),
-  mockOrderCount: vi.fn(),
-  mockOrderFindUnique: vi.fn(),
-  mockOrderUpdate: vi.fn(),
-  mockOrderStatusHistoryCreate: vi.fn(),
-  mockOrderNoteCreate: vi.fn(),
-}));
+  mockVariantFindMany,
+  mockVariantUpdateMany,
+  mockAddressCreate,
+  mockAddressUpdateMany,
+  mockTransaction,
+} = vi.hoisted(() => {
+  const mockOrderUpdate = vi.fn();
+  const mockOrderCreate = vi.fn();
+  const mockOrderStatusHistoryCreate = vi.fn();
+  const mockOrderNoteCreate = vi.fn();
+  const mockVariantFindMany = vi.fn();
+  const mockVariantUpdateMany = vi.fn();
+  const mockAddressCreate = vi.fn();
+  const mockAddressUpdateMany = vi.fn();
+  // tx client shares the same mock fns so assertions work whether the call
+  // came through prisma.* or the transaction client.
+  const txClient = {
+    order: { create: mockOrderCreate, update: mockOrderUpdate },
+    orderStatusHistory: { create: mockOrderStatusHistoryCreate },
+    orderNote: { create: mockOrderNoteCreate },
+    productVariant: { findMany: mockVariantFindMany, updateMany: mockVariantUpdateMany },
+    address: { create: mockAddressCreate, updateMany: mockAddressUpdateMany },
+  };
+  const mockTransaction = vi.fn(async (cb: (tx: typeof txClient) => unknown) => cb(txClient));
+  return {
+    mockOrderFindMany: vi.fn(),
+    mockOrderCount: vi.fn(),
+    mockOrderFindUnique: vi.fn(),
+    mockOrderUpdate,
+    mockOrderCreate,
+    mockOrderStatusHistoryCreate,
+    mockOrderNoteCreate,
+    mockVariantFindMany,
+    mockVariantUpdateMany,
+    mockAddressCreate,
+    mockAddressUpdateMany,
+    mockTransaction,
+  };
+});
 
 vi.mock('@earth-revibe/db', () => ({
   prisma: {
@@ -27,6 +59,7 @@ vi.mock('@earth-revibe/db', () => ({
       count: mockOrderCount,
       findUnique: mockOrderFindUnique,
       update: mockOrderUpdate,
+      create: mockOrderCreate,
     },
     orderStatusHistory: {
       create: mockOrderStatusHistoryCreate,
@@ -34,8 +67,27 @@ vi.mock('@earth-revibe/db', () => ({
     orderNote: {
       create: mockOrderNoteCreate,
     },
+    productVariant: {
+      findMany: mockVariantFindMany,
+      updateMany: mockVariantUpdateMany,
+    },
+    address: {
+      create: mockAddressCreate,
+      updateMany: mockAddressUpdateMany,
+    },
+    user: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    otpCode: {
+      count: vi.fn(),
+      deleteMany: vi.fn(),
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
+    $transaction: mockTransaction,
   },
-  Prisma: {},
+  Prisma: {
+    TransactionIsolationLevel: { Serializable: 'Serializable' },
+  },
 }));
 
 vi.mock('../../utils/api-error', () => {
@@ -53,6 +105,9 @@ vi.mock('../../utils/api-error', () => {
     }
     static badRequest(message: string) {
       return new ApiError(400, message, 'BAD_REQUEST');
+    }
+    static conflict(message: string) {
+      return new ApiError(409, message, 'CONFLICT');
     }
   };
   return { ApiError };
@@ -876,6 +931,216 @@ describe('adminOrderService', () => {
         // narrow mock doesn't stub it. The point is: the guard didn't fire.
         expect(String(err.message)).not.toMatch(/active AWB/);
       });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // createDraftOrder — two-phase offline drafts
+  // ---------------------------------------------------------------------------
+
+  describe('createDraftOrder', () => {
+    const ADMIN_ID = 'admin-id-1';
+
+    const DRAFT_INPUT = {
+      guestName: 'Ravi Kumar',
+      guestPhone: '9876543210',
+      items: [{ variantId: 'var-1', quantity: 2, unitPrice: 500 }],
+      discountAmount: 0,
+      shippingAmount: 0,
+      taxAmount: 0,
+    };
+
+    function stubDraftHappyPath() {
+      mockVariantFindMany.mockResolvedValue([
+        {
+          id: 'var-1',
+          size: 'M',
+          color: 'Black',
+          price: 500,
+          product: { id: 'prod-1', name: 'Tee', price: 500, images: [{ url: 'img.jpg' }] },
+        },
+      ]);
+      mockAddressCreate.mockResolvedValue({ id: 'addr-draft' });
+      mockOrderCreate.mockResolvedValue({ id: 'order-draft', orderNumber: 'ORD-DRAFT', items: [] });
+      mockOrderNoteCreate.mockResolvedValue({});
+    }
+
+    it('creates a DRAFT offline order linked to no user (temp customer on the order)', async () => {
+      stubDraftHappyPath();
+
+      await adminOrderService.createDraftOrder(ADMIN_ID, DRAFT_INPUT as any);
+
+      const data = mockOrderCreate.mock.calls[0][0].data;
+      expect(data.status).toBe('DRAFT');
+      expect(data.source).toBe('OFFLINE');
+      expect(data.guestName).toBe('Ravi Kumar');
+      expect(data.guestPhone).toBe('9876543210');
+      expect(data.userId).toBeUndefined();
+    });
+
+    it('does NOT reserve stock at draft time', async () => {
+      stubDraftHappyPath();
+
+      await adminOrderService.createDraftOrder(ADMIN_ID, DRAFT_INPUT as any);
+
+      // Stock is only decremented on confirm, never on draft creation.
+      expect(mockVariantUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('creates a placeholder address with the guest name and phone', async () => {
+      stubDraftHappyPath();
+
+      await adminOrderService.createDraftOrder(ADMIN_ID, DRAFT_INPUT as any);
+
+      const addr = mockAddressCreate.mock.calls[0][0].data;
+      expect(addr.fullName).toBe('Ravi Kumar');
+      expect(addr.phone).toBe('9876543210');
+      expect(addr.userId).toBeUndefined();
+    });
+
+    it('rejects a discount larger than the subtotal', async () => {
+      stubDraftHappyPath();
+
+      await expect(
+        adminOrderService.createDraftOrder(ADMIN_ID, {
+          ...DRAFT_INPUT,
+          discountAmount: 5000, // subtotal is 2 * 500 = 1000
+        } as any)
+      ).rejects.toMatchObject({ statusCode: 400 });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // confirmOfflineOrder — verification gate + stock reservation
+  // ---------------------------------------------------------------------------
+
+  describe('confirmOfflineOrder', () => {
+    const ADMIN_ID = 'admin-id-1';
+
+    function makeDraft(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'order-draft',
+        orderNumber: 'ORD-DRAFT',
+        status: 'DRAFT',
+        source: 'OFFLINE',
+        deletedAt: null,
+        userId: 'user-1',
+        user: { id: 'user-1', phoneVerified: true, isActive: true },
+        items: [{ variantId: 'var-1', quantity: 2, productName: 'Tee' }],
+        ...overrides,
+      };
+    }
+
+    it('throws 404 when the order does not exist', async () => {
+      mockOrderFindUnique.mockResolvedValue(null);
+      await expect(
+        adminOrderService.confirmOfflineOrder(ADMIN_ID, 'ORD-X', { status: 'DELIVERED' } as any)
+      ).rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it('refuses to confirm a non-draft order', async () => {
+      mockOrderFindUnique.mockResolvedValue(makeDraft({ status: 'CONFIRMED' }));
+      await expect(
+        adminOrderService.confirmOfflineOrder(ADMIN_ID, 'ORD-DRAFT', { status: 'DELIVERED' } as any)
+      ).rejects.toMatchObject({ statusCode: 400 });
+      expect(mockTransaction).not.toHaveBeenCalled();
+    });
+
+    it('refuses to confirm an archived draft', async () => {
+      mockOrderFindUnique.mockResolvedValue(makeDraft({ deletedAt: new Date() }));
+      await expect(
+        adminOrderService.confirmOfflineOrder(ADMIN_ID, 'ORD-DRAFT', { status: 'DELIVERED' } as any)
+      ).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('refuses to confirm when the customer is NOT verified (no userId)', async () => {
+      mockOrderFindUnique.mockResolvedValue(makeDraft({ userId: null, user: null }));
+      await expect(
+        adminOrderService.confirmOfflineOrder(ADMIN_ID, 'ORD-DRAFT', { status: 'DELIVERED' } as any)
+      ).rejects.toMatchObject({ statusCode: 400 });
+      expect(mockTransaction).not.toHaveBeenCalled();
+    });
+
+    it('refuses to confirm when the linked user is not phone-verified', async () => {
+      mockOrderFindUnique.mockResolvedValue(
+        makeDraft({ user: { id: 'user-1', phoneVerified: false, isActive: true } })
+      );
+      await expect(
+        adminOrderService.confirmOfflineOrder(ADMIN_ID, 'ORD-DRAFT', { status: 'DELIVERED' } as any)
+      ).rejects.toMatchObject({ statusCode: 400 });
+      expect(mockTransaction).not.toHaveBeenCalled();
+    });
+
+    it('confirms a verified draft: reserves stock and sets the final status', async () => {
+      mockOrderFindUnique.mockResolvedValue(makeDraft());
+      mockVariantUpdateMany.mockResolvedValue({ count: 1 });
+      mockOrderUpdate.mockResolvedValue({ id: 'order-draft', status: 'DELIVERED' });
+      mockOrderNoteCreate.mockResolvedValue({});
+
+      await adminOrderService.confirmOfflineOrder(ADMIN_ID, 'ORD-DRAFT', {
+        status: 'DELIVERED',
+        paymentMethod: 'CASH',
+      } as any);
+
+      // Stock reserved exactly once for the single line item.
+      expect(mockVariantUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'var-1', stock: { gte: 2 } },
+          data: { stock: { decrement: 2 } },
+        })
+      );
+      // Status flipped on the order.
+      expect(mockOrderUpdate.mock.calls[0][0].data.status).toBe('DELIVERED');
+    });
+
+    it('rolls up insufficient stock into a 409 conflict on confirm', async () => {
+      mockOrderFindUnique.mockResolvedValue(makeDraft());
+      mockVariantUpdateMany.mockResolvedValue({ count: 0 }); // race-safe predicate failed
+
+      await expect(
+        adminOrderService.confirmOfflineOrder(ADMIN_ID, 'ORD-DRAFT', { status: 'DELIVERED' } as any)
+      ).rejects.toMatchObject({ statusCode: 409 });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // sendDraftCustomerOtp / verifyDraftCustomer — draft-only guards
+  // ---------------------------------------------------------------------------
+
+  describe('draft customer verification guards', () => {
+    it('sendDraftCustomerOtp refuses a non-draft order', async () => {
+      mockOrderFindUnique.mockResolvedValue({
+        status: 'CONFIRMED',
+        source: 'OFFLINE',
+        guestPhone: '9876543210',
+      });
+      await expect(adminOrderService.sendDraftCustomerOtp('ORD-1')).rejects.toMatchObject({
+        statusCode: 400,
+      });
+    });
+
+    it('sendDraftCustomerOtp refuses a draft with no phone on file', async () => {
+      mockOrderFindUnique.mockResolvedValue({
+        status: 'DRAFT',
+        source: 'OFFLINE',
+        guestPhone: null,
+      });
+      await expect(adminOrderService.sendDraftCustomerOtp('ORD-1')).rejects.toMatchObject({
+        statusCode: 400,
+      });
+    });
+
+    it('verifyDraftCustomer refuses a non-draft order', async () => {
+      mockOrderFindUnique.mockResolvedValue({
+        id: 'o1',
+        status: 'CONFIRMED',
+        source: 'OFFLINE',
+        guestPhone: '9876543210',
+        guestName: 'Ravi',
+      });
+      await expect(
+        adminOrderService.verifyDraftCustomer('ORD-1', { code: '123456' } as any)
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
   });
 });

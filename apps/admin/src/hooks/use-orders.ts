@@ -6,6 +6,9 @@ import type {
   CreateManualOrderInput,
   SendCustomerOtpInput,
   VerifyCustomerOtpInput,
+  CreateDraftOrderInput,
+  VerifyDraftCustomerInput,
+  ConfirmOfflineOrderInput,
 } from '@/types';
 
 type SendCustomerOtpResult = { isExistingCustomer: boolean; hasName: boolean };
@@ -205,6 +208,63 @@ export function useCreateManualOrder() {
       queryClient.invalidateQueries({ queryKey: ['admin-inventory-summary'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
       // Stock changed → storefront product pages may show new availability.
+      revalidateStorefront(['products']);
+    },
+  });
+}
+
+// ---- Two-phase offline drafts ----
+
+/**
+ * Create a DRAFT offline order (temp customer + parked cart, no stock reserved,
+ * not yet confirmed). Returns the created order including its orderNumber.
+ */
+export function useCreateDraftOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateDraftOrderInput) => api.post('/admin/orders/manual/draft', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+    },
+  });
+}
+
+/** Send a WhatsApp OTP to the temp customer on a DRAFT order. */
+export function useSendDraftOtp() {
+  return useMutation<SendCustomerOtpResult, Error, { orderNumber: string }>({
+    mutationFn: ({ orderNumber }) => api.post(`/admin/orders/${orderNumber}/customer/send-otp`),
+  });
+}
+
+/** Verify the temp customer's OTP and attach the resulting User to the draft. */
+export function useVerifyDraftCustomer() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    VerifyCustomerOtpResult & { order: unknown },
+    Error,
+    { orderNumber: string } & VerifyDraftCustomerInput
+  >({
+    mutationFn: ({ orderNumber, ...body }) =>
+      api.post(`/admin/orders/${orderNumber}/customer/verify-otp`, body),
+    onSuccess: (_data, { orderNumber }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-order', orderNumber] });
+    },
+  });
+}
+
+/** Confirm a DRAFT into a real OFFLINE order (reserves stock, sets status). */
+export function useConfirmOfflineOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderNumber, ...body }: { orderNumber: string } & ConfirmOfflineOrderInput) =>
+      api.post(`/admin/orders/${orderNumber}/confirm`, body),
+    onSuccess: (_data, { orderNumber }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-order', orderNumber] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-inventory-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      // Stock changed on confirm → storefront availability may change.
       revalidateStorefront(['products']);
     },
   });

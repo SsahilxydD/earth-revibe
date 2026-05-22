@@ -621,6 +621,11 @@ model Order {
   userId          String?
   user            User?         @relation(fields: [userId], references: [id])
   guestEmail      String?
+  /// Temp customer captured on a DRAFT offline order before OTP verification.
+  /// On confirm the customer is verified and `userId` is populated; these stay
+  /// as a record of what the admin originally typed in.
+  guestName       String?
+  guestPhone      String?
   addressId       String
   address         Address       @relation(fields: [addressId], references: [id])
   status          OrderStatus   @default(PENDING)
@@ -695,6 +700,10 @@ model OrderTrackingActivity {
 }
 
 enum OrderStatus {
+  /// Unconfirmed offline draft (admin in-person sale, payment not yet received).
+  /// No stock reserved; excluded from revenue/counts/customer history until
+  /// confirmed. Only ever pairs with source = OFFLINE.
+  DRAFT
   PENDING
   CONFIRMED
   SHIPPING

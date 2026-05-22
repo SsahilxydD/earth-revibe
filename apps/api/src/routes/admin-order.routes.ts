@@ -9,6 +9,9 @@ import {
   updateOrderStatusSchema,
   addOrderNoteSchema,
   createManualOrderSchema,
+  createDraftOrderSchema,
+  verifyDraftCustomerSchema,
+  confirmOfflineOrderSchema,
   archiveOrderSchema,
   sendCustomerOtpSchema,
   verifyCustomerOtpSchema,
@@ -36,6 +39,11 @@ router.post(
   validate({ body: createManualOrderSchema }),
   asyncHandler(adminOrderController.createManualOrder)
 );
+router.post(
+  '/manual/draft',
+  validate({ body: createDraftOrderSchema }),
+  asyncHandler(adminOrderController.createDraftOrder)
+);
 router.get(
   '/',
   validate({ query: adminOrderQuerySchema }),
@@ -57,6 +65,21 @@ router.post(
   '/:orderNumber/notes',
   validate({ body: addOrderNoteSchema }),
   asyncHandler(adminOrderController.addNote)
+);
+// Two-phase offline drafts: verify the temp customer, then confirm.
+router.post(
+  '/:orderNumber/customer/send-otp',
+  asyncHandler(adminOrderController.sendDraftCustomerOtp)
+);
+router.post(
+  '/:orderNumber/customer/verify-otp',
+  validate({ body: verifyDraftCustomerSchema }),
+  asyncHandler(adminOrderController.verifyDraftCustomer)
+);
+router.post(
+  '/:orderNumber/confirm',
+  validate({ body: confirmOfflineOrderSchema }),
+  asyncHandler(adminOrderController.confirmOfflineOrder)
 );
 router.post('/:orderNumber/refund', asyncHandler(adminRefundController.initiateRefund));
 

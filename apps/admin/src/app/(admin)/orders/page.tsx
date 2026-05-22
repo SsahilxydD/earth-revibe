@@ -13,6 +13,7 @@ import { toast } from '@earth-revibe/ui';
 
 const statusOptions = [
   { value: '', label: 'All Statuses' },
+  { value: 'DRAFT', label: 'Draft (offline)' },
   { value: 'PENDING', label: 'Pending' },
   { value: 'CONFIRMED', label: 'Confirmed' },
   { value: 'SHIPPING', label: 'Shipping' },
@@ -22,6 +23,7 @@ const statusOptions = [
 ];
 
 const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
+  DRAFT: 'default',
   PENDING: 'info',
   CONFIRMED: 'info',
   SHIPPING: 'warning',
@@ -274,9 +276,17 @@ export default function OrdersPage() {
                       <td className="px-6 py-3">
                         <div>
                           <p className="text-charcoal">
-                            {order.user?.firstName} {order.user?.lastName}
+                            {order.user
+                              ? `${order.user.firstName} ${order.user.lastName}`
+                              : order.guestName || order.guestEmail || 'Guest'}
                           </p>
-                          <p className="text-xs text-medium-gray">{order.user?.email}</p>
+                          <p className="text-xs text-medium-gray">
+                            {order.user?.email ||
+                              (order.guestPhone ? `+91 ${order.guestPhone}` : '')}
+                            {order.status === 'DRAFT' && !order.user && (
+                              <span className="ml-1 text-amber-600">· unverified</span>
+                            )}
+                          </p>
                         </div>
                       </td>
                       <td className="px-6 py-3 text-dark-gray">{formatDate(order.createdAt)}</td>

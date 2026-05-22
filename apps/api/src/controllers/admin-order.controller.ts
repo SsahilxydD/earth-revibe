@@ -46,6 +46,29 @@ export const adminOrderController = {
     res.json({ success: true, data: result });
   },
 
+  async createDraftOrder(req: Request, res: Response) {
+    const order = await adminOrderService.createDraftOrder(req.user!.id, req.body);
+    res.status(201).json({ success: true, data: order });
+  },
+
+  async sendDraftCustomerOtp(req: Request, res: Response) {
+    const orderNumber = req.params.orderNumber as string;
+    const result = await adminOrderService.sendDraftCustomerOtp(orderNumber);
+    res.json({ success: true, data: result });
+  },
+
+  async verifyDraftCustomer(req: Request, res: Response) {
+    const orderNumber = req.params.orderNumber as string;
+    const result = await adminOrderService.verifyDraftCustomer(orderNumber, req.body);
+    res.json({ success: true, data: result });
+  },
+
+  async confirmOfflineOrder(req: Request, res: Response) {
+    const orderNumber = req.params.orderNumber as string;
+    const result = await adminOrderService.confirmOfflineOrder(req.user!.id, orderNumber, req.body);
+    res.json({ success: true, data: result });
+  },
+
   async archiveOrder(req: Request, res: Response) {
     const orderNumber = req.params.orderNumber as string;
     const result = await adminOrderService.archiveOrder(orderNumber, req.user!.id, req.body ?? {});
