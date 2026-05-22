@@ -24,6 +24,25 @@ export function useInventorySummary() {
   });
 }
 
+/**
+ * Product-grouped search for the offline-order picker — one row per product
+ * with its variants nested (vs the SKU-per-row `useInventory`). Backed by the
+ * lean `/admin/inventory/products` endpoint (no count, small page).
+ */
+export function useInventoryProducts(params: { search?: string; limit?: number } = {}) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  return useQuery({
+    queryKey: ['admin-inventory-products', params],
+    queryFn: () => api.get(`/admin/inventory/products?${searchParams.toString()}`),
+  });
+}
+
 export function useUpdateStock() {
   const queryClient = useQueryClient();
   return useMutation({

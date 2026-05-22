@@ -32,6 +32,8 @@ router.use(authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 
 router.get('/', asyncHandler(adminInventoryController.listInventory));
 router.get('/summary', asyncHandler(adminInventoryController.getInventorySummary));
+// Product-grouped search for the offline-order picker (one row per product).
+router.get('/products', asyncHandler(adminInventoryController.searchProductsForPicker));
 router.put(
   '/bulk',
   validate({ body: bulkUpdateStockSchema }),
