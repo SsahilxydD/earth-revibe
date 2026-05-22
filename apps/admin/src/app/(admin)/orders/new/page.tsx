@@ -34,6 +34,7 @@ type VerifiedCustomer = {
 };
 
 type LineItem = {
+  lineId: string;
   variantId: string;
   productName: string;
   productImage: string | null;
@@ -42,6 +43,8 @@ type LineItem = {
   stock: number;
   quantity: number;
   unitPrice: number;
+  // Sibling variants of the product, so the line item can offer a size selector.
+  variants: any[];
 };
 
 const statusOptions = [
@@ -65,6 +68,22 @@ function formatPrice(amount: number | string) {
     currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(amount));
+}
+
+// Natural apparel size order for the size selectors (S → M → L → XL → XXL),
+// with numeric sizes (28/30/32…) after lettered ones and unknowns last.
+const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'XXXXL'];
+function sizeRank(size?: string | null) {
+  let s = (size ?? '').trim().toUpperCase().replace(/\s+/g, '');
+  s = s.replace('2XL', 'XXL').replace('3XL', 'XXXL').replace('4XL', 'XXXXL');
+  const i = SIZE_ORDER.indexOf(s);
+  if (i !== -1) return i;
+  const n = parseFloat(s);
+  if (!Number.isNaN(n)) return 100 + n;
+  return 1000;
+}
+function sortVariantsBySize(variants: any[]) {
+  return [...variants].sort((a, b) => sizeRank(a?.size) - sizeRank(b?.size));
 }
 
 export default function NewManualOrderPage() {
@@ -133,6 +152,7 @@ export default function NewManualOrderPage() {
       return [
         ...current,
         {
+          lineId: crypto.randomUUID(),
           variantId: variant.id,
           productName: product?.name ?? '—',
           productImage: product?.images?.[0]?.url ?? null,
@@ -141,18 +161,38 @@ export default function NewManualOrderPage() {
           stock: variant.stock ?? 0,
           quantity: 1,
           unitPrice,
+          variants: sortVariantsBySize(product?.variants ?? []),
         },
       ];
     });
     // Keep the picker open so the admin can add several sizes/products in a row.
   };
 
-  const updateItem = (variantId: string, patch: Partial<LineItem>) => {
-    setItems((current) => current.map((i) => (i.variantId === variantId ? { ...i, ...patch } : i)));
+  const updateItem = (lineId: string, patch: Partial<LineItem>) => {
+    setItems((current) => current.map((i) => (i.lineId === lineId ? { ...i, ...patch } : i)));
   };
 
-  const removeItem = (variantId: string) => {
-    setItems((current) => current.filter((i) => i.variantId !== variantId));
+  const removeItem = (lineId: string) => {
+    setItems((current) => current.filter((i) => i.lineId !== lineId));
+  };
+
+  // Switch the size/variant of an already-added line (the line-item size selector).
+  const changeLineSize = (lineId: string, newVariantId: string) => {
+    setItems((current) =>
+      current.map((i) => {
+        if (i.lineId !== lineId) return i;
+        const v = i.variants.find((x: any) => x.id === newVariantId);
+        if (!v) return i;
+        return {
+          ...i,
+          variantId: v.id,
+          variantSize: v.size ?? '',
+          variantColor: v.color ?? '',
+          stock: v.stock ?? 0,
+          unitPrice: Number(v.price) || i.unitPrice,
+        };
+      })
+    );
   };
 
   const handleSendOtp = async () => {
@@ -352,7 +392,7 @@ export default function NewManualOrderPage() {
                   )}
                   {pickerProducts.map((product) => {
                     const price = Number(product.price) || 0;
-                    const variants: any[] = product.variants ?? [];
+                    const variants: any[] = sortVariantsBySize(product.variants ?? []);
                     return (
                       <div key={product.id} className="flex items-start gap-3 py-3 px-1">
                         {product.images?.[0]?.url ? (
@@ -419,7 +459,7 @@ export default function NewManualOrderPage() {
                   const overStock = item.quantity > item.stock;
                   return (
                     <div
-                      key={item.variantId}
+                      key={item.lineId}
                       className="flex items-start gap-3 py-3 border-b border-light-gray last:border-0"
                     >
                       {item.productImage ? (
@@ -435,11 +475,29 @@ export default function NewManualOrderPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-charcoal truncate">{item.productName}</p>
-                        <p className="text-xs text-medium-gray">
-                          {[item.variantSize, item.variantColor].filter(Boolean).join(' / ') || '—'}
-                          {' · '}
-                          {item.stock} in stock
-                        </p>
+                        {/* Size selector — change the size/variant of this line */}
+                        <div className="mt-1 flex items-center gap-2">
+                          {item.variants.length > 1 ? (
+                            <select
+                              value={item.variantId}
+                              onChange={(e) => changeLineSize(item.lineId, e.target.value)}
+                              className="h-7 px-2 rounded border border-light-gray bg-white text-xs text-charcoal outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                            >
+                              {item.variants.map((v: any) => (
+                                <option key={v.id} value={v.id}>
+                                  {[v.size, v.color].filter(Boolean).join(' / ') || 'One size'} ·{' '}
+                                  {v.stock ?? 0} in stock
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-xs text-medium-gray">
+                              {[item.variantSize, item.variantColor].filter(Boolean).join(' / ') ||
+                                '—'}{' '}
+                              · {item.stock} in stock
+                            </span>
+                          )}
+                        </div>
                         {overStock && (
                           <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
                             <AlertCircle size={12} /> Exceeds available stock
@@ -455,7 +513,7 @@ export default function NewManualOrderPage() {
                             max={item.stock}
                             value={item.quantity}
                             onChange={(e) =>
-                              updateItem(item.variantId, {
+                              updateItem(item.lineId, {
                                 quantity: Math.max(1, Number(e.target.value) || 1),
                               })
                             }
@@ -470,7 +528,7 @@ export default function NewManualOrderPage() {
                             step="0.01"
                             value={item.unitPrice}
                             onChange={(e) =>
-                              updateItem(item.variantId, {
+                              updateItem(item.lineId, {
                                 unitPrice: Math.max(0, Number(e.target.value) || 0),
                               })
                             }
@@ -485,7 +543,7 @@ export default function NewManualOrderPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => removeItem(item.variantId)}
+                          onClick={() => removeItem(item.lineId)}
                           className="p-1.5 rounded-md hover:bg-red-50 transition-colors"
                           title="Remove"
                         >
