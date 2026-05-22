@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Button, Badge, Card, Select } from '@earth-revibe/ui';
 import { toast } from '@earth-revibe/ui/toast';
-import { useInventory } from '@/hooks/use-inventory';
+import { useInventoryProducts } from '@/hooks/use-inventory';
 import {
   useCreateManualOrder,
   useCreateDraftOrder,
@@ -105,14 +105,11 @@ export default function NewManualOrderPage() {
   const [pickerSearch, setPickerSearch] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Picker UX: we want the variants the admin can actually sell first.
-  // The inventory endpoint's default sort is stock_asc (good for the
-  // restock dashboard, bad here) and would otherwise return only the
-  // worst-stocked variants in the first page.
-  const { data: pickerData, isLoading: pickerLoading } = useInventory({
+  // Product-grouped picker: one row per product with a size selector, backed
+  // by the lean /admin/inventory/products endpoint (no count, small page).
+  const { data: pickerData, isLoading: pickerLoading } = useInventoryProducts({
     search: pickerSearch || undefined,
-    sortBy: 'stock_desc',
-    limit: 8,
+    limit: 10,
   });
 
   const subtotal = useMemo(
@@ -124,7 +121,7 @@ export default function NewManualOrderPage() {
   const taxNum = Number(taxAmount) || 0;
   const total = Math.max(subtotal - discountNum + shippingNum + taxNum, 0);
 
-  const addVariant = (variant: any) => {
+  const addProductVariant = (product: any, variant: any) => {
     setItems((current) => {
       const existing = current.find((i) => i.variantId === variant.id);
       if (existing) {
@@ -132,13 +129,13 @@ export default function NewManualOrderPage() {
           i.variantId === variant.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      const unitPrice = Number(variant.price) || Number(variant.product?.price) || 0;
+      const unitPrice = Number(variant.price) || Number(product?.price) || 0;
       return [
         ...current,
         {
           variantId: variant.id,
-          productName: variant.product?.name ?? '—',
-          productImage: variant.product?.images?.[0]?.url ?? null,
+          productName: product?.name ?? '—',
+          productImage: product?.images?.[0]?.url ?? null,
           variantSize: variant.size ?? '',
           variantColor: variant.color ?? '',
           stock: variant.stock ?? 0,
@@ -147,8 +144,7 @@ export default function NewManualOrderPage() {
         },
       ];
     });
-    setPickerOpen(false);
-    setPickerSearch('');
+    // Keep the picker open so the admin can add several sizes/products in a row.
   };
 
   const updateItem = (variantId: string, patch: Partial<LineItem>) => {
@@ -301,7 +297,7 @@ export default function NewManualOrderPage() {
     }
   };
 
-  const pickerVariants: any[] = pickerData?.variants ?? [];
+  const pickerProducts: any[] = pickerData?.products ?? [];
 
   return (
     <div className="space-y-6">
@@ -341,34 +337,28 @@ export default function NewManualOrderPage() {
                   <input
                     autoFocus
                     type="text"
-                    placeholder="Search products by name or SKU…"
+                    placeholder="Search products by name…"
                     value={pickerSearch}
                     onChange={(e) => setPickerSearch(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
                   />
                 </div>
-                <div className="mt-2 max-h-64 overflow-y-auto divide-y divide-light-gray">
+                <div className="mt-2 max-h-72 overflow-y-auto divide-y divide-light-gray">
                   {pickerLoading && <p className="text-sm text-medium-gray py-3">Searching…</p>}
-                  {!pickerLoading && pickerVariants.length === 0 && (
+                  {!pickerLoading && pickerProducts.length === 0 && (
                     <p className="text-sm text-medium-gray py-3">
-                      {pickerSearch ? 'No matching variants' : 'Type to search'}
+                      {pickerSearch ? 'No matching products' : 'Type to search'}
                     </p>
                   )}
-                  {pickerVariants.map((variant) => {
-                    const label = [variant.size, variant.color].filter(Boolean).join(' / ');
-                    const price = Number(variant.price) || Number(variant.product?.price) || 0;
+                  {pickerProducts.map((product) => {
+                    const price = Number(product.price) || 0;
+                    const variants: any[] = product.variants ?? [];
                     return (
-                      <button
-                        key={variant.id}
-                        type="button"
-                        onClick={() => addVariant(variant)}
-                        disabled={(variant.stock ?? 0) <= 0}
-                        className="w-full flex items-center gap-3 py-2 px-1 text-left hover:bg-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {variant.product?.images?.[0]?.url ? (
+                      <div key={product.id} className="flex items-start gap-3 py-3 px-1">
+                        {product.images?.[0]?.url ? (
                           <img
-                            src={variant.product.images[0].url}
-                            alt={variant.product?.name ?? ''}
+                            src={product.images[0].url}
+                            alt={product.name ?? ''}
                             className="w-9 h-9 rounded-md object-cover bg-off-white flex-shrink-0"
                           />
                         ) : (
@@ -377,24 +367,42 @@ export default function NewManualOrderPage() {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-charcoal truncate">
-                            {variant.product?.name}
-                          </p>
-                          <p className="text-xs text-medium-gray">
-                            {label || '—'} &middot; SKU {variant.sku || '—'}
-                          </p>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-charcoal truncate">
+                              {product.name}
+                            </p>
+                            <p className="text-sm text-charcoal flex-shrink-0">
+                              {formatPrice(price)}
+                            </p>
+                          </div>
+                          {/* Size selector — one button per variant; pick a size to add it */}
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            {variants.length === 0 && (
+                              <span className="text-xs text-medium-gray">No sizes</span>
+                            )}
+                            {variants.map((variant) => {
+                              const label =
+                                [variant.size, variant.color].filter(Boolean).join(' / ') || 'Add';
+                              const outOfStock = (variant.stock ?? 0) <= 0;
+                              return (
+                                <button
+                                  key={variant.id}
+                                  type="button"
+                                  onClick={() => addProductVariant(product, variant)}
+                                  disabled={outOfStock}
+                                  title={outOfStock ? 'Out of stock' : `${variant.stock} in stock`}
+                                  className="px-2 py-1 rounded-md border border-light-gray bg-white text-xs text-charcoal hover:border-deep-earth hover:bg-off-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:line-through"
+                                >
+                                  {label}
+                                  <span className="ml-1 text-medium-gray">
+                                    ({variant.stock ?? 0})
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-sm text-charcoal">{formatPrice(price)}</p>
-                          <p
-                            className={`text-xs ${
-                              (variant.stock ?? 0) > 0 ? 'text-medium-gray' : 'text-red-600'
-                            }`}
-                          >
-                            {variant.stock ?? 0} in stock
-                          </p>
-                        </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

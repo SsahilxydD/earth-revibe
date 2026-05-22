@@ -87,6 +87,50 @@ export const adminInventoryController = {
     });
   },
 
+  /**
+   * Product-grouped search for the manual/offline order picker. Returns one
+   * row per PRODUCT (not per SKU) with its sellable variants nested, so the
+   * picker can show a product once and offer a size selector.
+   *
+   * Deliberately lean for speed: a single product findMany with a nested
+   * variant select, no `count`/pagination (the picker never paginates), and a
+   * small `take`. Much cheaper than the variant-level listInventory endpoint.
+   */
+  async searchProductsForPicker(req: Request, res: Response) {
+    const search = (req.query.search as string | undefined)?.trim();
+    const limit = Math.min(20, Math.max(1, Number(req.query.limit) || 10));
+
+    const where: Prisma.ProductWhereInput = {
+      // Only products that actually have variants to sell.
+      variants: { some: {} },
+    };
+    if (search) {
+      where.name = { contains: search, mode: 'insensitive' };
+    }
+
+    const products = await prisma.product.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        images: {
+          where: { isPrimary: true },
+          take: 1,
+          select: { url: true, altText: true },
+        },
+        variants: {
+          select: { id: true, size: true, color: true, stock: true, price: true },
+          orderBy: { stock: 'desc' },
+        },
+      },
+      orderBy: { name: 'asc' },
+      take: limit,
+    });
+
+    res.json({ success: true, data: { products } });
+  },
+
   async updateStock(req: Request, res: Response) {
     const variantId = req.params.variantId as string;
     const { stock } = req.body;
