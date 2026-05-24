@@ -22,18 +22,13 @@ interface ProductCardProps {
 const OFFERS = [
   {
     tab: '100% Back',
-    headline: 'Cashback on your first order',
-    desc: 'Your full first order returns as loyalty points. Spend ₹2,000, get ₹2,000 back.',
-  },
-  {
-    tab: '20% Refer',
-    headline: '20% for every friend',
-    desc: 'Friends get 15% off their first order; you earn 20% of it, paid in cash.',
+    headline: 'First-order cashback',
+    desc: 'Your entire first order comes back as loyalty points.',
   },
   {
     tab: '33% Return',
-    headline: 'Wear it, then send it back',
-    desc: 'A year on, return any piece for 33% of what you paid, back as points.',
+    headline: 'Year-on take-back',
+    desc: 'Wear it a year, send it back, and earn 33% back as points.',
   },
 ] as const;
 
@@ -389,11 +384,11 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               zIndex: 6,
               display: 'flex',
               flexDirection: 'column',
-              gap: 10,
-              padding: '14px 16px',
+              gap: 14,
+              padding: '16px 18px',
               borderTopLeftRadius: 16,
               borderTopRightRadius: 16,
-              background: 'rgba(255,255,255,0.5)',
+              background: 'rgba(255,255,255,0.76)',
               backdropFilter: 'blur(16px) saturate(1.3)',
               WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
               borderTop: '1px solid rgba(255,255,255,0.7)',
@@ -405,7 +400,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             }}
           >
             {/* Tab bar — the only interactive part; the rest of the sheet lets taps/swipes pass through */}
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', gap: 24 }}>
               {OFFERS.map((o, i) => (
                 <button
                   key={o.tab}
@@ -415,7 +410,6 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
                     setActiveOffer(i);
                   }}
                   style={{
-                    flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -428,13 +422,18 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
                   }}
                 >
                   <span
-                    style={{ fontSize: 10, fontWeight: activeOffer === i ? 600 : 500, color: '#000' }}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: activeOffer === i ? 700 : 600,
+                      color: '#000',
+                      whiteSpace: 'nowrap',
+                    }}
                   >
                     {o.tab}
                   </span>
                   <span
                     style={{
-                      width: 24,
+                      width: '100%',
                       height: 2,
                       borderRadius: 1,
                       backgroundColor: activeOffer === i ? '#000' : 'transparent',
@@ -446,11 +445,11 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
 
             <span style={{ height: 1, background: 'rgba(0,0,0,0.1)' }} />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#000' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: -0.2, color: '#000' }}>
                 {OFFERS[activeOffer].headline}
               </span>
-              <span style={{ fontSize: 9, fontWeight: 400, lineHeight: 1.45, color: '#000' }}>
+              <span style={{ fontSize: 10, fontWeight: 400, lineHeight: 1.5, color: '#000' }}>
                 {OFFERS[activeOffer].desc}
               </span>
             </div>
