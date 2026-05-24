@@ -380,12 +380,12 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               left: 0,
               right: 0,
               bottom: 0,
-              height: '50%',
+              minHeight: '50%',
               zIndex: 6,
               display: 'flex',
               flexDirection: 'column',
               gap: 14,
-              padding: '16px 18px',
+              padding: '16px 18px 26px 18px',
               borderTopLeftRadius: 16,
               borderTopRightRadius: 16,
               background: 'rgba(255,255,255,0.76)',
@@ -443,7 +443,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               ))}
             </div>
 
-            <span style={{ height: 1, background: 'rgba(0,0,0,0.1)' }} />
+            <span style={{ height: 1, flexShrink: 0, alignSelf: 'stretch', background: 'rgba(0,0,0,0.12)' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: -0.2, color: '#000' }}>
