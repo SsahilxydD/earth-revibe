@@ -16,11 +16,33 @@ interface ProductCardProps {
   index?: number;
 }
 
+// Store-wide running offers (see /offers), surfaced as a frosted-glass tabbed
+// sheet that slides up only when the card's swiper lands on the 2nd image — so
+// the first frame stays clean and the offers read as a reward for browsing.
+const OFFERS = [
+  {
+    tab: '100% Back',
+    headline: 'Cashback on your first order',
+    desc: 'Your full first order returns as loyalty points. Spend ₹2,000, get ₹2,000 back.',
+  },
+  {
+    tab: '20% Refer',
+    headline: '20% for every friend',
+    desc: 'Friends get 15% off their first order; you earn 20% of it, paid in cash.',
+  },
+  {
+    tab: '33% Return',
+    headline: 'Wear it, then send it back',
+    desc: 'A year on, return any piece for 33% of what you paid, back as points.',
+  },
+] as const;
+
 export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const router = useRouter();
   const prefetched = useRef(false);
   const [heartBounce, setHeartBounce] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [activeOffer, setActiveOffer] = useState(0);
 
   const { data: wishlistItems } = useWishlist({ enabled: typeof window !== 'undefined' });
   const addToWishlist = useAddToWishlist();
@@ -316,7 +338,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
           </div>
         )}
 
-        {/* Page indicator dots */}
+        {/* Page indicator dots — kept above the offers sheet; flip dark while it's up */}
         {hasSlider && (
           <div
             style={{
@@ -324,24 +346,114 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               bottom: 8,
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 5,
+              zIndex: 7,
               display: 'flex',
               gap: 5,
               pointerEvents: 'none',
             }}
           >
-            {sortedImages.map((_, i) => (
-              <span
-                key={i}
-                style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: 9999,
-                  backgroundColor: i === realIndex ? '#FFF' : 'rgba(255,255,255,0.5)',
-                  transition: 'background-color 0.2s ease',
-                }}
-              />
-            ))}
+            {sortedImages.map((_, i) => {
+              const onSheet = realIndex === 1;
+              const active = i === realIndex;
+              return (
+                <span
+                  key={i}
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: 9999,
+                    backgroundColor: active
+                      ? onSheet
+                        ? '#000'
+                        : '#FFF'
+                      : onSheet
+                        ? 'rgba(0,0,0,0.25)'
+                        : 'rgba(255,255,255,0.5)',
+                    transition: 'background-color 0.2s ease',
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Offers glass sheet — frosted bottom panel from mid-image, only on the 2nd image */}
+        {hasSlider && imageCount > 1 && (
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: '50%',
+              zIndex: 6,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              padding: '14px 16px',
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+              background: 'rgba(255,255,255,0.5)',
+              backdropFilter: 'blur(16px) saturate(1.3)',
+              WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
+              borderTop: '1px solid rgba(255,255,255,0.7)',
+              boxShadow: '0 -3px 14px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.7)',
+              opacity: realIndex === 1 ? 1 : 0,
+              transform: realIndex === 1 ? 'translateY(0)' : 'translateY(8px)',
+              transition: 'opacity 0.3s ease, transform 0.3s ease',
+              pointerEvents: 'none',
+            }}
+          >
+            {/* Tab bar — the only interactive part; the rest of the sheet lets taps/swipes pass through */}
+            <div style={{ display: 'flex' }}>
+              {OFFERS.map((o, i) => (
+                <button
+                  key={o.tab}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveOffer(i);
+                  }}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    pointerEvents: realIndex === 1 ? 'auto' : 'none',
+                  }}
+                >
+                  <span
+                    style={{ fontSize: 10, fontWeight: activeOffer === i ? 600 : 500, color: '#000' }}
+                  >
+                    {o.tab}
+                  </span>
+                  <span
+                    style={{
+                      width: 24,
+                      height: 2,
+                      borderRadius: 1,
+                      backgroundColor: activeOffer === i ? '#000' : 'transparent',
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
+
+            <span style={{ height: 1, background: 'rgba(0,0,0,0.1)' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#000' }}>
+                {OFFERS[activeOffer].headline}
+              </span>
+              <span style={{ fontSize: 9, fontWeight: 400, lineHeight: 1.45, color: '#000' }}>
+                {OFFERS[activeOffer].desc}
+              </span>
+            </div>
           </div>
         )}
 
