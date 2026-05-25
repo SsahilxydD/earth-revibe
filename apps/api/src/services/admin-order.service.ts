@@ -352,6 +352,7 @@ export const adminOrderService = {
                 id: true,
                 name: true,
                 price: true,
+                category: { select: { offlinePrice: true } },
                 images: { where: { isPrimary: true }, take: 1 },
               },
             },
@@ -363,7 +364,12 @@ export const adminOrderService = {
         const orderItems = data.items.map((item) => {
           const v = variantMap.get(item.variantId);
           if (!v) throw ApiError.badRequest(`Product variant ${item.variantId} not found`);
-          const unitPrice = item.unitPrice ?? (Number(v.price) || Number(v.product.price));
+          // Offline default: the category's offlinePrice wins over the online
+          // price; an explicit per-line unitPrice from the admin still wins over all.
+          const offline = v.product.category?.offlinePrice;
+          const unitPrice =
+            item.unitPrice ??
+            (offline != null ? Number(offline) : Number(v.price) || Number(v.product.price));
           const totalPrice = unitPrice * item.quantity;
           subtotal += totalPrice;
           return {
@@ -495,6 +501,7 @@ export const adminOrderService = {
               id: true,
               name: true,
               price: true,
+              category: { select: { offlinePrice: true } },
               images: { where: { isPrimary: true }, take: 1 },
             },
           },
@@ -506,7 +513,12 @@ export const adminOrderService = {
       const orderItems = data.items.map((item) => {
         const v = variantMap.get(item.variantId);
         if (!v) throw ApiError.badRequest(`Product variant ${item.variantId} not found`);
-        const unitPrice = item.unitPrice ?? (Number(v.price) || Number(v.product.price));
+        // Offline default: the category's offlinePrice wins over the online
+        // price; an explicit per-line unitPrice from the admin still wins over all.
+        const offline = v.product.category?.offlinePrice;
+        const unitPrice =
+          item.unitPrice ??
+          (offline != null ? Number(offline) : Number(v.price) || Number(v.product.price));
         const totalPrice = unitPrice * item.quantity;
         subtotal += totalPrice;
         return {

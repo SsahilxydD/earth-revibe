@@ -114,6 +114,9 @@ export const adminInventoryController = {
         id: true,
         name: true,
         price: true,
+        // Per-category offline price → the offline-order form defaults each
+        // line to this (falling back to the product/variant price when null).
+        category: { select: { offlinePrice: true } },
         images: {
           where: { isPrimary: true },
           take: 1,
