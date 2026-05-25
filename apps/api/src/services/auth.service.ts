@@ -13,6 +13,7 @@ import type {
   UpdateProfileInput,
   ChangePasswordInput,
 } from '@earth-revibe/shared';
+import { isPlaceholderEmail } from '@earth-revibe/shared';
 
 const JWT_SECRET_KEY = new TextEncoder().encode(env.JWT_SECRET);
 
@@ -159,16 +160,19 @@ export const authService = {
     // UI can decide whether to collect the full name before the OTP step.
     const existing = await prisma.user.findUnique({
       where: { phone },
-      select: { id: true, firstName: true, lastName: true },
+      select: { id: true, firstName: true, lastName: true, email: true },
     });
     const hasName = !!(existing && (existing.firstName?.trim() || existing.lastName?.trim()));
-    return { isNewUser: !existing, hasName };
+    // New users — or returning ones still on the @phone placeholder — must
+    // supply a real email on the OTP step (drives the required field in the UI).
+    const needsEmail = !existing || isPlaceholderEmail(existing.email);
+    return { isNewUser: !existing, hasName, needsEmail };
   },
 
   /**
    * Verify an OTP code and return a signed JWT + user data.
    */
-  async verifyOtp({ phone, code, firstName, lastName }: VerifyOtpInput) {
+  async verifyOtp({ phone, code, firstName, lastName, email }: VerifyOtpInput) {
     // Find the latest unverified, unexpired OTP for this phone
     const otp = await prisma.otpCode.findFirst({
       where: { phone, verified: false, expiresAt: { gte: new Date() } },
@@ -202,6 +206,19 @@ export const authService = {
     // Find or create user by phone
     let user = await prisma.user.findUnique({ where: { phone } });
 
+    // A real email may only belong to one account. If the supplied email is
+    // already linked elsewhere, surface a clear error instead of a 500 from the
+    // unique constraint on create/update.
+    if (email) {
+      const emailOwner = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      if (emailOwner && emailOwner.id !== user?.id) {
+        throw ApiError.badRequest('This email is already linked to another account');
+      }
+    }
+
     const incomingFirst = firstName?.trim() ?? '';
     const incomingLast = lastName?.trim() ?? '';
 
@@ -209,7 +226,9 @@ export const authService = {
       user = await prisma.user.create({
         data: {
           phone,
-          email: `${phone.replace('+', '')}@phone.earthrevibe.com`,
+          // Use the real email if the client collected one; otherwise fall back
+          // to the synthetic placeholder (kept for legacy/guest-ish flows).
+          email: email || `${phone.replace('+', '')}@phone.earthrevibe.com`,
           firstName: incomingFirst,
           lastName: incomingLast,
           phoneVerified: true,
@@ -228,6 +247,8 @@ export const authService = {
       // already has (profile edits happen via a dedicated endpoint).
       const shouldBackfillFirst = !user.firstName?.trim() && incomingFirst;
       const shouldBackfillLast = !user.lastName?.trim() && incomingLast;
+      // Replace the @phone placeholder with the real email once we have one.
+      const shouldBackfillEmail = !!email && isPlaceholderEmail(user.email);
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
@@ -235,6 +256,7 @@ export const authService = {
           lastLoginAt: new Date(),
           ...(shouldBackfillFirst && { firstName: incomingFirst }),
           ...(shouldBackfillLast && { lastName: incomingLast }),
+          ...(shouldBackfillEmail && { email }),
         },
       });
     }

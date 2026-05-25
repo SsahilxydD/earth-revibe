@@ -85,6 +85,9 @@ export const createCodOrderSchema = z.object({
   addressId: z.string().min(1),
   discountCode: z.string().optional(),
   loyaltyPointsToUse: z.coerce.number().int().min(0).default(0),
+  // Collected at COD checkout when the account still carries the @phone
+  // placeholder email; backfills the real one so the order confirmation lands.
+  email: z.string().trim().email().max(254).optional(),
 });
 
 export type CreateMagicCheckoutInput = z.infer<typeof createMagicCheckoutSchema>;

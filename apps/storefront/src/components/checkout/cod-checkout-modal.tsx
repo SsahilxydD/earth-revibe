@@ -11,6 +11,8 @@ import { useAddresses, useCreateAddress } from '@/hooks/use-addresses';
 import { api } from '@/lib/api-client';
 import { formatPrice } from '@/lib/utils';
 import { trackPurchaseCompleted } from '@/lib/analytics';
+import { useAuthStore } from '@/stores/auth-store';
+import { isPlaceholderEmail } from '@earth-revibe/shared';
 import type { Address } from '@/types';
 
 const INDIAN_STATES = [
@@ -89,6 +91,13 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
   const [error, setError] = useState('');
   const [_isSubmitting, setIsSubmitting] = useState(false);
 
+  // Phone-OTP accounts carry the @phone placeholder; COD must capture a real
+  // email (it's the only flow that doesn't pass through Razorpay's backfill).
+  const userEmail = useAuthStore((s) => s.user?.email);
+  const needsEmail = isPlaceholderEmail(userEmail);
+  const [email, setEmail] = useState('');
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
   // New address form state
   const [form, setForm] = useState({
     fullName: '',
@@ -166,6 +175,10 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
 
   const handlePlaceOrder = async () => {
     if (!selectedAddressId) return;
+    if (needsEmail && !emailValid) {
+      setError('Enter a valid email to place a COD order');
+      return;
+    }
     setIsSubmitting(true);
     setError('');
     setStep('confirming');
@@ -177,6 +190,7 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
           addressId: selectedAddressId,
           discountCode: effectiveDiscountCode || undefined,
           loyaltyPointsToUse: 0,
+          ...(needsEmail && { email: email.trim() }),
         }
       );
 
@@ -415,9 +429,40 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
             Pay {formatPrice(total)} in cash when your order is delivered
           </div>
 
+          {/* Email — required when the account still has the @phone placeholder */}
+          {needsEmail && (
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Email *
+              </label>
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                maxLength={254}
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                }}
+                className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)]"
+              />
+              <p className="mt-1.5 text-[11px] text-[var(--color-muted)]">
+                We&apos;ll send your order confirmation &amp; rewards here.
+              </p>
+            </div>
+          )}
+
           {error && <p className="text-xs text-red-500 text-center">{error}</p>}
 
-          <Button variant="primary" fullWidth size="lg" onClick={handlePlaceOrder}>
+          <Button
+            variant="primary"
+            fullWidth
+            size="lg"
+            onClick={handlePlaceOrder}
+            disabled={needsEmail && !emailValid}
+          >
             Place COD Order
           </Button>
         </div>
