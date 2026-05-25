@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ShoppingBag, Gift, TrendingUp, Copy, Check } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatPrice } from '@/lib/utils';
 
 interface LoyaltySummary {
   currentBalance: number;
@@ -121,7 +121,7 @@ export default function LoyaltyPage() {
             letterSpacing: -1,
           }}
         >
-          {(balance ?? 0).toLocaleString('en-IN')}
+          {Math.round(balance ?? 0).toLocaleString('en-IN')}
         </span>
         <div style={{ height: 1, backgroundColor: '#333' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -134,7 +134,7 @@ export default function LoyaltyPage() {
                 color: '#FFF',
               }}
             >
-              {(totalEarned ?? 0).toLocaleString('en-IN')}
+              {Math.round(totalEarned ?? 0).toLocaleString('en-IN')}
             </span>
             <span style={{ fontSize: 10, fontWeight: 300, color: '#666' }}>Total Earned</span>
           </div>
@@ -147,7 +147,7 @@ export default function LoyaltyPage() {
                 color: '#FFF',
               }}
             >
-              {(totalRedeemed ?? 0).toLocaleString('en-IN')}
+              {Math.round(totalRedeemed ?? 0).toLocaleString('en-IN')}
             </span>
             <span style={{ fontSize: 10, fontWeight: 300, color: '#666' }}>Redeemed</span>
           </div>
@@ -193,7 +193,7 @@ export default function LoyaltyPage() {
                       {c.code}
                     </span>
                     <span style={{ fontSize: 11, fontWeight: 300, color: '#666' }}>
-                      ₹{c.value.toLocaleString('en-IN')} off · {expiryLabel}
+                      {formatPrice(c.value)} off · {expiryLabel}
                     </span>
                   </div>
                   <button
@@ -313,7 +313,7 @@ export default function LoyaltyPage() {
                     }}
                   >
                     {isPositive ? '+' : '-'}
-                    {Math.abs(tx.points).toLocaleString('en-IN')}
+                    {Math.round(Math.abs(tx.points)).toLocaleString('en-IN')}
                   </span>
                 </div>
                 {i < transactions.length - 1 && (

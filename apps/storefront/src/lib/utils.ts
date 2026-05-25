@@ -12,7 +12,8 @@ export function formatPrice(amount: number | string | null | undefined): string 
   // "0990990" string-concatenation garbage on the page.
   const n = typeof amount === 'number' ? amount : Number(amount);
   if (!Number.isFinite(n)) return '₹0';
-  return `\u20B9${n.toLocaleString('en-IN')}`;
+  // Always show whole rupees \u2014 round off, never expose paise/float artefacts.
+  return `\u20B9${Math.round(n).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 }
 
 export function formatDate(date: string): string {
