@@ -8,6 +8,7 @@ import { Search, X, Clock, ArrowRight, Grid3X3, Sparkles } from 'lucide-react';
 import { useUiStore, lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 import { api } from '@/lib/api-client';
 import { Spinner } from '@/components/ui/spinner';
+import { formatPrice } from '@/lib/utils';
 
 const RECENT_SEARCHES_KEY = 'earth-revibe-recent-searches';
 const MAX_RECENT = 5;
@@ -188,8 +189,7 @@ export function SearchOverlay() {
                         <div className="flex-1 min-w-0">
                           <p className="truncate text-sm font-medium">{product.name}</p>
                           <p className="text-sm text-[var(--color-muted)]">
-                            {'\u20B9'}
-                            {product.price.toLocaleString('en-IN')}
+                            {formatPrice(product.price)}
                           </p>
                         </div>
                         <ArrowRight className="h-4 w-4 shrink-0 text-[var(--color-muted)]" />
