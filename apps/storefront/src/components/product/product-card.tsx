@@ -388,7 +388,8 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               padding: '16px 18px 26px 18px',
               borderTopLeftRadius: 16,
               borderTopRightRadius: 16,
-              background: 'rgba(255,255,255,0.76)',
+              fontFamily: 'var(--font-helvetica)',
+              background: 'rgba(255,255,255,0.85)',
               backdropFilter: 'blur(16px) saturate(1.3)',
               WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
               borderTop: '1px solid rgba(255,255,255,0.7)',
@@ -424,8 +425,8 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
                   <span
                     style={{
                       fontSize: 11,
-                      fontWeight: activeOffer === i ? 700 : 600,
-                      color: '#000',
+                      fontWeight: activeOffer === i ? 400 : 300,
+                      color: activeOffer === i ? '#000' : '#999',
                       whiteSpace: 'nowrap',
                     }}
                   >
@@ -446,10 +447,10 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             <span style={{ height: 1, flexShrink: 0, alignSelf: 'stretch', background: 'rgba(0,0,0,0.12)' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: -0.2, color: '#000' }}>
+              <span style={{ fontSize: 13, fontWeight: 500, color: '#000' }}>
                 {OFFERS[activeOffer].headline}
               </span>
-              <span style={{ fontSize: 10, fontWeight: 400, lineHeight: 1.5, color: '#000' }}>
+              <span style={{ fontSize: 12, fontWeight: 300, lineHeight: 1.7, color: '#666' }}>
                 {OFFERS[activeOffer].desc}
               </span>
             </div>
