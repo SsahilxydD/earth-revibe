@@ -96,6 +96,22 @@ function getCategoryInfo(productCategory: string): { name: string; slug: string 
   return map[last] || { name: last, slug: last.toLowerCase().replace(/\s+/g, '-') };
 }
 
+// Fixed offline / in-person sale prices, keyed by category slug. The admin
+// offline-order form defaults each line to these (still editable). Categories
+// not listed here have no offline price and fall back to the online price.
+// Bottomwear = cargo-pants + trousers.
+const OFFLINE_PRICES: Record<string, number> = {
+  't-shirts': 700,
+  shirts: 1000,
+  polos: 700,
+  // Bottomwear ₹1200. Production merges bottoms into one `bottomwear` category;
+  // the CSV seed splits them into cargo-pants + trousers — cover all three.
+  bottomwear: 1200,
+  'cargo-pants': 1200,
+  trousers: 1200,
+  shackets: 1400,
+};
+
 const COLOR_MAP: Record<string, { name: string; hex: string }> = {
   'marine-folklore': { name: 'Teal', hex: '#008080' },
   'vintage-herbarium-shirt': { name: 'Cream', hex: '#FFFDD0' },
@@ -285,6 +301,7 @@ async function main() {
           name: cat.name,
           slug: cat.slug,
           description: `${cat.name} collection by Earth Revibe`,
+          offlinePrice: OFFLINE_PRICES[cat.slug] ?? null,
           isActive: true,
         },
       });

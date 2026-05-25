@@ -43,6 +43,9 @@ type LineItem = {
   stock: number;
   quantity: number;
   unitPrice: number;
+  // Fixed offline price for this product's category (null if none). Kept on the
+  // line so size changes don't lose it and the UI can flag a manual override.
+  offlinePrice: number | null;
   // Sibling variants of the product, so the line item can offer a size selector.
   variants: any[];
 };
@@ -148,7 +151,11 @@ export default function NewManualOrderPage() {
           i.variantId === variant.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      const unitPrice = Number(variant.price) || Number(product?.price) || 0;
+      // Offline orders default to the category's fixed offline price; fall back
+      // to the variant/product (online) price when the category has none.
+      const offlinePrice =
+        product?.category?.offlinePrice != null ? Number(product.category.offlinePrice) : null;
+      const unitPrice = offlinePrice ?? (Number(variant.price) || Number(product?.price) || 0);
       return [
         ...current,
         {
@@ -161,6 +168,7 @@ export default function NewManualOrderPage() {
           stock: variant.stock ?? 0,
           quantity: 1,
           unitPrice,
+          offlinePrice,
           variants: sortVariantsBySize(product?.variants ?? []),
         },
       ];
@@ -189,7 +197,9 @@ export default function NewManualOrderPage() {
           variantSize: v.size ?? '',
           variantColor: v.color ?? '',
           stock: v.stock ?? 0,
-          unitPrice: Number(v.price) || i.unitPrice,
+          // Offline price is per-category, so it holds across sizes; only fall
+          // back to the variant price when this product has no offline price.
+          unitPrice: i.offlinePrice ?? (Number(v.price) || i.unitPrice),
         };
       })
     );
