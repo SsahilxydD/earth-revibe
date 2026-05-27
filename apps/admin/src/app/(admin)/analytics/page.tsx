@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { TrendingUp, ShoppingBag, Users, Headset, Globe, Store } from 'lucide-react';
+import { ChartLineIcon } from '@shopify/polaris-icons';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Card, Badge, Skeleton } from '@earth-revibe/ui';
+import { Card, Badge, Skeleton, PageHeader } from '@earth-revibe/ui';
 import { formatPrice } from '@earth-revibe/shared';
 import { StatCard } from '@/components/dashboard/stat-card';
 
@@ -22,30 +23,32 @@ export default function AnalyticsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-charcoal">Analytics</h1>
-        <div className="flex gap-1 bg-off-white rounded-lg p-1">
-          {[
-            { label: '7 Days', value: '7d' },
-            { label: '30 Days', value: '30d' },
-            { label: '90 Days', value: '90d' },
-          ].map((p) => (
-            <button
-              key={p.value}
-              onClick={() => setPeriod(p.value)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                period === p.value
-                  ? 'bg-white text-charcoal shadow-sm'
-                  : 'text-medium-gray hover:text-charcoal'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
+    <div className="space-y-3">
+      <PageHeader
+        icon={ChartLineIcon}
+        title="Analytics"
+        actions={
+          <div className="flex gap-0.5 bg-[#f1f1f1] rounded-lg p-0.5">
+            {[
+              { label: '7 days', value: '7d' },
+              { label: '30 days', value: '30d' },
+              { label: '90 days', value: '90d' },
+            ].map((p) => (
+              <button
+                key={p.value}
+                onClick={() => setPeriod(p.value)}
+                className={`px-3 h-7 rounded-md text-[13px] font-medium ${
+                  period === p.value
+                    ? 'bg-white text-[#303030] shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_1px_rgba(0,0,0,0.04)]'
+                    : 'text-[#616161] hover:text-[#1a1a1a]'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        }
+      />
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (

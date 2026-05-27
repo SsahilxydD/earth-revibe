@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { Button, Badge, Card, Input, Select, Skeleton } from '@earth-revibe/ui';
+import { Edit2, Trash2 } from 'lucide-react';
+import { PlusIcon, BlogIcon } from '@shopify/polaris-icons';
+import { Button, Badge, Card, Input, Select, Skeleton, PageHeader } from '@earth-revibe/ui';
 import { useBlogPosts, useDeleteBlogPost } from '@/hooks/use-blog';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'default'> = {
@@ -36,15 +37,19 @@ export default function BlogListPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-charcoal">Blog Posts</h1>
-        <Link href="/blog/new">
-          <Button>
-            <Plus size={16} /> New Post
-          </Button>
-        </Link>
-      </div>
+    <div className="space-y-3">
+      <PageHeader
+        icon={BlogIcon}
+        title="Blog posts"
+        actions={
+          <Link href="/blog/new">
+            <Button size="sm">
+              <PlusIcon className="w-3.5 h-3.5 fill-current" />
+              New post
+            </Button>
+          </Link>
+        }
+      />
 
       <Card>
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
