@@ -846,13 +846,14 @@ model Review {
   title      String?
   content    String?  @db.Text
   isVerified Boolean  @default(false)
-  isApproved Boolean  @default(true)
+  isApproved Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@unique([productId, userId])
   @@index([productId])
   @@index([userId])
+  @@index([isApproved])
   @@map("reviews")
 }
 

@@ -48,6 +48,8 @@ import { adminWhatsAppInboundRouter } from './routes/admin-whatsapp-inbound.rout
 import { adminEngagementRuleRouter } from './routes/admin-engagement-rule.routes';
 import { adminTemplateVariantRouter } from './routes/admin-template-variant.routes';
 import { adminCustomerSegmentRouter } from './routes/admin-customer-segment.routes';
+import { reviewRouter } from './routes/review.routes';
+import { adminReviewRouter } from './routes/admin-review.routes';
 import {
   meDropSubscriptionRouter,
   tokenUnsubRouter,
@@ -582,6 +584,8 @@ app.use('/api/v1/admin/whatsapp-inbound', adminWhatsAppInboundRouter);
 app.use('/api/v1/admin/engagement-rules', adminEngagementRuleRouter);
 app.use('/api/v1/admin/template-variants', adminTemplateVariantRouter);
 app.use('/api/v1/admin/customer-segments', adminCustomerSegmentRouter);
+app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/admin/reviews', adminReviewRouter);
 app.use('/api/v1/me/drop-subscription', meDropSubscriptionRouter);
 app.use('/api/v1/u', tokenUnsubRouter);
 // Admin drop-alert dispatch lives at /api/v1/admin/products/:id/drop-alert/*.
