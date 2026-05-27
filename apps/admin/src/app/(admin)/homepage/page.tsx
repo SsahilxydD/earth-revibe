@@ -2,7 +2,9 @@
 
 import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { Upload, Loader2, ExternalLink, Plus, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { Upload, Loader2, ExternalLink, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { PlusIcon, PageIcon } from '@shopify/polaris-icons';
+import { PageHeader, Button } from '@earth-revibe/ui';
 import { toast } from '@earth-revibe/ui/toast';
 import {
   useHomepageSections,
@@ -87,32 +89,28 @@ export default function HomepagePage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
-        <h1 className="text-2xl font-bold text-deep-earth">Homepage</h1>
+      <div className="space-y-3">
+        <PageHeader icon={PageIcon} title="Homepage" />
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-32 rounded-lg bg-gray-100 animate-pulse" />
+          <div key={i} className="h-32 rounded-xl bg-white animate-pulse" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-deep-earth">Homepage Sections</h1>
-          <p className="text-sm text-medium-gray mt-1">
-            Upload full-bleed images for each section. Each links to a category on the storefront.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2 rounded-md bg-deep-earth px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
-        >
-          <Plus size={14} />
-          Add Section
-        </button>
-      </div>
+    <div className="space-y-3">
+      <PageHeader
+        icon={PageIcon}
+        title="Homepage sections"
+        subtitle="Upload full-bleed images for each section. Each links to a category on the storefront."
+        actions={
+          <Button size="sm" onClick={() => setShowAddForm(true)}>
+            <PlusIcon className="w-3.5 h-3.5 fill-current" />
+            Add section
+          </Button>
+        }
+      />
 
       {/* Add form */}
       {showAddForm && (
