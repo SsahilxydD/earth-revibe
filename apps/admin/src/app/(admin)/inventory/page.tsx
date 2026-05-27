@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { InventoryIcon as PolarisInventoryIcon } from '@shopify/polaris-icons';
+import { PageHeader } from '@earth-revibe/ui';
 import {
   Search,
   Package,
@@ -216,12 +218,8 @@ export default function InventoryPage() {
   }, [bulkStockValue, selectedIds, bulkUpdateStock]);
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-charcoal">Inventory</h1>
-        <p className="text-sm text-medium-gray mt-1">Manage product stock levels and inventory</p>
-      </div>
+    <div className="space-y-3">
+      <PageHeader icon={PolarisInventoryIcon} title="Inventory" />
 
       {/* Summary cards */}
       {summaryLoading ? (

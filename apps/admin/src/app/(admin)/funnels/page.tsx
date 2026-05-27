@@ -11,8 +11,9 @@ import {
   ArrowRight,
   BarChart3,
 } from 'lucide-react';
+import { PlusIcon, ChartFunnelIcon } from '@shopify/polaris-icons';
 import { useFunnelStore, type SavedFunnel } from '@/stores/funnel-store';
-import { Button } from '@earth-revibe/ui';
+import { Button, PageHeader } from '@earth-revibe/ui';
 
 export default function FunnelsPage() {
   const funnels = useFunnelStore((s) => s.funnels);
@@ -32,22 +33,20 @@ export default function FunnelsPage() {
   );
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary font-heading">Funnels</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            Build and monitor customer journey funnels
-          </p>
-        </div>
-        <Link href="/funnels/create">
-          <Button>
-            <Plus size={16} />
-            Create Funnel
-          </Button>
-        </Link>
-      </div>
+    <div className="space-y-3">
+      <PageHeader
+        icon={ChartFunnelIcon}
+        title="Funnels"
+        subtitle="Build and monitor customer journey funnels"
+        actions={
+          <Link href="/funnels/create">
+            <Button size="sm">
+              <PlusIcon className="w-3.5 h-3.5 fill-current" />
+              Create funnel
+            </Button>
+          </Link>
+        }
+      />
 
       {/* Stats overview */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

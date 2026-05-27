@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { MessageSquare } from 'lucide-react';
-import { Button, Badge, Card, Input, Select, Skeleton } from '@earth-revibe/ui';
+import { ChatIcon } from '@shopify/polaris-icons';
+import { Button, Badge, Card, Input, Select, Skeleton, PageHeader } from '@earth-revibe/ui';
 import { useAdminTickets } from '@/hooks/use-support-tickets';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'info' | 'error' | 'default'> = {
@@ -49,8 +50,8 @@ export default function SupportTicketsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-charcoal">Support Tickets</h1>
+    <div className="space-y-3">
+      <PageHeader icon={ChatIcon} title="Support tickets" />
 
       <Card>
         <div className="flex flex-col sm:flex-row gap-3 mb-6">

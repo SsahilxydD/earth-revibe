@@ -10,7 +10,8 @@ import {
   AlertTriangle,
   ArrowRight,
 } from 'lucide-react';
-import { Card, Badge } from '@earth-revibe/ui';
+import { NotificationIcon } from '@shopify/polaris-icons';
+import { Card, Badge, PageHeader } from '@earth-revibe/ui';
 import { Skeleton } from '@earth-revibe/ui/skeleton';
 import { useNotifications, type AdminNotification } from '@/hooks/use-notifications';
 
@@ -106,14 +107,12 @@ export default function NotificationsPage() {
   const mediumPriority = notifications?.filter((n) => n.priority === 'medium') ?? [];
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-charcoal">Notifications</h1>
-        <p className="text-sm text-medium-gray mt-1">
-          Real-time alerts for orders, inventory, and support
-        </p>
-      </div>
+    <div className="space-y-3">
+      <PageHeader
+        icon={NotificationIcon}
+        title="Notifications"
+        subtitle="Real-time alerts for orders, inventory, and support"
+      />
 
       {isLoading ? (
         <Card>

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Download, Eye, Send } from 'lucide-react';
-import { Button, Badge, Card, Select } from '@earth-revibe/ui';
+import { Eye } from 'lucide-react';
+import { SearchIcon, ExportIcon, SendIcon, AirplaneIcon } from '@shopify/polaris-icons';
+import { Button, Badge, Card, Select, PageHeader } from '@earth-revibe/ui';
 import { Skeleton } from '@earth-revibe/ui/skeleton';
 import { toast } from '@earth-revibe/ui/toast';
 import {
@@ -54,75 +55,71 @@ export default function TravelApplicationsPage() {
   const backfill = useBackfillReceipts();
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-charcoal">Travel Applications</h1>
-          <p className="text-sm text-medium-gray mt-1">
-            Review Travel Circle applications submitted via /apply-for-trip-form
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            disabled={backfill.isPending}
-            onClick={async () => {
-              // Confirm before fanning out to external services.
-              const ok = window.confirm(
-                'Send the receipt email + WhatsApp to every pending applicant who hasn’t received one yet?\n\nThis skips anyone already acknowledged and can take a minute if there’s a backlog.'
-              );
-              if (!ok) return;
-              try {
-                const r = await backfill.mutateAsync(false);
-                if (r.total === 0) {
-                  toast.success('Everyone is already acknowledged — nothing to send.');
-                } else {
-                  toast.success(
-                    `Sent to ${r.stamped}/${r.total} applicants (email: ${r.emailSent}, WhatsApp: ${r.whatsAppSent}${r.failed ? `, failed: ${r.failed}` : ''})`
-                  );
+    <div className="space-y-3">
+      <PageHeader
+        icon={AirplaneIcon}
+        title="Travel applications"
+        subtitle="Review Travel Circle applications submitted via /apply-for-trip-form"
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={backfill.isPending}
+              onClick={async () => {
+                const ok = window.confirm(
+                  'Send the receipt email + WhatsApp to every pending applicant who hasn’t received one yet?\n\nThis skips anyone already acknowledged and can take a minute if there’s a backlog.'
+                );
+                if (!ok) return;
+                try {
+                  const r = await backfill.mutateAsync(false);
+                  if (r.total === 0) {
+                    toast.success('Everyone is already acknowledged — nothing to send.');
+                  } else {
+                    toast.success(
+                      `Sent to ${r.stamped}/${r.total} applicants (email: ${r.emailSent}, WhatsApp: ${r.whatsAppSent}${r.failed ? `, failed: ${r.failed}` : ''})`
+                    );
+                  }
+                } catch (err: any) {
+                  toast.error(err.message || 'Failed to run backfill');
                 }
-              } catch (err: any) {
-                toast.error(err.message || 'Failed to run backfill');
-              }
-            }}
-            title="Send the acknowledgement message to applicants who applied before this workflow existed"
-          >
-            <Send size={16} />
-            {backfill.isPending ? 'Sending…' : 'Send receipts to prior applicants'}
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={exportCSV.isPending}
-            onClick={async () => {
-              try {
-                const result = await exportCSV.mutateAsync();
-                if (result?.truncated) {
-                  toast.success(
-                    `Exported ${result.exported?.toLocaleString()} of ${result.total?.toLocaleString()} applications (limit reached)`
-                  );
-                } else {
-                  toast.success('Applications exported');
+              }}
+              title="Send the acknowledgement message to applicants who applied before this workflow existed"
+            >
+              <SendIcon className="w-3.5 h-3.5 fill-current" />
+              {backfill.isPending ? 'Sending…' : 'Send receipts'}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={exportCSV.isPending}
+              onClick={async () => {
+                try {
+                  const result = await exportCSV.mutateAsync();
+                  if (result?.truncated) {
+                    toast.success(
+                      `Exported ${result.exported?.toLocaleString()} of ${result.total?.toLocaleString()} applications (limit reached)`
+                    );
+                  } else {
+                    toast.success('Applications exported');
+                  }
+                } catch (err: any) {
+                  toast.error(err.message || 'Failed to export');
                 }
-              } catch (err: any) {
-                toast.error(err.message || 'Failed to export');
-              }
-            }}
-          >
-            <Download size={16} />
-            {exportCSV.isPending ? 'Exporting…' : 'Export CSV'}
-          </Button>
-        </div>
-      </div>
+              }}
+            >
+              <ExportIcon className="w-3.5 h-3.5 fill-current" />
+              {exportCSV.isPending ? 'Exporting…' : 'Export'}
+            </Button>
+          </>
+        }
+      />
 
       {/* Filters */}
-      <Card>
-        <div className="flex flex-col sm:flex-row gap-3">
+      <Card padding={false}>
+        <div className="flex flex-col sm:flex-row gap-2 p-3">
           <div className="flex-1 relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray"
-            />
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 fill-[#8a8a8a] pointer-events-none" />
             <input
               type="text"
               placeholder="Search by name, city, phone, Instagram, or app #"
@@ -131,7 +128,7 @@ export default function TravelApplicationsPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+              className="w-full h-8 pl-8 pr-3 rounded-lg bg-white text-[13px] text-[#303030] placeholder:text-[#8a8a8a] outline-none transition-shadow shadow-[inset_0_0_0_1px_#ebebeb] focus:shadow-[inset_0_0_0_1px_#005bd3,0_0_0_2px_rgba(0,91,211,0.2)]"
             />
           </div>
           <Select
