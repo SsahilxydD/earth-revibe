@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check, X, Loader2, Plus, Search } from 'lucide-react';
+import { Check, X, Loader2, Search } from 'lucide-react';
+import { PlusIcon, GiftCardIcon } from '@shopify/polaris-icons';
 import { api } from '@/lib/api-client';
-import { Button } from '@earth-revibe/ui';
+import { Button, PageHeader } from '@earth-revibe/ui';
 import { Modal } from '@earth-revibe/ui/modal';
 import { toast } from '@earth-revibe/ui/toast';
 
@@ -174,33 +175,32 @@ export default function LoyaltyRedemptionsPage() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700 }}>Loyalty Redemptions</h1>
-          <p style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-            Customers email support to request a cash-out; approve here to mint a single-use code
-            for their account. Points are deducted only on approval.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button
-            variant="secondary"
-            onClick={() => expireMutation.mutate()}
-            disabled={expireMutation.isPending}
-          >
-            {expireMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              'Run expiry sweep'
-            )}
-          </Button>
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus className="mr-1 h-4 w-4" />
-            New redemption
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-3">
+      <PageHeader
+        icon={GiftCardIcon}
+        title="Loyalty redemptions"
+        subtitle="Customers email support to request a cash-out; approve here to mint a single-use code for their account. Points are deducted only on approval."
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => expireMutation.mutate()}
+              disabled={expireMutation.isPending}
+            >
+              {expireMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                'Run expiry sweep'
+              )}
+            </Button>
+            <Button size="sm" onClick={() => setShowCreate(true)}>
+              <PlusIcon className="w-3.5 h-3.5 fill-current" />
+              New redemption
+            </Button>
+          </>
+        }
+      />
 
       <div
         style={{
