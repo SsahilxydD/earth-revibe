@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Star, ChevronRight, ImageOff } from 'lucide-react';
-import { Button, Badge, Card, Select } from '@earth-revibe/ui';
+import { Star, ChevronRight, ImageOff } from 'lucide-react';
+import { SearchIcon, StarIcon } from '@shopify/polaris-icons';
+import { Button, Badge, Card, Select, PageHeader } from '@earth-revibe/ui';
 import { Skeleton } from '@earth-revibe/ui/skeleton';
 import { useReviewProducts } from '@/hooks/use-reviews';
 
@@ -40,34 +41,27 @@ export default function ReviewsProductListPage() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-charcoal">Reviews</h1>
-          <p className="text-sm text-medium-gray mt-1">
-            Pick a product to view and moderate its reviews
-          </p>
-        </div>
-      </div>
+    <div className="space-y-3">
+      <PageHeader
+        icon={StarIcon}
+        title="Reviews"
+        subtitle="Pick a product to view and moderate its reviews"
+      />
 
       {/* Filters */}
-      <Card>
-        <div className="flex flex-col sm:flex-row gap-3">
+      <Card padding={false}>
+        <div className="flex flex-col sm:flex-row gap-2 p-3">
           <div className="flex-1 relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray"
-            />
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 fill-[#8a8a8a] pointer-events-none" />
             <input
               type="text"
-              placeholder="Search products by name or slug..."
+              placeholder="Search products by name or slug"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+              className="w-full h-8 pl-8 pr-3 rounded-lg bg-white text-[13px] text-[#303030] placeholder:text-[#8a8a8a] outline-none transition-shadow shadow-[inset_0_0_0_1px_#ebebeb] focus:shadow-[inset_0_0_0_1px_#005bd3,0_0_0_2px_rgba(0,91,211,0.2)]"
             />
           </div>
           <Select

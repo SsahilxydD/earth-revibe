@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Search, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
-import { Button, Badge, Card, Select } from '@earth-revibe/ui';
+import { Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { PlusIcon, SearchIcon, DiscountIcon } from '@shopify/polaris-icons';
+import { Button, Badge, Card, Select, PageHeader } from '@earth-revibe/ui';
 import { Skeleton } from '@earth-revibe/ui/skeleton';
 import { toast } from '@earth-revibe/ui/toast';
 import { Modal } from '@earth-revibe/ui/modal';
@@ -203,37 +204,32 @@ export default function DiscountsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-charcoal">Discount Codes</h1>
-          <p className="text-sm text-medium-gray mt-1">
-            Create and manage promotional discount codes
-          </p>
-        </div>
-        <Button onClick={openCreateModal}>
-          <Plus size={16} /> Create Discount
-        </Button>
-      </div>
+    <div className="space-y-3">
+      <PageHeader
+        icon={DiscountIcon}
+        title="Discounts"
+        actions={
+          <Button size="sm" onClick={openCreateModal}>
+            <PlusIcon className="w-3.5 h-3.5 fill-current" />
+            Create discount
+          </Button>
+        }
+      />
 
       {/* Filters */}
-      <Card>
-        <div className="flex flex-col sm:flex-row gap-3">
+      <Card padding={false}>
+        <div className="flex flex-col sm:flex-row gap-2 p-3">
           <div className="flex-1 relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray"
-            />
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 fill-[#8a8a8a] pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by discount code..."
+              placeholder="Search by discount code"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+              className="w-full h-8 pl-8 pr-3 rounded-lg bg-white text-[13px] text-[#303030] placeholder:text-[#8a8a8a] outline-none transition-shadow shadow-[inset_0_0_0_1px_#ebebeb] focus:shadow-[inset_0_0_0_1px_#005bd3,0_0_0_2px_rgba(0,91,211,0.2)]"
             />
           </div>
           <Select
