@@ -18,39 +18,20 @@ import {
   ChevronRight,
   ChevronDown,
   X,
-  FolderTree,
-  Warehouse,
-  Star,
-  Coins,
-  GitBranchPlus,
-  Bell,
-  LayoutTemplate,
-  Plane,
 } from 'lucide-react';
 import { useUIStore } from '@/stores/ui-store';
 import type { LucideIcon } from 'lucide-react';
 
-type NavLeaf = {
-  kind: 'leaf';
-  label: string;
-  href: string;
-  icon: LucideIcon;
-};
-
+type NavLeaf = { kind: 'leaf'; label: string; href: string; icon: LucideIcon };
 type NavGroup = {
   kind: 'group';
   label: string;
   icon: LucideIcon;
-  href: string; // parent click target (defaults to first child's route)
-  children: { label: string; href: string; icon: LucideIcon }[];
+  href: string;
+  children: { label: string; href: string }[];
 };
-
 type NavItem = NavLeaf | NavGroup;
 
-// Shopify admin sidebar order: Home, Orders, Products, Customers, Marketing,
-// Discounts, Content, Analytics. Settings pinned bottom. We slot our extras
-// (Reviews, Loyalty, Funnels, Notifications, Travel) inside the matching
-// groups so the top-level stays compact.
 const navItems: NavItem[] = [
   { kind: 'leaf', label: 'Home', href: '/dashboard', icon: Home },
   { kind: 'leaf', label: 'Orders', href: '/orders', icon: ShoppingBag },
@@ -60,10 +41,10 @@ const navItems: NavItem[] = [
     icon: Tag,
     href: '/products',
     children: [
-      { label: 'Products', href: '/products', icon: Tag },
-      { label: 'Categories', href: '/categories', icon: FolderTree },
-      { label: 'Inventory', href: '/inventory', icon: Warehouse },
-      { label: 'Reviews', href: '/reviews', icon: Star },
+      { label: 'Catalog', href: '/products' },
+      { label: 'Categories', href: '/categories' },
+      { label: 'Inventory', href: '/inventory' },
+      { label: 'Reviews', href: '/reviews' },
     ],
   },
   {
@@ -72,8 +53,8 @@ const navItems: NavItem[] = [
     icon: Users,
     href: '/customers',
     children: [
-      { label: 'Customers', href: '/customers', icon: Users },
-      { label: 'Loyalty redemptions', href: '/loyalty-redemptions', icon: Coins },
+      { label: 'Customers', href: '/customers' },
+      { label: 'Loyalty redemptions', href: '/loyalty-redemptions' },
     ],
   },
   {
@@ -82,8 +63,8 @@ const navItems: NavItem[] = [
     icon: Megaphone,
     href: '/funnels',
     children: [
-      { label: 'Funnels', href: '/funnels', icon: GitBranchPlus },
-      { label: 'Notifications', href: '/notifications', icon: Bell },
+      { label: 'Funnels', href: '/funnels' },
+      { label: 'Notifications', href: '/notifications' },
     ],
   },
   { kind: 'leaf', label: 'Discounts', href: '/discounts', icon: Percent },
@@ -93,9 +74,9 @@ const navItems: NavItem[] = [
     icon: FileText,
     href: '/homepage',
     children: [
-      { label: 'Homepage', href: '/homepage', icon: LayoutTemplate },
-      { label: 'Blog', href: '/blog', icon: FileText },
-      { label: 'Travel applications', href: '/travel-applications', icon: Plane },
+      { label: 'Homepage', href: '/homepage' },
+      { label: 'Blog', href: '/blog' },
+      { label: 'Travel applications', href: '/travel-applications' },
     ],
   },
   { kind: 'leaf', label: 'Analytics', href: '/analytics', icon: BarChart3 },
@@ -113,22 +94,23 @@ function isGroupActive(pathname: string, group: NavGroup) {
   );
 }
 
+// Polaris item style: 8px radius pill, 28-32px tall, transparent until hover/active.
+// Active gets white surface with the multi-layer Polaris shadow.
+const itemBase =
+  'flex items-center gap-2 mx-1.5 px-2 h-8 rounded-lg text-[13px] font-medium select-none';
+const itemActive =
+  'bg-white text-[#303030] shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_1px_1px_rgba(0,0,0,0.04)]';
+const itemIdle = 'text-[#303030] hover:bg-[#ebebeb]';
+
 export function Sidebar() {
   const pathname = usePathname();
   const { isSidebarCollapsed, toggleSidebar, isMobileSidebarOpen, setMobileSidebarOpen } =
     useUIStore();
 
-  // Track explicitly-opened groups. A group also opens automatically when the
-  // current route lives inside it — so the user always sees their location's
-  // siblings without manual toggling.
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-
-  const isGroupOpen = (group: NavGroup) =>
-    openGroups[group.label] ?? isGroupActive(pathname, group);
-
+  const isGroupOpen = (g: NavGroup) => openGroups[g.label] ?? isGroupActive(pathname, g);
   const toggleGroup = (label: string) =>
-    setOpenGroups((prev) => ({ ...prev, [label]: !(prev[label] ?? false) }));
-
+    setOpenGroups((p) => ({ ...p, [label]: !(p[label] ?? false) }));
   const handleNavigate = () => setMobileSidebarOpen(false);
 
   const renderLeaf = (item: NavLeaf) => {
@@ -139,11 +121,7 @@ export function Sidebar() {
         href={item.href}
         onClick={handleNavigate}
         title={isSidebarCollapsed ? item.label : undefined}
-        className={`group flex items-center gap-3 mx-2 px-2 py-1.5 rounded-lg text-[13px] transition-colors ${
-          active
-            ? 'bg-white text-[#303030] font-semibold shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.04)]'
-            : 'text-[#303030] hover:bg-[#ebebeb]'
-        }`}
+        className={`${itemBase} ${active ? itemActive : itemIdle}`}
       >
         <item.icon
           size={16}
@@ -162,22 +140,14 @@ export function Sidebar() {
 
     return (
       <div key={item.label}>
-        {/* Parent row: click on icon/label navigates to the group's href,
-            click on chevron toggles open/close. Mirrors Shopify's pattern. */}
         <div
-          className={`group flex items-center mx-2 rounded-lg ${
-            parentSelfActive
-              ? 'bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.04)]'
-              : 'hover:bg-[#ebebeb]'
-          }`}
+          className={`flex items-center mx-1.5 rounded-lg ${parentSelfActive ? itemActive : 'hover:bg-[#ebebeb]'}`}
         >
           <Link
             href={item.href}
             onClick={handleNavigate}
             title={isSidebarCollapsed ? item.label : undefined}
-            className={`flex-1 flex items-center gap-3 px-2 py-1.5 text-[13px] ${
-              groupActive ? 'text-[#303030] font-semibold' : 'text-[#303030]'
-            }`}
+            className="flex-1 flex items-center gap-2 px-2 h-8 text-[13px] font-medium text-[#303030]"
           >
             <item.icon
               size={16}
@@ -191,30 +161,29 @@ export function Sidebar() {
               type="button"
               onClick={() => toggleGroup(item.label)}
               aria-label={open ? `Collapse ${item.label}` : `Expand ${item.label}`}
-              className="p-1.5 mr-1 rounded text-[#616161] hover:text-[#1a1a1a]"
+              className="h-6 w-6 mr-1 flex items-center justify-center rounded text-[#616161] hover:text-[#1a1a1a]"
             >
               <ChevronDown
-                size={14}
-                strokeWidth={2}
-                className={`transition-transform ${open ? '' : '-rotate-90'}`}
+                size={12}
+                strokeWidth={2.25}
+                className={`[transition:transform_80ms_ease] ${open ? '' : '-rotate-90'}`}
               />
             </button>
           )}
         </div>
 
-        {/* Sub-items */}
         {open && !isSidebarCollapsed && (
-          <div className="mt-0.5 mb-1 space-y-0.5">
+          <div className="mt-0.5 mb-0.5 space-y-px">
             {item.children.map((child) => {
-              const childActive = isPathActive(pathname, child.href);
+              const active = isPathActive(pathname, child.href);
               return (
                 <Link
                   key={child.href}
                   href={child.href}
                   onClick={handleNavigate}
-                  className={`flex items-center gap-3 mx-2 pl-8 pr-2 py-1.5 rounded-lg text-[13px] transition-colors ${
-                    childActive
-                      ? 'bg-white text-[#303030] font-semibold shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.04)]'
+                  className={`flex items-center mx-1.5 pl-8 pr-2 h-7 rounded-lg text-[13px] ${
+                    active
+                      ? `${itemActive} font-medium`
                       : 'text-[#616161] hover:bg-[#ebebeb] hover:text-[#303030]'
                   }`}
                 >
@@ -230,33 +199,18 @@ export function Sidebar() {
 
   const sidebarContent = (
     <>
-      {/* Brand */}
-      <div className="flex items-center gap-2 h-14 px-4 border-b border-[#ebebeb]">
-        <div className="w-6 h-6 rounded-md bg-[#303030] flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-[11px] font-bold tracking-tight">ER</span>
-        </div>
-        {!isSidebarCollapsed && (
-          <span className="text-[13px] font-semibold text-[#1a1a1a] whitespace-nowrap">
-            Earth Revibe
-          </span>
-        )}
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 py-3 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 py-2 space-y-px overflow-y-auto">
         {navItems.map((item) => (item.kind === 'leaf' ? renderLeaf(item) : renderGroup(item)))}
       </nav>
 
-      {/* Settings — pinned bottom, matches Shopify */}
-      <div className="border-t border-[#ebebeb] py-2">
+      <div className="border-t border-[#ebebeb] py-1">
         {renderLeaf({ kind: 'leaf', label: 'Settings', href: '/settings', icon: Settings })}
       </div>
 
-      {/* Collapse toggle (desktop only) */}
-      <div className="hidden lg:block border-t border-[#ebebeb] p-2">
+      <div className="hidden lg:block border-t border-[#ebebeb] p-1.5">
         <button
           onClick={toggleSidebar}
-          className="w-full flex items-center justify-center gap-2 px-2 py-1.5 rounded text-[#616161] hover:text-[#1a1a1a] hover:bg-[#ebebeb] text-[12px]"
+          className="w-full flex items-center justify-center gap-1.5 h-7 px-2 rounded text-[12px] text-[#616161] hover:text-[#1a1a1a] hover:bg-[#ebebeb]"
         >
           {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           {!isSidebarCollapsed && <span>Collapse</span>}
@@ -267,11 +221,12 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar — sticky under the topbar (top-14 = topbar height). */}
       <aside
-        className={`hidden lg:flex flex-col bg-[#f1f1f1] border-r border-[#ebebeb] h-screen sticky top-0 transition-all duration-150 ${
-          isSidebarCollapsed ? 'w-[56px]' : 'w-[240px]'
+        className={`hidden lg:flex flex-col bg-[#f1f1f1] border-r border-[#ebebeb] sticky top-14 self-start [transition:width_100ms_ease] ${
+          isSidebarCollapsed ? 'w-[56px]' : 'w-[228px]'
         }`}
+        style={{ height: 'calc(100vh - 56px)' }}
       >
         {sidebarContent}
       </aside>
@@ -283,7 +238,7 @@ export function Sidebar() {
           <aside className="fixed inset-y-0 left-0 w-[260px] bg-[#f1f1f1] border-r border-[#ebebeb] flex flex-col z-50">
             <button
               onClick={() => setMobileSidebarOpen(false)}
-              className="absolute top-3 right-3 text-[#616161] hover:text-[#1a1a1a]"
+              className="absolute top-2 right-2 p-1 text-[#616161] hover:text-[#1a1a1a]"
               aria-label="Close menu"
             >
               <X size={18} />
