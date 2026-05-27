@@ -1,4 +1,4 @@
-# redeploy-marker: 2026-05-20 (PR #26 webhook dropped during Railway incident)
+# redeploy-marker: 2026-05-27 (bumped healthcheckTimeout; #54 cold-start hit the 30s wall)
 [build]
 builder = "nixpacks"
 buildCommand = "pnpm install --frozen-lockfile && pnpm turbo build --filter=@earth-revibe/api"
@@ -13,7 +13,10 @@ buildCommand = "pnpm install --frozen-lockfile && pnpm turbo build --filter=@ear
 # so prior healthy state is preserved.
 startCommand = "pnpm -F @earth-revibe/db db:generate && pnpm -F @earth-revibe/db db:migrate:deploy && node apps/api/dist/index.js"
 healthcheckPath = "/api/v1/health"
-healthcheckTimeout = 30
+# 30s was too tight: prisma generate + migrate deploy + node boot consumed the
+# whole window on the reviews deploy (commit bb9e57b). 90s gives clean margin
+# without weakening the migrate-first-or-don't-start safety chain above.
+healthcheckTimeout = 90
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
