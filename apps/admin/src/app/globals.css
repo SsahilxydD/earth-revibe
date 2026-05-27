@@ -57,20 +57,22 @@
   --color-error-bg: #fee2e2;
   --color-info-bg: #eff6ff;
 
-  /* Legacy token aliases (prevents breaking existing pages) */
-  --color-deep-earth: #0d0d0d;
+  /* Legacy token aliases — now mapped to Polaris values so every page that
+   * still uses `text-charcoal`, `border-light-gray`, etc. inherits the new
+   * Shopify-style palette without touching the JSX. */
+  --color-deep-earth: #303030;
   --color-forest-green: #22c55e;
-  --color-charcoal: #0d0d0d;
-  --color-dark-gray: #7a7a7a;
-  --color-medium-gray: #999999;
-  --color-light-gray: #e8e8e8;
-  --color-off-white: #f5f5f5;
-  --color-cream: #fafafa;
+  --color-charcoal: #303030;
+  --color-dark-gray: #4a4a4a;
+  --color-medium-gray: #8a8a8a;
+  --color-light-gray: #ebebeb;
+  --color-off-white: #f7f7f7;
+  --color-cream: #f1f1f1;
   --color-warm-white: #ffffff;
-  --color-terracotta: #dc2626;
-  --color-sand: #f59e0b;
-  --color-clay: #7a7a7a;
-  --color-sage: #22c55e;
+  --color-terracotta: #d72c0d;
+  --color-sand: #b07700;
+  --color-clay: #616161;
+  --color-sage: #0c5132;
 
   /* Font Families — Inter to match Shopify admin */
   --font-inter:
