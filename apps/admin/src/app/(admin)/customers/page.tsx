@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Eye, UserCheck, UserX, Download } from 'lucide-react';
-import { Button, Badge, Card, Select } from '@earth-revibe/ui';
+import { Eye, UserCheck, UserX } from 'lucide-react';
+import { SearchIcon, ExportIcon, PersonIcon } from '@shopify/polaris-icons';
+import { Button, Badge, Card, Select, PageHeader } from '@earth-revibe/ui';
 import { Skeleton } from '@earth-revibe/ui/skeleton';
 import { toast } from '@earth-revibe/ui/toast';
 import {
@@ -52,53 +53,50 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-charcoal">Customers</h1>
-          <p className="text-sm text-medium-gray mt-1">View and manage customer accounts</p>
-        </div>
-        <Button
-          variant="secondary"
-          onClick={async () => {
-            try {
-              const result = await exportCSV.mutateAsync();
-              if (result?.truncated) {
-                toast.success(
-                  `Exported ${result.exported?.toLocaleString()} of ${result.total?.toLocaleString()} customers (limit reached)`
-                );
-              } else {
-                toast.success('Customers exported successfully');
+    <div className="space-y-3">
+      <PageHeader
+        icon={PersonIcon}
+        title="Customers"
+        actions={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={async () => {
+              try {
+                const result = await exportCSV.mutateAsync();
+                if (result?.truncated) {
+                  toast.success(
+                    `Exported ${result.exported?.toLocaleString()} of ${result.total?.toLocaleString()} customers (limit reached)`
+                  );
+                } else {
+                  toast.success('Customers exported successfully');
+                }
+              } catch (err: any) {
+                toast.error(err.message || 'Failed to export customers');
               }
-            } catch (err: any) {
-              toast.error(err.message || 'Failed to export customers');
-            }
-          }}
-          disabled={exportCSV.isPending}
-        >
-          <Download size={16} />
-          {exportCSV.isPending ? 'Exporting...' : 'Export CSV'}
-        </Button>
-      </div>
+            }}
+            disabled={exportCSV.isPending}
+          >
+            <ExportIcon className="w-3.5 h-3.5 fill-current" />
+            {exportCSV.isPending ? 'Exporting…' : 'Export'}
+          </Button>
+        }
+      />
 
       {/* Filters */}
-      <Card>
-        <div className="flex flex-col sm:flex-row gap-3">
+      <Card padding={false}>
+        <div className="flex flex-col sm:flex-row gap-2 p-3">
           <div className="flex-1 relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray"
-            />
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 fill-[#8a8a8a] pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by name, email, or phone..."
+              placeholder="Search by name, email, or phone"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+              className="w-full h-8 pl-8 pr-3 rounded-lg bg-white text-[13px] text-[#303030] placeholder:text-[#8a8a8a] outline-none transition-shadow shadow-[inset_0_0_0_1px_#ebebeb] focus:shadow-[inset_0_0_0_1px_#005bd3,0_0_0_2px_rgba(0,91,211,0.2)]"
             />
           </div>
           <Select

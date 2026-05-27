@@ -2,18 +2,9 @@
 
 import { useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import {
-  Plus,
-  Search,
-  Pencil,
-  Trash2,
-  Download,
-  Upload,
-  CheckSquare,
-  FolderInput,
-  Package,
-} from 'lucide-react';
-import { Button, Badge, Card, Select, Modal } from '@earth-revibe/ui';
+import { Pencil, Trash2, CheckSquare, FolderInput, Package } from 'lucide-react';
+import { PlusIcon, SearchIcon, ImportIcon, ExportIcon, ProductIcon } from '@shopify/polaris-icons';
+import { Button, Badge, Card, Select, Modal, PageHeader } from '@earth-revibe/ui';
 import { toast } from '@earth-revibe/ui/toast';
 import { Skeleton } from '@earth-revibe/ui/skeleton';
 import {
@@ -229,59 +220,61 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-charcoal">Products</h1>
-          <p className="text-sm text-medium-gray mt-1">Manage your product catalog</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={handleExportCSV} disabled={exportCSV.isPending}>
-            <Download size={18} />
-            {exportCSV.isPending ? 'Exporting...' : 'Export CSV'}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importCSV.isPending}
-          >
-            <Upload size={18} />
-            {importCSV.isPending ? 'Importing...' : 'Import CSV'}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleImportCSV}
-            className="hidden"
-          />
-          <Link href="/products/new">
-            <Button>
-              <Plus size={18} />
-              Add Product
+    <div className="space-y-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv"
+        onChange={handleImportCSV}
+        className="hidden"
+      />
+      <PageHeader
+        icon={ProductIcon}
+        title="Products"
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportCSV}
+              disabled={exportCSV.isPending}
+            >
+              <ExportIcon className="w-3.5 h-3.5 fill-current" />
+              {exportCSV.isPending ? 'Exporting…' : 'Export'}
             </Button>
-          </Link>
-        </div>
-      </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importCSV.isPending}
+            >
+              <ImportIcon className="w-3.5 h-3.5 fill-current" />
+              {importCSV.isPending ? 'Importing…' : 'Import'}
+            </Button>
+            <Link href="/products/new">
+              <Button size="sm">
+                <PlusIcon className="w-3.5 h-3.5 fill-current" />
+                Add product
+              </Button>
+            </Link>
+          </>
+        }
+      />
 
       {/* Filters */}
-      <Card>
-        <div className="flex flex-col sm:flex-row gap-3">
+      <Card padding={false}>
+        <div className="flex flex-col sm:flex-row gap-2 p-3">
           <div className="flex-1 relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray"
-            />
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 fill-[#8a8a8a] pointer-events-none" />
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Search products"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-9 pr-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+              className="w-full h-8 pl-8 pr-3 rounded-lg bg-white text-[13px] text-[#303030] placeholder:text-[#8a8a8a] outline-none transition-shadow shadow-[inset_0_0_0_1px_#ebebeb] focus:shadow-[inset_0_0_0_1px_#005bd3,0_0_0_2px_rgba(0,91,211,0.2)]"
             />
           </div>
           <Select

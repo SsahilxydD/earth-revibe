@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Package, Search } from 'lucide-react';
+import { Pencil, Trash2, Package, Search } from 'lucide-react';
+import { PlusIcon, CollectionIcon } from '@shopify/polaris-icons';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createCategorySchema, type CreateCategoryInput } from '@earth-revibe/shared';
-import { Button, Input, Textarea, Card, Badge, Modal } from '@earth-revibe/ui';
+import { Button, Input, Textarea, Card, Badge, Modal, PageHeader } from '@earth-revibe/ui';
 import { toast } from '@earth-revibe/ui/toast';
 import { Skeleton } from '@earth-revibe/ui/skeleton';
 import {
@@ -254,18 +255,17 @@ export default function CategoriesPage() {
   const isSubmitting = createCategory.isPending || updateCategory.isPending;
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-charcoal">Categories</h1>
-          <p className="text-sm text-medium-gray mt-1">Organize your product catalog</p>
-        </div>
-        <Button onClick={openCreate}>
-          <Plus size={18} />
-          Add Category
-        </Button>
-      </div>
+    <div className="space-y-3">
+      <PageHeader
+        icon={CollectionIcon}
+        title="Categories"
+        actions={
+          <Button size="sm" onClick={openCreate}>
+            <PlusIcon className="w-3.5 h-3.5 fill-current" />
+            Add category
+          </Button>
+        }
+      />
 
       {/* Categories list */}
       <Card padding={false}>
