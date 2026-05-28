@@ -27,6 +27,7 @@ import { wishlistRouter } from './routes/wishlist.routes';
 import { loyaltyRouter } from './routes/loyalty.routes';
 import { referralRouter } from './routes/referral.routes';
 import { adminReferralRouter } from './routes/admin-referral.routes';
+import { promoRouter } from './routes/promo.routes';
 import { blogRouter } from './routes/blog.routes';
 import { adminBlogRouter } from './routes/admin-blog.routes';
 import { supportRouter } from './routes/support.routes';
@@ -137,7 +138,8 @@ app.use(sanitize);
 // because Indian mobile carriers use CGNAT — thousands of subscribers share one
 // public IP, so they collectively exhaust a per-IP bucket almost immediately.
 // Mutations (POST/PUT/DELETE) and sensitive flows (auth, checkout) remain limited.
-const PUBLIC_GET_PATHS = /^\/api\/v1\/(products|categories|homepage|blog|search|catalog)(\/|$|\?)/;
+const PUBLIC_GET_PATHS =
+  /^\/api\/v1\/(products|categories|homepage|blog|search|catalog|promo)(\/|$|\?)/;
 
 app.use(
   rateLimit({
@@ -560,6 +562,7 @@ app.use('/api/v1/discounts', discountRouter);
 app.use('/api/v1/wishlist', wishlistRouter);
 app.use('/api/v1/loyalty', loyaltyRouter);
 app.use('/api/v1/referrals', referralRouter);
+app.use('/api/v1/promo', promoRouter);
 app.use('/api/v1/blog', blogRouter);
 app.use('/api/v1/support', supportRouter);
 app.use('/api/v1/admin/orders', adminOrderRouter);

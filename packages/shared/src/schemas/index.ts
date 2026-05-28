@@ -11,6 +11,7 @@ export * from './blog.schema';
 export * from './support.schema';
 export * from './loyalty.schema';
 export * from './referral.schema';
+export * from './promo.schema';
 export * from './settings.schema';
 export * from './checkout.schema';
 export * from './travel-application.schema';

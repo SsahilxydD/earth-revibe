@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore } from '@/stores/cart-store';
 import { api } from '@/lib/api-client';
+import { PENDING_PROMO_KEY } from '@/app/(shop)/spinner/page';
 
 interface ServerCartItem {
   variantId: string;
@@ -35,6 +37,7 @@ interface ServerCart {
  */
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
   const checkAuth = useAuthStore((s) => s.checkAuth);
+  const router = useRouter();
   const checkedRef = useRef(false);
 
   useEffect(() => {
@@ -44,6 +47,18 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
     checkAuth().then(async () => {
       const user = useAuthStore.getState().user;
       if (!user) return;
+
+      // Resume a QR promo claim captured before login: the /spinner page stashed
+      // the campaign code, sent the visitor to log in, and now that they're
+      // authenticated we send them back to /spinner to finish claiming.
+      try {
+        const pendingPromo = localStorage.getItem(PENDING_PROMO_KEY);
+        if (pendingPromo && window.location.pathname !== '/spinner') {
+          router.replace(`/spinner?spin=true&c=${encodeURIComponent(pendingPromo)}`);
+        }
+      } catch {
+        // localStorage unavailable — non-fatal, claim can be retried via the QR.
+      }
 
       try {
         const serverCart = await api.get<ServerCart>('/cart');
