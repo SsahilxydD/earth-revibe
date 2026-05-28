@@ -321,6 +321,10 @@ model Cart {
   // /api/v1/webhooks/whatsapp handler to clear `abandonedEmailSentAt` if Meta
   // later reports the message as failed — closes the loop on accepted-but-undelivered.
   lastRecoveryMessageId    String?    @db.VarChar(255)
+  // How many recovery messages we've sent for this cart. Lets the sweep
+  // re-engage a still-abandoned cart after a cooldown (instead of one-shot
+  // forever) while capping total nudges so we never spam.
+  recoveryAttempts         Int        @default(0)
   createdAt                DateTime   @default(now())
   updatedAt                DateTime   @updatedAt
 

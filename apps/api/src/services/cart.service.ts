@@ -75,8 +75,13 @@ export const cartService = {
     let cart = await prisma.cart.findUnique({ where: { userId } });
     if (!cart) {
       cart = await prisma.cart.create({ data: { userId } });
-    } else if (cart.abandonedEmailSentAt) {
-      await prisma.cart.update({ where: { id: cart.id }, data: { abandonedEmailSentAt: null } });
+    } else if (cart.abandonedEmailSentAt || cart.recoveryAttempts > 0) {
+      // Actively shopping again — clear the recovery flag AND reset the nudge
+      // counter so a fresh abandonment gets the full re-engagement cycle.
+      await prisma.cart.update({
+        where: { id: cart.id },
+        data: { abandonedEmailSentAt: null, recoveryAttempts: 0 },
+      });
     }
 
     // Upsert cart item
@@ -169,10 +174,11 @@ export const cartService = {
         });
       }
 
-      // Touch updatedAt and reset abandoned email flag — user is actively shopping
+      // Touch updatedAt and reset the recovery flag + nudge counter — user is
+      // actively shopping, so a later abandonment starts a fresh cycle.
       await tx.cart.update({
         where: { id: cart.id },
-        data: { updatedAt: new Date(), abandonedEmailSentAt: null },
+        data: { updatedAt: new Date(), abandonedEmailSentAt: null, recoveryAttempts: 0 },
       });
     });
 

@@ -25,6 +25,13 @@ import { sendWhatsAppAbandonedCart } from '../services/whatsapp.service';
 // per-row `abandonedEmailSentAt` filter ensures correctness even if both ran.
 let sweepInFlight = false;
 
+// Re-engagement policy: re-send to a still-abandoned cart after this cooldown
+// (instead of one-shot forever), capped at MAX nudges so we never spam. The
+// per-cart counter resets when the customer next edits the cart (see
+// cart.service.ts), so a genuinely fresh abandonment starts the cycle over.
+const MAX_RECOVERY_ATTEMPTS = 3;
+const REENGAGE_AFTER_DAYS = 7;
+
 const userCartInclude = {
   user: { select: { id: true, email: true, phone: true, firstName: true } },
   items: {
@@ -166,6 +173,7 @@ export async function processOneAbandonedCart(cart: AbandonedCartCart): Promise<
       where: { id: cart.id },
       data: {
         abandonedEmailSentAt: new Date(),
+        recoveryAttempts: { increment: 1 },
         ...(waMessageId ? { lastRecoveryMessageId: waMessageId } : {}),
       },
     });
@@ -362,6 +370,7 @@ export async function runAbandonedCartCheck(): Promise<{
     const ph = getPostHog();
     const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const reengageBefore = new Date(Date.now() - REENGAGE_AFTER_DAYS * 24 * 60 * 60 * 1000);
 
     // Per-cycle cap protects the shared 2000/24h Meta budget. Anything beyond
     // the cap is left for the next 15-min cycle.
@@ -371,7 +380,13 @@ export async function runAbandonedCartCheck(): Promise<{
     const abandonedCarts = await prisma.cart.findMany({
       where: {
         updatedAt: { lte: thirtyMinAgo },
-        abandonedEmailSentAt: null,
+        // Eligible if never messaged OR last messaged long enough ago to
+        // re-engage — and only while under the per-cart nudge cap. Previously
+        // this was `abandonedEmailSentAt: null`, which excluded a cart forever
+        // after a single message (so once every cart was messaged, the sweep
+        // sent nothing).
+        OR: [{ abandonedEmailSentAt: null }, { abandonedEmailSentAt: { lt: reengageBefore } }],
+        recoveryAttempts: { lt: MAX_RECOVERY_ATTEMPTS },
         items: { some: {} },
         user: {
           orders: {
