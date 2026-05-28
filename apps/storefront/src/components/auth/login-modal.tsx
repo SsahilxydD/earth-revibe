@@ -7,6 +7,8 @@ import { useAuthStore } from '@/stores/auth-store';
 
 type Step = 'phone' | 'name' | 'otp';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -26,6 +28,8 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [email, setEmail] = useState('');
+  const [needsEmail, setNeedsEmail] = useState(false);
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const phoneRef = useRef<HTMLInputElement>(null);
@@ -37,6 +41,8 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
       setPhone('');
       setFullName('');
       setNeedsName(false);
+      setEmail('');
+      setNeedsEmail(false);
       setOtp(Array(6).fill(''));
       setError('');
       setLoading(false);
@@ -60,6 +66,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
   }, [isOpen, onClose]);
 
   const formattedPhone = phone ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : '';
+  const emailValid = EMAIL_RE.test(email.trim());
 
   const handleSendOtp = async () => {
     if (phone.length !== 10 || !/^[6-9]\d{9}$/.test(phone)) {
@@ -69,13 +76,15 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
     setLoading(true);
     setError('');
     try {
-      const res = await api.post<{ isNewUser: boolean; hasName: boolean }>('/auth/send-otp', {
-        phone: `+91${phone}`,
-      });
+      const res = await api.post<{ isNewUser: boolean; hasName: boolean; needsEmail: boolean }>(
+        '/auth/send-otp',
+        { phone: `+91${phone}` }
+      );
       setResendTimer(30);
       setOtp(Array(6).fill(''));
       const mustAskName = !!res && (res.isNewUser || !res.hasName);
       setNeedsName(mustAskName);
+      setNeedsEmail(!!res?.needsEmail);
       if (mustAskName) {
         setStep('name');
         setTimeout(() => nameRef.current?.focus(), 100);
@@ -103,6 +112,11 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
 
   const handleVerifyOtp = useCallback(
     async (code: string) => {
+      const trimmedEmail = email.trim();
+      if (needsEmail && !EMAIL_RE.test(trimmedEmail)) {
+        setError('Enter a valid email address');
+        return;
+      }
       setLoading(true);
       setError('');
       try {
@@ -112,6 +126,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
           body.firstName = parts[0];
           if (parts.length > 1) body.lastName = parts.slice(1).join(' ');
         }
+        if (needsEmail) body.email = trimmedEmail;
         await api.post('/auth/verify-otp', body);
         await checkAuth();
         onClose();
@@ -124,7 +139,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
         setLoading(false);
       }
     },
-    [phone, fullName, needsName, checkAuth, onClose, onSuccess]
+    [phone, fullName, needsName, email, needsEmail, checkAuth, onClose, onSuccess]
   );
 
   const handleOtpChange = (index: number, value: string) => {
@@ -135,7 +150,9 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
     if (value && index < 5) otpRefs.current[index + 1]?.focus();
     if (value && index === 5) {
       const code = next.join('');
-      if (code.length === 6) handleVerifyOtp(code);
+      // When an email is also required, wait for the user to fill it + tap
+      // Verify rather than auto-submitting on the 6th digit.
+      if (code.length === 6 && !needsEmail) handleVerifyOtp(code);
     }
   };
 
@@ -152,8 +169,11 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
     const next = Array(6).fill('');
     for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
     setOtp(next);
-    if (pasted.length === 6) handleVerifyOtp(pasted);
-    else otpRefs.current[pasted.length]?.focus();
+    if (pasted.length === 6) {
+      if (!needsEmail) handleVerifyOtp(pasted);
+    } else {
+      otpRefs.current[pasted.length]?.focus();
+    }
   };
 
   const handleResend = async () => {
@@ -272,11 +292,44 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
               ))}
             </div>
 
+            {/* Email — required when the account has no real email yet */}
+            {needsEmail && (
+              <div className="mt-6 w-full">
+                <label className="text-[10px] font-normal tracking-[1.5px] text-[#999]">
+                  EMAIL
+                </label>
+                <div className="mt-3 border-b border-[#e5e5e5] pb-3">
+                  <input
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    maxLength={254}
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setError('');
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && otp.join('').length === 6 && emailValid) {
+                        handleVerifyOtp(otp.join(''));
+                      }
+                    }}
+                    disabled={loading}
+                    className="w-full bg-transparent text-[14px] font-light text-black outline-none placeholder:text-[#ccc] disabled:opacity-50"
+                  />
+                </div>
+                <p className="mt-2 text-[11px] font-light text-[#999]">
+                  For order updates &amp; rewards.
+                </p>
+              </div>
+            )}
+
             {/* Verify button */}
             <button
               type="button"
               onClick={() => handleVerifyOtp(otp.join(''))}
-              disabled={loading || otp.join('').length !== 6}
+              disabled={loading || otp.join('').length !== 6 || (needsEmail && !emailValid)}
               className="mt-8 flex h-[46px] w-full items-center justify-center bg-black text-[11px] font-normal tracking-[2px] text-white transition-opacity disabled:opacity-40"
             >
               {loading ? 'VERIFYING...' : 'VERIFY'}

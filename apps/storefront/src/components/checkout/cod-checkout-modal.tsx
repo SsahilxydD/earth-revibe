@@ -12,6 +12,8 @@ import { useCheckoutConfig } from '@/hooks/use-checkout-config';
 import { api } from '@/lib/api-client';
 import { formatPrice } from '@/lib/utils';
 import { trackPurchaseCompleted } from '@/lib/analytics';
+import { useAuthStore } from '@/stores/auth-store';
+import { isPlaceholderEmail } from '@earth-revibe/shared';
 import type { Address } from '@/types';
 
 const INDIAN_STATES = [
@@ -94,6 +96,13 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
   // so a network retry can't create a duplicate COD order server-side.
   const submittingRef = useRef(false);
   const idemKeyRef = useRef<string | null>(null);
+
+  // Phone-OTP accounts carry the @phone placeholder; COD must capture a real
+  // email (it's the only flow that doesn't pass through Razorpay's backfill).
+  const userEmail = useAuthStore((s) => s.user?.email);
+  const needsEmail = isPlaceholderEmail(userEmail);
+  const [email, setEmail] = useState('');
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   // New address form state
   const [form, setForm] = useState({
@@ -180,6 +189,10 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
 
   const handlePlaceOrder = async () => {
     if (!selectedAddressId || submittingRef.current) return;
+    if (needsEmail && !emailValid) {
+      setError('Enter a valid email to place a COD order');
+      return;
+    }
     submittingRef.current = true;
     // One stable idempotency key per attempt: a double-tap or network retry
     // reuses it, so the server returns the same order instead of creating a
@@ -201,6 +214,7 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
           addressId: selectedAddressId,
           discountCode: effectiveDiscountCode || undefined,
           loyaltyPointsToUse: 0,
+          ...(needsEmail && { email: email.trim() }),
         },
         { idempotencyKey: idemKeyRef.current }
       );
@@ -449,6 +463,33 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
             Pay {formatPrice(total)} in cash when your order is delivered
           </div>
 
+          {/* Email — required when the account still has the @phone placeholder.
+              COD skips Razorpay's email backfill, so without this the order
+              confirmation + loyalty cashback never reach the customer. */}
+          {needsEmail && (
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Email *
+              </label>
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                maxLength={254}
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                }}
+                className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)]"
+              />
+              <p className="mt-1.5 text-[11px] text-[var(--color-muted)]">
+                We&apos;ll send your order confirmation &amp; rewards here.
+              </p>
+            </div>
+          )}
+
           {error && <p className="text-xs text-red-500 text-center">{error}</p>}
 
           <Button
@@ -456,7 +497,7 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
             fullWidth
             size="lg"
             onClick={handlePlaceOrder}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (needsEmail && !emailValid)}
           >
             Place COD Order
           </Button>

@@ -75,6 +75,10 @@ export const verifyOtpSchema = z.object({
   // already have a name on file.
   firstName: z.string().trim().min(1).max(60).optional(),
   lastName: z.string().trim().max(60).optional(),
+  // Optional — collected when the account would otherwise carry the synthetic
+  // @phone placeholder email. Replaces/backfills the placeholder on verify so
+  // order confirmations and loyalty redemption reach a real inbox.
+  email: z.string().trim().email().max(254).optional(),
 });
 
 export type SendOtpInput = z.infer<typeof sendOtpSchema>;
