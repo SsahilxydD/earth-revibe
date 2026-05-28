@@ -223,16 +223,42 @@ router.post(
             where: { razorpayOrderId: paymentEntity.order_id },
           });
           if (payment) {
-            await prisma.payment.update({
-              where: { id: payment.id },
-              data: {
-                status: 'FAILED',
-                failureReason: paymentEntity.error_description || 'Payment failed',
-              },
-            });
-            await prisma.order.update({
+            // Release the stock reserved at order creation so the item is
+            // immediately buyable again, instead of being held until the 2h
+            // stale-checkout cron. Idempotent: Razorpay retries this webhook,
+            // so we only restore when the order isn't already CANCELLED.
+            const failedOrderRow = await prisma.order.findUnique({
               where: { id: payment.orderId },
-              data: { status: 'CANCELLED' },
+              include: { items: { select: { variantId: true, quantity: true } } },
+            });
+            await prisma.$transaction(async (tx) => {
+              await tx.payment.update({
+                where: { id: payment.id },
+                data: {
+                  status: 'FAILED',
+                  failureReason: paymentEntity.error_description || 'Payment failed',
+                },
+              });
+              if (failedOrderRow && failedOrderRow.status !== 'CANCELLED') {
+                await tx.order.update({
+                  where: { id: failedOrderRow.id },
+                  data: { status: 'CANCELLED' },
+                });
+                for (const item of failedOrderRow.items) {
+                  await tx.productVariant.update({
+                    where: { id: item.variantId },
+                    data: { stock: { increment: item.quantity } },
+                  });
+                }
+                // Free the discount code's usage slot so a failed payment
+                // doesn't permanently burn a limited-use promo.
+                if (failedOrderRow.discountCodeId) {
+                  await tx.discountCode.updateMany({
+                    where: { id: failedOrderRow.discountCodeId, usageCount: { gt: 0 } },
+                    data: { usageCount: { decrement: 1 } },
+                  });
+                }
+              }
             });
 
             const phFailed = getPostHog();

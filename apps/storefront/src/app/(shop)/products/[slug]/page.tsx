@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ProductDetail } from '@/components/product/product-detail';
@@ -14,10 +15,14 @@ function resolveApiBase(): string {
   return `https://${raw}`;
 }
 
-async function getProduct(slug: string): Promise<Product | null> {
+// `cache()` dedupes within a single request, so generateMetadata + the page
+// render share ONE fetch instead of two. `revalidate: 60` serves a cached
+// (ISR) response across requests rather than blocking every view on a fresh
+// Railway round-trip — PDPs are the most-visited/most-crawled pages.
+const getProduct = cache(async (slug: string): Promise<Product | null> => {
   try {
     const res = await fetch(`${resolveApiBase()}/products/${slug}`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (!res.ok) return null;
     const json = await res.json();
@@ -26,7 +31,7 @@ async function getProduct(slug: string): Promise<Product | null> {
   } catch {
     return null;
   }
-}
+});
 
 /* ------------------------------------------------------------------ */
 /*  Metadata                                                           */
