@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
+import { apiErrorMessage } from '@/lib/api-error';
 import { useToast } from '@/providers';
 
 interface Address {
@@ -171,7 +172,7 @@ export default function AddressesPage() {
       addToast('Address added', 'success');
     },
     onError: (err: any) => {
-      addToast(err?.message || 'Failed to add address', 'error');
+      addToast(apiErrorMessage(err, 'Failed to add address'), 'error');
     },
   });
 
@@ -184,7 +185,7 @@ export default function AddressesPage() {
       addToast('Address updated', 'success');
     },
     onError: (err: any) => {
-      addToast(err?.message || 'Failed to update address', 'error');
+      addToast(apiErrorMessage(err, 'Failed to update address'), 'error');
     },
   });
 

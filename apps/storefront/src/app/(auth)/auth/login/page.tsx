@@ -24,7 +24,14 @@ export default function LoginPage() {
   const [needsName, setNeedsName] = useState(false);
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  // Seed with a "session expired" notice when the api client bounced the user
+  // here after a failed token refresh (?expired=1).
+  const [error, setError] = useState(() =>
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('expired') === '1'
+      ? 'Your session expired. Please log in again.'
+      : ''
+  );
   const [shake, setShake] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
 
@@ -92,7 +99,10 @@ export default function LoginPage() {
         }
         const user = await api.post('/auth/verify-otp', body);
         setUser(user);
-        router.replace('/');
+        // Return the user to where they were headed before login (e.g. a
+        // wishlist tap or a protected page), guarding against open redirects.
+        const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+        router.replace(returnUrl && returnUrl.startsWith('/') ? returnUrl : '/');
       } catch (err: any) {
         setError(err?.message || 'Verification failed');
         setShake(true);

@@ -39,7 +39,12 @@ export default function ReferralsPage() {
   const [codeCopied, setCodeCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const { data: codeData, isLoading: codeLoading } = useQuery({
+  const {
+    data: codeData,
+    isLoading: codeLoading,
+    isError: codeError,
+    refetch: refetchCode,
+  } = useQuery({
     queryKey: ['referral-code'],
     queryFn: () => api.get<ReferralCodeData>('/referrals/code'),
   });
@@ -122,6 +127,45 @@ export default function ReferralsPage() {
         }}
       >
         <Spinner className="h-6 w-6" />
+      </div>
+    );
+  }
+
+  // Without the code query we'd otherwise render a fake "---" code and a broken
+  // share link as if real. Show a clear error + retry instead.
+  if (codeError || !codeData?.referralCode) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '40vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 16,
+          padding: '0 28px',
+          textAlign: 'center',
+        }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 300, color: '#777', lineHeight: 1.5 }}>
+          We couldn&apos;t load your referral details. Please try again.
+        </span>
+        <button
+          onClick={() => refetchCode()}
+          style={{
+            height: 46,
+            padding: '0 28px',
+            backgroundColor: '#000',
+            color: '#FFF',
+            fontSize: 11,
+            fontWeight: 400,
+            letterSpacing: 2,
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          RETRY
+        </button>
       </div>
     );
   }

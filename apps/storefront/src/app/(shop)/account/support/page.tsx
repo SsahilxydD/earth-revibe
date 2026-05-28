@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
+import { apiErrorMessage } from '@/lib/api-error';
 import { formatDate } from '@/lib/utils';
 import { useToast } from '@/providers';
 
@@ -70,7 +71,7 @@ export default function SupportPage() {
       addToast('Ticket created successfully', 'success');
     },
     onError: (err: any) => {
-      addToast(err?.message || 'Failed to create ticket', 'error');
+      addToast(apiErrorMessage(err, 'Failed to create ticket'), 'error');
     },
   });
 

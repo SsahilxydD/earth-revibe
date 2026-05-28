@@ -25,6 +25,12 @@ export function Header() {
   const openCart = useCartStore((s) => s.openCart);
   const pathname = usePathname();
 
+  // The cart count comes from a localStorage-persisted store, so the server
+  // renders 0 while the client hydrates the real count. Gate the badge on a
+  // mount flag to avoid a hydration mismatch + count flash on every load.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Initialize from current scroll position to avoid wrong state on first frame
   const [scrolled, setScrolled] = useState(() =>
     typeof window !== 'undefined' ? window.scrollY > 10 : false
@@ -110,7 +116,7 @@ export function Header() {
               aria-label="Cart"
             >
               <ShoppingBag className="h-5 w-5" />
-              {itemCount > 0 && (
+              {mounted && itemCount > 0 && (
                 <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-primary)] text-[10px] font-bold text-white">
                   {itemCount > 99 ? '99+' : itemCount}
                 </span>
