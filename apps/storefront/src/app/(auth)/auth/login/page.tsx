@@ -8,6 +8,8 @@ import { useAuthStore } from '@/stores/auth-store';
 
 type Step = 'phone' | 'name' | 'otp';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const fade = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
@@ -34,6 +36,8 @@ export default function LoginPage() {
   );
   const [shake, setShake] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [email, setEmail] = useState('');
+  const [needsEmail, setNeedsEmail] = useState(false);
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -45,6 +49,7 @@ export default function LoginPage() {
   }, [resendTimer]);
 
   const formattedPhone = phone ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : '';
+  const emailValid = EMAIL_RE.test(email.trim());
 
   const handleSendOtp = async () => {
     if (phone.length !== 10 || !/^[6-9]\d{9}$/.test(phone)) {
@@ -54,13 +59,15 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await api.post<{ isNewUser: boolean; hasName: boolean }>('/auth/send-otp', {
-        phone: `+91${phone}`,
-      });
+      const res = await api.post<{ isNewUser: boolean; hasName: boolean; needsEmail: boolean }>(
+        '/auth/send-otp',
+        { phone: `+91${phone}` }
+      );
       setResendTimer(30);
       setOtp(Array(6).fill(''));
       const mustAskName = !!res && (res.isNewUser || !res.hasName);
       setNeedsName(mustAskName);
+      setNeedsEmail(!!res?.needsEmail);
       if (mustAskName) {
         setStep('name');
         setTimeout(() => nameRef.current?.focus(), 200);
@@ -88,6 +95,11 @@ export default function LoginPage() {
 
   const handleVerifyOtp = useCallback(
     async (code: string) => {
+      const trimmedEmail = email.trim();
+      if (needsEmail && !EMAIL_RE.test(trimmedEmail)) {
+        setError('Enter a valid email address');
+        return;
+      }
       setLoading(true);
       setError('');
       try {
@@ -97,6 +109,7 @@ export default function LoginPage() {
           body.firstName = parts[0];
           if (parts.length > 1) body.lastName = parts.slice(1).join(' ');
         }
+        if (needsEmail) body.email = trimmedEmail;
         const user = await api.post('/auth/verify-otp', body);
         setUser(user);
         // Return the user to where they were headed before login (e.g. a
@@ -111,7 +124,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     },
-    [phone, fullName, needsName, setUser, router]
+    [phone, fullName, needsName, email, needsEmail, setUser, router]
   );
 
   const handleOtpChange = (index: number, value: string) => {
@@ -122,7 +135,9 @@ export default function LoginPage() {
     if (value && index < 5) otpRefs.current[index + 1]?.focus();
     if (value && index === 5) {
       const code = next.join('');
-      if (code.length === 6) handleVerifyOtp(code);
+      // When an email is also required, wait for the user to fill it + tap
+      // Verify rather than auto-submitting on the 6th digit.
+      if (code.length === 6 && !needsEmail) handleVerifyOtp(code);
     }
   };
 
@@ -139,8 +154,11 @@ export default function LoginPage() {
     const next = Array(6).fill('');
     for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
     setOtp(next);
-    if (pasted.length === 6) handleVerifyOtp(pasted);
-    else otpRefs.current[pasted.length]?.focus();
+    if (pasted.length === 6) {
+      if (!needsEmail) handleVerifyOtp(pasted);
+    } else {
+      otpRefs.current[pasted.length]?.focus();
+    }
   };
 
   const handleResend = async () => {
@@ -273,11 +291,42 @@ export default function LoginPage() {
             ))}
           </div>
 
+          {/* Email — required when the account has no real email yet */}
+          {needsEmail && (
+            <div className="w-full">
+              <label className="text-[10px] font-normal tracking-[1.5px] text-[#999]">EMAIL</label>
+              <div className="mt-3 border-b border-[#e5e5e5] pb-3">
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  maxLength={254}
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && otp.join('').length === 6 && emailValid) {
+                      handleVerifyOtp(otp.join(''));
+                    }
+                  }}
+                  disabled={loading}
+                  className="w-full bg-transparent text-[14px] font-light text-black outline-none placeholder:text-[#ccc] disabled:opacity-50"
+                />
+              </div>
+              <p className="mt-2 text-[11px] font-light text-[#999]">
+                For order updates &amp; rewards.
+              </p>
+            </div>
+          )}
+
           {/* Verify button — full width, black, 50px height */}
           <button
             type="button"
             onClick={() => handleVerifyOtp(otp.join(''))}
-            disabled={loading || otp.join('').length !== 6}
+            disabled={loading || otp.join('').length !== 6 || (needsEmail && !emailValid)}
             className="flex h-[50px] w-full items-center justify-center bg-black text-[12px] font-normal tracking-[2px] text-white transition-opacity disabled:opacity-40"
           >
             {loading ? 'VERIFYING...' : 'VERIFY'}

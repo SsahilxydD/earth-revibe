@@ -7,7 +7,7 @@ import { logger } from '../config/logger';
 import { APP_CONSTANTS } from '../config/constants';
 import { maybeLinkReferralAtCheckout, convertReferralOnFirstOrder } from './referral.service';
 import { defaultExpiresAt } from './points-expiry.service';
-import { generateOrderNumber, comboDiscount } from '@earth-revibe/shared';
+import { generateOrderNumber, comboDiscount, isPlaceholderEmail } from '@earth-revibe/shared';
 import type { ComboDiscountInput } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
 import { sendWhatsAppOrderUpdate } from './whatsapp.service';
@@ -1124,6 +1124,29 @@ export async function createCodOrder(
     where: { id: data.addressId, userId },
   });
   if (!address) throw ApiError.badRequest('Address not found');
+
+  // COD must land on a real email. Phone-OTP accounts carry the @phone
+  // placeholder, and Razorpay (which normally backfills it) is skipped on COD —
+  // so order confirmations and the email-gated loyalty cashback would never
+  // reach the customer. Backfill from the checkout-supplied email, or refuse
+  // with EMAIL_REQUIRED so the client can prompt for one.
+  const codUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+  if (isPlaceholderEmail(codUser?.email)) {
+    if (!data.email) {
+      throw new ApiError(400, 'Add your email to place a COD order', 'EMAIL_REQUIRED');
+    }
+    const emailOwner = await prisma.user.findUnique({
+      where: { email: data.email },
+      select: { id: true },
+    });
+    if (emailOwner && emailOwner.id !== userId) {
+      throw ApiError.badRequest('This email is already linked to another account');
+    }
+    await prisma.user.update({ where: { id: userId }, data: { email: data.email } });
+  }
 
   // Fetch variants with product data
   const variantIds = data.items.map((i) => i.variantId);
