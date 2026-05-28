@@ -1,7 +1,7 @@
 import { prisma } from '@earth-revibe/db';
 import type { Prisma } from '@earth-revibe/db';
 import { ApiError } from '../utils/api-error';
-import { defaultExpiresAt } from './points-expiry.service';
+import type { MarkReferralPaidInput } from '@earth-revibe/shared';
 
 /**
  * Try to interpret `code` as a referral code entered at checkout and, if valid,
@@ -103,7 +103,7 @@ export async function convertReferralOnFirstOrder(
   tx: Prisma.TransactionClient,
   userId: string,
   subtotal: number,
-  orderNumber: string
+  _orderNumber: string
 ): Promise<
   | { credited: false }
   | { credited: true; referrerId: string; referrerReward: number; refereeReward: number }
@@ -117,31 +117,20 @@ export async function convertReferralOnFirstOrder(
   if (!referral || referral.status !== 'SIGNED_UP') return { credited: false };
 
   const referrerReward = computeReferrerReward(subtotal);
-  // The referee already got 15% off + 100% cashback on the paid amount at
-  // checkout; a separate welcome bonus on top would be triple-dipping and
-  // adds unnecessary liability with no behavioural lift, so we skip it.
+  // The referee already got 15% off + first-order cashback at checkout, so no
+  // extra referee reward. The referrer is paid 20% of subtotal as CASH to their
+  // UPI (not points) — recorded as a PENDING payout for an admin to settle.
   const refereeReward = 0;
 
   await tx.referral.update({
     where: { id: referral.id },
-    data: { status: 'CONVERTED', referrerReward, refereeReward },
+    data: {
+      status: 'CONVERTED',
+      referrerReward,
+      refereeReward,
+      payoutStatus: referrerReward > 0 ? 'PENDING' : null,
+    },
   });
-
-  if (referrerReward > 0) {
-    await tx.user.update({
-      where: { id: referral.referrerId },
-      data: { loyaltyPoints: { increment: referrerReward } },
-    });
-    await tx.loyaltyTransaction.create({
-      data: {
-        userId: referral.referrerId,
-        type: 'BONUS',
-        points: referrerReward,
-        description: `Referral reward (20% of order #${orderNumber})`,
-        expiresAt: defaultExpiresAt(),
-      },
-    });
-  }
 
   return {
     credited: true,
@@ -181,13 +170,18 @@ export async function validateReferralCode(userId: string, code: string) {
 }
 
 export const referralService = {
+  async setUpi(userId: string, upiId: string) {
+    await prisma.user.update({ where: { id: userId }, data: { upiId } });
+    return { upiId };
+  },
+
   async getMyReferralCode(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { referralCode: true },
+      select: { referralCode: true, upiId: true },
     });
     if (!user) throw ApiError.notFound('User not found');
-    return { referralCode: user.referralCode };
+    return { referralCode: user.referralCode, upiId: user.upiId };
   },
 
   async getMyReferrals(userId: string) {
@@ -206,6 +200,13 @@ export const referralService = {
       signedUp: referrals.filter((r) => r.status === 'SIGNED_UP').length,
       converted: referrals.filter((r) => r.status === 'CONVERTED').length,
       totalRewardsEarned: referrals.reduce((sum, r) => sum + (r.referrerReward || 0), 0),
+      // ₹ owed but not yet paid out, and ₹ already paid (cash via UPI).
+      pendingPayout: referrals
+        .filter((r) => r.payoutStatus === 'PENDING')
+        .reduce((sum, r) => sum + (r.referrerReward || 0), 0),
+      paidPayout: referrals
+        .filter((r) => r.payoutStatus === 'PAID')
+        .reduce((sum, r) => sum + (r.referrerReward || 0), 0),
     };
 
     return { referrals, stats };
@@ -221,5 +222,76 @@ export const referralService = {
       },
     });
     return referral;
+  },
+};
+
+/**
+ * Admin-side referral cash payouts. Manual flow: list what's owed, an admin pays
+ * it to the referrer's UPI from their own app, then marks it paid here. No money
+ * is moved by the system.
+ */
+export const adminReferralService = {
+  async listPayouts(status: 'pending' | 'paid' | 'all' = 'pending') {
+    const where: Prisma.ReferralWhereInput = { status: 'CONVERTED' };
+    if (status === 'pending') where.payoutStatus = 'PENDING';
+    else if (status === 'paid') where.payoutStatus = 'PAID';
+    else where.payoutStatus = { not: null };
+
+    const referrals = await prisma.referral.findMany({
+      where,
+      include: {
+        referrer: {
+          select: { id: true, firstName: true, lastName: true, upiId: true, phone: true },
+        },
+        referee: { select: { firstName: true, lastName: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return referrals.map((r) => ({
+      id: r.id,
+      amount: r.referrerReward,
+      payoutStatus: r.payoutStatus,
+      payoutPaidAt: r.payoutPaidAt,
+      payoutUpiId: r.payoutUpiId,
+      payoutRef: r.payoutRef,
+      convertedAt: r.updatedAt,
+      referrer: r.referrer,
+      referee: r.referee,
+    }));
+  },
+
+  async markPaid(referralId: string, data: MarkReferralPaidInput) {
+    const referral = await prisma.referral.findUnique({
+      where: { id: referralId },
+      include: { referrer: { select: { upiId: true } } },
+    });
+    if (!referral) throw ApiError.notFound('Referral not found');
+    if (referral.status !== 'CONVERTED' || referral.payoutStatus !== 'PENDING') {
+      throw ApiError.badRequest(
+        'Only a converted referral with a pending payout can be marked paid'
+      );
+    }
+    if (!referral.referrer.upiId) {
+      throw ApiError.badRequest(
+        'Referrer has no UPI ID on file — they must add one before you can mark this paid'
+      );
+    }
+
+    const updated = await prisma.referral.update({
+      where: { id: referral.id },
+      data: {
+        payoutStatus: 'PAID',
+        payoutPaidAt: new Date(),
+        payoutUpiId: referral.referrer.upiId, // snapshot where it was sent
+        payoutRef: data.payoutRef || null,
+      },
+    });
+    return {
+      id: updated.id,
+      payoutStatus: updated.payoutStatus,
+      payoutPaidAt: updated.payoutPaidAt,
+      payoutUpiId: updated.payoutUpiId,
+    };
   },
 };

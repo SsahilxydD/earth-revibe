@@ -66,6 +66,7 @@ const navItems: NavItem[] = [
     children: [
       { label: 'Funnels', href: '/funnels' },
       { label: 'Notifications', href: '/notifications' },
+      { label: 'Referral payouts', href: '/referrals' },
     ],
   },
   { kind: 'leaf', label: 'Discounts', href: '/discounts', icon: DiscountIcon },

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Copy, Check } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
@@ -9,12 +9,15 @@ import { useToast } from '@/providers';
 
 interface ReferralCodeData {
   referralCode: string;
+  upiId?: string | null;
 }
 interface ReferralStats {
   total: number;
   signedUp: number;
   converted: number;
   totalRewardsEarned: number;
+  pendingPayout: number;
+  paidPayout: number;
 }
 interface ReferralsData {
   referrals: unknown[];
@@ -36,6 +39,21 @@ export default function ReferralsPage() {
     queryFn: () => api.get<ReferralsData>('/referrals/my-referrals'),
   });
 
+  const queryClient = useQueryClient();
+  const [upi, setUpi] = useState('');
+  useEffect(() => {
+    if (codeData?.upiId) setUpi(codeData.upiId);
+  }, [codeData?.upiId]);
+  const saveUpi = useMutation({
+    mutationFn: (upiId: string) => api.put('/referrals/upi', { upiId }),
+    onSuccess: () => {
+      addToast('UPI saved — your referral cash will be sent here', 'success');
+      queryClient.invalidateQueries({ queryKey: ['referral-code'] });
+    },
+    onError: (e: unknown) =>
+      addToast(e instanceof Error ? e.message : 'Failed to save UPI', 'error'),
+  });
+
   const isLoading = codeLoading || referralsLoading;
   const code = codeData?.referralCode ?? '---';
   const referralLink =
@@ -45,6 +63,8 @@ export default function ReferralsPage() {
     signedUp: 0,
     converted: 0,
     totalRewardsEarned: 0,
+    pendingPayout: 0,
+    paidPayout: 0,
   };
 
   const copyToClipboard = async (text: string, type: 'code' | 'link') => {
@@ -183,6 +203,51 @@ export default function ReferralsPage() {
         </button>
       </div>
 
+      {/* UPI for payouts */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+          YOUR UPI FOR PAYOUTS
+        </span>
+        <input
+          type="text"
+          value={upi}
+          onChange={(e) => setUpi(e.target.value.trim())}
+          placeholder="name@bank"
+          style={{
+            width: '100%',
+            height: 46,
+            border: '1px solid #E5E5E5',
+            padding: '0 14px',
+            fontSize: 14,
+            color: '#000',
+            outline: 'none',
+            fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
+          }}
+        />
+        <button
+          onClick={() => saveUpi.mutate(upi)}
+          disabled={saveUpi.isPending || !upi}
+          style={{
+            width: '100%',
+            height: 46,
+            backgroundColor: '#000',
+            color: '#FFF',
+            fontSize: 11,
+            fontWeight: 400,
+            letterSpacing: 2,
+            border: 'none',
+            cursor: saveUpi.isPending || !upi ? 'not-allowed' : 'pointer',
+            opacity: saveUpi.isPending || !upi ? 0.5 : 1,
+          }}
+        >
+          {saveUpi.isPending ? 'SAVING…' : 'SAVE UPI'}
+        </button>
+        <span style={{ fontSize: 11, fontWeight: 300, color: '#999', lineHeight: 1.5 }}>
+          We send your 20% referral cash here once a friend completes their first order.
+          {stats.pendingPayout > 0 ? ` ₹${stats.pendingPayout} pending.` : ''}
+        </span>
+      </div>
+
       {/* YOUR STATS label */}
       <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
         YOUR STATS
@@ -194,7 +259,7 @@ export default function ReferralsPage() {
           { value: stats.total, label: 'Referred' },
           { value: stats.signedUp, label: 'Signed Up' },
           { value: stats.converted, label: 'Converted' },
-          { value: stats.totalRewardsEarned, label: 'Points' },
+          { value: `₹${stats.totalRewardsEarned}`, label: 'Earned' },
         ].map((s) => (
           <div
             key={s.label}

@@ -11,3 +11,8 @@ export enum ReferralStatus {
   SIGNED_UP = 'SIGNED_UP',
   CONVERTED = 'CONVERTED',
 }
+
+export enum ReferralPayoutStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+}
