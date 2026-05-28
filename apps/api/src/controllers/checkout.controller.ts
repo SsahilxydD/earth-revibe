@@ -5,6 +5,13 @@ import { env } from '../config/env';
 import { logger } from '../config/logger';
 
 export const checkoutController = {
+  // Public, unauthenticated. Single source of truth for storefront-visible
+  // checkout config (currently just the COD fee) so the UI never shows a fee
+  // that differs from what the server actually charges in createCodOrder.
+  async getConfig(_req: Request, res: Response) {
+    res.json({ success: true, data: { codFee: env.COD_FEE || 0 } });
+  },
+
   async createMagicOrder(req: Request, res: Response) {
     const userId = req.user?.id ?? null;
 

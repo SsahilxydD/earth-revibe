@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bookmark, Share2, Plus, Loader2, Wallet, Users, Recycle } from 'lucide-react';
@@ -43,7 +44,11 @@ function uniqueSizes(variants: ProductVariant[]): string[] {
 }
 
 function findVariant(variants: ProductVariant[], size: string | null): ProductVariant | undefined {
-  return variants.find((v) => size === null || v.size === size);
+  // With a size, match it exactly. Without one, only auto-resolve a single
+  // (sizeless) variant — never default to the first of several, which made the
+  // PDP show variant[0]'s price/stock before the user picked a size.
+  if (size) return variants.find((v) => v.size === size);
+  return variants.length === 1 ? variants[0] : undefined;
 }
 
 function stockFor(variants: ProductVariant[], size: string | null): number {
@@ -912,6 +917,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
   const addItem = useCartStore((s) => s.addItem);
   const { addToast } = useToast();
+  const router = useRouter();
 
   const variant = useMemo(
     () => findVariant(product.variants, selectedSize),
@@ -920,41 +926,55 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const price = variant?.price ?? product.price;
   const onSale = product.compareAtPrice !== null && product.compareAtPrice > price;
 
-  const addToBag = async () => {
+  // Returns true if the item was actually added (so Buy Now can route only on success).
+  const addToBag = async (): Promise<boolean> => {
     if (sizes.length > 0 && !selectedSize) {
       addToast('Please select a size', 'info');
-      return;
+      return false;
     }
     const v = findVariant(product.variants, selectedSize);
-    if (sizes.length > 0 && (!v || v.stock <= 0)) return;
+    // Require a real, in-stock variant — never add the bare product.id as a
+    // cart id (it's not a variant, so checkout rejects it as unavailable).
+    if (!v || v.stock <= 0) {
+      addToast(v ? 'This size is sold out' : 'This item is unavailable', 'info');
+      return false;
+    }
 
     setIsAdding(true);
     await new Promise((r) => setTimeout(r, 300));
 
     const img = product.images.find((i) => i.isPrimary) || product.images[0];
     addItem({
-      id: v?.id || product.id,
+      id: v.id,
       productId: product.id,
       name: product.name,
       slug: product.slug,
       image: img?.url || '',
-      price: v?.price ?? product.price,
+      price: v.price ?? product.price,
       compareAtPrice: product.compareAtPrice ?? undefined,
       size: selectedSize || '',
       color: '',
-      maxQuantity: v?.stock ?? 99,
+      maxQuantity: v.stock,
       quantity: 1,
     });
 
     trackAddToCart({
       id: product.id,
       name: product.name,
-      price: v?.price ?? product.price,
+      price: v.price ?? product.price,
       quantity: 1,
       variant: selectedSize || undefined,
     });
     addToast('Added to cart', 'success');
     setIsAdding(false);
+    return true;
+  };
+
+  // Buy Now = add the item, then go straight to checkout. Previously this
+  // button was wired to addToBag too, so it silently did nothing visible.
+  const buyNow = async () => {
+    const added = await addToBag();
+    if (added) router.push('/checkout');
   };
 
   return (
@@ -1179,7 +1199,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </button>
           {/* E1Y3u — buyBtn, h50, rounded pill, black fill, 500 weight */}
           <button
-            onClick={addToBag}
+            onClick={buyNow}
             disabled={isAdding}
             style={{
               width: '100%',

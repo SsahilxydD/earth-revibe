@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/stores/cart-store';
+import { useCheckoutConfig } from '@/hooks/use-checkout-config';
 import { formatPrice } from '@/lib/utils';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 
@@ -14,8 +15,6 @@ import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 /*  corners, editorial italic hero total, two option cards (Pay online */
 /*  selected by default), and a confirm button with baked-in total.    */
 /* ------------------------------------------------------------------ */
-
-const COD_SURCHARGE = 150;
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -40,7 +39,11 @@ export function PaymentMethodModal({
 }: PaymentMethodModalProps) {
   const getTotal = useCartStore((s) => s.getTotal);
   const subtotal = subtotalOverride ?? getTotal();
-  const codTotal = subtotal + COD_SURCHARGE;
+  // COD fee from the server (single source of truth) — what's shown here is
+  // exactly what createCodOrder charges. Defaults to 0 until config loads.
+  const { data: checkoutConfig } = useCheckoutConfig();
+  const codSurcharge = checkoutConfig?.codFee ?? 0;
+  const codTotal = subtotal + codSurcharge;
 
   const [method, setMethod] = useState<Method>('prepaid');
   const [mounted, setMounted] = useState(false);
@@ -306,16 +309,19 @@ export function PaymentMethodModal({
                   >
                     {formatPrice(subtotal)}
                   </span>
-                  {/* sUdKW — bolder COD fee annotation: solid color, 11/300 */}
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 300,
-                      color: method === 'cod' ? '#FFF' : '#000',
-                    }}
-                  >
-                    +{formatPrice(COD_SURCHARGE)} COD charge
-                  </span>
+                  {/* sUdKW — bolder COD fee annotation: solid color, 11/300.
+                      Only shown when a real fee applies. */}
+                  {codSurcharge > 0 && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 300,
+                        color: method === 'cod' ? '#FFF' : '#000',
+                      }}
+                    >
+                      +{formatPrice(codSurcharge)} COD charge
+                    </span>
+                  )}
                 </div>
               </button>
             </div>

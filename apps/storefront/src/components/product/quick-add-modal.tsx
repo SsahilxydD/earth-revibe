@@ -93,23 +93,34 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
 
   const handleAdd = () => {
     if (!product) return;
-    const variantId = matchedVariant?.id || `${product.id}-default`;
+    // Never fabricate a `${product.id}-default` id — it doesn't exist in the
+    // DB, so checkout later rejects the item as "no longer available". Require
+    // a real, in-stock variant.
+    if (!matchedVariant?.id || matchedVariant.stock <= 0) {
+      addToast('This item is unavailable', 'info');
+      return;
+    }
     addItem({
-      id: variantId,
+      id: matchedVariant.id,
       productId: product.id,
       name: product.name,
       slug: product.slug,
       image: primaryImage?.url || '',
-      price: product.price,
+      // Use the selected variant's price, not the product base price — they can
+      // differ, and the wrong price here surprises the user at checkout.
+      price: matchedVariant.price ?? product.price,
       compareAtPrice: product.compareAtPrice || undefined,
-      size: selectedSize || 'M',
-      color: matchedVariant?.color || 'Default',
-      maxQuantity: matchedVariant?.stock && matchedVariant.stock > 0 ? matchedVariant.stock : 10,
+      size: selectedSize || matchedVariant.size || 'M',
+      color: matchedVariant.color || 'Default',
+      maxQuantity: matchedVariant.stock,
     });
     addToast('Added to bag', 'success');
     onClose();
     setTimeout(() => openCart(), 200);
   };
+
+  // Price to display — the matched variant's price when resolved, else base.
+  const displayPrice = matchedVariant?.price ?? product?.price ?? 0;
 
   if (!product) return null;
 
@@ -168,7 +179,7 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{ fontSize: 13, fontWeight: 400, color: '#000' }}>{product.name}</span>
               <span style={{ fontSize: 12, fontWeight: 300, color: '#000' }}>
-                {formatPrice(product.price)}
+                {formatPrice(displayPrice)}
               </span>
             </div>
           </div>
@@ -273,7 +284,7 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
             opacity: isInStock && !loadingVariants ? 1 : 0.4,
           }}
         >
-          {isInStock ? `ADD TO BAG — ${formatPrice(product.price)}` : 'OUT OF STOCK'}
+          {isInStock ? `ADD TO BAG — ${formatPrice(displayPrice)}` : 'OUT OF STOCK'}
         </button>
       </div>
     </div>
