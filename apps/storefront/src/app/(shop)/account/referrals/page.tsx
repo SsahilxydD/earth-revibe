@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Copy, Check, Share2, ShoppingBag, Wallet } from 'lucide-react';
+import { Copy, Check, Share2, ShoppingBag, Wallet, Pencil } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
@@ -51,13 +51,15 @@ export default function ReferralsPage() {
 
   const queryClient = useQueryClient();
   const [upi, setUpi] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
   useEffect(() => {
     if (codeData?.upiId) setUpi(codeData.upiId);
   }, [codeData?.upiId]);
   const saveUpi = useMutation({
     mutationFn: (upiId: string) => api.put('/referrals/upi', { upiId }),
     onSuccess: () => {
-      addToast('UPI saved — your referral cash will be sent here', 'success');
+      addToast('UPI saved. Your referral cash will be sent here.', 'success');
+      setIsEditing(false);
       queryClient.invalidateQueries({ queryKey: ['referral-code'] });
     },
     onError: (e: unknown) => {
@@ -83,6 +85,9 @@ export default function ReferralsPage() {
     paidPayout: 0,
   };
 
+  const savedUpi = codeData?.upiId ?? '';
+  const showSaved = !!savedUpi && !isEditing;
+
   const copyToClipboard = async (text: string, type: 'code' | 'link') => {
     try {
       await navigator.clipboard.writeText(text);
@@ -101,7 +106,7 @@ export default function ReferralsPage() {
 
   const shareWhatsApp = () => {
     const message = encodeURIComponent(
-      `Check out Earth Revibe — use my code ${code} at checkout on your first order for 15% off + 100% cashback in loyalty points. ${referralLink}`
+      `Check out Earth Revibe! Use my code ${code} at checkout on your first order for 15% off + 100% cashback in loyalty points. ${referralLink}`
     );
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
@@ -246,46 +251,125 @@ export default function ReferralsPage() {
         ))}
       </div>
 
-      {/* UPI for payouts */}
+      {/* UPI for payouts. A saved UPI shows read-only with an edit pencil so it's */}
+      {/* obviously stored; editing swaps in the input + save (and a cancel). */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
-          YOUR UPI FOR PAYOUTS
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#000', letterSpacing: 1.5 }}>
+          {showSaved ? 'YOUR UPI' : 'YOUR UPI FOR PAYOUTS'}
         </span>
-        <input
-          type="text"
-          value={upi}
-          onChange={(e) => setUpi(e.target.value.trim())}
-          placeholder="name@bank"
-          style={{
-            width: '100%',
-            height: 46,
-            border: '1px solid #E5E5E5',
-            padding: '0 14px',
-            fontSize: 14,
-            color: '#000',
-            outline: 'none',
-            fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
-          }}
-        />
-        <button
-          onClick={() => saveUpi.mutate(upi)}
-          disabled={saveUpi.isPending || !upi}
-          style={{
-            width: '100%',
-            height: 46,
-            backgroundColor: '#000',
-            color: '#FFF',
-            fontSize: 11,
-            fontWeight: 400,
-            letterSpacing: 2,
-            border: 'none',
-            cursor: saveUpi.isPending || !upi ? 'not-allowed' : 'pointer',
-            opacity: saveUpi.isPending || !upi ? 0.5 : 1,
-          }}
-        >
-          {saveUpi.isPending ? 'SAVING…' : 'SAVE UPI'}
-        </button>
-        <span style={{ fontSize: 11, fontWeight: 300, color: '#999', lineHeight: 1.5 }}>
+
+        {showSaved ? (
+          <div
+            style={{
+              width: '100%',
+              height: 46,
+              border: '1px solid #E5E5E5',
+              padding: '0 14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
+                fontSize: 14,
+                color: '#000',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {savedUpi}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              aria-label="Edit UPI"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: 0,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#000',
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: 1,
+                flexShrink: 0,
+              }}
+            >
+              <Pencil size={14} strokeWidth={1.5} />
+              EDIT
+            </button>
+          </div>
+        ) : (
+          <>
+            <input
+              type="text"
+              value={upi}
+              onChange={(e) => setUpi(e.target.value.trim())}
+              placeholder="name@bank"
+              style={{
+                width: '100%',
+                height: 46,
+                border: '1px solid #E5E5E5',
+                padding: '0 14px',
+                fontSize: 14,
+                color: '#000',
+                outline: 'none',
+                fontFamily: 'var(--font-mono, "Geist Mono", monospace)',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={() => saveUpi.mutate(upi)}
+                disabled={saveUpi.isPending || !upi}
+                style={{
+                  flex: 1,
+                  height: 46,
+                  backgroundColor: '#000',
+                  color: '#FFF',
+                  fontSize: 11,
+                  fontWeight: 400,
+                  letterSpacing: 2,
+                  border: 'none',
+                  cursor: saveUpi.isPending || !upi ? 'not-allowed' : 'pointer',
+                  opacity: saveUpi.isPending || !upi ? 0.5 : 1,
+                }}
+              >
+                {saveUpi.isPending ? 'SAVING…' : 'SAVE UPI'}
+              </button>
+              {savedUpi && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUpi(savedUpi);
+                    setIsEditing(false);
+                  }}
+                  style={{
+                    flex: 1,
+                    height: 46,
+                    border: '1px solid #E5E5E5',
+                    backgroundColor: 'transparent',
+                    color: '#000',
+                    fontSize: 11,
+                    fontWeight: 400,
+                    letterSpacing: 2,
+                    cursor: 'pointer',
+                  }}
+                >
+                  CANCEL
+                </button>
+              )}
+            </div>
+          </>
+        )}
+
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#000', lineHeight: 1.5 }}>
           We send your 20% referral cash here once a friend completes their first order.
           {stats.pendingPayout > 0 ? ` ₹${stats.pendingPayout} pending.` : ''}
         </span>
@@ -303,8 +387,8 @@ export default function ReferralsPage() {
       >
         <strong style={{ color: '#000' }}>Why we ask for your UPI:</strong> Referral rewards are
         paid as real cash, not points. We send your 20% straight to your UPI after each
-        friend&apos;s first order is confirmed. A UPI ID is just a payment handle (like an email) —
-        never your bank account number or card details — so it&apos;s safe to share. Add it once and
+        friend&apos;s first order is confirmed. A UPI ID is just a payment handle, like an email,
+        never your bank account number or card details, so it&apos;s safe to share. Add it once and
         your payouts are automatic.
       </div>
 
