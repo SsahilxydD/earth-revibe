@@ -50,6 +50,7 @@ model User {
   backInStockSubs   BackInStockSubscription[]
   dropSubscription  DropSubscription?
   dropAlertSends    DropAlertSend[]
+  promoClaims       PromoClaim[]
 
   @@map("users")
 }
@@ -996,6 +997,47 @@ model LoyaltyConfig {
   updatedAt           DateTime @updatedAt
 
   @@map("loyalty_config")
+}
+
+// ==========================================
+// PROMO / ACQUISITION (QR scan → points)
+// ==========================================
+
+// A QR/scan campaign that grants a one-time loyalty-point bonus to whoever
+// scans and logs in. Used for offline acquisition + brand recall (the points
+// sit in their wallet and we can retarget on them). One row per campaign;
+// `code` is what the /spinner landing and the claim API key off.
+model PromoCampaign {
+  id           String   @id @default(cuid())
+  code         String   @unique // e.g. "SCAN500" — used in the QR landing URL
+  title        String
+  pointsReward Int // points granted per claim
+  expiryDays   Int      @default(180) // claimed points expire this many days out
+  isActive     Boolean  @default(true) // kill-switch: flip off to stop all claims
+  maxClaims    Int? // optional total-claims cap; null = unlimited
+  claimCount   Int      @default(0) // acquisition metric, incremented per claim
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  claims PromoClaim[]
+
+  @@map("promo_campaigns")
+}
+
+// One claim per (campaign, user) — the unique constraint atomically enforces
+// "one claim per account". Records how many points were awarded for audit.
+model PromoClaim {
+  id            String        @id @default(cuid())
+  campaignId    String
+  campaign      PromoCampaign @relation(fields: [campaignId], references: [id])
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  pointsAwarded Int
+  createdAt     DateTime      @default(now())
+
+  @@unique([campaignId, userId])
+  @@index([userId])
+  @@map("promo_claims")
 }
 
 model Referral {
