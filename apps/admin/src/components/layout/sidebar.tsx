@@ -35,7 +35,16 @@ type NavItem = NavLeaf | NavGroup;
 
 const navItems: NavItem[] = [
   { kind: 'leaf', label: 'Home', href: '/dashboard', icon: HomeIcon },
-  { kind: 'leaf', label: 'Orders', href: '/orders', icon: OrderIcon },
+  {
+    kind: 'group',
+    label: 'Orders',
+    icon: OrderIcon,
+    href: '/orders',
+    children: [
+      { label: 'Active', href: '/orders' },
+      { label: 'Archived', href: '/orders/archived' },
+    ],
+  },
   {
     kind: 'group',
     label: 'Products',
@@ -169,23 +178,31 @@ export function Sidebar() {
 
         {open && !isSidebarCollapsed && (
           <div className="mt-0.5 mb-0.5 space-y-px">
-            {item.children.map((child) => {
-              const active = isPathActive(pathname, child.href);
-              return (
-                <Link
-                  key={child.href}
-                  href={child.href}
-                  onClick={handleNavigate}
-                  className={`flex items-center mx-1.5 pl-9 pr-2 h-7 rounded-lg text-[13px] ${
-                    active
-                      ? `${itemActive} font-medium`
-                      : 'text-[#616161] hover:bg-[#ebebeb] hover:text-[#303030]'
-                  }`}
-                >
-                  <span className="truncate">{child.label}</span>
-                </Link>
-              );
-            })}
+            {(() => {
+              // Longest matching child href wins, so a nested child (e.g.
+              // /orders/archived) doesn't also light up a parent-prefix sibling
+              // (/orders → Active) as active.
+              const activeChildHref = item.children
+                .filter((c) => isPathActive(pathname, c.href))
+                .reduce((best, c) => (c.href.length > best.length ? c.href : best), '');
+              return item.children.map((child) => {
+                const active = child.href === activeChildHref;
+                return (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    onClick={handleNavigate}
+                    className={`flex items-center mx-1.5 pl-9 pr-2 h-7 rounded-lg text-[13px] ${
+                      active
+                        ? `${itemActive} font-medium`
+                        : 'text-[#616161] hover:bg-[#ebebeb] hover:text-[#303030]'
+                    }`}
+                  >
+                    <span className="truncate">{child.label}</span>
+                  </Link>
+                );
+              });
+            })()}
           </div>
         )}
       </div>
