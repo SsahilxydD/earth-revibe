@@ -119,9 +119,15 @@ class ApiClient {
       if (refreshed) {
         return this.request<T>(path, options, signal, true);
       }
-      // Refresh failed — force logout
+      // Refresh failed — force logout, then send the user to login with a clear
+      // "session expired" notice and a returnUrl so they land back where they
+      // were instead of being silently logged out / stuck mid-action.
       const { useAuthStore } = await import('@/stores/auth-store');
       useAuthStore.getState().logout();
+      if (!window.location.pathname.startsWith('/auth/')) {
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/auth/login?expired=1&returnUrl=${returnUrl}`;
+      }
     }
 
     let json: ApiResponse<T>;

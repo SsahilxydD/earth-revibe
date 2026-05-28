@@ -46,6 +46,23 @@ function SearchContent() {
     setSearchInput(query);
   }, [query]);
 
+  // Live search: debounce what the user types into the URL ?q (replace, not
+  // push, so we don't spam history) so results update as they type instead of
+  // only on Enter.
+  useEffect(() => {
+    const trimmed = searchInput.trim();
+    if (trimmed === query) return;
+    const t = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (trimmed) params.set('q', trimmed);
+      if (sort) params.set('sort', sort);
+      const qs = params.toString();
+      router.replace(qs ? `/search?${qs}` : '/search', { scroll: false });
+      if (trimmed) trackSearch(trimmed);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput, query, sort, router]);
+
   const queryParams = useMemo(
     () => ({
       search: query || undefined,

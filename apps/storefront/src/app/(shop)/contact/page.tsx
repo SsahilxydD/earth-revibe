@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Mail, Phone, MapPin, Send, Clock } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import { apiErrorMessage } from '@/lib/api-error';
 import { useToast } from '@/providers';
 
 interface ContactFormData {
@@ -31,7 +32,7 @@ export default function ContactPage() {
       addToast("Message sent! We'll get back to you soon.", 'success');
       reset();
     } catch (error: any) {
-      addToast(error?.message || 'Failed to send message. Please try again.', 'error');
+      addToast(apiErrorMessage(error, 'Failed to send message. Please try again.'), 'error');
     } finally {
       setIsSubmitting(false);
     }

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
-import { useCartStore } from '@/stores/cart-store';
+import { useCartStore, type CartItem } from '@/stores/cart-store';
 import { api } from '@/lib/api-client';
 
 interface ServerCartItem {
@@ -50,7 +50,7 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
         const localItems = useCartStore.getState().items;
 
         // Convert server cart to local format
-        const serverItems = serverCart.items.map((item) => ({
+        const serverItems: CartItem[] = serverCart.items.map((item) => ({
           id: item.variant.id,
           productId: item.variant.product.id,
           name: item.variant.product.name,
@@ -64,25 +64,45 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
         }));
 
         if (serverItems.length > 0 && localItems.length > 0) {
-          // Merge: start with server cart, add any local-only items
+          // Merge by variant: when an item is in BOTH carts, sum the quantities
+          // (capped at stock) instead of dropping the guest's quantity, and keep
+          // the local combo tokens (the server cart doesn't persist them).
+          const localById = new Map(localItems.map((i) => [i.id, i]));
           const serverIds = new Set(serverItems.map((i) => i.id));
-          const localOnly = localItems.filter((i) => !serverIds.has(i.id));
-          const merged = [...serverItems, ...localOnly];
+          const merged: CartItem[] = serverItems.map((s) => {
+            const l = localById.get(s.id);
+            if (!l) return s;
+            return {
+              ...s,
+              quantity: Math.min(s.quantity + l.quantity, s.maxQuantity),
+              comboSlug: l.comboSlug,
+              comboGroupId: l.comboGroupId,
+            };
+          });
+          merged.push(...localItems.filter((i) => !serverIds.has(i.id)));
           useCartStore.setState({ items: merged });
 
           // Sync merged cart back to server
-          if (localOnly.length > 0) {
-            await api.post('/cart/sync', {
-              items: merged.map((i) => ({ variantId: i.id, quantity: i.quantity })),
-            });
-          }
+          await api.post('/cart/sync', {
+            items: merged.map((i) => ({
+              variantId: i.id,
+              quantity: i.quantity,
+              comboSlug: i.comboSlug,
+              comboGroupId: i.comboGroupId,
+            })),
+          });
         } else if (serverItems.length > 0) {
           // Server has items, local empty — restore from server
           useCartStore.setState({ items: serverItems });
         } else if (localItems.length > 0) {
           // Local has items, server empty — push local to server
           await api.post('/cart/sync', {
-            items: localItems.map((i) => ({ variantId: i.id, quantity: i.quantity })),
+            items: localItems.map((i) => ({
+              variantId: i.id,
+              quantity: i.quantity,
+              comboSlug: i.comboSlug,
+              comboGroupId: i.comboGroupId,
+            })),
           });
         }
       } catch {

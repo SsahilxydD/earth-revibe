@@ -8,6 +8,7 @@ import { Heart } from 'lucide-react';
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { trackWishlistToggle } from '@/lib/analytics';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/use-wishlist';
+import { useAuthStore } from '@/stores/auth-store';
 import { QuickAddModal } from './quick-add-modal';
 import type { Product } from '@/types';
 
@@ -42,6 +43,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const { data: wishlistItems } = useWishlist({ enabled: typeof window !== 'undefined' });
   const addToWishlist = useAddToWishlist();
   const removeFromWishlist = useRemoveFromWishlist();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const isWishlisted = useMemo(
     () => wishlistItems?.some((item) => item.product?.id === product.id) ?? false,
@@ -52,17 +54,40 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      // Guests: go straight to login (with a returnUrl) instead of firing an
+      // optimistic toggle that 401s and animates a heart that never sticks.
+      if (!isAuthenticated) {
+        const returnUrl = encodeURIComponent(window.location.pathname);
+        router.push(`/auth/login?returnUrl=${returnUrl}`);
+        return;
+      }
       setHeartBounce(true);
       setTimeout(() => setHeartBounce(false), 300);
+      // Only bounce to login if the session actually died (401); other errors
+      // are transient and the hook already reverts the optimistic update.
+      const onError = (err: { status?: number }) => {
+        if (err?.status === 401) {
+          const returnUrl = encodeURIComponent(window.location.pathname);
+          router.push(`/auth/login?returnUrl=${returnUrl}`);
+        }
+      };
       if (isWishlisted) {
         trackWishlistToggle({ id: product.id, name: product.name, added: false });
-        removeFromWishlist.mutate(product.id, { onError: () => router.push('/auth/login') });
+        removeFromWishlist.mutate(product.id, { onError });
       } else {
         trackWishlistToggle({ id: product.id, name: product.name, added: true });
-        addToWishlist.mutate(product.id, { onError: () => router.push('/auth/login') });
+        addToWishlist.mutate(product.id, { onError });
       }
     },
-    [isWishlisted, product.id, product.name, addToWishlist, removeFromWishlist, router]
+    [
+      isAuthenticated,
+      isWishlisted,
+      product.id,
+      product.name,
+      addToWishlist,
+      removeFromWishlist,
+      router,
+    ]
   );
 
   const isAboveFold = index < 4;
@@ -444,7 +469,14 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               ))}
             </div>
 
-            <span style={{ height: 1, flexShrink: 0, alignSelf: 'stretch', background: 'rgba(0,0,0,0.12)' }} />
+            <span
+              style={{
+                height: 1,
+                flexShrink: 0,
+                alignSelf: 'stretch',
+                background: 'rgba(0,0,0,0.12)',
+              }}
+            />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <span style={{ fontSize: 13, fontWeight: 500, color: '#000' }}>
