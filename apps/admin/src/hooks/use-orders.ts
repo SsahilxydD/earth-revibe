@@ -7,6 +7,7 @@ import type {
   SendCustomerOtpInput,
   VerifyCustomerOtpInput,
   CreateDraftOrderInput,
+  UpdateDraftOrderInput,
   VerifyDraftCustomerInput,
   ConfirmOfflineOrderInput,
 } from '@/types';
@@ -224,6 +225,19 @@ export function useCreateDraftOrder() {
   return useMutation({
     mutationFn: (data: CreateDraftOrderInput) => api.post('/admin/orders/manual/draft', data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+    },
+  });
+}
+
+/** Edit a still-DRAFT offline order (items / temp customer / totals) before confirm. */
+export function useUpdateDraftOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderNumber, ...body }: { orderNumber: string } & UpdateDraftOrderInput) =>
+      api.put(`/admin/orders/${orderNumber}/draft`, body),
+    onSuccess: (_data, { orderNumber }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-order', orderNumber] });
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
     },
   });

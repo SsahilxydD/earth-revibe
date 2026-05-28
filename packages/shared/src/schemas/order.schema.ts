@@ -136,6 +136,23 @@ export const createDraftOrderSchema = z.object({
   note: z.string().max(1000).optional(),
 });
 
+// Update an existing DRAFT offline order (items / temp customer / totals).
+// Drafts hold no stock and are excluded from revenue until confirmed, so they
+// can be freely edited before being verified + confirmed. Mirrors createDraftOrderSchema.
+export const updateDraftOrderSchema = z.object({
+  guestName: z.string().trim().min(1, 'Customer name is required').max(120),
+  guestPhone: z
+    .string()
+    .trim()
+    .regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number (10 digits)'),
+  items: z.array(manualOrderItemSchema).min(1, 'At least one item is required'),
+  discountAmount: z.coerce.number().min(0).default(0),
+  shippingAmount: z.coerce.number().min(0).default(0),
+  taxAmount: z.coerce.number().min(0).default(0),
+  paymentMethod: offlinePaymentMethodSchema.optional(),
+  note: z.string().max(1000).optional(),
+});
+
 // Verify the temp customer on a DRAFT order via WhatsApp OTP. The phone is
 // taken from the order's guestPhone server-side, so it's not in the body.
 export const verifyDraftCustomerSchema = z.object({
@@ -176,6 +193,7 @@ export type ManualOrderItemInput = z.infer<typeof manualOrderItemSchema>;
 export type OfflinePaymentMethod = z.infer<typeof offlinePaymentMethodSchema>;
 export type CreateManualOrderInput = z.infer<typeof createManualOrderSchema>;
 export type CreateDraftOrderInput = z.infer<typeof createDraftOrderSchema>;
+export type UpdateDraftOrderInput = z.infer<typeof updateDraftOrderSchema>;
 export type VerifyDraftCustomerInput = z.infer<typeof verifyDraftCustomerSchema>;
 export type ConfirmOfflineOrderInput = z.infer<typeof confirmOfflineOrderSchema>;
 export type ArchiveOrderInput = z.infer<typeof archiveOrderSchema>;

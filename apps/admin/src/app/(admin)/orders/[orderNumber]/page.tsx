@@ -40,8 +40,10 @@ import {
   useSendDraftOtp,
   useVerifyDraftCustomer,
   useConfirmOfflineOrder,
+  useUpdateDraftOrder,
 } from '@/hooks/use-orders';
 import type { ConfirmOfflineOrderInput, OfflinePaymentMethod } from '@/types';
+import { OrderItemsEditor, type LineItem } from '@/components/orders/order-items-editor';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
   DRAFT: 'default',
@@ -111,6 +113,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const sendDraftOtp = useSendDraftOtp();
   const verifyDraftCustomer = useVerifyDraftCustomer();
   const confirmOfflineOrder = useConfirmOfflineOrder();
+  const updateDraft = useUpdateDraftOrder();
 
   const [newStatus, setNewStatus] = useState('');
   const [statusNote, setStatusNote] = useState('');
@@ -128,6 +131,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const [confirmStatus, setConfirmStatus] = useState('DELIVERED');
   const [confirmPayment, setConfirmPayment] = useState('');
   const [confirmNote, setConfirmNote] = useState('');
+
+  // Inline draft editing: items + temp customer (name/phone) + totals.
+  const [isEditing, setIsEditing] = useState(false);
+  const [editItems, setEditItems] = useState<LineItem[]>([]);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editDiscount, setEditDiscount] = useState('0');
+  const [editShipping, setEditShipping] = useState('0');
+  const [editTax, setEditTax] = useState('0');
 
   const order = (data as any)?.order ?? data;
 
@@ -275,6 +287,70 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     }
   };
 
+  // Pre-fill the inline editor from the current draft. Live stock isn't known
+  // for existing lines (enforceStock={false} on the editor); it's re-checked at
+  // confirm time. Name/phone fall back to a verified user if the draft already
+  // has one linked.
+  const startEdit = () => {
+    setEditItems(
+      (order.items ?? []).map((it: any) => ({
+        lineId: crypto.randomUUID(),
+        variantId: it.variantId,
+        productName: it.productName,
+        productImage: it.productImage ?? null,
+        variantSize: it.variantSize ?? '',
+        variantColor: it.variantColor ?? '',
+        stock: 0,
+        quantity: it.quantity,
+        unitPrice: Number(it.unitPrice),
+        offlinePrice: null,
+        variants: [],
+      }))
+    );
+    setEditName(
+      order.guestName || `${order.user?.firstName ?? ''} ${order.user?.lastName ?? ''}`.trim()
+    );
+    setEditPhone(order.guestPhone || order.user?.phone || '');
+    setEditDiscount(String(order.discountAmount ?? 0));
+    setEditShipping(String(order.shippingAmount ?? 0));
+    setEditTax(String(order.taxAmount ?? 0));
+    setIsEditing(true);
+  };
+
+  const handleSaveDraftEdit = async () => {
+    if (!editName.trim()) {
+      toast.error('Enter the customer name');
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(editPhone.trim())) {
+      toast.error('Enter a valid 10-digit Indian mobile number');
+      return;
+    }
+    if (editItems.length === 0) {
+      toast.error('Add at least one item');
+      return;
+    }
+    try {
+      await updateDraft.mutateAsync({
+        orderNumber,
+        guestName: editName.trim(),
+        guestPhone: editPhone.trim(),
+        items: editItems.map((i) => ({
+          variantId: i.variantId,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+        })),
+        discountAmount: Number(editDiscount) || 0,
+        shippingAmount: Number(editShipping) || 0,
+        taxAmount: Number(editTax) || 0,
+      });
+      toast.success('Draft updated');
+      setIsEditing(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update draft');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -378,67 +454,101 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Order items */}
-          <Card>
-            <h3 className="text-base font-semibold text-charcoal mb-4">Items</h3>
-            <div className="space-y-3">
-              {order.items.map((item: any) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-4 py-2 border-b border-light-gray last:border-0"
-                >
-                  <div className="w-12 h-12 rounded-lg bg-off-white flex items-center justify-center flex-shrink-0">
-                    {item.productImage ? (
-                      <img
-                        src={item.productImage}
-                        alt={item.productName}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    ) : (
-                      <Package size={20} className="text-medium-gray" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-charcoal truncate">{item.productName}</p>
-                    <p className="text-xs text-medium-gray">
-                      {item.variantSize} / {item.variantColor} &middot; Qty: {item.quantity}
-                    </p>
-                  </div>
-                  <p className="font-medium text-charcoal">{formatPrice(item.totalPrice)}</p>
+          {/* Order items — inline-editable for an unconfirmed DRAFT */}
+          {isEditing ? (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-charcoal">Editing draft</h2>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
+                    Cancel
+                  </Button>
+                  <Button size="sm" onClick={handleSaveDraftEdit} disabled={updateDraft.isPending}>
+                    {updateDraft.isPending ? 'Saving…' : 'Save changes'}
+                  </Button>
                 </div>
-              ))}
-            </div>
+              </div>
+              <OrderItemsEditor
+                items={editItems}
+                onItemsChange={setEditItems}
+                discountAmount={editDiscount}
+                shippingAmount={editShipping}
+                taxAmount={editTax}
+                onDiscountChange={setEditDiscount}
+                onShippingChange={setEditShipping}
+                onTaxChange={setEditTax}
+                enforceStock={false}
+              />
+            </>
+          ) : (
+            <Card>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold text-charcoal">Items</h3>
+                {isDraft && !isArchived && (
+                  <Button variant="secondary" size="sm" onClick={startEdit}>
+                    Edit
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-3">
+                {order.items.map((item: any) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-4 py-2 border-b border-light-gray last:border-0"
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-off-white flex items-center justify-center flex-shrink-0">
+                      {item.productImage ? (
+                        <img
+                          src={item.productImage}
+                          alt={item.productName}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <Package size={20} className="text-medium-gray" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-charcoal truncate">{item.productName}</p>
+                      <p className="text-xs text-medium-gray">
+                        {item.variantSize} / {item.variantColor} &middot; Qty: {item.quantity}
+                      </p>
+                    </div>
+                    <p className="font-medium text-charcoal">{formatPrice(item.totalPrice)}</p>
+                  </div>
+                ))}
+              </div>
 
-            {/* Totals */}
-            <div className="mt-4 pt-4 border-t border-light-gray space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-medium-gray">Subtotal</span>
-                <span className="text-charcoal">{formatPrice(order.subtotal)}</span>
-              </div>
-              {Number(order.discountAmount) > 0 && (
-                <div className="flex justify-between text-success">
-                  <span>Discount {order.discountCode ? `(${order.discountCode.code})` : ''}</span>
-                  <span>-{formatPrice(order.discountAmount)}</span>
-                </div>
-              )}
-              {Number(order.shippingAmount) > 0 && (
+              {/* Totals */}
+              <div className="mt-4 pt-4 border-t border-light-gray space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-medium-gray">Shipping</span>
-                  <span className="text-charcoal">{formatPrice(order.shippingAmount)}</span>
+                  <span className="text-medium-gray">Subtotal</span>
+                  <span className="text-charcoal">{formatPrice(order.subtotal)}</span>
                 </div>
-              )}
-              {order.loyaltyPointsUsed > 0 && (
-                <div className="flex justify-between text-success">
-                  <span>Loyalty Points ({order.loyaltyPointsUsed} pts)</span>
-                  <span>-{formatPrice(order.loyaltyPointsUsed)}</span>
+                {Number(order.discountAmount) > 0 && (
+                  <div className="flex justify-between text-success">
+                    <span>Discount {order.discountCode ? `(${order.discountCode.code})` : ''}</span>
+                    <span>-{formatPrice(order.discountAmount)}</span>
+                  </div>
+                )}
+                {Number(order.shippingAmount) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-medium-gray">Shipping</span>
+                    <span className="text-charcoal">{formatPrice(order.shippingAmount)}</span>
+                  </div>
+                )}
+                {order.loyaltyPointsUsed > 0 && (
+                  <div className="flex justify-between text-success">
+                    <span>Loyalty Points ({order.loyaltyPointsUsed} pts)</span>
+                    <span>-{formatPrice(order.loyaltyPointsUsed)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-semibold text-base pt-2 border-t border-light-gray">
+                  <span className="text-charcoal">Total</span>
+                  <span className="text-charcoal">{formatPrice(order.totalAmount)}</span>
                 </div>
-              )}
-              <div className="flex justify-between font-semibold text-base pt-2 border-t border-light-gray">
-                <span className="text-charcoal">Total</span>
-                <span className="text-charcoal">{formatPrice(order.totalAmount)}</span>
               </div>
-            </div>
-          </Card>
+            </Card>
+          )}
 
           {/* Fulfillment / Shipping */}
           <Card>
@@ -633,7 +743,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Draft offline order: verify the temp customer, then confirm */}
-          {isDraft && !isArchived && (
+          {isDraft && !isArchived && !isEditing && (
             <Card>
               <div className="flex items-center gap-2 mb-1">
                 <ShieldCheck size={18} className="text-deep-earth" />
@@ -825,7 +935,37 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <div className="flex items-center gap-2 mb-4">
               <h3 className="text-base font-semibold text-charcoal">Customer</h3>
             </div>
-            {order.user ? (
+            {isEditing && isDraft ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1">
+                    Name <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Customer name"
+                    className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1">
+                    Phone <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="10-digit Indian mobile"
+                    className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal placeholder:text-medium-gray outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                  />
+                </div>
+                <p className="text-xs text-medium-gray">
+                  Editing the draft customer. Verify by OTP after saving to link a real account.
+                </p>
+              </div>
+            ) : order.user ? (
               <div className="space-y-2 text-sm">
                 <p className="font-medium text-charcoal">
                   {order.user.firstName} {order.user.lastName}
