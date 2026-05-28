@@ -51,6 +51,9 @@ export default function CheckoutPage() {
         items: items.map((item) => ({
           variantId: item.id,
           quantity: item.quantity,
+          // Carry Flight Mode combo tokens so the bundle discount actually applies.
+          comboSlug: item.comboSlug,
+          comboGroupId: item.comboGroupId,
         })),
         ...(discountCode ? { discountCode } : {}),
         loyaltyPointsToUse: 0,

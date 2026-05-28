@@ -205,6 +205,11 @@ export function CartDrawer() {
         items: items.map((item) => ({
           variantId: item.id,
           quantity: item.quantity,
+          // Carry the Flight Mode combo tokens so the server applies the
+          // bundle discount the cart already shows. Omitting them charged
+          // bundle buyers full price.
+          comboSlug: item.comboSlug,
+          comboGroupId: item.comboGroupId,
         })),
         ...(discountCode ? { discountCode } : {}),
         loyaltyPointsToUse: 0,

@@ -13,6 +13,9 @@ import {
 
 const router: IRouter = Router();
 
+// Public config (COD fee, etc.) — no auth; read by the storefront before login.
+router.get('/config', asyncHandler(checkoutController.getConfig));
+
 // Checkout endpoints — support both authenticated and guest users
 router.post(
   '/create-order',

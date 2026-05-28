@@ -147,8 +147,14 @@ class ApiClient {
   get<T = any>(path: string, signal?: AbortSignal) {
     return this.request<T>(path, { method: 'GET' }, signal);
   }
-  post<T = any>(path: string, body?: any) {
-    return this.request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined });
+  post<T = any>(path: string, body?: any, opts?: { idempotencyKey?: string }) {
+    const headers: Record<string, string> = {};
+    if (opts?.idempotencyKey) headers['X-Idempotency-Key'] = opts.idempotencyKey;
+    return this.request<T>(path, {
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+      headers,
+    });
   }
   put<T = any>(path: string, body?: any) {
     return this.request<T>(path, { method: 'PUT', body: body ? JSON.stringify(body) : undefined });

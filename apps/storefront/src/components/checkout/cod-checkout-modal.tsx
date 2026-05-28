@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, MapPin, Plus, Loader2, Check } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { MapplsAddressInput } from './mappls-address-input';
 import { useCartStore, type CartItem } from '@/stores/cart-store';
 import { useAddresses, useCreateAddress } from '@/hooks/use-addresses';
+import { useCheckoutConfig } from '@/hooks/use-checkout-config';
 import { api } from '@/lib/api-client';
 import { formatPrice } from '@/lib/utils';
 import { trackPurchaseCompleted } from '@/lib/analytics';
@@ -87,7 +88,12 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
   const [error, setError] = useState('');
-  const [_isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Synchronous re-entry guard (state updates are async, so a same-tick double
+  // tap could otherwise fire twice). Plus a stable idempotency key per attempt
+  // so a network retry can't create a duplicate COD order server-side.
+  const submittingRef = useRef(false);
+  const idemKeyRef = useRef<string | null>(null);
 
   // New address form state
   const [form, setForm] = useState({
@@ -100,10 +106,15 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
     pinCode: '',
   });
 
+  // COD fee from the server — the same value createCodOrder adds, so the
+  // "pay in cash" amount shown here matches what's actually charged.
+  const { data: checkoutConfig } = useCheckoutConfig();
+  const codFee = checkoutConfig?.codFee ?? 0;
+
   const subtotal = isDirect
     ? items.reduce((acc, i) => acc + i.price * i.quantity, 0)
     : getSubtotal();
-  const total = Math.max(subtotal - effectiveDiscountAmount, 0);
+  const total = Math.max(subtotal - effectiveDiscountAmount, 0) + codFee;
 
   const selectedAddress = addresses.find((a: Address) => a.id === selectedAddressId);
 
@@ -113,6 +124,9 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
     setShowNewForm(false);
     setError('');
     setForm({ fullName: '', phone: '', line1: '', line2: '', city: '', state: '', pinCode: '' });
+    submittingRef.current = false;
+    idemKeyRef.current = null;
+    setIsSubmitting(false);
     onClose();
   };
 
@@ -165,7 +179,12 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
   };
 
   const handlePlaceOrder = async () => {
-    if (!selectedAddressId) return;
+    if (!selectedAddressId || submittingRef.current) return;
+    submittingRef.current = true;
+    // One stable idempotency key per attempt: a double-tap or network retry
+    // reuses it, so the server returns the same order instead of creating a
+    // duplicate. (FAILED keys fall through, so a fixed-and-retry still works.)
+    if (!idemKeyRef.current) idemKeyRef.current = crypto.randomUUID();
     setIsSubmitting(true);
     setError('');
     setStep('confirming');
@@ -173,11 +192,17 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
       const result = await api.post<{ orderNumber: string; total: number; pointsEarned: number }>(
         '/checkout/create-cod-order',
         {
-          items: items.map((i) => ({ variantId: i.id, quantity: i.quantity })),
+          items: items.map((i) => ({
+            variantId: i.id,
+            quantity: i.quantity,
+            comboSlug: i.comboSlug,
+            comboGroupId: i.comboGroupId,
+          })),
           addressId: selectedAddressId,
           discountCode: effectiveDiscountCode || undefined,
           loyaltyPointsToUse: 0,
-        }
+        },
+        { idempotencyKey: idemKeyRef.current }
       );
 
       trackPurchaseCompleted({
@@ -192,8 +217,11 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
       resetAndClose();
       router.push(`/checkout/confirmation?orderId=${result.orderNumber}&method=cod`);
     } catch (err: any) {
-      setError(err.message || 'Failed to place order');
+      setError(err.details?.[0]?.message || err.message || 'Failed to place order');
       setStep('review');
+      // Allow a fresh retry with a new key after a failure.
+      idemKeyRef.current = null;
+      submittingRef.current = false;
     } finally {
       setIsSubmitting(false);
     }
@@ -405,6 +433,12 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
               <span className="text-[var(--color-muted)]">Shipping</span>
               <span className="text-green-600">Free</span>
             </div>
+            {codFee > 0 && (
+              <div className="flex justify-between">
+                <span className="text-[var(--color-muted)]">COD charge</span>
+                <span>+{formatPrice(codFee)}</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-[var(--color-border)] pt-1.5 text-sm font-bold">
               <span>Total</span>
               <span>{formatPrice(total)}</span>
@@ -417,7 +451,13 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
 
           {error && <p className="text-xs text-red-500 text-center">{error}</p>}
 
-          <Button variant="primary" fullWidth size="lg" onClick={handlePlaceOrder}>
+          <Button
+            variant="primary"
+            fullWidth
+            size="lg"
+            onClick={handlePlaceOrder}
+            disabled={isSubmitting}
+          >
             Place COD Order
           </Button>
         </div>
