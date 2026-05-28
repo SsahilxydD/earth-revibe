@@ -5,8 +5,15 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Skeleton } from '@earth-revibe/ui';
 import { FilterBar } from '@/components/dashboard/filter-bar';
+import { PeriodSelector } from '@/components/dashboard/period-selector';
 import { MetricsStrip } from '@/components/dashboard/metrics-strip';
+import { MetricCard } from '@/components/dashboard/metric-card';
 import { ActionCards } from '@/components/dashboard/action-cards';
+import { SalesChart } from '@/components/dashboard/sales-chart';
+import RevenueChart from '@/components/dashboard/revenue-chart';
+import { OrdersByStatus } from '@/components/dashboard/orders-by-status';
+import { TopProducts } from '@/components/dashboard/top-products';
+import { RecentOrders } from '@/components/dashboard/recent-orders';
 
 function formatINR(value: number) {
   return new Intl.NumberFormat('en-IN', {
@@ -25,6 +32,9 @@ export default function DashboardPage() {
   });
 
   const m = data?.metrics;
+  const salesOverTime = data?.salesOverTime ?? [];
+  const topProducts = data?.topProducts ?? [];
+  const ordersByStatus = data?.ordersByStatus ?? [];
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -69,9 +79,12 @@ export default function DashboardPage() {
     : [];
 
   return (
-    <div className="max-w-[860px] space-y-5">
-      {/* Filter bar - Shopify style */}
-      <FilterBar period={period} onPeriodChange={setPeriod} />
+    <div className="max-w-[1100px] space-y-5">
+      {/* Date controls - dropdown + pill selector (both bound to the same period) */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <FilterBar period={period} onPeriodChange={setPeriod} />
+        <PeriodSelector value={period} onChange={setPeriod} />
+      </div>
 
       {/* Metrics strip - compact horizontal card with sparklines */}
       {isLoading ? (
@@ -87,10 +100,34 @@ export default function DashboardPage() {
         <MetricsStrip metrics={metrics} />
       )}
 
+      {/* Metric cards grid - expanded view of the same metrics */}
+      {!isLoading && metrics.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {metrics.map((mc) => (
+            <MetricCard key={mc.label} title={mc.label} value={mc.value} change={mc.change} />
+          ))}
+        </div>
+      )}
+
       {/* Greeting */}
       <div className="pt-2">
         <h1 className="text-xl font-semibold text-charcoal">{greeting()}</h1>
       </div>
+
+      {/* Sales over time for the selected period */}
+      <SalesChart data={salesOverTime} isLoading={isLoading} />
+
+      {/* Revenue overview - trailing 6 months (self-fetches) */}
+      <RevenueChart />
+
+      {/* Orders breakdown + best sellers (both fed by the same /home payload) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <OrdersByStatus data={ordersByStatus} />
+        <TopProducts products={topProducts} />
+      </div>
+
+      {/* Latest orders - self-fetches /admin/analytics/recent-orders */}
+      <RecentOrders />
 
       {/* Action cards feed */}
       <ActionCards />
