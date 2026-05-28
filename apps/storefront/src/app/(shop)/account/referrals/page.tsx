@@ -2,10 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Share2, ShoppingBag, Wallet } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { useToast } from '@/providers';
+
+const HOW_IT_WORKS = [
+  { icon: Share2, title: 'Share', desc: 'Send your code to friends via WhatsApp or link' },
+  {
+    icon: ShoppingBag,
+    title: 'They Order',
+    desc: 'They get 15% off their first order with your code',
+  },
+  { icon: Wallet, title: 'You Earn', desc: '20% of their order, paid as cash to your UPI' },
+] as const;
 
 interface ReferralCodeData {
   referralCode: string;
@@ -50,8 +60,14 @@ export default function ReferralsPage() {
       addToast('UPI saved — your referral cash will be sent here', 'success');
       queryClient.invalidateQueries({ queryKey: ['referral-code'] });
     },
-    onError: (e: unknown) =>
-      addToast(e instanceof Error ? e.message : 'Failed to save UPI', 'error'),
+    onError: (e: unknown) => {
+      // The api client throws a plain { message, details } object (not an Error).
+      // For validation failures the useful text is in details[].message (e.g.
+      // "Enter a valid UPI ID (e.g. name@bank)"); the top-level message is just
+      // "Validation failed", so surface the field detail first.
+      const err = e as { message?: string; details?: { message?: string }[] };
+      addToast(err.details?.[0]?.message || err.message || 'Failed to save UPI', 'error');
+    },
   });
 
   const isLoading = codeLoading || referralsLoading;
@@ -203,6 +219,33 @@ export default function ReferralsPage() {
         </button>
       </div>
 
+      {/* HOW IT WORKS label */}
+      <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+        HOW IT WORKS
+      </span>
+
+      {/* 3-column grid — mirrors the loyalty page's steps */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+        {HOW_IT_WORKS.map((item) => (
+          <div
+            key={item.title}
+            style={{
+              border: '1px solid #F0F0F0',
+              padding: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            <item.icon size={18} color="#000" strokeWidth={1.5} />
+            <span style={{ fontSize: 11, fontWeight: 400, color: '#000' }}>{item.title}</span>
+            <span style={{ fontSize: 10, fontWeight: 300, color: '#999', lineHeight: 1.4 }}>
+              {item.desc}
+            </span>
+          </div>
+        ))}
+      </div>
+
       {/* UPI for payouts */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
@@ -246,6 +289,23 @@ export default function ReferralsPage() {
           We send your 20% referral cash here once a friend completes their first order.
           {stats.pendingPayout > 0 ? ` ₹${stats.pendingPayout} pending.` : ''}
         </span>
+      </div>
+
+      {/* Why we ask for your UPI — fine print, mirrors loyalty's redemption note */}
+      <div
+        style={{
+          padding: 14,
+          border: '1px solid #F0F0F0',
+          fontSize: 11,
+          lineHeight: 1.6,
+          color: '#777',
+        }}
+      >
+        <strong style={{ color: '#000' }}>Why we ask for your UPI:</strong> Referral rewards are
+        paid as real cash, not points. We send your 20% straight to your UPI after each
+        friend&apos;s first order is confirmed. A UPI ID is just a payment handle (like an email) —
+        never your bank account number or card details — so it&apos;s safe to share. Add it once and
+        your payouts are automatic.
       </div>
 
       {/* YOUR STATS label */}
