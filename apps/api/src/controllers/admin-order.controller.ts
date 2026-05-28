@@ -51,6 +51,12 @@ export const adminOrderController = {
     res.status(201).json({ success: true, data: order });
   },
 
+  async updateDraftOrder(req: Request, res: Response) {
+    const orderNumber = req.params.orderNumber as string;
+    const order = await adminOrderService.updateDraftOrder(req.user!.id, orderNumber, req.body);
+    res.json({ success: true, data: order });
+  },
+
   async sendDraftCustomerOtp(req: Request, res: Response) {
     const orderNumber = req.params.orderNumber as string;
     const result = await adminOrderService.sendDraftCustomerOtp(orderNumber);

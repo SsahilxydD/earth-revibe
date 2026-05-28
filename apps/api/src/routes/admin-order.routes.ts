@@ -10,6 +10,7 @@ import {
   addOrderNoteSchema,
   createManualOrderSchema,
   createDraftOrderSchema,
+  updateDraftOrderSchema,
   verifyDraftCustomerSchema,
   confirmOfflineOrderSchema,
   archiveOrderSchema,
@@ -80,6 +81,12 @@ router.post(
   '/:orderNumber/confirm',
   validate({ body: confirmOfflineOrderSchema }),
   asyncHandler(adminOrderController.confirmOfflineOrder)
+);
+// Edit a still-DRAFT offline order (items / temp customer / totals) before confirm.
+router.put(
+  '/:orderNumber/draft',
+  validate({ body: updateDraftOrderSchema }),
+  asyncHandler(adminOrderController.updateDraftOrder)
 );
 router.post('/:orderNumber/refund', asyncHandler(adminRefundController.initiateRefund));
 

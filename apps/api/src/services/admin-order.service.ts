@@ -11,6 +11,7 @@ import type {
   AddOrderNoteInput,
   CreateManualOrderInput,
   CreateDraftOrderInput,
+  UpdateDraftOrderInput,
   VerifyDraftCustomerInput,
   ConfirmOfflineOrderInput,
   ArchiveOrderInput,
@@ -596,6 +597,120 @@ export const adminOrderService = {
       }
 
       return created;
+    });
+
+    return order;
+  },
+
+  /**
+   * Edit a still-DRAFT offline order before it's confirmed. Drafts reserve no
+   * stock and are excluded from revenue/history, so items, the temp customer
+   * (guestName/guestPhone), and totals can all be freely replaced. Mirrors the
+   * pricing logic of createDraftOrder; line items are swapped wholesale (nothing
+   * to restock). Rejected once the order leaves DRAFT.
+   */
+  async updateDraftOrder(adminId: string, orderNumber: string, data: UpdateDraftOrderInput) {
+    const existing = await prisma.order.findUnique({
+      where: { orderNumber },
+      select: { id: true, status: true, source: true, deletedAt: true, addressId: true },
+    });
+    if (!existing) throw ApiError.notFound('Order not found');
+    if (existing.deletedAt) throw ApiError.badRequest('Order is archived. Restore it first.');
+    if (existing.status !== 'DRAFT' || existing.source !== 'OFFLINE') {
+      throw ApiError.badRequest('Only draft offline orders can be edited.');
+    }
+
+    const variantIds = [...new Set(data.items.map((i) => i.variantId))];
+
+    const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const variants = await tx.productVariant.findMany({
+        where: { id: { in: variantIds } },
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              category: { select: { offlinePrice: true } },
+              images: { where: { isPrimary: true }, take: 1 },
+            },
+          },
+        },
+      });
+      const variantMap = new Map(variants.map((v) => [v.id, v]));
+
+      let subtotal = 0;
+      const orderItems = data.items.map((item) => {
+        const v = variantMap.get(item.variantId);
+        if (!v) throw ApiError.badRequest(`Product variant ${item.variantId} not found`);
+        const offline = v.product.category?.offlinePrice;
+        const unitPrice =
+          item.unitPrice ??
+          (offline != null ? Number(offline) : Number(v.price) || Number(v.product.price));
+        const totalPrice = unitPrice * item.quantity;
+        subtotal += totalPrice;
+        return {
+          variantId: v.id,
+          quantity: item.quantity,
+          unitPrice,
+          totalPrice,
+          productName: v.product.name,
+          productImage: v.product.images[0]?.url || null,
+          variantSize: v.size,
+          variantColor: v.color,
+        };
+      });
+
+      const discountAmount = data.discountAmount || 0;
+      const shippingAmount = data.shippingAmount || 0;
+      const taxAmount = data.taxAmount || 0;
+      if (discountAmount > subtotal) {
+        throw ApiError.badRequest(`Discount (₹${discountAmount}) exceeds subtotal (₹${subtotal})`);
+      }
+      const totalAmount = subtotal - discountAmount + shippingAmount + taxAmount;
+
+      // Replace the line items wholesale — no stock was reserved for a draft,
+      // so there is nothing to restock when we drop the old rows.
+      await tx.orderItem.deleteMany({ where: { orderId: existing.id } });
+
+      const updated = await tx.order.update({
+        where: { id: existing.id },
+        data: {
+          guestName: data.guestName,
+          guestPhone: data.guestPhone,
+          subtotal,
+          discountAmount,
+          shippingAmount,
+          taxAmount,
+          totalAmount,
+          items: { create: orderItems },
+        },
+        include: { items: true },
+      });
+
+      // Keep the placeholder address in sync with the temp customer.
+      if (existing.addressId) {
+        await tx.address.update({
+          where: { id: existing.addressId },
+          data: { fullName: data.guestName, phone: data.guestPhone },
+        });
+      }
+
+      const noteParts: string[] = [];
+      if (data.paymentMethod) noteParts.push(`Tentative payment method: ${data.paymentMethod}`);
+      if (data.note) noteParts.push(data.note);
+      if (noteParts.length > 0) {
+        await tx.orderNote.create({
+          data: {
+            orderId: existing.id,
+            userId: adminId,
+            content: noteParts.join('\n'),
+            isInternal: true,
+          },
+        });
+      }
+
+      return updated;
     });
 
     return order;
