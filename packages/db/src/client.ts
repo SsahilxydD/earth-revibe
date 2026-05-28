@@ -20,6 +20,16 @@ export const prisma =
   new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
     datasourceUrl: getDatasourceUrl(),
+    // Interactive transactions hold several sequential round-trips (e.g. the
+    // offline-order stock-decrement loop + order create) against the Supabase
+    // PgBouncer pooler, whose per-query latency adds up. Prisma's 5s default
+    // expired them mid-flight under that latency (P2028 "Transaction already
+    // closed"). Raise the defaults globally so every transaction in the API has
+    // headroom; individual $transaction calls can still override these.
+    transactionOptions: {
+      maxWait: 10_000, // wait up to 10s to acquire a pooled connection
+      timeout: 30_000, // allow a transaction up to 30s to complete
+    },
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
