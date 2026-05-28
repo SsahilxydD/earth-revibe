@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { loyaltyService } from '../services/loyalty.service';
+import { selfRedeem } from '../services/loyalty-redemption.service';
 
 export const loyaltyController = {
   async getBalance(req: Request, res: Response) {
@@ -21,6 +22,11 @@ export const loyaltyController = {
 
   async getActiveCodes(req: Request, res: Response) {
     const result = await loyaltyService.getActiveCodes(req.user!.id);
+    res.json({ success: true, data: result });
+  },
+
+  async redeem(req: Request, res: Response) {
+    const result = await selfRedeem(req.user!.id);
     res.json({ success: true, data: result });
   },
 };

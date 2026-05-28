@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ShoppingBag, Gift, TrendingUp, Copy, Check } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
+import { useToast } from '@/providers';
 import { formatDate, formatPrice } from '@/lib/utils';
 
 interface LoyaltySummary {
@@ -42,7 +43,7 @@ interface ActiveCodesResponse {
 
 const HOW_IT_WORKS = [
   { icon: ShoppingBag, title: 'Earn', desc: '100% cashback on your first order' },
-  { icon: Gift, title: 'Redeem', desc: 'Email support to get a single-use code' },
+  { icon: Gift, title: 'Redeem', desc: 'Tap redeem to turn points into a code' },
   { icon: TrendingUp, title: 'Refer', desc: '20% cash to your bank + 15% off for them' },
 ] as const;
 
@@ -60,6 +61,25 @@ export default function LoyaltyPage() {
   const { data: codesData } = useQuery({
     queryKey: ['loyalty-codes'],
     queryFn: () => api.get<ActiveCodesResponse>('/loyalty/codes'),
+  });
+
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
+  const redeem = useMutation({
+    mutationFn: () => api.post<{ code: string; value: number }>('/loyalty/redeem'),
+    onSuccess: (data) => {
+      addToast(`Redeemed! Your ₹${data.value} code is ready below.`, 'success');
+      queryClient.invalidateQueries({ queryKey: ['loyalty-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['loyalty-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['loyalty-history'] });
+    },
+    onError: (e: unknown) => {
+      // The api client throws a plain { message, details } object (not an Error);
+      // the useful validation text (e.g. the minimum-points message) is in
+      // details[0].message, with a generic top-level message.
+      const err = e as { message?: string; details?: { message?: string }[] };
+      addToast(err.details?.[0]?.message || err.message || 'Could not redeem points', 'error');
+    },
   });
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -154,7 +174,35 @@ export default function LoyaltyPage() {
         </div>
       </div>
 
-      {/* Redemption codes — issued when admin approves a redemption request */}
+      {/* Self-serve redeem — turns the whole balance into one single-use code */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <button
+          type="button"
+          onClick={() => redeem.mutate()}
+          disabled={redeem.isPending || balance < 100}
+          style={{
+            width: '100%',
+            height: 46,
+            backgroundColor: '#000',
+            color: '#FFF',
+            fontSize: 11,
+            fontWeight: 400,
+            letterSpacing: 2,
+            border: 'none',
+            cursor: redeem.isPending || balance < 100 ? 'not-allowed' : 'pointer',
+            opacity: redeem.isPending || balance < 100 ? 0.5 : 1,
+          }}
+        >
+          {redeem.isPending ? 'REDEEMING…' : 'REDEEM MY POINTS'}
+        </button>
+        <span style={{ fontSize: 11, fontWeight: 300, color: '#777', lineHeight: 1.5 }}>
+          {balance < 100
+            ? 'Earn at least 100 points to redeem.'
+            : `Redeem all ${Math.round(balance).toLocaleString('en-IN')} points for a one-time ₹${Math.round(balance)} discount code.`}
+        </span>
+      </div>
+
+      {/* Redemption codes — issued when you redeem points (or an admin approves) */}
       {codesData?.codes && codesData.codes.length > 0 && (
         <>
           <span style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
@@ -264,13 +312,10 @@ export default function LoyaltyPage() {
           color: '#777',
         }}
       >
-        <strong style={{ color: '#000' }}>How redemption works:</strong> Email{' '}
-        <a href="mailto:support@earthrevibe.com" style={{ color: '#000' }}>
-          support@earthrevibe.com
-        </a>{' '}
-        with the number of points you&apos;d like to cash out. A manager will review and issue you a
-        single-use discount code by email, usable at checkout with no minimum order value. Points
-        expire 6 months from the date they were earned.
+        <strong style={{ color: '#000' }}>How redemption works:</strong> Tap{' '}
+        <strong>Redeem my points</strong> above to instantly turn your balance into a single-use
+        discount code worth ₹1 per point, usable at checkout with no minimum order value. We also
+        send it to your email and WhatsApp. Points expire 6 months from the date they were earned.
       </div>
 
       {/* RECENT ACTIVITY label */}

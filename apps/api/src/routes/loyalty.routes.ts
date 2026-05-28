@@ -11,5 +11,6 @@ router.get('/balance', asyncHandler(loyaltyController.getBalance));
 router.get('/history', asyncHandler(loyaltyController.getHistory));
 router.get('/summary', asyncHandler(loyaltyController.getSummary));
 router.get('/codes', asyncHandler(loyaltyController.getActiveCodes));
+router.post('/redeem', asyncHandler(loyaltyController.redeem));
 
 export { router as loyaltyRouter };
