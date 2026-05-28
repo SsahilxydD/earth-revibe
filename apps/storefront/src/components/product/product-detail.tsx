@@ -672,7 +672,7 @@ function MoodSection({ excludeId }: { excludeId: string }) {
             const img =
               p.images?.find((i: { isPrimary?: boolean }) => i.isPrimary) || p.images?.[0];
             return (
-              <a
+              <Link
                 key={p.id}
                 href={`/products/${p.slug}`}
                 style={{
@@ -726,7 +726,7 @@ function MoodSection({ excludeId }: { excludeId: string }) {
                   </div>
                   <Plus size={16} color="#000" />
                 </div>
-              </a>
+              </Link>
             );
           })}
         </div>

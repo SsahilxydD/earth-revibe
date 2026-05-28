@@ -496,6 +496,15 @@ export const orderService = {
         });
       }
 
+      // Free the discount code's usage slot — a cancelled order shouldn't
+      // permanently consume a limited-use promo. Guard against going negative.
+      if (order.discountCodeId) {
+        await tx.discountCode.updateMany({
+          where: { id: order.discountCodeId, usageCount: { gt: 0 } },
+          data: { usageCount: { decrement: 1 } },
+        });
+      }
+
       // Restore loyalty points if used
       if (order.loyaltyPointsUsed > 0) {
         await tx.user.update({
