@@ -20,6 +20,7 @@ model User {
   firstName     String
   lastName      String
   avatar        String?
+  upiId         String?   // UPI VPA for referral cash payouts
   role          UserRole  @default(CUSTOMER)
   isActive      Boolean   @default(true)
   emailVerified Boolean   @default(false)
@@ -1004,8 +1005,14 @@ model Referral {
   refereeId    String         @unique
   referee      User           @relation("Referee", fields: [refereeId], references: [id])
   status       ReferralStatus @default(PENDING)
-  referrerReward Int          @default(0)
+  referrerReward Int          @default(0) // ₹ owed to the referrer on conversion (paid as cash via UPI)
   refereeReward  Int          @default(0)
+  // Cash-payout tracking (manual admin payout). Null until the referral CONVERTS,
+  // then PENDING (cash owed) → PAID once an admin pays it to payoutUpiId.
+  payoutStatus ReferralPayoutStatus?
+  payoutPaidAt DateTime?
+  payoutUpiId  String? // UPI the payout was sent to (snapshot at mark-paid)
+  payoutRef    String? // optional admin reference / UPI txn id
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
@@ -1017,6 +1024,11 @@ enum ReferralStatus {
   PENDING
   SIGNED_UP
   CONVERTED
+}
+
+enum ReferralPayoutStatus {
+  PENDING
+  PAID
 }
 
 model ReferralConfig {

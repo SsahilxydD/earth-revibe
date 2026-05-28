@@ -2,6 +2,11 @@ import type { Request, Response } from 'express';
 import { referralService, validateReferralCode } from '../services/referral.service';
 
 export const referralController = {
+  async setUpi(req: Request, res: Response) {
+    const result = await referralService.setUpi(req.user!.id, req.body.upiId);
+    res.json({ success: true, data: result });
+  },
+
   async getMyReferralCode(req: Request, res: Response) {
     const result = await referralService.getMyReferralCode(req.user!.id);
     res.json({ success: true, data: result });
