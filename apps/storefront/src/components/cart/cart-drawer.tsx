@@ -10,7 +10,6 @@ import { useAuthStore } from '@/stores/auth-store';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 import { formatPrice, getImageUrl } from '@/lib/utils';
 import { CartItemRow } from './cart-item';
-import { KitUpsellBanner } from './kit-upsell-banner';
 import { LoginModal } from '@/components/auth/login-modal';
 import { PaymentMethodModal } from '@/components/checkout/payment-method-modal';
 import { CODCheckoutModal } from '@/components/checkout/cod-checkout-modal';
@@ -547,43 +546,11 @@ export function CartDrawer() {
               {/* Divider */}
               <div style={{ height: 1, backgroundColor: '#F0F0F0', flexShrink: 0 }} />
 
-              {/* Free shipping + buyback banner — 56px */}
-              <div
-                style={{
-                  height: 56,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 4,
-                  padding: '10px 0',
-                  flexShrink: 0,
-                }}
-              >
-                <span style={{ fontSize: 11, fontWeight: 300, color: '#22C55E' }}>
-                  Free shipping on all orders
-                </span>
-                <span
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 500,
-                    color: '#999',
-                    letterSpacing: 2,
-                  }}
-                >
-                  365-DAY BUYBACK · 33% STORE CREDIT BACK
-                </span>
-              </div>
-
-              {/* Divider */}
-              <div style={{ height: 1, backgroundColor: '#F0F0F0', flexShrink: 0 }} />
-
               {/* Items list — scrollable, padding 20/28 */}
               <div
                 className="hide-scrollbar"
                 style={{ flex: 1, overflowY: 'auto', padding: '20px 28px' }}
               >
-                <KitUpsellBanner variant="drawer" onClick={closeCart} />
                 {items.map((item, i) => (
                   <div key={item.id}>
                     <div style={{ padding: '16px 0' }}>
@@ -597,13 +564,13 @@ export function CartDrawer() {
               </div>
             </div>
 
-            {/* Footer — padding 20/28/28/28, gap 20 */}
+            {/* Footer */}
             <div
               style={{
-                padding: '20px 28px 28px 28px',
+                padding: '16px 28px 20px 28px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 20,
+                gap: 12,
                 flexShrink: 0,
               }}
             >
@@ -785,23 +752,6 @@ export function CartDrawer() {
                   Secure checkout · Delivery in 3–5 days
                 </span>
               </div>
-
-              {/* Continue shopping */}
-              <button
-                onClick={closeCart}
-                style={{
-                  width: '100%',
-                  textAlign: 'center',
-                  fontSize: 11,
-                  fontWeight: 300,
-                  color: '#999',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                Continue shopping
-              </button>
             </div>
           </>
         )}
