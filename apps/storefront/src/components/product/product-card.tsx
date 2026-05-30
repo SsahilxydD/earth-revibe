@@ -40,10 +40,14 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [activeOffer, setActiveOffer] = useState(0);
 
-  const { data: wishlistItems } = useWishlist({ enabled: typeof window !== 'undefined' });
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  // Guests have no wishlist — never fetch it for them (an unauthenticated
+  // /wishlist call 401s, and the heart just routes guests to login on click).
+  const { data: wishlistItems } = useWishlist({
+    enabled: typeof window !== 'undefined' && isAuthenticated,
+  });
   const addToWishlist = useAddToWishlist();
   const removeFromWishlist = useRemoveFromWishlist();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const isWishlisted = useMemo(
     () => wishlistItems?.some((item) => item.product?.id === product.id) ?? false,

@@ -119,14 +119,18 @@ class ApiClient {
       if (refreshed) {
         return this.request<T>(path, options, signal, true);
       }
-      // Refresh failed — force logout, then send the user to login with a clear
-      // "session expired" notice and a returnUrl so they land back where they
-      // were instead of being silently logged out / stuck mid-action.
+      // Refresh failed. ONLY bounce to login if the user was actually signed in
+      // (a real mid-session expiry). Guests legitimately get 401s from
+      // guest-tolerant endpoints (/wishlist, /auth/me, etc.) — they must never
+      // be redirected, or they can't browse the site at all. For guests we let
+      // the 401 propagate so the calling hook handles it gracefully.
       const { useAuthStore } = await import('@/stores/auth-store');
-      useAuthStore.getState().logout();
-      if (!window.location.pathname.startsWith('/auth/')) {
-        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-        window.location.href = `/auth/login?expired=1&returnUrl=${returnUrl}`;
+      if (useAuthStore.getState().isAuthenticated) {
+        useAuthStore.getState().logout();
+        if (!window.location.pathname.startsWith('/auth/')) {
+          const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = `/auth/login?expired=1&returnUrl=${returnUrl}`;
+        }
       }
     }
 
