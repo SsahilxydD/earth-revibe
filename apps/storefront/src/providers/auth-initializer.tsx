@@ -79,9 +79,17 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
         }));
 
         if (serverItems.length > 0 && localItems.length > 0) {
-          // Merge by variant: when an item is in BOTH carts, sum the quantities
-          // (capped at stock) instead of dropping the guest's quantity, and keep
-          // the local combo tokens (the server cart doesn't persist them).
+          // Merge by variant: when an item is in BOTH carts, take the MAX of the
+          // two quantities (capped at stock), and keep the local combo tokens
+          // (the server cart doesn't persist them).
+          //
+          // MUST be idempotent — do NOT sum. The local cart is persisted to
+          // localStorage and is already a synced copy of the server cart, and
+          // this merge runs on every authenticated app mount. Summing made the
+          // quantity double on every fresh load (N + N → 2N → 4N …), which
+          // surfaced as the cart silently ballooning with duplicate items.
+          // max(local, server) is a no-op when they're already in sync, and
+          // still honours a larger guest-side quantity if one exists.
           const localById = new Map(localItems.map((i) => [i.id, i]));
           const serverIds = new Set(serverItems.map((i) => i.id));
           const merged: CartItem[] = serverItems.map((s) => {
@@ -89,7 +97,7 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
             if (!l) return s;
             return {
               ...s,
-              quantity: Math.min(s.quantity + l.quantity, s.maxQuantity),
+              quantity: Math.min(Math.max(s.quantity, l.quantity), s.maxQuantity),
               comboSlug: l.comboSlug,
               comboGroupId: l.comboGroupId,
             };
