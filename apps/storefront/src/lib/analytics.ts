@@ -134,12 +134,19 @@ export function trackPurchaseCompleted(order: {
     payment_type: order.paymentMethod,
   });
 
-  fbq('track', 'Purchase', {
-    value: order.total,
-    currency: 'INR',
-    num_items: order.itemCount,
-    content_type: 'product',
-  });
+  fbq(
+    'track',
+    'Purchase',
+    {
+      value: order.total,
+      currency: 'INR',
+      num_items: order.itemCount,
+      content_type: 'product',
+    },
+    // Shared dedup key with the server CAPI Purchase (sends eventId=orderNumber).
+    // Without this, prepaid + COD purchases are double-counted by Meta.
+    { eventID: order.orderId }
+  );
 }
 
 export function trackSearch(query: string, resultCount?: number) {

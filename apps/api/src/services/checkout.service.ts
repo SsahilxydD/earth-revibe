@@ -1106,6 +1106,7 @@ export async function finalizeOrderFromPending(
     contentType: 'product',
     numItems: cartItems.length,
     orderId: finalOrderNumber,
+    eventId: finalOrderNumber, // dedupe against the client Pixel Purchase
   }).catch(() => {});
 
   return { orderNumber: finalOrderNumber, pointsEarned, accountAutoCreated };
@@ -1443,6 +1444,7 @@ export async function createCodOrder(
     contentType: 'product',
     numItems: data.items.length,
     orderId: orderNumber,
+    eventId: orderNumber, // dedupe against the client Pixel Purchase
   }).catch(() => {});
 
   return { orderNumber, total: totalAmount, pointsEarned: txResult.pointsEarned };
