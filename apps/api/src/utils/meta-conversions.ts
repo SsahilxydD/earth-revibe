@@ -8,6 +8,7 @@ const API_VERSION = 'v21.0';
 interface MetaEventData {
   event_name: string;
   event_time: number;
+  event_id?: string; // dedup key shared with the browser Pixel's eventID
   action_source: 'website';
   user_data: {
     em?: string[]; // hashed email
@@ -40,6 +41,11 @@ export async function sendMetaEvent(params: {
   contentType?: string;
   numItems?: number;
   orderId?: string;
+  // Dedup key shared with the browser Pixel's `eventID`. When both the
+  // client pixel and this server CAPI event carry the same event_id, Meta
+  // collapses them into one conversion instead of double-counting. Use a
+  // stable per-order value (the order number).
+  eventId?: string;
 }): Promise<void> {
   const token = env.META_CONVERSIONS_API_TOKEN;
   if (!token) {
@@ -56,6 +62,9 @@ export async function sendMetaEvent(params: {
     event_time: Math.floor(Date.now() / 1000),
     action_source: 'website',
     user_data: {},
+    // Falls back to orderId so prepaid + COD purchases dedupe against the
+    // browser Pixel even when no explicit eventId is passed.
+    ...(params.eventId || params.orderId ? { event_id: params.eventId || params.orderId } : {}),
   };
 
   // Hash PII before sending (Meta requires SHA-256 hashing)
