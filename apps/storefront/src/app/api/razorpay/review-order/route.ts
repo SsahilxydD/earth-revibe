@@ -35,6 +35,15 @@ export async function POST(request: NextRequest) {
   const text = await upstream.text();
   console.log(`[review-order proxy] upstream=${upstream.status} response=${text}`);
 
+  // Fail OPEN: a non-200 from the review endpoint (e.g. a Railway cold-start
+  // 5xx) can make Razorpay disable COD for the order. The review handshake only
+  // gates whether COD is *offered* — it never moves money — so on any upstream
+  // error we still return 200 {status:'accept'} and rely on the loud log above
+  // to surface a genuinely misconfigured upstream.
+  if (!upstream.ok) {
+    return NextResponse.json({ status: 'accept' });
+  }
+
   return new NextResponse(text, {
     status: upstream.status,
     headers: { 'Content-Type': upstream.headers.get('Content-Type') ?? 'application/json' },
