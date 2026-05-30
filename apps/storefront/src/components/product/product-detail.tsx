@@ -1027,8 +1027,18 @@ export function ProductDetail({ product }: ProductDetailProps) {
           {/* 6LGs4 — shareBtn, top-right offset */}
           <button
             onClick={() => {
-              if (navigator.share)
-                navigator.share({ title: product.name, url: window.location.href });
+              const url = window.location.href;
+              // navigator.share is mobile-only; on desktop it's undefined and the
+              // button would silently no-op. Fall back to copying the link so
+              // desktop shoppers can still share (lost organic traffic otherwise).
+              if (navigator.share) {
+                navigator.share({ title: product.name, url }).catch(() => {});
+              } else if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText(url).then(
+                  () => addToast('Link copied', 'success'),
+                  () => {}
+                );
+              }
             }}
             style={{
               position: 'absolute',

@@ -393,11 +393,21 @@ app.post('/api/v1/cart/guest-snapshot', async (req, res) => {
 
     const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-    // Upsert — update if this email already has a snapshot
+    // Upsert — update if this email already has a snapshot.
+    // Only write firstName when this request actually carries one — otherwise a
+    // later snapshot (e.g. a cart change with no name in scope) would overwrite
+    // a previously-captured name with undefined, and recovery emails fall back
+    // to the generic "Hey there,". Conditional spread preserves the stored name.
     await prisma.guestAbandonedCart.upsert({
       where: { email },
       create: { email, firstName, items, cartTotal },
-      update: { items, cartTotal, firstName, emailSent: false, updatedAt: new Date() },
+      update: {
+        items,
+        cartTotal,
+        emailSent: false,
+        updatedAt: new Date(),
+        ...(firstName ? { firstName } : {}),
+      },
     });
 
     logger.info({ email, itemCount: items.length }, 'Guest cart snapshot saved');
