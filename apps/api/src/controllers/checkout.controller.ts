@@ -160,32 +160,50 @@ export const checkoutController = {
 
   /**
    * Razorpay COD Review API — called by Razorpay before confirming a COD order.
-   * Uses Basic Auth (configured via env vars).
    * Responds with { status: "accept" } or { status: "reject", reason: "..." }.
+   *
+   * CRITICAL — this endpoint FAILS OPEN. A non-200 (or {status:'reject'}) here
+   * can make Razorpay disable COD for the order entirely ("Cash on delivery is
+   * not available for this order"). So when the optional Basic Auth creds are
+   * unset, or the credentials don't match, we LOG and still return
+   * 200 {status:'accept'} rather than gating COD on a config gap. This only
+   * affects whether COD is *offered* — it never moves money: capture and order
+   * finalization still pass the strict HMAC check in verifyMagicPayment.
+   *
+   * TODO: once RAZORPAY_COD_REVIEW_USERNAME/PASSWORD are set in prod AND real
+   * review logic exists (block high-value / repeat-RTO addresses), tighten this
+   * back up to reject on genuine credential mismatch.
    */
   async reviewCodOrder(req: Request, res: Response) {
-    // Verify Basic Auth
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Basic ')) {
-      res.status(401).json({ status: 'reject', reason: 'Unauthorized' });
-      return;
-    }
-
     const expectedUser = env.RAZORPAY_COD_REVIEW_USERNAME;
     const expectedPass = env.RAZORPAY_COD_REVIEW_PASSWORD;
+
+    // No creds configured → can't (and shouldn't) gate. Accept + log.
     if (!expectedUser || !expectedPass) {
-      res.status(500).json({ status: 'reject', reason: 'COD review not configured' });
+      logger.warn(
+        'razorpay.review-order: COD review creds not configured — accepting (fail-open) so COD stays available'
+      );
+      res.json({ status: 'accept' });
       return;
     }
 
-    const decoded = Buffer.from(authHeader.slice(6), 'base64').toString();
+    // Creds are configured: verify, but still fail OPEN on mismatch (log loudly)
+    // so a credential drift between Razorpay and Railway can't silently kill COD.
+    const decoded = authHeader?.startsWith('Basic ')
+      ? Buffer.from(authHeader.slice(6), 'base64').toString()
+      : '';
     const [user, pass] = decoded.split(':');
     if (user !== expectedUser || pass !== expectedPass) {
-      res.status(401).json({ status: 'reject', reason: 'Invalid credentials' });
+      logger.error(
+        { authPresent: !!authHeader },
+        'razorpay.review-order: Basic Auth mismatch — accepting anyway (fail-open) to avoid disabling COD; check dashboard creds vs RAZORPAY_COD_REVIEW_*'
+      );
+      res.json({ status: 'accept' });
       return;
     }
 
-    // Accept the COD order — add rejection logic here later if needed
+    // Authenticated. Accept the COD order — add rejection logic here later
     // (e.g., block high-value orders, repeat RTO addresses, etc.)
     res.json({ status: 'accept' });
   },
