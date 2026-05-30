@@ -5,7 +5,18 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bookmark, Share2, Plus, Loader2, Wallet, Users, Recycle } from 'lucide-react';
+import {
+  Bookmark,
+  Share2,
+  Plus,
+  Loader2,
+  Wallet,
+  Users,
+  Recycle,
+  Star,
+  Truck,
+  RotateCcw,
+} from 'lucide-react';
 import { motion, animate } from 'framer-motion';
 import { formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { trackProductViewed, trackAddToCart } from '@/lib/analytics';
@@ -1126,6 +1137,32 @@ export function ProductDetail({ product }: ProductDetailProps) {
               </span>
             )}
           </div>
+          {/* Rating summary — social proof at the decision point. Data already
+              fetched (averageRating/reviewCount, used in JSON-LD); only shown
+              when there are reviews so we never render an empty/0-star state. */}
+          {product.reviewCount > 0 && product.averageRating != null && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <div style={{ display: 'flex', gap: 1 }}>
+                {[0, 1, 2, 3, 4].map((i) => {
+                  const filled = i < Math.round(product.averageRating!);
+                  return (
+                    <Star
+                      key={i}
+                      size={13}
+                      color={filled ? '#121212' : '#D4D4D4'}
+                      fill={filled ? '#121212' : 'none'}
+                    />
+                  );
+                })}
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 400, color: '#000' }}>
+                {product.averageRating.toFixed(1)}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 300, color: '#999' }}>
+                ({product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'})
+              </span>
+            </div>
+          )}
         </div>
 
         {/* ===== EjlwE — sizeSec, padding 16 20 0 20, gap 10, vertical ===== */}
@@ -1220,6 +1257,70 @@ export function ProductDetail({ product }: ProductDetailProps) {
           >
             {isAdding ? <Loader2 size={16} className="animate-spin" /> : 'BUY NOW'}
           </button>
+
+          {/* Low-stock urgency — only when a size is picked and stock is genuinely
+              low (1–5). Real scarcity from variant.stock, never fabricated. */}
+          {(() => {
+            const sel = stockFor(product.variants, selectedSize);
+            if (selectedSize && sel > 0 && sel <= 5) {
+              return (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    marginTop: 4,
+                  }}
+                >
+                  <span
+                    style={{ width: 6, height: 6, borderRadius: 9999, backgroundColor: '#EF4444' }}
+                  />
+                  <span style={{ fontSize: 12, fontWeight: 400, color: '#EF4444' }}>
+                    Only {sel} left — order soon
+                  </span>
+                </div>
+              );
+            }
+            return null;
+          })()}
+
+          {/* Trust / reassurance strip — table-stakes for Indian D2C; sits at the
+              CTA so the buyer is reassured at the exact moment of decision. */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              alignItems: 'flex-start',
+              gap: 8,
+              marginTop: 12,
+              paddingTop: 14,
+              borderTop: '1px solid #F0F0F0',
+            }}
+          >
+            {[
+              { icon: Truck, label: 'Free shipping' },
+              { icon: Wallet, label: 'Cash on Delivery' },
+              { icon: RotateCcw, label: 'Easy 7-day returns' },
+            ].map(({ icon: Icon, label }) => (
+              <div
+                key={label}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 6,
+                  textAlign: 'center',
+                }}
+              >
+                <Icon size={18} color="#121212" strokeWidth={1.5} />
+                <span style={{ fontSize: 10, fontWeight: 400, color: '#666', lineHeight: 1.3 }}>
+                  {label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ===== Offer banner — links to /offers ===== */}
