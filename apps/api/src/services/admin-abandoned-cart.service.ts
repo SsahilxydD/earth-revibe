@@ -206,7 +206,9 @@ export async function sendOneRecovery(kind: AbandonedCartKind, id: string) {
     const cart = await prisma.cart.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, email: true, phone: true, firstName: true } },
+        user: {
+          select: { id: true, email: true, phone: true, firstName: true, whatsappOptIn: true },
+        },
         items: {
           include: {
             variant: {
