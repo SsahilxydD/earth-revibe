@@ -33,7 +33,7 @@ const MAX_RECOVERY_ATTEMPTS = 3;
 const REENGAGE_AFTER_DAYS = 7;
 
 const userCartInclude = {
-  user: { select: { id: true, email: true, phone: true, firstName: true } },
+  user: { select: { id: true, email: true, phone: true, firstName: true, whatsappOptIn: true } },
   items: {
     include: {
       variant: {
@@ -89,10 +89,14 @@ export async function processOneAbandonedCart(cart: AbandonedCartCart): Promise<
   let emailSucceeded = false;
   let emailTransient = false;
 
-  // 1. WhatsApp (preferred — higher open rate)
+  // 1. WhatsApp (preferred — higher open rate). Gated on marketing consent:
+  // abandoned-cart recovery is a MARKETING-category template, which Meta only
+  // delivers to opted-in recipients. Without this gate we send into the void
+  // (accepted by Meta, throttled/undelivered) and risk the number's quality
+  // rating. Email below is a separate channel and is not consent-gated here.
   let waMessageId: string | undefined;
   let waRateLimited = false;
-  if (cart.user?.phone) {
+  if (cart.user?.phone && cart.user?.whatsappOptIn) {
     waAttempted = true;
     const itemNames = cartItems.map((i) => i.name).join(', ');
     const result = await sendWhatsAppAbandonedCart(cart.user.phone, firstName, itemNames);

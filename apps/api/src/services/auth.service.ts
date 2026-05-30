@@ -233,6 +233,9 @@ export const authService = {
           lastName: incomingLast,
           phoneVerified: true,
           isActive: true,
+          // Signing up via WhatsApp OTP implies consent to WhatsApp comms;
+          // whatsappOptIn defaults true, stamp when that consent was captured.
+          whatsappOptInAt: new Date(),
         },
       });
 
