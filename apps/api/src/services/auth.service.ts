@@ -5,7 +5,7 @@ import { env } from '../config/env';
 import { logger } from '../config/logger';
 import { ApiError } from '../utils/api-error';
 import { APP_CONSTANTS } from '../config/constants';
-import { sendWhatsAppOtp } from './whatsapp.service';
+import { sendWhatsAppOtp, sendWhatsAppWelcome } from './whatsapp.service';
 import type {
   SendOtpInput,
   VerifyOtpInput,
@@ -205,6 +205,9 @@ export const authService = {
 
     // Find or create user by phone
     let user = await prisma.user.findUnique({ where: { phone } });
+    // Capture before the find-or-create below mutates `user` — drives the
+    // one-time welcome WhatsApp send for genuinely new signups.
+    const wasNewUser = !user;
 
     // A real email may only belong to one account. If the supplied email is
     // already linked elsewhere, surface a clear error instead of a 500 from the
@@ -266,6 +269,16 @@ export const authService = {
 
     if (!user.isActive) {
       throw ApiError.forbidden('Account is deactivated');
+    }
+
+    // Welcome a brand-new shopper on WhatsApp — fire-and-forget so login never
+    // blocks on it, and only for new signups who opted in (whatsappOptIn is set
+    // true at signup). Marketing-category template; the sender soft-fails and
+    // self-skips if the welcome image URL isn't configured.
+    if (wasNewUser && user.phone && user.whatsappOptIn) {
+      void sendWhatsAppWelcome(user.phone).catch((err) =>
+        logger.error({ err }, 'WhatsApp welcome dispatch failed')
+      );
     }
 
     const tokens = await issueTokenPair(user);

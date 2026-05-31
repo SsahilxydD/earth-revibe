@@ -970,6 +970,88 @@ export async function sendWhatsAppAbandonedCart(
 }
 
 /**
+ * Send the welcome WhatsApp message to a brand-new shopper, fired once right
+ * after they sign up via OTP (auth.service verifyOtp). This is event-driven,
+ * 1:1, and inside the signup window (the user just initiated contact), which
+ * keeps it clear of the cron-marketing fair-use guard rail that keeps WhatsApp
+ * out of the engagement-rule engine (see feedback_meta_fair_use.md memory).
+ * er_welcome is a MARKETING-category template, so callers MUST gate on
+ * user.whatsappOptIn before calling.
+ *
+ * The approved er_welcome template has a STATIC body (no body variables) and an
+ * IMAGE header, so the send payload carries only the header component. Requires
+ * WHATSAPP_WELCOME_HEADER_IMAGE_URL — Meta rejects a media-header template
+ * (132012) without it — so we warn + skip when it is unset. Soft-fail (never
+ * throws): callers dispatch it fire-and-forget and login must never block on it.
+ */
+export async function sendWhatsAppWelcome(phone: string): Promise<boolean> {
+  if (!env.WHATSAPP_WELCOME_HEADER_IMAGE_URL) {
+    logger.warn('WhatsApp welcome: WHATSAPP_WELCOME_HEADER_IMAGE_URL not set — skipping send');
+    return false;
+  }
+
+  const digits = phone.replace(/\D/g, '');
+  const to = /^\d{10}$/.test(digits) ? `91${digits}` : digits;
+  const masked = to.length >= 6 ? to.slice(0, 4) + '****' + to.slice(-2) : to;
+  if (!to) {
+    logger.warn({ phone: masked }, 'WhatsApp welcome: invalid phone, skipping');
+    return false;
+  }
+
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: env.WHATSAPP_WELCOME_TEMPLATE,
+      language: { code: 'en' },
+      components: [
+        {
+          type: 'header',
+          parameters: [{ type: 'image', image: { link: env.WHATSAPP_WELCOME_HEADER_IMAGE_URL } }],
+        },
+      ],
+    },
+  };
+
+  let res: Response;
+  try {
+    res = await fetch(GRAPH_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    logger.error({ err, phone: masked }, 'WhatsApp welcome network error');
+    return false;
+  }
+
+  const bodyText = await res.text();
+  if (!res.ok) {
+    logger.error(
+      { status: res.status, body: bodyText, phone: masked },
+      'WhatsApp welcome API error'
+    );
+    return false;
+  }
+
+  let messageId: string | undefined;
+  try {
+    messageId = (JSON.parse(bodyText) as { messages?: { id: string }[] }).messages?.[0]?.id;
+  } catch {
+    // bodyText already captured for logging below
+  }
+  logger.info(
+    { phone: masked, messageId, templateName: env.WHATSAPP_WELCOME_TEMPLATE },
+    'WhatsApp welcome message accepted by Meta'
+  );
+  return true;
+}
+
+/**
  * Send a back-in-stock WhatsApp utility template (PR 10). 1:1 transactional
  * send to a user who explicitly subscribed via the storefront "Notify me"
  * button — this is opt-in, event-driven, and Meta-categorised as utility,
