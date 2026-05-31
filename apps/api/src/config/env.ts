@@ -46,6 +46,15 @@ const envSchema = z.object({
   // 132012 ("header: Format mismatch, expected IMAGE, received UNKNOWN") when
   // the header is missing. Leave unset only if the template has no header.
   WHATSAPP_ABANDONED_CART_HEADER_IMAGE_URL: z.string().url().optional(),
+  // Welcome WhatsApp message, sent once right after a shopper signs up via OTP.
+  // Event-driven, 1:1, inside the signup window (the user just initiated contact),
+  // and consent-gated on user.whatsappOptIn — so it stays clear of the cron-marketing
+  // fair-use guard rail that keeps WhatsApp out of the engagement-rule engine.
+  WHATSAPP_WELCOME_TEMPLATE: z.string().default('er_welcome'),
+  // Public HTTPS URL for the er_welcome template's IMAGE header. The approved
+  // template carries an image header, so Meta rejects the send (132012) without
+  // it — leave unset to disable the welcome send entirely (it warns + skips).
+  WHATSAPP_WELCOME_HEADER_IMAGE_URL: z.string().url().optional(),
   // Supabase Storage (image uploads only — auth is handled by JWT)
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
