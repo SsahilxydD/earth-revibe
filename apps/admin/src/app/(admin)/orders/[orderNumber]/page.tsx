@@ -41,9 +41,11 @@ import {
   useVerifyDraftCustomer,
   useConfirmOfflineOrder,
   useUpdateDraftOrder,
+  useUpdateOrderDate,
 } from '@/hooks/use-orders';
 import type { ConfirmOfflineOrderInput, OfflinePaymentMethod } from '@/types';
 import { OrderItemsEditor, type LineItem } from '@/components/orders/order-items-editor';
+import { todayLocalDate, isoToLocalDate, localDateToISO } from '@/lib/order-date';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'default' | 'error' | 'info'> = {
   DRAFT: 'default',
@@ -97,6 +99,14 @@ function formatDateTime(date: string) {
   });
 }
 
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 export default function OrderDetailPage({ params }: { params: Promise<{ orderNumber: string }> }) {
   const { orderNumber } = use(params);
   const { data, isLoading } = useOrder(orderNumber);
@@ -114,6 +124,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const verifyDraftCustomer = useVerifyDraftCustomer();
   const confirmOfflineOrder = useConfirmOfflineOrder();
   const updateDraft = useUpdateDraftOrder();
+  const updateOrderDate = useUpdateOrderDate();
 
   const [newStatus, setNewStatus] = useState('');
   const [statusNote, setStatusNote] = useState('');
@@ -131,6 +142,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const [confirmStatus, setConfirmStatus] = useState('DELIVERED');
   const [confirmPayment, setConfirmPayment] = useState('');
   const [confirmNote, setConfirmNote] = useState('');
+  // Order date set at confirm time ('' = keep the draft's current date).
+  const [confirmDate, setConfirmDate] = useState('');
+
+  // Standalone order-date editor (non-draft offline orders).
+  const [editingDate, setEditingDate] = useState(false);
+  const [dateInput, setDateInput] = useState('');
 
   // Inline draft editing: items + temp customer (name/phone) + totals.
   const [isEditing, setIsEditing] = useState(false);
@@ -274,16 +291,34 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   };
 
   const handleConfirmOrder = async () => {
+    const picked = confirmDate || isoToLocalDate(order.createdAt);
+    const dateChanged = picked !== isoToLocalDate(order.createdAt);
     try {
       await confirmOfflineOrder.mutateAsync({
         orderNumber,
         status: confirmStatus as ConfirmOfflineOrderInput['status'],
         paymentMethod: (confirmPayment || undefined) as OfflinePaymentMethod | undefined,
         note: confirmNote.trim() || undefined,
+        orderDate: dateChanged ? localDateToISO(picked) : undefined,
       });
       toast.success('Offline order confirmed');
     } catch (err: any) {
       toast.error(err.message || 'Failed to confirm order');
+    }
+  };
+
+  const handleSaveDate = async () => {
+    const changed = dateInput && dateInput !== isoToLocalDate(order.createdAt);
+    if (!changed) {
+      setEditingDate(false);
+      return;
+    }
+    try {
+      await updateOrderDate.mutateAsync({ orderNumber, orderDate: localDateToISO(dateInput) });
+      toast.success('Order date updated');
+      setEditingDate(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update order date');
     }
   };
 
@@ -836,6 +871,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               {/* Step 2 — confirm into a real offline order */}
               <div className="space-y-3 pt-4 border-t border-light-gray">
                 <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1">Order date</label>
+                  <input
+                    type="date"
+                    value={confirmDate || isoToLocalDate(order.createdAt)}
+                    max={todayLocalDate()}
+                    min="2020-01-01"
+                    onChange={(e) => setConfirmDate(e.target.value)}
+                    className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                  />
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-charcoal mb-1">
                     Final status
                   </label>
@@ -927,6 +973,52 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                   Update Status
                 </Button>
               </div>
+            </Card>
+          )}
+
+          {/* Order date — backdate an offline sale entered after the fact */}
+          {isOffline && !isDraft && !isArchived && (
+            <Card>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-semibold text-charcoal">Order date</h3>
+                {!editingDate && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setDateInput(isoToLocalDate(order.createdAt));
+                      setEditingDate(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                )}
+              </div>
+              {editingDate ? (
+                <div className="space-y-3">
+                  <input
+                    type="date"
+                    value={dateInput}
+                    max={todayLocalDate()}
+                    min="2020-01-01"
+                    onChange={(e) => setDateInput(e.target.value)}
+                    className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                  />
+                  <p className="text-xs text-medium-gray">
+                    Backdating changes which day this sale counts toward in revenue &amp; reports.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveDate} disabled={updateOrderDate.isPending}>
+                      {updateOrderDate.isPending ? 'Saving…' : 'Save'}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setEditingDate(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-charcoal">{formatDate(order.createdAt)}</p>
+              )}
             </Card>
           )}
 

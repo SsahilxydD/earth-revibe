@@ -284,6 +284,21 @@ export function useConfirmOfflineOrder() {
   });
 }
 
+/** Re-date an existing offline order (backdate a late-entered sale). */
+export function useUpdateOrderDate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderNumber, orderDate }: { orderNumber: string; orderDate: string }) =>
+      api.put(`/admin/orders/${orderNumber}/date`, { orderDate }),
+    onSuccess: (_data, { orderNumber }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-order', orderNumber] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      // Moving the date changes which day this sale counts toward.
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+    },
+  });
+}
+
 /** Soft-delete (archive) an order. Distinct from cancelling. */
 export function useArchiveOrder() {
   const queryClient = useQueryClient();

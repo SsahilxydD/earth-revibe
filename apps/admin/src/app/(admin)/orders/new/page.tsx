@@ -17,6 +17,7 @@ import {
   computeOrderTotals,
   type LineItem,
 } from '@/components/orders/order-items-editor';
+import { todayLocalDate, localDateToISO } from '@/lib/order-date';
 import type { CreateManualOrderInput, CreateDraftOrderInput, OfflinePaymentMethod } from '@/types';
 
 type VerifiedCustomer = {
@@ -85,6 +86,9 @@ export default function NewManualOrderPage() {
   const [status, setStatus] = useState('DELIVERED');
   const [paymentMethod, setPaymentMethod] = useState<'' | OfflinePaymentMethod>('CASH');
   const [note, setNote] = useState('');
+  // Effective order date — defaults to today; can be backdated for a sale
+  // recorded after the fact. Applies to both the verify-now and draft flows.
+  const [orderDate, setOrderDate] = useState(todayLocalDate());
 
   const discountNum = Number(discountAmount) || 0;
   const shippingNum = Number(shippingAmount) || 0;
@@ -182,6 +186,8 @@ export default function NewManualOrderPage() {
       status: status as CreateManualOrderInput['status'],
       paymentMethod: paymentMethod || undefined,
       note: note.trim() || undefined,
+      orderDate:
+        orderDate && orderDate !== todayLocalDate() ? localDateToISO(orderDate) : undefined,
     };
     try {
       const created = await createManualOrder.mutateAsync(payload);
@@ -223,6 +229,8 @@ export default function NewManualOrderPage() {
       taxAmount: taxNum,
       paymentMethod: paymentMethod || undefined,
       note: note.trim() || undefined,
+      orderDate:
+        orderDate && orderDate !== todayLocalDate() ? localDateToISO(orderDate) : undefined,
     };
     try {
       const created = await createDraftOrder.mutateAsync(payload);
@@ -475,6 +483,22 @@ export default function NewManualOrderPage() {
           <Card>
             <h3 className="text-base font-semibold text-charcoal mb-4">Order</h3>
             <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-1">Order date</label>
+                <input
+                  type="date"
+                  value={orderDate}
+                  max={todayLocalDate()}
+                  min="2020-01-01"
+                  onChange={(e) => setOrderDate(e.target.value)}
+                  className="w-full px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+                />
+                <p className="text-xs text-medium-gray mt-1">
+                  {orderDate && orderDate !== todayLocalDate()
+                    ? 'Backdated — this sale will be recorded on this date for revenue & reports.'
+                    : 'Defaults to today. Backdate a sale that was made earlier.'}
+                </p>
+              </div>
               {customerMode === 'verify' ? (
                 <div>
                   <label className="block text-sm font-medium text-charcoal mb-1">Status</label>

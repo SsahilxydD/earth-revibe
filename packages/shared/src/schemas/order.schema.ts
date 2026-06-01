@@ -70,6 +70,22 @@ export const manualOrderItemSchema = z.object({
 
 export const offlinePaymentMethodSchema = z.enum(['CASH', 'UPI', 'CARD', 'BANK_TRANSFER', 'OTHER']);
 
+// Optional effective date for an offline sale. Lets the admin backdate an
+// in-person order that was actually made earlier; stored as Order.createdAt,
+// which is what revenue/analytics group by and what the order list sorts on.
+// Transported as an ISO-8601 UTC string (what `Date.toISOString()` produces).
+// Bounded to "not in the future" — with a 1-day slack for the admin's timezone
+// vs. server clock — and a sane lower bound so a typo can't land in 1970.
+export const offlineOrderDateSchema = z
+  .string()
+  .datetime({ message: 'Order date must be a valid date' })
+  .refine((s) => Date.parse(s) <= Date.now() + 24 * 60 * 60 * 1000, {
+    message: 'Order date cannot be in the future',
+  })
+  .refine((s) => Date.parse(s) >= Date.parse('2020-01-01T00:00:00.000Z'), {
+    message: 'Order date is too far in the past',
+  });
+
 export const createManualOrderSchema = z.object({
   // The User row of the verified customer (returned by verify-customer-otp).
   // Required — the customer must be OTP-verified before we'll record the sale.
@@ -85,6 +101,8 @@ export const createManualOrderSchema = z.object({
     .default(OrderStatus.DELIVERED),
   paymentMethod: offlinePaymentMethodSchema.optional(),
   note: z.string().max(1000).optional(),
+  // Optional backdating — when omitted, createdAt defaults to now().
+  orderDate: offlineOrderDateSchema.optional(),
 });
 
 // ── Offline-order customer verification (admin) ────────────────────
@@ -134,6 +152,8 @@ export const createDraftOrderSchema = z.object({
   // Tentative payment method; can be changed at confirm time.
   paymentMethod: offlinePaymentMethodSchema.optional(),
   note: z.string().max(1000).optional(),
+  // Optional backdating — carries through to the confirmed order's createdAt.
+  orderDate: offlineOrderDateSchema.optional(),
 });
 
 // Update an existing DRAFT offline order (items / temp customer / totals).
@@ -170,6 +190,17 @@ export const confirmOfflineOrderSchema = z.object({
     .default(OrderStatus.DELIVERED),
   paymentMethod: offlinePaymentMethodSchema.optional(),
   note: z.string().max(1000).optional(),
+  // Optional backdating applied at confirm time — overrides the draft's date.
+  orderDate: offlineOrderDateSchema.optional(),
+});
+
+// Re-date an already-created OFFLINE order (admin). createdAt is the order's
+// effective/sale date — what revenue/analytics bucket by and what the order
+// list sorts on. Only offline orders may be re-dated; online orders stay
+// pinned to their real checkout/payment time. orderDate is required here (the
+// whole point of the call) unlike the optional create/confirm variants.
+export const updateOrderDateSchema = z.object({
+  orderDate: offlineOrderDateSchema,
 });
 
 // Archiving (soft-delete). Reason is optional but recorded in status history.
@@ -196,6 +227,7 @@ export type CreateDraftOrderInput = z.infer<typeof createDraftOrderSchema>;
 export type UpdateDraftOrderInput = z.infer<typeof updateDraftOrderSchema>;
 export type VerifyDraftCustomerInput = z.infer<typeof verifyDraftCustomerSchema>;
 export type ConfirmOfflineOrderInput = z.infer<typeof confirmOfflineOrderSchema>;
+export type UpdateOrderDateInput = z.infer<typeof updateOrderDateSchema>;
 export type ArchiveOrderInput = z.infer<typeof archiveOrderSchema>;
 export type SendCustomerOtpInput = z.infer<typeof sendCustomerOtpSchema>;
 export type VerifyCustomerOtpInput = z.infer<typeof verifyCustomerOtpSchema>;

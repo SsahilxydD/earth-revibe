@@ -75,6 +75,12 @@ export const adminOrderController = {
     res.json({ success: true, data: result });
   },
 
+  async updateOrderDate(req: Request, res: Response) {
+    const orderNumber = req.params.orderNumber as string;
+    const result = await adminOrderService.updateOrderDate(orderNumber, req.user!.id, req.body);
+    res.json({ success: true, data: result });
+  },
+
   async archiveOrder(req: Request, res: Response) {
     const orderNumber = req.params.orderNumber as string;
     const result = await adminOrderService.archiveOrder(orderNumber, req.user!.id, req.body ?? {});
