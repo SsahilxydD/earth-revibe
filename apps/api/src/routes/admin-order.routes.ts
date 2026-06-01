@@ -13,6 +13,7 @@ import {
   updateDraftOrderSchema,
   verifyDraftCustomerSchema,
   confirmOfflineOrderSchema,
+  updateOrderDateSchema,
   archiveOrderSchema,
   sendCustomerOtpSchema,
   verifyCustomerOtpSchema,
@@ -87,6 +88,12 @@ router.put(
   '/:orderNumber/draft',
   validate({ body: updateDraftOrderSchema }),
   asyncHandler(adminOrderController.updateDraftOrder)
+);
+// Re-date an existing offline order (backdate a late-entered sale).
+router.put(
+  '/:orderNumber/date',
+  validate({ body: updateOrderDateSchema }),
+  asyncHandler(adminOrderController.updateOrderDate)
 );
 router.post('/:orderNumber/refund', asyncHandler(adminRefundController.initiateRefund));
 

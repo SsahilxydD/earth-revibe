@@ -14,6 +14,7 @@ import type {
   UpdateDraftOrderInput,
   VerifyDraftCustomerInput,
   ConfirmOfflineOrderInput,
+  UpdateOrderDateInput,
   ArchiveOrderInput,
   SendCustomerOtpInput,
   VerifyCustomerOtpInput,
@@ -431,6 +432,13 @@ export const adminOrderService = {
           },
         });
 
+        // Optional backdating: an in-person sale recorded after the fact can
+        // be dated to when it actually happened. Drives revenue/analytics
+        // bucketing and the order-list sort. The initial status-history entry
+        // is stamped with the same date so the order's timeline reads
+        // consistently with its header date. Omitted → Prisma's @default(now()).
+        const backdatedAt = data.orderDate ? new Date(data.orderDate) : undefined;
+
         const created = await tx.order.create({
           data: {
             orderNumber,
@@ -438,6 +446,7 @@ export const adminOrderService = {
             addressId: address.id,
             source: 'OFFLINE',
             status: data.status,
+            ...(backdatedAt && { createdAt: backdatedAt }),
             subtotal,
             discountAmount,
             shippingAmount,
@@ -449,6 +458,7 @@ export const adminOrderService = {
                 status: data.status,
                 note: 'Manual offline order created',
                 changedBy: adminId,
+                ...(backdatedAt && { createdAt: backdatedAt }),
               },
             },
           },
@@ -556,6 +566,11 @@ export const adminOrderService = {
         },
       });
 
+      // Optional backdating set at draft time carries through unchanged when
+      // the draft is later confirmed (confirm never rewrites createdAt), so the
+      // finalized offline order lands in the right revenue/analytics bucket.
+      const backdatedAt = data.orderDate ? new Date(data.orderDate) : undefined;
+
       const created = await tx.order.create({
         data: {
           orderNumber,
@@ -565,6 +580,7 @@ export const adminOrderService = {
           addressId: address.id,
           source: 'OFFLINE',
           status: 'DRAFT',
+          ...(backdatedAt && { createdAt: backdatedAt }),
           subtotal,
           discountAmount,
           shippingAmount,
@@ -576,6 +592,7 @@ export const adminOrderService = {
               status: 'DRAFT',
               note: 'Draft offline order created (awaiting payment + verification)',
               changedBy: adminId,
+              ...(backdatedAt && { createdAt: backdatedAt }),
             },
           },
         },
@@ -829,10 +846,18 @@ export const adminOrderService = {
           }
         }
 
+        // Optional backdating at confirm time overrides the draft's date.
+        // Only the order's effective date moves; the confirm status-history
+        // entry keeps real wall-clock time so the draft→confirm timeline stays
+        // correctly ordered (a backdated confirm entry could otherwise sort
+        // before the original DRAFT entry).
+        const backdatedAt = data.orderDate ? new Date(data.orderDate) : undefined;
+
         const updated = await tx.order.update({
           where: { id: existing.id },
           data: {
             status: data.status,
+            ...(backdatedAt && { createdAt: backdatedAt }),
             statusHistory: {
               create: {
                 status: data.status,
@@ -923,5 +948,46 @@ export const adminOrderService = {
     ]);
 
     return { orderNumber: order.orderNumber };
+  },
+
+  /**
+   * Re-date an existing OFFLINE order — backdate a sale that was entered late.
+   * createdAt is the order's effective date: it's what revenue/analytics bucket
+   * by and what the order list sorts on. ONLINE orders are rejected (their date
+   * is pinned to the real Razorpay checkout/payment time). The change is logged
+   * as an internal note so the audit trail records who moved it and from when.
+   */
+  async updateOrderDate(orderNumber: string, adminId: string, data: UpdateOrderDateInput) {
+    const order = await prisma.order.findUnique({
+      where: { orderNumber },
+      select: { id: true, source: true, deletedAt: true, createdAt: true },
+    });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.deletedAt) throw ApiError.badRequest('Order is archived. Restore it first.');
+    if (order.source !== 'OFFLINE') {
+      throw ApiError.badRequest('Only offline orders can be re-dated.');
+    }
+
+    const newDate = new Date(data.orderDate);
+    const previous = order.createdAt;
+
+    const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const u = await tx.order.update({
+        where: { id: order.id },
+        data: { createdAt: newDate },
+        select: { orderNumber: true, createdAt: true },
+      });
+      await tx.orderNote.create({
+        data: {
+          orderId: order.id,
+          userId: adminId,
+          content: `Order date changed from ${previous.toISOString()} to ${newDate.toISOString()}`,
+          isInternal: true,
+        },
+      });
+      return u;
+    });
+
+    return updated;
   },
 };

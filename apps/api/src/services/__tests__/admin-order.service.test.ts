@@ -16,6 +16,7 @@ const {
   mockVariantUpdateMany,
   mockAddressCreate,
   mockAddressUpdateMany,
+  mockUserFindUnique,
   mockTransaction,
 } = vi.hoisted(() => {
   const mockOrderUpdate = vi.fn();
@@ -48,6 +49,7 @@ const {
     mockVariantUpdateMany,
     mockAddressCreate,
     mockAddressUpdateMany,
+    mockUserFindUnique: vi.fn(),
     mockTransaction,
   };
 });
@@ -75,7 +77,7 @@ vi.mock('@earth-revibe/db', () => ({
       create: mockAddressCreate,
       updateMany: mockAddressUpdateMany,
     },
-    user: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    user: { findUnique: mockUserFindUnique, create: vi.fn(), update: vi.fn() },
     otpCode: {
       count: vi.fn(),
       deleteMany: vi.fn(),
@@ -935,6 +937,74 @@ describe('adminOrderService', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // createManualOrder — optional backdating (Order.createdAt)
+  // ---------------------------------------------------------------------------
+
+  describe('createManualOrder', () => {
+    const ADMIN_ID = 'admin-id-1';
+
+    const MANUAL_INPUT = {
+      userId: 'user-1',
+      items: [{ variantId: 'var-1', quantity: 2, unitPrice: 500 }],
+      discountAmount: 0,
+      shippingAmount: 0,
+      taxAmount: 0,
+      status: 'DELIVERED',
+    };
+
+    function stubManualHappyPath() {
+      mockUserFindUnique.mockResolvedValue({
+        id: 'user-1',
+        phone: '9876543210',
+        phoneVerified: true,
+        firstName: 'Ravi',
+        lastName: 'Kumar',
+        isActive: true,
+      });
+      mockVariantFindMany.mockResolvedValue([
+        {
+          id: 'var-1',
+          size: 'M',
+          color: 'Black',
+          price: 500,
+          product: {
+            id: 'prod-1',
+            name: 'Tee',
+            price: 500,
+            category: null,
+            images: [{ url: 'img.jpg' }],
+          },
+        },
+      ]);
+      mockVariantUpdateMany.mockResolvedValue({ count: 1 });
+      mockAddressCreate.mockResolvedValue({ id: 'addr-1' });
+      mockOrderCreate.mockResolvedValue({ id: 'order-1', orderNumber: 'ORD-1', items: [] });
+      mockOrderNoteCreate.mockResolvedValue({});
+    }
+
+    it('omits createdAt (defaults to now()) when no orderDate is given', async () => {
+      stubManualHappyPath();
+
+      await adminOrderService.createManualOrder(ADMIN_ID, MANUAL_INPUT as any);
+
+      const data = mockOrderCreate.mock.calls[0][0].data;
+      expect(data.createdAt).toBeUndefined();
+      expect(data.statusHistory.create.createdAt).toBeUndefined();
+    });
+
+    it('backdates the order and its initial status-history entry from orderDate', async () => {
+      stubManualHappyPath();
+      const orderDate = '2024-03-15T10:00:00.000Z';
+
+      await adminOrderService.createManualOrder(ADMIN_ID, { ...MANUAL_INPUT, orderDate } as any);
+
+      const data = mockOrderCreate.mock.calls[0][0].data;
+      expect(data.createdAt).toEqual(new Date(orderDate));
+      expect(data.statusHistory.create.createdAt).toEqual(new Date(orderDate));
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // createDraftOrder — two-phase offline drafts
   // ---------------------------------------------------------------------------
 
@@ -1007,6 +1077,27 @@ describe('adminOrderService', () => {
           discountAmount: 5000, // subtotal is 2 * 500 = 1000
         } as any)
       ).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('omits createdAt (defaults to now()) when no orderDate is given', async () => {
+      stubDraftHappyPath();
+
+      await adminOrderService.createDraftOrder(ADMIN_ID, DRAFT_INPUT as any);
+
+      const data = mockOrderCreate.mock.calls[0][0].data;
+      expect(data.createdAt).toBeUndefined();
+      expect(data.statusHistory.create.createdAt).toBeUndefined();
+    });
+
+    it('backdates the draft and its status-history entry from orderDate', async () => {
+      stubDraftHappyPath();
+      const orderDate = '2024-03-15T10:00:00.000Z';
+
+      await adminOrderService.createDraftOrder(ADMIN_ID, { ...DRAFT_INPUT, orderDate } as any);
+
+      const data = mockOrderCreate.mock.calls[0][0].data;
+      expect(data.createdAt).toEqual(new Date(orderDate));
+      expect(data.statusHistory.create.createdAt).toEqual(new Date(orderDate));
     });
   });
 
@@ -1100,6 +1191,104 @@ describe('adminOrderService', () => {
       await expect(
         adminOrderService.confirmOfflineOrder(ADMIN_ID, 'ORD-DRAFT', { status: 'DELIVERED' } as any)
       ).rejects.toMatchObject({ statusCode: 409 });
+    });
+
+    it('backdates createdAt on the order (not the status entry) when orderDate is given', async () => {
+      mockOrderFindUnique.mockResolvedValue(makeDraft());
+      mockVariantUpdateMany.mockResolvedValue({ count: 1 });
+      mockOrderUpdate.mockResolvedValue({ id: 'order-draft', status: 'DELIVERED' });
+      mockOrderNoteCreate.mockResolvedValue({});
+      const orderDate = '2024-03-15T10:00:00.000Z';
+
+      await adminOrderService.confirmOfflineOrder(ADMIN_ID, 'ORD-DRAFT', {
+        status: 'DELIVERED',
+        orderDate,
+      } as any);
+
+      const data = mockOrderUpdate.mock.calls[0][0].data;
+      expect(data.createdAt).toEqual(new Date(orderDate));
+      // The confirm status-history entry keeps real wall-clock time so the
+      // draft→confirm timeline stays ordered.
+      expect(data.statusHistory.create.createdAt).toBeUndefined();
+    });
+
+    it('leaves createdAt untouched on confirm when no orderDate is given', async () => {
+      mockOrderFindUnique.mockResolvedValue(makeDraft());
+      mockVariantUpdateMany.mockResolvedValue({ count: 1 });
+      mockOrderUpdate.mockResolvedValue({ id: 'order-draft', status: 'DELIVERED' });
+      mockOrderNoteCreate.mockResolvedValue({});
+
+      await adminOrderService.confirmOfflineOrder(ADMIN_ID, 'ORD-DRAFT', {
+        status: 'DELIVERED',
+      } as any);
+
+      expect(mockOrderUpdate.mock.calls[0][0].data.createdAt).toBeUndefined();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // updateOrderDate — re-date an existing offline order (OFFLINE-only)
+  // ---------------------------------------------------------------------------
+
+  describe('updateOrderDate', () => {
+    const ADMIN_ID = 'admin-id-1';
+    const NEW_DATE = '2024-03-15T10:00:00.000Z';
+
+    it('throws 404 when the order does not exist', async () => {
+      mockOrderFindUnique.mockResolvedValue(null);
+
+      await expect(
+        adminOrderService.updateOrderDate('ORD-X', ADMIN_ID, { orderDate: NEW_DATE } as any)
+      ).rejects.toMatchObject({ statusCode: 404 });
+      expect(mockTransaction).not.toHaveBeenCalled();
+    });
+
+    it('refuses to re-date an ONLINE order (date pinned to checkout/payment)', async () => {
+      mockOrderFindUnique.mockResolvedValue({
+        id: 'o1',
+        source: 'ONLINE',
+        deletedAt: null,
+        createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      });
+
+      await expect(
+        adminOrderService.updateOrderDate('ORD-1', ADMIN_ID, { orderDate: NEW_DATE } as any)
+      ).rejects.toMatchObject({ statusCode: 400 });
+      expect(mockTransaction).not.toHaveBeenCalled();
+    });
+
+    it('refuses to re-date an archived order', async () => {
+      mockOrderFindUnique.mockResolvedValue({
+        id: 'o1',
+        source: 'OFFLINE',
+        deletedAt: new Date(),
+        createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      });
+
+      await expect(
+        adminOrderService.updateOrderDate('ORD-1', ADMIN_ID, { orderDate: NEW_DATE } as any)
+      ).rejects.toMatchObject({ statusCode: 400 });
+      expect(mockTransaction).not.toHaveBeenCalled();
+    });
+
+    it('updates createdAt and records an internal audit note for an offline order', async () => {
+      const previous = new Date('2024-01-01T00:00:00.000Z');
+      mockOrderFindUnique.mockResolvedValue({
+        id: 'o1',
+        source: 'OFFLINE',
+        deletedAt: null,
+        createdAt: previous,
+      });
+      mockOrderUpdate.mockResolvedValue({ orderNumber: 'ORD-1', createdAt: new Date(NEW_DATE) });
+      mockOrderNoteCreate.mockResolvedValue({});
+
+      await adminOrderService.updateOrderDate('ORD-1', ADMIN_ID, { orderDate: NEW_DATE } as any);
+
+      expect(mockOrderUpdate.mock.calls[0][0].data.createdAt).toEqual(new Date(NEW_DATE));
+      const note = mockOrderNoteCreate.mock.calls[0][0].data;
+      expect(note).toMatchObject({ orderId: 'o1', userId: ADMIN_ID, isInternal: true });
+      expect(note.content).toContain(previous.toISOString());
+      expect(note.content).toContain(new Date(NEW_DATE).toISOString());
     });
   });
 

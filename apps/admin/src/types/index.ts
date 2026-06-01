@@ -94,4 +94,5 @@ export type {
   UpdateDraftOrderInput,
   VerifyDraftCustomerInput,
   ConfirmOfflineOrderInput,
+  UpdateOrderDateInput,
 } from '@earth-revibe/shared';
