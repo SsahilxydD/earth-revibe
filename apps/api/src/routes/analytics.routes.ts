@@ -1,8 +1,9 @@
 import { Router, type IRouter } from 'express';
 import { analyticsController } from '../controllers/analytics.controller';
 import { authenticate, authorize } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 import { asyncHandler } from '../utils/async-handler';
-import { UserRole } from '@earth-revibe/shared';
+import { UserRole, analyticsQuerySchema } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
 
@@ -13,6 +14,10 @@ router.get('/home', asyncHandler(analyticsController.getHomeDashboard));
 router.get('/dashboard', asyncHandler(analyticsController.getDashboardStats));
 router.get('/revenue-chart', asyncHandler(analyticsController.getRevenueChart));
 router.get('/recent-orders', asyncHandler(analyticsController.getRecentOrders));
-router.get('/detailed', asyncHandler(analyticsController.getAnalytics));
+router.get(
+  '/detailed',
+  validate({ query: analyticsQuerySchema }),
+  asyncHandler(analyticsController.getAnalytics)
+);
 
 export { router as analyticsRouter };

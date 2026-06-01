@@ -631,7 +631,12 @@ export async function finalizeOrderFromPending(
     where: { id: { in: variantIds } },
     include: {
       product: {
-        select: { name: true, price: true, images: { where: { isPrimary: true }, take: 1 } },
+        select: {
+          name: true,
+          price: true,
+          costPrice: true,
+          images: { where: { isPrimary: true }, take: 1 },
+        },
       },
     },
   });
@@ -646,6 +651,7 @@ export async function finalizeOrderFromPending(
       variantId: ci.variantId,
       quantity: ci.quantity,
       unitPrice,
+      costPrice: variant.product.costPrice,
       totalPrice,
       productName: variant.product.name,
       productImage: variant.product.images[0]?.url || null,
@@ -1160,6 +1166,7 @@ export async function createCodOrder(
           name: true,
           slug: true,
           price: true,
+          costPrice: true,
           images: { where: { isPrimary: true }, take: 1 },
         },
       },
@@ -1176,6 +1183,7 @@ export async function createCodOrder(
     variantId: string;
     quantity: number;
     unitPrice: number;
+    costPrice: Prisma.Decimal | null;
     totalPrice: number;
     productName: string;
     productImage: string | null;
@@ -1198,6 +1206,7 @@ export async function createCodOrder(
       variantId: variant.id,
       quantity: reqItem.quantity,
       unitPrice,
+      costPrice: variant.product.costPrice,
       totalPrice,
       productName: variant.product.name,
       productImage: variant.product.images[0]?.url || null,

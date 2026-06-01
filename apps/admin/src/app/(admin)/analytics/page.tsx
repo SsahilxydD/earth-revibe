@@ -2,56 +2,170 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { TrendingUp, ShoppingBag, Users, Headset, Globe, Store } from 'lucide-react';
+import {
+  TrendingUp,
+  ShoppingBag,
+  Users,
+  Headset,
+  Globe,
+  Store,
+  IndianRupee,
+  Receipt,
+  Wallet,
+  PiggyBank,
+  Trophy,
+} from 'lucide-react';
 import { ChartLineIcon } from '@shopify/polaris-icons';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Card, Badge, Skeleton, PageHeader } from '@earth-revibe/ui';
+import { Card, Badge, Skeleton, PageHeader, Select } from '@earth-revibe/ui';
 import { formatPrice } from '@earth-revibe/shared';
 import { StatCard } from '@/components/dashboard/stat-card';
+import { ExpenseManager } from '@/components/analytics/expense-manager';
+import { useCategories } from '@/hooks/use-categories';
+import { isoToLocalDate, todayLocalDate } from '@/lib/order-date';
 
 const AnalyticsCharts = dynamic(() => import('@/components/analytics/analytics-charts'), {
   ssr: false,
 });
 
-export default function AnalyticsPage() {
-  const [period, setPeriod] = useState('30d');
+// Quick presets resolve to a [from, to] pair of local YYYY-MM-DD strings that
+// fill the date inputs. Custom dates are then editable directly.
+function presetRange(preset: string): { start: string; end: string } {
+  const now = new Date();
+  const s = new Date();
+  if (preset === '7d') s.setDate(now.getDate() - 7);
+  else if (preset === '90d') s.setDate(now.getDate() - 90);
+  else if (preset === 'mtd') s.setFullYear(now.getFullYear(), now.getMonth(), 1);
+  else if (preset === 'ytd') s.setFullYear(now.getFullYear(), 0, 1);
+  else s.setDate(now.getDate() - 30);
+  return { start: isoToLocalDate(s), end: isoToLocalDate(now) };
+}
 
+const PRESETS = [
+  { label: '7 days', value: '7d' },
+  { label: '30 days', value: '30d' },
+  { label: '90 days', value: '90d' },
+  { label: 'This month', value: 'mtd' },
+  { label: 'This year', value: 'ytd' },
+];
+
+const channelOptions = [
+  { value: 'all', label: 'All channels' },
+  { value: 'online', label: 'Online' },
+  { value: 'offline', label: 'Offline' },
+];
+
+function pct(n: number) {
+  return `${n.toFixed(1)}% margin`;
+}
+
+export default function AnalyticsPage() {
+  const initial = presetRange('30d');
+  const [startDate, setStartDate] = useState(initial.start);
+  const [endDate, setEndDate] = useState(initial.end);
+  const [channel, setChannel] = useState('all');
+  const [categoryId, setCategoryId] = useState('');
+
+  const { data: catData } = useCategories();
+  const categories: any[] = catData?.categories ?? (Array.isArray(catData) ? catData : []);
+  const categoryOptions = [
+    { value: '', label: 'All categories' },
+    ...categories.map((c) => ({ value: c.id, label: c.name })),
+  ];
+
+  // Bake local-tz day boundaries into the ISO range the API filters on.
+  const startISO = startDate ? new Date(`${startDate}T00:00:00`).toISOString() : undefined;
+  const endISO = endDate ? new Date(`${endDate}T23:59:59.999`).toISOString() : undefined;
+
+  const queryParams = { startDate: startISO, endDate: endISO, channel, categoryId };
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['analytics', period],
-    queryFn: () => api.get(`/admin/analytics/detailed?period=${period}`),
+    queryKey: ['analytics', queryParams],
+    queryFn: () => {
+      const qs = new URLSearchParams();
+      if (startISO) qs.set('startDate', startISO);
+      if (endISO) qs.set('endDate', endISO);
+      qs.set('channel', channel);
+      if (categoryId) qs.set('categoryId', categoryId);
+      return api.get(`/admin/analytics/detailed?${qs.toString()}`);
+    },
   });
+
+  const applyPreset = (p: string) => {
+    const r = presetRange(p);
+    setStartDate(r.start);
+    setEndDate(r.end);
+  };
+
+  const pnl = data?.pnl;
+  const coverage = pnl ? Number(pnl.cogsCoverage ?? 1) : 1;
 
   return (
     <div className="space-y-3">
-      <PageHeader
-        icon={ChartLineIcon}
-        title="Analytics"
-        actions={
-          <div className="flex gap-0.5 bg-[#f1f1f1] rounded-lg p-0.5">
-            {[
-              { label: '7 days', value: '7d' },
-              { label: '30 days', value: '30d' },
-              { label: '90 days', value: '90d' },
-            ].map((p) => (
+      <PageHeader icon={ChartLineIcon} title="Analytics" />
+
+      {/* Filters */}
+      <Card>
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="block text-xs font-medium text-medium-gray mb-1">From</label>
+            <input
+              type="date"
+              value={startDate}
+              max={endDate || todayLocalDate()}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-medium-gray mb-1">To</label>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate}
+              max={todayLocalDate()}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="px-3 py-2 h-9 rounded-lg border border-light-gray bg-white text-sm text-charcoal outline-none focus:border-deep-earth focus:ring-2 focus:ring-deep-earth/20"
+            />
+          </div>
+          <div className="min-w-[140px]">
+            <label className="block text-xs font-medium text-medium-gray mb-1">Channel</label>
+            <Select
+              options={channelOptions}
+              value={channel}
+              onChange={(e) => setChannel(e.target.value)}
+            />
+          </div>
+          <div className="min-w-[160px]">
+            <label className="block text-xs font-medium text-medium-gray mb-1">Category</label>
+            <Select
+              options={categoryOptions}
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-0.5 bg-[#f1f1f1] rounded-lg p-0.5 ml-auto">
+            {PRESETS.map((p) => (
               <button
                 key={p.value}
-                onClick={() => setPeriod(p.value)}
-                className={`px-3 h-7 rounded-md text-[13px] font-medium ${
-                  period === p.value
-                    ? 'bg-white text-[#303030] shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_1px_rgba(0,0,0,0.04)]'
-                    : 'text-[#616161] hover:text-[#1a1a1a]'
-                }`}
+                onClick={() => applyPreset(p.value)}
+                className="px-3 h-7 rounded-md text-[13px] font-medium text-[#616161] hover:text-[#1a1a1a] hover:bg-white/60"
               >
                 {p.label}
               </button>
             ))}
           </div>
-        }
-      />
+        </div>
+      </Card>
+
+      {/* Profit & Loss (delivered orders only) */}
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-sm font-semibold text-charcoal">Profit &amp; Loss</h2>
+        <span className="text-xs text-medium-gray">Realized on delivered orders</span>
+      </div>
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-24 w-full" />
           ))}
         </div>
@@ -59,7 +173,6 @@ export default function AnalyticsPage() {
         <Card>
           <div className="py-12 text-center">
             <p className="text-charcoal font-medium mb-1">Failed to load analytics</p>
-            <p className="text-sm text-medium-gray mb-4">Something went wrong. Please try again.</p>
             <button
               onClick={() => window.location.reload()}
               className="text-sm font-medium text-deep-earth hover:underline"
@@ -69,39 +182,99 @@ export default function AnalyticsPage() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard
-            title="Avg Order Value"
-            value={formatPrice(data?.avgOrderValue || 0)}
-            change={`${data?.totalOrders || 0} total orders`}
+            title="Revenue"
+            value={formatPrice(pnl?.revenue || 0)}
+            change={`${pnl?.orders || 0} delivered orders`}
             changeType="neutral"
+            icon={IndianRupee}
+          />
+          <StatCard
+            title="Cost of goods"
+            value={formatPrice(pnl?.cogs || 0)}
+            change={
+              coverage < 1
+                ? `Based on ${(coverage * 100).toFixed(0)}% of items with cost`
+                : `${pnl?.units || 0} units`
+            }
+            changeType={coverage < 1 ? 'negative' : 'neutral'}
+            icon={Receipt}
+          />
+          <StatCard
+            title="Gross Profit"
+            value={formatPrice(pnl?.grossProfit || 0)}
+            change={pct(Number(pnl?.grossMargin || 0))}
+            changeType={(pnl?.grossProfit || 0) >= 0 ? 'positive' : 'negative'}
             icon={TrendingUp}
           />
           <StatCard
-            title="Total Orders"
-            value={String(data?.totalOrders || 0)}
-            change={`in last ${period === '7d' ? '7 days' : period === '90d' ? '90 days' : '30 days'}`}
+            title="Operating Expenses"
+            value={formatPrice(pnl?.expensesTotal || 0)}
+            change="Light bill, logistics, etc."
             changeType="neutral"
-            icon={ShoppingBag}
+            icon={Wallet}
           />
           <StatCard
-            title="New Customers"
-            value={String(data?.customerGrowth?.reduce((s: number, c: any) => s + c.count, 0) || 0)}
-            change={`in last ${period === '7d' ? '7 days' : period === '90d' ? '90 days' : '30 days'}`}
-            changeType="positive"
-            icon={Users}
-          />
-          <StatCard
-            title="Support Tickets"
-            value={String(data?.totalTickets || 0)}
-            change={`${data?.openTickets || 0} open`}
-            changeType={data?.openTickets > 5 ? 'negative' : 'neutral'}
-            icon={Headset}
+            title="Net Profit"
+            value={formatPrice(pnl?.netProfit || 0)}
+            change={pct(Number(pnl?.netMargin || 0))}
+            changeType={(pnl?.netProfit || 0) >= 0 ? 'positive' : 'negative'}
+            icon={PiggyBank}
           />
         </div>
       )}
 
-      {/* Sales by channel — online (storefront) vs offline (manual / in-person) */}
+      {/* Bestseller + operational stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <Card>
+          <div className="flex items-start justify-between">
+            <div className="min-w-0">
+              <p className="text-sm text-medium-gray">Bestseller</p>
+              {data?.bestSeller ? (
+                <>
+                  <p className="text-lg font-semibold text-charcoal mt-1 truncate">
+                    {data.bestSeller.name}
+                  </p>
+                  <p className="text-xs text-medium-gray mt-1">
+                    {data.bestSeller.quantity} sold · {formatPrice(data.bestSeller.revenue)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-lg font-semibold text-charcoal mt-1">—</p>
+              )}
+            </div>
+            <div className="w-10 h-10 bg-off-white rounded-lg flex items-center justify-center flex-shrink-0">
+              <Trophy size={20} className="text-deep-earth" />
+            </div>
+          </div>
+        </Card>
+        <StatCard
+          title="Avg Order Value"
+          value={formatPrice(data?.avgOrderValue || 0)}
+          change={`${data?.totalOrders || 0} total orders`}
+          changeType="neutral"
+          icon={ShoppingBag}
+        />
+        <StatCard
+          title="New Customers"
+          value={String(
+            data?.customerGrowth?.reduce((s: number, c: any) => s + c.count, 0) || 0
+          )}
+          change="in selected range"
+          changeType="positive"
+          icon={Users}
+        />
+        <StatCard
+          title="Support Tickets"
+          value={String(data?.totalTickets || 0)}
+          change={`${data?.openTickets || 0} open`}
+          changeType={data?.openTickets > 5 ? 'negative' : 'neutral'}
+          icon={Headset}
+        />
+      </div>
+
+      {/* Sales by channel */}
       <Card>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-charcoal">Sales by channel</h3>
@@ -134,7 +307,7 @@ export default function AnalyticsPage() {
                         {formatPrice(online.revenue)}
                       </p>
                       <p className="text-xs text-medium-gray mt-0.5">
-                        {online.orders} order{online.orders !== 1 ? 's' : ''} &middot;{' '}
+                        {online.orders} order{online.orders !== 1 ? 's' : ''} ·{' '}
                         {onlinePct.toFixed(0)}%
                       </p>
                     </div>
@@ -149,28 +322,16 @@ export default function AnalyticsPage() {
                         {formatPrice(offline.revenue)}
                       </p>
                       <p className="text-xs text-medium-gray mt-0.5">
-                        {offline.orders} order{offline.orders !== 1 ? 's' : ''} &middot;{' '}
+                        {offline.orders} order{offline.orders !== 1 ? 's' : ''} ·{' '}
                         {offlinePct.toFixed(0)}%
                       </p>
                     </div>
                   </div>
                 </div>
-                {/* Stacked split bar */}
                 {totalRev > 0 && (
-                  <div
-                    className="h-2 w-full rounded-full overflow-hidden bg-light-gray flex"
-                    aria-label="Online vs offline revenue split"
-                  >
-                    <div
-                      className="bg-blue-500"
-                      style={{ width: `${onlinePct}%` }}
-                      title={`Online ${onlinePct.toFixed(0)}%`}
-                    />
-                    <div
-                      className="bg-amber-500"
-                      style={{ width: `${offlinePct}%` }}
-                      title={`Offline ${offlinePct.toFixed(0)}%`}
-                    />
+                  <div className="h-2 w-full rounded-full overflow-hidden bg-light-gray flex">
+                    <div className="bg-blue-500" style={{ width: `${onlinePct}%` }} />
+                    <div className="bg-amber-500" style={{ width: `${offlinePct}%` }} />
                   </div>
                 )}
               </div>
@@ -180,6 +341,8 @@ export default function AnalyticsPage() {
       </Card>
 
       {!isLoading && data && <AnalyticsCharts data={data} />}
+
+      <ExpenseManager startISO={startISO} endISO={endISO} />
 
       <Card>
         <h3 className="text-base font-semibold text-charcoal mb-4">Top Products</h3>

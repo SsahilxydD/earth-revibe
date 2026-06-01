@@ -266,6 +266,7 @@ export const productService = {
         shortDescription: data.shortDescription,
         price: data.price,
         compareAtPrice: data.compareAtPrice,
+        costPrice: data.costPrice,
         material: data.material,
         careInstructions: data.careInstructions,
         seoTitle: data.seoTitle,
@@ -331,7 +332,7 @@ export const productService = {
       }
     }
 
-    const { categoryId, price, compareAtPrice, ...rest } = data;
+    const { categoryId, price, compareAtPrice, costPrice, ...rest } = data;
     const product = await prisma.product.update({
       where: { id },
       data: {
@@ -339,6 +340,7 @@ export const productService = {
         ...(slug ? { slug } : {}),
         ...(price !== undefined ? { price: String(price) } : {}),
         ...(compareAtPrice !== undefined ? { compareAtPrice: String(compareAtPrice) } : {}),
+        ...(costPrice !== undefined ? { costPrice: String(costPrice) } : {}),
         ...(categoryId ? { category: { connect: { id: categoryId } } } : {}),
       } as any,
       include: {

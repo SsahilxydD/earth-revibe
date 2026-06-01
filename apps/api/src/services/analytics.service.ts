@@ -1,6 +1,49 @@
-import { prisma } from '@earth-revibe/db';
+import { prisma, Prisma } from '@earth-revibe/db';
 import { APP_CONSTANTS } from '../config/constants';
 import { realOrders } from '../utils/order-filters';
+import { computePnl } from '../utils/pnl';
+import type { AnalyticsQuery } from '@earth-revibe/shared';
+
+/**
+ * Resolve the dashboard date window. Explicit startDate/endDate (ISO strings
+ * from the date pickers — the client bakes local-tz day boundaries into them)
+ * win; otherwise a preset (`7d/30d/90d/mtd/ytd`) is computed, defaulting to 30d.
+ */
+function resolveAnalyticsRange(query: AnalyticsQuery): { startDate: Date; endDate: Date } {
+  const now = new Date();
+  if (query.startDate || query.endDate) {
+    return {
+      startDate: query.startDate
+        ? new Date(query.startDate)
+        : new Date(now.getFullYear(), now.getMonth(), 1),
+      endDate: query.endDate ? new Date(query.endDate) : now,
+    };
+  }
+  const endDate = now;
+  let startDate: Date;
+  switch (query.period) {
+    case '7d':
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 7);
+      break;
+    case '90d':
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 90);
+      break;
+    case 'mtd':
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    case 'ytd':
+      startDate = new Date(now.getFullYear(), 0, 1);
+      break;
+    case '30d':
+    default:
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 30);
+      break;
+  }
+  return { startDate, endDate };
+}
 
 export const analyticsService = {
   async getDashboardStats() {
@@ -278,10 +321,28 @@ export const analyticsService = {
     };
   },
 
-  async getAnalytics(period: string = '30d') {
-    const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+  async getAnalytics(query: AnalyticsQuery = { channel: 'all' }) {
+    const { startDate, endDate } = resolveAnalyticsRange(query);
+    const channel = query.channel ?? 'all';
+    const categoryId = query.categoryId;
+    const range = { gte: startDate, lte: endDate };
+
+    // P&L base set: realized = DELIVERED + non-archived, dated in range, narrowed
+    // by channel (order.source) and category (orders that include an item in the
+    // category). createdAt is the now-editable order/sale date.
+    const sourceFilter: Prisma.OrderWhereInput =
+      channel === 'online'
+        ? { source: 'ONLINE' }
+        : channel === 'offline'
+          ? { source: 'OFFLINE' }
+          : {};
+    const pnlOrderWhere: Prisma.OrderWhereInput = {
+      deletedAt: null,
+      status: 'DELIVERED',
+      createdAt: range,
+      ...sourceFilter,
+      ...(categoryId ? { items: { some: { variant: { product: { categoryId } } } } } : {}),
+    };
 
     const [
       ordersByStatus,
@@ -292,16 +353,21 @@ export const analyticsService = {
       salesBySource,
       totalTickets,
       openTickets,
+      pnlRevenueAgg,
+      pnlItems,
+      expenseAgg,
+      expenseByCat,
     ] = await Promise.all([
       prisma.order.groupBy({
         by: ['status'],
-        where: { ...realOrders, createdAt: { gte: startDate } },
+        where: { ...realOrders, createdAt: range },
         _count: true,
       }),
       prisma.$queryRaw<{ date: string; revenue: number }[]>`
         SELECT DATE("createdAt") as date, SUM("totalAmount") as revenue
         FROM orders
-        WHERE "createdAt" >= ${startDate} AND status NOT IN ('CANCELLED', 'DRAFT') AND "deletedAt" IS NULL
+        WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+          AND status NOT IN ('CANCELLED', 'DRAFT') AND "deletedAt" IS NULL
         GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `,
@@ -311,7 +377,8 @@ export const analyticsService = {
         JOIN product_variants pv ON pv.id = oi."variantId"
         JOIN products p ON p.id = pv."productId"
         JOIN orders o ON o.id = oi."orderId"
-        WHERE o."createdAt" >= ${startDate} AND o.status NOT IN ('CANCELLED', 'DRAFT') AND o."deletedAt" IS NULL
+        WHERE o."createdAt" >= ${startDate} AND o."createdAt" <= ${endDate}
+          AND o.status NOT IN ('CANCELLED', 'DRAFT') AND o."deletedAt" IS NULL
         GROUP BY p.id, p.name
         ORDER BY quantity DESC
         LIMIT 5
@@ -319,31 +386,113 @@ export const analyticsService = {
       prisma.$queryRaw<{ month: string; count: number }[]>`
         SELECT TO_CHAR("createdAt", 'Mon') as month, COUNT(*)::int as count
         FROM users
-        WHERE role = 'CUSTOMER' AND "createdAt" >= ${startDate}
+        WHERE role = 'CUSTOMER' AND "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
         GROUP BY TO_CHAR("createdAt", 'Mon'), DATE_TRUNC('month', "createdAt")
         ORDER BY DATE_TRUNC('month', "createdAt") ASC
       `,
       prisma.order.aggregate({
-        where: { ...realOrders, createdAt: { gte: startDate }, status: { notIn: ['CANCELLED'] } },
+        where: { ...realOrders, createdAt: range, status: { notIn: ['CANCELLED'] } },
         _avg: { totalAmount: true },
         _count: true,
       }),
       // #5 — split sales by channel (online storefront vs offline/manual)
       prisma.order.groupBy({
         by: ['source'],
-        where: { ...realOrders, createdAt: { gte: startDate }, status: { notIn: ['CANCELLED'] } },
+        where: { ...realOrders, createdAt: range, status: { notIn: ['CANCELLED'] } },
         _sum: { totalAmount: true },
         _count: true,
       }),
-      prisma.supportTicket.count({ where: { createdAt: { gte: startDate } } }),
+      prisma.supportTicket.count({ where: { createdAt: range } }),
       prisma.supportTicket.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
+      // ── P&L: realized (delivered) revenue + the items behind it ──
+      prisma.order.aggregate({
+        where: pnlOrderWhere,
+        _sum: { totalAmount: true },
+        _count: true,
+      }),
+      prisma.orderItem.findMany({
+        where: {
+          order: pnlOrderWhere,
+          ...(categoryId ? { variant: { product: { categoryId } } } : {}),
+        },
+        select: {
+          quantity: true,
+          costPrice: true,
+          totalPrice: true,
+          productName: true,
+          order: { select: { createdAt: true } },
+        },
+      }),
+      prisma.operatingExpense.aggregate({ where: { incurredAt: range }, _sum: { amount: true } }),
+      prisma.operatingExpense.groupBy({
+        by: ['category'],
+        where: { incurredAt: range },
+        _sum: { amount: true },
+      }),
     ]);
 
     const sourceRow = (s: 'ONLINE' | 'OFFLINE') => salesBySource.find((r) => r.source === s);
     const onlineRow = sourceRow('ONLINE');
     const offlineRow = sourceRow('OFFLINE');
 
+    // ── Reduce the delivered order items once into COGS, coverage, bestseller,
+    // and the by-day profit series ──
+    let cogs = 0;
+    let coveredRevenue = 0;
+    let merchandiseRevenue = 0;
+    let units = 0;
+    const byDay = new Map<string, { revenue: number; cogs: number }>();
+    const byProduct = new Map<string, { quantity: number; revenue: number }>();
+    for (const it of pnlItems) {
+      const qty = it.quantity;
+      const lineRevenue = Number(it.totalPrice);
+      const hasCost = it.costPrice != null;
+      const lineCost = hasCost ? Number(it.costPrice) * qty : 0;
+      merchandiseRevenue += lineRevenue;
+      units += qty;
+      cogs += lineCost;
+      if (hasCost) coveredRevenue += lineRevenue;
+      const day = it.order.createdAt.toISOString().split('T')[0];
+      const d = byDay.get(day) ?? { revenue: 0, cogs: 0 };
+      d.revenue += lineRevenue;
+      d.cogs += lineCost;
+      byDay.set(day, d);
+      const p = byProduct.get(it.productName) ?? { quantity: 0, revenue: 0 };
+      p.quantity += qty;
+      p.revenue += lineRevenue;
+      byProduct.set(it.productName, p);
+    }
+
+    // Revenue basis: order totalAmount (money in) normally; merchandise revenue
+    // when a category filter is active, so revenue and COGS stay category-scoped.
+    const revenue = categoryId
+      ? merchandiseRevenue
+      : Number(pnlRevenueAgg._sum.totalAmount || 0);
+    const expensesTotal = Number(expenseAgg._sum.amount || 0);
+    const pnl = computePnl({ revenue, cogs, expensesTotal });
+    const cogsCoverage = merchandiseRevenue > 0 ? coveredRevenue / merchandiseRevenue : 1;
+
+    const bestSeller =
+      [...byProduct.entries()]
+        .map(([name, v]) => ({ name, quantity: v.quantity, revenue: v.revenue }))
+        .sort((a, b) => b.quantity - a.quantity)[0] ?? null;
+
+    const profitByDay = [...byDay.entries()]
+      .map(([date, v]) => ({
+        date,
+        revenue: v.revenue,
+        cogs: v.cogs,
+        grossProfit: v.revenue - v.cogs,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    const expensesByCategory = expenseByCat
+      .map((e) => ({ category: e.category, amount: Number(e._sum.amount || 0) }))
+      .sort((a, b) => b.amount - a.amount);
+
     return {
+      range: { startDate: startDate.toISOString(), endDate: endDate.toISOString() },
+      filters: { channel, categoryId: categoryId ?? null },
       ordersByStatus: ordersByStatus.map((s) => ({ status: s.status, count: s._count })),
       revenueByDay: revenueByDay.map((r) => ({ date: String(r.date), revenue: Number(r.revenue) })),
       topProducts: topProducts.map((p) => ({
@@ -366,6 +515,16 @@ export const analyticsService = {
       },
       totalTickets,
       openTickets,
+      // ── Profit & Loss (delivered orders only) ──
+      pnl: {
+        ...pnl,
+        cogsCoverage,
+        orders: pnlRevenueAgg._count,
+        units,
+      },
+      expensesByCategory,
+      bestSeller,
+      profitByDay,
     };
   },
 };

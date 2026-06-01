@@ -21,3 +21,5 @@ export * from './whatsapp-inbound.schema';
 export * from './engagement-rule.schema';
 export * from './whatsapp-template-variant.schema';
 export * from './customer-segment.schema';
+export * from './expense.schema';
+export * from './analytics.schema';
