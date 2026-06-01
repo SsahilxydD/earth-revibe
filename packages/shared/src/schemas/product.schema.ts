@@ -11,6 +11,11 @@ export const createProductSchema = z.object({
     (v) => (v === '' || v === undefined || v === null ? undefined : v),
     z.coerce.number().positive().optional()
   ),
+  // Unit cost of goods, used for gross-profit analytics. Optional; may be 0.
+  costPrice: z.preprocess(
+    (v) => (v === '' || v === undefined || v === null ? undefined : v),
+    z.coerce.number().min(0).optional()
+  ),
   material: z.string().optional(),
   careInstructions: z.string().optional(),
   seoTitle: z.string().max(70).optional(),

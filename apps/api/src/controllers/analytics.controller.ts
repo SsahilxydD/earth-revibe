@@ -24,8 +24,7 @@ export const analyticsController = {
   },
 
   async getAnalytics(req: Request, res: Response) {
-    const period = (req.query.period as string) || '30d';
-    const data = await analyticsService.getAnalytics(period);
+    const data = await analyticsService.getAnalytics(res.locals.validatedQuery || req.query);
     res.json({ success: true, data });
   },
 };

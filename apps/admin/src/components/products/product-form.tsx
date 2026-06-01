@@ -126,6 +126,15 @@ export function ProductForm({
                 error={errors.compareAtPrice?.message}
                 {...register('compareAtPrice')}
               />
+              <Input
+                label="Cost Price (INR)"
+                type="number"
+                step="0.01"
+                placeholder="1500"
+                helperText="Your unit cost — powers gross-profit analytics. Never shown to customers."
+                error={errors.costPrice?.message}
+                {...register('costPrice')}
+              />
             </div>
           </Card>
 

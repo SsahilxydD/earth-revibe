@@ -60,6 +60,7 @@ model User {
   dropSubscription  DropSubscription?
   dropAlertSends    DropAlertSend[]
   promoClaims       PromoClaim[]
+  operatingExpenses OperatingExpense[]
 
   @@map("users")
 }
@@ -210,6 +211,10 @@ model Product {
   shortDescription String?
   price           Decimal       @db.Decimal(10, 2)
   compareAtPrice  Decimal?      @db.Decimal(10, 2)
+  /// Unit cost of goods, used to compute gross profit in analytics. Null = not
+  /// set yet (treated as unknown; surfaced via a coverage metric). Never
+  /// exposed on the storefront.
+  costPrice       Decimal?      @db.Decimal(10, 2)
   material        String?
   careInstructions String?      @db.Text
   seoTitle        String?
@@ -744,6 +749,10 @@ model OrderItem {
   variant   ProductVariant @relation(fields: [variantId], references: [id])
   quantity  Int
   unitPrice Decimal        @db.Decimal(10, 2)
+  /// Snapshot of the product's unit cost at sale time, so gross profit stays
+  /// stable when a product's cost changes later. Null for lines created before
+  /// cost tracking, or when the product had no cost set.
+  costPrice Decimal?       @db.Decimal(10, 2)
   totalPrice Decimal       @db.Decimal(10, 2)
   productName    String
   productImage   String?
@@ -1377,4 +1386,27 @@ enum TravelApplicationStatus {
   APPROVED
   REJECTED
   WAITLISTED
+}
+
+/// A business operating cost (light bill, logistics, rent, etc.) recorded by an
+/// admin. Subtracted from gross profit to compute net profit in analytics.
+/// `category` is a free-text grouping validated against the shared
+/// ExpenseCategory enum in the app layer (kept as text here so categories can
+/// evolve without a DB-enum migration). `incurredAt` is the date the cost
+/// applies to (used for the P&L date-range bucketing), distinct from createdAt.
+model OperatingExpense {
+  id          String   @id @default(cuid())
+  label       String
+  category    String   @default("OTHER")
+  amount      Decimal  @db.Decimal(10, 2)
+  incurredAt  DateTime
+  note        String?
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([incurredAt])
+  @@index([category])
+  @@map("operating_expenses")
 }

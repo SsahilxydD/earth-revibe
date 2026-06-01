@@ -971,6 +971,7 @@ describe('adminOrderService', () => {
             id: 'prod-1',
             name: 'Tee',
             price: 500,
+            costPrice: 250,
             category: null,
             images: [{ url: 'img.jpg' }],
           },
@@ -1001,6 +1002,15 @@ describe('adminOrderService', () => {
       const data = mockOrderCreate.mock.calls[0][0].data;
       expect(data.createdAt).toEqual(new Date(orderDate));
       expect(data.statusHistory.create.createdAt).toEqual(new Date(orderDate));
+    });
+
+    it("snapshots the product's costPrice onto the created order items", async () => {
+      stubManualHappyPath();
+
+      await adminOrderService.createManualOrder(ADMIN_ID, MANUAL_INPUT as any);
+
+      const items = mockOrderCreate.mock.calls[0][0].data.items.create;
+      expect(items[0].costPrice).toBe(250);
     });
   });
 
