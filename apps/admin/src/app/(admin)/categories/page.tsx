@@ -222,6 +222,7 @@ export default function CategoriesPage() {
       image: category.image || '',
       sortOrder: category.sortOrder,
       isActive: category.isActive,
+      costPrice: category.costPrice != null ? Number(category.costPrice) : undefined,
     });
     setIsModalOpen(true);
   };
@@ -286,6 +287,8 @@ export default function CategoriesPage() {
                 <tr className="border-b border-light-gray bg-off-white/50">
                   <th className="text-left px-6 py-3 font-medium text-medium-gray">Name</th>
                   <th className="text-left px-6 py-3 font-medium text-medium-gray">Slug</th>
+                  <th className="text-left px-6 py-3 font-medium text-medium-gray">Products</th>
+                  <th className="text-left px-6 py-3 font-medium text-medium-gray">Cost</th>
                   <th className="text-left px-6 py-3 font-medium text-medium-gray">Order</th>
                   <th className="text-left px-6 py-3 font-medium text-medium-gray">Status</th>
                   <th className="text-right px-6 py-3 font-medium text-medium-gray">Actions</th>
@@ -306,6 +309,10 @@ export default function CategoriesPage() {
                       </div>
                     </td>
                     <td className="px-6 py-3 text-dark-gray">{cat.slug}</td>
+                    <td className="px-6 py-3 text-dark-gray">{cat.productCount ?? 0}</td>
+                    <td className="px-6 py-3 text-dark-gray">
+                      {cat.costPrice != null ? `₹${Number(cat.costPrice)}` : '—'}
+                    </td>
                     <td className="px-6 py-3 text-dark-gray">{cat.sortOrder}</td>
                     <td className="px-6 py-3">
                       <Badge variant={cat.isActive ? 'success' : 'default'}>
@@ -382,6 +389,15 @@ export default function CategoriesPage() {
             type="number"
             error={errors.sortOrder?.message}
             {...register('sortOrder', { valueAsNumber: true })}
+          />
+          <Input
+            label="Cost of goods (INR)"
+            type="number"
+            step="0.01"
+            placeholder="e.g. 200"
+            helperText="Default cost for products in this category — powers gross-profit when a product has no cost of its own. Bulk-edits all products here. Never shown to customers."
+            error={errors.costPrice?.message}
+            {...register('costPrice')}
           />
           <label className="flex items-center gap-2 cursor-pointer">
             <input

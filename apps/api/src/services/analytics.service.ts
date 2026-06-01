@@ -341,7 +341,13 @@ export const analyticsService = {
       status: 'DELIVERED',
       createdAt: range,
       ...sourceFilter,
-      ...(categoryId ? { items: { some: { variant: { product: { categoryId } } } } } : {}),
+      ...(categoryId
+        ? {
+            items: {
+              some: { variant: { product: { productCategories: { some: { categoryId } } } } },
+            },
+          }
+        : {}),
     };
 
     const [
@@ -413,7 +419,9 @@ export const analyticsService = {
       prisma.orderItem.findMany({
         where: {
           order: pnlOrderWhere,
-          ...(categoryId ? { variant: { product: { categoryId } } } : {}),
+          ...(categoryId
+            ? { variant: { product: { productCategories: { some: { categoryId } } } } }
+            : {}),
         },
         select: {
           quantity: true,
@@ -421,6 +429,15 @@ export const analyticsService = {
           totalPrice: true,
           productName: true,
           order: { select: { createdAt: true } },
+          // Product + category cost for the live fallback when the line has no
+          // snapshotted cost.
+          variant: {
+            select: {
+              product: {
+                select: { costPrice: true, category: { select: { costPrice: true } } },
+              },
+            },
+          },
         },
       }),
       prisma.operatingExpense.aggregate({ where: { incurredAt: range }, _sum: { amount: true } }),
@@ -446,8 +463,16 @@ export const analyticsService = {
     for (const it of pnlItems) {
       const qty = it.quantity;
       const lineRevenue = Number(it.totalPrice);
-      const hasCost = it.costPrice != null;
-      const lineCost = hasCost ? Number(it.costPrice) * qty : 0;
+      // Effective unit cost: the snapshot taken at sale, else the product's own
+      // cost, else its category cost (live fallback). This is what lets a
+      // category cost backfill COGS for orders placed before any cost was set.
+      const unitCost =
+        it.costPrice ??
+        it.variant?.product?.costPrice ??
+        it.variant?.product?.category?.costPrice ??
+        null;
+      const hasCost = unitCost != null;
+      const lineCost = hasCost ? Number(unitCost) * qty : 0;
       merchandiseRevenue += lineRevenue;
       units += qty;
       cogs += lineCost;

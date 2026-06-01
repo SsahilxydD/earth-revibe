@@ -11,6 +11,11 @@ export const createCategorySchema = z.object({
   parentId: z.string().optional(),
   sortOrder: z.coerce.number().int().default(0),
   isActive: z.boolean().default(true),
+  // Default cost of goods for products in this category (gross-profit fallback).
+  costPrice: z.preprocess(
+    (v) => (v === '' || v === undefined || v === null ? undefined : v),
+    z.coerce.number().min(0).optional()
+  ),
 });
 
 export const updateCategorySchema = createCategorySchema.partial();

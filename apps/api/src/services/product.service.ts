@@ -285,6 +285,9 @@ export const productService = {
         isFeatured: data.isFeatured,
         categoryId: data.categoryId,
         vibes: data.vibes ?? [],
+        // Mirror the primary category into the join table so category membership
+        // is consistent everywhere (counts, catalog browse, analytics filter).
+        productCategories: { create: { categoryId: data.categoryId } },
       },
       include: {
         category: {
@@ -351,6 +354,15 @@ export const productService = {
         variants: true,
       },
     });
+
+    // Keep the join table in sync when the primary category changes, so
+    // membership (counts, catalog browse, analytics filter) stays consistent.
+    if (categoryId) {
+      await prisma.productCategory.createMany({
+        data: [{ productId: id, categoryId }],
+        skipDuplicates: true,
+      });
+    }
 
     invalidateListCache();
     notifyIndexNow([`/products/${product.slug}`]).catch(() => {});
