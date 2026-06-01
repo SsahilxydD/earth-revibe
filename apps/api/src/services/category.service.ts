@@ -30,6 +30,8 @@ export const categoryService = {
       parentId: cat.parentId,
       sortOrder: cat.sortOrder,
       isActive: cat.isActive,
+      costPrice: cat.costPrice,
+      offlinePrice: cat.offlinePrice,
       createdAt: cat.createdAt,
       updatedAt: cat.updatedAt,
       productCount: cat._count.productCategories,
@@ -44,7 +46,9 @@ export const categoryService = {
           where: { isActive: true },
           orderBy: { sortOrder: 'asc' },
         },
-        _count: { select: { products: true } },
+        // Count via the join table (source of truth for membership) so it
+        // matches the catalog listing, which also reads productCategories.
+        _count: { select: { productCategories: true } },
       },
     });
 
@@ -52,7 +56,7 @@ export const categoryService = {
 
     return {
       ...category,
-      productCount: category._count.products,
+      productCount: category._count.productCategories,
     };
   },
 
@@ -78,6 +82,7 @@ export const categoryService = {
         parentId: data.parentId,
         sortOrder: data.sortOrder ?? 0,
         isActive: data.isActive ?? true,
+        costPrice: data.costPrice,
       },
     });
 
@@ -117,6 +122,7 @@ export const categoryService = {
         ...(data.parentId !== undefined && { parentId: data.parentId }),
         ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
+        ...(data.costPrice !== undefined && { costPrice: data.costPrice }),
       },
     });
 

@@ -163,6 +163,11 @@ model Category {
   // admin offline-order form defaults each line for products in this category to
   // this price (still editable per line). Null → fall back to the online price.
   offlinePrice Decimal?  @db.Decimal(10, 2)
+  // Default cost of goods for products in this category. Used as a live fallback
+  // for gross-profit analytics: a product's effective cost is its own costPrice
+  // if set, else this category cost. Lets you bulk-set cost per category instead
+  // of per product. Never exposed on the storefront.
+  costPrice   Decimal?  @db.Decimal(10, 2)
   parentId    String?
   parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
   children    Category[] @relation("CategoryTree")
