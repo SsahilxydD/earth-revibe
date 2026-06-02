@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Heart, Star } from 'lucide-react';
+import { Heart, Star, Gift } from 'lucide-react';
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { trackWishlistToggle } from '@/lib/analytics';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/use-wishlist';
@@ -17,9 +17,9 @@ interface ProductCardProps {
   index?: number;
 }
 
-// Store-wide running offers (see /offers), surfaced as a thin frosted-glass
-// strip (<=20% of the tile) that slides up only when the card's swiper lands on
-// the 2nd image — so the image + dots stay visible and offers read as a reward.
+// Store-wide running offers (see /offers), surfaced as a small centered
+// frosted-glass pill that slides up only when the card's swiper lands on the
+// 2nd image — so the image + dots stay visible and offers read as a reward.
 const OFFERS = [
   {
     tab: '100% Back',
@@ -380,7 +380,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
           </div>
         )}
 
-        {/* Page indicator dots — kept above the offers sheet; flip dark while it's up */}
+        {/* Page indicator dots — white with a soft shadow so they read over any image */}
         {hasSlider && (
           <div
             style={{
@@ -395,7 +395,6 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             }}
           >
             {sortedImages.map((_, i) => {
-              const onSheet = realIndex === 1;
               const active = i === realIndex;
               return (
                 <span
@@ -404,13 +403,8 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
                     width: 5,
                     height: 5,
                     borderRadius: 9999,
-                    backgroundColor: active
-                      ? onSheet
-                        ? '#000'
-                        : '#FFF'
-                      : onSheet
-                        ? 'rgba(0,0,0,0.25)'
-                        : 'rgba(255,255,255,0.5)',
+                    backgroundColor: active ? '#FFF' : 'rgba(255,255,255,0.55)',
+                    boxShadow: '0 0 2px rgba(0,0,0,0.35)',
                     transition: 'background-color 0.2s ease',
                   }}
                 />
@@ -423,59 +417,48 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
         {hasSlider && imageCount > 1 && (
           <div
             style={{
+              // Small centered frosted pill that floats just above the dots, so the
+              // photo stays clear and the dots read below it. Single line, the two
+              // offer labels joined — compact and tidy, not a full-width panel.
               position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              // Thin teaser strip: never more than 20% of the tile, so the image
-              // and the page dots stay visible. The bottom padding reserves room
-              // for the dots (separate element, zIndex 7, bottom: 8) below the text.
-              maxHeight: '20%',
-              overflow: 'hidden',
+              bottom: 22,
+              left: '50%',
               zIndex: 6,
+              maxWidth: 'calc(100% - 24px)',
               display: 'flex',
-              flexDirection: 'column',
+              alignItems: 'center',
               justifyContent: 'center',
-              gap: 3,
-              padding: '7px 12px 15px 12px',
-              borderTopLeftRadius: 14,
-              borderTopRightRadius: 14,
+              gap: 6,
+              padding: '6px 12px',
+              borderRadius: 9999,
               fontFamily: 'var(--font-helvetica)',
-              background: 'rgba(255,255,255,0.85)',
-              backdropFilter: 'blur(14px) saturate(1.3)',
-              WebkitBackdropFilter: 'blur(14px) saturate(1.3)',
-              borderTop: '1px solid rgba(255,255,255,0.7)',
-              boxShadow: '0 -2px 10px rgba(0,0,0,0.12)',
+              background: 'rgba(255,255,255,0.8)',
+              backdropFilter: 'blur(12px) saturate(1.3)',
+              WebkitBackdropFilter: 'blur(12px) saturate(1.3)',
+              border: '1px solid rgba(255,255,255,0.6)',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.14)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
               opacity: realIndex === 1 ? 1 : 0,
-              transform: realIndex === 1 ? 'translateY(0)' : 'translateY(8px)',
+              transform: realIndex === 1 ? 'translate(-50%, 0)' : 'translate(-50%, 8px)',
               transition: 'opacity 0.3s ease, transform 0.3s ease',
               pointerEvents: 'none',
             }}
           >
-            {OFFERS.map((o) => (
-              <div
-                key={o.tab}
-                style={{ display: 'flex', alignItems: 'baseline', gap: 5, lineHeight: 1.15 }}
-              >
-                <span
-                  style={{ fontSize: 10, fontWeight: 500, color: '#000', whiteSpace: 'nowrap' }}
-                >
-                  {o.tab}
-                </span>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 300,
-                    color: '#555',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {o.headline}
-                </span>
-              </div>
-            ))}
+            <Gift size={11} color="#000" style={{ flexShrink: 0 }} />
+            <span
+              style={{
+                fontSize: 9.5,
+                fontWeight: 500,
+                letterSpacing: 0.5,
+                color: '#000',
+                textTransform: 'uppercase',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {OFFERS.map((o) => o.tab).join(' · ')}
+            </span>
           </div>
         )}
 
