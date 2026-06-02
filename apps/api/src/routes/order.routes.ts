@@ -1,5 +1,6 @@
 import { Router, type IRouter } from 'express';
 import { orderController } from '../controllers/order.controller';
+import { returnController } from '../controllers/return.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { idempotency } from '../middleware/idempotency';
@@ -9,6 +10,7 @@ import {
   verifyPaymentSchema,
   orderQuerySchema,
   cancelOrderSchema,
+  createReturnRequestSchema,
 } from '@earth-revibe/shared';
 
 const router: IRouter = Router();
@@ -34,6 +36,11 @@ router.post(
   '/:orderNumber/cancel',
   validate({ body: cancelOrderSchema }),
   asyncHandler(orderController.cancelOrder)
+);
+router.post(
+  '/:orderNumber/returns',
+  validate({ body: createReturnRequestSchema }),
+  asyncHandler(returnController.requestReturn)
 );
 
 export { router as orderRouter };

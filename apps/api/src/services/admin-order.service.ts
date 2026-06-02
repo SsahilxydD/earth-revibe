@@ -145,7 +145,11 @@ export const adminOrderService = {
 
     await prisma.order.update({
       where: { id: order.id },
-      data: { status: data.status },
+      data: {
+        status: data.status,
+        // Stamp delivery time on the DELIVERED transition — anchors the return window.
+        ...(data.status === 'DELIVERED' && !order.deliveredAt ? { deliveredAt: new Date() } : {}),
+      },
     });
 
     await prisma.orderStatusHistory.create({
@@ -449,6 +453,9 @@ export const adminOrderService = {
             source: 'OFFLINE',
             status: data.status,
             ...(backdatedAt && { createdAt: backdatedAt }),
+            // Offline sales default to DELIVERED — anchor the return window to the
+            // (possibly backdated) sale date.
+            ...(data.status === 'DELIVERED' && { deliveredAt: backdatedAt ?? new Date() }),
             subtotal,
             discountAmount,
             shippingAmount,
@@ -864,6 +871,7 @@ export const adminOrderService = {
           data: {
             status: data.status,
             ...(backdatedAt && { createdAt: backdatedAt }),
+            ...(data.status === 'DELIVERED' && { deliveredAt: backdatedAt ?? new Date() }),
             statusHistory: {
               create: {
                 status: data.status,

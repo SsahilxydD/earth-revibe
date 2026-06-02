@@ -18,6 +18,9 @@ import type {
   LoyaltyTransactionType,
   ReferralStatus,
   UserRole,
+  ReturnStatus,
+  ReturnType,
+  ReturnReason,
 } from '../enums';
 
 // ─── Pagination ──────────────────────────────────────────────────────────────
@@ -183,11 +186,23 @@ export interface OrderItem {
   productName: string;
   productSlug: string;
   productImage: string | null;
+  variantId: string;
   variantSize: string;
   variantColor: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  // How many units of this line are already covered by a non-rejected return
+  // request. Lets the return UI cap the quantity stepper. Present on the
+  // customer order-detail payload; omitted elsewhere.
+  alreadyReturnedQty?: number;
+}
+
+export interface OrderStatusHistoryEntry {
+  id: string;
+  status: OrderStatus | string;
+  note: string | null;
+  createdAt: string;
 }
 
 export interface OrderPayment {
@@ -222,6 +237,42 @@ export interface Order {
   awbCode: string | null;
   courierName: string | null;
   trackingUrl: string | null;
+  deliveredAt: string | null;
+  statusHistory?: OrderStatusHistoryEntry[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Returns / RMA ───────────────────────────────────────────────────────────
+
+export interface ReturnItem {
+  id: string;
+  orderItemId: string;
+  quantity: number;
+  exchangeVariantId: string | null;
+  // Denormalized snapshot of the order line, for display.
+  productName?: string;
+  productImage?: string | null;
+  variantSize?: string;
+  variantColor?: string;
+}
+
+export interface ReturnRequest {
+  id: string;
+  orderId: string;
+  orderNumber?: string;
+  userId: string | null;
+  type: ReturnType | string;
+  reasonCode: ReturnReason | string;
+  // Free-text customer comment (the legacy `reason` column).
+  reason: string | null;
+  status: ReturnStatus | string;
+  adminNote: string | null;
+  refundAmount: number | null;
+  returnAwbCode: string | null;
+  returnTrackingUrl: string | null;
+  replacementOrderId: string | null;
+  items: ReturnItem[];
   createdAt: string;
   updatedAt: string;
 }

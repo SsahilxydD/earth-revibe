@@ -135,3 +135,49 @@ export async function sendNewOrderToDiscord(input: NewOrderDiscordInput): Promis
     return false;
   }
 }
+
+interface ReturnUpdateDiscordInput {
+  orderNumber: string;
+  status: string;
+  note?: string;
+}
+
+/**
+ * Post a return-lifecycle update to the orders Discord webhook. Soft-fail:
+ * notification failure must never roll back a return transition.
+ */
+export async function sendReturnUpdateToDiscord(input: ReturnUpdateDiscordInput): Promise<boolean> {
+  const url = env.DISCORD_ORDER_WEBHOOK_URL;
+  if (!url) return false;
+
+  const embed = {
+    title: `↩️ Return ${input.status} — ${input.orderNumber}`,
+    color: EMBED_COLOR_CLAY,
+    timestamp: new Date().toISOString(),
+    fields: [
+      { name: 'Order', value: input.orderNumber, inline: true },
+      { name: 'Return status', value: input.status, inline: true },
+      ...(input.note ? [{ name: 'Note', value: input.note, inline: false }] : []),
+    ],
+    footer: { text: 'Earth Revibe · Returns' },
+  };
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ embeds: [embed] }),
+    });
+    if (!res.ok) {
+      logger.error(
+        { status: res.status, orderNumber: input.orderNumber },
+        'Discord return webhook error'
+      );
+      return false;
+    }
+    return true;
+  } catch (err) {
+    logger.error({ err, orderNumber: input.orderNumber }, 'Discord return webhook network error');
+    return false;
+  }
+}

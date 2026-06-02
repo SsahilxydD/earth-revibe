@@ -680,6 +680,10 @@ model Order {
   /// stale rows apart from genuinely-unchanged ones. Stamped on every
   /// successful tracking call regardless of whether the status changed.
   lastShipmentSyncAt   DateTime?
+  /// When the order reached DELIVERED. Set on the DELIVERED transition (admin
+  /// status update and Shiprocket carrier sync); backfilled for existing orders
+  /// from OrderStatusHistory. Anchors the 72-hour return window.
+  deliveredAt          DateTime?
   /// Soft-delete / archive marker. When set, the order is hidden from admin
   /// lists, customer history, and ALL analytics aggregates, but retained
   /// (payment, history, audit trail) and restorable. Never hard-deleted.
@@ -691,7 +695,7 @@ model Order {
   payment            Payment?
   statusHistory      OrderStatusHistory[]
   notes              OrderNote[]
-  returnRequest      ReturnRequest?
+  returnRequests     ReturnRequest[]
   trackingActivities OrderTrackingActivity[]
 
   @@index([userId])
@@ -810,6 +814,7 @@ model Payment {
   method              PaymentMethod?
   refundId            String?
   refundAmount        Decimal?      @db.Decimal(10, 2)
+  refundedAt          DateTime?
   failureReason       String?
   paidAt              DateTime?
   createdAt           DateTime      @default(now())
@@ -843,16 +848,68 @@ enum PaymentMethod {
 
 model ReturnRequest {
   id           String       @id @default(cuid())
-  orderId      String       @unique
+  /// The original order. No longer unique — an order can accrue multiple
+  /// returns over time (different items / separate requests within the window).
+  orderId      String
   order        Order        @relation(fields: [orderId], references: [id])
-  reason       String       @db.Text
+  /// Requester. Null for guest/offline orders (derive customer via the order).
+  userId       String?
+  type         ReturnType   @default(REFUND)
+  reasonCode   ReturnReason @default(OTHER)
+  /// Optional free-text customer comment (the legacy `reason` column).
+  reason       String?      @db.Text
   status       ReturnStatus @default(REQUESTED)
   adminNote    String?      @db.Text
   refundAmount Decimal?     @db.Decimal(10, 2)
+  /// Shiprocket reverse-pickup (return shipment) identifiers.
+  returnShiprocketOrderId Int?
+  returnShipmentId        Int?
+  returnAwbCode           String?
+  returnTrackingUrl       String?
+  /// For EXCHANGE: the auto-created zero-charge replacement order's id.
+  replacementOrderId      String?
+  items         ReturnItem[]
+  statusHistory ReturnStatusHistory[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
   @@map("return_requests")
+}
+
+/// One line of a return: which order item and how many units. For an EXCHANGE
+/// the line carries the chosen replacement variant.
+model ReturnItem {
+  id              String        @id @default(cuid())
+  returnRequestId String
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  /// References OrderItem.id (validated in the service; not an FK so a returned
+  /// line can't block order-item lifecycle).
+  orderItemId     String
+  quantity        Int
+  /// EXCHANGE only — the ProductVariant.id the customer wants instead.
+  exchangeVariantId String?
+  createdAt       DateTime      @default(now())
+
+  @@index([returnRequestId])
+  @@index([orderItemId])
+  @@map("return_items")
+}
+
+/// Append-only audit of a return's status transitions (mirrors OrderStatusHistory).
+model ReturnStatusHistory {
+  id              String        @id @default(cuid())
+  returnRequestId String
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  status          ReturnStatus
+  note            String?
+  changedBy       String?
+  createdAt       DateTime      @default(now())
+
+  @@index([returnRequestId])
+  @@map("return_status_history")
 }
 
 enum ReturnStatus {
@@ -863,6 +920,22 @@ enum ReturnStatus {
   RECEIVED
   REFUND_INITIATED
   COMPLETED
+}
+
+enum ReturnType {
+  REFUND
+  EXCHANGE
+}
+
+enum ReturnReason {
+  DEFECTIVE
+  DAMAGED_IN_TRANSIT
+  WRONG_ITEM
+  NOT_AS_DESCRIBED
+  SIZE_TOO_SMALL
+  SIZE_TOO_LARGE
+  CHANGED_MIND
+  OTHER
 }
 
 // ==========================================
@@ -1286,7 +1359,13 @@ model StoreSettings {
   socialTwitter       String?
   freeShippingThreshold Decimal? @db.Decimal(10, 2)
   gstRate             Decimal @default(18) @db.Decimal(5, 2)
+  /// Legacy; superseded by returnWindowHours (kept to avoid a drop migration).
   returnWindowDays    Int     @default(7)
+  /// Return/exchange eligibility window, in hours from delivery. Policy = 72h.
+  returnWindowHours   Int     @default(72)
+  /// When true, an eligible exchange auto-processes (reverse pickup + replacement
+  /// shipment) on customer request. When false, it waits for admin approval.
+  autoApproveExchanges Boolean @default(true)
   checkoutConfig      Json?
   shippingConfig      Json?
   updatedAt           DateTime @updatedAt
