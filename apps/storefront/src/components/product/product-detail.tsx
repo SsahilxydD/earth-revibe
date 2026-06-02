@@ -428,7 +428,21 @@ function DetailTabs({ product }: { product: Product }) {
             </span>
           ))}
 
-        {tab === 'reviews' && <ProductReviews product={product} embedded />}
+        {tab === 'reviews' && (
+          <div
+            style={{
+              // Scroll the reviews inside the card so this tab keeps the same locked
+              // height as the others (cardMinH) instead of resizing the whole card.
+              // 124 = card padding (20+24) + tab bar (44) + tab-content padding (16+20).
+              maxHeight: cardMinH > 0 ? cardMinH - 124 : 360,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
+            <ProductReviews product={product} embedded />
+          </div>
+        )}
       </div>
     </div>
   );
