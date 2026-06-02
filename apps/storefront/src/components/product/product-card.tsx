@@ -17,9 +17,9 @@ interface ProductCardProps {
   index?: number;
 }
 
-// Store-wide running offers (see /offers), surfaced as a frosted-glass tabbed
-// sheet that slides up only when the card's swiper lands on the 2nd image — so
-// the first frame stays clean and the offers read as a reward for browsing.
+// Store-wide running offers (see /offers), surfaced as a thin frosted-glass
+// strip (<=20% of the tile) that slides up only when the card's swiper lands on
+// the 2nd image — so the image + dots stay visible and offers read as a reward.
 const OFFERS = [
   {
     tab: '100% Back',
@@ -38,7 +38,6 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const prefetched = useRef(false);
   const [heartBounce, setHeartBounce] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
-  const [activeOffer, setActiveOffer] = useState(0);
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   // Guests have no wishlist — never fetch it for them (an unauthenticated
@@ -428,87 +427,55 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               left: 0,
               right: 0,
               bottom: 0,
-              minHeight: '50%',
+              // Thin teaser strip: never more than 20% of the tile, so the image
+              // and the page dots stay visible. The bottom padding reserves room
+              // for the dots (separate element, zIndex 7, bottom: 8) below the text.
+              maxHeight: '20%',
+              overflow: 'hidden',
               zIndex: 6,
               display: 'flex',
               flexDirection: 'column',
-              gap: 14,
-              padding: '16px 18px 26px 18px',
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
+              justifyContent: 'center',
+              gap: 3,
+              padding: '7px 12px 15px 12px',
+              borderTopLeftRadius: 14,
+              borderTopRightRadius: 14,
               fontFamily: 'var(--font-helvetica)',
               background: 'rgba(255,255,255,0.85)',
-              backdropFilter: 'blur(16px) saturate(1.3)',
-              WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
+              backdropFilter: 'blur(14px) saturate(1.3)',
+              WebkitBackdropFilter: 'blur(14px) saturate(1.3)',
               borderTop: '1px solid rgba(255,255,255,0.7)',
-              boxShadow: '0 -3px 14px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.7)',
+              boxShadow: '0 -2px 10px rgba(0,0,0,0.12)',
               opacity: realIndex === 1 ? 1 : 0,
               transform: realIndex === 1 ? 'translateY(0)' : 'translateY(8px)',
               transition: 'opacity 0.3s ease, transform 0.3s ease',
               pointerEvents: 'none',
             }}
           >
-            {/* Tab bar — the only interactive part; the rest of the sheet lets taps/swipes pass through */}
-            <div style={{ display: 'flex', gap: 24 }}>
-              {OFFERS.map((o, i) => (
-                <button
-                  key={o.tab}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setActiveOffer(i);
-                  }}
+            {OFFERS.map((o) => (
+              <div
+                key={o.tab}
+                style={{ display: 'flex', alignItems: 'baseline', gap: 5, lineHeight: 1.15 }}
+              >
+                <span
+                  style={{ fontSize: 10, fontWeight: 500, color: '#000', whiteSpace: 'nowrap' }}
+                >
+                  {o.tab}
+                </span>
+                <span
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 6,
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                    pointerEvents: realIndex === 1 ? 'auto' : 'none',
+                    fontSize: 10,
+                    fontWeight: 300,
+                    color: '#555',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: activeOffer === i ? 400 : 300,
-                      color: activeOffer === i ? '#000' : '#999',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {o.tab}
-                  </span>
-                  <span
-                    style={{
-                      width: '100%',
-                      height: 2,
-                      borderRadius: 1,
-                      backgroundColor: activeOffer === i ? '#000' : 'transparent',
-                    }}
-                  />
-                </button>
-              ))}
-            </div>
-
-            <span
-              style={{
-                height: 1,
-                flexShrink: 0,
-                alignSelf: 'stretch',
-                background: 'rgba(0,0,0,0.12)',
-              }}
-            />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 13, fontWeight: 500, color: '#000' }}>
-                {OFFERS[activeOffer].headline}
-              </span>
-              <span style={{ fontSize: 12, fontWeight: 300, lineHeight: 1.7, color: '#666' }}>
-                {OFFERS[activeOffer].desc}
-              </span>
-            </div>
+                  {o.headline}
+                </span>
+              </div>
+            ))}
           </div>
         )}
 
