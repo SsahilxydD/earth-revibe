@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { X } from 'lucide-react';
+import Link from 'next/link';
+import { X, Gift, ChevronRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useCartStore } from '@/stores/cart-store';
 import { useToast } from '@/providers';
@@ -283,6 +284,42 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
                 : 'Out of stock'}
             </span>
           </div>
+        )}
+
+        {/* Offers — compact teaser strip, links to full /offers (store-wide programs) */}
+        {!loadingVariants && (
+          <Link
+            href="/offers"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 14px',
+              backgroundColor: '#F5F2ED',
+              borderRadius: 12,
+              textDecoration: 'none',
+            }}
+          >
+            <Gift size={15} color="#000" style={{ flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: '#000' }}>
+                WE PAY YOU BACK
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 300,
+                  color: '#666',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                100% first order · 20% referral · 33% year-on
+              </span>
+            </div>
+            <ChevronRight size={15} color="#999" style={{ flexShrink: 0 }} />
+          </Link>
         )}
 
         {/* ADD TO BAG */}
