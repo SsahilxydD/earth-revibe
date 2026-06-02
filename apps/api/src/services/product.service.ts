@@ -31,6 +31,33 @@ function invalidateListCache() {
   listCache.clear();
 }
 
+// Best-seller set: top products by REAL units sold across paid orders. Cached
+// process-wide for a few minutes so the product-list endpoint can flag tiles
+// without recomputing per request. Mirrors analytics.service's top-products
+// query (order_items -> variant -> product, paid statuses only).
+const BESTSELLER_TOP_N = 10;
+const BESTSELLER_MIN_UNITS = 3;
+const BESTSELLER_CACHE_TTL_MS = 10 * 60_000;
+let bestSellerCache: { ids: Set<string>; expiresAt: number } | null = null;
+
+async function getBestSellerProductIds(): Promise<Set<string>> {
+  if (bestSellerCache && bestSellerCache.expiresAt > Date.now()) return bestSellerCache.ids;
+  const rows = await prisma.$queryRaw<{ productId: string }[]>`
+    SELECT pv."productId" AS "productId"
+    FROM order_items oi
+    JOIN product_variants pv ON pv.id = oi."variantId"
+    JOIN orders o ON o.id = oi."orderId"
+    WHERE o.status IN ('CONFIRMED', 'SHIPPING', 'DELIVERED') AND o."deletedAt" IS NULL
+    GROUP BY pv."productId"
+    HAVING SUM(oi.quantity) >= ${BESTSELLER_MIN_UNITS}
+    ORDER BY SUM(oi.quantity) DESC
+    LIMIT ${BESTSELLER_TOP_N}
+  `;
+  const ids = new Set(rows.map((r) => r.productId));
+  bestSellerCache = { ids, expiresAt: Date.now() + BESTSELLER_CACHE_TTL_MS };
+  return ids;
+}
+
 export const productService = {
   async listProducts(query: ProductQuery, adminMode = false) {
     const {
@@ -189,10 +216,11 @@ export const productService = {
       prisma.product.count({ where }),
     ]);
 
-    // Card-level rating: one grouped query over approved reviews for just this
-    // page's products (not N per-product queries), merged onto each item so the
-    // tile can show stars + average. Mirrors getProductBySlug's rounding.
+    // Card-level rating + best-seller flag, both data-driven. Rating: one grouped
+    // query over approved reviews for just this page's products (no N+1). Best
+    // seller: the cached global top-sellers-by-units set. Kick both off together.
     const productIds = products.map((p) => p.id);
+    const bestSellerIdsPromise = getBestSellerProductIds();
     const ratingRows = productIds.length
       ? await prisma.review.groupBy({
           by: ['productId'],
@@ -201,6 +229,7 @@ export const productService = {
           _count: { _all: true },
         })
       : [];
+    const bestSellerIds = await bestSellerIdsPromise;
     const ratingByProduct = new Map(ratingRows.map((r) => [r.productId, r]));
     const productsWithRatings = products.map((p) => {
       const r = ratingByProduct.get(p.id);
@@ -208,6 +237,7 @@ export const productService = {
         ...p,
         averageRating: r?._avg.rating != null ? Math.round(r._avg.rating * 10) / 10 : null,
         reviewCount: r?._count._all ?? 0,
+        isBestSeller: bestSellerIds.has(p.id),
       };
     });
 

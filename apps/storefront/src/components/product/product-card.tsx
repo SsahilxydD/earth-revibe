@@ -199,7 +199,27 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
   const variants = product.variants ?? [];
   const isOutOfStock = variants.length > 0 && variants.every((v) => v.stock <= 0);
   const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
-  const isLowStock = !isOutOfStock && totalStock > 0 && totalStock <= 5;
+
+  // Single data-driven status strip per tile. Stock comes from the live variants
+  // in the payload, "best seller" from real sales (server-computed isBestSeller),
+  // "new" from createdAt. Sold-out is shown by the overlay, not the strip.
+  const almostOut = !isOutOfStock && totalStock > 0 && totalStock <= 5;
+  const lowStock = !isOutOfStock && totalStock > 5 && totalStock <= 15;
+  const isBestSeller = product.isBestSeller === true;
+  const createdMs = new Date(product.createdAt).getTime();
+  const isNew = Number.isFinite(createdMs) && Date.now() - createdMs < 14 * 24 * 60 * 60 * 1000;
+  // Priority: critical stock urgency first, then merchandising, then recency.
+  const statusBadge: { label: string; dot?: string; star?: boolean } | null = isOutOfStock
+    ? null
+    : almostOut
+      ? { label: 'Almost out', dot: '#EF4444' }
+      : isBestSeller
+        ? { label: 'Best seller', star: true }
+        : lowStock
+          ? { label: 'Low stock', dot: '#F59E0B' }
+          : isNew
+            ? { label: 'New', dot: '#34D399' }
+            : null;
 
   const handleAddToBag = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -269,75 +289,47 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
           ))}
         </div>
 
-        {/* Badges — top left (above slider) */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 10,
-            left: 10,
-            zIndex: 5,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-            pointerEvents: 'none',
-          }}
-        >
-          {product.tags?.some((t) => t.tag.name === 'new-arrival') && (
-            <span
-              style={{
-                display: 'inline-flex',
-                height: 20,
-                padding: '0 8px',
-                alignItems: 'center',
-                backgroundColor: '#000',
-                fontSize: 8,
-                fontWeight: 400,
-                color: '#FFF',
-                letterSpacing: 1.5,
-              }}
-            >
-              NEW
-            </span>
-          )}
-          {product.tags?.some((t) => t.tag.name === 'bestseller') && (
-            <span
-              style={{
-                display: 'inline-flex',
-                height: 20,
-                padding: '0 8px',
-                alignItems: 'center',
-                backgroundColor: '#000',
-                fontSize: 8,
-                fontWeight: 400,
-                color: '#FFF',
-                letterSpacing: 1.5,
-              }}
-            >
-              BESTSELLER
-            </span>
-          )}
-        </div>
-
-        {/* Urgency — bottom left */}
-        {isLowStock && (
+        {/* Status strip — one data-driven label per tile (frosted gray glass) */}
+        {statusBadge && (
           <div
             style={{
               position: 'absolute',
-              bottom: 10,
+              top: 10,
               left: 10,
               zIndex: 5,
               display: 'inline-flex',
-              height: 18,
-              padding: '0 8px',
               alignItems: 'center',
-              gap: 4,
-              backgroundColor: '#FFF',
+              gap: 5,
+              height: 19,
+              padding: '0 9px',
+              borderRadius: 3,
+              background: 'rgba(60,60,60,0.34)',
+              backdropFilter: 'blur(10px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(10px) saturate(140%)',
+              border: '1px solid rgba(255,255,255,0.22)',
+              boxShadow: '0 1px 6px rgba(0,0,0,0.12)',
               pointerEvents: 'none',
             }}
           >
-            <span style={{ width: 5, height: 5, borderRadius: 9999, backgroundColor: '#EF4444' }} />
-            <span style={{ fontSize: 8, fontWeight: 400, color: '#000', letterSpacing: 0.3 }}>
-              Only {totalStock} left
+            {statusBadge.star ? (
+              <Star size={9} color="#F5C451" fill="#F5C451" strokeWidth={0} />
+            ) : (
+              <span
+                style={{ width: 5, height: 5, borderRadius: 9999, backgroundColor: statusBadge.dot }}
+              />
+            )}
+            <span
+              style={{
+                fontSize: 8.5,
+                fontWeight: 500,
+                letterSpacing: 1,
+                color: '#FFF',
+                textTransform: 'uppercase',
+                lineHeight: 1,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {statusBadge.label}
             </span>
           </div>
         )}

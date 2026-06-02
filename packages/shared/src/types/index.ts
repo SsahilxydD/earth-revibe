@@ -108,6 +108,9 @@ export interface Product {
   vibes: string[];
   averageRating: number | null;
   reviewCount: number;
+  // Set on list payloads: true if the product is among the top sellers by real
+  // units sold (server-computed). Absent on the PDP payload.
+  isBestSeller?: boolean;
   // Written reviews (content present) for the PDP list; star-only ratings are
   // excluded here but counted in reviewCount/averageRating. Present on the
   // product-detail payload.
