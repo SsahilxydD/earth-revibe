@@ -10,16 +10,16 @@
  * reference them; we migrate incrementally. */
 @theme {
   /* Polaris-aligned surfaces + text (1:1 with --p-color-* tokens from shopify) */
-  --color-p-bg: #f1f1f1;            /* page + sidebar background */
-  --color-p-bg-surface: #ffffff;     /* cards, active items */
+  --color-p-bg: #f1f1f1; /* page + sidebar background */
+  --color-p-bg-surface: #ffffff; /* cards, active items */
   --color-p-bg-surface-hover: #f7f7f7;
   --color-p-bg-surface-active: #f3f3f3;
   --color-p-bg-surface-selected: #f1f1f1;
-  --color-p-bg-fill-brand: #303030;  /* primary buttons / brand */
-  --color-p-text: #303030;           /* primary text */
+  --color-p-bg-fill-brand: #303030; /* primary buttons / brand */
+  --color-p-text: #303030; /* primary text */
   --color-p-text-secondary: #616161; /* secondary text */
   --color-p-text-disabled: #b5b5b5;
-  --color-p-text-link: #005bd3;      /* shopify blue */
+  --color-p-text-link: #005bd3; /* shopify blue */
   --color-p-icon: #4a4a4a;
   --color-p-icon-secondary: #8a8a8a;
   --color-p-border: #ebebeb;
