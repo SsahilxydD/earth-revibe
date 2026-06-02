@@ -443,17 +443,35 @@ export const orderService = {
     const order = await prisma.order.findFirst({
       where: { orderNumber, userId, deletedAt: null, NOT: { status: 'DRAFT' } },
       include: {
-        items: true,
+        // Pull the product slug per line (via the variant) so the return UI can
+        // load sibling variants for an exchange — OrderItem stores no slug.
+        items: { include: { variant: { select: { product: { select: { slug: true } } } } } },
         payment: true,
         address: true,
         statusHistory: { orderBy: { createdAt: 'desc' } },
         discountCode: { select: { code: true, type: true, value: true } },
+        returnRequests: { include: { items: true }, orderBy: { createdAt: 'desc' } },
       },
     });
 
     if (!order) throw ApiError.notFound('Order not found');
 
-    return order;
+    // Annotate each line with units already covered by a non-rejected return so
+    // the return UI can cap the quantity a customer may still return.
+    const returnedByItem = new Map<string, number>();
+    for (const r of order.returnRequests) {
+      if (r.status === 'REJECTED') continue;
+      for (const ri of r.items) {
+        returnedByItem.set(ri.orderItemId, (returnedByItem.get(ri.orderItemId) ?? 0) + ri.quantity);
+      }
+    }
+    const items = order.items.map(({ variant, ...it }) => ({
+      ...it,
+      productSlug: variant?.product?.slug ?? null,
+      alreadyReturnedQty: returnedByItem.get(it.id) ?? 0,
+    }));
+
+    return { ...order, items };
   },
 
   async cancelOrder(userId: string, orderNumber: string, data: CancelOrderInput) {

@@ -73,6 +73,13 @@ export type {
 
   // Notification
   Notification,
+
+  // Returns / RMA
+  ReturnRequest,
+  ReturnItem,
+  ReturnQuery,
+  UpdateReturnStatusInput,
+  CreateReturnRequestInput,
 } from '@earth-revibe/shared';
 
 // Re-export ClientApiError as ApiError for consistency with storefront

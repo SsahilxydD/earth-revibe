@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner';
 const TABS = [
   { href: '/account/profile', label: 'Profile' },
   { href: '/account/orders', label: 'Orders' },
+  { href: '/account/returns', label: 'Returns' },
   { href: '/account/addresses', label: 'Addresses' },
   { href: '/account/wishlist', label: 'Wishlist' },
   { href: '/account/loyalty', label: 'Loyalty' },

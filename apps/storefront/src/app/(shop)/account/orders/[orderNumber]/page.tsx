@@ -1,21 +1,36 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
+import { Modal } from '@/components/ui/modal';
 import { api } from '@/lib/api-client';
+import { apiErrorMessage } from '@/lib/api-error';
+import { useToast } from '@/providers';
 import { formatPrice, formatDate, getImageUrl } from '@/lib/utils';
+import { orderStatusMeta } from '@/lib/order-status';
+import { ReturnRequestModal } from '@/components/returns/return-request-modal';
 
 interface OrderItem {
   id: string;
   productName: string;
   productImage: string | null;
+  productSlug: string | null;
+  variantId: string;
   variantSize: string;
   variantColor: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  alreadyReturnedQty?: number;
+}
+
+interface StatusHistoryEntry {
+  id: string;
+  status: string;
+  note: string | null;
+  createdAt: string;
 }
 
 interface OrderDetail {
@@ -24,6 +39,8 @@ interface OrderDetail {
   status: string;
   createdAt: string;
   updatedAt: string;
+  deliveredAt: string | null;
+  statusHistory?: StatusHistoryEntry[];
   items: OrderItem[];
   address: {
     fullName: string;
@@ -45,38 +62,33 @@ interface OrderDetail {
   totalAmount: number;
 }
 
-const STATUS_ORDER: Record<string, number> = {
-  PENDING: 0,
-  CONFIRMED: 1,
-  SHIPPING: 2,
-  DELIVERED: 3,
-};
-
-const STATUS_COLOR: Record<string, string> = {
-  PENDING: '#EAB308',
-  CONFIRMED: '#3B82F6',
-  SHIPPING: '#8B5CF6',
-  DELIVERED: '#22C55E',
-  CANCELLED: '#999',
-  RETURNED: '#999',
-};
-
-const TIMELINE_LABELS = ['Confirmed', 'Shipping', 'Delivered'];
-
-function formatStatus(status: string) {
-  return status
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-    .replace(/\b(\w)(\w*)/g, (_, f, r) => f + r.toLowerCase());
-}
+const CANCELLABLE = ['PENDING', 'CONFIRMED'];
+const TRACKABLE = ['SHIPPING', 'DELIVERED'];
 
 export default function OrderDetailPage({ params }: { params: Promise<{ orderNumber: string }> }) {
   const { orderNumber } = use(params);
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [returnOpen, setReturnOpen] = useState(false);
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', orderNumber],
     queryFn: () => api.get<OrderDetail>(`/orders/${orderNumber}`),
     enabled: !!orderNumber,
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => api.post(`/orders/${orderNumber}/cancel`, { reason: cancelReason.trim() }),
+    onSuccess: () => {
+      addToast('Order cancelled', 'success');
+      setCancelOpen(false);
+      setCancelReason('');
+      queryClient.invalidateQueries({ queryKey: ['order', orderNumber] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onError: (err) => addToast(apiErrorMessage(err, 'Could not cancel this order'), 'error'),
   });
 
   if (isLoading) {
@@ -122,10 +134,40 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     );
   }
 
-  const currentStep = STATUS_ORDER[order.status] ?? 0;
-  const isCancelled = order.status === 'CANCELLED' || order.status === 'RETURNED';
-  // Three-step timeline: Confirmed (1), Shipping (2), Delivered (3).
-  const timelineProgress = [currentStep >= 1, currentStep >= 2, currentStep >= 3];
+  const meta = orderStatusMeta(order.status);
+  const canCancel = CANCELLABLE.includes(order.status);
+  const canTrack = TRACKABLE.includes(order.status);
+
+  // Return window — 72h from delivery (server is authoritative; this gates the UI).
+  const RETURN_WINDOW_HOURS = 72;
+  const hoursSinceDelivery = order.deliveredAt
+    ? (Date.now() - new Date(order.deliveredAt).getTime()) / 3_600_000
+    : null;
+  const returnWindowOpen =
+    order.status === 'DELIVERED' &&
+    hoursSinceDelivery !== null &&
+    hoursSinceDelivery < RETURN_WINDOW_HOURS;
+  const returnWindowClosed =
+    order.status === 'DELIVERED' && hoursSinceDelivery !== null && !returnWindowOpen;
+  const hoursLeft =
+    hoursSinceDelivery !== null
+      ? Math.max(0, Math.ceil(RETURN_WINDOW_HOURS - hoursSinceDelivery))
+      : 0;
+  // Clean milestone timeline from the server's status history: the first time
+  // each status was reached, chronological. Surfaces PENDING + terminal
+  // CANCELLED/RETURNED that the old fixed 3-step bar ignored.
+  const milestones = (() => {
+    const chrono = [...(order.statusHistory ?? [])].reverse();
+    const seen = new Set<string>();
+    const out: StatusHistoryEntry[] = [];
+    for (const h of chrono) {
+      if (!seen.has(h.status)) {
+        seen.add(h.status);
+        out.push(h);
+      }
+    }
+    return out;
+  })();
 
   return (
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 32 }}>
@@ -151,65 +193,64 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           style={{
             fontSize: 11,
             fontWeight: 400,
-            color: STATUS_COLOR[order.status] || '#999',
+            color: meta.color,
             letterSpacing: 0.5,
           }}
         >
-          {formatStatus(order.status)}
+          {meta.label}
         </span>
       </div>
 
-      {/* Timeline — dots + dashed lines + labels */}
-      {!isCancelled && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* Dots row */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            {TIMELINE_LABELS.map((label, i) => (
-              <div key={label} style={{ display: 'contents' }}>
-                <div
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 9999,
-                    backgroundColor: timelineProgress[i] ? '#000' : '#CCC',
-                    flexShrink: 0,
-                  }}
-                />
-                {i < TIMELINE_LABELS.length - 1 && (
+      {/* Status timeline — driven by the server's status history (real
+          milestones with friendly labels + dates), including terminal states. */}
+      {milestones.length > 0 && (
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>STATUS</p>
+          <ol
+            style={{
+              marginTop: 16,
+              paddingLeft: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+              listStyle: 'none',
+            }}
+          >
+            {milestones.map((h, i) => {
+              const m = orderStatusMeta(h.status);
+              const isLatest = i === milestones.length - 1;
+              return (
+                <li key={h.id} style={{ display: 'flex', gap: 12 }}>
                   <div
                     style={{
-                      flex: 1,
-                      height: 0,
-                      borderTop: `1px dashed ${timelineProgress[i + 1] ? '#000' : '#CCC'}`,
+                      width: 8,
+                      height: 8,
+                      borderRadius: 9999,
+                      marginTop: 5,
+                      backgroundColor: isLatest ? m.color : '#CCC',
+                      flexShrink: 0,
                     }}
                   />
-                )}
-              </div>
-            ))}
-          </div>
-          {/* Labels row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            {TIMELINE_LABELS.map((label, i) => (
-              <span
-                key={label}
-                style={{
-                  fontSize: 9,
-                  fontWeight: 400,
-                  color: timelineProgress[i] ? '#000' : '#CCC',
-                  letterSpacing: 0.3,
-                }}
-              >
-                {label}
-              </span>
-            ))}
-          </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span
+                      style={{ fontSize: 12, fontWeight: 400, color: isLatest ? '#000' : '#666' }}
+                    >
+                      {m.label}
+                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 300, color: '#999' }}>
+                      {formatDate(h.createdAt)}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
         </div>
       )}
 
-      {/* Shiprocket tracking activity feed (only when the order has been picked up
-          and the carrier started reporting). Falls back to persisted activities
-          when Shiprocket is unreachable. */}
-      {!isCancelled && <ShipmentTracking orderNumber={order.orderNumber} />}
+      {/* Shiprocket tracking activity feed — self-hides until the carrier starts
+          reporting; falls back to persisted activities when Shiprocket is down. */}
+      <ShipmentTracking orderNumber={order.orderNumber} />
 
       {/* Items */}
       <div>
@@ -311,27 +352,151 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         </div>
       </div>
 
-      {/* Track Package button — outline, 50px, 1px black border */}
-      {!isCancelled && (
-        <button
-          style={{
-            width: '100%',
-            height: 50,
-            border: '1px solid #000',
-            backgroundColor: 'transparent',
-            fontSize: 12,
-            fontWeight: 400,
-            letterSpacing: 2,
-            color: '#000',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          TRACK PACKAGE
-        </button>
+      {/* Actions — track, return/exchange (post-delivery, in window), cancel. */}
+      {(canTrack || canCancel || returnWindowOpen || returnWindowClosed) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {canTrack && (
+            <Link
+              href={`/track-order?order=${encodeURIComponent(order.orderNumber)}`}
+              style={{
+                width: '100%',
+                height: 50,
+                border: '1px solid #000',
+                backgroundColor: 'transparent',
+                fontSize: 12,
+                fontWeight: 400,
+                letterSpacing: 2,
+                color: '#000',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              TRACK PACKAGE
+            </Link>
+          )}
+          {returnWindowOpen && (
+            <button
+              onClick={() => setReturnOpen(true)}
+              style={{
+                width: '100%',
+                height: 50,
+                border: '1px solid #000',
+                backgroundColor: '#000',
+                fontSize: 12,
+                fontWeight: 400,
+                letterSpacing: 2,
+                color: '#fff',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+              }}
+            >
+              RETURN OR EXCHANGE
+              <span style={{ fontSize: 9, fontWeight: 300, letterSpacing: 0.5, opacity: 0.8 }}>
+                {hoursLeft}h left in your return window
+              </span>
+            </button>
+          )}
+          {returnWindowClosed && (
+            <p style={{ fontSize: 11, fontWeight: 300, color: '#999', textAlign: 'center' }}>
+              Your {RETURN_WINDOW_HOURS}-hour return window has closed.
+            </p>
+          )}
+          {canCancel && (
+            <button
+              onClick={() => setCancelOpen(true)}
+              style={{
+                width: '100%',
+                height: 50,
+                border: '1px solid #DC2626',
+                backgroundColor: 'transparent',
+                fontSize: 12,
+                fontWeight: 400,
+                letterSpacing: 2,
+                color: '#DC2626',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              CANCEL ORDER
+            </button>
+          )}
+        </div>
       )}
+
+      <Modal isOpen={cancelOpen} onClose={() => setCancelOpen(false)} title="Cancel order">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <p style={{ fontSize: 13, fontWeight: 300, color: '#666', lineHeight: 1.5 }}>
+            Tell us why you're cancelling order #{order.orderNumber}. If you've paid, your refund is
+            processed automatically.
+          </p>
+          <textarea
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            placeholder="Reason for cancellation (min 5 characters)"
+            rows={3}
+            style={{
+              width: '100%',
+              border: '1px solid #E5E5E5',
+              borderRadius: 4,
+              padding: 10,
+              fontSize: 13,
+              fontWeight: 300,
+              resize: 'vertical',
+            }}
+          />
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => setCancelOpen(false)}
+              style={{
+                padding: '10px 16px',
+                fontSize: 12,
+                fontWeight: 400,
+                letterSpacing: 1,
+                background: 'transparent',
+                border: '1px solid #E5E5E5',
+                cursor: 'pointer',
+              }}
+            >
+              KEEP ORDER
+            </button>
+            <button
+              disabled={cancelReason.trim().length < 5 || cancelMutation.isPending}
+              onClick={() => cancelMutation.mutate()}
+              style={{
+                padding: '10px 16px',
+                fontSize: 12,
+                fontWeight: 400,
+                letterSpacing: 1,
+                background: '#DC2626',
+                color: '#fff',
+                border: '1px solid #DC2626',
+                cursor:
+                  cancelReason.trim().length < 5 || cancelMutation.isPending
+                    ? 'not-allowed'
+                    : 'pointer',
+                opacity: cancelReason.trim().length < 5 || cancelMutation.isPending ? 0.5 : 1,
+              }}
+            >
+              {cancelMutation.isPending ? 'CANCELLING…' : 'CONFIRM CANCEL'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <ReturnRequestModal
+        orderNumber={order.orderNumber}
+        items={order.items}
+        isOpen={returnOpen}
+        onClose={() => setReturnOpen(false)}
+      />
     </div>
   );
 }

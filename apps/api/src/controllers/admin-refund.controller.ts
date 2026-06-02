@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { prisma, Prisma } from '@earth-revibe/db';
 import { getRazorpay } from '../config/razorpay';
 import { ApiError } from '../utils/api-error';
+import { returnService } from '../services/return.service';
 
 export const adminRefundController = {
   async initiateRefund(req: Request, res: Response) {
@@ -81,8 +82,12 @@ export const adminRefundController = {
           status: isFullRefund ? 'REFUNDED' : 'PARTIALLY_REFUNDED',
           refundId: refundResult.id,
           refundAmount: refundAmountDecimal,
+          refundedAt: new Date(),
         },
       });
+
+      // If this refund settles a customer return request, advance its lifecycle.
+      await returnService.linkRefund(tx, order.id, refundAmountDecimal, isFullRefund, req.user!.id);
 
       // Refund is a Payment-level event in the six-status model — order.status
       // stays where it was (DELIVERED / RETURNED / CANCELLED). Payment.status

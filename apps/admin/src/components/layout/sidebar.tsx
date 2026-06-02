@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   HomeIcon,
   OrderIcon,
+  ReturnIcon,
   ProductIcon,
   PersonIcon,
   MegaphoneIcon,
@@ -43,6 +44,16 @@ const navItems: NavItem[] = [
     children: [
       { label: 'Active', href: '/orders' },
       { label: 'Archived', href: '/orders/archived' },
+    ],
+  },
+  {
+    kind: 'group',
+    label: 'Returns',
+    icon: ReturnIcon,
+    href: '/returns',
+    children: [
+      { label: 'All returns', href: '/returns' },
+      { label: 'Pending', href: '/returns?status=REQUESTED' },
     ],
   },
   {

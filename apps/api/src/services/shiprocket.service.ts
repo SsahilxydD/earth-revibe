@@ -398,6 +398,109 @@ export const shiprocketService = {
   },
 
   /**
+   * Schedule a Shiprocket REVERSE pickup for a return: collect the returned
+   * line items from the customer (pickup_*) and bring them back to the seller's
+   * return address (shipping_*, from SHIPROCKET_RETURN_* env). Persists the
+   * resulting reverse-shipment ids onto the ReturnRequest.
+   *
+   * NOTE: net-new integration — requires the Shiprocket account to have returns
+   * enabled and the SHIPROCKET_RETURN_* env vars configured; verify live before
+   * relying on it. Callers guard this and Discord-alert on failure.
+   */
+  async createReturnOrder(returnRequestId: string) {
+    const ret = await prisma.returnRequest.findUnique({
+      where: { id: returnRequestId },
+      include: {
+        items: true,
+        order: {
+          include: {
+            address: true,
+            user: { select: { email: true, phone: true } },
+          },
+        },
+      },
+    });
+    if (!ret) throw new Error('Return not found');
+    const addr = ret.order.address;
+    if (!addr) throw new Error('Return order has no pickup address');
+
+    const orderItems = await prisma.orderItem.findMany({
+      where: { id: { in: ret.items.map((i) => i.orderItemId) } },
+    });
+    const oiById = new Map(orderItems.map((o) => [o.id, o]));
+    const lineItems: ShiprocketOrderItem[] = ret.items.map((ri) => {
+      const oi = oiById.get(ri.orderItemId);
+      return {
+        name: oi?.productName ?? 'Returned item',
+        sku: oi?.variantId ?? ri.orderItemId,
+        units: ri.quantity,
+        selling_price: oi ? Number(oi.unitPrice) : 0,
+      };
+    });
+    const subTotal = lineItems.reduce((s, i) => s + i.selling_price * i.units, 0);
+    const totalUnits = ret.items.reduce((u, i) => u + i.quantity, 0);
+    const weight = Math.max(
+      totalUnits * APP_CONSTANTS.DEFAULT_ITEM_WEIGHT_KG,
+      APP_CONSTANTS.MIN_SHIPPING_WEIGHT_KG
+    );
+
+    const custName = (addr.fullName || 'Customer').split(' ');
+    const srReturn = await shiprocketRequest<any>('/orders/create/return', {
+      method: 'POST',
+      body: {
+        order_id: `${ret.order.orderNumber}-R${ret.id.slice(-6)}`,
+        order_date: new Date().toISOString().split('T')[0],
+        // Pickup = the customer (origin of the reverse shipment).
+        pickup_customer_name: custName[0],
+        pickup_last_name: custName.slice(1).join(' ') || '',
+        pickup_address: addr.line1,
+        pickup_address_2: addr.line2 || '',
+        pickup_city: addr.city,
+        pickup_state: addr.state,
+        pickup_country: 'India',
+        pickup_pincode: addr.pinCode,
+        pickup_email: ret.order.user?.email || ret.order.guestEmail || '',
+        pickup_phone: (addr.phone || ret.order.user?.phone || '').replace(/^\+91/, ''),
+        // Shipping = the seller's return-to address (must be configured).
+        shipping_customer_name: process.env.SHIPROCKET_RETURN_NAME || 'Earth Revibe',
+        shipping_last_name: '',
+        shipping_address: process.env.SHIPROCKET_RETURN_ADDRESS || '',
+        shipping_address_2: '',
+        shipping_city: process.env.SHIPROCKET_RETURN_CITY || '',
+        shipping_country: 'India',
+        shipping_pincode: process.env.SHIPROCKET_RETURN_PINCODE || '',
+        shipping_state: process.env.SHIPROCKET_RETURN_STATE || '',
+        shipping_email: process.env.SHIPROCKET_RETURN_EMAIL || '',
+        shipping_phone: (process.env.SHIPROCKET_RETURN_PHONE || '').replace(/^\+91/, ''),
+        order_items: lineItems,
+        payment_method: 'Prepaid',
+        sub_total: subTotal,
+        length: 20,
+        breadth: 15,
+        height: 10,
+        weight,
+      },
+    });
+
+    await prisma.returnRequest.update({
+      where: { id: ret.id },
+      data: {
+        returnShiprocketOrderId: srReturn.order_id ?? null,
+        returnShipmentId: srReturn.shipment_id ?? null,
+        returnAwbCode: srReturn.awb_code ?? null,
+        returnTrackingUrl: srReturn.awb_code
+          ? `https://shiprocket.co/tracking/${srReturn.awb_code}`
+          : null,
+      },
+    });
+
+    return {
+      returnShiprocketOrderId: srReturn.order_id,
+      returnShipmentId: srReturn.shipment_id,
+    };
+  },
+
+  /**
    * Generate shipping label for a shipment.
    */
   async generateLabel(shiprocketShipmentId: number): Promise<string> {
@@ -876,7 +979,13 @@ async function syncTrackingState(
   const now = new Date();
 
   const orderUpdate = statusChanged
-    ? { status: args.newStatus as OrderStatus, lastShipmentSyncAt: now }
+    ? {
+        status: args.newStatus as OrderStatus,
+        lastShipmentSyncAt: now,
+        // Stamp the delivery time when the carrier reports DELIVERED — anchors
+        // the return window.
+        ...(args.newStatus === OrderStatus.DELIVERED ? { deliveredAt: now } : {}),
+      }
     : { lastShipmentSyncAt: now };
 
   const ops: any[] = [prisma.order.update({ where: { id: orderId }, data: orderUpdate })];

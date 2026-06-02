@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { Package, Truck, CheckCircle, Clock, MapPin, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,13 @@ interface OrderStatus {
     isCompleted: boolean;
     isCurrent: boolean;
   }[];
+}
+
+interface TrackingResponse {
+  tracked: boolean;
+  currentStatusDescription?: string;
+  etd?: string;
+  activities?: { date: string; status: string; activity?: string; location?: string }[];
 }
 
 const STATUS_ICONS: Record<string, typeof Package> = {
@@ -102,27 +109,68 @@ export default function TrackOrderPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<TrackFormData>();
 
-  const onSubmit = async (data: TrackFormData) => {
-    setIsLoading(true);
-    setNotFound(false);
-    setOrderStatus(null);
-
-    try {
-      const result = await api.get<OrderStatus>(`/orders/${data.orderNumber.trim()}/track`);
-      setOrderStatus(result);
-    } catch (error: any) {
-      if (error?.status === 404) {
-        setNotFound(true);
-      } else {
-        addToast(error?.message || 'Failed to track order. Please try again.', 'error');
+  // Tracking truth lives at /shipping/track/:orderNumber (live Shiprocket fetch
+  // + persisted-history fallback). It's auth-gated, so the standalone tracker
+  // works for logged-in customers; guest tracking is a separate future feature.
+  const track = useCallback(
+    async (orderNumber: string) => {
+      const trimmed = orderNumber.trim();
+      if (!trimmed) return;
+      setIsLoading(true);
+      setNotFound(false);
+      setOrderStatus(null);
+      try {
+        const res = await api.get<{ data?: TrackingResponse } & TrackingResponse>(
+          `/shipping/track/${trimmed}`
+        );
+        const tr = (res && 'data' in res && res.data ? res.data : res) as TrackingResponse;
+        if (!tr || tr.tracked === false) {
+          setNotFound(true);
+          return;
+        }
+        const chrono = [...(tr.activities ?? [])].reverse();
+        const timeline = chrono.map((a, i) => ({
+          status: String(a.status || '')
+            .toLowerCase()
+            .replace(/\s+/g, '-'),
+          label: a.status || 'Update',
+          timestamp: a.date,
+          description: [a.activity, a.location].filter(Boolean).join(' · ') || undefined,
+          isCompleted: true,
+          isCurrent: i === chrono.length - 1,
+        }));
+        setOrderStatus({
+          orderId: trimmed,
+          status: tr.currentStatusDescription || 'In transit',
+          estimatedDelivery: tr.etd,
+          timeline,
+        });
+      } catch (error: any) {
+        if (error?.status === 404) setNotFound(true);
+        else if (error?.status === 401)
+          addToast('Please log in to your account to track this order.', 'error');
+        else addToast(error?.message || 'Failed to track order. Please try again.', 'error');
+      } finally {
+        setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
+    },
+    [addToast]
+  );
+
+  // Prefill + auto-track when arriving from an order page (?order=ER-…).
+  useEffect(() => {
+    const o = new URLSearchParams(window.location.search).get('order');
+    if (o) {
+      setValue('orderNumber', o);
+      void track(o);
     }
-  };
+  }, [setValue, track]);
+
+  const onSubmit = (data: TrackFormData) => track(data.orderNumber);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12 lg:px-8">
