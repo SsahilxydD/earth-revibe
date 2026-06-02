@@ -2,6 +2,7 @@ import { Text, View } from 'react-native';
 import type { OrderStatus } from '@earth-revibe/shared';
 
 const styles: Record<OrderStatus, { bg: string; text: string; label: string }> = {
+  DRAFT: { bg: 'bg-muted/10', text: 'text-muted', label: 'Draft' },
   PENDING: { bg: 'bg-warning/10', text: 'text-warning', label: 'Pending' },
   CONFIRMED: { bg: 'bg-success/10', text: 'text-success', label: 'Confirmed' },
   SHIPPING: { bg: 'bg-primary/10', text: 'text-primary', label: 'Shipping' },

@@ -37,8 +37,9 @@ jobs:
         if: env.DIFF_SIZE != '0'
         env:
           # Claude CLI auth — set ONE of these as a GitHub secret:
-          # Option 1: Claude subscription OAuth token (from `claude auth status`)
-          CLAUDE_CODE_AUTH_TOKEN: ${{ secrets.CLAUDE_CODE_AUTH_TOKEN }}
+          # Option 1: Claude subscription OAuth token (from `claude setup-token`).
+          # The CLI reads CLAUDE_CODE_OAUTH_TOKEN; our secret is named CLAUDE_CODE_AUTH_TOKEN.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_AUTH_TOKEN }}
           # Option 2: If you later get an API key, this also works
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           PR_TITLE: ${{ github.event.pull_request.title }}

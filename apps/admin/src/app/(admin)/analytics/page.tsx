@@ -258,9 +258,7 @@ export default function AnalyticsPage() {
         />
         <StatCard
           title="New Customers"
-          value={String(
-            data?.customerGrowth?.reduce((s: number, c: any) => s + c.count, 0) || 0
-          )}
+          value={String(data?.customerGrowth?.reduce((s: number, c: any) => s + c.count, 0) || 0)}
           change="in selected range"
           changeType="positive"
           icon={Users}

@@ -490,9 +490,7 @@ export const analyticsService = {
 
     // Revenue basis: order totalAmount (money in) normally; merchandise revenue
     // when a category filter is active, so revenue and COGS stay category-scoped.
-    const revenue = categoryId
-      ? merchandiseRevenue
-      : Number(pnlRevenueAgg._sum.totalAmount || 0);
+    const revenue = categoryId ? merchandiseRevenue : Number(pnlRevenueAgg._sum.totalAmount || 0);
     const expensesTotal = Number(expenseAgg._sum.amount || 0);
     const pnl = computePnl({ revenue, cogs, expensesTotal });
     const cogsCoverage = merchandiseRevenue > 0 ? coveredRevenue / merchandiseRevenue : 1;

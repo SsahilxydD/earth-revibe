@@ -5,6 +5,9 @@ coverage
 pnpm-lock.yaml
 prisma/generated
 
+# Generated code-graph snapshot (committed artifact, not source)
+graphify-out/
+
 # Tooling / plugin config — not project source
 .claude/
 .mcp.json
