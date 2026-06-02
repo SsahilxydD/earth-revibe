@@ -218,9 +218,12 @@ export const productService = {
           ...(includeAll ? {} : { where: { isActive: true } }),
           orderBy: { createdAt: 'asc' },
         },
+        // Only written reviews (with content) are shown in the list; star-only
+        // ratings still count toward the average + total (aggregated below).
         reviews: {
-          where: { isApproved: true },
+          where: { isApproved: true, content: { not: null } },
           orderBy: { createdAt: 'desc' },
+          take: 20,
           include: {
             user: {
               select: { firstName: true, lastName: true },
@@ -237,7 +240,28 @@ export const productService = {
       throw ApiError.notFound('Product not found');
     }
 
-    return product;
+    // Rating summary across ALL approved reviews (incl. star-only ratings) +
+    // a 1–5 star breakdown, so the PDP can render the average, count, and bars.
+    const [agg, breakdown] = await Promise.all([
+      prisma.review.aggregate({
+        where: { productId: product.id, isApproved: true },
+        _avg: { rating: true },
+        _count: true,
+      }),
+      prisma.review.groupBy({
+        by: ['rating'],
+        where: { productId: product.id, isApproved: true },
+        _count: { rating: true },
+      }),
+    ]);
+    const reviewCount = agg._count;
+    const averageRating = agg._avg.rating != null ? Math.round(agg._avg.rating * 10) / 10 : null;
+    const ratingBreakdown = [5, 4, 3, 2, 1].map((star) => ({
+      star,
+      count: breakdown.find((b) => b.rating === star)?._count.rating ?? 0,
+    }));
+
+    return { ...product, averageRating, reviewCount, ratingBreakdown };
   },
 
   async createProduct(data: CreateProductInput) {

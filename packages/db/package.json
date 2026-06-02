@@ -14,6 +14,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:status": "prisma migrate status",
     "db:seed": "tsx src/seed.ts",
+    "db:seed:reviews": "tsx src/seed-reviews.ts",
     "db:studio": "prisma studio",
     "backfill-vibes": "tsx src/scripts/backfill-product-vibes.ts"
   },
