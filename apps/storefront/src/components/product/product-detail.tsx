@@ -24,6 +24,7 @@ import { useCartStore } from '@/stores/cart-store';
 import { useToast } from '@/providers';
 import { useProducts } from '@/hooks/use-products';
 import { useAddToWishlist, useRemoveFromWishlist, useWishlist } from '@/hooks/use-wishlist';
+import { ProductReviews } from './product-reviews';
 import type { Product, ProductVariant } from '@/types';
 
 // Lazy-load DOMPurify
@@ -1474,6 +1475,9 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
         {/* ===== Mzs7t — tabSec, paddingTop 24 ===== */}
         <DetailTabs product={product} />
+
+        {/* ===== Ratings & reviews ===== */}
+        <ProductReviews product={product} />
 
         {/* ===== relSec — mood filters + grid ===== */}
         <MoodSection excludeId={product.id} />

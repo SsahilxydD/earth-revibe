@@ -108,6 +108,11 @@ export interface Product {
   vibes: string[];
   averageRating: number | null;
   reviewCount: number;
+  // Written reviews (content present) for the PDP list; star-only ratings are
+  // excluded here but counted in reviewCount/averageRating. Present on the
+  // product-detail payload.
+  reviews?: Review[];
+  ratingBreakdown?: { star: number; count: number }[];
   categoryId: string | null;
   category: Category | null;
   images: ProductImage[];
