@@ -443,7 +443,9 @@ export const orderService = {
     const order = await prisma.order.findFirst({
       where: { orderNumber, userId, deletedAt: null, NOT: { status: 'DRAFT' } },
       include: {
-        items: true,
+        // Pull the product slug per line (via the variant) so the return UI can
+        // load sibling variants for an exchange — OrderItem stores no slug.
+        items: { include: { variant: { select: { product: { select: { slug: true } } } } } },
         payment: true,
         address: true,
         statusHistory: { orderBy: { createdAt: 'desc' } },
@@ -463,8 +465,9 @@ export const orderService = {
         returnedByItem.set(ri.orderItemId, (returnedByItem.get(ri.orderItemId) ?? 0) + ri.quantity);
       }
     }
-    const items = order.items.map((it) => ({
+    const items = order.items.map(({ variant, ...it }) => ({
       ...it,
+      productSlug: variant?.product?.slug ?? null,
       alreadyReturnedQty: returnedByItem.get(it.id) ?? 0,
     }));
 

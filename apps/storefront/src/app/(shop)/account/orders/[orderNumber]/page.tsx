@@ -10,11 +10,13 @@ import { apiErrorMessage } from '@/lib/api-error';
 import { useToast } from '@/providers';
 import { formatPrice, formatDate, getImageUrl } from '@/lib/utils';
 import { orderStatusMeta } from '@/lib/order-status';
+import { ReturnRequestModal } from '@/components/returns/return-request-modal';
 
 interface OrderItem {
   id: string;
   productName: string;
   productImage: string | null;
+  productSlug: string | null;
   variantId: string;
   variantSize: string;
   variantColor: string;
@@ -69,6 +71,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const { addToast } = useToast();
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [returnOpen, setReturnOpen] = useState(false);
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', orderNumber],
@@ -134,6 +137,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const meta = orderStatusMeta(order.status);
   const canCancel = CANCELLABLE.includes(order.status);
   const canTrack = TRACKABLE.includes(order.status);
+
+  // Return window — 72h from delivery (server is authoritative; this gates the UI).
+  const RETURN_WINDOW_HOURS = 72;
+  const hoursSinceDelivery = order.deliveredAt
+    ? (Date.now() - new Date(order.deliveredAt).getTime()) / 3_600_000
+    : null;
+  const returnWindowOpen =
+    order.status === 'DELIVERED' &&
+    hoursSinceDelivery !== null &&
+    hoursSinceDelivery < RETURN_WINDOW_HOURS;
+  const returnWindowClosed =
+    order.status === 'DELIVERED' && hoursSinceDelivery !== null && !returnWindowOpen;
+  const hoursLeft =
+    hoursSinceDelivery !== null
+      ? Math.max(0, Math.ceil(RETURN_WINDOW_HOURS - hoursSinceDelivery))
+      : 0;
   // Clean milestone timeline from the server's status history: the first time
   // each status was reached, chronological. Surfaces PENDING + terminal
   // CANCELLED/RETURNED that the old fixed 3-step bar ignored.
@@ -333,8 +352,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         </div>
       </div>
 
-      {/* Actions — track (when shipped/delivered) and cancel (pre-shipping). */}
-      {(canTrack || canCancel) && (
+      {/* Actions — track, return/exchange (post-delivery, in window), cancel. */}
+      {(canTrack || canCancel || returnWindowOpen || returnWindowClosed) && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {canTrack && (
             <Link
@@ -356,6 +375,37 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             >
               TRACK PACKAGE
             </Link>
+          )}
+          {returnWindowOpen && (
+            <button
+              onClick={() => setReturnOpen(true)}
+              style={{
+                width: '100%',
+                height: 50,
+                border: '1px solid #000',
+                backgroundColor: '#000',
+                fontSize: 12,
+                fontWeight: 400,
+                letterSpacing: 2,
+                color: '#fff',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+              }}
+            >
+              RETURN OR EXCHANGE
+              <span style={{ fontSize: 9, fontWeight: 300, letterSpacing: 0.5, opacity: 0.8 }}>
+                {hoursLeft}h left in your return window
+              </span>
+            </button>
+          )}
+          {returnWindowClosed && (
+            <p style={{ fontSize: 11, fontWeight: 300, color: '#999', textAlign: 'center' }}>
+              Your {RETURN_WINDOW_HOURS}-hour return window has closed.
+            </p>
           )}
           {canCancel && (
             <button
@@ -440,6 +490,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           </div>
         </div>
       </Modal>
+
+      <ReturnRequestModal
+        orderNumber={order.orderNumber}
+        items={order.items}
+        isOpen={returnOpen}
+        onClose={() => setReturnOpen(false)}
+      />
     </div>
   );
 }
