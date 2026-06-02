@@ -334,7 +334,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
           </div>
         )}
 
-        {/* Sold out overlay */}
+        {/* Sold out overlay — dim + corner-to-corner slash + label */}
         {isOutOfStock && (
           <div
             style={{
@@ -348,7 +348,34 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               pointerEvents: 'none',
             }}
           >
-            <span style={{ fontSize: 10, fontWeight: 400, color: '#FFF', letterSpacing: 1.5 }}>
+            {/* Diagonal slash across the whole tile so it reads as unavailable
+                at a glance. preserveAspectRatio="none" + non-scaling stroke keeps
+                it corner-to-corner and a constant width on the 3:4 tile. */}
+            <svg
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+            >
+              <line
+                x1="0"
+                y1="0"
+                x2="100"
+                y2="100"
+                stroke="rgba(255,255,255,0.75)"
+                strokeWidth={1.5}
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+            <span
+              style={{
+                position: 'relative',
+                fontSize: 10,
+                fontWeight: 400,
+                color: '#FFF',
+                letterSpacing: 1.5,
+              }}
+            >
               SOLD OUT
             </span>
           </div>
@@ -541,7 +568,14 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
         >
           {product.name}
         </p>
-        <span style={{ fontSize: 12, fontWeight: 400, color: isOutOfStock ? '#999' : '#000' }}>
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 400,
+            color: isOutOfStock ? '#999' : '#000',
+            textDecoration: isOutOfStock ? 'line-through' : 'none',
+          }}
+        >
           {formatPrice(product.price)}
         </span>
         {product.reviewCount > 0 && product.averageRating != null && (
