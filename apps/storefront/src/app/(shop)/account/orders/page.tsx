@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api-client';
 import { formatPrice, formatDate } from '@/lib/utils';
+import { orderStatusMeta } from '@/lib/order-status';
 
 interface Order {
   id: string;
@@ -14,15 +15,6 @@ interface Order {
   items: { id: string }[];
   createdAt: string;
 }
-
-const STATUS_COLOR: Record<string, string> = {
-  PENDING: '#EAB308',
-  CONFIRMED: '#3B82F6',
-  SHIPPING: '#8B5CF6',
-  DELIVERED: '#22C55E',
-  CANCELLED: '#999',
-  RETURNED: '#999',
-};
 
 export default function OrdersPage() {
   const qc = useQueryClient();
@@ -150,14 +142,11 @@ export default function OrdersPage() {
                   style={{
                     fontSize: 11,
                     fontWeight: 400,
-                    color: STATUS_COLOR[order.status] || '#999',
+                    color: orderStatusMeta(order.status).color,
                     letterSpacing: 0.5,
                   }}
                 >
-                  {order.status
-                    .replace(/_/g, ' ')
-                    .replace(/\b\w/g, (c) => c.toUpperCase())
-                    .replace(/\b(\w)(\w*)/g, (_, f, r) => f + r.toLowerCase())}
+                  {orderStatusMeta(order.status).label}
                 </span>
               </div>
               {/* Bottom row: date + items | total */}
