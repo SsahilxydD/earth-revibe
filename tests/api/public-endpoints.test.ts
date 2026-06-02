@@ -129,10 +129,13 @@ describe('Auth API — Error Cases', () => {
     expect(res.body.success).toBe(false);
   });
 
-  it('POST /api/v1/auth/register with missing fields returns 400', async () => {
+  // Customer signup/login is WhatsApp OTP (the server-side /auth/register route
+  // was removed in 8e8f438). send-otp is the signup entrypoint; an invalid phone
+  // must fail Zod validation.
+  it('POST /api/v1/auth/send-otp with invalid phone returns 400', async () => {
     const res = await request(API_URL)
-      .post('/api/v1/auth/register')
-      .send({ email: 'test@test.com' }) // Missing password, name
+      .post('/api/v1/auth/send-otp')
+      .send({ phone: 'not-a-phone' }) // Fails the +91 phone regex
       .timeout(10000);
 
     expect([400, 422]).toContain(res.status);

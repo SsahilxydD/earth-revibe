@@ -151,6 +151,10 @@ export function useUpdateOrderStatus() {
 // Mirrors the API's VALID_TRANSITIONS state machine so the UI doesn't offer
 // transitions the server will reject.
 export const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  // DRAFT (offline order) is confirmed via the dedicated confirmOfflineOrder
+  // flow, not the generic status-transition endpoint — which is why the API's
+  // VALID_TRANSITIONS omits it. Mirror that: offer no generic transitions here.
+  DRAFT: [],
   PENDING: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['SHIPPING', 'CANCELLED'],
   SHIPPING: ['DELIVERED', 'RETURNED', 'CANCELLED'],

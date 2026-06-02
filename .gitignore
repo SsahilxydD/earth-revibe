@@ -5,6 +5,10 @@ node_modules/
 .next/
 out/
 
+# Playwright E2E generated artifacts (uploaded by CI, never committed)
+playwright-report/
+test-results/
+
 # Build
 dist/
 *.tsbuildinfo
