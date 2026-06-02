@@ -1196,6 +1196,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
                     onClick={() => !oos && setSelectedSize(s)}
                     disabled={oos}
                     style={{
+                      position: 'relative',
+                      overflow: 'hidden',
                       flex: 1,
                       height: 40,
                       borderRadius: 9999,
@@ -1210,7 +1212,27 @@ export function ProductDetail({ product }: ProductDetailProps) {
                       cursor: oos ? 'default' : 'pointer',
                     }}
                   >
-                    {s}
+                    {/* Slash unavailable sizes so they read as out of stock, not just dim.
+                        Clipped to the pill via overflow:hidden; label stays on top. */}
+                    {oos && (
+                      <svg
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                      >
+                        <line
+                          x1="0"
+                          y1="0"
+                          x2="100"
+                          y2="100"
+                          stroke="#BBB"
+                          strokeWidth={1}
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      </svg>
+                    )}
+                    <span style={{ position: 'relative' }}>{s}</span>
                   </button>
                 );
               })}

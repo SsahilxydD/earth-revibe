@@ -223,6 +223,8 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
                     onClick={() => setSelectedSize(size)}
                     disabled={!inStock}
                     style={{
+                      position: 'relative',
+                      overflow: 'hidden',
                       flex: 1,
                       height: 40,
                       display: 'flex',
@@ -237,7 +239,26 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
                       opacity: inStock ? 1 : 0.5,
                     }}
                   >
-                    {size}
+                    {/* Slash out-of-stock sizes for an unmistakable unavailable cue */}
+                    {!inStock && (
+                      <svg
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                      >
+                        <line
+                          x1="0"
+                          y1="0"
+                          x2="100"
+                          y2="100"
+                          stroke="#BBB"
+                          strokeWidth={1}
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      </svg>
+                    )}
+                    <span style={{ position: 'relative' }}>{size}</span>
                   </button>
                 );
               })}
