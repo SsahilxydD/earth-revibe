@@ -239,7 +239,7 @@ function SizeGuideSheet({ open, onClose }: { open: boolean; onClose: () => void 
 /*  tabContent: csm3f (padding 20 20 24 20, gap 16)                    */
 /* ------------------------------------------------------------------ */
 
-type TabKey = 'details' | 'washcare' | 'shipping';
+type TabKey = 'details' | 'washcare' | 'shipping' | 'reviews';
 
 function DetailTabs({ product }: { product: Product }) {
   const [tab, setTab] = useState<TabKey>('details');
@@ -271,10 +271,13 @@ function DetailTabs({ product }: { product: Product }) {
     measure();
   }, []);
 
+  // Reviews tab only when the product actually has ratings (avoids a dead tab).
+  const hasReviews = (product.reviewCount ?? 0) > 0 && product.averageRating != null;
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'details', label: 'Details & Description' },
     { key: 'washcare', label: 'Washcare' },
     { key: 'shipping', label: 'Shipping' },
+    ...(hasReviews ? [{ key: 'reviews' as TabKey, label: 'Reviews' }] : []),
   ];
 
   const detailRows: string[] = [];
@@ -424,6 +427,8 @@ function DetailTabs({ product }: { product: Product }) {
               No shipping info available.
             </span>
           ))}
+
+        {tab === 'reviews' && <ProductReviews product={product} embedded />}
       </div>
     </div>
   );
@@ -1473,11 +1478,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </div>
         )}
 
-        {/* ===== Mzs7t — tabSec, paddingTop 24 ===== */}
+        {/* ===== Mzs7t — tabSec (Details / Washcare / Shipping / Reviews) ===== */}
         <DetailTabs product={product} />
-
-        {/* ===== Ratings & reviews ===== */}
-        <ProductReviews product={product} />
 
         {/* ===== relSec — mood filters + grid ===== */}
         <MoodSection excludeId={product.id} />

@@ -25,22 +25,39 @@ function Stars({ value, size = 14 }: { value: number; size?: number }) {
  * breakdown) is computed across all approved ratings; the list shows only the
  * written reviews (product.reviews). Renders nothing until a product has ratings.
  */
-export function ProductReviews({ product }: { product: Product }) {
+export function ProductReviews({
+  product,
+  embedded = false,
+}: {
+  product: Product;
+  embedded?: boolean;
+}) {
   const count = product.reviewCount ?? 0;
   const avg = product.averageRating;
   if (!count || avg == null) return null;
 
   const breakdown = product.ratingBreakdown ?? [];
   const written = product.reviews ?? [];
+  // Separators must stay visible: the tab card sits on #F5F5F5, where the
+  // standalone #F5F5F5 divider would vanish.
+  const rowDivider = embedded ? '#E5E5E5' : '#F5F5F5';
 
   return (
-    <div style={{ padding: '32px 20px 8px 20px', borderTop: '1px solid #F0F0F0' }}>
-      <p style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
-        RATINGS &amp; REVIEWS
-      </p>
+    <div
+      style={
+        embedded ? { padding: 0 } : { padding: '32px 20px 8px 20px', borderTop: '1px solid #F0F0F0' }
+      }
+    >
+      {!embedded && (
+        <p style={{ fontSize: 10, fontWeight: 400, color: '#999', letterSpacing: 1.5 }}>
+          RATINGS &amp; REVIEWS
+        </p>
+      )}
 
       {/* Summary: big average + breakdown bars */}
-      <div style={{ display: 'flex', gap: 24, marginTop: 16, alignItems: 'flex-start' }}>
+      <div
+        style={{ display: 'flex', gap: 24, marginTop: embedded ? 0 : 16, alignItems: 'flex-start' }}
+      >
         <div
           style={{
             display: 'flex',
@@ -92,7 +109,7 @@ export function ProductReviews({ product }: { product: Product }) {
             return (
               <div
                 key={r.id}
-                style={{ padding: '16px 0', borderTop: i === 0 ? 'none' : '1px solid #F5F5F5' }}
+                style={{ padding: '16px 0', borderTop: i === 0 ? 'none' : `1px solid ${rowDivider}` }}
               >
                 <div
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
