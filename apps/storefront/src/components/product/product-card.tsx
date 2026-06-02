@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Heart } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
 import { cn, formatPrice, getImageUrl, BLUR_DATA_URL } from '@/lib/utils';
 import { trackWishlistToggle } from '@/lib/analytics';
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/use-wishlist';
@@ -552,6 +552,29 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
         <span style={{ fontSize: 12, fontWeight: 400, color: isOutOfStock ? '#999' : '#000' }}>
           {formatPrice(product.price)}
         </span>
+        {product.reviewCount > 0 && product.averageRating != null && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+            <div style={{ display: 'flex', gap: 1 }}>
+              {[0, 1, 2, 3, 4].map((i) => {
+                const filled = i < Math.round(product.averageRating!);
+                return (
+                  <Star
+                    key={i}
+                    size={11}
+                    color={filled ? '#121212' : '#D4D4D4'}
+                    fill={filled ? '#121212' : 'none'}
+                  />
+                );
+              })}
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 400, color: '#000' }}>
+              {product.averageRating.toFixed(1)}
+            </span>
+            <span style={{ fontSize: 11, fontWeight: 300, color: '#999' }}>
+              ({product.reviewCount})
+            </span>
+          </div>
+        )}
       </Link>
 
       <div style={{ padding: '0 10px 10px 10px' }}>

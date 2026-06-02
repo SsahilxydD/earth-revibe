@@ -189,8 +189,30 @@ export const productService = {
       prisma.product.count({ where }),
     ]);
 
+    // Card-level rating: one grouped query over approved reviews for just this
+    // page's products (not N per-product queries), merged onto each item so the
+    // tile can show stars + average. Mirrors getProductBySlug's rounding.
+    const productIds = products.map((p) => p.id);
+    const ratingRows = productIds.length
+      ? await prisma.review.groupBy({
+          by: ['productId'],
+          where: { productId: { in: productIds }, isApproved: true },
+          _avg: { rating: true },
+          _count: { _all: true },
+        })
+      : [];
+    const ratingByProduct = new Map(ratingRows.map((r) => [r.productId, r]));
+    const productsWithRatings = products.map((p) => {
+      const r = ratingByProduct.get(p.id);
+      return {
+        ...p,
+        averageRating: r?._avg.rating != null ? Math.round(r._avg.rating * 10) / 10 : null,
+        reviewCount: r?._count._all ?? 0,
+      };
+    });
+
     const result = {
-      products,
+      products: productsWithRatings,
       total,
       page,
       limit,
