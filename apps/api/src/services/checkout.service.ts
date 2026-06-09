@@ -571,6 +571,33 @@ export const checkoutService = {
 
     return result;
   },
+
+  /**
+   * Lightweight order-status probe by Razorpay order id. Used by the
+   * storefront after a Magic Checkout COD completion: COD has no captured
+   * payment for the client to verify with verify-payment (the HMAC is over
+   * order_id|payment_id), so the client polls this until the payment.pending
+   * webhook (or the reconcile sweep) finalizes the order. A razorpayOrderId
+   * is unguessable and only held by the customer who created the checkout,
+   * so exposing existence + orderNumber against it is safe unauthenticated
+   * (same model as getOrderAddress above).
+   */
+  async getOrderStatus(razorpayOrderId: string) {
+    const payment = await prisma.payment.findUnique({
+      where: { razorpayOrderId },
+      include: {
+        order: { select: { orderNumber: true, loyaltyPointsEarned: true } },
+      },
+    });
+    if (!payment?.order) {
+      return { found: false as const };
+    }
+    return {
+      found: true as const,
+      orderNumber: payment.order.orderNumber,
+      pointsEarned: payment.order.loyaltyPointsEarned ?? 0,
+    };
+  },
 };
 
 /**
@@ -600,6 +627,11 @@ export async function finalizeOrderFromPending(
     razorpayPaymentId: string;
     razorpaySignature?: string;
     method?: string;
+    // Magic Checkout COD: the payment entity exists but nothing is captured —
+    // Razorpay signals the placed order via payment.pending (method=cod).
+    // The order is real and must be fulfilled, but Payment stays PENDING
+    // until collected on delivery (mirrors createCodOrder's status model).
+    codPending?: boolean;
   }
 ): Promise<{ orderNumber: string; pointsEarned: number; accountAutoCreated: boolean } | null> {
   // Idempotency: if order already exists for this razorpayOrderId, skip
@@ -663,7 +695,15 @@ export async function finalizeOrderFromPending(
   const discountAmount = Number(pending.discountAmount);
   const loyaltyDiscount = Number(pending.loyaltyDiscount);
   const shippingAmount = 0;
-  const totalAmount = Math.max(subtotal - discountAmount - loyaltyDiscount + shippingAmount, 0);
+  // Magic Checkout COD: Razorpay collects subtotal + the COD fee we quote via
+  // shipping-info (env.COD_FEE). Fold it into totalAmount exactly like
+  // createCodOrder does, so Payment.amount and Shiprocket's collectable match
+  // what the customer owes on delivery.
+  const codFee = paymentInfo.codPending ? env.COD_FEE || 0 : 0;
+  const totalAmount = Math.max(
+    subtotal - discountAmount - loyaltyDiscount + shippingAmount + codFee,
+    0
+  );
 
   let discountCodeId: string | null = null;
   if (pending.discountCode) {
@@ -857,18 +897,22 @@ export async function finalizeOrderFromPending(
                 razorpayPaymentId: paymentInfo.razorpayPaymentId,
                 razorpaySignature: paymentInfo.razorpaySignature || '',
                 amount: totalAmount,
-                status: 'CAPTURED',
+                status: paymentInfo.codPending ? 'PENDING' : 'CAPTURED',
                 method: paymentInfo.method as any,
-                paidAt: new Date(),
+                paidAt: paymentInfo.codPending ? null : new Date(),
               },
             },
             status: 'CONFIRMED',
             statusHistory: {
               create: {
                 status: 'CONFIRMED',
-                note: isGuest
-                  ? 'Payment received via Magic Checkout (guest)'
-                  : 'Payment received via Magic Checkout',
+                note: paymentInfo.codPending
+                  ? isGuest
+                    ? 'COD order placed via Magic Checkout (guest)'
+                    : 'COD order placed via Magic Checkout'
+                  : isGuest
+                    ? 'Payment received via Magic Checkout (guest)'
+                    : 'Payment received via Magic Checkout',
               },
             },
           },
@@ -1076,7 +1120,7 @@ export async function finalizeOrderFromPending(
     customerPhone: customerPhone || null,
     totalAmount,
     itemCount: cartItems.length,
-    paymentMethod: 'razorpay',
+    paymentMethod: paymentInfo.codPending ? 'cod' : 'razorpay',
     status: 'CONFIRMED',
   }).catch((err) =>
     logger.error({ err, orderNumber: finalOrderNumber }, 'Admin new-order alert fanout threw')
@@ -1093,7 +1137,7 @@ export async function finalizeOrderFromPending(
         total: totalAmount,
         item_count: cartItems.length,
         discount_amount: discountAmount,
-        payment_method: 'razorpay',
+        payment_method: paymentInfo.codPending ? 'cod' : 'razorpay',
         is_guest: isGuest,
         loyalty_points_earned: pointsEarned,
         account_auto_created: accountAutoCreated,
@@ -1521,24 +1565,35 @@ export async function reconcileStaleCheckouts(): Promise<{
 
       const payments = (rzpPayments as any)?.items || rzpPayments || [];
       const capturedPayment = payments.find?.((p: any) => p.status === 'captured');
+      // Magic Checkout COD: the payment is created with method=cod and sits at
+      // status=pending until collected on delivery — it is NEVER 'captured' at
+      // checkout time. Without this check, the 2h branch below treated every
+      // Magic COD order as an abandoned cart: restocked it and deleted the
+      // PendingCheckout. That silently dropped ALL Magic Checkout COD orders.
+      const codPendingPayment = payments.find?.(
+        (p: any) => p.method === 'cod' && (p.status === 'pending' || p.status === 'authorized')
+      );
 
-      if (capturedPayment) {
-        // Payment was captured but order never created — finalize now
+      if (capturedPayment || codPendingPayment) {
+        const payment = capturedPayment || codPendingPayment;
+        const isCod = !capturedPayment;
+        // Payment was captured (or COD placed) but order never created — finalize now
         logger.warn(
-          { razorpayOrderId: checkout.razorpayOrderId, orderNumber: checkout.orderNumber },
-          'Reconciliation: found captured payment with no order — finalizing'
+          { razorpayOrderId: checkout.razorpayOrderId, orderNumber: checkout.orderNumber, isCod },
+          'Reconciliation: found payment with no order — finalizing'
         );
 
         const result = await finalizeOrderFromPending(checkout, {
           razorpayOrderId: checkout.razorpayOrderId,
-          razorpayPaymentId: capturedPayment.id,
+          razorpayPaymentId: payment.id,
           razorpaySignature: '',
-          method: mapPaymentMethod(capturedPayment.method),
+          method: mapPaymentMethod(payment.method),
+          codPending: isCod,
         });
 
         if (result) {
           logger.info(
-            { orderNumber: checkout.orderNumber },
+            { orderNumber: checkout.orderNumber, isCod },
             'Reconciliation: order finalized successfully'
           );
           finalized++;
@@ -1620,13 +1675,20 @@ export async function syncUserOrders(userId: string): Promise<{ synced: number }
 
       const payments = (rzpPayments as any)?.items || rzpPayments || [];
       const capturedPayment = payments.find?.((p: any) => p.status === 'captured');
+      // Same COD blind spot as reconcileStaleCheckouts: a Magic Checkout COD
+      // payment stays status=pending (method=cod) — still a real order.
+      const codPendingPayment = payments.find?.(
+        (p: any) => p.method === 'cod' && (p.status === 'pending' || p.status === 'authorized')
+      );
+      const payment = capturedPayment || codPendingPayment;
 
-      if (capturedPayment) {
+      if (payment) {
         const result = await finalizeOrderFromPending(checkout, {
           razorpayOrderId: checkout.razorpayOrderId,
-          razorpayPaymentId: capturedPayment.id,
+          razorpayPaymentId: payment.id,
           razorpaySignature: '',
-          method: mapPaymentMethod(capturedPayment.method),
+          method: mapPaymentMethod(payment.method),
+          codPending: !capturedPayment,
         });
         if (result) synced++;
       }
