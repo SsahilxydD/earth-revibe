@@ -153,6 +153,23 @@ export const checkoutController = {
     res.json({ success: true, data: result });
   },
 
+  /**
+   * Order-status probe for Magic Checkout COD completions — COD has no
+   * captured payment to verify, so the storefront polls this until the
+   * payment.pending webhook finalizes the order. See checkoutService.getOrderStatus.
+   */
+  async getOrderStatus(req: Request, res: Response) {
+    const razorpayOrderId = req.params.razorpayOrderId as string;
+    if (!razorpayOrderId) {
+      res
+        .status(400)
+        .json({ success: false, error: { code: 'BAD_REQUEST', message: 'Missing order ID' } });
+      return;
+    }
+    const result = await checkoutService.getOrderStatus(razorpayOrderId);
+    res.json({ success: true, data: result });
+  },
+
   async createCodOrderHandler(req: Request, res: Response) {
     const result = await createCodOrder(req.user!.id, req.body);
     res.status(201).json({ success: true, data: result });

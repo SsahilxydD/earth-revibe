@@ -47,6 +47,15 @@ router.get(
   asyncHandler(checkoutController.getOrderAddress)
 );
 
+// Magic Checkout COD completion probe — polled by the storefront while the
+// payment.pending webhook finalizes the order (COD has nothing to verify
+// client-side). Unauthenticated by design: razorpayOrderId is the capability.
+router.get(
+  '/order-status/:razorpayOrderId',
+  optionalAuthenticate,
+  asyncHandler(checkoutController.getOrderStatus)
+);
+
 // Razorpay server-to-server callbacks.
 //
 // No Zod validate() here on purpose: a single 400 from schema rejection can

@@ -38,8 +38,11 @@ interface RazorpayInstance {
 
 export interface RazorpayResponse {
   razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
+  // Optional: Magic Checkout COD completions have no captured payment, so
+  // payment_id/signature may be absent. Callers must branch on these and
+  // fall back to polling /checkout/order-status (see lib/cod-order.ts).
+  razorpay_payment_id?: string;
+  razorpay_signature?: string;
 }
 
 interface InitiatePaymentParams {

@@ -14,6 +14,7 @@ import { LoginModal } from '@/components/auth/login-modal';
 import { PaymentMethodModal } from '@/components/checkout/payment-method-modal';
 import { CODCheckoutModal } from '@/components/checkout/cod-checkout-modal';
 import { api } from '@/lib/api-client';
+import { awaitMagicOrder } from '@/lib/cod-order';
 import { useRazorpay, preloadRazorpayScript } from '@/hooks/use-razorpay';
 import { useProducts } from '@/hooks/use-products';
 import { useToast } from '@/providers';
@@ -227,7 +228,23 @@ export function CartDrawer() {
         description: `Order ${result.orderNumber}`,
       });
 
+      const goToConfirmation = (orderNumber: string, accountAutoCreated = false) => {
+        closeCart();
+        setCheckoutStep('idle');
+        const params = new URLSearchParams({ orderId: orderNumber });
+        if (accountAutoCreated) params.set('newAccount', '1');
+        router.push(`/checkout/confirmation?${params.toString()}`);
+      };
+
       if (!paymentResponse) {
+        // Razorpay's Magic COD flow can close the modal without invoking the
+        // handler even though the order WAS placed (it finalizes via the
+        // payment.pending webhook). Show the cancel toast immediately for the
+        // common genuine-cancel case, but quietly watch for the order in the
+        // background and redirect if it materializes.
+        void awaitMagicOrder(result.razorpayOrderId, { attempts: 15 }).then((status) => {
+          if (status?.found && status.orderNumber) goToConfirmation(status.orderNumber);
+        });
         addToast('Payment was cancelled. You can try again.', 'info');
         setCheckoutStep('idle');
         return;
@@ -235,21 +252,44 @@ export function CartDrawer() {
 
       setCheckoutStep('verifying');
 
-      const verification = await api.post<{
-        orderNumber: string;
-        pointsEarned: number;
-        accountAutoCreated: boolean;
-      }>('/checkout/verify-payment', {
-        razorpayOrderId: paymentResponse.razorpay_order_id,
-        razorpayPaymentId: paymentResponse.razorpay_payment_id,
-        razorpaySignature: paymentResponse.razorpay_signature,
-      });
+      // COD completions carry no captured payment — there may be no
+      // payment_id/signature to verify. The order is created server-side by
+      // the payment.pending webhook; poll for it instead of calling verify.
+      if (!paymentResponse.razorpay_payment_id || !paymentResponse.razorpay_signature) {
+        const status = await awaitMagicOrder(result.razorpayOrderId);
+        if (status?.found && status.orderNumber) {
+          goToConfirmation(status.orderNumber);
+          return;
+        }
+        throw new Error(
+          'We could not confirm your order yet. If you placed a COD order, check your email/WhatsApp for confirmation before retrying.'
+        );
+      }
 
-      closeCart();
-      setCheckoutStep('idle');
-      const params = new URLSearchParams({ orderId: verification.orderNumber });
-      if (verification.accountAutoCreated) params.set('newAccount', '1');
-      router.push(`/checkout/confirmation?${params.toString()}`);
+      let verification: { orderNumber: string; pointsEarned: number; accountAutoCreated: boolean };
+      try {
+        verification = await api.post<{
+          orderNumber: string;
+          pointsEarned: number;
+          accountAutoCreated: boolean;
+        }>('/checkout/verify-payment', {
+          razorpayOrderId: paymentResponse.razorpay_order_id,
+          razorpayPaymentId: paymentResponse.razorpay_payment_id,
+          razorpaySignature: paymentResponse.razorpay_signature,
+        });
+      } catch (verifyError: any) {
+        // Client-side verify can fail while the webhook still finalizes the
+        // order (COD signatures, transient 5xx). Don't dead-end the customer —
+        // poll order-status before surfacing an error.
+        const status = await awaitMagicOrder(result.razorpayOrderId);
+        if (status?.found && status.orderNumber) {
+          goToConfirmation(status.orderNumber);
+          return;
+        }
+        throw verifyError;
+      }
+
+      goToConfirmation(verification.orderNumber, verification.accountAutoCreated);
     } catch (error: any) {
       addToast(error?.message || 'Something went wrong. Please try again.', 'error');
       setCheckoutStep('idle');

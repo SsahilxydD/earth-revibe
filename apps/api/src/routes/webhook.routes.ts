@@ -216,6 +216,64 @@ router.post(
           break;
         }
 
+        case 'payment.pending': {
+          // Magic Checkout COD: nothing is ever captured at checkout — Razorpay
+          // signals the placed order with payment.pending + method=cod (this is
+          // exactly how their own WooCommerce 1CC plugin finalizes COD orders).
+          // Before this case existed the event fell through to the default
+          // branch, no order was created, and the 2h reconcile sweep restocked
+          // the items — silently dropping every Magic Checkout COD order.
+          // NOTE: 'payment.pending' must be subscribed on the webhook in the
+          // Razorpay dashboard for this to fire at all.
+          const paymentEntity = payload?.payment?.entity;
+          if (!paymentEntity) break;
+          if (paymentEntity.method !== 'cod') {
+            // pending also fires for slow methods (e.g. bank transfer) — those
+            // finalize via payment.captured later, nothing to do here.
+            logger.info(
+              { event, method: paymentEntity.method },
+              'payment.pending for non-COD method — ignoring'
+            );
+            break;
+          }
+
+          const pendingCheckout = await prisma.pendingCheckout.findUnique({
+            where: { razorpayOrderId: paymentEntity.order_id },
+          });
+
+          if (!pendingCheckout) {
+            // Either already finalized (webhook retry / reconcile race) or the
+            // pending row was garbage-collected before this event arrived.
+            const existing = await prisma.payment.findUnique({
+              where: { razorpayOrderId: paymentEntity.order_id },
+            });
+            if (!existing) {
+              logger.error(
+                {
+                  razorpayOrderId: paymentEntity.order_id,
+                  razorpayPaymentId: paymentEntity.id,
+                },
+                'payment.pending(cod): no PendingCheckout and no order — COD order lost, backfill manually from Razorpay dashboard'
+              );
+            }
+            break;
+          }
+
+          const codResult = await finalizeOrderFromPending(pendingCheckout, {
+            razorpayOrderId: paymentEntity.order_id,
+            razorpayPaymentId: paymentEntity.id,
+            method: 'COD',
+            codPending: true,
+          });
+          if (codResult) {
+            logger.info(
+              { orderNumber: codResult.orderNumber, razorpayPaymentId: paymentEntity.id },
+              'COD order finalized from payment.pending webhook'
+            );
+          }
+          break;
+        }
+
         case 'payment.failed': {
           const paymentEntity = payload?.payment?.entity;
           if (!paymentEntity) break;
