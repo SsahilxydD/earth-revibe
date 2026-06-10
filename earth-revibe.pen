@@ -1,5 +1,5 @@
 {
-  "version": "2.11",
+  "version": "2.13",
   "children": [
     {
       "type": "frame",
@@ -123,11 +123,8 @@
                       "name": "phoneSep",
                       "width": 1,
                       "height": 16,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#CCCCCCFF"
-                      }
+                      "stroke": "#CCCCCCFF",
+                      "strokeWidth": 1
                     },
                     {
                       "type": "text",
@@ -154,11 +151,8 @@
                   "name": "phoneLine",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  }
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1
                 }
               ]
             },
@@ -294,11 +288,9 @@
                   "name": "box1",
                   "width": 48,
                   "height": 56,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  },
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "justifyContent": "center",
                   "alignItems": "center",
@@ -321,11 +313,9 @@
                   "name": "box2",
                   "width": 48,
                   "height": 56,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  },
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "justifyContent": "center",
                   "alignItems": "center",
@@ -348,11 +338,9 @@
                   "name": "box3",
                   "width": 48,
                   "height": 56,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#000000FF"
-                  },
+                  "stroke": "#000000FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "justifyContent": "center",
                   "alignItems": "center",
@@ -374,11 +362,9 @@
                   "name": "box4",
                   "width": 48,
                   "height": 56,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  },
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "justifyContent": "center",
                   "alignItems": "center"
@@ -389,11 +375,9 @@
                   "name": "box5",
                   "width": 48,
                   "height": 56,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  },
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "justifyContent": "center",
                   "alignItems": "center"
@@ -404,11 +388,9 @@
                   "name": "box6",
                   "width": 48,
                   "height": 56,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  },
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "justifyContent": "center",
                   "alignItems": "center"
@@ -519,13 +501,13 @@
           "alignItems": "center",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "ypsOj",
               "name": "backBtn",
               "width": 20,
               "height": 20,
-              "iconFontName": "arrow-left",
-              "iconFontFamily": "lucide",
+              "icon": "arrow-left",
+              "library": "lucide",
               "fill": "#000000FF"
             },
             {
@@ -554,11 +536,8 @@
           "name": "Tab Nav",
           "width": "fill_container",
           "height": 44,
-          "stroke": {
-            "align": "inside",
-            "thickness": 0,
-            "fill": "#FFFFFFFF"
-          },
+          "stroke": "#FFFFFFFF",
+          "strokeAlignment": "inner",
           "gap": 24,
           "padding": [
             0,
@@ -647,11 +626,8 @@
           "name": "divider",
           "width": "fill_container",
           "height": 1,
-          "stroke": {
-            "align": "center",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          }
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
         },
         {
           "type": "frame",
@@ -799,11 +775,8 @@
                       "name": "f1Line",
                       "width": "fill_container",
                       "height": 1,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      }
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1
                     }
                   ]
                 },
@@ -855,11 +828,8 @@
                       "name": "f2Line",
                       "width": "fill_container",
                       "height": 1,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      }
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1
                     }
                   ]
                 },
@@ -911,11 +881,8 @@
                       "name": "f3Line",
                       "width": "fill_container",
                       "height": 1,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#F0F0F0FF"
-                      }
+                      "stroke": "#F0F0F0FF",
+                      "strokeWidth": 1
                     }
                   ]
                 },
@@ -968,11 +935,8 @@
                           "name": "f4Sep",
                           "width": 1,
                           "height": 14,
-                          "stroke": {
-                            "align": "center",
-                            "thickness": 1,
-                            "fill": "#CCCCCCFF"
-                          }
+                          "stroke": "#CCCCCCFF",
+                          "strokeWidth": 1
                         },
                         {
                           "type": "text",
@@ -999,11 +963,8 @@
                       "name": "f4Line",
                       "width": "fill_container",
                       "height": 1,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      }
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1
                     }
                   ]
                 }
@@ -1075,13 +1036,13 @@
           "alignItems": "center",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "Mbrni",
               "name": "oBack",
               "width": 20,
               "height": 20,
-              "iconFontName": "arrow-left",
-              "iconFontFamily": "lucide",
+              "icon": "arrow-left",
+              "library": "lucide",
               "fill": "#000000FF"
             },
             {
@@ -1198,11 +1159,8 @@
           "name": "oDivider",
           "width": "fill_container",
           "height": 1,
-          "stroke": {
-            "align": "center",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          }
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
         },
         {
           "type": "frame",
@@ -1261,10 +1219,6 @@
                   "id": "oqGIv",
                   "name": "Order 1",
                   "width": "fill_container",
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 0
-                  },
                   "layout": "vertical",
                   "gap": 10,
                   "padding": [
@@ -1342,11 +1296,8 @@
                   "name": "o1Line",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  }
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -1430,11 +1381,8 @@
                   "name": "o2Line",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  }
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -1518,11 +1466,8 @@
                   "name": "o3Line",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  }
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1
                 }
               ]
             }
@@ -1556,13 +1501,13 @@
           "alignItems": "center",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "wgv45",
               "name": "dBack",
               "width": 20,
               "height": 20,
-              "iconFontName": "arrow-left",
-              "iconFontFamily": "lucide",
+              "icon": "arrow-left",
+              "library": "lucide",
               "fill": "#000000FF"
             },
             {
@@ -1584,11 +1529,8 @@
           "name": "dDivider",
           "width": "fill_container",
           "height": 1,
-          "stroke": {
-            "align": "center",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          }
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
         },
         {
           "type": "frame",
@@ -1681,11 +1623,8 @@
                       "name": "dash1",
                       "width": "fill_container",
                       "height": 0,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#000000FF"
-                      }
+                      "stroke": "#000000FF",
+                      "strokeWidth": 1
                     },
                     {
                       "type": "ellipse",
@@ -1701,11 +1640,8 @@
                       "name": "dash2",
                       "width": "fill_container",
                       "height": 0,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#000000FF"
-                      }
+                      "stroke": "#000000FF",
+                      "strokeWidth": 1
                     },
                     {
                       "type": "ellipse",
@@ -1855,11 +1791,8 @@
                   "name": "itemLine",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  }
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -2063,11 +1996,8 @@
                   "name": "payLine",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  }
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -2113,11 +2043,9 @@
               "name": "Track Package Button",
               "width": "fill_container",
               "height": 50,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#000000FF"
-              },
+              "stroke": "#000000FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "justifyContent": "center",
               "alignItems": "center",
               "children": [
@@ -2164,13 +2092,13 @@
           "alignItems": "center",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "AlpAn",
               "name": "aBack",
               "width": 20,
               "height": 20,
-              "iconFontName": "arrow-left",
-              "iconFontFamily": "lucide",
+              "icon": "arrow-left",
+              "library": "lucide",
               "fill": "#000000FF"
             },
             {
@@ -2287,11 +2215,8 @@
           "name": "aDivider",
           "width": "fill_container",
           "height": 1,
-          "stroke": {
-            "align": "center",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          }
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
         },
         {
           "type": "frame",
@@ -2344,11 +2269,9 @@
               "id": "kDBcS",
               "name": "Address Card 1",
               "width": "fill_container",
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#E5E5E5FF"
-              },
+              "stroke": "#E5E5E5FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "vertical",
               "gap": 10,
               "padding": 20,
@@ -2449,11 +2372,9 @@
               "id": "4V3dN",
               "name": "Address Card 2",
               "width": "fill_container",
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "vertical",
               "gap": 10,
               "padding": 20,
@@ -2578,13 +2499,13 @@
           "alignItems": "center",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "im0Mu",
               "name": "wBack",
               "width": 20,
               "height": 20,
-              "iconFontName": "arrow-left",
-              "iconFontFamily": "lucide",
+              "icon": "arrow-left",
+              "library": "lucide",
               "fill": "#000000FF"
             },
             {
@@ -2701,11 +2622,8 @@
           "name": "wDiv",
           "width": "fill_container",
           "height": 1,
-          "stroke": {
-            "align": "center",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          }
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
         },
         {
           "type": "frame",
@@ -2804,11 +2722,9 @@
                       "name": "wCard1Btn",
                       "width": "fill_container",
                       "height": 36,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "justifyContent": "center",
                       "alignItems": "center",
                       "children": [
@@ -2871,11 +2787,9 @@
                       "name": "wCard2Btn",
                       "width": "fill_container",
                       "height": 36,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "justifyContent": "center",
                       "alignItems": "center",
                       "children": [
@@ -2947,11 +2861,9 @@
                       "name": "wCard3Btn",
                       "width": "fill_container",
                       "height": 36,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "justifyContent": "center",
                       "alignItems": "center",
                       "children": [
@@ -3085,13 +2997,13 @@
           "alignItems": "center",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "Y1ZvL",
               "name": "lBack",
               "width": 20,
               "height": 20,
-              "iconFontName": "arrow-left",
-              "iconFontFamily": "lucide",
+              "icon": "arrow-left",
+              "library": "lucide",
               "fill": "#000000FF"
             },
             {
@@ -3120,11 +3032,8 @@
           "name": "lDivTop",
           "width": "fill_container",
           "height": 1,
-          "stroke": {
-            "align": "center",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          }
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
         },
         {
           "type": "frame",
@@ -3179,11 +3088,8 @@
                   "name": "balDivider",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#333333FF"
-                  }
+                  "stroke": "#333333FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -3278,23 +3184,21 @@
                   "id": "RSaSn",
                   "name": "hw1",
                   "width": "fill_container",
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  },
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "gap": 8,
                   "padding": 16,
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "4zVsQ",
                       "name": "hw1Icon",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "shopping-bag",
-                      "iconFontFamily": "lucide",
+                      "icon": "shopping-bag",
+                      "library": "lucide",
                       "fill": "#000000FF"
                     },
                     {
@@ -3327,23 +3231,21 @@
                   "id": "OglbS",
                   "name": "hw2",
                   "width": "fill_container",
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  },
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "gap": 8,
                   "padding": 16,
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "BVRDH",
                       "name": "hw2Icon",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "gift",
-                      "iconFontFamily": "lucide",
+                      "icon": "gift",
+                      "library": "lucide",
                       "fill": "#000000FF"
                     },
                     {
@@ -3376,23 +3278,21 @@
                   "id": "rJLji",
                   "name": "hw3",
                   "width": "fill_container",
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  },
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "gap": 8,
                   "padding": 16,
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "yjeWk",
                       "name": "hw3Icon",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "trending-up",
-                      "iconFontFamily": "lucide",
+                      "icon": "trending-up",
+                      "library": "lucide",
                       "fill": "#000000FF"
                     },
                     {
@@ -3499,11 +3399,8 @@
                   "name": "tx1Line",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  }
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -3564,11 +3461,8 @@
                   "name": "tx2Line",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  }
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -3655,13 +3549,13 @@
           "alignItems": "center",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "s8HOq",
               "name": "rBack",
               "width": 20,
               "height": 20,
-              "iconFontName": "arrow-left",
-              "iconFontFamily": "lucide",
+              "icon": "arrow-left",
+              "library": "lucide",
               "fill": "#000000FF"
             },
             {
@@ -3690,11 +3584,8 @@
           "name": "rDivTop",
           "width": "fill_container",
           "height": 1,
-          "stroke": {
-            "align": "center",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          }
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
         },
         {
           "type": "frame",
@@ -3737,11 +3628,9 @@
                   "name": "rCodeBox",
                   "width": "fill_container",
                   "height": 56,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  },
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "justifyContent": "center",
                   "alignItems": "center",
                   "children": [
@@ -3770,13 +3659,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "OHflv",
                       "name": "rCopyIcon",
                       "width": 14,
                       "height": 14,
-                      "iconFontName": "copy",
-                      "iconFontFamily": "lucide",
+                      "icon": "copy",
+                      "library": "lucide",
                       "fill": "#FFFFFFFF"
                     },
                     {
@@ -3831,11 +3720,9 @@
                   "name": "rShareLink",
                   "width": "fill_container",
                   "height": 46,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  },
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "gap": 8,
                   "justifyContent": "center",
                   "alignItems": "center",
@@ -4041,13 +3928,13 @@
           "alignItems": "center",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "2F5sm",
               "name": "sBack",
               "width": 20,
               "height": 20,
-              "iconFontName": "arrow-left",
-              "iconFontFamily": "lucide",
+              "icon": "arrow-left",
+              "library": "lucide",
               "fill": "#000000FF"
             },
             {
@@ -4076,11 +3963,8 @@
           "name": "sDivTop",
           "width": "fill_container",
           "height": 1,
-          "stroke": {
-            "align": "center",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          }
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
         },
         {
           "type": "frame",
@@ -4209,11 +4093,8 @@
                   "name": "st1Line",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  }
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -4289,11 +4170,8 @@
                   "name": "st2Line",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  }
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -4414,13 +4292,13 @@
                   "letterSpacing": 2
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "C4nip",
                   "name": "cClose",
                   "width": 20,
                   "height": 20,
-                  "iconFontName": "x",
-                  "iconFontFamily": "lucide",
+                  "icon": "x",
+                  "library": "lucide",
                   "fill": "#000000FF"
                 }
               ]
@@ -4431,11 +4309,8 @@
               "name": "cDivider1",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -4464,11 +4339,8 @@
               "name": "cDivider2",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -4544,11 +4416,9 @@
                               "id": "hnN3q",
                               "name": "item1Qty",
                               "height": 28,
-                              "stroke": {
-                                "align": "inside",
-                                "thickness": 1,
-                                "fill": "#E5E5E5FF"
-                              },
+                              "stroke": "#E5E5E5FF",
+                              "strokeWidth": 1,
+                              "strokeAlignment": "inner",
                               "alignItems": "center",
                               "children": [
                                 {
@@ -4616,13 +4486,13 @@
                                   "fontWeight": "normal"
                                 },
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "lZ2NF",
                                   "name": "item1Remove",
                                   "width": 14,
                                   "height": 14,
-                                  "iconFontName": "trash-2",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "trash-2",
+                                  "library": "lucide",
                                   "fill": "#CCCCCCFF"
                                 }
                               ]
@@ -4639,11 +4509,8 @@
                   "name": "itemDiv",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  }
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -4707,11 +4574,9 @@
                               "id": "OOpL8",
                               "name": "item2Qty",
                               "height": 28,
-                              "stroke": {
-                                "align": "inside",
-                                "thickness": 1,
-                                "fill": "#E5E5E5FF"
-                              },
+                              "stroke": "#E5E5E5FF",
+                              "strokeWidth": 1,
+                              "strokeAlignment": "inner",
                               "alignItems": "center",
                               "children": [
                                 {
@@ -4779,13 +4644,13 @@
                                   "fontWeight": "normal"
                                 },
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "iCdAK",
                                   "name": "item2Remove",
                                   "width": 14,
                                   "height": 14,
-                                  "iconFontName": "trash-2",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "trash-2",
+                                  "library": "lucide",
                                   "fill": "#CCCCCCFF"
                                 }
                               ]
@@ -4820,11 +4685,8 @@
               "name": "cFootDiv",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -4841,11 +4703,9 @@
                   "name": "cDiscInput",
                   "width": "fill_container",
                   "height": 42,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  },
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "padding": [
                     0,
                     14
@@ -4869,11 +4729,9 @@
                   "id": "lsDWo",
                   "name": "cDiscBtn",
                   "height": 42,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#000000FF"
-                  },
+                  "stroke": "#000000FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "padding": [
                     0,
                     20
@@ -4975,11 +4833,8 @@
                   "name": "cTotalLine",
                   "width": "fill_container",
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  }
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "frame",
@@ -5052,13 +4907,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "fH1Ua",
                   "name": "lockIcon",
                   "width": 12,
                   "height": 12,
-                  "iconFontName": "lock",
-                  "iconFontFamily": "lucide",
+                  "icon": "lock",
+                  "library": "lucide",
                   "fill": "#CCCCCCFF"
                 },
                 {
@@ -5127,13 +4982,13 @@
               "letterSpacing": 2
             },
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "Ov61m",
               "name": "eClose",
               "width": 20,
               "height": 20,
-              "iconFontName": "x",
-              "iconFontFamily": "lucide",
+              "icon": "x",
+              "library": "lucide",
               "fill": "#000000FF"
             }
           ]
@@ -5144,11 +4999,8 @@
           "name": "eDivider",
           "width": "fill_container",
           "height": 1,
-          "stroke": {
-            "align": "center",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          }
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
         },
         {
           "type": "frame",
@@ -5166,13 +5018,13 @@
           "alignItems": "center",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "AQZue",
               "name": "eBagIcon",
               "width": 48,
               "height": 48,
-              "iconFontName": "shopping-bag",
-              "iconFontFamily": "lucide",
+              "icon": "shopping-bag",
+              "library": "lucide",
               "fill": "#E5E5E5FF"
             },
             {
@@ -5211,11 +5063,9 @@
               "name": "eBtn",
               "width": 240,
               "height": 46,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#000000FF"
-              },
+              "stroke": "#000000FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "justifyContent": "center",
               "alignItems": "center",
               "children": [
@@ -5344,13 +5194,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "uIoli",
                       "name": "hd1Icon",
                       "width": 11,
                       "height": 11,
-                      "iconFontName": "wind",
-                      "iconFontFamily": "lucide",
+                      "icon": "wind",
+                      "library": "lucide",
                       "fill": "#999999FF"
                     },
                     {
@@ -5374,13 +5224,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "IYjYC",
                       "name": "hd2Icon",
                       "width": 11,
                       "height": 11,
-                      "iconFontName": "luggage",
-                      "iconFontFamily": "lucide",
+                      "icon": "luggage",
+                      "library": "lucide",
                       "fill": "#999999FF"
                     },
                     {
@@ -5404,13 +5254,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "s98eX",
                       "name": "hd3Icon",
                       "width": 11,
                       "height": 11,
-                      "iconFontName": "sun",
-                      "iconFontFamily": "lucide",
+                      "icon": "sun",
+                      "library": "lucide",
                       "fill": "#999999FF"
                     },
                     {
@@ -5436,11 +5286,8 @@
           "name": "prodDiv",
           "width": "fill_container",
           "height": 1,
-          "stroke": {
-            "align": "center",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          }
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
         },
         {
           "type": "frame",
@@ -5477,11 +5324,9 @@
                   },
                   "width": 48,
                   "height": 48,
-                  "stroke": {
-                    "align": "outside",
-                    "thickness": 2,
-                    "fill": "#000000FF"
-                  }
+                  "stroke": "#000000FF",
+                  "strokeWidth": 2,
+                  "strokeAlignment": "outer"
                 },
                 {
                   "type": "text",
@@ -5683,13 +5528,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "87uPo",
                   "name": "filterIcon",
                   "width": 14,
                   "height": 14,
-                  "iconFontName": "sliders-horizontal",
-                  "iconFontFamily": "lucide",
+                  "icon": "sliders-horizontal",
+                  "library": "lucide",
                   "fill": "#000000FF"
                 },
                 {
@@ -5723,13 +5568,13 @@
                   "fontWeight": "300"
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "BBa9n",
                   "name": "sortIcon",
                   "width": 14,
                   "height": 14,
-                  "iconFontName": "chevron-down",
-                  "iconFontFamily": "lucide",
+                  "icon": "chevron-down",
+                  "library": "lucide",
                   "fill": "#999999FF"
                 }
               ]
@@ -5773,13 +5618,13 @@
                   "letterSpacing": 0.5
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "LsHA9",
                   "name": "chip1X",
                   "width": 10,
                   "height": 10,
-                  "iconFontName": "x",
-                  "iconFontFamily": "lucide",
+                  "icon": "x",
+                  "library": "lucide",
                   "fill": "#999999FF"
                 }
               ]
@@ -5809,13 +5654,13 @@
                   "letterSpacing": 0.5
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "cEeAA",
                   "name": "chip2X",
                   "width": 10,
                   "height": 10,
-                  "iconFontName": "x",
-                  "iconFontFamily": "lucide",
+                  "icon": "x",
+                  "library": "lucide",
                   "fill": "#999999FF"
                 }
               ]
@@ -6371,11 +6216,8 @@
               "name": "fDiv1",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -6492,11 +6334,9 @@
                           "name": "fS1",
                           "width": 40,
                           "height": 36,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "#E5E5E5FF"
-                          },
+                          "stroke": "#E5E5E5FF",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
                           "layout": "vertical",
                           "justifyContent": "center",
                           "alignItems": "center",
@@ -6519,11 +6359,9 @@
                           "name": "fS2",
                           "width": 40,
                           "height": 36,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "#E5E5E5FF"
-                          },
+                          "stroke": "#E5E5E5FF",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
                           "layout": "vertical",
                           "justifyContent": "center",
                           "alignItems": "center",
@@ -6569,11 +6407,9 @@
                           "name": "fS4",
                           "width": 40,
                           "height": 36,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "#E5E5E5FF"
-                          },
+                          "stroke": "#E5E5E5FF",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
                           "layout": "vertical",
                           "justifyContent": "center",
                           "alignItems": "center",
@@ -6596,11 +6432,9 @@
                           "name": "fS5",
                           "width": 40,
                           "height": 36,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "#E5E5E5FF"
-                          },
+                          "stroke": "#E5E5E5FF",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
                           "layout": "vertical",
                           "justifyContent": "center",
                           "alignItems": "center",
@@ -6623,11 +6457,9 @@
                           "name": "fS6",
                           "width": 40,
                           "height": 36,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "#E5E5E5FF"
-                          },
+                          "stroke": "#E5E5E5FF",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
                           "layout": "vertical",
                           "justifyContent": "center",
                           "alignItems": "center",
@@ -6681,11 +6513,9 @@
                           "fill": "#000000FF",
                           "width": 28,
                           "height": 28,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 2,
-                            "fill": "#000000FF"
-                          }
+                          "stroke": "#000000FF",
+                          "strokeWidth": 2,
+                          "strokeAlignment": "inner"
                         },
                         {
                           "type": "ellipse",
@@ -6694,11 +6524,9 @@
                           "fill": "#FFFFFFFF",
                           "width": 28,
                           "height": 28,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "#E5E5E5FF"
-                          }
+                          "stroke": "#E5E5E5FF",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner"
                         },
                         {
                           "type": "ellipse",
@@ -6904,13 +6732,13 @@
                   ]
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "7JA5l",
                   "name": "qaClose",
                   "width": 18,
                   "height": 18,
-                  "iconFontName": "x",
-                  "iconFontFamily": "lucide",
+                  "icon": "x",
+                  "library": "lucide",
                   "fill": "#999999FF"
                 }
               ]
@@ -6921,11 +6749,8 @@
               "name": "qaDivider",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -6959,11 +6784,9 @@
                       "name": "qs1",
                       "width": "fill_container",
                       "height": 40,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "vertical",
                       "justifyContent": "center",
                       "alignItems": "center",
@@ -7009,11 +6832,9 @@
                       "name": "qs3",
                       "width": "fill_container",
                       "height": 40,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "vertical",
                       "justifyContent": "center",
                       "alignItems": "center",
@@ -7036,11 +6857,9 @@
                       "name": "qs4",
                       "width": "fill_container",
                       "height": 40,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "vertical",
                       "justifyContent": "center",
                       "alignItems": "center",
@@ -7063,11 +6882,9 @@
                       "name": "qs5",
                       "width": "fill_container",
                       "height": 40,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#F0F0F0FF"
-                      },
+                      "stroke": "#F0F0F0FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "vertical",
                       "justifyContent": "center",
                       "alignItems": "center",
@@ -7120,11 +6937,9 @@
                       "fill": "#D2B48CFF",
                       "width": 28,
                       "height": 28,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 2,
-                        "fill": "#000000FF"
-                      }
+                      "stroke": "#000000FF",
+                      "strokeWidth": 2,
+                      "strokeAlignment": "inner"
                     },
                     {
                       "type": "ellipse",
@@ -7133,11 +6948,9 @@
                       "fill": "#FFFFFFFF",
                       "width": 28,
                       "height": 28,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      }
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner"
                     },
                     {
                       "type": "ellipse",
@@ -7293,13 +7106,13 @@
                   "letterSpacing": 2
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "6GXYN",
                   "name": "ftA1i",
                   "width": 14,
                   "height": 14,
-                  "iconFontName": "chevron-down",
-                  "iconFontFamily": "lucide",
+                  "icon": "chevron-down",
+                  "library": "lucide",
                   "fill": "#CCCCCCFF"
                 }
               ]
@@ -7310,11 +7123,8 @@
               "name": "ftA1l",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#EEEEEEFF"
-              }
+              "stroke": "#EEEEEEFF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -7338,13 +7148,13 @@
                   "letterSpacing": 2
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "5J93m",
                   "name": "ftA2i",
                   "width": 14,
                   "height": 14,
-                  "iconFontName": "chevron-down",
-                  "iconFontFamily": "lucide",
+                  "icon": "chevron-down",
+                  "library": "lucide",
                   "fill": "#CCCCCCFF"
                 }
               ]
@@ -7355,11 +7165,8 @@
               "name": "ftA2l",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#EEEEEEFF"
-              }
+              "stroke": "#EEEEEEFF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -7383,13 +7190,13 @@
                   "letterSpacing": 2
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "nnCm6",
                   "name": "ftA3i",
                   "width": 14,
                   "height": 14,
-                  "iconFontName": "chevron-down",
-                  "iconFontFamily": "lucide",
+                  "icon": "chevron-down",
+                  "library": "lucide",
                   "fill": "#CCCCCCFF"
                 }
               ]
@@ -7400,11 +7207,8 @@
               "name": "ftA3l",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#EEEEEEFF"
-              }
+              "stroke": "#EEEEEEFF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -7428,13 +7232,13 @@
                   "letterSpacing": 2
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "QmLLa",
                   "name": "ftA4i",
                   "width": 14,
                   "height": 14,
-                  "iconFontName": "chevron-down",
-                  "iconFontFamily": "lucide",
+                  "icon": "chevron-down",
+                  "library": "lucide",
                   "fill": "#CCCCCCFF"
                 }
               ]
@@ -7458,33 +7262,33 @@
           "alignItems": "center",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "UBg3g",
               "name": "ftIg",
               "width": 18,
               "height": 18,
-              "iconFontName": "instagram",
-              "iconFontFamily": "lucide",
+              "icon": "instagram",
+              "library": "lucide",
               "fill": "#000000FF"
             },
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "9mMSm",
               "name": "ftFb",
               "width": 18,
               "height": 18,
-              "iconFontName": "facebook",
-              "iconFontFamily": "lucide",
+              "icon": "facebook",
+              "library": "lucide",
               "fill": "#000000FF"
             },
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "XjYe2",
               "name": "ftYt",
               "width": 18,
               "height": 18,
-              "iconFontName": "youtube",
-              "iconFontFamily": "lucide",
+              "icon": "youtube",
+              "library": "lucide",
               "fill": "#000000FF"
             }
           ]
@@ -7542,27 +7346,27 @@
           "layout": "none",
           "children": [
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "sP1wX",
               "x": 345,
               "y": 16,
               "name": "wishBtn",
               "width": 20,
               "height": 20,
-              "iconFontName": "bookmark",
-              "iconFontFamily": "lucide",
+              "icon": "bookmark",
+              "library": "lucide",
               "fill": "#FFFFFFFF"
             },
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "6LGs4",
               "x": 370,
               "y": 17,
               "name": "shareBtn",
               "width": 18,
               "height": 18,
-              "iconFontName": "share-2",
-              "iconFontFamily": "lucide",
+              "icon": "share-2",
+              "library": "lucide",
               "fill": "#FFFFFFFF"
             }
           ]
@@ -7590,11 +7394,8 @@
               "name": "infoSec",
               "width": 393,
               "fill": "#FFFFFFFF",
-              "stroke": {
-                "align": "inside",
-                "thickness": 0,
-                "fill": "#FFFFFFFF"
-              },
+              "stroke": "#FFFFFFFF",
+              "strokeAlignment": "inner",
               "layout": "vertical",
               "gap": 6,
               "padding": [
@@ -7630,13 +7431,13 @@
                           "fontWeight": "500"
                         },
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "6jczs",
                           "name": "pdpBookmark",
                           "width": 16,
                           "height": 16,
-                          "iconFontName": "bookmark",
-                          "iconFontFamily": "lucide",
+                          "icon": "bookmark",
+                          "library": "lucide",
                           "fill": "#000000FF"
                         }
                       ]
@@ -7647,11 +7448,9 @@
                       "name": "sizeGuideBtn",
                       "height": 28,
                       "cornerRadius": 4,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "padding": [
                         0,
                         12
@@ -7736,11 +7535,9 @@
                       "width": "fill_container",
                       "height": 40,
                       "cornerRadius": 9999,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "vertical",
                       "justifyContent": "center",
                       "alignItems": "center",
@@ -7764,11 +7561,9 @@
                       "width": "fill_container",
                       "height": 40,
                       "cornerRadius": 9999,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "vertical",
                       "justifyContent": "center",
                       "alignItems": "center",
@@ -7792,11 +7587,9 @@
                       "width": "fill_container",
                       "height": 40,
                       "cornerRadius": 9999,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "vertical",
                       "justifyContent": "center",
                       "alignItems": "center",
@@ -7820,11 +7613,9 @@
                       "width": "fill_container",
                       "height": 40,
                       "cornerRadius": 9999,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#F0F0F0FF"
-                      },
+                      "stroke": "#F0F0F0FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "vertical",
                       "justifyContent": "center",
                       "alignItems": "center",
@@ -7861,11 +7652,9 @@
                   "width": "fill_container",
                   "height": 50,
                   "cornerRadius": 9999,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  },
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "justifyContent": "center",
                   "alignItems": "center",
                   "children": [
@@ -7971,12 +7760,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "baxCP",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "wallet",
-                              "iconFontFamily": "lucide",
+                              "icon": "wallet",
+                              "library": "lucide",
                               "fill": "#2A2419"
                             },
                             {
@@ -8030,12 +7819,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "eqx2d",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "users",
-                              "iconFontFamily": "lucide",
+                              "icon": "users",
+                              "library": "lucide",
                               "fill": "#2A2419"
                             },
                             {
@@ -8089,12 +7878,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "PBCkT",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "recycle",
-                              "iconFontFamily": "lucide",
+                              "icon": "recycle",
+                              "library": "lucide",
                               "fill": "#2A2419"
                             },
                             {
@@ -8151,11 +7940,9 @@
           "width": 353,
           "fill": "#e7e4e4",
           "cornerRadius": 20,
-          "stroke": {
-            "align": "inside",
-            "thickness": 1,
-            "fill": "#F0F0F0FF"
-          },
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1,
+          "strokeAlignment": "inner",
           "layout": "vertical",
           "padding": [
             20,
@@ -8246,11 +8033,7 @@
               "name": "tabDivider",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 0,
-                "fill": "#E8E8E8FF"
-              }
+              "stroke": "#E8E8E8FF"
             },
             {
               "type": "frame",
@@ -8258,11 +8041,8 @@
               "name": "tabContent",
               "width": "fill_container",
               "fill": "#e7e4e4ff",
-              "stroke": {
-                "align": "inside",
-                "thickness": 0,
-                "fill": "#F5F5F500"
-              },
+              "stroke": "#F5F5F500",
+              "strokeAlignment": "inner",
               "layout": "vertical",
               "gap": 16,
               "padding": [
@@ -8399,11 +8179,9 @@
                       "fill": "#D4A574FF",
                       "width": 48,
                       "height": 48,
-                      "stroke": {
-                        "align": "outside",
-                        "thickness": 2,
-                        "fill": "#000000FF"
-                      }
+                      "stroke": "#000000FF",
+                      "strokeWidth": 2,
+                      "strokeAlignment": "outer"
                     },
                     {
                       "type": "text",
@@ -8556,15 +8334,15 @@
                       "layout": "none",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "PvLIe",
                           "x": 148,
                           "y": 10,
                           "name": "r1Bm",
                           "width": 16,
                           "height": 16,
-                          "iconFontName": "bookmark",
-                          "iconFontFamily": "lucide",
+                          "icon": "bookmark",
+                          "library": "lucide",
                           "fill": "#FFFFFFFF"
                         }
                       ]
@@ -8613,13 +8391,13 @@
                           ]
                         },
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "Q4eJz",
                           "name": "r1Add",
                           "width": 16,
                           "height": 16,
-                          "iconFontName": "plus",
-                          "iconFontFamily": "lucide",
+                          "icon": "plus",
+                          "library": "lucide",
                           "fill": "#000000FF"
                         }
                       ]
@@ -8644,15 +8422,15 @@
                       "layout": "none",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "e5AcW",
                           "x": 148,
                           "y": 10,
                           "name": "r2Bm",
                           "width": 16,
                           "height": 16,
-                          "iconFontName": "bookmark",
-                          "iconFontFamily": "lucide",
+                          "icon": "bookmark",
+                          "library": "lucide",
                           "fill": "#FFFFFFFF"
                         }
                       ]
@@ -8701,13 +8479,13 @@
                           ]
                         },
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "I3RaV",
                           "name": "r2Add",
                           "width": 16,
                           "height": 16,
-                          "iconFontName": "plus",
-                          "iconFontFamily": "lucide",
+                          "icon": "plus",
+                          "library": "lucide",
                           "fill": "#000000FF"
                         }
                       ]
@@ -8737,11 +8515,9 @@
               "height": 470,
               "fill": "#E8E4DFFF",
               "cornerRadius": 20,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner"
             },
             {
               "type": "frame",
@@ -8752,11 +8528,9 @@
               "height": 470,
               "fill": "#D4C8BDFF",
               "cornerRadius": 20,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner"
             },
             {
               "type": "frame",
@@ -8767,11 +8541,9 @@
               "height": 470,
               "fill": "#C4B8ADFF",
               "cornerRadius": 20,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner"
             }
           ]
         }
@@ -8872,11 +8644,9 @@
                         0,
                         8
                       ],
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "vertical",
                       "justifyContent": "center",
                       "alignItems": "center",
@@ -8948,11 +8718,9 @@
                   "clip": true,
                   "width": "fill_container",
                   "cornerRadius": 12,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#F0F0F0FF"
-                  },
+                  "stroke": "#F0F0F0FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "children": [
                     {
@@ -9024,11 +8792,8 @@
                       "name": "tHL",
                       "width": "fill_container",
                       "height": 1,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#F0F0F0FF"
-                      }
+                      "stroke": "#F0F0F0FF",
+                      "strokeWidth": 1
                     },
                     {
                       "type": "frame",
@@ -9098,11 +8863,8 @@
                       "name": "r1L",
                       "width": "fill_container",
                       "height": 1,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#F5F5F5FF"
-                      }
+                      "stroke": "#F5F5F5FF",
+                      "strokeWidth": 1
                     },
                     {
                       "type": "frame",
@@ -9173,11 +8935,8 @@
                       "name": "r2L",
                       "width": "fill_container",
                       "height": 1,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#F5F5F5FF"
-                      }
+                      "stroke": "#F5F5F5FF",
+                      "strokeWidth": 1
                     },
                     {
                       "type": "frame",
@@ -9247,11 +9006,8 @@
                       "name": "r3L",
                       "width": "fill_container",
                       "height": 1,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#F5F5F5FF"
-                      }
+                      "stroke": "#F5F5F5FF",
+                      "strokeWidth": 1
                     },
                     {
                       "type": "frame",
@@ -9322,11 +9078,8 @@
                       "name": "r4L",
                       "width": "fill_container",
                       "height": 1,
-                      "stroke": {
-                        "align": "center",
-                        "thickness": 1,
-                        "fill": "#F5F5F5FF"
-                      }
+                      "stroke": "#F5F5F5FF",
+                      "strokeWidth": 1
                     },
                     {
                       "type": "frame",
@@ -9591,11 +9344,9 @@
                 "mode": "stretch"
               },
               "cornerRadius": 20,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "none",
               "children": [
                 {
@@ -9609,15 +9360,15 @@
                   "height": 628
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "HgiHs",
                   "x": 308,
                   "y": 28,
                   "name": "c1Arrow",
                   "width": 20,
                   "height": 20,
-                  "iconFontName": "arrow-up-right",
-                  "iconFontFamily": "lucide",
+                  "icon": "arrow-up-right",
+                  "library": "lucide",
                   "fill": "#FFFFFFFF"
                 },
                 {
@@ -9712,11 +9463,9 @@
                 "mode": "stretch"
               },
               "cornerRadius": 20,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "none",
               "children": [
                 {
@@ -9730,15 +9479,15 @@
                   "height": 628
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "dq69q",
                   "x": 308,
                   "y": 28,
                   "name": "c1Arrow",
                   "width": 20,
                   "height": 20,
-                  "iconFontName": "arrow-up-right",
-                  "iconFontFamily": "lucide",
+                  "icon": "arrow-up-right",
+                  "library": "lucide",
                   "fill": "#FFFFFFFF"
                 },
                 {
@@ -9833,11 +9582,9 @@
                 "mode": "stretch"
               },
               "cornerRadius": 20,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "none",
               "children": [
                 {
@@ -9851,15 +9598,15 @@
                   "height": 628
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "D1y1d",
                   "x": 308,
                   "y": 28,
                   "name": "c1Arrow",
                   "width": 20,
                   "height": 20,
-                  "iconFontName": "arrow-up-right",
-                  "iconFontFamily": "lucide",
+                  "icon": "arrow-up-right",
+                  "library": "lucide",
                   "fill": "#FFFFFFFF"
                 },
                 {
@@ -9954,11 +9701,9 @@
                 "mode": "stretch"
               },
               "cornerRadius": 20,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "none",
               "children": [
                 {
@@ -9972,15 +9717,15 @@
                   "height": 628
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "X37sq",
                   "x": 308,
                   "y": 28,
                   "name": "c1Arrow",
                   "width": 20,
                   "height": 20,
-                  "iconFontName": "arrow-up-right",
-                  "iconFontFamily": "lucide",
+                  "icon": "arrow-up-right",
+                  "library": "lucide",
                   "fill": "#FFFFFFFF"
                 },
                 {
@@ -10075,11 +9820,9 @@
                 "mode": "stretch"
               },
               "cornerRadius": 20,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "none",
               "children": [
                 {
@@ -10093,15 +9836,15 @@
                   "height": 628
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "Bg81D",
                   "x": 308,
                   "y": 28,
                   "name": "c1Arrow",
                   "width": 20,
                   "height": 20,
-                  "iconFontName": "arrow-up-right",
-                  "iconFontFamily": "lucide",
+                  "icon": "arrow-up-right",
+                  "library": "lucide",
                   "fill": "#FFFFFFFF"
                 },
                 {
@@ -10196,11 +9939,9 @@
                 "mode": "stretch"
               },
               "cornerRadius": 20,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "none",
               "children": [
                 {
@@ -10214,15 +9955,15 @@
                   "height": 628
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "cfoZd",
                   "x": 308,
                   "y": 28,
                   "name": "c1Arrow",
                   "width": 20,
                   "height": 20,
-                  "iconFontName": "arrow-up-right",
-                  "iconFontFamily": "lucide",
+                  "icon": "arrow-up-right",
+                  "library": "lucide",
                   "fill": "#FFFFFFFF"
                 },
                 {
@@ -10471,13 +10212,13 @@
                   "fontWeight": "500"
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "CtnGi",
                   "name": "pmClose",
                   "width": 18,
                   "height": 18,
-                  "iconFontName": "x",
-                  "iconFontFamily": "lucide",
+                  "icon": "x",
+                  "library": "lucide",
                   "fill": "#000000FF"
                 }
               ]
@@ -10488,11 +10229,8 @@
               "name": "pmDiv",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -10551,11 +10289,9 @@
                   "height": 84,
                   "fill": "#000000FF",
                   "cornerRadius": 14,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#000000FF"
-                  },
+                  "stroke": "#000000FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "padding": [
                     0,
                     20
@@ -10623,11 +10359,9 @@
                   "height": 84,
                   "fill": "#FFFFFFFF",
                   "cornerRadius": 14,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#E5E5E5FF"
-                  },
+                  "stroke": "#E5E5E5FF",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "padding": [
                     0,
                     20
@@ -10762,13 +10496,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "Mse8T",
                       "name": "pmSecureIcon",
                       "width": 10,
                       "height": 10,
-                      "iconFontName": "lock",
-                      "iconFontFamily": "lucide",
+                      "icon": "lock",
+                      "library": "lucide",
                       "fill": "#999999FF"
                     },
                     {
@@ -10816,13 +10550,13 @@
           "letterSpacing": 2
         },
         {
-          "type": "icon_font",
+          "type": "icon",
           "id": "sfgYk",
           "name": "ecTopClose",
           "width": 18,
           "height": 18,
-          "iconFontName": "x",
-          "iconFontFamily": "lucide",
+          "icon": "x",
+          "library": "lucide",
           "fill": "#000000FF"
         }
       ]
@@ -10885,13 +10619,13 @@
               ]
             },
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "puFKU",
               "name": "ecClose",
               "width": 20,
               "height": 20,
-              "iconFontName": "x",
-              "iconFontFamily": "lucide",
+              "icon": "x",
+              "library": "lucide",
               "fill": "#000000FF"
             }
           ]
@@ -10920,13 +10654,13 @@
               "fontWeight": "normal"
             },
             {
-              "type": "icon_font",
+              "type": "icon",
               "id": "XEw0g",
               "name": "ecShopLinkArrow",
               "width": 14,
               "height": 14,
-              "iconFontName": "arrow-up-right",
-              "iconFontFamily": "lucide",
+              "icon": "arrow-up-right",
+              "library": "lucide",
               "fill": "#000000FF"
             }
           ]
@@ -11116,13 +10850,13 @@
                       "fontWeight": "300"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "OOGgj",
                       "name": "ecV1Arr",
                       "width": 12,
                       "height": 12,
-                      "iconFontName": "chevron-right",
-                      "iconFontFamily": "lucide",
+                      "icon": "chevron-right",
+                      "library": "lucide",
                       "fill": "#CCCCCCFF"
                     }
                   ]
@@ -11135,11 +10869,8 @@
               "name": "ecVd1",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -11193,13 +10924,13 @@
                       "fontWeight": "300"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "uAhQi",
                       "name": "ecV2Arr",
                       "width": 12,
                       "height": 12,
-                      "iconFontName": "chevron-right",
-                      "iconFontFamily": "lucide",
+                      "icon": "chevron-right",
+                      "library": "lucide",
                       "fill": "#CCCCCCFF"
                     }
                   ]
@@ -11212,11 +10943,8 @@
               "name": "ecVd2",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -11270,13 +10998,13 @@
                       "fontWeight": "300"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "IaPF1",
                       "name": "ecV3Arr",
                       "width": 12,
                       "height": 12,
-                      "iconFontName": "chevron-right",
-                      "iconFontFamily": "lucide",
+                      "icon": "chevron-right",
+                      "library": "lucide",
                       "fill": "#CCCCCCFF"
                     }
                   ]
@@ -11289,11 +11017,8 @@
               "name": "ecVd3",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -11347,13 +11072,13 @@
                       "fontWeight": "300"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "iU1Zg",
                       "name": "ecV4Arr",
                       "width": 12,
                       "height": 12,
-                      "iconFontName": "chevron-right",
-                      "iconFontFamily": "lucide",
+                      "icon": "chevron-right",
+                      "library": "lucide",
                       "fill": "#CCCCCCFF"
                     }
                   ]
@@ -11366,11 +11091,8 @@
               "name": "ecVd4",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -11424,13 +11146,13 @@
                       "fontWeight": "300"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "jyOkK",
                       "name": "ecV5Arr",
                       "width": 12,
                       "height": 12,
-                      "iconFontName": "chevron-right",
-                      "iconFontFamily": "lucide",
+                      "icon": "chevron-right",
+                      "library": "lucide",
                       "fill": "#CCCCCCFF"
                     }
                   ]
@@ -11443,11 +11165,8 @@
               "name": "ecVd5",
               "width": "fill_container",
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              }
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1
             },
             {
               "type": "frame",
@@ -11501,13 +11220,13 @@
                       "fontWeight": "300"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "oE6NW",
                       "name": "ecV6Arr",
                       "width": 12,
                       "height": 12,
-                      "iconFontName": "chevron-right",
-                      "iconFontFamily": "lucide",
+                      "icon": "chevron-right",
+                      "library": "lucide",
                       "fill": "#CCCCCCFF"
                     }
                   ]
@@ -11563,11 +11282,9 @@
           "width": 820,
           "fill": "#FFFFFFFF",
           "cornerRadius": 12,
-          "stroke": {
-            "align": "inside",
-            "thickness": 1,
-            "fill": "#E5E5E5FF"
-          },
+          "stroke": "#E5E5E5FF",
+          "strokeWidth": 1,
+          "strokeAlignment": "inner",
           "layout": "vertical",
           "gap": 16,
           "padding": 24,
@@ -11600,11 +11317,9 @@
               "width": "fill_container",
               "height": 40,
               "fill": "#FFFFFFFF",
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "justifyContent": "center",
               "alignItems": "center",
               "children": [
@@ -11637,11 +11352,9 @@
               "width": "fill_container",
               "height": 56,
               "fill": "#FFFFFFFF",
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "vertical",
               "gap": 4,
               "padding": [
@@ -11683,11 +11396,9 @@
           "width": 820,
           "fill": "#FFFFFFFF",
           "cornerRadius": 12,
-          "stroke": {
-            "align": "inside",
-            "thickness": 1,
-            "fill": "#E5E5E5FF"
-          },
+          "stroke": "#E5E5E5FF",
+          "strokeWidth": 1,
+          "strokeAlignment": "inner",
           "layout": "vertical",
           "gap": 16,
           "padding": 24,
@@ -11720,11 +11431,9 @@
               "width": "fill_container",
               "height": 80,
               "fill": "#FFFFFFFF",
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "vertical",
               "gap": 8,
               "justifyContent": "center",
@@ -11736,11 +11445,8 @@
                   "name": "s2bL1",
                   "width": 24,
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#CCCCCCFF"
-                  }
+                  "stroke": "#CCCCCCFF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "text",
@@ -11760,11 +11466,8 @@
                   "name": "s2bL2",
                   "width": 24,
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#CCCCCCFF"
-                  }
+                  "stroke": "#CCCCCCFF",
+                  "strokeWidth": 1
                 }
               ]
             },
@@ -11785,11 +11488,9 @@
               "width": "fill_container",
               "height": 120,
               "fill": "#FFFFFFFF",
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#F0F0F0FF"
-              },
+              "stroke": "#F0F0F0FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "vertical",
               "gap": 8,
               "justifyContent": "center",
@@ -11801,11 +11502,8 @@
                   "name": "s2aL1",
                   "width": 24,
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#CCCCCCFF"
-                  }
+                  "stroke": "#CCCCCCFF",
+                  "strokeWidth": 1
                 },
                 {
                   "type": "text",
@@ -11837,11 +11535,8 @@
                   "name": "s2aL2",
                   "width": 24,
                   "height": 1,
-                  "stroke": {
-                    "align": "center",
-                    "thickness": 1,
-                    "fill": "#CCCCCCFF"
-                  }
+                  "stroke": "#CCCCCCFF",
+                  "strokeWidth": 1
                 }
               ]
             }
@@ -11855,11 +11550,9 @@
           "height": 2163,
           "fill": "#FFFFFFFF",
           "cornerRadius": 12,
-          "stroke": {
-            "align": "inside",
-            "thickness": 1,
-            "fill": "#E5E5E5FF"
-          },
+          "stroke": "#E5E5E5FF",
+          "strokeWidth": 1,
+          "strokeAlignment": "inner",
           "layout": "vertical",
           "gap": 16,
           "padding": 24,
@@ -11905,11 +11598,9 @@
               "width": "fill_container",
               "fill": "#FAFAFAFF",
               "cornerRadius": 12,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#E5E5E5FF"
-              },
+              "stroke": "#E5E5E5FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "vertical",
               "gap": 16,
               "padding": 24,
@@ -11961,11 +11652,9 @@
                         "mode": "stretch"
                       },
                       "cornerRadius": 24,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "none",
                       "children": [
                         {
@@ -12034,23 +11723,23 @@
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "mReMG",
                                   "name": "aArrow",
                                   "width": 16,
                                   "height": 16,
-                                  "iconFontName": "arrow-right",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "arrow-right",
+                                  "library": "lucide",
                                   "fill": "#FFFFFFFF"
                                 },
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "gcoSx",
                                   "name": "aX",
                                   "width": 14,
                                   "height": 14,
-                                  "iconFontName": "x",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "x",
+                                  "library": "lucide",
                                   "fill": "#666666FF"
                                 }
                               ]
@@ -12070,11 +11759,9 @@
               "width": "fill_container",
               "fill": "#FAFAFAFF",
               "cornerRadius": 12,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#E5E5E5FF"
-              },
+              "stroke": "#E5E5E5FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "vertical",
               "gap": 16,
               "padding": 24,
@@ -12121,11 +11808,9 @@
                       "height": 700,
                       "fill": "#FFFFFFFF",
                       "cornerRadius": 32,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "none",
                       "children": [
                         {
@@ -12180,13 +11865,13 @@
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "5IlCg",
                                   "name": "bCloseX",
                                   "width": 14,
                                   "height": 14,
-                                  "iconFontName": "x",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "x",
+                                  "library": "lucide",
                                   "fill": "#FFFFFFFF"
                                 }
                               ]
@@ -12284,13 +11969,13 @@
                                   "letterSpacing": 2
                                 },
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "Zqwnx",
                                   "name": "bCTAIcon",
                                   "width": 14,
                                   "height": 14,
-                                  "iconFontName": "arrow-right",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "arrow-right",
+                                  "library": "lucide",
                                   "fill": "#000000FF"
                                 }
                               ]
@@ -12311,11 +11996,9 @@
               "height": 499,
               "fill": "#FAFAFAFF",
               "cornerRadius": 12,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#E5E5E5FF"
-              },
+              "stroke": "#E5E5E5FF",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "vertical",
               "gap": 16,
               "padding": 24,
@@ -12362,11 +12045,9 @@
                       "height": 240,
                       "fill": "#FFFFFFFF",
                       "cornerRadius": 24,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "#E5E5E5FF"
-                      },
+                      "stroke": "#E5E5E5FF",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "layout": "none",
                       "children": [
                         {
@@ -12408,11 +12089,9 @@
                           "width": 393,
                           "height": 56,
                           "fill": "#FFFFFFFF",
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "#F0F0F0FF"
-                          },
+                          "stroke": "#F0F0F0FF",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
                           "padding": [
                             0,
                             20
@@ -12439,23 +12118,23 @@
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "ZJFW8",
                                   "name": "cH1",
                                   "width": 18,
                                   "height": 18,
-                                  "iconFontName": "search",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "search",
+                                  "library": "lucide",
                                   "fill": "#000000FF"
                                 },
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "LGjH5",
                                   "name": "cH2",
                                   "width": 18,
                                   "height": 18,
-                                  "iconFontName": "shopping-bag",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "shopping-bag",
+                                  "library": "lucide",
                                   "fill": "#000000FF"
                                 }
                               ]
@@ -12555,11 +12234,8 @@
               "name": "heroLine",
               "width": 28,
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#FFFFFF66"
-              }
+              "stroke": "#FFFFFF66",
+              "strokeWidth": 1
             },
             {
               "type": "text",
@@ -16372,11 +16048,8 @@
               "name": "clLine",
               "width": 28,
               "height": 1,
-              "stroke": {
-                "align": "center",
-                "thickness": 1,
-                "fill": "#FFFFFF66"
-              }
+              "stroke": "#FFFFFF66",
+              "strokeWidth": 1
             },
             {
               "type": "text",
@@ -16413,13 +16086,13 @@
                   "letterSpacing": 2.5
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "kex5c",
                   "name": "clCtaA",
                   "width": 14,
                   "height": 14,
-                  "iconFontName": "arrow-right",
-                  "iconFontFamily": "lucide",
+                  "icon": "arrow-right",
+                  "library": "lucide",
                   "fill": "#000000FF"
                 }
               ]
@@ -16440,11 +16113,9 @@
       "height": 300,
       "fill": "#FFFFFFFF",
       "cornerRadius": 12,
-      "stroke": {
-        "align": "inside",
-        "thickness": 1,
-        "fill": "#ECECECFF"
-      },
+      "stroke": "#ECECECFF",
+      "strokeWidth": 1,
+      "strokeAlignment": "inner",
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -16992,12 +16663,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "y9jiw",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "wallet",
-                          "iconFontFamily": "lucide",
+                          "icon": "wallet",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17048,12 +16719,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "y51vO",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "users",
-                          "iconFontFamily": "lucide",
+                          "icon": "users",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17104,12 +16775,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "W8VgW",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "recycle",
-                          "iconFontFamily": "lucide",
+                          "icon": "recycle",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17238,12 +16909,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "zDVgs",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "wallet",
-                          "iconFontFamily": "lucide",
+                          "icon": "wallet",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17297,12 +16968,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "DLhmp",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "users",
-                          "iconFontFamily": "lucide",
+                          "icon": "users",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17356,12 +17027,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "iYmdA",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "recycle",
-                          "iconFontFamily": "lucide",
+                          "icon": "recycle",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17493,12 +17164,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "yKi6L",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "wallet",
-                          "iconFontFamily": "lucide",
+                          "icon": "wallet",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17552,12 +17223,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "RyptO",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "users",
-                          "iconFontFamily": "lucide",
+                          "icon": "users",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17611,12 +17282,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "GIEVf",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "recycle",
-                          "iconFontFamily": "lucide",
+                          "icon": "recycle",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17748,12 +17419,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "LhRg7",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "wallet",
-                          "iconFontFamily": "lucide",
+                          "icon": "wallet",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17807,12 +17478,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "kZB5s",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "users",
-                          "iconFontFamily": "lucide",
+                          "icon": "users",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -17866,12 +17537,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "AwcCj",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "recycle",
-                          "iconFontFamily": "lucide",
+                          "icon": "recycle",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -18003,12 +17674,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "UB7fy",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "wallet",
-                          "iconFontFamily": "lucide",
+                          "icon": "wallet",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -18062,12 +17733,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "SVvE0",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "users",
-                          "iconFontFamily": "lucide",
+                          "icon": "users",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -18121,12 +17792,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "gGWJX",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "recycle",
-                          "iconFontFamily": "lucide",
+                          "icon": "recycle",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -18258,12 +17929,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "uhF23",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "wallet",
-                          "iconFontFamily": "lucide",
+                          "icon": "wallet",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -18317,12 +17988,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "EWJE0",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "users",
-                          "iconFontFamily": "lucide",
+                          "icon": "users",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -18376,12 +18047,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "QsAWu",
                           "width": 32,
                           "height": 32,
-                          "iconFontName": "recycle",
-                          "iconFontFamily": "lucide",
+                          "icon": "recycle",
+                          "library": "lucide",
                           "fill": "#2A2419"
                         },
                         {
@@ -18490,11 +18161,9 @@
               "height": 740,
               "fill": "#FFFFFF",
               "cornerRadius": 32,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#E5E5E5"
-              },
+              "stroke": "#E5E5E5",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "none",
               "children": [
                 {
@@ -18566,13 +18235,11 @@
                   "width": 360,
                   "height": 52,
                   "fill": "#FFFFFF",
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": {
-                      "bottom": 1
-                    },
-                    "fill": "#EEEEEE"
+                  "stroke": "#EEEEEE",
+                  "strokeWidth": {
+                    "bottom": 1
                   },
+                  "strokeAlignment": "inner",
                   "padding": [
                     16,
                     12
@@ -18768,13 +18435,11 @@
                   "width": 360,
                   "height": 60,
                   "fill": "#FFFFFF",
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": {
-                      "top": 1
-                    },
-                    "fill": "#EEEEEE"
+                  "stroke": "#EEEEEE",
+                  "strokeWidth": {
+                    "top": 1
                   },
+                  "strokeAlignment": "inner",
                   "padding": 8,
                   "justifyContent": "space_between",
                   "alignItems": "center",
@@ -18789,12 +18454,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "Wa9tt",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "house",
-                          "iconFontFamily": "lucide",
+                          "icon": "house",
+                          "library": "lucide",
                           "fill": "#111111"
                         },
                         {
@@ -18818,12 +18483,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "HHURW",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "search",
-                          "iconFontFamily": "lucide",
+                          "icon": "search",
+                          "library": "lucide",
                           "fill": "#9C9C9C"
                         },
                         {
@@ -18847,12 +18512,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "LEJhZ",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "gift",
-                          "iconFontFamily": "lucide",
+                          "icon": "gift",
+                          "library": "lucide",
                           "fill": "#9C9C9C"
                         },
                         {
@@ -18876,12 +18541,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "xWxqk",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "user",
-                          "iconFontFamily": "lucide",
+                          "icon": "user",
+                          "library": "lucide",
                           "fill": "#9C9C9C"
                         },
                         {
@@ -18921,12 +18586,12 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "juUSy",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "life-buoy",
-                      "iconFontFamily": "lucide",
+                      "icon": "life-buoy",
+                      "library": "lucide",
                       "fill": "#FFFFFF"
                     }
                   ]
@@ -18973,11 +18638,9 @@
               "height": 740,
               "fill": "#FFFFFF",
               "cornerRadius": 32,
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "#E5E5E5"
-              },
+              "stroke": "#E5E5E5",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "none",
               "children": [
                 {
@@ -19049,13 +18712,11 @@
                   "width": 360,
                   "height": 52,
                   "fill": "#FFFFFF",
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": {
-                      "bottom": 1
-                    },
-                    "fill": "#EEEEEE"
+                  "stroke": "#EEEEEE",
+                  "strokeWidth": {
+                    "bottom": 1
                   },
+                  "strokeAlignment": "inner",
                   "padding": [
                     16,
                     12
@@ -19251,13 +18912,11 @@
                   "width": 360,
                   "height": 60,
                   "fill": "#FFFFFF",
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": {
-                      "top": 1
-                    },
-                    "fill": "#EEEEEE"
+                  "stroke": "#EEEEEE",
+                  "strokeWidth": {
+                    "top": 1
                   },
+                  "strokeAlignment": "inner",
                   "padding": 8,
                   "justifyContent": "space_between",
                   "alignItems": "center",
@@ -19272,12 +18931,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "L1wAi",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "house",
-                          "iconFontFamily": "lucide",
+                          "icon": "house",
+                          "library": "lucide",
                           "fill": "#111111"
                         },
                         {
@@ -19301,12 +18960,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "BdOHG",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "search",
-                          "iconFontFamily": "lucide",
+                          "icon": "search",
+                          "library": "lucide",
                           "fill": "#9C9C9C"
                         },
                         {
@@ -19330,12 +18989,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "BAtzq",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "gift",
-                          "iconFontFamily": "lucide",
+                          "icon": "gift",
+                          "library": "lucide",
                           "fill": "#9C9C9C"
                         },
                         {
@@ -19359,12 +19018,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "V4OH76",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "user",
-                          "iconFontFamily": "lucide",
+                          "icon": "user",
+                          "library": "lucide",
                           "fill": "#9C9C9C"
                         },
                         {
@@ -19414,12 +19073,12 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "GrtZ0",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "x",
-                      "iconFontFamily": "lucide",
+                      "icon": "x",
+                      "library": "lucide",
                       "fill": "#FFFFFF"
                     }
                   ]
@@ -19434,11 +19093,9 @@
                   "width": 256,
                   "fill": "#FFFFFF",
                   "cornerRadius": 16,
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "#EAEAEA"
-                  },
+                  "stroke": "#EAEAEA",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "effect": {
                     "type": "shadow",
                     "shadowType": "outer",
@@ -19456,13 +19113,11 @@
                       "id": "UtTCT",
                       "name": "Header",
                       "width": "fill_container",
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": {
-                          "bottom": 1
-                        },
-                        "fill": "#EEEEEE"
+                      "stroke": "#EEEEEE",
+                      "strokeWidth": {
+                        "bottom": 1
                       },
+                      "strokeAlignment": "inner",
                       "layout": "vertical",
                       "gap": 2,
                       "padding": [
@@ -19522,21 +19177,19 @@
                               "height": 36,
                               "fill": "#FFFFFF",
                               "cornerRadius": 18,
-                              "stroke": {
-                                "align": "inside",
-                                "thickness": 1,
-                                "fill": "#E5E5E5"
-                              },
+                              "stroke": "#E5E5E5",
+                              "strokeWidth": 1,
+                              "strokeAlignment": "inner",
                               "justifyContent": "center",
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "f2ytY",
                                   "width": 16,
                                   "height": 16,
-                                  "iconFontName": "ticket",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "ticket",
+                                  "library": "lucide",
                                   "fill": "#111111"
                                 }
                               ]
@@ -19591,21 +19244,19 @@
                               "height": 36,
                               "fill": "#FFFFFF",
                               "cornerRadius": 18,
-                              "stroke": {
-                                "align": "inside",
-                                "thickness": 1,
-                                "fill": "#E5E5E5"
-                              },
+                              "stroke": "#E5E5E5",
+                              "strokeWidth": 1,
+                              "strokeAlignment": "inner",
                               "justifyContent": "center",
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "a93dcq",
                                   "width": 16,
                                   "height": 16,
-                                  "iconFontName": "instagram",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "instagram",
+                                  "library": "lucide",
                                   "fill": "#111111"
                                 }
                               ]
@@ -19660,21 +19311,19 @@
                               "height": 36,
                               "fill": "#FFFFFF",
                               "cornerRadius": 18,
-                              "stroke": {
-                                "align": "inside",
-                                "thickness": 1,
-                                "fill": "#E5E5E5"
-                              },
+                              "stroke": "#E5E5E5",
+                              "strokeWidth": 1,
+                              "strokeAlignment": "inner",
                               "justifyContent": "center",
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "icon_font",
+                                  "type": "icon",
                                   "id": "V4wHke",
                                   "width": 16,
                                   "height": 16,
-                                  "iconFontName": "message-circle",
-                                  "iconFontFamily": "lucide",
+                                  "icon": "message-circle",
+                                  "library": "lucide",
                                   "fill": "#111111"
                                 }
                               ]
@@ -19712,6 +19361,1912 @@
                       ]
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "p8xAp",
+      "x": 7165,
+      "y": 0,
+      "name": "Home — Earth Revibe",
+      "clip": true,
+      "width": 393,
+      "fill": "#FFFFFFFF",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "Qitqu",
+          "name": "Announce Bar",
+          "width": "fill_container",
+          "height": 36,
+          "fill": "#000000FF",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Nsong",
+              "name": "announceText",
+              "fill": "#FFFFFFFF",
+              "content": "365-DAY BUYBACK  ·  TRADE BACK FOR 33% STORE CREDIT",
+              "fontFamily": "Inter",
+              "fontSize": 9,
+              "fontWeight": "500",
+              "letterSpacing": 1.5
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "sOdSo",
+          "name": "Header",
+          "width": "fill_container",
+          "height": 56,
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon",
+              "id": "mkQqM",
+              "name": "menuIcon",
+              "width": 20,
+              "height": 20,
+              "icon": "menu",
+              "library": "lucide",
+              "fill": "#000000FF"
+            },
+            {
+              "type": "frame",
+              "id": "YFz3K",
+              "name": "logoWrap",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "btvl1",
+                  "name": "logoImg",
+                  "width": 26,
+                  "height": 26,
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "earth-revibe-logo.png",
+                    "mode": "fit"
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "bXZvq",
+                  "name": "logoText",
+                  "fill": "#000000FF",
+                  "content": "EARTH REVIBE",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal",
+                  "letterSpacing": 3
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "BEeK2",
+              "name": "hdrIcons",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "dLrsF",
+                  "name": "searchIcon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "search",
+                  "library": "lucide",
+                  "fill": "#000000FF"
+                },
+                {
+                  "type": "icon",
+                  "id": "PNwh5",
+                  "name": "bagIcon",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "shopping-bag",
+                  "library": "lucide",
+                  "fill": "#000000FF"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "line",
+          "id": "X9IJ3",
+          "name": "hdrDivider",
+          "width": "fill_container",
+          "height": 1,
+          "stroke": "#F0F0F0FF",
+          "strokeWidth": 1
+        },
+        {
+          "type": "frame",
+          "id": "podxV",
+          "name": "Hero",
+          "metadata": {
+            "type": "unsplash",
+            "username": "_karsten",
+            "link": "https://unsplash.com/@_karsten",
+            "author": "Karsten Winegeart"
+          },
+          "clip": true,
+          "width": "fill_container",
+          "height": 620,
+          "fill": {
+            "type": "image",
+            "enabled": true,
+            "url": "https://images.unsplash.com/photo-1695264394197-c3af0c6958ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODEwNDEyNjZ8&ixlib=rb-4.1.0&q=80&w=1080",
+            "mode": "fill"
+          },
+          "layout": "vertical",
+          "padding": [
+            0,
+            28
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "nRgSh",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 0,
+              "name": "heroOverlay",
+              "fill": "#00000073",
+              "width": 393,
+              "height": 620
+            },
+            {
+              "type": "text",
+              "id": "eHe9r",
+              "name": "heroKicker",
+              "fill": "#FFFFFFB3",
+              "content": "SS '26  ·  NEW DROP",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "normal",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "PdTxj",
+              "name": "heroTitle",
+              "fill": "#FFFFFFFF",
+              "content": "Shop by\ncollection.",
+              "lineHeight": 1,
+              "textAlign": "center",
+              "fontFamily": "Inter",
+              "fontSize": 52,
+              "fontWeight": "300",
+              "letterSpacing": -1.8,
+              "fontStyle": "italic"
+            },
+            {
+              "type": "frame",
+              "id": "OKYHl",
+              "name": "heroLineWrap",
+              "padding": [
+                20,
+                0,
+                14,
+                0
+              ],
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "lCz9L",
+                  "name": "heroLine",
+                  "fill": "#FFFFFF66",
+                  "width": 28,
+                  "height": 1
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "FWut3",
+              "name": "heroSub",
+              "fill": "#FFFFFFCC",
+              "content": "Linens. Cheques. Polos. Tees.",
+              "lineHeight": 1.5,
+              "textAlign": "center",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "300"
+            },
+            {
+              "type": "frame",
+              "id": "MFtpi",
+              "name": "heroStats",
+              "gap": 12,
+              "padding": [
+                16,
+                0,
+                0,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "dIYve",
+                  "name": "stat",
+                  "fill": "#FFFFFFCC",
+                  "content": "56 PIECES",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "text",
+                  "id": "gzHxW",
+                  "name": "stat",
+                  "fill": "#FFFFFF80",
+                  "content": "·",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "text",
+                  "id": "Z5vjZ",
+                  "name": "stat",
+                  "fill": "#FFFFFFCC",
+                  "content": "6 COLLECTIONS",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "text",
+                  "id": "oY48c",
+                  "name": "stat",
+                  "fill": "#FFFFFF80",
+                  "content": "·",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "text",
+                  "id": "yrYjo",
+                  "name": "stat",
+                  "fill": "#FFFFFFCC",
+                  "content": "SS '26",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "C9hyi",
+              "name": "heroCtaWrap",
+              "padding": [
+                28,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Y84LXE",
+                  "name": "heroPill",
+                  "height": 50,
+                  "fill": "#FFFFFFFF",
+                  "cornerRadius": 9999,
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    28
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "DdF3p",
+                      "name": "heroPillText",
+                      "fill": "#000000FF",
+                      "content": "SHOP ALL 56 PIECES",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "500",
+                      "letterSpacing": 1.5
+                    },
+                    {
+                      "type": "icon",
+                      "id": "uAVSr",
+                      "name": "heroPillArrow",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "arrow-right",
+                      "library": "lucide",
+                      "fill": "#000000FF"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "F65mIF",
+          "name": "Vibe Intro",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "padding": [
+            44,
+            28,
+            28,
+            28
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "N737Qr",
+              "name": "introKicker",
+              "fill": "#000000FF",
+              "content": "SHOP BY COLLECTION",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "normal",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "I4Ixpg",
+              "name": "introSub",
+              "fill": "#999999FF",
+              "content": "Tap any collection to explore.",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "300"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Fqune",
+          "name": "Collection — Linens",
+          "metadata": {
+            "type": "unsplash",
+            "username": "babak22ir",
+            "link": "https://unsplash.com/@babak22ir",
+            "author": "Babak Eshaghian"
+          },
+          "clip": true,
+          "width": "fill_container",
+          "height": 628,
+          "fill": {
+            "type": "image",
+            "enabled": true,
+            "url": "https://images.unsplash.com/photo-1758888677284-f6aed2f458eb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODEwNDIxNjF8&ixlib=rb-4.1.0&q=80&w=1080",
+            "mode": "fill"
+          },
+          "layout": "vertical",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "z7PgPy",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 0,
+              "name": "scrim",
+              "fill": "#00000040",
+              "width": 393,
+              "height": 628
+            },
+            {
+              "type": "icon",
+              "id": "Kww4J",
+              "layoutPosition": "absolute",
+              "x": 345,
+              "y": 28,
+              "name": "arrow",
+              "width": 20,
+              "height": 20,
+              "icon": "arrow-up-right",
+              "library": "lucide",
+              "fill": "#FFFFFFFF"
+            },
+            {
+              "type": "text",
+              "id": "M0o2o",
+              "name": "kicker",
+              "fill": "#FFFFFFCC",
+              "content": "THE LINEN EDIT",
+              "fontFamily": "Inter",
+              "fontSize": 9,
+              "fontWeight": "normal",
+              "letterSpacing": 2
+            },
+            {
+              "type": "frame",
+              "id": "ebkVK",
+              "name": "titleWrap",
+              "padding": [
+                9,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "RFJFc",
+                  "name": "title",
+                  "fill": "#FFFFFFFF",
+                  "content": "Linens",
+                  "lineHeight": 1,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "300",
+                  "letterSpacing": -1.2,
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "cD9Ul",
+              "name": "lineWrap",
+              "padding": [
+                20,
+                0,
+                12,
+                0
+              ],
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "n2GgsP",
+                  "name": "line",
+                  "fill": "#FFFFFFCC",
+                  "width": 28,
+                  "height": 1
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "A1woW",
+              "name": "tagline",
+              "fill": "#FFFFFFCC",
+              "content": "\"breathes easy, wears lighter\"",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300",
+              "fontStyle": "italic"
+            },
+            {
+              "type": "frame",
+              "id": "syu7q",
+              "name": "statsWrap",
+              "padding": [
+                18,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Kf4Xg",
+                  "name": "stats",
+                  "fill": "#FFFFFFCC",
+                  "content": "12 PIECES   ·   FROM ₹1,890",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "BsK0r",
+          "name": "Collection — Cheques",
+          "metadata": {
+            "type": "unsplash",
+            "username": "leo_visions_",
+            "link": "https://unsplash.com/@leo_visions_",
+            "author": "Leo_Visions"
+          },
+          "clip": true,
+          "width": "fill_container",
+          "height": 628,
+          "fill": {
+            "type": "image",
+            "enabled": true,
+            "url": "https://images.unsplash.com/photo-1668240669639-19fce257b365?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODEwNDIxNjJ8&ixlib=rb-4.1.0&q=80&w=1080",
+            "mode": "fill"
+          },
+          "layout": "vertical",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "pOnsc",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 0,
+              "name": "scrim",
+              "fill": "#00000040",
+              "width": 393,
+              "height": 628
+            },
+            {
+              "type": "icon",
+              "id": "rwSM5",
+              "layoutPosition": "absolute",
+              "x": 345,
+              "y": 28,
+              "name": "arrow",
+              "width": 20,
+              "height": 20,
+              "icon": "arrow-up-right",
+              "library": "lucide",
+              "fill": "#FFFFFFFF"
+            },
+            {
+              "type": "text",
+              "id": "j7fwD",
+              "name": "kicker",
+              "fill": "#FFFFFFCC",
+              "content": "CHECKS & PLAIDS",
+              "fontFamily": "Inter",
+              "fontSize": 9,
+              "fontWeight": "normal",
+              "letterSpacing": 2
+            },
+            {
+              "type": "frame",
+              "id": "z7ttzt",
+              "name": "titleWrap",
+              "padding": [
+                9,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "v6GJ1",
+                  "name": "title",
+                  "fill": "#FFFFFFFF",
+                  "content": "Cheques",
+                  "lineHeight": 1,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "300",
+                  "letterSpacing": -1.2,
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "a7ezt",
+              "name": "lineWrap",
+              "padding": [
+                20,
+                0,
+                12,
+                0
+              ],
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "QPSrd",
+                  "name": "line",
+                  "fill": "#FFFFFFCC",
+                  "width": 28,
+                  "height": 1
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "G2alh",
+              "name": "tagline",
+              "fill": "#FFFFFFCC",
+              "content": "\"boxes you'd happily live in\"",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300",
+              "fontStyle": "italic"
+            },
+            {
+              "type": "frame",
+              "id": "l13YOh",
+              "name": "statsWrap",
+              "padding": [
+                18,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ddIsD",
+                  "name": "stats",
+                  "fill": "#FFFFFFCC",
+                  "content": "9 PIECES   ·   FROM ₹1,449",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "v18tUk",
+          "name": "Collection — Polos",
+          "metadata": {
+            "type": "unsplash",
+            "username": "blueeyeaa",
+            "link": "https://unsplash.com/@blueeyeaa",
+            "author": "TuanAnh Blue"
+          },
+          "clip": true,
+          "width": "fill_container",
+          "height": 628,
+          "fill": {
+            "type": "image",
+            "enabled": true,
+            "url": "https://images.unsplash.com/photo-1720514496333-2c552e9ee5f2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODEwNDE3MjV8&ixlib=rb-4.1.0&q=80&w=1080",
+            "mode": "fill"
+          },
+          "layout": "vertical",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "xydAu",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 0,
+              "name": "scrim",
+              "fill": "#00000040",
+              "width": 393,
+              "height": 628
+            },
+            {
+              "type": "icon",
+              "id": "xVroC",
+              "layoutPosition": "absolute",
+              "x": 345,
+              "y": 28,
+              "name": "arrow",
+              "width": 20,
+              "height": 20,
+              "icon": "arrow-up-right",
+              "library": "lucide",
+              "fill": "#FFFFFFFF"
+            },
+            {
+              "type": "text",
+              "id": "L8yIk",
+              "name": "kicker",
+              "fill": "#FFFFFFCC",
+              "content": "KNIT & PIQUÉ POLOS",
+              "fontFamily": "Inter",
+              "fontSize": 9,
+              "fontWeight": "normal",
+              "letterSpacing": 2
+            },
+            {
+              "type": "frame",
+              "id": "q2jwjG",
+              "name": "titleWrap",
+              "padding": [
+                9,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "TrsKZ",
+                  "name": "title",
+                  "fill": "#FFFFFFFF",
+                  "content": "Polos",
+                  "lineHeight": 1,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "300",
+                  "letterSpacing": -1.2,
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "lVPGi",
+              "name": "lineWrap",
+              "padding": [
+                20,
+                0,
+                12,
+                0
+              ],
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "t4Ne7Y",
+                  "name": "line",
+                  "fill": "#FFFFFFCC",
+                  "width": 28,
+                  "height": 1
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "WT69O",
+              "name": "tagline",
+              "fill": "#FFFFFFCC",
+              "content": "\"collared, never corporate\"",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300",
+              "fontStyle": "italic"
+            },
+            {
+              "type": "frame",
+              "id": "GvePG",
+              "name": "statsWrap",
+              "padding": [
+                18,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "mi2c7",
+                  "name": "stats",
+                  "fill": "#FFFFFFCC",
+                  "content": "8 PIECES   ·   FROM ₹1,290",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "q8SWd",
+          "name": "Collection — Tees",
+          "clip": true,
+          "width": "fill_container",
+          "height": 628,
+          "fill": {
+            "type": "image",
+            "enabled": true,
+            "url": "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=720&q=80&fm=jpg",
+            "mode": "fill"
+          },
+          "layout": "vertical",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "t4OpNz",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 0,
+              "name": "scrim",
+              "fill": "#00000040",
+              "width": 393,
+              "height": 628
+            },
+            {
+              "type": "icon",
+              "id": "CjwaW",
+              "layoutPosition": "absolute",
+              "x": 345,
+              "y": 28,
+              "name": "arrow",
+              "width": 20,
+              "height": 20,
+              "icon": "arrow-up-right",
+              "library": "lucide",
+              "fill": "#FFFFFFFF"
+            },
+            {
+              "type": "text",
+              "id": "CDBKj",
+              "name": "kicker",
+              "fill": "#FFFFFFCC",
+              "content": "HEAVYWEIGHT TEES",
+              "fontFamily": "Inter",
+              "fontSize": 9,
+              "fontWeight": "normal",
+              "letterSpacing": 2
+            },
+            {
+              "type": "frame",
+              "id": "h9M7Od",
+              "name": "titleWrap",
+              "padding": [
+                9,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ouxfo",
+                  "name": "title",
+                  "fill": "#FFFFFFFF",
+                  "content": "Tees",
+                  "lineHeight": 1,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "300",
+                  "letterSpacing": -1.2,
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "M5Bv6l",
+              "name": "lineWrap",
+              "padding": [
+                20,
+                0,
+                12,
+                0
+              ],
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "RakxX",
+                  "name": "line",
+                  "fill": "#FFFFFFCC",
+                  "width": 28,
+                  "height": 1
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "z36rB",
+              "name": "tagline",
+              "fill": "#FFFFFFCC",
+              "content": "\"heavy on comfort, light on noise\"",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300",
+              "fontStyle": "italic"
+            },
+            {
+              "type": "frame",
+              "id": "jamsM",
+              "name": "statsWrap",
+              "padding": [
+                18,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "CTRTj",
+                  "name": "stats",
+                  "fill": "#FFFFFFCC",
+                  "content": "14 PIECES   ·   FROM ₹990",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "E3g9G",
+          "name": "Collection — Stripes",
+          "metadata": {
+            "type": "unsplash",
+            "username": "lsgerbec",
+            "link": "https://unsplash.com/@lsgerbec",
+            "author": "Linda Gerbec"
+          },
+          "clip": true,
+          "width": "fill_container",
+          "height": 628,
+          "fill": {
+            "type": "image",
+            "enabled": true,
+            "url": "https://images.unsplash.com/photo-1706883085307-40b73255769f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODEwNDIyMjB8&ixlib=rb-4.1.0&q=80&w=1080",
+            "mode": "fill"
+          },
+          "layout": "vertical",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "dCEN4",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 0,
+              "name": "scrim",
+              "fill": "#00000052",
+              "width": 393,
+              "height": 628
+            },
+            {
+              "type": "icon",
+              "id": "IhXVR",
+              "layoutPosition": "absolute",
+              "x": 345,
+              "y": 28,
+              "name": "arrow",
+              "width": 20,
+              "height": 20,
+              "icon": "arrow-up-right",
+              "library": "lucide",
+              "fill": "#FFFFFFFF"
+            },
+            {
+              "type": "text",
+              "id": "CO4I0",
+              "name": "kicker",
+              "fill": "#FFFFFFCC",
+              "content": "TIDEWATER STRIPES",
+              "fontFamily": "Inter",
+              "fontSize": 9,
+              "fontWeight": "normal",
+              "letterSpacing": 2
+            },
+            {
+              "type": "frame",
+              "id": "Trjgl",
+              "name": "titleWrap",
+              "padding": [
+                9,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "SoBBu",
+                  "name": "title",
+                  "fill": "#FFFFFFFF",
+                  "content": "Stripes",
+                  "lineHeight": 1,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "300",
+                  "letterSpacing": -1.2,
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "LMkdJ",
+              "name": "lineWrap",
+              "padding": [
+                20,
+                0,
+                12,
+                0
+              ],
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "pi7Yu",
+                  "name": "line",
+                  "fill": "#FFFFFFCC",
+                  "width": 28,
+                  "height": 1
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "vsjIX",
+              "name": "tagline",
+              "fill": "#FFFFFFCC",
+              "content": "\"lines that go places\"",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300",
+              "fontStyle": "italic"
+            },
+            {
+              "type": "frame",
+              "id": "P8FCQ",
+              "name": "statsWrap",
+              "padding": [
+                18,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "d1gAkC",
+                  "name": "stats",
+                  "fill": "#FFFFFFCC",
+                  "content": "7 PIECES   ·   FROM ₹1,290",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "BXmPX",
+          "name": "Collection — Overshirts",
+          "clip": true,
+          "width": "fill_container",
+          "height": 628,
+          "fill": {
+            "type": "image",
+            "enabled": true,
+            "url": "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=720&q=80&fm=jpg",
+            "mode": "fill"
+          },
+          "layout": "vertical",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "FmigX",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 0,
+              "name": "scrim",
+              "fill": "#00000059",
+              "width": 393,
+              "height": 628
+            },
+            {
+              "type": "icon",
+              "id": "bgC1c",
+              "layoutPosition": "absolute",
+              "x": 345,
+              "y": 28,
+              "name": "arrow",
+              "width": 20,
+              "height": 20,
+              "icon": "arrow-up-right",
+              "library": "lucide",
+              "fill": "#FFFFFFFF"
+            },
+            {
+              "type": "text",
+              "id": "U8Pndt",
+              "name": "kicker",
+              "fill": "#FFFFFFCC",
+              "content": "SHACKETS & OVERSHIRTS",
+              "fontFamily": "Inter",
+              "fontSize": 9,
+              "fontWeight": "normal",
+              "letterSpacing": 2
+            },
+            {
+              "type": "frame",
+              "id": "cgzll",
+              "name": "titleWrap",
+              "padding": [
+                9,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Z8DSR",
+                  "name": "title",
+                  "fill": "#FFFFFFFF",
+                  "content": "Overshirts",
+                  "lineHeight": 1,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 42,
+                  "fontWeight": "300",
+                  "letterSpacing": -1.2,
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "O087sC",
+              "name": "lineWrap",
+              "padding": [
+                20,
+                0,
+                12,
+                0
+              ],
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "lSJry",
+                  "name": "line",
+                  "fill": "#FFFFFFCC",
+                  "width": 28,
+                  "height": 1
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "xwGLe",
+              "name": "tagline",
+              "fill": "#FFFFFFCC",
+              "content": "\"one layer, every season\"",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "300",
+              "fontStyle": "italic"
+            },
+            {
+              "type": "frame",
+              "id": "zMSIO",
+              "name": "statsWrap",
+              "padding": [
+                18,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "M7FAl3",
+                  "name": "stats",
+                  "fill": "#FFFFFFCC",
+                  "content": "6 PIECES   ·   FROM ₹1,990",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "normal",
+                  "letterSpacing": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "KZ93B",
+          "name": "Editorial Quote",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            56,
+            28,
+            0,
+            28
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "T2p9V",
+              "name": "qLineTop",
+              "fill": "#CCCCCCFF",
+              "width": 24,
+              "height": 1
+            },
+            {
+              "type": "text",
+              "id": "mpkYO",
+              "name": "qText",
+              "fill": "#999999FF",
+              "content": "\"Wear it like you're already there.\"",
+              "textAlign": "center",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "300",
+              "fontStyle": "italic"
+            },
+            {
+              "type": "rectangle",
+              "id": "zChtf",
+              "name": "qLineBottom",
+              "fill": "#CCCCCCFF",
+              "width": 24,
+              "height": 1
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "hjLhX",
+          "name": "Closer",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            80,
+            28,
+            72,
+            28
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "cwuGk",
+              "name": "closerKicker",
+              "fill": "#999999FF",
+              "content": "BUILT FOR THE 20–30 TRAVELLER",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "normal",
+              "letterSpacing": 2
+            },
+            {
+              "type": "text",
+              "id": "M3H0sr",
+              "name": "closerTitle",
+              "fill": "#000000FF",
+              "content": "One rack.\nSix collections.\nZero filler.",
+              "lineHeight": 1.1,
+              "fontFamily": "Inter",
+              "fontSize": 32,
+              "fontWeight": "300",
+              "letterSpacing": -0.8
+            },
+            {
+              "type": "rectangle",
+              "id": "Sb7cA",
+              "name": "closerLine",
+              "fill": "#000000FF",
+              "width": 32,
+              "height": 1
+            },
+            {
+              "type": "text",
+              "id": "AeOHQ",
+              "name": "closerBody",
+              "fill": "#666666FF",
+              "content": "56 pieces that earn their place.\nPicked by cloth, not by trend.",
+              "lineHeight": 1.6,
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "300"
+            },
+            {
+              "type": "frame",
+              "id": "b7JYRc",
+              "name": "closerBtn",
+              "width": 200,
+              "height": 50,
+              "fill": "#000000FF",
+              "cornerRadius": 9999,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "FsfeN",
+                  "name": "closerBtnText",
+                  "fill": "#FFFFFFFF",
+                  "content": "BROWSE ALL 56 PIECES →",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "500",
+                  "letterSpacing": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "J6uhf",
+          "name": "Payback Wrap",
+          "width": "fill_container",
+          "layout": "vertical",
+          "padding": [
+            0,
+            20,
+            56,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "z2AR4b",
+              "name": "Payback Card",
+              "width": "fill_container",
+              "fill": "#F5F2EDFF",
+              "cornerRadius": 14,
+              "layout": "vertical",
+              "gap": 24,
+              "padding": [
+                40,
+                20,
+                32,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "KGXYf",
+                  "name": "pbHeading",
+                  "fill": "#000000FF",
+                  "content": "WE PAY YOU BACK.\nTHREE WAYS.",
+                  "lineHeight": 1.25,
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "700",
+                  "letterSpacing": 1.5
+                },
+                {
+                  "type": "frame",
+                  "id": "Ft1nA",
+                  "name": "pbCols",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "NVqTm",
+                      "name": "col — TODAY",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "ZZ6cb",
+                          "name": "colIcon",
+                          "width": 32,
+                          "height": 32,
+                          "icon": "wallet",
+                          "library": "lucide",
+                          "fill": "#2A2419FF"
+                        },
+                        {
+                          "type": "text",
+                          "id": "aAoUw",
+                          "name": "colEyebrow",
+                          "fill": "#999999FF",
+                          "content": "TODAY",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "S6OPX",
+                          "name": "colTitle",
+                          "fill": "#000000FF",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "First-Order Cashback",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "q62r0",
+                          "name": "colDesc",
+                          "fill": "#5C5247FF",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "100% of your first order, as loyalty points",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "o8Jih",
+                      "name": "col — PER FRIEND",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "fqCl1",
+                          "name": "colIcon",
+                          "width": 32,
+                          "height": 32,
+                          "icon": "users",
+                          "library": "lucide",
+                          "fill": "#2A2419FF"
+                        },
+                        {
+                          "type": "text",
+                          "id": "qBaTR",
+                          "name": "colEyebrow",
+                          "fill": "#999999FF",
+                          "content": "PER FRIEND",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "PtZjh",
+                          "name": "colTitle",
+                          "fill": "#000000FF",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Cash for Referrals",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "v429bw",
+                          "name": "colDesc",
+                          "fill": "#5C5247FF",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "20% cash to your bank, per friend's first order",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "HIr0u",
+                      "name": "col — YEAR 1+",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "trKA5",
+                          "name": "colIcon",
+                          "width": 32,
+                          "height": 32,
+                          "icon": "recycle",
+                          "library": "lucide",
+                          "fill": "#2A2419FF"
+                        },
+                        {
+                          "type": "text",
+                          "id": "PbdB6",
+                          "name": "colEyebrow",
+                          "fill": "#999999FF",
+                          "content": "YEAR 1+",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "500",
+                          "letterSpacing": 2.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "RjWjX",
+                          "name": "colTitle",
+                          "fill": "#000000FF",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Forever Buyback",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "sfGWR",
+                          "name": "colDesc",
+                          "fill": "#5C5247FF",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "33% back, any time after a year",
+                          "lineHeight": 1.5,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 9,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "M1m7rv",
+                  "name": "pbFooter",
+                  "fill": "#999999FF",
+                  "content": "Always on. No code. No expiry.",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "300"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Q24R2o",
+          "name": "Footer",
+          "clip": true,
+          "width": "fill_container",
+          "fill": "#F5F5F5FF",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "L6cjR",
+              "name": "ftLogo",
+              "width": "fill_container",
+              "fill": "#F5F5F5FF",
+              "layout": "vertical",
+              "gap": 8,
+              "padding": [
+                12,
+                28,
+                20,
+                28
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "k6WCr",
+                  "name": "ftLogoImg",
+                  "width": 36,
+                  "height": 36,
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "earth-revibe-logo.png",
+                    "mode": "fit"
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "nMhpp",
+                  "name": "ftLogoName",
+                  "fill": "#000000FF",
+                  "content": "EARTH REVIBE",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal",
+                  "letterSpacing": 3
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "y0DoyI",
+              "name": "ftAccordion",
+              "width": "fill_container",
+              "fill": "#F5F5F5FF",
+              "layout": "vertical",
+              "padding": [
+                0,
+                28
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "SltPj",
+                  "name": "ftA1",
+                  "width": "fill_container",
+                  "height": 46,
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "uyXex",
+                      "name": "ftA1t",
+                      "fill": "#000000FF",
+                      "content": "SHOP",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal",
+                      "letterSpacing": 2
+                    },
+                    {
+                      "type": "icon",
+                      "id": "rkZHv",
+                      "name": "ftA1i",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "chevron-down",
+                      "library": "lucide",
+                      "fill": "#CCCCCCFF"
+                    }
+                  ]
+                },
+                {
+                  "type": "line",
+                  "id": "miwGt",
+                  "name": "ftA1l",
+                  "width": "fill_container",
+                  "height": 1,
+                  "stroke": "#EEEEEEFF",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "V6013",
+                  "name": "ftA2",
+                  "width": "fill_container",
+                  "height": 46,
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "zFd8r",
+                      "name": "ftA2t",
+                      "fill": "#000000FF",
+                      "content": "SUPPORT",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal",
+                      "letterSpacing": 2
+                    },
+                    {
+                      "type": "icon",
+                      "id": "pgRZH",
+                      "name": "ftA2i",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "chevron-down",
+                      "library": "lucide",
+                      "fill": "#CCCCCCFF"
+                    }
+                  ]
+                },
+                {
+                  "type": "line",
+                  "id": "tFipf",
+                  "name": "ftA2l",
+                  "width": "fill_container",
+                  "height": 1,
+                  "stroke": "#EEEEEEFF",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "N1BcXD",
+                  "name": "ftA3",
+                  "width": "fill_container",
+                  "height": 46,
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "D08uN",
+                      "name": "ftA3t",
+                      "fill": "#000000FF",
+                      "content": "ABOUT US",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal",
+                      "letterSpacing": 2
+                    },
+                    {
+                      "type": "icon",
+                      "id": "O2R2Tm",
+                      "name": "ftA3i",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "chevron-down",
+                      "library": "lucide",
+                      "fill": "#CCCCCCFF"
+                    }
+                  ]
+                },
+                {
+                  "type": "line",
+                  "id": "pVe1h",
+                  "name": "ftA3l",
+                  "width": "fill_container",
+                  "height": 1,
+                  "stroke": "#EEEEEEFF",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "SEWdi",
+                  "name": "ftA4",
+                  "width": "fill_container",
+                  "height": 46,
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "bQDJS",
+                      "name": "ftA4t",
+                      "fill": "#000000FF",
+                      "content": "LEGAL",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal",
+                      "letterSpacing": 2
+                    },
+                    {
+                      "type": "icon",
+                      "id": "gLeHl",
+                      "name": "ftA4i",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "chevron-down",
+                      "library": "lucide",
+                      "fill": "#CCCCCCFF"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "EWsIy",
+              "name": "ftSocial",
+              "width": "fill_container",
+              "fill": "#F5F5F5FF",
+              "gap": 20,
+              "padding": [
+                20,
+                0,
+                0,
+                0
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "f0hTo",
+                  "name": "ftIg",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "instagram",
+                  "library": "lucide",
+                  "fill": "#000000FF"
+                },
+                {
+                  "type": "icon",
+                  "id": "kyOar",
+                  "name": "ftFb",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "facebook",
+                  "library": "lucide",
+                  "fill": "#000000FF"
+                },
+                {
+                  "type": "icon",
+                  "id": "xsGMg",
+                  "name": "ftYt",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "youtube",
+                  "library": "lucide",
+                  "fill": "#000000FF"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "T30BXt",
+              "name": "ftCopy",
+              "width": "fill_container",
+              "fill": "#F5F5F5FF",
+              "layout": "vertical",
+              "padding": [
+                16,
+                28,
+                24,
+                28
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "H6rZU",
+                  "name": "ftCopyText",
+                  "fill": "#999999FF",
+                  "content": "© 2026 Earth Revibe · Made in India",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "300"
                 }
               ]
             }

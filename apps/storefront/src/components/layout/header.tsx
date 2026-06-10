@@ -36,17 +36,27 @@ export function Header() {
     typeof window !== 'undefined' ? window.scrollY > 10 : false
   );
 
+  // Homepage: header floats fully transparent (white logo/icons) over the
+  // full-bleed collection covers, and only goes solid once the covers
+  // (#home-covers) have scrolled past. Other routes keep the solid header.
+  const isHome = pathname === '/';
+  const [pastCovers, setPastCovers] = useState(false);
+
   const isProductDetail = pathname.startsWith('/products/') && pathname !== '/products';
 
   const updateScrolled = useCallback(() => {
     setScrolled(window.scrollY > 10);
+    const covers = document.getElementById('home-covers');
+    if (covers) setPastCovers(covers.getBoundingClientRect().bottom <= 64);
   }, []);
 
   useEffect(() => {
     updateScrolled();
     window.addEventListener('scroll', updateScrolled, { passive: true });
     return () => window.removeEventListener('scroll', updateScrolled);
-  }, [updateScrolled]);
+  }, [updateScrolled, pathname]);
+
+  const transparent = isHome && !pastCovers;
 
   return (
     <>
@@ -57,8 +67,12 @@ export function Header() {
       {/* ------------------------------------------------------------ */}
       <header
         className={cn(
-          'sticky top-0 z-40 w-full bg-white transition-all duration-300',
-          scrolled && 'shadow-md'
+          'top-0 z-40 w-full transition-all duration-300',
+          // Home: out-of-flow so the covers reach the very top edge; fully
+          // transparent until scrolled past them, then solid white.
+          isHome ? 'fixed' : 'sticky',
+          transparent ? 'bg-transparent text-white' : 'bg-white text-black',
+          scrolled && !transparent && 'shadow-md'
         )}
       >
         <div
@@ -82,7 +96,7 @@ export function Header() {
           <div className="flex justify-center">
             <Link href="/">
               <Image
-                src="/Earth Revibe Logo Black.png"
+                src={transparent ? '/Earth Revibe Logo White.png' : '/Earth Revibe Logo Black.png'}
                 alt="Earth Revibe"
                 width={160}
                 height={40}
@@ -125,13 +139,21 @@ export function Header() {
           </div>
         </div>
 
-        <nav className="hidden border-t border-[var(--color-border)] lg:flex lg:items-center lg:justify-center lg:gap-8 lg:px-4 lg:py-2">
+        <nav
+          className={cn(
+            'hidden border-t lg:flex lg:items-center lg:justify-center lg:gap-8 lg:px-4 lg:py-2',
+            transparent ? 'border-transparent' : 'border-[var(--color-border)]'
+          )}
+        >
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                'text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-text)] transition-colors hover:text-[var(--color-muted)]',
+                'text-xs font-semibold uppercase tracking-[0.15em] transition-colors',
+                transparent
+                  ? 'text-white hover:text-white/70'
+                  : 'text-[var(--color-text)] hover:text-[var(--color-muted)]',
                 link.label === 'SALE' && 'text-[var(--color-sale)]'
               )}
             >
