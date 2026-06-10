@@ -207,7 +207,11 @@ describe('shiprocketService.getTracking', () => {
     expect(result.available).toBe(true);
     expect(mockOrderUpdate).toHaveBeenCalledWith({
       where: { id: 'order-1' },
-      data: { status: 'DELIVERED', lastShipmentSyncAt: expect.any(Date) },
+      data: {
+        status: 'DELIVERED',
+        deliveredAt: expect.any(Date),
+        lastShipmentSyncAt: expect.any(Date),
+      },
     });
     expect(mockOrderStatusHistoryCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({ orderId: 'order-1', status: 'DELIVERED' }),
@@ -323,7 +327,11 @@ describe('shiprocketService.getTracking', () => {
 
     expect(mockOrderUpdate).toHaveBeenCalledWith({
       where: { id: 'order-1' },
-      data: { status: 'DELIVERED', lastShipmentSyncAt: expect.any(Date) },
+      data: {
+        status: 'DELIVERED',
+        deliveredAt: expect.any(Date),
+        lastShipmentSyncAt: expect.any(Date),
+      },
     });
   });
 
@@ -355,7 +363,11 @@ describe('shiprocketService.getTracking', () => {
 
     expect(mockOrderUpdate).toHaveBeenCalledWith({
       where: { id: 'order-1' },
-      data: { status: 'DELIVERED', lastShipmentSyncAt: expect.any(Date) },
+      data: {
+        status: 'DELIVERED',
+        deliveredAt: expect.any(Date),
+        lastShipmentSyncAt: expect.any(Date),
+      },
     });
   });
 
@@ -419,7 +431,11 @@ describe('shiprocketService.refreshAllPendingShipments', () => {
     expect(mockTransaction).toHaveBeenCalledTimes(2);
     expect(mockOrderUpdate).toHaveBeenCalledWith({
       where: { id: 'o1' },
-      data: { status: 'DELIVERED', lastShipmentSyncAt: expect.any(Date) },
+      data: {
+        status: 'DELIVERED',
+        deliveredAt: expect.any(Date),
+        lastShipmentSyncAt: expect.any(Date),
+      },
     });
     expect(mockOrderUpdate).toHaveBeenCalledWith({
       where: { id: 'o2' },
@@ -612,7 +628,11 @@ describe('shiprocketService.refreshByAwb', () => {
     expect(result).toEqual({ changed: true, orderId: 'order-1' });
     expect(mockOrderUpdate).toHaveBeenCalledWith({
       where: { id: 'order-1' },
-      data: { status: 'DELIVERED', lastShipmentSyncAt: expect.any(Date) },
+      data: {
+        status: 'DELIVERED',
+        deliveredAt: expect.any(Date),
+        lastShipmentSyncAt: expect.any(Date),
+      },
     });
   });
 });

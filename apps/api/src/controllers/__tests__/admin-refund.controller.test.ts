@@ -13,6 +13,10 @@ const mockTx = {
   productVariant: { update: vi.fn() },
   user: { update: vi.fn() },
   loyaltyTransaction: { create: vi.fn() },
+  // The refund flow links an open return request (if any) via return.service —
+  // findFirst resolving null = refund not tied to a return (no-op path).
+  returnRequest: { findFirst: vi.fn(), update: vi.fn() },
+  returnStatusHistory: { create: vi.fn() },
 };
 
 vi.mock('@earth-revibe/db', () => ({

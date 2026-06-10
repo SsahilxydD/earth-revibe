@@ -596,7 +596,7 @@ describe('adminDiscountController.updateDiscount', () => {
     expect(updateData.expiresAt).toBeInstanceOf(Date);
   });
 
-  it('sets optional fields to null when provided as falsy values', async () => {
+  it('clears optional fields on explicit null but keeps literal zeros', async () => {
     mockDiscountCode.findUnique.mockResolvedValue(existingDiscount);
     mockDiscountCode.update.mockResolvedValue(existingDiscount);
 
@@ -604,8 +604,8 @@ describe('adminDiscountController.updateDiscount', () => {
       params: { id: 'disc-001' },
       body: {
         description: '',
-        minOrderValue: 0,
-        maxDiscountAmount: 0,
+        minOrderValue: null,
+        maxDiscountAmount: null,
         usageLimit: 0,
       },
     });
@@ -614,10 +614,13 @@ describe('adminDiscountController.updateDiscount', () => {
     await adminDiscountController.updateDiscount(req, res);
 
     const updateData = mockDiscountCode.update.mock.calls[0][0].data;
+    // '' clears the description; explicit nulls clear numeric limits. A
+    // literal 0 is a VALID value now — the old `|| null` coercion that
+    // swallowed zeros is gone (only null/undefined clear).
     expect(updateData.description).toBeNull();
     expect(updateData.minOrderValue).toBeNull();
     expect(updateData.maxDiscountAmount).toBeNull();
-    expect(updateData.usageLimit).toBeNull();
+    expect(updateData.usageLimit).toBe(0);
   });
 
   it('passes the correct id to the update call', async () => {

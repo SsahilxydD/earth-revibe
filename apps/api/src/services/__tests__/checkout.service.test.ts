@@ -22,6 +22,16 @@ const mocks = vi.hoisted(() => {
   const txReferralUpdate = vi.fn();
   const txCartFindUnique = vi.fn();
   const txCartItemDeleteMany = vi.fn();
+  const txPaymentFindUnique = vi.fn();
+  // The finalize path moved user/address work inside the transaction — share
+  // ONE fn per method between the top-level prisma mock and the tx client so
+  // tests can stage/assert either handle interchangeably.
+  const txUserFindUnique = vi.fn();
+  const txUserFindFirst = vi.fn();
+  const txUserCreate = vi.fn();
+  const txAddressFindFirst = vi.fn();
+  const txAddressCount = vi.fn();
+  const txAddressCreate = vi.fn();
 
   return {
     // ── top-level prisma table mocks ──────────────────────────────────────
@@ -37,10 +47,10 @@ const mocks = vi.hoisted(() => {
       findMany: vi.fn(),
     },
     user: {
-      findUnique: vi.fn(),
-      findFirst: vi.fn(),
-      update: vi.fn(),
-      create: vi.fn(),
+      findUnique: txUserFindUnique,
+      findFirst: txUserFindFirst,
+      update: txUserUpdate,
+      create: txUserCreate,
     },
     loyaltyConfig: { findFirst: vi.fn() },
     order: { count: vi.fn() },
@@ -51,10 +61,11 @@ const mocks = vi.hoisted(() => {
       delete: txPendingCheckoutDelete,
     },
     address: {
-      findFirst: vi.fn(),
-      count: vi.fn(),
-      create: vi.fn(),
+      findFirst: txAddressFindFirst,
+      count: txAddressCount,
+      create: txAddressCreate,
     },
+    payment: { findUnique: txPaymentFindUnique },
     // ── transaction ───────────────────────────────────────────────────────
     $transaction: vi.fn(),
 
@@ -75,7 +86,12 @@ const mocks = vi.hoisted(() => {
         count: txOrderCount,
       },
       discountCode: { update: txDiscountCodeUpdate },
-      user: { update: txUserUpdate },
+      user: {
+        update: txUserUpdate,
+        findUnique: txUserFindUnique,
+        findFirst: txUserFindFirst,
+        create: txUserCreate,
+      },
       loyaltyTransaction: { create: txLoyaltyTransactionCreate },
       referral: {
         findUnique: txReferralFindUnique,
@@ -83,6 +99,12 @@ const mocks = vi.hoisted(() => {
       },
       cart: { findUnique: txCartFindUnique },
       cartItem: { deleteMany: txCartItemDeleteMany },
+      payment: { findUnique: txPaymentFindUnique },
+      address: {
+        findFirst: txAddressFindFirst,
+        count: txAddressCount,
+        create: txAddressCreate,
+      },
     },
 
     // ── named tx-level fns (for direct assertion) ─────────────────────────
@@ -101,10 +123,18 @@ const mocks = vi.hoisted(() => {
     txReferralUpdate,
     txCartFindUnique,
     txCartItemDeleteMany,
+    txPaymentFindUnique,
+    txUserFindUnique,
+    txUserFindFirst,
+    txUserCreate,
+    txAddressFindFirst,
+    txAddressCount,
+    txAddressCreate,
 
     // ── razorpay ──────────────────────────────────────────────────────────
     razorpayOrdersCreate: vi.fn(),
     razorpayOrdersFetch: vi.fn(),
+    razorpayOrdersFetchPayments: vi.fn(),
 
     // ── shared ────────────────────────────────────────────────────────────
     generateOrderNumber: vi.fn(() => 'ORD-TEST-001'),
@@ -125,10 +155,17 @@ vi.mock('@earth-revibe/db', () => ({
     order: mocks.order,
     pendingCheckout: mocks.pendingCheckout,
     address: mocks.address,
+    payment: mocks.payment,
     $transaction: mocks.$transaction,
   },
   Prisma: {
     TransactionIsolationLevel: { Serializable: 'Serializable' },
+    // The webhook/client race handler checks `err instanceof
+    // Prisma.PrismaClientKnownRequestError` — give the mock a real class.
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code?: string;
+      meta?: Record<string, unknown>;
+    },
   },
 }));
 
@@ -137,6 +174,9 @@ vi.mock('../../config/razorpay', () => ({
     orders: {
       create: mocks.razorpayOrdersCreate,
       fetch: mocks.razorpayOrdersFetch,
+      // Reconciliation polls each stale checkout's payments before deciding
+      // to finalize (captured / COD-pending) or release stock.
+      fetchPayments: mocks.razorpayOrdersFetchPayments,
     },
   })),
 }));
@@ -157,9 +197,15 @@ vi.mock('../../config/constants', () => ({
   },
 }));
 
-vi.mock('@earth-revibe/shared', () => ({
-  generateOrderNumber: mocks.generateOrderNumber,
-}));
+vi.mock('@earth-revibe/shared', async (importOriginal) => {
+  // Keep the real pricing/email helpers (comboDiscount, isPlaceholderEmail, …)
+  // so tests exercise genuine maths; only the order-number generator is faked.
+  const actual = await importOriginal<typeof import('@earth-revibe/shared')>();
+  return {
+    ...actual,
+    generateOrderNumber: mocks.generateOrderNumber,
+  };
+});
 
 vi.mock('../shiprocket.service', () => ({
   shiprocketService: {
@@ -318,6 +364,11 @@ beforeEach(() => {
   vi.resetAllMocks();
   // Re-wire generateOrderNumber after reset
   mocks.generateOrderNumber.mockReturnValue('ORD-TEST-001');
+  // Defaults the new COD-reconciliation paths rely on: no payment row exists
+  // yet, and Razorpay reports no payments for a stale order unless a test
+  // stages otherwise.
+  mocks.txPaymentFindUnique.mockResolvedValue(null);
+  mocks.razorpayOrdersFetchPayments.mockResolvedValue({ items: [] });
 });
 
 // ===========================================================================
@@ -699,12 +750,12 @@ describe('checkoutService.createMagicOrder', () => {
       );
     });
 
-    it('caps FLAT discount at subtotal to prevent negative total', async () => {
-      // Flat 1500 > subtotal 1000 → discount capped at 1000 → total 0
+    it('caps FLAT discount so the order keeps the ₹1 Razorpay minimum', async () => {
+      // Flat 1500 > subtotal 1000 → discount capped at 999 → total ₹1 (100 paise)
       await applyWithDiscount({ type: 'FLAT', value: 1500 });
 
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ amount: 0 })
+        expect.objectContaining({ amount: 100 })
       );
     });
 
@@ -1034,6 +1085,8 @@ describe('checkoutService.createMagicOrder', () => {
       mocks.discountCode.findUnique.mockResolvedValueOnce(
         makeDiscount({ type: 'FLAT', value: 600 })
       );
+      // First user lookup is the referral-code probe (code isn't one → null)
+      mocks.user.findUnique.mockResolvedValueOnce(null);
       mocks.order.count.mockResolvedValueOnce(0);
       mocks.user.findUnique.mockResolvedValueOnce({ id: 'user-1', loyaltyPoints: 1000 });
       mocks.loyaltyConfig.findFirst.mockResolvedValueOnce({ isActive: true, minRedeemPoints: 10 });
@@ -1051,9 +1104,10 @@ describe('checkoutService.createMagicOrder', () => {
 
       await checkoutService.createMagicOrder('user-1', input as any);
 
-      // subtotal=1000, flat=600, maxLoyalty=400, loyaltyUsed=min(700,400)=400 → total=0
+      // subtotal=1000, flat=600, maxLoyalty=400 — but the total is floored at
+      // the ₹1 Razorpay minimum → 100 paise
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ amount: 0 })
+        expect.objectContaining({ amount: 100 })
       );
     });
   });
@@ -1071,6 +1125,8 @@ describe('checkoutService.createMagicOrder', () => {
       mocks.discountCode.findUnique.mockResolvedValueOnce(
         makeDiscount({ type: 'FLAT', value: 150 })
       );
+      // First user lookup is the referral-code probe (code isn't one → null)
+      mocks.user.findUnique.mockResolvedValueOnce(null);
       mocks.order.count.mockResolvedValueOnce(0);
       mocks.user.findUnique.mockResolvedValueOnce({ id: 'user-1', loyaltyPoints: 1000 });
       mocks.loyaltyConfig.findFirst.mockResolvedValueOnce({ isActive: true, minRedeemPoints: 1 });
@@ -1088,8 +1144,9 @@ describe('checkoutService.createMagicOrder', () => {
 
       await checkoutService.createMagicOrder('user-1', input as any);
 
+      // Floored at the ₹1 Razorpay minimum, never negative
       expect(mocks.razorpayOrdersCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ amount: 0 })
+        expect.objectContaining({ amount: 100 })
       );
     });
 
@@ -1117,8 +1174,9 @@ describe('checkoutService.createMagicOrder', () => {
       );
 
       const callArg = mocks.razorpayOrdersCreate.mock.calls[0][0];
-      expect(callArg.amount).toBeGreaterThanOrEqual(0);
-      expect(callArg.amount).toBe(0);
+      // Fully-discounted orders still charge the ₹1 Razorpay minimum
+      expect(callArg.amount).toBeGreaterThan(0);
+      expect(callArg.amount).toBe(100);
     });
   });
 
@@ -1330,7 +1388,8 @@ describe('checkoutService.createMagicOrder', () => {
       expect(result.prefill).toEqual({
         name: 'Alice Smith',
         email: 'alice@example.com',
-        contact: '9876543210',
+        // Bare 10-digit numbers get the +91 country code for Razorpay prefill
+        contact: '+919876543210',
       });
     });
 
@@ -1501,15 +1560,17 @@ describe('checkoutService.getShippingInfo', () => {
   // Regressions covering the schema-rejection bug that silently tripped
   // Razorpay's callback circuit breaker (cf. ticket #18726923).
 
-  it('accepts pre-pincode callback (country-only, no zipcode) with a 200 placeholder', async () => {
+  it('marks the pre-pincode callback (country-only) serviceable + COD for India', async () => {
+    // Razorpay's Magic UI decides COD availability from the FIRST shipping-info
+    // response — returning cod:false here permanently hid COD in the modal, so
+    // India is now COD-eligible even before a pincode arrives.
     const result = await checkoutService.getShippingInfo({
       addresses: [{ country: 'in' }],
     } as any);
 
     expect(result.addresses).toHaveLength(1);
-    expect(result.addresses[0].shipping_methods[0].serviceable).toBe(false);
-    expect(result.addresses[0].shipping_methods[0].cod).toBe(false);
-    expect(result.addresses[0].shipping_methods[0].cod_fee).toBe(0);
+    expect(result.addresses[0].shipping_methods[0].serviceable).toBe(true);
+    expect(result.addresses[0].shipping_methods[0].cod).toBe(true);
   });
 
   it('coerces numeric zipcode to string and still marks serviceable', async () => {
@@ -1996,7 +2057,11 @@ describe('checkoutService.verifyMagicPayment', () => {
       mocks.razorpayOrdersFetch.mockResolvedValueOnce({
         customer_details: {}, // no shipping_address
       });
+      // finalize re-fetches the variants for order-item pricing before address checks
+      mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       mocks.user.findUnique.mockResolvedValueOnce({ phone: null, email: 'u@x.com' });
+      // Address resolution happens inside the order transaction now
+      setupVerifyTransaction();
       mocks.address.findFirst.mockResolvedValueOnce(null); // no default address
 
       await expect(
@@ -2013,12 +2078,16 @@ describe('checkoutService.verifyMagicPayment', () => {
       mocks.razorpayOrdersFetch.mockResolvedValueOnce({
         customer_details: {}, // no shipping_address, no email
       });
+      // finalize re-fetches the variants for order-item pricing before address checks
+      mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant()]);
       // Auto-create user flow — no customer email means isGuest stays true
       // (customerEmail would be '' since no customer_details.email and pending.guestEmail is 'g@x.com')
       // Actually guestEmail exists so auto-create fires
       mocks.user.findUnique.mockResolvedValueOnce(null);
       mocks.user.findFirst.mockResolvedValueOnce(null);
       mocks.user.create.mockResolvedValueOnce({ id: 'auto-user-1', email: 'g@x.com' });
+      // Address resolution happens inside the order transaction now
+      setupVerifyTransaction();
       // After auto-creation, user is no longer guest → tries to find default address
       mocks.address.findFirst.mockResolvedValueOnce(null);
 
@@ -2067,7 +2136,7 @@ describe('checkoutService.verifyMagicPayment', () => {
   // ── Return value ──────────────────────────────────────────────────────────
 
   describe('return value', () => {
-    it('returns orderNumber and pointsEarned (1 per 100 INR) for authenticated user', async () => {
+    it('returns orderNumber and 20% cashback points for a repeat-order user', async () => {
       const pending = makePendingCheckout({
         userId: 'user-1',
         subtotal: 1000,
@@ -2096,8 +2165,8 @@ describe('checkoutService.verifyMagicPayment', () => {
 
       expect(result).toHaveProperty('orderNumber', 'ORD-TEST-001');
       expect(result).toHaveProperty('pointsEarned');
-      // 1000 INR / 100 = 10 points
-      expect(result.pointsEarned).toBe(10);
+      // Repeat order (priorOrderCount=2) → 20% cashback: floor(1000 / 5) = 200
+      expect(result.pointsEarned).toBe(200);
     });
 
     it('returns pointsEarned for auto-created guest users', async () => {
@@ -2123,15 +2192,16 @@ describe('checkoutService.verifyMagicPayment', () => {
       mocks.txOrderUpdate.mockResolvedValueOnce({});
       mocks.txUserUpdate.mockResolvedValue({});
       mocks.txLoyaltyTransactionCreate.mockResolvedValue({});
-      mocks.txOrderCount.mockResolvedValueOnce(1);
+      // 1st count: cashback's priorOrderCount (0 → first order); 2nd: referral check
+      mocks.txOrderCount.mockResolvedValueOnce(0).mockResolvedValueOnce(1);
       mocks.txReferralFindUnique.mockResolvedValueOnce(null);
       mocks.txCartFindUnique.mockResolvedValueOnce(null);
       mocks.txPendingCheckoutDelete.mockResolvedValueOnce({});
 
       const result = await checkoutService.verifyMagicPayment(null, makeValidVerifyInput() as any);
 
-      // Auto-created users earn points (1000 INR / 100 = 10 points)
-      expect(result.pointsEarned).toBe(10);
+      // First order → 100% cashback as points (₹1000 → 1000 points)
+      expect(result.pointsEarned).toBe(1000);
     });
   });
 
@@ -2381,18 +2451,21 @@ describe('restoreExpiredReservations', () => {
     expect(mocks.$transaction).toHaveBeenCalledTimes(3);
   });
 
-  it('queries only checkouts older than CHECKOUT_EXPIRY_MS with stockReserved=true', async () => {
+  it('queries all stale checkouts (>30min) — reserved or not — for reconciliation', async () => {
+    // Reconciliation now sweeps EVERY stale checkout (it may need to finalize
+    // a paid/COD order, not just release stock), so there's no stockReserved
+    // filter in the query — the per-checkout logic branches on it instead.
     mocks.pendingCheckout.findMany.mockResolvedValueOnce([]);
 
     await restoreExpiredReservations();
 
     const call = mocks.pendingCheckout.findMany.mock.calls[0][0];
-    expect(call.where.stockReserved).toBe(true);
+    expect(call.where.stockReserved).toBeUndefined();
     expect(call.where.createdAt).toBeDefined();
     expect(call.where.createdAt.lt).toBeInstanceOf(Date);
   });
 
-  it('the expiry date is approximately 2 hours in the past', async () => {
+  it('the staleness cutoff is approximately 30 minutes in the past', async () => {
     mocks.pendingCheckout.findMany.mockResolvedValueOnce([]);
 
     const beforeCall = Date.now();
@@ -2403,9 +2476,9 @@ describe('restoreExpiredReservations', () => {
     const ltDate = call.where.createdAt.lt as Date;
     const diffMs = beforeCall - ltDate.getTime();
 
-    // Should be approximately 7_200_000ms (2h) with a small tolerance
-    expect(diffMs).toBeGreaterThanOrEqual(7_200_000 - 100);
-    expect(diffMs).toBeLessThanOrEqual(7_200_000 + afterCall - beforeCall + 100);
+    // Should be approximately 1_800_000ms (30min) with a small tolerance
+    expect(diffMs).toBeGreaterThanOrEqual(1_800_000 - 100);
+    expect(diffMs).toBeLessThanOrEqual(1_800_000 + afterCall - beforeCall + 100);
   });
 
   it('restores correct quantity per variant item', async () => {

@@ -787,9 +787,11 @@ describe('orderService', () => {
           .createOrder(USER_ID, { ...BASE_CREATE_INPUT, discountCode: 'SAVE10' })
           .catch(() => {});
 
+        // DRAFT orders (pre-payment Magic Checkout shells) no longer burn a
+        // per-user use either — only real, non-cancelled orders count.
         expect(mockOrderCount).toHaveBeenCalledWith(
           expect.objectContaining({
-            where: expect.objectContaining({ status: { not: 'CANCELLED' } }),
+            where: expect.objectContaining({ status: { notIn: ['CANCELLED', 'DRAFT'] } }),
           })
         );
       });
@@ -1613,27 +1615,36 @@ describe('orderService', () => {
         );
       });
 
-      it('awards 100 referrer reward points (APP_CONSTANTS.REFERRER_REWARD_POINTS)', async () => {
+      it('records a 20% cash referrer reward as a PENDING payout (no points)', async () => {
         setupWithReferral({ status: 'SIGNED_UP', orderCount: 1 });
 
         await orderService.verifyPayment(USER_ID, makeVerifyInput());
 
-        expect(mockTxUserUpdate).toHaveBeenCalledWith(
+        // Referrer is paid 20% of subtotal (₹1000 → ₹200) as CASH, recorded on
+        // the referral for an admin to settle — not as loyalty points.
+        expect(mockTxReferralUpdate).toHaveBeenCalledWith(
           expect.objectContaining({
-            where: { id: 'referrer-001' },
-            data: { loyaltyPoints: { increment: 100 } },
+            where: { id: 'ref-001' },
+            data: expect.objectContaining({
+              status: 'CONVERTED',
+              referrerReward: 200,
+              refereeReward: 0,
+              payoutStatus: 'PENDING',
+            }),
           })
+        );
+        expect(mockTxUserUpdate).not.toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: 'referrer-001' } })
         );
       });
 
-      it('awards 50 referee bonus points (APP_CONSTANTS.REFEREE_REWARD_POINTS)', async () => {
+      it('gives the referee no extra bonus points (cashback already applied at checkout)', async () => {
         setupWithReferral({ status: 'SIGNED_UP', orderCount: 1 });
 
         await orderService.verifyPayment(USER_ID, makeVerifyInput());
 
-        expect(mockTxUserUpdate).toHaveBeenCalledWith(
+        expect(mockTxUserUpdate).not.toHaveBeenCalledWith(
           expect.objectContaining({
-            where: { id: USER_ID },
             data: { loyaltyPoints: { increment: 50 } },
           })
         );
@@ -1830,6 +1841,7 @@ describe('orderService', () => {
         address: null,
         statusHistory: [],
         discountCode: null,
+        returnRequests: [],
       });
 
       const result = await orderService.getOrder(USER_ID, ORDER_NUMBER);
@@ -1863,11 +1875,16 @@ describe('orderService', () => {
 
       await orderService.getOrder(USER_ID, 'ORD-XYZ').catch(() => {});
 
-      // deletedAt:null is added by the soft-delete exclusion — archived orders
-      // must not be visible in customer history.
+      // deletedAt:null excludes soft-deleted orders; NOT DRAFT hides unpaid
+      // Magic Checkout shells from customer history.
       expect(mockOrderFindFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { orderNumber: 'ORD-XYZ', userId: USER_ID, deletedAt: null },
+          where: {
+            orderNumber: 'ORD-XYZ',
+            userId: USER_ID,
+            deletedAt: null,
+            NOT: { status: 'DRAFT' },
+          },
         })
       );
     });
@@ -1879,9 +1896,11 @@ describe('orderService', () => {
 
       const callArg = mockOrderFindFirst.mock.calls[0][0];
       expect(callArg.include).toMatchObject({
-        items: true,
+        // items carry the product slug (via variant) for the return/exchange UI
+        items: { include: { variant: { select: { product: { select: { slug: true } } } } } },
         payment: true,
         address: true,
+        returnRequests: { include: { items: true }, orderBy: { createdAt: 'desc' } },
       });
     });
   });
@@ -2215,7 +2234,8 @@ describe('orderService', () => {
           expect.objectContaining({
             where: expect.objectContaining({
               id: { not: 'order-db-001' },
-              status: { not: 'CANCELLED' },
+              // DRAFT shells don't count as "other purchases" either
+              status: { notIn: ['CANCELLED', 'DRAFT'] },
             }),
           })
         );

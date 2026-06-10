@@ -18,7 +18,8 @@ describe('errorHandler middleware', () => {
   });
 
   it('should return structured error for validation failures (400)', async () => {
-    const res = await request.post('/api/v1/auth/register').send({ email: 'bad' }).expect(400);
+    // Auth is OTP-based now — send-otp's zod schema rejects before any side effect.
+    const res = await request.post('/api/v1/auth/send-otp').send({ phone: 'bad' }).expect(400);
 
     expect(res.body.success).toBe(false);
     expect(res.body.error.code).toBe('BAD_REQUEST');

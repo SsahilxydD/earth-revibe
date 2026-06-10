@@ -1,5 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { request, cleanupTestData, makeRegisterPayload } from '../../test/helpers';
+import { prisma } from '@earth-revibe/db';
+import { request, cleanupTestData, createTestUser } from '../../test/helpers';
+import { hashOtp, hashPassword } from '../../services/auth.service';
 
 /** Extract a named cookie value from a supertest response. */
 function getCookie(res: { headers: Record<string, string | string[]> }, name: string): string {
@@ -13,69 +15,112 @@ function getCookie(res: { headers: Record<string, string | string[]> }, name: st
   return '';
 }
 
+/**
+ * Seed a fresh, unverified OTP for a phone. The API never returns the code
+ * (it goes out via WhatsApp, hashed at rest), so tests write the row directly
+ * with a known code's hash — no network involved.
+ */
+async function seedOtp(phone: string, code = '123456') {
+  await prisma.otpCode.create({
+    data: {
+      phone,
+      codeHash: hashOtp(code),
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    },
+  });
+  return code;
+}
+
 describe('Auth Routes', () => {
   const createdUserIds: string[] = [];
+  const usedPhones: string[] = [];
 
   afterEach(async () => {
+    if (usedPhones.length) {
+      await prisma.otpCode.deleteMany({ where: { phone: { in: usedPhones } } });
+      usedPhones.length = 0;
+    }
     await cleanupTestData(createdUserIds);
     createdUserIds.length = 0;
   });
 
-  describe('POST /api/v1/auth/register', () => {
-    it('should register a new user (201)', async () => {
-      const payload = makeRegisterPayload();
+  describe('POST /api/v1/auth/send-otp', () => {
+    it('should reject an invalid phone (400)', async () => {
+      const res = await request
+        .post('/api/v1/auth/send-otp')
+        .send({ phone: 'not-a-phone' })
+        .expect(400);
 
-      const res = await request.post('/api/v1/auth/register').send(payload).expect(201);
+      expect(res.body.success).toBe(false);
+    });
+  });
+
+  describe('POST /api/v1/auth/verify-otp', () => {
+    it('should log in an existing user with a valid OTP and set auth cookies (200)', async () => {
+      const { user } = await createTestUser();
+      createdUserIds.push(user.id);
+      usedPhones.push(user.phone!);
+      const code = await seedOtp(user.phone!);
+
+      const res = await request
+        .post('/api/v1/auth/verify-otp')
+        .send({ phone: user.phone, code })
+        .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.email).toBe(payload.email);
+      expect(res.body.data.id).toBe(user.id);
       // Tokens are in httpOnly cookies, not in the JSON body
       expect(getCookie(res, 'access_token')).toBeTruthy();
       expect(getCookie(res, 'refresh_token')).toBeTruthy();
-      createdUserIds.push(res.body.data.id);
     });
 
-    it('should reject invalid email (400)', async () => {
-      const payload = makeRegisterPayload({ email: 'not-an-email' });
+    it('should reject a wrong code and count the attempt (400)', async () => {
+      const { user } = await createTestUser();
+      createdUserIds.push(user.id);
+      usedPhones.push(user.phone!);
+      await seedOtp(user.phone!, '123456');
 
-      const res = await request.post('/api/v1/auth/register').send(payload).expect(400);
+      const res = await request
+        .post('/api/v1/auth/verify-otp')
+        .send({ phone: user.phone, code: '654321' })
+        .expect(400);
+
+      expect(res.body.error.message).toBe('Invalid OTP');
+      const otp = await prisma.otpCode.findFirst({ where: { phone: user.phone! } });
+      expect(otp?.attempts).toBe(1);
+    });
+
+    it('should reject when no active OTP exists for the phone (400)', async () => {
+      const { user } = await createTestUser();
+      createdUserIds.push(user.id);
+      usedPhones.push(user.phone!);
+
+      const res = await request
+        .post('/api/v1/auth/verify-otp')
+        .send({ phone: user.phone, code: '123456' })
+        .expect(400);
 
       expect(res.body.success).toBe(false);
-    });
-
-    it('should reject weak password (400)', async () => {
-      const payload = makeRegisterPayload({ password: '123' });
-
-      const res = await request.post('/api/v1/auth/register').send(payload).expect(400);
-
-      expect(res.body.success).toBe(false);
-    });
-
-    it('should reject duplicate email (409)', async () => {
-      const payload = makeRegisterPayload();
-
-      const first = await request.post('/api/v1/auth/register').send(payload);
-      createdUserIds.push(first.body.data.id);
-
-      const res = await request.post('/api/v1/auth/register').send(payload).expect(409);
-
-      expect(res.body.error.code).toBe('CONFLICT');
     });
   });
 
   describe('POST /api/v1/auth/login', () => {
     it('should login with valid credentials and set auth cookies (200)', async () => {
-      const payload = makeRegisterPayload();
-      const registerRes = await request.post('/api/v1/auth/register').send(payload);
-      createdUserIds.push(registerRes.body.data.id);
+      const password = 'Sturdy-Passw0rd';
+      const { user } = await createTestUser();
+      createdUserIds.push(user.id);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: await hashPassword(password) },
+      });
 
       const res = await request
         .post('/api/v1/auth/login')
-        .send({ email: payload.email, password: payload.password })
+        .send({ email: user.email, password })
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.email).toBe(payload.email);
+      expect(res.body.data.email).toBe(user.email);
       // Tokens live in httpOnly cookies
       expect(getCookie(res, 'access_token')).toBeTruthy();
       expect(getCookie(res, 'refresh_token')).toBeTruthy();
@@ -93,17 +138,21 @@ describe('Auth Routes', () => {
 
   describe('GET /api/v1/auth/me', () => {
     it('should return user profile with valid token (200)', async () => {
-      const payload = makeRegisterPayload();
-      const registerRes = await request.post('/api/v1/auth/register').send(payload);
-      const accessToken = getCookie(registerRes, 'access_token');
-      createdUserIds.push(registerRes.body.data.id);
+      const { user } = await createTestUser();
+      createdUserIds.push(user.id);
+      usedPhones.push(user.phone!);
+      const code = await seedOtp(user.phone!);
+      const loginRes = await request
+        .post('/api/v1/auth/verify-otp')
+        .send({ phone: user.phone, code });
+      const accessToken = getCookie(loginRes, 'access_token');
 
       const res = await request
         .get('/api/v1/auth/me')
         .set('Cookie', `access_token=${accessToken}`)
         .expect(200);
 
-      expect(res.body.data.email).toBe(payload.email);
+      expect(res.body.data.email).toBe(user.email);
     });
 
     it('should reject missing token (401)', async () => {
@@ -117,14 +166,13 @@ describe('Auth Routes', () => {
 
   describe('POST /api/v1/auth/refresh', () => {
     it('should rotate tokens via refresh cookie (200)', async () => {
-      const payload = makeRegisterPayload();
-      const registerRes = await request.post('/api/v1/auth/register').send(payload);
-      createdUserIds.push(registerRes.body.data.id);
-
+      const { user } = await createTestUser();
+      createdUserIds.push(user.id);
+      usedPhones.push(user.phone!);
+      const code = await seedOtp(user.phone!);
       const loginRes = await request
-        .post('/api/v1/auth/login')
-        .send({ email: payload.email, password: payload.password });
-
+        .post('/api/v1/auth/verify-otp')
+        .send({ phone: user.phone, code });
       const refreshToken = getCookie(loginRes, 'refresh_token');
 
       const res = await request
@@ -146,16 +194,24 @@ describe('Auth Routes', () => {
 
   describe('PUT /api/v1/auth/password', () => {
     it('should change password with valid current password (200)', async () => {
-      const payload = makeRegisterPayload();
-      const registerRes = await request.post('/api/v1/auth/register').send(payload);
-      const accessToken = getCookie(registerRes, 'access_token');
-      createdUserIds.push(registerRes.body.data.id);
+      const password = 'Sturdy-Passw0rd';
+      const { user } = await createTestUser();
+      createdUserIds.push(user.id);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: await hashPassword(password) },
+      });
+
+      const loginRes = await request
+        .post('/api/v1/auth/login')
+        .send({ email: user.email, password });
+      const accessToken = getCookie(loginRes, 'access_token');
 
       await request
         .put('/api/v1/auth/password')
         .set('Cookie', `access_token=${accessToken}`)
         .send({
-          currentPassword: payload.password,
+          currentPassword: password,
           newPassword: 'NewPass123',
           confirmNewPassword: 'NewPass123',
         })
@@ -163,7 +219,7 @@ describe('Auth Routes', () => {
 
       await request
         .post('/api/v1/auth/login')
-        .send({ email: payload.email, password: 'NewPass123' })
+        .send({ email: user.email, password: 'NewPass123' })
         .expect(200);
     });
   });

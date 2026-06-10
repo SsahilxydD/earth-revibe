@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { productService } from '../product.service';
 
 // ---------------------------------------------------------------------------
@@ -15,6 +15,14 @@ const mockPrismaFns = vi.hoisted(() => ({
   },
   category: {
     findUnique: vi.fn(),
+    findMany: vi.fn(),
+  },
+  review: {
+    groupBy: vi.fn(),
+    aggregate: vi.fn(),
+  },
+  productCategory: {
+    createMany: vi.fn(),
   },
   productVariant: {
     findUnique: vi.fn(),
@@ -25,6 +33,7 @@ const mockPrismaFns = vi.hoisted(() => ({
     delete: vi.fn(),
   },
   $transaction: vi.fn(),
+  $queryRaw: vi.fn(),
   productImage: {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
@@ -117,8 +126,26 @@ const makeProductQuery = (overrides = {}) => ({
 // Reset mocks before every test
 // ---------------------------------------------------------------------------
 
+// listProducts has two module-level caches (list results 60s, bestseller ids
+// 10min). Jump the clock past both before every test so each one runs cold —
+// otherwise a test reusing a previous test's query shape is served from cache
+// and its prisma mocks never get called.
+let clockCursor = Date.now();
+
 beforeEach(() => {
   vi.resetAllMocks();
+  clockCursor += 11 * 60_000;
+  vi.useFakeTimers({ now: clockCursor });
+  // listProducts decorates results with rating + isBestSeller lookups.
+  mockPrismaFns.$queryRaw.mockResolvedValue([]);
+  mockPrismaFns.review.groupBy.mockResolvedValue([]);
+  mockPrismaFns.review.aggregate.mockResolvedValue({ _avg: { rating: null }, _count: 0 });
+  mockPrismaFns.category.findMany.mockResolvedValue([]);
+  mockPrismaFns.productCategory.createMany.mockResolvedValue({ count: 1 });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 // ===========================================================================
@@ -154,15 +181,21 @@ describe('productService.listProducts', () => {
   it('filters by category slug when category is a single string', async () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
     vi.mocked(prisma.product.count).mockResolvedValue(0);
+    // Slugs are resolved to ids first; the main query then filters by FK.
+    vi.mocked(prisma.category.findMany).mockResolvedValue([{ id: 'cat-1' }] as any);
 
     await productService.listProducts(makeProductQuery({ category: 'tops' }));
 
+    expect(vi.mocked(prisma.category.findMany)).toHaveBeenCalledWith({
+      where: { slug: { in: ['tops'] } },
+      select: { id: true },
+    });
     const call = vi.mocked(prisma.product.findMany).mock.calls[0][0] as any;
     expect(call.where.AND).toEqual([
       {
         OR: [
-          { category: { slug: 'tops' } },
-          { productCategories: { some: { category: { slug: 'tops' } } } },
+          { categoryId: { in: ['cat-1'] } },
+          { productCategories: { some: { categoryId: { in: ['cat-1'] } } } },
         ],
       },
     ]);
@@ -171,17 +204,25 @@ describe('productService.listProducts', () => {
   it('filters by IN clause when category is an array of slugs', async () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
     vi.mocked(prisma.product.count).mockResolvedValue(0);
+    vi.mocked(prisma.category.findMany).mockResolvedValue([
+      { id: 'cat-t' },
+      { id: 'cat-s' },
+    ] as any);
 
     await productService.listProducts(
       makeProductQuery({ category: ['t-shirts', 'shirts'] as any })
     );
 
+    expect(vi.mocked(prisma.category.findMany)).toHaveBeenCalledWith({
+      where: { slug: { in: ['t-shirts', 'shirts'] } },
+      select: { id: true },
+    });
     const call = vi.mocked(prisma.product.findMany).mock.calls[0][0] as any;
     expect(call.where.AND).toEqual([
       {
         OR: [
-          { category: { slug: { in: ['t-shirts', 'shirts'] } } },
-          { productCategories: { some: { category: { slug: { in: ['t-shirts', 'shirts'] } } } } },
+          { categoryId: { in: ['cat-t', 'cat-s'] } },
+          { productCategories: { some: { categoryId: { in: ['cat-t', 'cat-s'] } } } },
         ],
       },
     ]);
@@ -317,6 +358,7 @@ describe('productService.listProducts', () => {
   it('combines vibe filter with category filter (does not overwrite category)', async () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
     vi.mocked(prisma.product.count).mockResolvedValue(0);
+    vi.mocked(prisma.category.findMany).mockResolvedValue([{ id: 'cat-shirts' }] as any);
 
     await productService.listProducts(
       makeProductQuery({ vibe: 'into-the-wild' as any, category: 'shirts' })
@@ -327,8 +369,8 @@ describe('productService.listProducts', () => {
     expect(call.where.AND).toEqual([
       {
         OR: [
-          { category: { slug: 'shirts' } },
-          { productCategories: { some: { category: { slug: 'shirts' } } } },
+          { categoryId: { in: ['cat-shirts'] } },
+          { productCategories: { some: { categoryId: { in: ['cat-shirts'] } } } },
         ],
       },
     ]);
@@ -346,7 +388,13 @@ describe('productService.getProductBySlug', () => {
 
     const result = await productService.getProductBySlug('eco-tee');
 
-    expect(result).toEqual(product);
+    // The PDP payload decorates the product with a rating summary.
+    expect(result).toEqual({
+      ...product,
+      averageRating: null,
+      reviewCount: 0,
+      ratingBreakdown: [5, 4, 3, 2, 1].map((star) => ({ star, count: 0 })),
+    });
     expect(prisma.product.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({ where: { slug: 'eco-tee' } })
     );
@@ -385,7 +433,9 @@ describe('productService.getProductBySlug', () => {
     await productService.getProductBySlug('eco-tee');
 
     const call = vi.mocked(prisma.product.findUnique).mock.calls[0][0] as any;
-    expect(call.include.reviews.where).toEqual({ isApproved: true });
+    // Only approved, WRITTEN reviews appear in the list; star-only ratings are
+    // excluded here but still counted via the aggregate.
+    expect(call.include.reviews.where).toEqual({ isApproved: true, content: { not: null } });
   });
 });
 
