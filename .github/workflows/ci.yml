@@ -71,10 +71,20 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/earth_revibe_test
 
+      # Integration tests (auth routes, error handler) hit the service's real
+      # Postgres — without the schema applied every prisma call 500s with
+      # P2021 "table does not exist".
+      - name: Apply database migrations
+        run: pnpm --filter @earth-revibe/db exec prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/earth_revibe_test
+          DIRECT_URL: postgresql://test:test@localhost:5432/earth_revibe_test
+
       - name: Run API tests
         run: pnpm turbo test
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/earth_revibe_test
+          DIRECT_URL: postgresql://test:test@localhost:5432/earth_revibe_test
           JWT_SECRET: test-secret-for-ci-padded-to-32-chars-minimum
           NODE_ENV: test
 
