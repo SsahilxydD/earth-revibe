@@ -119,7 +119,7 @@ export default async function HomePage() {
               className="relative block h-[85svh] min-h-[480px] w-full overflow-hidden"
             >
               <Image
-                src={`/collections/${c.key}.jpg`}
+                src={`/covers/${c.key}.jpg`}
                 alt={`${c.title} collection — Earth Revibe`}
                 fill
                 priority={i === 0}
