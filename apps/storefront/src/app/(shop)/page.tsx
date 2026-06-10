@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowUpRight, Recycle, Users, Wallet } from 'lucide-react';
+import { Recycle, Users, Wallet } from 'lucide-react';
 
 export const revalidate = 3600; // refresh live piece counts/prices hourly
 
@@ -116,7 +116,7 @@ export default async function HomePage() {
               href={`/products?${c.query}`}
               prefetch={i < 2}
               aria-label={`Shop ${c.title}`}
-              className="relative block h-[85svh] min-h-[480px] w-full overflow-hidden"
+              className="relative block aspect-[9/16] w-full overflow-hidden md:aspect-auto md:h-[92vh]"
             >
               <Image
                 src={`/covers/${c.key}.jpg`}
@@ -124,16 +124,12 @@ export default async function HomePage() {
                 fill
                 priority={i === 0}
                 sizes="100vw"
-                className="object-cover object-top"
+                className="object-cover"
               />
               {/* scrim for text legibility */}
               <div
                 className="absolute inset-0"
                 style={{ backgroundColor: `rgba(0,0,0,${c.scrim})` }}
-              />
-              <ArrowUpRight
-                className="absolute right-7 top-7 h-5 w-5 text-white"
-                strokeWidth={1.5}
               />
               <div className="absolute inset-0 flex flex-col items-center justify-center px-7 text-center">
                 <p className="text-[9px] font-normal tracking-[2px] text-white/80">{c.kicker}</p>
