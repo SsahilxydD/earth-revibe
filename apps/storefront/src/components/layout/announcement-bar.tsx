@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { X } from 'lucide-react';
 import { useUiStore } from '@/stores/ui-store';
 
@@ -17,6 +18,7 @@ export function AnnouncementBar() {
   const { announcementDismissed, dismissAnnouncement } = useUiStore();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const pathname = usePathname();
 
   const rotateMessage = useCallback(() => {
     setIsVisible(false);
@@ -31,6 +33,9 @@ export function AnnouncementBar() {
     const timer = setInterval(rotateMessage, ROTATE_INTERVAL);
     return () => clearInterval(timer);
   }, [announcementDismissed, rotateMessage]);
+
+  // Homepage runs full-bleed covers under a transparent header — no bar there.
+  if (pathname === '/') return null;
 
   if (announcementDismissed) return null;
 
