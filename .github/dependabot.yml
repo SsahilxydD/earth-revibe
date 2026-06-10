@@ -1,0 +1,45 @@
+# Dependabot policy — written after bulk-updating advisories broke prod twice
+# (see 3a02972 revert). Rules of the game:
+#
+#   1. MAJOR version bumps are NEVER auto-PR'd. Majors carry breaking API
+#      changes (Prisma, Express, Next, zod...) and need a manual migration
+#      with build + tests + a staging click-through. Bumping them blind is
+#      what broke orders/profile/tickets.
+#   2. Patch + minor updates arrive as ONE grouped weekly PR — review it,
+#      wait for green CI, merge. No more 51 separate PRs.
+#   3. Security fixes get their own group so they're easy to fast-track.
+#
+# When a security advisory REQUIRES a major bump, do it by hand, alone, with
+# `pnpm build` + tests + manual order-flow check before merging.
+
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Asia/Kolkata'
+    open-pull-requests-limit: 3
+    labels:
+      - 'dependencies'
+    groups:
+      security-patches:
+        applies-to: security-updates
+        update-types: ['patch', 'minor']
+      minor-and-patch:
+        applies-to: version-updates
+        update-types: ['minor', 'patch']
+    ignore:
+      # Majors are manual-migration territory — never auto-bump anything.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    groups:
+      actions:
+        patterns: ['*']
