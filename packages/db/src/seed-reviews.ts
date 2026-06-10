@@ -27,14 +27,68 @@ const prisma = new PrismaClient();
 const USER_POOL_SIZE = 220; // > max ratings/product so each product gets distinct reviewers
 
 const FIRST_NAMES = [
-  'Aarav', 'Vivaan', 'Aditya', 'Arjun', 'Sai', 'Reyansh', 'Krishna', 'Ishaan', 'Rohan', 'Kabir',
-  'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Myra', 'Anika', 'Riya', 'Ira', 'Kiara', 'Navya',
-  'Karan', 'Rahul', 'Neha', 'Priya', 'Sneha', 'Ayaan', 'Dev', 'Tara', 'Zara', 'Mehul',
-  'Nikhil', 'Pooja', 'Sanya', 'Veer', 'Aryan', 'Isha', 'Manav', 'Tanya', 'Yash', 'Simran',
+  'Aarav',
+  'Vivaan',
+  'Aditya',
+  'Arjun',
+  'Sai',
+  'Reyansh',
+  'Krishna',
+  'Ishaan',
+  'Rohan',
+  'Kabir',
+  'Ananya',
+  'Diya',
+  'Saanvi',
+  'Aadhya',
+  'Myra',
+  'Anika',
+  'Riya',
+  'Ira',
+  'Kiara',
+  'Navya',
+  'Karan',
+  'Rahul',
+  'Neha',
+  'Priya',
+  'Sneha',
+  'Ayaan',
+  'Dev',
+  'Tara',
+  'Zara',
+  'Mehul',
+  'Nikhil',
+  'Pooja',
+  'Sanya',
+  'Veer',
+  'Aryan',
+  'Isha',
+  'Manav',
+  'Tanya',
+  'Yash',
+  'Simran',
 ];
 const LAST_NAMES = [
-  'Sharma', 'Verma', 'Gupta', 'Singh', 'Kumar', 'Patel', 'Reddy', 'Nair', 'Iyer', 'Mehta',
-  'Shah', 'Joshi', 'Rao', 'Das', 'Bose', 'Kapoor', 'Malhotra', 'Chopra', 'Bhat', 'Menon',
+  'Sharma',
+  'Verma',
+  'Gupta',
+  'Singh',
+  'Kumar',
+  'Patel',
+  'Reddy',
+  'Nair',
+  'Iyer',
+  'Mehta',
+  'Shah',
+  'Joshi',
+  'Rao',
+  'Das',
+  'Bose',
+  'Kapoor',
+  'Malhotra',
+  'Chopra',
+  'Bhat',
+  'Menon',
 ];
 
 type Persona = 'coastal' | 'heritage' | 'resort' | 'utility' | 'everyday' | 'quiet';
@@ -47,10 +101,18 @@ const POSITIVE: Record<Persona, { titles: string[]; bodies: string[] }> = {
   // linen, sea, Mediterranean, sailing, villa, harbour
   coastal: {
     titles: [
-      'Sea breeze in fabric form 🌊', 'Made for the coast ⛵️', 'A holiday in one piece 🏖️',
-      'Light as a Mediterranean morning ☀️', 'Quietly perfect by the water 🐚', 'Effortless resort ease 🤍',
-      'My villa wardrobe staple 🍋', 'Breezy and beautifully cut ✨', 'Harbour to dinner with ease 🛥️',
-      'Cool, calm, coastal 🌊', 'Summer in a single piece ☀️', 'Linen done right 🤍',
+      'Sea breeze in fabric form 🌊',
+      'Made for the coast ⛵️',
+      'A holiday in one piece 🏖️',
+      'Light as a Mediterranean morning ☀️',
+      'Quietly perfect by the water 🐚',
+      'Effortless resort ease 🤍',
+      'My villa wardrobe staple 🍋',
+      'Breezy and beautifully cut ✨',
+      'Harbour to dinner with ease 🛥️',
+      'Cool, calm, coastal 🌊',
+      'Summer in a single piece ☀️',
+      'Linen done right 🤍',
     ],
     bodies: [
       'Wore this for a long lunch by the marina and it kept me cool all afternoon. The fabric breathes like a sea breeze. 🌊',
@@ -72,10 +134,18 @@ const POSITIVE: Record<Persona, { titles: string[]; bodies: string[] }> = {
   // countryside, estate, autumn, fireside, tweed, moors
   heritage: {
     titles: [
-      'A country house staple 🍂', 'Made for crisp mornings 🌰', 'Quiet heritage charm 🏡',
-      'Autumn in a single layer 🍷', 'Timeless and grounding 🍂', 'Effortless weekend tailoring 🤎',
-      'Built for the long walk 🍁', 'Old-world and beautifully made 🥃', 'Estate-ready and easy 🐎',
-      'Warm without the bulk 🍂', 'A keeper for the cooler months 🌰', 'Quietly distinguished 🤎',
+      'A country house staple 🍂',
+      'Made for crisp mornings 🌰',
+      'Quiet heritage charm 🏡',
+      'Autumn in a single layer 🍷',
+      'Timeless and grounding 🍂',
+      'Effortless weekend tailoring 🤎',
+      'Built for the long walk 🍁',
+      'Old-world and beautifully made 🥃',
+      'Estate-ready and easy 🐎',
+      'Warm without the bulk 🍂',
+      'A keeper for the cooler months 🌰',
+      'Quietly distinguished 🤎',
     ],
     bodies: [
       'Perfect for long walks on a crisp morning and a glass of something by the fire afterwards. Warm without any bulk. 🍂',
@@ -97,10 +167,18 @@ const POSITIVE: Record<Persona, { titles: string[]; bodies: string[] }> = {
   // poolside, club, golf, refined leisure (polos)
   resort: {
     titles: [
-      'Poolside perfection 🏝️', 'Club house ready ⛳️', 'Leisure done right 🍸',
-      'Sun lounger essential 🌴', 'Quietly elegant ease 🥂', 'A resort wardrobe favourite 🤍',
-      'Terrace to dinner with ease 🍹', 'Effortless and refined 🌺', 'Made for slow afternoons 🌴',
-      'Smart, breezy, beautiful 🥂', 'My holiday go-to 🏝️', 'Polished without the effort 🍸',
+      'Poolside perfection 🏝️',
+      'Club house ready ⛳️',
+      'Leisure done right 🍸',
+      'Sun lounger essential 🌴',
+      'Quietly elegant ease 🥂',
+      'A resort wardrobe favourite 🤍',
+      'Terrace to dinner with ease 🍹',
+      'Effortless and refined 🌺',
+      'Made for slow afternoons 🌴',
+      'Smart, breezy, beautiful 🥂',
+      'My holiday go-to 🏝️',
+      'Polished without the effort 🍸',
     ],
     bodies: [
       'Wore it from the pool to a long lunch without a second thought. Smart, breezy, and beautifully relaxed. 🏝️',
@@ -122,10 +200,18 @@ const POSITIVE: Record<Persona, { titles: string[]; bodies: string[] }> = {
   // travel, layering, journeys, airports, the road (pants, cargo, shackets)
   utility: {
     titles: [
-      'Built for the journey ✈️', 'A travel wardrobe hero 🧳', 'Refined and ready 🗺️',
-      'My layer of choice 🏔️', 'Effortless and practical 🤎', 'A quiet workhorse 🤍',
-      'Made for the road 🧭', 'Smart and hard-wearing 🚂', 'Goes everywhere with me ✈️',
-      'Dependable and easy 🧳', 'Considered down to the detail 🗺️', 'The piece I always pack 🏔️',
+      'Built for the journey ✈️',
+      'A travel wardrobe hero 🧳',
+      'Refined and ready 🗺️',
+      'My layer of choice 🏔️',
+      'Effortless and practical 🤎',
+      'A quiet workhorse 🤍',
+      'Made for the road 🧭',
+      'Smart and hard-wearing 🚂',
+      'Goes everywhere with me ✈️',
+      'Dependable and easy 🧳',
+      'Considered down to the detail 🗺️',
+      'The piece I always pack 🏔️',
     ],
     bodies: [
       'Lived in this through three airports and it still looked sharp at the other end. Comfortable and quietly smart. ✈️',
@@ -147,10 +233,18 @@ const POSITIVE: Record<Persona, { titles: string[]; bodies: string[] }> = {
   // weekend, easy, relaxed-cool, cafe (tees, boxy)
   everyday: {
     titles: [
-      'An easy everyday favourite 🤍', 'A weekend in one piece 😌', 'Quietly cool 🌿',
-      'Soft and effortless ☕️', 'My new go-to 🤍', 'Relaxed done right 😌',
-      'Lives in my rotation 🍃', 'Easy from the first wear 🛋️', 'Comfort without compromise 🙂',
-      'Simple and beautifully soft 🌿', 'The one I always reach for 🤍', 'Effortless any day ☕️',
+      'An easy everyday favourite 🤍',
+      'A weekend in one piece 😌',
+      'Quietly cool 🌿',
+      'Soft and effortless ☕️',
+      'My new go-to 🤍',
+      'Relaxed done right 😌',
+      'Lives in my rotation 🍃',
+      'Easy from the first wear 🛋️',
+      'Comfort without compromise 🙂',
+      'Simple and beautifully soft 🌿',
+      'The one I always reach for 🤍',
+      'Effortless any day ☕️',
     ],
     bodies: [
       'Soft from the very first wear and the fit sits just right, relaxed without ever looking sloppy. ☕️',
@@ -172,10 +266,18 @@ const POSITIVE: Record<Persona, { titles: string[]; bodies: string[] }> = {
   // timeless, understated, versatile (fallback)
   quiet: {
     titles: [
-      'Quietly luxurious ✨', 'Timeless and refined 🤍', 'Understated elegance 🕊️',
-      'Effortlessly considered ✨', 'A genuine keeper 🤍', 'Beautifully made ✨',
-      'Quiet good taste 🤎', 'Refined without effort 🌙', 'Elegant in every detail 🕊️',
-      'The kind you keep 🤍', 'Subtle and beautifully cut ✨', 'Understated and lovely 🤎',
+      'Quietly luxurious ✨',
+      'Timeless and refined 🤍',
+      'Understated elegance 🕊️',
+      'Effortlessly considered ✨',
+      'A genuine keeper 🤍',
+      'Beautifully made ✨',
+      'Quiet good taste 🤎',
+      'Refined without effort 🌙',
+      'Elegant in every detail 🕊️',
+      'The kind you keep 🤍',
+      'Subtle and beautifully cut ✨',
+      'Understated and lovely 🤎',
     ],
     bodies: [
       'Impeccably cut and quietly elegant. It looks far more expensive than it is and pairs with anything. ✨',
@@ -200,8 +302,12 @@ const POSITIVE: Record<Persona, { titles: string[]; bodies: string[] }> = {
 // on a middling/low rating. Still warm, still no em dashes.
 const MIXED = {
   titles: [
-    'Lovely, with a note on fit 🤔', 'Beautiful, sizing runs generous 📏', 'Refined but slightly relaxed 🙂',
-    'Gorgeous, just size down 📐', 'Lovely piece, lighter than I expected 🙂', 'Elegant, a small caveat 🤔',
+    'Lovely, with a note on fit 🤔',
+    'Beautiful, sizing runs generous 📏',
+    'Refined but slightly relaxed 🙂',
+    'Gorgeous, just size down 📐',
+    'Lovely piece, lighter than I expected 🙂',
+    'Elegant, a small caveat 🤔',
   ],
   bodies: [
     'The quality is lovely though the cut runs generous. Consider sizing down for a sharper silhouette. 📏',
@@ -213,7 +319,12 @@ const MIXED = {
   ],
 };
 const CRITICAL = {
-  titles: ['Lighter than expected 😕', 'Generous on the fit 📏', 'Beautiful, but runs large 📐', 'Lovely look, check the sizing 🤷'],
+  titles: [
+    'Lighter than expected 😕',
+    'Generous on the fit 📏',
+    'Beautiful, but runs large 📐',
+    'Lovely look, check the sizing 🤷',
+  ],
   bodies: [
     'The colour and finish are elegant, though the fabric is lighter in weight than I had anticipated. 😕',
     'A refined piece, but the cut ran more relaxed than the size guide suggested for my frame. 📏',
@@ -239,9 +350,17 @@ function personaFor(name: string): Persona {
   const n = name.toLowerCase();
   if (/pant|trouser|cargo|shacket|bellbottom|utility/.test(n)) return 'utility';
   if (/polo/.test(n)) return 'resort';
-  if (/plaid|check|glen|pinstripe|herbarium|alpine|fireside|ember|dustroad|solstice|mocha|mulberry|heritage/.test(n))
+  if (
+    /plaid|check|glen|pinstripe|herbarium|alpine|fireside|ember|dustroad|solstice|mocha|mulberry|heritage/.test(
+      n
+    )
+  )
     return 'heritage';
-  if (/linen|cloudweave|tidewater|shoreline|marine|coastal|powder|ether|void|terra|tropical|aqua/.test(n))
+  if (
+    /linen|cloudweave|tidewater|shoreline|marine|coastal|powder|ether|void|terra|tropical|aqua/.test(
+      n
+    )
+  )
     return 'coastal';
   if (/tee|boxy|graphic|print|puff|word|star/.test(n)) return 'everyday';
   return 'quiet';
@@ -286,9 +405,12 @@ function makeRatings(n: number, targetAvg: number): number[] {
   for (let i = 0; i < n && deficit > 0; i++) {
     const roll = Math.random();
     let drop: number;
-    if (roll < 0.78) drop = 1; // -> 4 (most common)
-    else if (roll < 0.93) drop = 2; // -> 3
-    else if (roll < 0.985) drop = 3; // -> 2
+    if (roll < 0.78)
+      drop = 1; // -> 4 (most common)
+    else if (roll < 0.93)
+      drop = 2; // -> 3
+    else if (roll < 0.985)
+      drop = 3; // -> 2
     else drop = 4; // -> 1 (rare)
     drop = Math.min(drop, deficit, 4);
     ratings[i] = 5 - drop;
@@ -320,7 +442,10 @@ async function ensureReviewerPool(): Promise<string[]> {
 }
 
 async function main() {
-  console.log('→ Seeding/refreshing product reviews. Target DB:', process.env.DATABASE_URL?.split('@')[1] ?? '(unknown)');
+  console.log(
+    '→ Seeding/refreshing product reviews. Target DB:',
+    process.env.DATABASE_URL?.split('@')[1] ?? '(unknown)'
+  );
 
   const userIds = await ensureReviewerPool();
   console.log(`  reviewer pool: ${userIds.length} users`);
@@ -364,7 +489,9 @@ async function main() {
 
       await prisma.review.createMany({ data: rows, skipDuplicates: true });
       const achieved = (ratings.reduce((s, r) => s + r, 0) / total).toFixed(2);
-      console.log(`  ✓ seeded ${product.name} [${persona}]: ${total} ratings (avg ${achieved}), ${writtenCount} written`);
+      console.log(
+        `  ✓ seeded ${product.name} [${persona}]: ${total} ratings (avg ${achieved}), ${writtenCount} written`
+      );
       seeded++;
     } else {
       // Refresh the copy on the existing written reviews (preserve everything else).
@@ -372,8 +499,11 @@ async function main() {
       await Promise.all(
         written.map((r) => {
           const text = deal(r.rating);
-          return prisma.review.update({ where: { id: r.id }, data: { title: text.title, content: text.content } });
-        }),
+          return prisma.review.update({
+            where: { id: r.id },
+            data: { title: text.title, content: text.content },
+          });
+        })
       );
       console.log(`  ↻ refreshed ${product.name} [${persona}]: ${written.length} written reviews`);
       refreshed++;
@@ -382,7 +512,7 @@ async function main() {
   }
 
   console.log(
-    `\nDone. Seeded ${seeded} products fresh, refreshed copy on ${refreshed} products (${refreshedRows} written reviews).`,
+    `\nDone. Seeded ${seeded} products fresh, refreshed copy on ${refreshed} products (${refreshedRows} written reviews).`
   );
 }
 

@@ -45,7 +45,9 @@ export function ProductReviews({
   return (
     <div
       style={
-        embedded ? { padding: 0 } : { padding: '32px 20px 8px 20px', borderTop: '1px solid #F0F0F0' }
+        embedded
+          ? { padding: 0 }
+          : { padding: '32px 20px 8px 20px', borderTop: '1px solid #F0F0F0' }
       }
     >
       {!embedded && (
@@ -109,7 +111,10 @@ export function ProductReviews({
             return (
               <div
                 key={r.id}
-                style={{ padding: '16px 0', borderTop: i === 0 ? 'none' : `1px solid ${rowDivider}` }}
+                style={{
+                  padding: '16px 0',
+                  borderTop: i === 0 ? 'none' : `1px solid ${rowDivider}`,
+                }}
               >
                 <div
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}

@@ -314,7 +314,12 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               <Star size={9} color="#F5C451" fill="#F5C451" strokeWidth={0} />
             ) : (
               <span
-                style={{ width: 5, height: 5, borderRadius: 9999, backgroundColor: statusBadge.dot }}
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: 9999,
+                  backgroundColor: statusBadge.dot,
+                }}
               />
             )}
             <span
