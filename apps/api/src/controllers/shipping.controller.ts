@@ -35,7 +35,12 @@ export const shippingController = {
       throw ApiError.badRequest('Order must be confirmed before creating shipment');
     }
 
-    const result = await shiprocketService.createShiprocketOrder(order.id);
+    // Optional: a unique suffix (e.g. "R2") forces a fresh Shiprocket order on
+    // re-ship, sidestepping their order_id dedupe that hands back a dead AWB.
+    const retrySuffix =
+      typeof req.body?.retrySuffix === 'string' ? req.body.retrySuffix : undefined;
+
+    const result = await shiprocketService.createShiprocketOrder(order.id, retrySuffix);
     res.json({ success: true, data: result });
   },
 

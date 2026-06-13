@@ -257,8 +257,19 @@ export const shiprocketService = {
   /**
    * Create an order on Shiprocket after payment is confirmed.
    * This pushes the order to Shiprocket's dashboard for fulfillment.
+   *
+   * `orderIdSuffix` lets a re-ship send a UNIQUE reference to Shiprocket.
+   * Shiprocket dedupes /orders/create/adhoc on the `order_id` we send: if an
+   * order with that reference already exists (e.g. an earlier attempt that was
+   * later cancelled on their side), Shiprocket returns the OLD order — and with
+   * it the dead AWB — instead of minting a fresh one, and our status sweep then
+   * re-cancels the order. Passing a suffix (`ER-…-R2`) sidesteps the collision
+   * so the carrier issues a brand-new AWB. The DB binding is unaffected: we
+   * store Shiprocket's own numeric order_id / shipment_id from the response, and
+   * webhooks/reconcile join on those + awbCode, never on the reference we send.
+   * Omitted on a first ship → byte-identical payload to before.
    */
-  async createShiprocketOrder(orderId: string) {
+  async createShiprocketOrder(orderId: string, orderIdSuffix?: string) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -291,11 +302,17 @@ export const shiprocketService = {
       (order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Guest');
     const customerPhone = order.address.phone || order.user?.phone || '';
 
+    // Reference we hand Shiprocket. Unique per re-ship to dodge their dedupe
+    // (see method doc). Sanitised to the chars Shiprocket accepts in a ref.
+    const shiprocketOrderRef = orderIdSuffix
+      ? `${order.orderNumber}-${orderIdSuffix.replace(/[^A-Za-z0-9-]/g, '')}`
+      : order.orderNumber;
+
     // Create order on Shiprocket
     const srOrder = await shiprocketRequest<any>('/orders/create/adhoc', {
       method: 'POST',
       body: {
-        order_id: order.orderNumber,
+        order_id: shiprocketOrderRef,
         order_date: new Date(order.createdAt).toISOString().split('T')[0],
         pickup_location: env.SHIPROCKET_PICKUP_LOCATION || 'Earthrevibe',
         billing_customer_name: customerName.split(' ')[0],
