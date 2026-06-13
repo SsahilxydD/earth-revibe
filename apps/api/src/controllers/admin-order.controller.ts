@@ -92,4 +92,10 @@ export const adminOrderController = {
     const result = await adminOrderService.restoreOrder(orderNumber, req.user!.id);
     res.json({ success: true, data: result });
   },
+
+  async reopenOrder(req: Request, res: Response) {
+    const orderNumber = req.params.orderNumber as string;
+    const result = await adminOrderService.reopenOrder(orderNumber, req.user!.id);
+    res.json({ success: true, data: result });
+  },
 };

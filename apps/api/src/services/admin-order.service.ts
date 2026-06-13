@@ -965,6 +965,60 @@ export const adminOrderService = {
   },
 
   /**
+   * Reopen a CANCELLED order so it can be re-fulfilled — e.g. an accidental
+   * cancel, or a Shiprocket-side cancel we want to undo. Reverts status to
+   * CONFIRMED and clears the now-dead shipment binding (awbCode / courierName /
+   * trackingUrl / shiprocket ids / sync stamp) so a fresh shipment can be booked
+   * via POST /shipping/:orderNumber/create-shipment + /assign-awb (both of which
+   * refuse to run while those fields are set).
+   *
+   * The SAME order row is preserved — the customer keeps seeing their original
+   * order, now CONFIRMED again instead of CANCELLED. The stale Shiprocket order
+   * is left cancelled on their side; create-shipment books a brand-new one.
+   * CANCELLED is otherwise terminal in the six-state machine, so this is the
+   * only sanctioned way back out of it.
+   */
+  async reopenOrder(orderNumber: string, adminId: string) {
+    const order = await prisma.order.findUnique({ where: { orderNumber } });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.status !== 'CANCELLED') {
+      throw ApiError.badRequest(
+        `Only CANCELLED orders can be reopened — this one is ${order.status}.`
+      );
+    }
+    if (order.deletedAt) {
+      throw ApiError.badRequest('Order is archived. Restore it first, then reopen.');
+    }
+
+    await prisma.$transaction([
+      prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: 'CONFIRMED',
+          // Drop the dead shipment binding so create-shipment / assign-awb can
+          // book a fresh courier. The cancelled Shiprocket order is left as-is.
+          awbCode: null,
+          courierName: null,
+          trackingUrl: null,
+          shiprocketOrderId: null,
+          shiprocketShipmentId: null,
+          lastShipmentSyncAt: null,
+        },
+      }),
+      prisma.orderStatusHistory.create({
+        data: {
+          orderId: order.id,
+          status: 'CONFIRMED',
+          note: 'Order reopened by admin (cancel reversed; shipment binding cleared for re-booking)',
+          changedBy: adminId,
+        },
+      }),
+    ]);
+
+    return { orderNumber: order.orderNumber, status: 'CONFIRMED' };
+  },
+
+  /**
    * Re-date an existing OFFLINE order — backdate a sale that was entered late.
    * createdAt is the order's effective date: it's what revenue/analytics bucket
    * by and what the order list sorts on. ONLINE orders are rejected (their date

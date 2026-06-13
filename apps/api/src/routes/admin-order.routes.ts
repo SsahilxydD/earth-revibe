@@ -58,6 +58,10 @@ router.delete(
   asyncHandler(adminOrderController.archiveOrder)
 );
 router.post('/:orderNumber/restore', asyncHandler(adminOrderController.restoreOrder));
+// Reopen a CANCELLED order: revert to CONFIRMED and clear the dead shipment
+// binding so a fresh courier can be booked. Recovers an accidental/Shiprocket
+// cancel without losing the original order row (customer keeps the same order).
+router.post('/:orderNumber/reopen', asyncHandler(adminOrderController.reopenOrder));
 router.put(
   '/:orderNumber/status',
   validate({ body: updateOrderStatusSchema }),
