@@ -86,6 +86,16 @@ const envSchema = z.object({
   // PostHog server-side analytics
   POSTHOG_API_KEY: z.string().optional(),
   POSTHOG_HOST: z.string().default('https://us.i.posthog.com'),
+  // Google Analytics 4 Data API (live visitors + admin "Website Analytics").
+  // Needs a SERVICE ACCOUNT (not an API key). Paste the whole service-account
+  // JSON into GA_SERVICE_ACCOUNT_JSON, or split it into GA_CLIENT_EMAIL +
+  // GA_PRIVATE_KEY. GA_PROPERTY_ID is the numeric property id — if omitted we
+  // auto-discover it via the GA Admin API. The ga4 service also tolerates a few
+  // alternate var names (GOOGLE_SERVICE_ACCOUNT_JSON, etc.) read from env.
+  GA_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  GA_CLIENT_EMAIL: z.string().optional(),
+  GA_PRIVATE_KEY: z.string().optional(),
+  GA_PROPERTY_ID: z.string().optional(),
   // Resend email service
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM_EMAIL: z.string().default('Earth Revibe <noreply@earthrevibe.com>'),

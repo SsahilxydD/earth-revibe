@@ -17,6 +17,8 @@
   "dependencies": {
     "@earth-revibe/db": "workspace:*",
     "@earth-revibe/shared": "workspace:*",
+    "@google-analytics/admin": "^9.1.0",
+    "@google-analytics/data": "^6.1.0",
     "@sentry/node": "^10.46.0",
     "@supabase/supabase-js": "^2.99.0",
     "@types/node-cron": "^3.0.11",

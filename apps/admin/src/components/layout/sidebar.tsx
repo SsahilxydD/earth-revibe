@@ -13,6 +13,7 @@ import {
   DiscountIcon,
   ContentIcon,
   ChartLineIcon,
+  GlobeIcon,
   ChatIcon,
   SettingsIcon,
   ChevronDownIcon,
@@ -102,6 +103,7 @@ const navItems: NavItem[] = [
     ],
   },
   { kind: 'leaf', label: 'Analytics', href: '/analytics', icon: ChartLineIcon },
+  { kind: 'leaf', label: 'Website Analytics', href: '/web-analytics', icon: GlobeIcon },
   { kind: 'leaf', label: 'Support', href: '/support-tickets', icon: ChatIcon },
 ];
 

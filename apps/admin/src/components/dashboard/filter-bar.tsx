@@ -1,13 +1,33 @@
 'use client';
 
 import { CalendarDays, ChevronDown } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
 
 interface FilterBarProps {
   period: string;
   onPeriodChange: (period: string) => void;
 }
 
+interface LiveData {
+  configured: boolean;
+  activeUsers: number;
+}
+
 export function FilterBar({ period, onPeriodChange }: FilterBarProps) {
+  // Live visitor count from GA4 realtime. Polls every 20s, but only while the
+  // tab is foregrounded so backgrounded admins don't hammer the API.
+  const { data: live, isLoading: liveLoading } = useQuery<LiveData>({
+    queryKey: ['ga-live'],
+    queryFn: () => api.get('/admin/analytics/ga/live'),
+    refetchInterval: 20000,
+    refetchIntervalInBackground: false,
+  });
+
+  // Not-configured or errored → fall back to the original "0 live visitors".
+  const liveCount = live?.configured ? live.activeUsers : 0;
+  const liveLabel = liveLoading && !live ? '—' : String(liveCount);
+
   return (
     <div className="flex items-center gap-3 flex-wrap">
       {/* Date range dropdown */}
@@ -50,7 +70,9 @@ export function FilterBar({ period, onPeriodChange }: FilterBarProps) {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
         </span>
-        <span className="text-sm text-charcoal font-medium">0 live visitors</span>
+        <span className="text-sm text-charcoal font-medium">
+          {liveLabel} live visitor{liveCount === 1 ? '' : 's'}
+        </span>
       </div>
     </div>
   );
