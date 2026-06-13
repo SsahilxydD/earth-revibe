@@ -738,7 +738,15 @@ export const shiprocketService = {
 
     for (const order of orders) {
       try {
-        await shiprocketService.createShiprocketOrder(order.id);
+        // Send a UNIQUE reference per attempt. This cron picks up orders whose
+        // shiprocketOrderId is null — which includes orders just reopened after
+        // a cancellation. Re-sending the bare orderNumber would let Shiprocket's
+        // dedupe hand back the OLD cancelled order + its dead AWB (which the
+        // status sweep then re-cancels). A timestamped suffix forces a fresh
+        // Shiprocket order every time, so the cron can never resurrect a dead
+        // AWB. See createShiprocketOrder's doc for the dedupe details.
+        const retrySuffix = `RC${Date.now().toString(36)}`;
+        await shiprocketService.createShiprocketOrder(order.id, retrySuffix);
         recovered++;
       } catch (err) {
         failed++;
