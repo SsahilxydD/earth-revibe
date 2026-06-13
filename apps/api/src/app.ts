@@ -171,6 +171,8 @@ app.get('/api/v1/health', async (_req, res) => {
     success: healthy,
     message: healthy ? 'Earth Revibe API is running' : 'Service degraded',
     timestamp: new Date().toISOString(),
+    // Railway injects this on every deploy; lets us confirm which build is live.
+    commit: process.env.RAILWAY_GIT_COMMIT_SHA?.slice(0, 7) ?? 'unknown',
     checks,
   });
 });
