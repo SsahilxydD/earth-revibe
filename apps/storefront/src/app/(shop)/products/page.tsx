@@ -78,6 +78,19 @@ const CATEGORIES = [
   { label: 'Shackets', value: 'shackets', color: '#C97B63', img: '/categories/shackets.webp' },
 ] as const;
 
+// Collection landing copy — gives a ?category=<slug> page a real title (audit F4)
+// instead of the generic "All Products" heading. Mirrors the homepage tile copy.
+const CATEGORY_META: Record<string, { kicker: string; title: string }> = {
+  linens: { kicker: 'THE LINEN EDIT', title: 'Linens' },
+  cheques: { kicker: 'CHECKS & PLAIDS', title: 'Cheques' },
+  stripes: { kicker: 'TIDEWATER STRIPES', title: 'Stripes' },
+  polos: { kicker: 'KNIT & PIQUÉ POLOS', title: 'Polos' },
+  't-shirts': { kicker: 'HEAVYWEIGHT TEES', title: 'Tees' },
+  shackets: { kicker: 'SHACKETS & OVERSHIRTS', title: 'Overshirts' },
+  shirts: { kicker: 'SHIRTS', title: 'Shirts' },
+  bottomwear: { kicker: 'BOTTOMWEAR', title: 'Bottomwear' },
+};
+
 function parseSort(sort: string | null): { sortBy: string; sortOrder: 'asc' | 'desc' } {
   switch (sort) {
     case 'price-asc':
@@ -290,6 +303,15 @@ function ProductsContent() {
               </p>
               <h1 style={{ fontSize: 28, fontWeight: 300, color: '#000', letterSpacing: -0.5 }}>
                 &ldquo;{search}&rdquo;
+              </h1>
+            </>
+          ) : category && CATEGORY_META[category] ? (
+            <>
+              <p style={{ fontSize: 10, fontWeight: 300, color: '#CCC', letterSpacing: 0.5 }}>
+                {CATEGORY_META[category].kicker}
+              </p>
+              <h1 style={{ fontSize: 28, fontWeight: 300, color: '#000', letterSpacing: -0.5 }}>
+                {CATEGORY_META[category].title}
               </h1>
             </>
           ) : (
