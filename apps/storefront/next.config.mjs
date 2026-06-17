@@ -85,6 +85,22 @@ const nextConfig = {
         destination: '/categories/:slug',
         permanent: true,
       },
+      // Product slugs reconciled with their names (audit F8/F9) — keep old URLs alive.
+      {
+        source: '/products/void-passage-pocket-shirt',
+        destination: '/products/void-passage-linen-shirt',
+        permanent: true,
+      },
+      {
+        source: '/products/earthstone-relaxed-shirt',
+        destination: '/products/earthstone-relaxed-linen-shirt',
+        permanent: true,
+      },
+      {
+        source: '/products/blu-skin-cotton-oversized-stripe-boxy-fit-shirt',
+        destination: '/products/bluewater-stripe-shirt',
+        permanent: true,
+      },
     ];
   },
 };

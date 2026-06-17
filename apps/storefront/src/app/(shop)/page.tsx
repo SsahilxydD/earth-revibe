@@ -23,7 +23,7 @@ const COLLECTIONS = [
     kicker: 'THE LINEN EDIT',
     title: 'Linens',
     tagline: '“breathes easy, wears lighter”',
-    query: 'search=linen',
+    query: 'category=linens',
     scrim: 0.25,
   },
   {
@@ -31,7 +31,7 @@ const COLLECTIONS = [
     kicker: 'CHECKS & PLAIDS',
     title: 'Cheques',
     tagline: '“boxes you’d happily live in”',
-    query: 'search=check',
+    query: 'category=cheques',
     scrim: 0.25,
   },
   {
@@ -55,7 +55,7 @@ const COLLECTIONS = [
     kicker: 'TIDEWATER STRIPES',
     title: 'Stripes',
     tagline: '“lines that go places”',
-    query: 'search=stripe',
+    query: 'category=stripes',
     scrim: 0.32,
   },
   {
