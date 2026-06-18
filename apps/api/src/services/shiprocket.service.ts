@@ -33,9 +33,17 @@ const SR_ID_TO_STATUS: Record<number, OrderStatus> = {
   17: OrderStatus.SHIPPING, // Out For Delivery — still in flight
   7: OrderStatus.DELIVERED,
   8: OrderStatus.CANCELLED, // Cancelled
-  13: OrderStatus.CANCELLED, // Lost
   22: OrderStatus.CANCELLED, // Damaged
-  19: OrderStatus.RETURNED, // RTO Delivered (back to seller)
+  10: OrderStatus.RETURNED, // RTO Delivered (back to seller)
+  // Shiprocket code 19 = "Out For Pickup" and 13 = "Pickup Error" are
+  // PRE-TRANSIT pickup-phase states, not terminal outcomes — the courier
+  // hasn't collected the parcel yet and Shiprocket will retry. They are
+  // deliberately omitted so mapShiprocketStatus returns null and the order
+  // stays CONFIRMED (awaiting pickup) and keeps getting swept. They used to be
+  // mis-mapped: 19 → RETURNED (mislabelled "RTO Delivered", which is really
+  // code 10) and 13 → CANCELLED (mislabelled "Lost", which is really code 12).
+  // That flipped live pickups into a terminal state rendered as a red/error
+  // badge on the admin, so an out-for-pickup order looked cancelled.
 };
 
 const SR_TEXT_TO_STATUS: Record<string, OrderStatus> = {

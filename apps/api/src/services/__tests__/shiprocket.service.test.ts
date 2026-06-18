@@ -375,7 +375,8 @@ describe('shiprocketService.getTracking', () => {
     mockOrderFindUnique.mockResolvedValue(trackedOrder);
     mockShiprocketRequest.mockResolvedValue({
       tracking_data: {
-        shipment_status_id: 19,
+        // Shiprocket code 10 = "RTO Delivered" (back to seller → RETURNED).
+        shipment_status_id: 10,
         shipment_status: 'RTO Delivered',
         shipment_track_activities: [],
       },
@@ -387,6 +388,52 @@ describe('shiprocketService.getTracking', () => {
       where: { id: 'order-1' },
       data: { status: 'RETURNED', lastShipmentSyncAt: expect.any(Date) },
     });
+  });
+
+  it('treats "Out For Pickup" (status 19) as a non-terminal pickup-phase state — NOT cancelled/returned', async () => {
+    // Regression: Shiprocket code 19 is "Out For Pickup" (courier en route to
+    // collect), not "RTO Delivered". It was wrongly mapped to RETURNED, which
+    // renders as the same red error badge as CANCELLED on the admin. A
+    // CONFIRMED order awaiting pickup must stay CONFIRMED — no status flip, no
+    // history row — and keep getting swept until it actually ships.
+    mockOrderFindUnique.mockResolvedValue({ ...trackedOrder, status: 'CONFIRMED' });
+    mockShiprocketRequest.mockResolvedValue({
+      tracking_data: {
+        shipment_status_id: 19,
+        shipment_status: 'Out For Pickup',
+        shipment_track_activities: [],
+      },
+    });
+
+    await shiprocketService.getTracking('order-1');
+
+    // Only the sync timestamp is touched — no `status` key at all.
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'order-1' },
+      data: { lastShipmentSyncAt: expect.any(Date) },
+    });
+    expect(mockOrderStatusHistoryCreate).not.toHaveBeenCalled();
+  });
+
+  it('treats "Pickup Error" (status 13) as recoverable — NOT cancelled', async () => {
+    // Regression: code 13 is "Pickup Error" (Shiprocket retries pickup), not
+    // "Lost". It must not flip a CONFIRMED order to the terminal CANCELLED state.
+    mockOrderFindUnique.mockResolvedValue({ ...trackedOrder, status: 'CONFIRMED' });
+    mockShiprocketRequest.mockResolvedValue({
+      tracking_data: {
+        shipment_status_id: 13,
+        shipment_status: 'Pickup Error',
+        shipment_track_activities: [],
+      },
+    });
+
+    await shiprocketService.getTracking('order-1');
+
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'order-1' },
+      data: { lastShipmentSyncAt: expect.any(Date) },
+    });
+    expect(mockOrderStatusHistoryCreate).not.toHaveBeenCalled();
   });
 });
 
