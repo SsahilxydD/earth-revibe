@@ -299,7 +299,7 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               zIndex: 5,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 3,
+              gap: 0,
               height: 14,
               padding: '0 6px',
               borderRadius: 2.5,
@@ -311,18 +311,6 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
               pointerEvents: 'none',
             }}
           >
-            {statusBadge.star ? (
-              <Star size={7} color="#F5C451" fill="#F5C451" strokeWidth={0} />
-            ) : (
-              <span
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: 9999,
-                  backgroundColor: statusBadge.dot,
-                }}
-              />
-            )}
             <span
               style={{
                 fontSize: 6.5,
