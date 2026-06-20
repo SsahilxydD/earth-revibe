@@ -288,20 +288,21 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
           ))}
         </div>
 
-        {/* Status strip — one data-driven label per tile (frosted gray glass) */}
-        {statusBadge && (
+        {/* Status strip — one data-driven label per tile (frosted gray glass).
+            Only shown on the first image; hidden once the user swipes past it. */}
+        {statusBadge && realIndex === 0 && (
           <div
             style={{
               position: 'absolute',
-              top: 10,
-              left: 10,
+              top: 9,
+              left: 9,
               zIndex: 5,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 5,
-              height: 19,
-              padding: '0 9px',
-              borderRadius: 3,
+              gap: 3,
+              height: 14,
+              padding: '0 6px',
+              borderRadius: 2.5,
               background: 'rgba(60,60,60,0.34)',
               backdropFilter: 'blur(10px) saturate(140%)',
               WebkitBackdropFilter: 'blur(10px) saturate(140%)',
@@ -311,12 +312,12 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             }}
           >
             {statusBadge.star ? (
-              <Star size={9} color="#F5C451" fill="#F5C451" strokeWidth={0} />
+              <Star size={7} color="#F5C451" fill="#F5C451" strokeWidth={0} />
             ) : (
               <span
                 style={{
-                  width: 5,
-                  height: 5,
+                  width: 4,
+                  height: 4,
                   borderRadius: 9999,
                   backgroundColor: statusBadge.dot,
                 }}
@@ -324,9 +325,9 @@ export function ProductCard({ product, index = 99 }: ProductCardProps) {
             )}
             <span
               style={{
-                fontSize: 8.5,
+                fontSize: 6.5,
                 fontWeight: 500,
-                letterSpacing: 1,
+                letterSpacing: 0.6,
                 color: '#FFF',
                 textTransform: 'uppercase',
                 lineHeight: 1,
