@@ -46,8 +46,12 @@ export default function SpinnerPage() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('c') || DEFAULT_CODE;
 
-    // Logged out → remember the campaign and send them to log in. The
-    // AuthInitializer brings them back here once authenticated.
+    // Logged out → send them to log in with a returnUrl that brings them
+    // straight back here to finish claiming. This must NOT rely on a page
+    // reload: login navigates client-side (router.replace), and AuthInitializer
+    // — which holds the localStorage resume — lives in the root layout and only
+    // re-runs checkAuth() on a full reload. The localStorage stash below is kept
+    // purely as a fallback for a later fresh load (e.g. tab reopened).
     if (!isAuthenticated) {
       try {
         localStorage.setItem(PENDING_PROMO_KEY, code);
@@ -55,7 +59,8 @@ export default function SpinnerPage() {
         // localStorage can be unavailable (private mode); claim still works if
         // they return to this URL after logging in.
       }
-      router.replace('/auth/login');
+      const returnUrl = `/spinner?spin=true&c=${encodeURIComponent(code)}`;
+      router.replace(`/auth/login?returnUrl=${encodeURIComponent(returnUrl)}`);
       return;
     }
 
