@@ -86,6 +86,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
           shortDescription: product.shortDescription || undefined,
           price: product.price,
           compareAtPrice: product.compareAtPrice || undefined,
+          costPrice: product.costPrice ?? undefined,
           material: product.material || undefined,
           careInstructions: product.careInstructions || undefined,
           composition: product.composition || undefined,
