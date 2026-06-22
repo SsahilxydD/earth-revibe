@@ -185,6 +185,10 @@ export const productService = {
           slug: true,
           price: true,
           compareAtPrice: true,
+          // Cost of goods — ADMIN ONLY. Gated behind adminMode so the public
+          // storefront list endpoint never exposes our buy price. Powers the
+          // bulk Cost Prices editor (and is consistent with COGS analytics).
+          ...(adminMode ? { costPrice: true } : {}),
           status: true,
           isFeatured: true,
           vibes: true,
