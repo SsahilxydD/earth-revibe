@@ -75,6 +75,16 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // QR promo: the printed code points at /?spinner=true — route it to the
+      // real claim flow at /spinner. Temporary (307) so the campaign URL isn't
+      // permanently cached by scanners' browsers. Any extra params (e.g. &c=CODE)
+      // pass through to the destination.
+      {
+        source: '/',
+        has: [{ type: 'query', key: 'spinner', value: 'true' }],
+        destination: '/spinner?spin=true',
+        permanent: false,
+      },
       {
         source: '/collections/all',
         destination: '/products',
