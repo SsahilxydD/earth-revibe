@@ -26,6 +26,11 @@ export const notArchived: Prisma.OrderWhereInput = { deletedAt: null };
  */
 export const realOrders: Prisma.OrderWhereInput = {
   deletedAt: null,
+  // Net-zero exchange replacements (return.service.processExchange) carry
+  // full-price line items but totalAmount=0; excluding them keeps order count,
+  // AOV, and the item-level top-products SUM honest while genuine in-person
+  // OFFLINE sales (isExchangeReplacement=false) still count.
+  isExchangeReplacement: false,
   NOT: { status: 'DRAFT' },
 };
 
@@ -36,3 +41,7 @@ export const realOrders: Prisma.OrderWhereInput = {
  */
 export const notArchivedSql = (alias?: string): string =>
   `${alias ? `${alias}.` : ''}"deletedAt" IS NULL`;
+
+/** Raw-SQL predicate excluding net-zero exchange-replacement orders. */
+export const notExchangeReplacementSql = (alias?: string): string =>
+  `${alias ? `${alias}.` : ''}"isExchangeReplacement" = false`;

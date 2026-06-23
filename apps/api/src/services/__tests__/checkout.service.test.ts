@@ -58,6 +58,7 @@ const mocks = vi.hoisted(() => {
       create: txPendingCheckoutCreate,
       findUnique: vi.fn(),
       findMany: vi.fn(),
+      update: vi.fn(),
       delete: txPendingCheckoutDelete,
     },
     address: {
@@ -2102,14 +2103,16 @@ describe('checkoutService.verifyMagicPayment', () => {
 
   // ── Total amount — never negative ────────────────────────────────────────
 
-  describe('total amount — never negative in verifyMagicPayment', () => {
-    it('clamps total to 0 when discounts exceed subtotal in pending checkout', async () => {
-      // discount=600, loyaltyDiscount=600 but subtotal=500 → total would be negative
+  describe('total amount — never below the Razorpay ₹1 floor in verifyMagicPayment', () => {
+    it('floors total to ₹1 (Razorpay 100-paise minimum) when discounts exceed subtotal in pending checkout', async () => {
+      // discount=400, loyaltyDiscount=200 but subtotal=500 → raw total -100.
+      // finalizeOrderFromPending mirrors createMagicOrder's ₹1 floor, so the
+      // persisted total equals the charged amount (Razorpay rejects < 100 paise).
       const pending = makePendingCheckout({
         userId: 'user-1',
         subtotal: 500,
         discountAmount: 400,
-        loyaltyDiscount: 200, // 500 - 400 - 200 = -100 → clamped to 0
+        loyaltyDiscount: 200, // 500 - 400 - 200 = -100 → floored to ₹1
       });
       mocks.pendingCheckout.findUnique.mockResolvedValueOnce(pending);
       mocks.razorpayOrdersFetch.mockResolvedValueOnce(makeRzpOrderFetch());
@@ -2127,7 +2130,7 @@ describe('checkoutService.verifyMagicPayment', () => {
 
       expect(mocks.txOrderCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ totalAmount: 0 }),
+          data: expect.objectContaining({ totalAmount: 1 }),
         })
       );
     });

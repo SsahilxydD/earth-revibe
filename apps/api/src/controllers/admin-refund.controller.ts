@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { prisma, Prisma } from '@earth-revibe/db';
+import { prisma, Prisma, ReturnStatus } from '@earth-revibe/db';
 import { getRazorpay } from '../config/razorpay';
 import { ApiError } from '../utils/api-error';
 import { returnService } from '../services/return.service';
@@ -106,8 +106,15 @@ export const adminRefundController = {
         },
       });
 
-      // Only restore stock on full refund
-      if (isFullRefund) {
+      // A return already owns the restock decision for this order: its RECEIVED
+      // transition restocks the actually-returned units (and correctly skips
+      // defective/damaged or admin-opted-out items). Only a direct refund of an
+      // order with NO return should restore stock here — otherwise we'd double-
+      // credit returned units and wrongly restock units the customer kept.
+      const hasReturn = await tx.returnRequest.count({
+        where: { orderId: order.id, status: { not: ReturnStatus.REJECTED } },
+      });
+      if (isFullRefund && hasReturn === 0) {
         for (const item of order.items) {
           await tx.productVariant.update({
             where: { id: item.variantId },

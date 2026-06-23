@@ -138,7 +138,11 @@ export function useRazorpay() {
             color: '#121212',
           },
           one_click_checkout: true,
-          show_coupons: true,
+          // In-widget coupons can't change the already-locked Razorpay order
+          // amount, so they'd display a discount we never actually charge.
+          // Customers apply codes up-front (discountCode -> createMagicOrder),
+          // which persists and charges correctly. See applyPromotion().
+          show_coupons: false,
           handler: (response: RazorpayResponse) => {
             setIsLoading(false);
             resolve(response);

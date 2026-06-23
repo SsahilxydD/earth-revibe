@@ -979,7 +979,10 @@ export const adminOrderService = {
    * only sanctioned way back out of it.
    */
   async reopenOrder(orderNumber: string, adminId: string) {
-    const order = await prisma.order.findUnique({ where: { orderNumber } });
+    const order = await prisma.order.findUnique({
+      where: { orderNumber },
+      include: { items: true },
+    });
     if (!order) throw ApiError.notFound('Order not found');
     if (order.status !== 'CANCELLED') {
       throw ApiError.badRequest(
@@ -990,30 +993,46 @@ export const adminOrderService = {
       throw ApiError.badRequest('Order is archived. Restore it first, then reopen.');
     }
 
-    await prisma.$transaction([
-      prisma.order.update({
-        where: { id: order.id },
-        data: {
-          status: 'CONFIRMED',
-          // Drop the dead shipment binding so create-shipment / assign-awb can
-          // book a fresh courier. The cancelled Shiprocket order is left as-is.
-          awbCode: null,
-          courierName: null,
-          trackingUrl: null,
-          shiprocketOrderId: null,
-          shiprocketShipmentId: null,
-          lastShipmentSyncAt: null,
-        },
-      }),
-      prisma.orderStatusHistory.create({
-        data: {
-          orderId: order.id,
-          status: 'CONFIRMED',
-          note: 'Order reopened by admin (cancel reversed; shipment binding cleared for re-booking)',
-          changedBy: adminId,
-        },
-      }),
-    ]);
+    await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // Re-reserve stock that was returned to the sellable pool at cancel time.
+        // Same race-safe predicate as confirmOfflineOrder / createManualOrder: a
+        // shortfall aborts the reopen instead of silently overselling.
+        for (const item of order.items) {
+          const r = await tx.productVariant.updateMany({
+            where: { id: item.variantId, stock: { gte: item.quantity } },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (r.count === 0) {
+            throw ApiError.conflict(`Insufficient stock to reopen ${item.productName}`);
+          }
+        }
+
+        await tx.order.update({
+          where: { id: order.id },
+          data: {
+            status: 'CONFIRMED',
+            // Drop the dead shipment binding so create-shipment / assign-awb can
+            // book a fresh courier. The cancelled Shiprocket order is left as-is.
+            awbCode: null,
+            courierName: null,
+            trackingUrl: null,
+            shiprocketOrderId: null,
+            shiprocketShipmentId: null,
+            lastShipmentSyncAt: null,
+          },
+        });
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: order.id,
+            status: 'CONFIRMED',
+            note: 'Order reopened by admin (cancel reversed; stock re-reserved; shipment binding cleared for re-booking)',
+            changedBy: adminId,
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
 
     return { orderNumber: order.orderNumber, status: 'CONFIRMED' };
   },

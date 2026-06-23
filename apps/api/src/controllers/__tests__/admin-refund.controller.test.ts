@@ -15,7 +15,9 @@ const mockTx = {
   loyaltyTransaction: { create: vi.fn() },
   // The refund flow links an open return request (if any) via return.service —
   // findFirst resolving null = refund not tied to a return (no-op path).
-  returnRequest: { findFirst: vi.fn(), update: vi.fn() },
+  // count is the restock guard: 0 = order has no (non-rejected) return, so a
+  // full refund restores stock here (default set in beforeEach).
+  returnRequest: { findFirst: vi.fn(), update: vi.fn(), count: vi.fn() },
   returnStatusHistory: { create: vi.fn() },
 };
 
@@ -25,6 +27,17 @@ vi.mock('@earth-revibe/db', () => ({
     $transaction: vi.fn(),
   },
   Prisma: {},
+  // The controller now reads ReturnStatus.REJECTED to decide whether a return
+  // already owns the restock; mirror the real Prisma enum so the import resolves.
+  ReturnStatus: {
+    REQUESTED: 'REQUESTED',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+    PICKED_UP: 'PICKED_UP',
+    RECEIVED: 'RECEIVED',
+    REFUND_INITIATED: 'REFUND_INITIATED',
+    COMPLETED: 'COMPLETED',
+  },
 }));
 
 vi.mock('../../config/razorpay', () => ({
@@ -82,6 +95,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   // Reset all mockTx sub-methods
   Object.values(mockTx).forEach((obj) => Object.values(obj).forEach((fn: any) => fn.mockReset()));
+  // Default: order has no return, so a full refund restores stock here. Tests
+  // exercising the "return owns the restock" path override this per-case.
+  mockTx.returnRequest.count.mockResolvedValue(0);
   setupTransaction();
 });
 

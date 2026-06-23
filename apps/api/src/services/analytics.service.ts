@@ -240,11 +240,13 @@ export const analyticsService = {
         WHERE "createdAt" >= ${startDate}
         AND "deletedAt" IS NULL
         AND status != 'DRAFT'
+        AND "isExchangeReplacement" = false
         AND "userId" IN (
           SELECT "userId" FROM orders
           WHERE "createdAt" < ${startDate}
           AND "deletedAt" IS NULL
           AND status != 'DRAFT'
+          AND "isExchangeReplacement" = false
           GROUP BY "userId"
         )
       `,
@@ -259,7 +261,7 @@ export const analyticsService = {
         JOIN product_variants pv ON pv.id = oi."variantId"
         JOIN products p ON p.id = pv."productId"
         JOIN orders o ON o.id = oi."orderId"
-        WHERE o."createdAt" >= ${startDate} AND o.status NOT IN ('CANCELLED', 'DRAFT') AND o."deletedAt" IS NULL
+        WHERE o."createdAt" >= ${startDate} AND o.status NOT IN ('CANCELLED', 'DRAFT') AND o."deletedAt" IS NULL AND o."isExchangeReplacement" = false
         GROUP BY p.id, p.name
         ORDER BY quantity DESC
         LIMIT 5
@@ -269,7 +271,7 @@ export const analyticsService = {
         : prisma.$queryRaw<{ date: string; revenue: number }[]>`
             SELECT DATE("createdAt") as date, SUM("totalAmount") as revenue
             FROM orders
-            WHERE "createdAt" >= ${startDate} AND status NOT IN ('CANCELLED', 'DRAFT') AND "deletedAt" IS NULL
+            WHERE "createdAt" >= ${startDate} AND status NOT IN ('CANCELLED', 'DRAFT') AND "deletedAt" IS NULL AND "isExchangeReplacement" = false
             GROUP BY DATE("createdAt")
             ORDER BY date ASC
           `,
@@ -339,6 +341,11 @@ export const analyticsService = {
     const pnlOrderWhere: Prisma.OrderWhereInput = {
       deletedAt: null,
       status: 'DELIVERED',
+      // Exclude net-zero exchange-replacement shells: they carry full-price
+      // line items (so they'd add COGS + units) but totalAmount=0 (so they add
+      // no revenue), which understates profit/margins and inflates pnl.units.
+      // Genuine paid OFFLINE sales always have totalAmount>0.
+      isExchangeReplacement: false,
       createdAt: range,
       ...sourceFilter,
       ...(categoryId
@@ -373,7 +380,7 @@ export const analyticsService = {
         SELECT DATE("createdAt") as date, SUM("totalAmount") as revenue
         FROM orders
         WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
-          AND status NOT IN ('CANCELLED', 'DRAFT') AND "deletedAt" IS NULL
+          AND status NOT IN ('CANCELLED', 'DRAFT') AND "deletedAt" IS NULL AND "isExchangeReplacement" = false
         GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `,
@@ -384,7 +391,7 @@ export const analyticsService = {
         JOIN products p ON p.id = pv."productId"
         JOIN orders o ON o.id = oi."orderId"
         WHERE o."createdAt" >= ${startDate} AND o."createdAt" <= ${endDate}
-          AND o.status NOT IN ('CANCELLED', 'DRAFT') AND o."deletedAt" IS NULL
+          AND o.status NOT IN ('CANCELLED', 'DRAFT') AND o."deletedAt" IS NULL AND o."isExchangeReplacement" = false
         GROUP BY p.id, p.name
         ORDER BY quantity DESC
         LIMIT 5

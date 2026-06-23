@@ -153,6 +153,25 @@ export const checkoutService = {
       );
     }
 
+    // Take the larger of (coupon discount) vs (combo bundle discount).
+    // No stacking — customer gets whichever saves more.
+    // Combo discount only fires for items added together via Flight Mode
+    // ("Add Pack to Bag" stamps comboSlug + comboGroupId on each piece).
+    // Items without those tokens are à la carte and contribute 0 — no
+    // accidental discount on a 5-item à la carte cart.
+    const comboInputs: ComboDiscountInput[] = data.items.map((it) => {
+      const v = variants.find((x) => x.id === it.variantId);
+      const unitPrice = v ? Number(v.price) || Number(v.product.price) : 0;
+      return {
+        price: unitPrice,
+        quantity: it.quantity,
+        comboSlug: it.comboSlug,
+        comboGroupId: it.comboGroupId,
+      };
+    });
+    const combo = comboDiscount(comboInputs).total;
+    if (combo > discountAmount) discountAmount = combo;
+
     // Apply loyalty points (only for authenticated users)
     let loyaltyDiscount = 0;
     if (!isGuest && data.loyaltyPointsToUse > 0) {
@@ -173,25 +192,6 @@ export const checkoutService = {
       const maxLoyaltyDiscount = Math.max(lineItemsTotal - discountAmount, 0);
       loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
     }
-
-    // Take the larger of (coupon discount) vs (combo bundle discount).
-    // No stacking — customer gets whichever saves more.
-    // Combo discount only fires for items added together via Flight Mode
-    // ("Add Pack to Bag" stamps comboSlug + comboGroupId on each piece).
-    // Items without those tokens are à la carte and contribute 0 — no
-    // accidental discount on a 5-item à la carte cart.
-    const comboInputs: ComboDiscountInput[] = data.items.map((it) => {
-      const v = variants.find((x) => x.id === it.variantId);
-      const unitPrice = v ? Number(v.price) || Number(v.product.price) : 0;
-      return {
-        price: unitPrice,
-        quantity: it.quantity,
-        comboSlug: it.comboSlug,
-        comboGroupId: it.comboGroupId,
-      };
-    });
-    const combo = comboDiscount(comboInputs).total;
-    if (combo > discountAmount) discountAmount = combo;
 
     // Cap total discount so the order is at least ₹1 (Razorpay minimum)
     const maxDiscount = lineItemsTotal - 1;
@@ -461,7 +461,17 @@ export const checkoutService = {
     const subtotal = Number(pending.subtotal);
 
     try {
-      const discountAmount = await calculateDiscount(data.code, subtotal);
+      const raw = await calculateDiscount(data.code, subtotal);
+      // Mirror createMagicOrder's cap so the order stays >= ₹1 and the discount
+      // never exceeds subtotal.
+      const discountAmount = Math.min(raw, Math.max(subtotal - 1, 0));
+
+      // Persist so finalizeOrderFromPending records/charges this coupon — the
+      // PendingCheckout is our system of record for the final Order + Payment.
+      await prisma.pendingCheckout.update({
+        where: { id: pending.id },
+        data: { discountCode: data.code, discountAmount },
+      });
 
       return {
         promotion: {
@@ -673,12 +683,13 @@ export async function finalizeOrderFromPending(
     },
   });
 
-  let subtotal = 0;
+  // Per-line prices are best-effort display only; the financial totals MUST come
+  // from the BILLED pending values so Order.totalAmount / Payment.amount equal
+  // what Razorpay captured (createMagicOrder locked the charge at create time).
   const orderItems = cartItems.map((ci) => {
     const variant = variants.find((v) => v.id === ci.variantId)!;
     const unitPrice = Number(variant.price) || Number(variant.product.price);
     const totalPrice = unitPrice * ci.quantity;
-    subtotal += totalPrice;
     return {
       variantId: ci.variantId,
       quantity: ci.quantity,
@@ -692,6 +703,7 @@ export async function finalizeOrderFromPending(
     };
   });
 
+  const subtotal = Number(pending.subtotal); // billed line-items total
   const discountAmount = Number(pending.discountAmount);
   const loyaltyDiscount = Number(pending.loyaltyDiscount);
   const shippingAmount = 0;
@@ -700,10 +712,23 @@ export async function finalizeOrderFromPending(
   // createCodOrder does, so Payment.amount and Shiprocket's collectable match
   // what the customer owes on delivery.
   const codFee = paymentInfo.codPending ? env.COD_FEE || 0 : 0;
-  const totalAmount = Math.max(
-    subtotal - discountAmount - loyaltyDiscount + shippingAmount + codFee,
-    0
-  );
+  // Mirror createMagicOrder's ₹1 floor so the persisted total equals the
+  // charged amount even in the discount-cap-floor case.
+  const totalBeforeShipping = Math.max(subtotal - discountAmount - loyaltyDiscount, 1);
+  const totalAmount = totalBeforeShipping + shippingAmount + codFee;
+
+  // Defence-in-depth: if live prices drifted since order creation, the charge
+  // is already fixed at the Razorpay amount — log, never overwrite the books.
+  const liveSubtotal = cartItems.reduce((sum, ci) => {
+    const v = variants.find((x) => x.id === ci.variantId)!;
+    return sum + (Number(v.price) || Number(v.product.price)) * ci.quantity;
+  }, 0);
+  if (liveSubtotal !== subtotal) {
+    logger.warn(
+      { orderNumber: pending.orderNumber, billedSubtotal: subtotal, liveSubtotal },
+      'Price drift between order creation and finalization; persisting billed amount'
+    );
+  }
 
   let discountCodeId: string | null = null;
   if (pending.discountCode) {
@@ -1293,17 +1318,6 @@ export async function createCodOrder(
     if (dc) discountCodeId = dc.id;
   }
 
-  // Loyalty points
-  let loyaltyDiscount = 0;
-  if (data.loyaltyPointsToUse > 0) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.loyaltyPoints < data.loyaltyPointsToUse) {
-      throw ApiError.badRequest('Insufficient loyalty points');
-    }
-    const maxLoyaltyDiscount = Math.max(subtotal - discountAmount, 0);
-    loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
-  }
-
   // Combo bundle discount (see comboDiscount in @earth-revibe/shared/combos).
   // Only fires for items tagged with comboSlug + comboGroupId (Flight Mode
   // "Add Pack to Bag"). Stacks with coupon? — No, take MAX of the two.
@@ -1319,6 +1333,17 @@ export async function createCodOrder(
   });
   const combo = comboDiscount(comboInputs).total;
   if (combo > discountAmount) discountAmount = combo;
+
+  // Loyalty points
+  let loyaltyDiscount = 0;
+  if (data.loyaltyPointsToUse > 0) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.loyaltyPoints < data.loyaltyPointsToUse) {
+      throw ApiError.badRequest('Insufficient loyalty points');
+    }
+    const maxLoyaltyDiscount = Math.max(subtotal - discountAmount, 0);
+    loyaltyDiscount = Math.min(data.loyaltyPointsToUse, maxLoyaltyDiscount);
+  }
 
   const codFee = env.COD_FEE || 0;
   const totalAmount = Math.max(subtotal - discountAmount - loyaltyDiscount + codFee, 0);

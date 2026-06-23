@@ -218,15 +218,20 @@ export const returnService = {
 
     const replacementOrderNumber = generateOrderNumber();
 
-    // DB txn: re-check stock, decrement, create the replacement order (CONFIRMED,
-    // net-zero, OFFLINE so it stays out of revenue), flip the return to APPROVED.
+    // DB txn: re-check stock + same-price invariant, decrement, create the
+    // replacement order (CONFIRMED, net-zero, OFFLINE, isExchangeReplacement so
+    // it is excluded from analytics counts/AOV/top-products), flip to APPROVED.
     const replacement = await prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
         const variant = await tx.productVariant.findUnique({
           where: { id: line.exchangeVariantId! },
           include: {
             product: {
-              select: { name: true, images: { where: { isPrimary: true }, take: 1 } },
+              select: {
+                name: true,
+                price: true,
+                images: { where: { isPrimary: true }, take: 1 },
+              },
             },
           },
         });
@@ -238,8 +243,20 @@ export const returnService = {
         });
         if (dec.count === 0) throw ApiError.conflict('Replacement variant went out of stock');
 
+        // Re-assert the same-price invariant on EVERY entry path. The guard in
+        // requestReturn (L135-141) only runs at request time; the admin approval
+        // path (updateStatus -> processExchange) does no price check, and the
+        // replacement variant's (or its product's) price can drift before
+        // approval. Fail loudly rather than ship a pricier swap free / refund
+        // nothing on a cheaper one.
+        const replUnit = Number(variant.price) || Number(variant.product.price);
         const unit = Number(originalItem.unitPrice);
-        const subtotal = unit * line.quantity;
+        if (Math.abs(replUnit - unit) > 0.01) {
+          throw ApiError.conflict(
+            'Exchange replacement price no longer matches the original line. Reject and ask the customer to re-request or choose a refund.'
+          );
+        }
+        const subtotal = replUnit * line.quantity;
         const replacementOrder = await tx.order.create({
           data: {
             orderNumber: replacementOrderNumber,
@@ -247,15 +264,19 @@ export const returnService = {
             addressId: ret.order.addressId,
             source: 'OFFLINE',
             status: 'CONFIRMED',
+            // Net-zero internal order: flagged so analytics (counts, AOV,
+            // top-products, P&L) excludes it instead of inflating order count,
+            // dragging AOV to 0, or double-counting the exchanged unit.
+            isExchangeReplacement: true,
             subtotal,
-            // 100% "exchange" discount → net zero, excluded from revenue.
+            // 100% "exchange" discount → net zero.
             discountAmount: subtotal,
             totalAmount: 0,
             items: {
               create: {
                 variantId: variant.id,
                 quantity: line.quantity,
-                unitPrice: unit,
+                unitPrice: replUnit,
                 totalPrice: subtotal,
                 productName: variant.product.name,
                 productImage: variant.product.images[0]?.url || null,
