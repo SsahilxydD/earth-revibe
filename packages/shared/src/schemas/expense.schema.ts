@@ -13,7 +13,13 @@ export const createExpenseSchema = z.object({
   note: z.string().max(500).optional(),
 });
 
-export const updateExpenseSchema = createExpenseSchema.partial();
+// Zod-v4 partial+default hazard (see product.schema): `.partial()` makes fields
+// optional but keeps `.default()`, so an omitted `category` is injected as OTHER
+// at parse time and silently overwrites the real category on a single-field edit.
+// Re-declare it as a plain optional so an omitted field stays absent and is never written.
+export const updateExpenseSchema = createExpenseSchema.partial().extend({
+  category: z.nativeEnum(ExpenseCategory).optional(),
+});
 
 export const expenseQuerySchema = z.object({
   startDate: z.string().optional(),

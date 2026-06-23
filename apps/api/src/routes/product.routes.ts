@@ -8,6 +8,7 @@ import {
   updateProductSchema,
   productQuerySchema,
   productVariantSchema,
+  updateProductVariantSchema,
   addProductImageSchema,
   UserRole,
 } from '@earth-revibe/shared';
@@ -36,7 +37,7 @@ router.put(
   '/variants/:variantId',
   authenticate,
   authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
-  validate({ body: productVariantSchema.partial() }),
+  validate({ body: updateProductVariantSchema }),
   asyncHandler(productController.updateProductVariant)
 );
 router.delete(

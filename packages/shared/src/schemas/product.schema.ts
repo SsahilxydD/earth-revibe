@@ -37,7 +37,18 @@ export const createProductSchema = z.object({
   vibes: z.array(z.enum(VIBES)).default([]),
 });
 
-export const updateProductSchema = createProductSchema.partial();
+// Update payloads are partial — only the fields actually sent should change.
+// CAUTION (Zod v4): `.partial()` makes fields optional but does NOT strip
+// `.default()`, so an omitted defaulted field is still filled with its default
+// at parse time. That silently rewrote real data — a cost-price-only save came
+// out of the parser as { costPrice, status: 'DRAFT', isFeatured: false, vibes: [] }
+// and unpublished the product. Re-declare every defaulted field as a plain
+// optional (no default) so an omitted field stays absent and is never written.
+export const updateProductSchema = createProductSchema.partial().extend({
+  status: z.nativeEnum(ProductStatus).optional(),
+  isFeatured: z.boolean().optional(),
+  vibes: z.array(z.enum(VIBES)).optional(),
+});
 
 export const productQuerySchema = z.object({
   category: z.preprocess(
@@ -87,6 +98,17 @@ export const productVariantSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
+// Same Zod-v4 partial+default hazard as updateProductSchema: a partial variant
+// update must not reset omitted defaulted fields (notably stock→0). Re-declare
+// each defaulted field as a plain optional so omitted fields are never written.
+export const updateProductVariantSchema = productVariantSchema.partial().extend({
+  color: z.string().optional(),
+  stock: z.coerce.number().int().min(0).optional(),
+  lowStockThreshold: z.coerce.number().int().min(0).optional(),
+  weightUnit: z.enum(['g', 'kg', 'lb', 'oz']).optional(),
+  isActive: z.boolean().optional(),
+});
+
 export const addProductImageSchema = z.object({
   url: z.string().url(),
   thumbnailUrl: z.string().url().optional(),
@@ -98,4 +120,5 @@ export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type ProductQuery = z.infer<typeof productQuerySchema>;
 export type ProductVariantInput = z.infer<typeof productVariantSchema>;
+export type UpdateProductVariantInput = z.infer<typeof updateProductVariantSchema>;
 export type AddProductImageInput = z.infer<typeof addProductImageSchema>;

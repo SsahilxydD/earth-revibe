@@ -17,7 +17,16 @@ export const createDiscountSchema = z.object({
   expiresAt: z.coerce.date(),
 });
 
-export const updateDiscountSchema = createDiscountSchema.partial();
+// Zod-v4 partial+default hazard (see product.schema): `.partial()` keeps
+// `.default()`, so omitted defaulted fields are injected (perUserLimit→1,
+// applicable*→[], isActive→true) and wipe real targeting/limits on a partial
+// edit. Re-declare each as a plain optional so omitted fields stay absent.
+export const updateDiscountSchema = createDiscountSchema.partial().extend({
+  perUserLimit: z.coerce.number().int().positive().optional(),
+  applicableCategories: z.array(z.string()).optional(),
+  applicableProducts: z.array(z.string()).optional(),
+  isActive: z.boolean().optional(),
+});
 
 export const validateDiscountSchema = z.object({
   code: z.string().min(1),

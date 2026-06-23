@@ -16,7 +16,13 @@ export const createBlogPostSchema = z.object({
   tagIds: z.array(z.string()).optional(),
 });
 
-export const updateBlogPostSchema = createBlogPostSchema.partial();
+// Zod-v4 partial+default hazard (see product.schema): `.partial()` keeps
+// `.default()`, so an omitted `status` is injected as DRAFT and unpublishes a
+// live post on any partial edit (identical to the product-unpublish incident).
+// Re-declare it as a plain optional so an omitted field stays absent.
+export const updateBlogPostSchema = createBlogPostSchema.partial().extend({
+  status: z.nativeEnum(BlogPostStatus).optional(),
+});
 
 export const createBlogCategorySchema = z.object({
   name: z.string().min(2).max(100),

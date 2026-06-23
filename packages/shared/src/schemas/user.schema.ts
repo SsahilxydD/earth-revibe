@@ -39,6 +39,17 @@ export const addressSchema = z.object({
   isDefault: z.boolean().default(false),
 });
 
+// Zod-v4 partial+default hazard (see product.schema): `addressSchema.partial()`
+// keeps `.default()`, so omitted `label`/`isDefault` are injected ('Home'/false)
+// and overwrite a saved address's label and default flag on a partial edit
+// (e.g. changing only the phone resets the label to "Home"). Re-declare them as
+// plain optionals so omitted fields stay absent and are never written.
+export const updateAddressSchema = addressSchema.partial().extend({
+  label: z.string().optional(),
+  isDefault: z.boolean().optional(),
+});
+
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type AddressInput = z.infer<typeof addressSchema>;
+export type UpdateAddressInput = z.infer<typeof updateAddressSchema>;

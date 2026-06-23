@@ -18,7 +18,15 @@ export const createCategorySchema = z.object({
   ),
 });
 
-export const updateCategorySchema = createCategorySchema.partial();
+// Zod-v4 partial+default hazard (see product.schema): `.partial()` keeps
+// `.default()`, so omitted `sortOrder`/`isActive` are injected (0/true) and
+// overwrite real data on a partial edit — a category edit would force-activate
+// it and jump it to the top of the sort order. Re-declare them as plain
+// optionals so omitted fields stay absent and are never written.
+export const updateCategorySchema = createCategorySchema.partial().extend({
+  sortOrder: z.coerce.number().int().optional(),
+  isActive: z.boolean().optional(),
+});
 
 export const reorderCategoriesSchema = z.object({
   categories: z.array(
