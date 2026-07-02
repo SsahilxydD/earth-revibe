@@ -34,7 +34,7 @@ import { isVibe, VIBES as VIBE_SLUGS } from '@earth-revibe/shared';
 // valid. Labels just read clearer to first-time visitors.
 const VIBES = [
   {
-    label: 'Hill Vibe',
+    label: 'Mountain Vibe',
     value: 'above-the-clouds',
     img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&q=80&fm=jpg',
   },
