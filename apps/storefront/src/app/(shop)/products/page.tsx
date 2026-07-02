@@ -39,7 +39,7 @@ const VIBES = [
     img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&q=80&fm=jpg',
   },
   {
-    label: 'Beach',
+    label: 'Beach Vibe',
     value: 'salt-on-skin',
     img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&q=80&fm=jpg',
   },
