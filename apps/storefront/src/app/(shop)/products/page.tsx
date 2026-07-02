@@ -44,7 +44,7 @@ const VIBES = [
     img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&q=80&fm=jpg',
   },
   {
-    label: 'Golden Hour',
+    label: 'Wild Vibe',
     value: 'golden-hour-gang',
     img: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=200&q=80&fm=jpg',
   },
