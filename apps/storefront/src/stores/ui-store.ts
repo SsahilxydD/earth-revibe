@@ -5,17 +5,13 @@ import { create } from 'zustand';
 /* ------------------------------------------------------------------ */
 /*  Body overflow lock — reference counted so overlapping modals       */
 /*  (cart + search + mobile menu) don't clobber each other.            */
-/*  Also exposes a subscription so floating chrome (e.g. ContactFab)   */
-/*  can collapse itself while any overlay is open.                     */
 /* ------------------------------------------------------------------ */
 let overflowLockCount = 0;
-const overlayListeners = new Set<(active: boolean) => void>();
 
 export function lockBodyScroll() {
   overflowLockCount++;
   if (overflowLockCount === 1) {
     document.body.style.overflow = 'hidden';
-    overlayListeners.forEach((fn) => fn(true));
   }
 }
 
@@ -23,42 +19,7 @@ export function unlockBodyScroll() {
   overflowLockCount = Math.max(0, overflowLockCount - 1);
   if (overflowLockCount === 0) {
     document.body.style.overflow = '';
-    overlayListeners.forEach((fn) => fn(false));
   }
-}
-
-export function subscribeOverlayActive(fn: (active: boolean) => void): () => void {
-  overlayListeners.add(fn);
-  fn(overflowLockCount > 0);
-  return () => {
-    overlayListeners.delete(fn);
-  };
-}
-
-/* ------------------------------------------------------------------ */
-/*  Mobile bottom-dock visibility — reference counted so overlapping   */
-/*  modals (quick-add, etc.) that sit on top of the dock can hide it   */
-/*  for the duration of their open state without clobbering each other */
-/* ------------------------------------------------------------------ */
-let dockHiddenCount = 0;
-const dockListeners = new Set<(hidden: boolean) => void>();
-
-export function hideDock() {
-  dockHiddenCount++;
-  if (dockHiddenCount === 1) dockListeners.forEach((fn) => fn(true));
-}
-
-export function showDock() {
-  dockHiddenCount = Math.max(0, dockHiddenCount - 1);
-  if (dockHiddenCount === 0) dockListeners.forEach((fn) => fn(false));
-}
-
-export function subscribeDockHidden(fn: (hidden: boolean) => void): () => void {
-  dockListeners.add(fn);
-  fn(dockHiddenCount > 0);
-  return () => {
-    dockListeners.delete(fn);
-  };
 }
 
 /* ------------------------------------------------------------------ */
