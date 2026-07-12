@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -51,6 +51,7 @@ export function StoryViewer({
 
   // ---- playback engine -------------------------------------------------
   const fillRef = useRef<HTMLSpanElement | null>(null);
+  const barsRef = useRef<HTMLDivElement | null>(null);
   const elapsedRef = useRef(0);
   const pausedRef = useRef(false);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -79,6 +80,17 @@ export function StoryViewer({
       setPos({ s: s - 1, i: 0 });
     }
   }, [stories]);
+
+  // The rAF loop writes inline transforms straight onto the fill spans, and
+  // React reuses those DOM nodes across item changes — so a stale inline
+  // scaleX from a half-played segment would override the class-based state.
+  // Reset every segment's inline transform whenever the position changes.
+  useLayoutEffect(() => {
+    const fills = barsRef.current?.querySelectorAll<HTMLSpanElement>('[data-fill]');
+    fills?.forEach((el, idx) => {
+      el.style.transform = idx < pos.i ? 'scaleX(1)' : 'scaleX(0)';
+    });
+  }, [pos]);
 
   useEffect(() => {
     let raf = 0;
@@ -215,11 +227,12 @@ export function StoryViewer({
         />
 
         {/* progress segments */}
-        <div className="absolute inset-x-3 top-3 flex gap-1">
+        <div ref={barsRef} className="absolute inset-x-3 top-3 flex gap-1">
           {segments.map((i) => (
             <div key={i} className="h-[2.5px] flex-1 overflow-hidden rounded-full bg-white/35">
               <span
                 ref={i === pos.i ? fillRef : undefined}
+                data-fill
                 className={cn(
                   'block h-full w-full origin-left rounded-full bg-white',
                   i < pos.i ? 'scale-x-100' : 'scale-x-0'
