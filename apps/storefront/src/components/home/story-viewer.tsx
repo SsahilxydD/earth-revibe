@@ -230,15 +230,16 @@ export function StoryViewer({
 
         {/* progress segments */}
         <div ref={barsRef} className="absolute inset-x-3 top-3 flex gap-1">
+          {/* Fill state lives entirely in inline transforms (set by the
+              layout effect + the rAF writer). Tailwind's scale-x-* utilities
+              use the CSS `scale` property, which would multiply against the
+              inline transform and zero out the animating fill. */}
           {segments.map((i) => (
             <div key={i} className="h-[2.5px] flex-1 overflow-hidden rounded-full bg-white/35">
               <span
                 ref={i === pos.i ? fillRef : undefined}
                 data-fill
-                className={cn(
-                  'block h-full w-full origin-left rounded-full bg-white',
-                  i < pos.i ? 'scale-x-100' : 'scale-x-0'
-                )}
+                className="block h-full w-full origin-left rounded-full bg-white"
               />
             </div>
           ))}
