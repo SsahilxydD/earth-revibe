@@ -3,7 +3,16 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, ChevronDown, ChevronRight, ArrowRight, Instagram, Twitter, User } from 'lucide-react';
+import {
+  X,
+  ChevronDown,
+  ChevronRight,
+  ArrowRight,
+  Instagram,
+  Twitter,
+  User,
+  Search,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUiStore, lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 
@@ -41,8 +50,15 @@ const UTILITIES = [
 ];
 
 export function MobileMenu() {
-  const { isMobileMenuOpen, closeMobileMenu } = useUiStore();
+  const { isMobileMenuOpen, closeMobileMenu, openSearch } = useUiStore();
   const [shopExpanded, setShopExpanded] = useState(true);
+
+  // The header's search icon is desktop-only, so this row is the mobile
+  // entry point for search.
+  const handleSearchClick = () => {
+    closeMobileMenu();
+    openSearch();
+  };
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -167,6 +183,13 @@ export function MobileMenu() {
 
           {/* Utilities */}
           <div className="mt-5 border-t border-[#E2DBCD] pt-5">
+            <button
+              onClick={handleSearchClick}
+              className="flex w-full items-center gap-2 py-2.5 text-[11px] font-medium tracking-[0.18em] text-[#6B6459]"
+            >
+              <Search className="h-3.5 w-3.5" strokeWidth={1.6} />
+              SEARCH
+            </button>
             {UTILITIES.map((u) => (
               <Link
                 key={u.href}

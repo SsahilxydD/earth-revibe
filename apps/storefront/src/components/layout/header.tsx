@@ -114,9 +114,9 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Right icons. Cart is always visible (the dock no longer carries it).
-              Search + wishlist remain desktop-only — search is in the mobile dock,
-              wishlist is accessible via /account/wishlist from the Account tab. */}
+          {/* Right icons. Cart and account are always visible; search + wishlist
+              remain desktop-only — on mobile both live in the hamburger menu
+              (search row + WISHLIST utility link). */}
           <div className="flex items-center justify-end gap-1">
             <button
               onClick={openSearch}

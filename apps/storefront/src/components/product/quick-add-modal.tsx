@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCartStore } from '@/stores/cart-store';
 import { useToast } from '@/providers';
 import { formatPrice, getImageUrl } from '@/lib/utils';
-import { lockBodyScroll, unlockBodyScroll, hideDock, showDock } from '@/stores/ui-store';
+import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
 import { api } from '@/lib/api-client';
 import { Spinner } from '@/components/ui/spinner';
 import type { Product } from '@/types';
@@ -65,11 +65,7 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
   useEffect(() => {
     if (product) {
       lockBodyScroll();
-      hideDock();
-      return () => {
-        unlockBodyScroll();
-        showDock();
-      };
+      return () => unlockBodyScroll();
     }
   }, [product]);
 
