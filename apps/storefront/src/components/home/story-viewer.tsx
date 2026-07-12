@@ -96,7 +96,9 @@ export function StoryViewer({
     let raf = 0;
     let last = performance.now();
     const tick = (now: number) => {
-      const dt = now - last;
+      // rAF suspends while the tab/app is hidden; clamp the delta so a
+      // backgrounded story resumes where it left off instead of jumping.
+      const dt = Math.min(now - last, 64);
       last = now;
       if (!pausedRef.current) {
         elapsedRef.current += dt;
