@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Search, Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Search, Heart, ShoppingBag, ArrowLeft, Menu, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart-store';
 import { useUiStore } from '@/stores/ui-store';
@@ -20,7 +20,7 @@ const NAV_LINKS = [
 ];
 
 export function Header() {
-  const { isSearchOpen, openSearch } = useUiStore();
+  const { isSearchOpen, openSearch, openMobileMenu } = useUiStore();
   const itemCount = useCartStore((s) => s.getItemCount());
   const openCart = useCartStore((s) => s.openCart);
   const pathname = usePathname();
@@ -82,13 +82,21 @@ export function Header() {
           )}
         >
           <div className="flex items-center">
-            {isProductDetail && (
+            {isProductDetail ? (
               <button
                 onClick={() => window.history.back()}
                 className="flex h-10 w-10 items-center justify-center lg:hidden"
                 aria-label="Go back"
               >
                 <ArrowLeft className="h-5 w-5" />
+              </button>
+            ) : (
+              <button
+                onClick={openMobileMenu}
+                className="flex h-10 w-10 items-center justify-center lg:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" strokeWidth={1.6} />
               </button>
             )}
           </div>
@@ -123,6 +131,13 @@ export function Header() {
               aria-label="Wishlist"
             >
               <Heart className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/account"
+              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--color-surface)] transition-colors"
+              aria-label="Account"
+            >
+              <User className="h-5 w-5" strokeWidth={1.6} />
             </Link>
             <button
               onClick={openCart}
