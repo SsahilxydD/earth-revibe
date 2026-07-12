@@ -22,7 +22,7 @@ export interface DestinationStory {
   items: StoryItem[];
 }
 
-export const STORY_DURATION_MS = 5000;
+export const STORY_DURATION_MS = 15000;
 
 export const DESTINATION_STORIES: DestinationStory[] = [
   {
