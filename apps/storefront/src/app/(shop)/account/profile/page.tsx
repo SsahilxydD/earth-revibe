@@ -71,7 +71,9 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     await logout();
-    router.push('/auth/login');
+    // replace (not push) so Back after logout doesn't bounce through the
+    // now guest-guarded account page and back onto login.
+    router.replace('/auth/login');
   };
 
   if (isLoading) {

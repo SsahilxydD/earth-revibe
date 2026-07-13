@@ -30,7 +30,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       // Preserve where the guest was headed so login returns them here.
-      router.push(`/auth/login?returnUrl=${encodeURIComponent(pathname)}`);
+      // Use replace (not push) so this guarded route isn't left in history:
+      // otherwise Back from the login page lands here, re-triggers this guard,
+      // and bounces the guest forward to login again — they could never Back
+      // out to the homepage.
+      router.replace(`/auth/login?returnUrl=${encodeURIComponent(pathname)}`);
     }
   }, [isLoading, isAuthenticated, router, pathname]);
 
