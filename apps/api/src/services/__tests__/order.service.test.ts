@@ -28,6 +28,7 @@ const {
   mockTxOrderStatusHistoryCreate,
   mockTxOrderItemFindMany,
   mockTxUserUpdate,
+  mockTxUserFindUnique,
   mockTxLoyaltyTransactionCreate,
   mockTxReferralFindUnique,
   mockTxReferralUpdate,
@@ -53,6 +54,9 @@ const {
   const mockTxOrderStatusHistoryCreate = vi.fn();
   const mockTxOrderItemFindMany = vi.fn();
   const mockTxUserUpdate = vi.fn();
+  // reverseOrderPoints reads the user's live balance to clamp the earned-points
+  // clawback so a cancel/refund can never push loyaltyPoints below zero.
+  const mockTxUserFindUnique = vi.fn();
   const mockTxLoyaltyTransactionCreate = vi.fn();
   const mockTxReferralFindUnique = vi.fn();
   const mockTxReferralUpdate = vi.fn();
@@ -76,7 +80,7 @@ const {
     },
     orderStatusHistory: { create: mockTxOrderStatusHistoryCreate },
     orderItem: { findMany: mockTxOrderItemFindMany },
-    user: { update: mockTxUserUpdate },
+    user: { update: mockTxUserUpdate, findUnique: mockTxUserFindUnique },
     loyaltyTransaction: { create: mockTxLoyaltyTransactionCreate },
     referral: {
       findUnique: mockTxReferralFindUnique,
@@ -119,6 +123,7 @@ const {
     mockTxOrderStatusHistoryCreate,
     mockTxOrderItemFindMany,
     mockTxUserUpdate,
+    mockTxUserFindUnique,
     mockTxLoyaltyTransactionCreate,
     mockTxReferralFindUnique,
     mockTxReferralUpdate,
@@ -382,7 +387,7 @@ function restoreTxMock() {
       },
       orderStatusHistory: { create: mockTxOrderStatusHistoryCreate },
       orderItem: { findMany: mockTxOrderItemFindMany },
-      user: { update: mockTxUserUpdate },
+      user: { update: mockTxUserUpdate, findUnique: mockTxUserFindUnique },
       loyaltyTransaction: { create: mockTxLoyaltyTransactionCreate },
       referral: {
         findUnique: mockTxReferralFindUnique,
@@ -2086,9 +2091,13 @@ describe('orderService', () => {
 
       it('claws back earned loyalty points when loyaltyPointsEarned > 0', async () => {
         mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ loyaltyPointsEarned: 10 }));
-        mockTxOrderUpdate.mockResolvedValueOnce({});
+        // Status flip + the reversal's zeroing of loyaltyPointsEarned are two
+        // separate order.update calls now.
+        mockTxOrderUpdate.mockResolvedValue({});
         mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
         mockTxOrderItemFindMany.mockResolvedValueOnce([]);
+        // Live balance (>= earned) so the clamp keeps the full 10-pt clawback.
+        mockTxUserFindUnique.mockResolvedValueOnce({ loyaltyPoints: 500 });
         mockTxReferralFindUnique.mockResolvedValueOnce(null);
 
         await orderService.cancelOrder(USER_ID, ORDER_NUMBER, BASE_CANCEL_INPUT);
@@ -2102,6 +2111,13 @@ describe('orderService', () => {
         expect(mockTxLoyaltyTransactionCreate).toHaveBeenCalledWith(
           expect.objectContaining({
             data: expect.objectContaining({ type: 'ADJUSTED', points: -10 }),
+          })
+        );
+        // The earned marker is zeroed so a repeat cancel/refund can't double-claw.
+        expect(mockTxOrderUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { id: 'order-db-001' },
+            data: { loyaltyPointsEarned: 0 },
           })
         );
       });
@@ -2119,6 +2135,37 @@ describe('orderService', () => {
           (c) => c[0]?.data?.loyaltyPoints?.decrement !== undefined
         );
         expect(decrementCall).toBeUndefined();
+      });
+
+      it('clamps the clawback to the live balance so it never goes negative', async () => {
+        // Customer earned 1599 pts on this order but has since spent them all
+        // (balance 0). The old inline clawback decremented the full 1599 and
+        // drove the balance to −1599; the clamp now takes back only what remains.
+        mockOrderFindFirst.mockResolvedValueOnce(makeFullOrder({ loyaltyPointsEarned: 1599 }));
+        mockTxOrderUpdate.mockResolvedValue({});
+        mockTxOrderStatusHistoryCreate.mockResolvedValueOnce({});
+        mockTxOrderItemFindMany.mockResolvedValueOnce([]);
+        mockTxUserFindUnique.mockResolvedValueOnce({ loyaltyPoints: 0 });
+        mockTxReferralFindUnique.mockResolvedValueOnce(null);
+
+        await orderService.cancelOrder(USER_ID, ORDER_NUMBER, BASE_CANCEL_INPUT);
+
+        // No decrement at all (clawback clamped to 0), and no reversal ledger row.
+        const decrementCall = mockTxUserUpdate.mock.calls.find(
+          (c) => c[0]?.data?.loyaltyPoints?.decrement !== undefined
+        );
+        expect(decrementCall).toBeUndefined();
+        const reversalTxn = mockTxLoyaltyTransactionCreate.mock.calls.find(
+          (c) => (c[0]?.data?.points ?? 0) < 0
+        );
+        expect(reversalTxn).toBeUndefined();
+        // The earned marker is still zeroed to keep the reversal idempotent.
+        expect(mockTxOrderUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { id: 'order-db-001' },
+            data: { loyaltyPointsEarned: 0 },
+          })
+        );
       });
     });
 

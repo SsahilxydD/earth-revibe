@@ -4,6 +4,7 @@ import { env } from '../config/env';
 import { APP_CONSTANTS } from '../config/constants';
 import { logger } from '../config/logger';
 import { OrderStatus } from '@earth-revibe/shared';
+import { awardOrderPoints } from './loyalty-award.service';
 
 interface ShiprocketOrderItem {
   name: string;
@@ -1060,6 +1061,21 @@ async function syncTrackingState(
   }
 
   await prisma.$transaction(ops);
+
+  // Credit cashback when the carrier reports DELIVERED — COD cash is collected
+  // on delivery, so this is when COD points vest. Idempotent (a prepaid order
+  // already credited at capture is skipped) and isolated so a points failure
+  // never rolls back the status sync.
+  if (statusChanged && args.newStatus === OrderStatus.DELIVERED) {
+    try {
+      await prisma.$transaction((tx) => awardOrderPoints(tx, orderId));
+    } catch (err) {
+      logger.error(
+        { err, orderId, orderNumber: args.orderNumber },
+        'Failed to award loyalty points on delivery'
+      );
+    }
+  }
 
   if (statusChanged) {
     logger.info(

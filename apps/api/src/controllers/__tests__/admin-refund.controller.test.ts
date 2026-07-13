@@ -11,7 +11,9 @@ const mockTx = {
   order: { update: vi.fn() },
   orderStatusHistory: { create: vi.fn() },
   productVariant: { update: vi.fn() },
-  user: { update: vi.fn() },
+  // reverseOrderPoints reads the live balance (findUnique) to clamp the earned
+  // clawback so a full refund can never drive loyaltyPoints negative.
+  user: { update: vi.fn(), findUnique: vi.fn() },
   loyaltyTransaction: { create: vi.fn() },
   // The refund flow links an open return request (if any) via return.service —
   // findFirst resolving null = refund not tied to a return (no-op path).
@@ -366,6 +368,8 @@ describe('adminRefundController.initiateRefund — full refund flow', () => {
     mockTx.orderStatusHistory.create.mockResolvedValue({});
     mockTx.productVariant.update.mockResolvedValue({});
     mockTx.user.update.mockResolvedValue({});
+    // Live balance comfortably above the 25 earned so the full clawback applies.
+    mockTx.user.findUnique.mockResolvedValue({ loyaltyPoints: 500 });
     mockTx.loyaltyTransaction.create.mockResolvedValue({});
 
     const req = buildRequest() as Request;

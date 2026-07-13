@@ -3,6 +3,7 @@ import { ApiError } from '../utils/api-error';
 import { sendWhatsAppOrderUpdate, sendWhatsAppOtp } from './whatsapp.service';
 import { logger } from '../config/logger';
 import { isCarrierOwnedStatus } from './shiprocket.service';
+import { awardOrderPoints } from './loyalty-award.service';
 import { generateOtp, hashOtp, generateReferralCode } from './auth.service';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import type {
@@ -160,6 +161,18 @@ export const adminOrderService = {
         changedBy: adminId,
       },
     });
+
+    // Credit cashback once the order is delivered (for COD, the money is only
+    // collected on delivery). Idempotent — a prepaid order already credited at
+    // capture is skipped. Isolated so a points failure never blocks the status
+    // update itself.
+    if (data.status === 'DELIVERED') {
+      try {
+        await prisma.$transaction((tx) => awardOrderPoints(tx, order.id));
+      } catch (err) {
+        logger.error({ err, orderNumber }, 'Failed to award loyalty points on delivery');
+      }
+    }
 
     // Fire-and-forget WhatsApp notification to customer (registered or guest)
     const phone = order.user?.phone || order.address?.phone;

@@ -6,7 +6,7 @@ import { env } from '../config/env';
 import { logger } from '../config/logger';
 import { APP_CONSTANTS } from '../config/constants';
 import { maybeLinkReferralAtCheckout, convertReferralOnFirstOrder } from './referral.service';
-import { defaultExpiresAt } from './points-expiry.service';
+import { awardOrderPoints } from './loyalty-award.service';
 import { generateOrderNumber, comboDiscount, isPlaceholderEmail } from '@earth-revibe/shared';
 import type { ComboDiscountInput } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
@@ -955,39 +955,14 @@ export async function finalizeOrderFromPending(
             });
           }
 
-          // 100% cashback on the first order as a hook; 20% on repeat orders.
-          // Redemption is email-gated (admin approval required) so the realised
-          // liability is far less than face value thanks to breakage.
-          const priorOrderCount = await tx.order.count({
-            where: {
-              userId: effectiveUserId,
-              status: { not: 'CANCELLED' },
-              id: { not: order.id },
-            },
-          });
-          const isFirstOrder = priorOrderCount === 0;
-          pointsEarned = Math.floor(isFirstOrder ? totalAmount : totalAmount / 5);
-          if (pointsEarned > 0) {
-            await tx.user.update({
-              where: { id: effectiveUserId },
-              data: { loyaltyPoints: { increment: pointsEarned } },
-            });
-            await tx.order.update({
-              where: { id: order.id },
-              data: { loyaltyPointsEarned: pointsEarned },
-            });
-            await tx.loyaltyTransaction.create({
-              data: {
-                userId: effectiveUserId,
-                type: 'EARNED',
-                points: pointsEarned,
-                description: isFirstOrder
-                  ? `100% cashback — first order #${pending.orderNumber}`
-                  : `20% cashback — order #${pending.orderNumber}`,
-                orderId: order.id,
-                expiresAt: defaultExpiresAt(),
-              },
-            });
+          // Cashback is only earned once money is actually collected. Prepaid
+          // orders earn now (payment just captured); COD orders earn on delivery
+          // (see the DELIVERED hooks in admin-order + shiprocket services).
+          // Awarding — and letting the customer redeem — COD cashback here, on an
+          // order that may never be paid, is what drove balances negative when the
+          // order was later cancelled.
+          if (!paymentInfo.codPending) {
+            pointsEarned = await awardOrderPoints(tx, order.id);
           }
         }
 
@@ -1378,8 +1353,9 @@ export async function createCodOrder(
         });
       }
 
-      // Loyalty points
-      let pointsEarned = 0;
+      // Loyalty points. COD cashback is earned on delivery (see below), so at
+      // placement pointsEarned stays 0 — only redemption of existing points runs here.
+      const pointsEarned = 0;
       if (data.loyaltyPointsToUse > 0) {
         await tx.user.update({
           where: { id: userId },
@@ -1396,39 +1372,11 @@ export async function createCodOrder(
         });
       }
 
-      // 100% cashback on the first order; 20% thereafter. Email-gated
-      // redemption keeps breakage high so realised cost stays below face value.
-      const priorOrderCount = await tx.order.count({
-        where: {
-          userId,
-          status: { not: 'CANCELLED' },
-          id: { not: order.id },
-        },
-      });
-      const isFirstOrder = priorOrderCount === 0;
-      pointsEarned = Math.floor(isFirstOrder ? totalAmount : totalAmount / 5);
-      if (pointsEarned > 0) {
-        await tx.user.update({
-          where: { id: userId },
-          data: { loyaltyPoints: { increment: pointsEarned } },
-        });
-        await tx.order.update({
-          where: { id: order.id },
-          data: { loyaltyPointsEarned: pointsEarned },
-        });
-        await tx.loyaltyTransaction.create({
-          data: {
-            userId,
-            type: 'EARNED',
-            points: pointsEarned,
-            description: isFirstOrder
-              ? `100% cashback — first COD order #${orderNumber}`
-              : `20% cashback — COD order #${orderNumber}`,
-            orderId: order.id,
-            expiresAt: defaultExpiresAt(),
-          },
-        });
-      }
+      // COD cashback is earned on delivery, not at placement — a COD order is
+      // not paid until the carrier collects the cash. Earning here would let the
+      // customer redeem cashback on an unpaid order and go negative if it is
+      // later cancelled. The DELIVERED hooks (admin-order + shiprocket services)
+      // award the points via awardOrderPoints once the order is delivered.
 
       // Referral reward on first order
       await convertReferralOnFirstOrder(tx, userId, subtotal, orderNumber);
