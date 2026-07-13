@@ -53,7 +53,7 @@ export function Modal({
       />
       <div
         className={cn(
-          'relative z-10 w-full animate-slide-up rounded-xl bg-white p-6 shadow-2xl',
+          'relative z-10 w-full animate-slide-up rounded-xl bg-[#FAF7F0] p-6 shadow-2xl',
           maxWidth,
           'mx-4',
           className

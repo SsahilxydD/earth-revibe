@@ -317,7 +317,7 @@ export function CartDrawer() {
           height: '100%',
           width: '100%',
           maxWidth: 393,
-          backgroundColor: '#FFF',
+          backgroundColor: '#FAF7F0',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',

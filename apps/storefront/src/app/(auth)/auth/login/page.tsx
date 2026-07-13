@@ -283,7 +283,7 @@ export default function LoginPage() {
                 onChange={(e) => handleOtpChange(i, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(i, e)}
                 disabled={loading}
-                className={`h-14 w-12 border bg-white text-center font-mono text-[22px] text-black outline-none transition-colors ${
+                className={`h-14 w-12 border bg-[#FAF7F0] text-center font-mono text-[22px] text-black outline-none transition-colors ${
                   digit ? 'border-black' : 'border-[#e5e5e5]'
                 } focus:border-black disabled:opacity-50`}
                 autoComplete="one-time-code"

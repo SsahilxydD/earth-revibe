@@ -128,7 +128,7 @@ export function SearchOverlay() {
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={closeSearch} />
-      <div className="absolute left-0 right-0 top-0 bg-white animate-slide-down shadow-xl">
+      <div className="absolute left-0 right-0 top-0 bg-[#FAF7F0] animate-slide-down shadow-xl">
         <div className="px-4 py-6 md:px-8 lg:px-12 xl:px-20">
           {/* Search input */}
           <form onSubmit={handleSubmit} className="relative">

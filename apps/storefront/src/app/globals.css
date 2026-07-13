@@ -2,7 +2,7 @@
 
 :root {
   --color-primary: #121212;
-  --color-background: #ffffff;
+  --color-background: #faf7f0;
   --color-text: #121212;
   --color-sale: #cf2929;
   --color-sold-out: #939393;
@@ -37,7 +37,7 @@
 }
 html {
   overscroll-behavior-x: none;
-  background: #ffffff;
+  background: #faf7f0;
   /* iOS: ensure background fills behind safe area when viewport-fit=cover */
   min-height: 100%;
   /* Disable pinch-zoom and double-tap zoom across the entire site */

@@ -21,7 +21,7 @@ export default function FlightModePage() {
   return (
     <div
       className="font-[family-name:var(--font-inter)]"
-      style={{ backgroundColor: '#FFF', minHeight: '100vh' }}
+      style={{ backgroundColor: '#FAF7F0', minHeight: '100vh' }}
     >
       {/* Hero */}
       <section

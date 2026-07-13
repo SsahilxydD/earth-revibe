@@ -202,7 +202,7 @@ function KitBuilderInner() {
     <div
       className="font-[family-name:var(--font-inter)]"
       style={{
-        backgroundColor: '#FFF',
+        backgroundColor: '#FAF7F0',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
@@ -613,7 +613,7 @@ function VibeTile({
             width: 22,
             height: 22,
             borderRadius: 9999,
-            backgroundColor: '#FFF',
+            backgroundColor: '#FAF7F0',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -741,7 +741,7 @@ function Step2Pieces({
                 height: 92,
                 borderRadius: 12,
                 border: '1px solid #F0F0F0',
-                backgroundColor: '#FFF',
+                backgroundColor: '#FAF7F0',
                 padding: '0 14px',
                 display: 'flex',
                 alignItems: 'center',
@@ -802,7 +802,7 @@ function Step2Pieces({
                   padding: '0 12px',
                   borderRadius: 9999,
                   border: '1px solid #E5E5E5',
-                  backgroundColor: '#FFF',
+                  backgroundColor: '#FAF7F0',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -907,7 +907,7 @@ function Step3Sizes({
               style={{
                 borderRadius: 12,
                 border: '1px solid #F0F0F0',
-                backgroundColor: '#FFF',
+                backgroundColor: '#FAF7F0',
                 padding: 14,
                 display: 'flex',
                 flexDirection: 'column',
@@ -1042,7 +1042,7 @@ function Step3Sticky({
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
-        backgroundColor: '#FFF',
+        backgroundColor: '#FAF7F0',
         position: 'sticky',
         bottom: 0,
       }}
@@ -1332,7 +1332,7 @@ function Step4Review({
             height: 50,
             borderRadius: 9999,
             border: '1px solid #E5E5E5',
-            backgroundColor: '#FFF',
+            backgroundColor: '#FAF7F0',
             color: '#000',
             fontSize: 12,
             fontWeight: 400,
@@ -1411,7 +1411,7 @@ function StickyBar({
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
-        backgroundColor: '#FFF',
+        backgroundColor: '#FAF7F0',
         position: 'sticky',
         bottom: 0,
       }}

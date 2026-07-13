@@ -224,7 +224,7 @@ function CardContent({
                   padding: '0 10px',
                   borderRadius: 8,
                   border: '1px solid #E5E5E5',
-                  backgroundColor: '#FFF',
+                  backgroundColor: '#FAF7F0',
                   cursor: 'pointer',
                   fontSize: 11,
                   fontWeight: 400,
@@ -252,7 +252,7 @@ function CardContent({
                 padding: '0 10px',
                 borderRadius: 8,
                 border: '1px solid #E5E5E5',
-                backgroundColor: '#FFF',
+                backgroundColor: '#FAF7F0',
                 cursor: 'pointer',
               }}
             >
@@ -420,7 +420,7 @@ function CarouselSkeleton() {
               width: CARD_W,
               height: CARD_H,
               borderRadius: 12,
-              backgroundColor: '#FFF',
+              backgroundColor: '#FAF7F0',
               border: '1px solid #ECECEC',
               boxShadow: '0 2px 8px -2px rgba(0,0,0,0.06)',
               overflow: 'hidden',

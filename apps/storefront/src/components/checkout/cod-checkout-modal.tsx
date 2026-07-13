@@ -352,7 +352,7 @@ export function CODCheckoutModal({ isOpen, onClose, directItems }: CODCheckoutMo
                     <select
                       value={form.state}
                       onChange={(e) => setForm({ ...form, state: e.target.value })}
-                      className="col-span-2 rounded-lg border border-[var(--color-border)] px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)] appearance-none bg-white"
+                      className="col-span-2 rounded-lg border border-[var(--color-border)] px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)] appearance-none bg-[#FAF7F0]"
                     >
                       <option value="">Select State *</option>
                       {INDIAN_STATES.map((s) => (

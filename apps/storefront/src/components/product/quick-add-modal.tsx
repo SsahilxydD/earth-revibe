@@ -138,7 +138,7 @@ export function QuickAddModal({ product, onClose }: QuickAddModalProps) {
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: '#FFF',
+          backgroundColor: '#FAF7F0',
           padding: '24px 28px 28px 28px',
           display: 'flex',
           flexDirection: 'column',

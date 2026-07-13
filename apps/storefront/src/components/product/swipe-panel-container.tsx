@@ -69,11 +69,15 @@ function TapePanel({
   }, [slug]);
 
   if (!product) {
-    return <motion.div ref={panelRef} className="absolute inset-0 bg-white" style={{ x }} />;
+    return <motion.div ref={panelRef} className="absolute inset-0 bg-[#FAF7F0]" style={{ x }} />;
   }
 
   return (
-    <motion.div ref={panelRef} className="absolute inset-0 overflow-y-auto bg-white" style={{ x }}>
+    <motion.div
+      ref={panelRef}
+      className="absolute inset-0 overflow-y-auto bg-[#FAF7F0]"
+      style={{ x }}
+    >
       <ProductDetail product={product} />
     </motion.div>
   );

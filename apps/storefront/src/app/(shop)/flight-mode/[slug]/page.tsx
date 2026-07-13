@@ -176,7 +176,7 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
   return (
     <div
       className="font-[family-name:var(--font-inter)]"
-      style={{ backgroundColor: '#FFF', minHeight: '100vh' }}
+      style={{ backgroundColor: '#FAF7F0', minHeight: '100vh' }}
     >
       {/* Top bar */}
       <div
@@ -186,7 +186,7 @@ export default function ComboDetailPage({ params }: { params: Promise<{ slug: st
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backgroundColor: '#FFF',
+          backgroundColor: '#FAF7F0',
           borderBottom: '1px solid #F0F0F0',
           position: 'sticky',
           top: 56,
@@ -597,7 +597,7 @@ function PieceRow({
                   padding: '0 12px',
                   borderRadius: 6,
                   border: '1px solid #E5E5E5',
-                  backgroundColor: '#FFF',
+                  backgroundColor: '#FAF7F0',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
@@ -619,7 +619,7 @@ function PieceRow({
                 padding: '0 10px',
                 borderRadius: 6,
                 border: '1px solid #E5E5E5',
-                backgroundColor: '#FFF',
+                backgroundColor: '#FAF7F0',
                 cursor: canSwap ? 'pointer' : 'not-allowed',
                 opacity: canSwap ? 1 : 0.4,
               }}

@@ -50,7 +50,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   return (
     <div
-      className="min-h-screen bg-white font-[family-name:var(--font-inter)]"
+      className="min-h-screen bg-[#FAF7F0] font-[family-name:var(--font-inter)]"
       style={{ display: 'flex', flexDirection: 'column' }}
     >
       {/* Top bar — 56px, px-28 */}

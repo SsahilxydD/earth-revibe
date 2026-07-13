@@ -25,7 +25,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           className={cn(
-            'w-full rounded-[var(--button-radius)] border bg-white px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors duration-200',
+            'w-full rounded-[var(--button-radius)] border bg-[#FAF7F0] px-4 py-2.5 text-sm text-[var(--color-text)] outline-none transition-colors duration-200',
             'placeholder:text-[var(--color-muted)]',
             'focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]',
             'disabled:cursor-not-allowed disabled:bg-[var(--color-surface)] disabled:opacity-60',

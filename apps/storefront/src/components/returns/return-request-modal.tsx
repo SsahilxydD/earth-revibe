@@ -306,7 +306,7 @@ export function ReturnRequestModal({ orderNumber, items, isOpen, onClose }: Prop
               borderRadius: 4,
               fontSize: 13,
               fontWeight: 300,
-              background: '#fff',
+              background: '#FAF7F0',
             }}
           >
             {Object.values(ReturnReason).map((r) => (
@@ -359,7 +359,7 @@ const stepBtn: React.CSSProperties = {
   width: 22,
   height: 22,
   border: '1px solid #E5E5E5',
-  background: '#fff',
+  background: '#FAF7F0',
   fontSize: 14,
   cursor: 'pointer',
   borderRadius: 3,
