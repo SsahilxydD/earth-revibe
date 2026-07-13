@@ -15,6 +15,10 @@ const mocks = vi.hoisted(() => {
   const txOrderCreate = vi.fn();
   const txOrderUpdate = vi.fn();
   const txOrderCount = vi.fn();
+  // awardOrderPoints (prepaid earn path) reads the just-created order back via
+  // tx.order.findUnique to compute cashback. Tests that assert pointsEarned
+  // stage a return row; others leave it undefined so the award no-ops (returns 0).
+  const txOrderFindUnique = vi.fn();
   const txDiscountCodeUpdate = vi.fn();
   const txUserUpdate = vi.fn();
   const txLoyaltyTransactionCreate = vi.fn();
@@ -84,6 +88,7 @@ const mocks = vi.hoisted(() => {
         create: txOrderCreate,
         update: txOrderUpdate,
         count: txOrderCount,
+        findUnique: txOrderFindUnique,
       },
       discountCode: { update: txDiscountCodeUpdate },
       user: {
@@ -116,6 +121,7 @@ const mocks = vi.hoisted(() => {
     txOrderCreate,
     txOrderUpdate,
     txOrderCount,
+    txOrderFindUnique,
     txDiscountCodeUpdate,
     txUserUpdate,
     txLoyaltyTransactionCreate,
@@ -2151,6 +2157,15 @@ describe('checkoutService.verifyMagicPayment', () => {
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant({ price: 500 })]);
       setupVerifyTransaction();
       mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
+      // awardOrderPoints reads the order back for its cashback maths.
+      mocks.txOrderFindUnique.mockResolvedValueOnce({
+        id: 'order-1',
+        orderNumber: 'ORD-TEST-001',
+        userId: 'user-1',
+        status: 'CONFIRMED',
+        totalAmount: 1000,
+        loyaltyPointsEarned: 0,
+      });
       mocks.txOrderUpdate.mockResolvedValueOnce({});
       mocks.txUserUpdate.mockResolvedValue({});
       mocks.txLoyaltyTransactionCreate.mockResolvedValue({});
@@ -2189,6 +2204,15 @@ describe('checkoutService.verifyMagicPayment', () => {
       mocks.productVariant.findMany.mockResolvedValueOnce([makeVariant({ price: 500 })]);
       setupVerifyTransaction();
       mocks.txOrderCreate.mockResolvedValueOnce({ id: 'order-1' });
+      // awardOrderPoints reads the order back (userId is the auto-created user).
+      mocks.txOrderFindUnique.mockResolvedValueOnce({
+        id: 'order-1',
+        orderNumber: 'ORD-TEST-001',
+        userId: 'auto-user-1',
+        status: 'CONFIRMED',
+        totalAmount: 1000,
+        loyaltyPointsEarned: 0,
+      });
       mocks.txOrderUpdate.mockResolvedValueOnce({});
       mocks.txUserUpdate.mockResolvedValue({});
       mocks.txLoyaltyTransactionCreate.mockResolvedValue({});

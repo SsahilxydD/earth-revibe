@@ -62,10 +62,22 @@ import { shiprocketService, isCarrierOwnedStatus } from '../shiprocket.service';
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // $transaction in the service is called with an array of prisma promises;
-  // the mock resolves the array as-is — sufficient because the inner ops are
-  // also mocked.
-  mockTransaction.mockImplementation(async (ops: Promise<unknown>[]) => Promise.all(ops));
+  // $transaction is called two ways here:
+  //  1. the status-sync stamp passes an ARRAY of prisma promises — resolve as-is
+  //     (the inner ops are mocked).
+  //  2. the on-DELIVERED cashback award passes a CALLBACK — awardOrderPoints.
+  //     This suite is about status sync, not loyalty, so we run the callback
+  //     with a tx whose order.findUnique returns null: awardOrderPoints then
+  //     short-circuits to 0 (no loyalty writes, no throw). It still counts as a
+  //     real $transaction call, which is what the delivered-order test asserts.
+  mockTransaction.mockImplementation(async (arg: unknown) => {
+    if (typeof arg === 'function') {
+      return (arg as (tx: unknown) => unknown)({
+        order: { findUnique: vi.fn().mockResolvedValue(null) },
+      });
+    }
+    return Promise.all(arg as Promise<unknown>[]);
+  });
   mockTrackingActivityFindMany.mockResolvedValue([]);
   // Global fetch (used for Discord notify) — stubbed so tests don't try to
   // hit the network.
@@ -473,9 +485,10 @@ describe('shiprocketService.refreshAllPendingShipments', () => {
     const result = await shiprocketService.refreshAllPendingShipments({ limit: 10 });
 
     expect(result).toMatchObject({ scanned: 2, updated: 1, unchanged: 1, failed: 0 });
-    // Both orders get a $transaction (sync stamp), but only the updated one
-    // gets a status change.
-    expect(mockTransaction).toHaveBeenCalledTimes(2);
+    // Both orders get a $transaction (sync stamp); the one that advanced to
+    // DELIVERED fires a second, separate $transaction to award cashback on
+    // delivery — so 3 total (2 sync stamps + 1 award).
+    expect(mockTransaction).toHaveBeenCalledTimes(3);
     expect(mockOrderUpdate).toHaveBeenCalledWith({
       where: { id: 'o1' },
       data: {

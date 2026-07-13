@@ -8,6 +8,7 @@ import { generateOrderNumber } from '@earth-revibe/shared';
 import { shiprocketService } from './shiprocket.service';
 import { sendWhatsAppOrderUpdate } from './whatsapp.service';
 import { convertReferralOnFirstOrder } from './referral.service';
+import { reverseOrderPoints } from './loyalty-award.service';
 import type {
   CreateOrderInput,
   VerifyPaymentInput,
@@ -523,39 +524,10 @@ export const orderService = {
         });
       }
 
-      // Restore loyalty points if used
-      if (order.loyaltyPointsUsed > 0) {
-        await tx.user.update({
-          where: { id: userId },
-          data: { loyaltyPoints: { increment: order.loyaltyPointsUsed } },
-        });
-        await tx.loyaltyTransaction.create({
-          data: {
-            userId,
-            type: 'ADJUSTED',
-            points: order.loyaltyPointsUsed,
-            description: `Points restored from cancelled order #${order.orderNumber}`,
-            orderId: order.id,
-          },
-        });
-      }
-
-      // Claw back earned loyalty points
-      if (order.loyaltyPointsEarned > 0) {
-        await tx.user.update({
-          where: { id: userId },
-          data: { loyaltyPoints: { decrement: order.loyaltyPointsEarned } },
-        });
-        await tx.loyaltyTransaction.create({
-          data: {
-            userId,
-            type: 'ADJUSTED',
-            points: -order.loyaltyPointsEarned,
-            description: `Points reversed from cancelled order #${order.orderNumber}`,
-            orderId: order.id,
-          },
-        });
-      }
+      // Restore redeemed points and claw back earned cashback. The clawback is
+      // clamped to the current balance so cancelling an order whose cashback was
+      // already redeemed can never drive the balance negative.
+      await reverseOrderPoints(tx, order);
 
       // Claw back referral rewards if this was the referred user's first purchase
       const referral = await tx.referral.findUnique({

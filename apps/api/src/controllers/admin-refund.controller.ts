@@ -3,6 +3,7 @@ import { prisma, Prisma } from '@earth-revibe/db';
 import { getRazorpay } from '../config/razorpay';
 import { ApiError } from '../utils/api-error';
 import { returnService } from '../services/return.service';
+import { reverseOrderPoints } from '../services/loyalty-award.service';
 
 export const adminRefundController = {
   async initiateRefund(req: Request, res: Response) {
@@ -116,41 +117,11 @@ export const adminRefundController = {
         }
       }
 
-      // Only restore loyalty points on full refund
-      if (isFullRefund && order.userId) {
-        // Restore used loyalty points
-        if (order.loyaltyPointsUsed > 0) {
-          await tx.user.update({
-            where: { id: order.userId },
-            data: { loyaltyPoints: { increment: order.loyaltyPointsUsed } },
-          });
-          await tx.loyaltyTransaction.create({
-            data: {
-              userId: order.userId,
-              type: 'ADJUSTED',
-              points: order.loyaltyPointsUsed,
-              description: `Points restored from refunded order #${orderNumber}`,
-              orderId: order.id,
-            },
-          });
-        }
-
-        // Claw back earned loyalty points
-        if (order.loyaltyPointsEarned > 0) {
-          await tx.user.update({
-            where: { id: order.userId },
-            data: { loyaltyPoints: { decrement: order.loyaltyPointsEarned } },
-          });
-          await tx.loyaltyTransaction.create({
-            data: {
-              userId: order.userId,
-              type: 'ADJUSTED',
-              points: -order.loyaltyPointsEarned,
-              description: `Points reversed from refunded order #${orderNumber}`,
-              orderId: order.id,
-            },
-          });
-        }
+      // Only reverse loyalty points on a full refund. The clawback is clamped to
+      // the current balance so refunding an order whose cashback was already
+      // redeemed can never drive the balance negative.
+      if (isFullRefund) {
+        await reverseOrderPoints(tx, order, 'refunded');
       }
     });
 
