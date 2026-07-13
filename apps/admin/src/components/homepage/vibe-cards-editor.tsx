@@ -1,8 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, Eye, EyeOff, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Eye,
+  EyeOff,
+  Trash2,
+} from 'lucide-react';
+import {
+  DEFAULT_VIBE_CARDS,
   VIBES,
   homepageVibeCardContentSchema,
   type HomepageBlockRecord,
@@ -18,9 +29,11 @@ import {
   useUpdateHomepageBlock,
 } from '@/hooks/use-homepage';
 import { ImagePicker } from './image-picker';
+import { resolvePreviewUrl } from './preview-url';
 
-// Suggested display labels — same phrasing as the /products vibe filter row,
-// so homepage cards and filter chips tell one story. Admin can override.
+// Suggested display labels for vibes added beyond the defaults — same
+// phrasing as the /products vibe filter row so homepage cards and filter
+// chips tell one story. Admin can override.
 const SUGGESTED_LABELS: Record<Vibe, string> = {
   'above-the-clouds': 'Mountain Vibe',
   'salt-on-skin': 'Beach Vibe',
@@ -39,13 +52,97 @@ export function VibeCardsEditor({ blocks }: { blocks: HomepageBlockRecord[] }) {
     .filter((b) => b.type === 'VIBE_CARD')
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
-  const byVibe = new Map<string, HomepageBlockRecord>();
-  for (const block of cardBlocks) {
-    const content = parseCard(block.content);
-    if (content && !byVibe.has(content.vibe)) byVibe.set(content.vibe, block);
+  // The storefront renders the built-in defaults until the CMS has cards,
+  // so an empty CMS shows those defaults here — as what's actually live —
+  // with a one-click import that copies them in for editing.
+  if (cardBlocks.length === 0) {
+    return <ImportDefaultsView />;
   }
 
+  return <LiveCardsView cardBlocks={cardBlocks} />;
+}
+
+// ---------------------------------------------------------------------------
+// Empty CMS: mirror the live built-in cards + import action
+// ---------------------------------------------------------------------------
+
+function ImportDefaultsView() {
+  const createBlock = useCreateHomepageBlock();
+  const [importing, setImporting] = useState(false);
+
+  const importDefaults = async () => {
+    setImporting(true);
+    try {
+      // Sequential on purpose: block sortOrder is assigned max+1 per type,
+      // so parallel creates would race and scramble the card order.
+      for (const card of DEFAULT_VIBE_CARDS) {
+        await createBlock.mutateAsync({
+          type: 'VIBE_CARD',
+          content: { label: card.label, vibe: card.vibe, imageUrl: card.imageUrl },
+        });
+      }
+      toast.success('Cards imported — you can now edit them');
+    } catch {
+      toast.error('Import failed partway — the cards created so far are editable below');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-stone-200 bg-white p-4 space-y-3">
+      <p className="text-[12px] text-medium-gray">
+        These are the storefront&rsquo;s built-in cards, shown because none have been customised
+        yet. Import them to start editing — the homepage won&rsquo;t change until you do.
+      </p>
+
+      {DEFAULT_VIBE_CARDS.map((card) => (
+        <div
+          key={card.vibe}
+          className="flex items-center gap-4 rounded-lg border border-stone-100 bg-stone-50/60 p-3"
+        >
+          <div className="relative h-24 w-[72px] shrink-0 overflow-hidden rounded bg-stone-100">
+            <Image
+              src={resolvePreviewUrl(card.imageUrl)}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="72px"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-semibold text-deep-earth">{card.label}</p>
+            <p className="text-[11px] text-medium-gray">Links to /products?vibe={card.vibe}</p>
+          </div>
+          <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-green-700">
+            LIVE · BUILT-IN
+          </span>
+        </div>
+      ))}
+
+      <div className="flex justify-end">
+        <Button size="sm" isLoading={importing} onClick={importDefaults}>
+          <Download size={13} />
+          Import these {DEFAULT_VIBE_CARDS.length} cards to start editing
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CMS populated: editable live cards + collapsed "add another vibe"
+// ---------------------------------------------------------------------------
+
+function LiveCardsView({ cardBlocks }: { cardBlocks: HomepageBlockRecord[] }) {
   const reorderBlocks = useReorderHomepageBlocks();
+  const [showMore, setShowMore] = useState(false);
+
+  const usedVibes = new Set(
+    cardBlocks.map((b) => parseCard(b.content)?.vibe).filter(Boolean) as Vibe[]
+  );
+  const missingVibes = VIBES.filter((v) => !usedVibes.has(v));
+  const activeCount = cardBlocks.filter((b) => b.isActive).length;
 
   const handleSwap = async (index: number, direction: 'up' | 'down') => {
     const target = direction === 'up' ? index - 1 : index + 1;
@@ -59,16 +156,12 @@ export function VibeCardsEditor({ blocks }: { blocks: HomepageBlockRecord[] }) {
     }
   };
 
-  // Existing cards first (in display order), then vibes not yet on the homepage.
-  const missingVibes = VIBES.filter((v) => !byVibe.has(v));
-
   return (
     <div className="space-y-3">
-      {cardBlocks.length === 0 && (
-        <p className="rounded bg-stone-50 px-3 py-2 text-[12px] text-medium-gray">
-          The storefront is showing its built-in vibe cards. Add a card here to take over.
-        </p>
-      )}
+      <p className="text-[12px] text-medium-gray">
+        {activeCount} of {cardBlocks.length} card{cardBlocks.length === 1 ? '' : 's'} live on the
+        homepage.
+      </p>
 
       {cardBlocks.map((block, index) => (
         <VibeCardRow
@@ -82,11 +175,21 @@ export function VibeCardsEditor({ blocks }: { blocks: HomepageBlockRecord[] }) {
       ))}
 
       {missingVibes.length > 0 && (
-        <div className="space-y-3 pt-1">
-          <p className="text-[12px] font-medium text-medium-gray">Not on the homepage yet</p>
-          {missingVibes.map((vibe) => (
-            <NewVibeCardRow key={vibe} vibe={vibe} />
-          ))}
+        <div className="pt-1">
+          <button
+            onClick={() => setShowMore((s) => !s)}
+            className="flex items-center gap-1.5 text-[12px] font-medium text-medium-gray hover:text-deep-earth transition-colors"
+          >
+            {showMore ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            Add another vibe ({missingVibes.length} available)
+          </button>
+          {showMore && (
+            <div className="mt-3 space-y-3">
+              {missingVibes.map((vibe) => (
+                <NewVibeCardRow key={vibe} vibe={vibe} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -156,13 +259,17 @@ function VibeCardRow({
   };
 
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-stone-200 bg-white p-3">
+    <div
+      className={`flex items-center gap-4 rounded-lg border bg-white p-3 ${
+        block.isActive ? 'border-stone-200' : 'border-stone-200 opacity-60'
+      }`}
+    >
       <ImagePicker value={imageUrl} onChange={setImageUrl} frameClass="h-24 w-[72px]" />
       <div className="min-w-0 flex-1 space-y-1">
         <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Beach Vibe" />
         <p className="text-[11px] text-medium-gray">
           Links to /products?vibe={content.vibe}
-          {!block.isActive && ' · hidden'}
+          {!block.isActive && ' · hidden from homepage'}
         </p>
       </div>
       <button
