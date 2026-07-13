@@ -195,6 +195,8 @@ model ProductCategory {
   @@map("product_categories")
 }
 
+/// Legacy tile list from the pre-2026-07 homepage. Superseded by
+/// HomepageBlock; kept until prod data is confirmed disposable, then drop.
 model HomepageSection {
   id        String   @id @default(cuid())
   label     String
@@ -206,6 +208,23 @@ model HomepageSection {
   updatedAt DateTime @updatedAt
 
   @@map("homepage_sections")
+}
+
+/// Homepage CMS blocks. `type` is a HomepageBlockType from @earth-revibe/shared
+/// (string, not a PG enum, so new block types don't need a migration); `content`
+/// is a JSON payload validated against the per-type Zod schema in
+/// shared/schemas/homepage.schema.ts on every write.
+model HomepageBlock {
+  id        String   @id @default(cuid())
+  type      String
+  content   Json
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type, isActive, sortOrder])
+  @@map("homepage_blocks")
 }
 
 model Product {
