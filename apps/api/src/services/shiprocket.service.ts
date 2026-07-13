@@ -889,6 +889,100 @@ export const shiprocketService = {
    * sync logic that powers /refresh-shipment-status. Returns null if no
    * order in our DB matches the AWB.
    */
+  /**
+   * Ops diagnostic behind GET /api/v1/internal/sync-state/:orderNumber —
+   * answers "why hasn't this order synced" in one read: local sync fields,
+   * payment, recent history + carrier activities, a live read-only Shiprocket
+   * probe of the AWB, and a `diagnosis` explaining the failure leg. With
+   * refresh=true it first runs the standard refreshByAwb write-through, so
+   * probing also heals the order when Shiprocket has news.
+   */
+  async getSyncState(orderNumber: string, options: { refresh?: boolean } = {}) {
+    const load = () =>
+      prisma.order.findUnique({
+        where: { orderNumber },
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          awbCode: true,
+          shiprocketOrderId: true,
+          courierName: true,
+          lastShipmentSyncAt: true,
+          deliveredAt: true,
+          createdAt: true,
+          updatedAt: true,
+          payment: { select: { status: true, method: true } },
+          statusHistory: {
+            orderBy: { createdAt: 'desc' },
+            take: 8,
+            select: { status: true, note: true, createdAt: true },
+          },
+          trackingActivities: {
+            orderBy: { occurredAt: 'desc' },
+            take: 8,
+            select: { occurredAt: true, status: true, activity: true, location: true },
+          },
+        },
+      });
+
+    let order = await load();
+    if (!order) return null;
+
+    let refreshed: { changed: boolean } | null = null;
+    if (options.refresh && order.awbCode) {
+      try {
+        const result = await shiprocketService.refreshByAwb(order.awbCode);
+        refreshed = result ? { changed: result.changed } : null;
+        order = (await load())!;
+      } catch (err) {
+        logger.warn({ err, orderNumber }, 'sync-state: refresh pass failed — continuing');
+      }
+    }
+
+    // Read-only probe: what does Shiprocket say right now?
+    let shiprocket: {
+      reachable: boolean;
+      statusId?: number | string;
+      statusText?: string | number;
+      mapped?: OrderStatus | null;
+      error?: string;
+    } | null = null;
+    if (order.awbCode) {
+      try {
+        const result = await shiprocketRequest<any>(`/courier/track/awb/${order.awbCode}`);
+        const trackingData = result.tracking_data || {};
+        const { id, text } = extractCurrentStatus(trackingData);
+        shiprocket = {
+          reachable: true,
+          statusId: id,
+          statusText: text,
+          mapped: mapShiprocketStatus(id, text),
+        };
+      } catch (err) {
+        shiprocket = { reachable: false, error: String(err) };
+      }
+    }
+
+    const terminal = ['DELIVERED', 'CANCELLED', 'RETURNED'].includes(order.status);
+    const diagnosis =
+      !order.shiprocketOrderId && !order.awbCode
+        ? 'NO_SHIPROCKET_ORDER — post-payment Shiprocket creation failed (daily reconcile retries it; check its logs) or this order ships via another courier. Nothing to sync; drive the status manually if external.'
+        : !order.awbCode
+          ? 'NO_AWB — Shiprocket order exists but no AWB assigned. The 10-min cron backfills AWBs (reconcileMissingAwbs); if this persists, that cron is not running or AWB assignment keeps failing on the Shiprocket side.'
+          : terminal
+            ? `TERMINAL_STATUS — sweeps skip ${order.status} orders by design. If this CANCELLED/RETURNED is wrong, restore it in admin (CANCELLED → CONFIRMED).`
+            : shiprocket && !shiprocket.reachable
+              ? 'SR_UNREACHABLE — the Shiprocket tracking call failed (auth / rate limit / network). Check SHIPROCKET_EMAIL/PASSWORD and API logs.'
+              : shiprocket && shiprocket.mapped == null
+                ? 'UNMAPPED_SR_STATUS — Shiprocket reports a pre-transit or unknown status our map deliberately ignores (see SR_ID_TO_STATUS); the order stays as-is until a mapped event arrives.'
+                : order.lastShipmentSyncAt == null
+                  ? 'NEVER_SWEPT — sweep-eligible but never synced once: the 10-minute refresh cron is almost certainly not running (verify cron-job.org hits /internal/refresh-shipment-status).'
+                  : 'SWEEP_ELIGIBLE — this order syncs normally; compare lastShipmentSyncAt against the 10-minute cadence to judge cron health.';
+
+    return { order, refreshed, shiprocket, diagnosis };
+  },
+
   async refreshByAwb(awbCode: string): Promise<{ changed: boolean; orderId: string } | null> {
     const order = await prisma.order.findFirst({
       where: { awbCode },

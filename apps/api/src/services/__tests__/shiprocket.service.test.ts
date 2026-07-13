@@ -789,6 +789,89 @@ describe('shiprocketService.refreshByAwb', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// getSyncState (ops diagnostic)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('shiprocketService.getSyncState', () => {
+  const baseOrder = {
+    id: 'o-1',
+    orderNumber: 'ER-TEST1',
+    status: 'CONFIRMED',
+    awbCode: null,
+    shiprocketOrderId: null,
+    courierName: null,
+    lastShipmentSyncAt: null,
+    deliveredAt: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    payment: { status: 'PENDING', method: 'COD' },
+    statusHistory: [],
+    trackingActivities: [],
+  };
+
+  it('returns null for an unknown order', async () => {
+    mockOrderFindUnique.mockResolvedValue(null);
+    expect(await shiprocketService.getSyncState('ER-NOPE')).toBeNull();
+  });
+
+  it('diagnoses NO_SHIPROCKET_ORDER when neither SR id nor AWB exist', async () => {
+    mockOrderFindUnique.mockResolvedValue({ ...baseOrder });
+    const state = await shiprocketService.getSyncState('ER-TEST1');
+    expect(state?.diagnosis).toContain('NO_SHIPROCKET_ORDER');
+    expect(state?.shiprocket).toBeNull();
+    expect(mockShiprocketRequest).not.toHaveBeenCalled();
+  });
+
+  it('diagnoses NO_AWB when the SR order exists but has no AWB', async () => {
+    mockOrderFindUnique.mockResolvedValue({ ...baseOrder, shiprocketOrderId: 123 });
+    const state = await shiprocketService.getSyncState('ER-TEST1');
+    expect(state?.diagnosis).toContain('NO_AWB');
+  });
+
+  it('diagnoses TERMINAL_STATUS for cancelled orders and includes the SR probe', async () => {
+    mockOrderFindUnique.mockResolvedValue({
+      ...baseOrder,
+      status: 'CANCELLED',
+      shiprocketOrderId: 123,
+      awbCode: 'AWB1',
+    });
+    mockShiprocketRequest.mockResolvedValue({
+      tracking_data: { shipment_status_id: 8, shipment_status: 'Canceled' },
+    });
+    const state = await shiprocketService.getSyncState('ER-TEST1');
+    expect(state?.diagnosis).toContain('TERMINAL_STATUS');
+    expect(state?.shiprocket).toMatchObject({ reachable: true, statusId: 8 });
+  });
+
+  it('diagnoses NEVER_SWEPT for an eligible order with no sync stamp', async () => {
+    mockOrderFindUnique.mockResolvedValue({
+      ...baseOrder,
+      status: 'SHIPPING',
+      shiprocketOrderId: 123,
+      awbCode: 'AWB1',
+    });
+    mockShiprocketRequest.mockResolvedValue({
+      tracking_data: { shipment_status_id: 6, shipment_status: 'Shipped' },
+    });
+    const state = await shiprocketService.getSyncState('ER-TEST1');
+    expect(state?.diagnosis).toContain('NEVER_SWEPT');
+  });
+
+  it('diagnoses SR_UNREACHABLE when the probe call throws', async () => {
+    mockOrderFindUnique.mockResolvedValue({
+      ...baseOrder,
+      status: 'SHIPPING',
+      shiprocketOrderId: 123,
+      awbCode: 'AWB1',
+      lastShipmentSyncAt: new Date(),
+    });
+    mockShiprocketRequest.mockRejectedValue(new Error('401 from Shiprocket'));
+    const state = await shiprocketService.getSyncState('ER-TEST1');
+    expect(state?.diagnosis).toContain('SR_UNREACHABLE');
+    expect(state?.shiprocket).toMatchObject({ reachable: false });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // reconcileMissingShipments
 // ─────────────────────────────────────────────────────────────────────────────
 describe('shiprocketService.reconcileMissingShipments', () => {

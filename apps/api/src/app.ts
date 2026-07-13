@@ -371,6 +371,40 @@ app.post('/api/v1/internal/reconcile-shiprocket-awbs', async (req, res) => {
   }
 });
 
+// Ops diagnostic: why hasn't order X synced? Local sync state + recent
+// history/activities + a live Shiprocket probe + a plain-language diagnosis.
+// ?refresh=true first runs the standard write-through refresh (heals the
+// order when Shiprocket has news), then reports.
+//   curl -H "x-cron-secret: $CRON_SECRET" \
+//     "$API/api/v1/internal/sync-state/ER-XXXX?refresh=true"
+app.get('/api/v1/internal/sync-state/:orderNumber', async (req, res) => {
+  if (env.CRON_SECRET && req.headers['x-cron-secret'] !== env.CRON_SECRET) {
+    res
+      .status(401)
+      .json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid cron secret' } });
+    return;
+  }
+  try {
+    const { shiprocketService } = await import('./services/shiprocket.service.js');
+    const state = await shiprocketService.getSyncState(String(req.params.orderNumber), {
+      refresh: req.query.refresh === 'true',
+    });
+    if (!state) {
+      res
+        .status(404)
+        .json({ success: false, error: { code: 'NOT_FOUND', message: 'Order not found' } });
+      return;
+    }
+    res.json({ success: true, data: state });
+  } catch (err) {
+    logger.error({ err, orderNumber: req.params.orderNumber }, 'sync-state diagnostic failed');
+    res.status(500).json({
+      success: false,
+      error: { code: 'DIAG_FAILED', message: 'sync-state diagnostic failed' },
+    });
+  }
+});
+
 // Guest cart snapshot — called when newsletter popup captures an email
 // Stores the guest's email + cart items so abandoned cart emails work for non-logged-in visitors
 app.post('/api/v1/cart/guest-snapshot', async (req, res) => {
