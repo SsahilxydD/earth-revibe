@@ -1,104 +1,88 @@
 import { Router, type IRouter } from 'express';
 import type { Request, Response } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 import { asyncHandler } from '../utils/async-handler';
-import { UserRole } from '@earth-revibe/shared';
-import { prisma } from '@earth-revibe/db';
+import {
+  UserRole,
+  createHomepageBlockSchema,
+  homepageFeaturedContentSchema,
+  homepageHeroContentSchema,
+  reorderHomepageBlocksSchema,
+  updateHomepageBlockSchema,
+} from '@earth-revibe/shared';
+import { homepageService } from '../services/homepage.service';
 
 const router: IRouter = Router();
 
 router.use(authenticate);
 router.use(authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 
-// GET /api/v1/admin/homepage — list all sections
+// GET /api/v1/admin/homepage — all blocks, including inactive
 router.get(
   '/',
   asyncHandler(async (_req: Request, res: Response) => {
-    const sections = await prisma.homepageSection.findMany({
-      orderBy: { sortOrder: 'asc' },
-    });
-    res.json({ success: true, data: sections });
+    const blocks = await homepageService.listBlocks();
+    res.json({ success: true, data: blocks });
   })
 );
 
-// POST /api/v1/admin/homepage — create a new section
-router.post(
-  '/',
-  asyncHandler(async (req: Request, res: Response) => {
-    const { label, href, sortOrder } = req.body;
-    if (!label || !href) {
-      res.status(400).json({
-        success: false,
-        error: { code: 'BAD_REQUEST', message: 'label and href are required' },
-      });
-      return;
-    }
-    const section = await prisma.homepageSection.create({
-      data: {
-        label,
-        href,
-        sortOrder: sortOrder ?? 0,
-        isActive: true,
-      },
-    });
-    res.status(201).json({ success: true, data: section });
-  })
-);
-
-// PUT /api/v1/admin/homepage/reorder — MUST be before /:id routes
+// PUT /api/v1/admin/homepage/hero — upsert the hero singleton
 router.put(
-  '/reorder',
+  '/hero',
+  validate({ body: homepageHeroContentSchema }),
   asyncHandler(async (req: Request, res: Response) => {
-    const { orderedIds } = req.body;
-    if (!Array.isArray(orderedIds)) {
-      res.status(400).json({
-        success: false,
-        error: { code: 'BAD_REQUEST', message: 'orderedIds array is required' },
-      });
-      return;
-    }
+    const block = await homepageService.upsertSingleton('HERO', req.body);
+    res.json({ success: true, data: block });
+  })
+);
 
-    await prisma.$transaction(
-      orderedIds.map((id: string, index: number) =>
-        prisma.homepageSection.update({
-          where: { id },
-          data: { sortOrder: index },
-        })
-      )
-    );
+// PUT /api/v1/admin/homepage/featured — upsert the curated featured-products singleton
+router.put(
+  '/featured',
+  validate({ body: homepageFeaturedContentSchema }),
+  asyncHandler(async (req: Request, res: Response) => {
+    const block = await homepageService.upsertSingleton('FEATURED_PRODUCTS', req.body);
+    res.json({ success: true, data: block });
+  })
+);
 
+// PUT /api/v1/admin/homepage/blocks/reorder — MUST be before /blocks/:id
+router.put(
+  '/blocks/reorder',
+  validate({ body: reorderHomepageBlocksSchema }),
+  asyncHandler(async (req: Request, res: Response) => {
+    await homepageService.reorderBlocks(req.body.orderedIds);
     res.json({ success: true });
   })
 );
 
-// DELETE /api/v1/admin/homepage/:id — remove a section
-router.delete(
-  '/:id',
+// POST /api/v1/admin/homepage/blocks — create a STORY_STACK / VIBE_CARD block
+router.post(
+  '/blocks',
+  validate({ body: createHomepageBlockSchema }),
   asyncHandler(async (req: Request, res: Response) => {
-    await prisma.homepageSection.delete({ where: { id: String(req.params.id) } });
-    res.json({ success: true });
+    const block = await homepageService.createBlock(req.body);
+    res.status(201).json({ success: true, data: block });
   })
 );
 
-// PATCH /api/v1/admin/homepage/:id — update imageUrl (and optionally label/href/sortOrder/isActive)
+// PATCH /api/v1/admin/homepage/blocks/:id — update content / sortOrder / isActive
 router.patch(
-  '/:id',
+  '/blocks/:id',
+  validate({ body: updateHomepageBlockSchema }),
   asyncHandler(async (req: Request, res: Response) => {
-    const id = String(req.params.id);
-    const { imageUrl, label, href, sortOrder, isActive } = req.body;
+    const block = await homepageService.updateBlock(String(req.params.id), req.body);
+    res.json({ success: true, data: block });
+  })
+);
 
-    const section = await prisma.homepageSection.update({
-      where: { id },
-      data: {
-        ...(imageUrl !== undefined ? { imageUrl } : {}),
-        ...(label !== undefined ? { label } : {}),
-        ...(href !== undefined ? { href } : {}),
-        ...(sortOrder !== undefined ? { sortOrder } : {}),
-        ...(isActive !== undefined ? { isActive } : {}),
-      },
-    });
-
-    res.json({ success: true, data: section });
+// DELETE /api/v1/admin/homepage/blocks/:id
+router.delete(
+  '/blocks/:id',
+  asyncHandler(async (req: Request, res: Response) => {
+    await homepageService.deleteBlock(String(req.params.id));
+    res.json({ success: true });
   })
 );
 

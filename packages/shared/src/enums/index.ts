@@ -10,3 +10,4 @@ export * from './notification.enum';
 export * from './travel-application.enum';
 export * from './expense.enum';
 export * from './vibe';
+export * from './homepage.enum';

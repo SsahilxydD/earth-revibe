@@ -3,65 +3,80 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { revalidateStorefront } from '@/lib/revalidate-storefront';
+import type {
+  CreateHomepageBlockInput,
+  HomepageBlockRecord,
+  HomepageFeaturedContent,
+  HomepageHeroContent,
+  UpdateHomepageBlockInput,
+} from '@earth-revibe/shared';
 
-export interface HomepageSection {
-  id: string;
-  label: string;
-  href: string;
-  imageUrl: string | null;
-  sortOrder: number;
-  isActive: boolean;
-}
+const BLOCKS_KEY = ['homepage-blocks'];
 
-export function useHomepageSections() {
-  return useQuery<HomepageSection[]>({
-    queryKey: ['homepage-sections'],
-    queryFn: () => api.get<HomepageSection[]>('/admin/homepage'),
+export function useHomepageBlocks() {
+  return useQuery<HomepageBlockRecord[]>({
+    queryKey: BLOCKS_KEY,
+    queryFn: () => api.get<HomepageBlockRecord[]>('/admin/homepage'),
   });
 }
 
-export function useUpdateHomepageSection() {
+/** Shared onSuccess: refetch blocks + instantly revalidate the storefront's ISR cache. */
+function useHomepageInvalidation() {
   const queryClient = useQueryClient();
+  return () => {
+    queryClient.invalidateQueries({ queryKey: BLOCKS_KEY });
+    revalidateStorefront(['homepage']);
+  };
+}
+
+export function useUpsertHero() {
+  const invalidate = useHomepageInvalidation();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<HomepageSection> }) =>
-      api.patch<HomepageSection>(`/admin/homepage/${id}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
-      revalidateStorefront(['homepage']);
-    },
+    mutationFn: (content: HomepageHeroContent) =>
+      api.put<HomepageBlockRecord>('/admin/homepage/hero', content),
+    onSuccess: invalidate,
   });
 }
 
-export function useCreateHomepageSection() {
-  const queryClient = useQueryClient();
+export function useUpsertFeatured() {
+  const invalidate = useHomepageInvalidation();
   return useMutation({
-    mutationFn: (data: { label: string; href: string; sortOrder?: number }) =>
-      api.post<HomepageSection>('/admin/homepage', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
-      revalidateStorefront(['homepage']);
-    },
+    mutationFn: (content: HomepageFeaturedContent) =>
+      api.put<HomepageBlockRecord>('/admin/homepage/featured', content),
+    onSuccess: invalidate,
   });
 }
 
-export function useReorderHomepageSections() {
-  const queryClient = useQueryClient();
+export function useCreateHomepageBlock() {
+  const invalidate = useHomepageInvalidation();
   return useMutation({
-    mutationFn: (orderedIds: string[]) => api.put('/admin/homepage/reorder', { orderedIds }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
-      revalidateStorefront(['homepage']);
-    },
+    mutationFn: (input: CreateHomepageBlockInput) =>
+      api.post<HomepageBlockRecord>('/admin/homepage/blocks', input),
+    onSuccess: invalidate,
   });
 }
 
-export function useDeleteHomepageSection() {
-  const queryClient = useQueryClient();
+export function useUpdateHomepageBlock() {
+  const invalidate = useHomepageInvalidation();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/admin/homepage/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
-      revalidateStorefront(['homepage']);
-    },
+    mutationFn: ({ id, data }: { id: string; data: UpdateHomepageBlockInput }) =>
+      api.patch<HomepageBlockRecord>(`/admin/homepage/blocks/${id}`, data),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteHomepageBlock() {
+  const invalidate = useHomepageInvalidation();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/admin/homepage/blocks/${id}`),
+    onSuccess: invalidate,
+  });
+}
+
+export function useReorderHomepageBlocks() {
+  const invalidate = useHomepageInvalidation();
+  return useMutation({
+    mutationFn: (orderedIds: string[]) => api.put('/admin/homepage/blocks/reorder', { orderedIds }),
+    onSuccess: invalidate,
   });
 }

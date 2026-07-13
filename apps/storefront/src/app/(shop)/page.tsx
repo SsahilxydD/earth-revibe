@@ -2,11 +2,14 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Recycle, Star, Users, Wallet } from 'lucide-react';
+import type { HomepagePayload } from '@earth-revibe/shared';
 import { DestinationStoriesSection } from '@/components/home/destination-stories-section';
+import { DESTINATION_STORIES, type DestinationStory } from '@/components/home/destination-stories';
 import { ReviewsCarousel } from '@/components/home/reviews-carousel';
 import { NewsletterInline } from '@/components/home/newsletter-inline';
+import { fetchFeaturedFallback, fetchHomepage, fetchVibeCount } from '@/lib/homepage-data';
 
-export const revalidate = 3600; // refresh vibe counts + featured pieces hourly
+export const revalidate = 3600; // hourly ISR; admin edits revalidate instantly via tag 'homepage'
 
 export const metadata: Metadata = {
   title: 'Earth Revibe — Vacation-Ready Minimal Fits',
@@ -14,12 +17,23 @@ export const metadata: Metadata = {
     'One rack, three vibes, zero filler. 47 vacation-ready pieces made in India — dress for Goa, Manali, Kerala, Jaipur or Ladakh.',
 };
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'https://earth-revibeapi-production.up.railway.app/api/v1';
+// ---------------------------------------------------------------------------
+// Built-in defaults — rendered whenever the CMS has no content for a section
+// or the API is unreachable. An empty CMS can never blank the homepage.
+// ---------------------------------------------------------------------------
 
-// The three shopping vibes — labels + imagery mirror /products' vibe row so
-// the homepage cards and the filter chips always tell the same story.
-const VIBE_CARDS = [
+const DEFAULT_HERO = {
+  imageUrl: '/covers/linens.jpg',
+  kicker: 'NEW ARRIVALS · MONSOON EDIT',
+  headline: 'Wear it like',
+  headlineItalic: 'you’re already there.',
+  ctaLabel: 'EXPLORE THE EDIT',
+  ctaHref: '/products',
+};
+
+// Labels + imagery mirror /products' vibe row so the homepage cards and the
+// filter chips always tell the same story.
+const DEFAULT_VIBE_CARDS = [
   {
     label: 'BEACH VIBE',
     vibe: 'salt-on-skin',
@@ -46,67 +60,47 @@ const QUICK_BROWSE = [
   { label: 'OFFERS', href: '/offers' },
 ];
 
-interface FeaturedProduct {
-  slug: string;
-  name: string;
-  price: number;
-  category: string;
-  image: string | null;
-  rating: number | null;
-  reviews: number | null;
-}
-
-async function fetchVibeCount(vibe: string): Promise<number | null> {
-  try {
-    const res = await fetch(`${API_BASE}/products?vibe=${vibe}&limit=1`, {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return typeof json?.data?.total === 'number' ? json.data.total : null;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchFeatured(): Promise<FeaturedProduct[]> {
-  try {
-    const res = await fetch(`${API_BASE}/products?isFeatured=true&limit=4`, {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return [];
-    const json = await res.json();
-    const products = json?.data?.products;
-    if (!Array.isArray(products)) return [];
-    return products.map(
-      (p: {
-        slug: string;
-        name: string;
-        price: string;
-        category?: { name?: string };
-        images?: { url: string; isPrimary?: boolean }[];
-        averageRating?: number;
-        reviewCount?: number;
-      }) => ({
-        slug: p.slug,
-        name: p.name,
-        price: Number(p.price),
-        category: p.category?.name?.toUpperCase() ?? 'PIECE',
-        image: p.images?.find((i) => i.isPrimary)?.url ?? p.images?.[0]?.url ?? null,
-        rating: typeof p.averageRating === 'number' ? p.averageRating : null,
-        reviews: typeof p.reviewCount === 'number' ? p.reviewCount : null,
-      })
-    );
-  } catch {
-    return [];
-  }
+/** CMS story stacks → the DestinationStory shape the story viewer renders. */
+function toDestinationStories(stacks: HomepagePayload['storyStacks']): DestinationStory[] {
+  return stacks.map((s) => ({
+    id: s.id,
+    name: s.name,
+    avatar: s.avatarUrl,
+    avatarPosition: s.avatarPosition,
+    items: s.items.map((item) => ({
+      src: item.imageUrl,
+      duration: item.durationMs,
+      kicker: item.kicker || undefined,
+      headline: item.headline || undefined,
+      cta: item.ctaLabel && item.ctaHref ? { label: item.ctaLabel, href: item.ctaHref } : undefined,
+    })),
+  }));
 }
 
 export default async function HomePage() {
-  const [featured, ...vibeCounts] = await Promise.all([
-    fetchFeatured(),
-    ...VIBE_CARDS.map((v) => fetchVibeCount(v.vibe)),
+  // One parallel burst, all ISR-cached: the CMS payload plus the fallback
+  // sources used when the CMS is empty or the /homepage endpoint is down.
+  const [cms, fallbackFeatured, ...fallbackCounts] = await Promise.all([
+    fetchHomepage(),
+    fetchFeaturedFallback(),
+    ...DEFAULT_VIBE_CARDS.map((v) => fetchVibeCount(v.vibe)),
   ]);
+
+  const hero = cms?.hero ?? DEFAULT_HERO;
+  const vibeCards =
+    cms && cms.vibeCards.length > 0
+      ? cms.vibeCards.map((c) => ({
+          label: c.label,
+          vibe: c.vibe,
+          img: c.imageUrl,
+          count: c.pieceCount,
+        }))
+      : DEFAULT_VIBE_CARDS.map((c, i) => ({ ...c, count: fallbackCounts[i] ?? null }));
+  const stories =
+    cms && cms.storyStacks.length > 0 ? toDestinationStories(cms.storyStacks) : DESTINATION_STORIES;
+  // /homepage already falls back to isFeatured-flagged products server-side;
+  // fallbackFeatured only covers the endpoint itself being down.
+  const featured = cms ? cms.featured : fallbackFeatured;
 
   return (
     <div className="bg-[#FAF7F0]">
@@ -115,8 +109,8 @@ export default async function HomePage() {
       <div id="home-covers">
         <section className="relative block aspect-[9/16] w-full overflow-hidden md:aspect-auto md:h-[92vh]">
           <Image
-            src="/covers/linens.jpg"
-            alt="Vacation-ready linens — Earth Revibe"
+            src={hero.imageUrl}
+            alt="Vacation-ready fits — Earth Revibe"
             fill
             priority
             sizes="100vw"
@@ -125,29 +119,37 @@ export default async function HomePage() {
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-black/55 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-screen-md px-6 pb-10">
-            <p className="text-[10px] font-medium tracking-[0.22em] text-white/85">
-              NEW ARRIVALS · MONSOON EDIT
-            </p>
+            {hero.kicker && (
+              <p className="text-[10px] font-medium tracking-[0.22em] text-white/85">
+                {hero.kicker}
+              </p>
+            )}
             <h1 className="mt-3 text-[34px] font-light leading-[1.15] text-white md:text-5xl">
-              Wear it like
-              <br />
-              <span className="italic">you&rsquo;re already there.</span>
+              {hero.headline}
+              {hero.headlineItalic && (
+                <>
+                  <br />
+                  <span className="italic">{hero.headlineItalic}</span>
+                </>
+              )}
             </h1>
-            <Link
-              href="/products"
-              prefetch
-              className="mt-6 inline-flex items-center gap-3 text-[11px] font-medium tracking-[0.2em] text-white"
-            >
-              <span className="border-b border-white/90 pb-1">EXPLORE THE EDIT</span>
-              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-            </Link>
+            {hero.ctaLabel && (
+              <Link
+                href={hero.ctaHref}
+                prefetch
+                className="mt-6 inline-flex items-center gap-3 text-[11px] font-medium tracking-[0.2em] text-white"
+              >
+                <span className="border-b border-white/90 pb-1">{hero.ctaLabel}</span>
+                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+              </Link>
+            )}
           </div>
         </section>
       </div>
 
       <div className="mx-auto w-full max-w-screen-md">
         {/* ===== Destination stories (Instagram-style) ===== */}
-        <DestinationStoriesSection />
+        <DestinationStoriesSection stories={stories} />
 
         {/* ===== Shop by Vibe ===== */}
         <section className="pt-12" aria-label="Shop by vibe">
@@ -164,34 +166,31 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="hide-scrollbar mt-6 flex gap-3 overflow-x-auto px-6">
-            {VIBE_CARDS.map((card, i) => {
-              const count = vibeCounts[i];
-              return (
-                <Link
-                  key={card.vibe}
-                  href={`/products?vibe=${card.vibe}`}
-                  className="w-[140px] shrink-0"
-                >
-                  <span className="relative block h-[186px] w-full overflow-hidden">
-                    <Image
-                      src={card.img}
-                      alt={`${card.label} — Earth Revibe`}
-                      fill
-                      sizes="140px"
-                      className="object-cover transition-transform duration-500 hover:scale-105"
-                    />
-                  </span>
-                  <p className="mt-3 text-[11px] font-medium tracking-[0.14em] text-[#171310]">
-                    {card.label}
+            {vibeCards.map((card) => (
+              <Link
+                key={card.vibe}
+                href={`/products?vibe=${card.vibe}`}
+                className="w-[140px] shrink-0"
+              >
+                <span className="relative block h-[186px] w-full overflow-hidden">
+                  <Image
+                    src={card.img}
+                    alt={`${card.label} — Earth Revibe`}
+                    fill
+                    sizes="140px"
+                    className="object-cover transition-transform duration-500 hover:scale-105"
+                  />
+                </span>
+                <p className="mt-3 text-[11px] font-medium uppercase tracking-[0.14em] text-[#171310]">
+                  {card.label}
+                </p>
+                {card.count !== null && (
+                  <p className="mt-1 text-[10px] tracking-[0.12em] text-[#8A8378]">
+                    {card.count} PIECES
                   </p>
-                  {count !== null && (
-                    <p className="mt-1 text-[10px] tracking-[0.12em] text-[#8A8378]">
-                      {count} PIECES
-                    </p>
-                  )}
-                </Link>
-              );
-            })}
+                )}
+              </Link>
+            ))}
           </div>
           <div className="mx-6 mt-10 h-px bg-[#E2DBCD]" />
         </section>
@@ -235,21 +234,21 @@ export default async function HomePage() {
         </section>
 
         {/* ===== Featured pieces ===== */}
-        <section className="pt-12" aria-label="Featured pieces">
-          <div className="flex items-end justify-between px-6">
-            <div>
-              <p className="text-[11px] font-medium tracking-[0.25em] text-[#8A8378]">CURATED</p>
-              <h2 className="mt-2 text-2xl font-light text-[#171310]">Featured Pieces</h2>
+        {featured.length > 0 && (
+          <section className="pt-12" aria-label="Featured pieces">
+            <div className="flex items-end justify-between px-6">
+              <div>
+                <p className="text-[11px] font-medium tracking-[0.25em] text-[#8A8378]">CURATED</p>
+                <h2 className="mt-2 text-2xl font-light text-[#171310]">Featured Pieces</h2>
+              </div>
+              <Link
+                href="/products"
+                className="flex items-center gap-1.5 pb-1 text-[10px] font-medium tracking-[0.18em] text-[#171310]"
+              >
+                VIEW ALL <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+              </Link>
             </div>
-            <Link
-              href="/products"
-              className="flex items-center gap-1.5 pb-1 text-[10px] font-medium tracking-[0.18em] text-[#171310]"
-            >
-              VIEW ALL <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-            </Link>
-          </div>
 
-          {featured.length > 0 && (
             <div className="hide-scrollbar mt-6 flex gap-3 overflow-x-auto px-6">
               {featured.map((p) => (
                 <Link key={p.slug} href={`/products/${p.slug}`} className="w-[168px] shrink-0">
@@ -281,8 +280,8 @@ export default async function HomePage() {
                 </Link>
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
 
         {/* ===== Payback — we pay you back, three ways ===== */}
         <section className="px-5 pt-14" aria-label="Rewards">

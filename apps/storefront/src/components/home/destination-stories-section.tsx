@@ -3,16 +3,24 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { DESTINATION_STORIES } from './destination-stories';
+import { DESTINATION_STORIES, type DestinationStory } from './destination-stories';
 import { StoryViewer } from './story-viewer';
 
 /**
  * "Dress for your destination" — Instagram-style story circles under the
  * hero. Tapping a circle opens the full-screen StoryViewer on that stack;
  * the shared layoutId morphs the circle into the viewer's avatar.
+ * Stacks come from the homepage CMS via props; the built-in set is only
+ * the fallback for an empty CMS.
  */
-export function DestinationStoriesSection() {
+export function DestinationStoriesSection({
+  stories = DESTINATION_STORIES,
+}: {
+  stories?: DestinationStory[];
+}) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  if (stories.length === 0) return null;
 
   return (
     <section aria-label="Destination stories">
@@ -26,7 +34,7 @@ export function DestinationStoriesSection() {
       </div>
 
       <div className="hide-scrollbar flex gap-4 overflow-x-auto px-6 pb-2 pt-6">
-        {DESTINATION_STORIES.map((story, i) => (
+        {stories.map((story, i) => (
           <button
             key={story.id}
             onClick={() => setOpenIndex(i)}
@@ -57,7 +65,11 @@ export function DestinationStoriesSection() {
 
       <AnimatePresence>
         {openIndex !== null && (
-          <StoryViewer initialIndex={openIndex} onClose={() => setOpenIndex(null)} />
+          <StoryViewer
+            stories={stories}
+            initialIndex={openIndex}
+            onClose={() => setOpenIndex(null)}
+          />
         )}
       </AnimatePresence>
     </section>
