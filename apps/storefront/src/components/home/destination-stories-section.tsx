@@ -3,21 +3,16 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { DESTINATION_STORIES, type DestinationStory } from './destination-stories';
+import type { DestinationStory } from './destination-stories';
 import { StoryViewer } from './story-viewer';
 
 /**
  * "Dress for your destination" — Instagram-style story circles under the
  * hero. Tapping a circle opens the full-screen StoryViewer on that stack;
  * the shared layoutId morphs the circle into the viewer's avatar.
- * Stacks come from the homepage CMS via props; the built-in set is only
- * the fallback for an empty CMS.
+ * Stacks come from the homepage CMS (or shared defaults) via page.tsx.
  */
-export function DestinationStoriesSection({
-  stories = DESTINATION_STORIES,
-}: {
-  stories?: DestinationStory[];
-}) {
+export function DestinationStoriesSection({ stories }: { stories: DestinationStory[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   if (stories.length === 0) return null;

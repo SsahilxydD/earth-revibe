@@ -7,12 +7,14 @@ import {
   ArrowUp,
   ChevronDown,
   ChevronUp,
+  Download,
   Eye,
   EyeOff,
   Plus,
   Trash2,
 } from 'lucide-react';
 import {
+  DEFAULT_DESTINATION_STORIES,
   homepageStoryStackContentSchema,
   type HomepageBlockRecord,
   type HomepageStoryStackContent,
@@ -26,6 +28,7 @@ import {
   useUpdateHomepageBlock,
 } from '@/hooks/use-homepage';
 import { ImagePicker } from './image-picker';
+import { resolvePreviewUrl } from './preview-url';
 
 const NEW_STACK: HomepageStoryStackContent = {
   name: '',
@@ -58,6 +61,14 @@ export function StoryStacksEditor({ blocks }: { blocks: HomepageBlockRecord[] })
   const reorderBlocks = useReorderHomepageBlocks();
   const [showNewForm, setShowNewForm] = useState(false);
 
+  // The storefront renders the built-in destinations until the CMS has
+  // stacks, so an empty CMS shows those here — as what's actually live —
+  // with a one-click import. No "add" form in this state: creating a single
+  // custom stack would flip the storefront from 5 built-ins to 1 CMS stack.
+  if (stacks.length === 0) {
+    return <ImportDefaultStoriesView />;
+  }
+
   const handleSwap = async (index: number, direction: 'up' | 'down') => {
     const target = direction === 'up' ? index - 1 : index + 1;
     if (target < 0 || target >= stacks.length) return;
@@ -72,13 +83,6 @@ export function StoryStacksEditor({ blocks }: { blocks: HomepageBlockRecord[] })
 
   return (
     <div className="space-y-3">
-      {stacks.length === 0 && !showNewForm && (
-        <p className="rounded bg-stone-50 px-3 py-2 text-[12px] text-medium-gray">
-          The storefront is showing its built-in destination stories. Add a destination here to take
-          over.
-        </p>
-      )}
-
       {stacks.map((block, index) => (
         <StackCard
           key={block.id}
@@ -116,6 +120,74 @@ export function StoryStacksEditor({ blocks }: { blocks: HomepageBlockRecord[] })
           Add destination
         </Button>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Empty CMS: mirror the live built-in destinations + import action
+// ---------------------------------------------------------------------------
+
+function ImportDefaultStoriesView() {
+  const createBlock = useCreateHomepageBlock();
+  const [importing, setImporting] = useState(false);
+
+  const importDefaults = async () => {
+    setImporting(true);
+    try {
+      // Sequential on purpose: block sortOrder is assigned max+1 per type,
+      // so parallel creates would race and scramble the circle order.
+      for (const stack of DEFAULT_DESTINATION_STORIES) {
+        await createBlock.mutateAsync({ type: 'STORY_STACK', content: stack });
+      }
+      toast.success('Destinations imported — you can now edit them');
+    } catch {
+      toast.error('Import failed partway — the destinations created so far are editable below');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-stone-200 bg-white p-4 space-y-3">
+      <p className="text-[12px] text-medium-gray">
+        These are the storefront&rsquo;s built-in destination circles, shown because none have been
+        customised yet. Import them to start editing — the homepage won&rsquo;t change until you do.
+      </p>
+
+      {DEFAULT_DESTINATION_STORIES.map((stack) => (
+        <div
+          key={stack.name}
+          className="flex items-center gap-3 rounded-lg border border-stone-100 bg-stone-50/60 p-3"
+        >
+          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-stone-100 ring-2 ring-[#A9663B]/40">
+            <Image
+              src={resolvePreviewUrl(stack.avatarUrl)}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="44px"
+              style={{ objectPosition: stack.avatarPosition }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-semibold text-deep-earth">{stack.name}</p>
+            <p className="text-[11px] text-medium-gray">
+              {stack.items.length} {stack.items.length === 1 ? 'story' : 'stories'}
+            </p>
+          </div>
+          <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-green-700">
+            LIVE · BUILT-IN
+          </span>
+        </div>
+      ))}
+
+      <div className="flex justify-end">
+        <Button size="sm" isLoading={importing} onClick={importDefaults}>
+          <Download size={13} />
+          Import these {DEFAULT_DESTINATION_STORIES.length} destinations to start editing
+        </Button>
+      </div>
     </div>
   );
 }
