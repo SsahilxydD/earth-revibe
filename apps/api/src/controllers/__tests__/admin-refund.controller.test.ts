@@ -184,6 +184,28 @@ describe('adminRefundController.initiateRefund — order / payment guards', () =
     });
   });
 
+  it('throws badRequest for COD payments (settled on delivery, nothing to refund on Razorpay)', async () => {
+    vi.mocked(prisma.order.findUnique).mockResolvedValue(
+      buildOrder({
+        payment: {
+          id: 'payment-1',
+          status: 'CAPTURED',
+          amount: '500.00',
+          razorpayPaymentId: 'pay_cod123',
+          method: 'COD',
+        },
+      }) as any
+    );
+
+    const req = buildRequest() as Request;
+    const res = buildResponse() as Response;
+
+    await expect(adminRefundController.initiateRefund(req, res)).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringContaining('COD'),
+    });
+  });
+
   it('throws badRequest when payment status is not CAPTURED', async () => {
     vi.mocked(prisma.order.findUnique).mockResolvedValue(
       buildOrder({
