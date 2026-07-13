@@ -120,7 +120,7 @@ export default async function HomePage() {
           <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-black/55 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-screen-md px-6 pb-10">
             {hero.kicker && (
-              <p className="text-[10px] font-medium tracking-[0.22em] text-white/85">
+              <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/85">
                 {hero.kicker}
               </p>
             )}
@@ -137,7 +137,7 @@ export default async function HomePage() {
               <Link
                 href={hero.ctaHref}
                 prefetch
-                className="mt-6 inline-flex items-center gap-3 text-[11px] font-medium tracking-[0.2em] text-white"
+                className="mt-6 inline-flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.2em] text-white"
               >
                 <span className="border-b border-white/90 pb-1">{hero.ctaLabel}</span>
                 <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
