@@ -12,6 +12,7 @@ import {
   updateHomepageBlockSchema,
 } from '@earth-revibe/shared';
 import { homepageService } from '../services/homepage.service';
+import { revalidateStorefrontTags } from '../utils/revalidate-storefront';
 
 const router: IRouter = Router();
 
@@ -33,6 +34,7 @@ router.put(
   validate({ body: homepageHeroContentSchema }),
   asyncHandler(async (req: Request, res: Response) => {
     const block = await homepageService.upsertSingleton('HERO', req.body);
+    revalidateStorefrontTags(['homepage']);
     res.json({ success: true, data: block });
   })
 );
@@ -43,6 +45,7 @@ router.put(
   validate({ body: homepageFeaturedContentSchema }),
   asyncHandler(async (req: Request, res: Response) => {
     const block = await homepageService.upsertSingleton('FEATURED_PRODUCTS', req.body);
+    revalidateStorefrontTags(['homepage']);
     res.json({ success: true, data: block });
   })
 );
@@ -53,6 +56,7 @@ router.put(
   validate({ body: reorderHomepageBlocksSchema }),
   asyncHandler(async (req: Request, res: Response) => {
     await homepageService.reorderBlocks(req.body.orderedIds);
+    revalidateStorefrontTags(['homepage']);
     res.json({ success: true });
   })
 );
@@ -63,6 +67,7 @@ router.post(
   validate({ body: createHomepageBlockSchema }),
   asyncHandler(async (req: Request, res: Response) => {
     const block = await homepageService.createBlock(req.body);
+    revalidateStorefrontTags(['homepage']);
     res.status(201).json({ success: true, data: block });
   })
 );
@@ -73,6 +78,7 @@ router.patch(
   validate({ body: updateHomepageBlockSchema }),
   asyncHandler(async (req: Request, res: Response) => {
     const block = await homepageService.updateBlock(String(req.params.id), req.body);
+    revalidateStorefrontTags(['homepage']);
     res.json({ success: true, data: block });
   })
 );
@@ -82,6 +88,7 @@ router.delete(
   '/blocks/:id',
   asyncHandler(async (req: Request, res: Response) => {
     await homepageService.deleteBlock(String(req.params.id));
+    revalidateStorefrontTags(['homepage']);
     res.json({ success: true });
   })
 );
