@@ -21,6 +21,20 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.supabase.co',
       },
+      // Homepage editor previews: built-in default cards reference Unsplash
+      // and storefront-relative paths (resolved against the prod domain).
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.earthrevibe.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'earthrevibe.com',
+      },
     ],
   },
   // Proxy API requests through Vercel to avoid CORS preflight failures.

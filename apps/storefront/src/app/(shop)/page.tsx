@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Recycle, Star, Users, Wallet } from 'lucide-react';
-import type { HomepagePayload } from '@earth-revibe/shared';
+import { DEFAULT_VIBE_CARDS, type HomepagePayload } from '@earth-revibe/shared';
 import { DestinationStoriesSection } from '@/components/home/destination-stories-section';
 import { DESTINATION_STORIES, type DestinationStory } from '@/components/home/destination-stories';
 import { ReviewsCarousel } from '@/components/home/reviews-carousel';
@@ -31,25 +31,8 @@ const DEFAULT_HERO = {
   ctaHref: '/products',
 };
 
-// Labels + imagery mirror /products' vibe row so the homepage cards and the
-// filter chips always tell the same story.
-const DEFAULT_VIBE_CARDS = [
-  {
-    label: 'BEACH VIBE',
-    vibe: 'salt-on-skin',
-    img: '/vibes/beach.webp',
-  },
-  {
-    label: 'MOUNTAIN VIBE',
-    vibe: 'above-the-clouds',
-    img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=80&fm=jpg',
-  },
-  {
-    label: 'CITY VIBE',
-    vibe: 'neon-nomads',
-    img: 'https://images.unsplash.com/photo-1514214246283-d427a95c5d2f?w=600&q=80&fm=jpg',
-  },
-] as const;
+// Default vibe cards come from @earth-revibe/shared (DEFAULT_VIBE_CARDS) so
+// the admin editor can show and import the exact same "currently live" set.
 
 const QUICK_BROWSE = [
   { label: 'SHIRTS', href: '/products?category=shirts' },
@@ -95,7 +78,12 @@ export default async function HomePage() {
           img: c.imageUrl,
           count: c.pieceCount,
         }))
-      : DEFAULT_VIBE_CARDS.map((c, i) => ({ ...c, count: fallbackCounts[i] ?? null }));
+      : DEFAULT_VIBE_CARDS.map((c, i) => ({
+          label: c.label,
+          vibe: c.vibe,
+          img: c.imageUrl,
+          count: fallbackCounts[i] ?? null,
+        }));
   const stories =
     cms && cms.storyStacks.length > 0 ? toDestinationStories(cms.storyStacks) : DESTINATION_STORIES;
   // /homepage already falls back to isFeatured-flagged products server-side;

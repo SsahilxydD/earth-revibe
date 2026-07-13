@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Loader2, Upload } from 'lucide-react';
 import { toast } from '@earth-revibe/ui/toast';
 import { useUploadImage } from '@/hooks/use-products';
+import { resolvePreviewUrl } from './preview-url';
 
 interface ImagePickerProps {
   value: string;
@@ -41,7 +42,13 @@ export function ImagePicker({
     <div className="flex items-center gap-3">
       <div className={`relative shrink-0 overflow-hidden rounded bg-stone-100 ${frameClass}`}>
         {value ? (
-          <Image src={value} alt="" fill className="object-cover" sizes="160px" />
+          <Image
+            src={resolvePreviewUrl(value)}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="160px"
+          />
         ) : (
           <div className="flex h-full items-center justify-center text-[11px] text-medium-gray">
             No image
