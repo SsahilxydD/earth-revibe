@@ -2,9 +2,13 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Recycle, Star, Users, Wallet } from 'lucide-react';
-import { DEFAULT_VIBE_CARDS, type HomepagePayload } from '@earth-revibe/shared';
+import {
+  DEFAULT_DESTINATION_STORIES,
+  DEFAULT_VIBE_CARDS,
+  type HomepagePayload,
+} from '@earth-revibe/shared';
 import { DestinationStoriesSection } from '@/components/home/destination-stories-section';
-import { DESTINATION_STORIES, type DestinationStory } from '@/components/home/destination-stories';
+import type { DestinationStory } from '@/components/home/destination-stories';
 import { ReviewsCarousel } from '@/components/home/reviews-carousel';
 import { NewsletterInline } from '@/components/home/newsletter-inline';
 import { fetchFeaturedFallback, fetchHomepage, fetchVibeCount } from '@/lib/homepage-data';
@@ -84,8 +88,13 @@ export default async function HomePage() {
           img: c.imageUrl,
           count: fallbackCounts[i] ?? null,
         }));
-  const stories =
-    cms && cms.storyStacks.length > 0 ? toDestinationStories(cms.storyStacks) : DESTINATION_STORIES;
+  const stories = toDestinationStories(
+    cms && cms.storyStacks.length > 0
+      ? cms.storyStacks
+      : // Built-in fallback from shared — stable ids keep framer layoutIds
+        // consistent across renders.
+        DEFAULT_DESTINATION_STORIES.map((s) => ({ id: `builtin-${s.name.toLowerCase()}`, ...s }))
+  );
   // /homepage already falls back to isFeatured-flagged products server-side;
   // fallbackFeatured only covers the endpoint itself being down.
   const featured = cms ? cms.featured : fallbackFeatured;

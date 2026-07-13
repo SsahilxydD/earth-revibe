@@ -7,14 +7,10 @@ import { motion } from 'framer-motion';
 import { Heart, Send, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { lockBodyScroll, unlockBodyScroll } from '@/stores/ui-store';
-import {
-  DESTINATION_STORIES,
-  STORY_DURATION_MS,
-  type DestinationStory,
-} from './destination-stories';
+import { STORY_DURATION_MS, type DestinationStory } from './destination-stories';
 
 interface StoryViewerProps {
-  stories?: DestinationStory[];
+  stories: DestinationStory[];
   initialIndex: number;
   onClose: () => void;
 }
@@ -30,11 +26,7 @@ interface StoryViewerProps {
  * - swipe down (offset or velocity) dismisses
  * - next image is preloaded the moment an item starts playing
  */
-export function StoryViewer({
-  stories = DESTINATION_STORIES,
-  initialIndex,
-  onClose,
-}: StoryViewerProps) {
+export function StoryViewer({ stories, initialIndex, onClose }: StoryViewerProps) {
   const [pos, setPos] = useState({ s: initialIndex, i: 0 });
   const [liked, setLiked] = useState(false);
 
