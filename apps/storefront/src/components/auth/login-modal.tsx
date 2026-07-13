@@ -200,7 +200,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
       <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-sm animate-slide-up bg-white px-7 pb-8 pt-6 font-[family-name:var(--font-inter)] sm:mx-4 sm:rounded-none">
+      <div className="relative z-10 w-full max-w-sm animate-slide-up bg-[#FAF7F0] px-7 pb-8 pt-6 font-[family-name:var(--font-inter)] sm:mx-4 sm:rounded-none">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -284,7 +284,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, onGuest }: LoginModalPr
                   onChange={(e) => handleOtpChange(i, e.target.value)}
                   onKeyDown={(e) => handleOtpKeyDown(i, e)}
                   disabled={loading}
-                  className={`h-12 w-10 border bg-white text-center font-mono text-lg text-black outline-none transition-colors ${
+                  className={`h-12 w-10 border bg-[#FAF7F0] text-center font-mono text-lg text-black outline-none transition-colors ${
                     digit ? 'border-black' : 'border-[#e5e5e5]'
                   } focus:border-black disabled:opacity-50`}
                   autoComplete="one-time-code"

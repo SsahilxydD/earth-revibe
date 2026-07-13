@@ -111,7 +111,7 @@ export function NewsletterPopup() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="relative w-full max-w-md rounded-xl bg-white px-8 py-14 text-center shadow-2xl sm:px-12">
+      <div className="relative w-full max-w-md rounded-xl bg-[#FAF7F0] px-8 py-14 text-center shadow-2xl sm:px-12">
         <button
           onClick={dismiss}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-black/30 hover:text-black transition-colors"

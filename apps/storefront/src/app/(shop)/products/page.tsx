@@ -276,7 +276,7 @@ function ProductsContent() {
   return (
     <div
       className="font-[family-name:var(--font-inter)]"
-      style={{ backgroundColor: '#FFF', position: 'relative' }}
+      style={{ backgroundColor: '#FAF7F0', position: 'relative' }}
     >
       {/* ===== Sticky bottom layer: header + hero video ===== */}
       <div
@@ -284,7 +284,7 @@ function ProductsContent() {
           position: 'sticky',
           top: 56,
           zIndex: 0,
-          backgroundColor: '#FFF',
+          backgroundColor: '#FAF7F0',
         }}
       >
         {/* Header */}
@@ -451,7 +451,7 @@ function ProductsContent() {
           position: 'relative',
           zIndex: 1,
           marginTop: -16,
-          backgroundColor: '#FFF',
+          backgroundColor: '#FAF7F0',
           borderTopLeftRadius: 16,
           borderTopRightRadius: 16,
         }}
@@ -932,8 +932,8 @@ function ProductsContent() {
 
 function ProductsPageFallback() {
   return (
-    <div style={{ backgroundColor: '#FFF', position: 'relative' }}>
-      <div style={{ position: 'sticky', top: 56, zIndex: 0, backgroundColor: '#FFF' }}>
+    <div style={{ backgroundColor: '#FAF7F0', position: 'relative' }}>
+      <div style={{ position: 'sticky', top: 56, zIndex: 0, backgroundColor: '#FAF7F0' }}>
         <div
           style={{
             padding: '24px 28px 16px 28px',
@@ -953,7 +953,7 @@ function ProductsPageFallback() {
           position: 'relative',
           zIndex: 1,
           marginTop: -16,
-          backgroundColor: '#FFF',
+          backgroundColor: '#FAF7F0',
           borderTopLeftRadius: 16,
           borderTopRightRadius: 16,
           padding: '14px 28px 28px 28px',

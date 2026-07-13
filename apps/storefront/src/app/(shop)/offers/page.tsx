@@ -67,7 +67,7 @@ export default function OffersPage() {
   return (
     <div>
       {/* Hero — white so it contrasts against the dark first offer section below */}
-      <section className="bg-white py-12 md:py-24">
+      <section className="bg-[#FAF7F0] py-12 md:py-24">
         <div className="mx-auto max-w-xl px-6 text-center">
           <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--color-muted)]">
             What's on right now
@@ -151,7 +151,7 @@ export default function OffersPage() {
                   href={offer.cta.href}
                   className={
                     isDark
-                      ? 'mt-10 inline-flex items-center gap-2 border border-white/20 bg-white px-6 py-3.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-primary)] transition-colors hover:bg-white/90 w-fit'
+                      ? 'mt-10 inline-flex items-center gap-2 border border-white/20 bg-[#FAF7F0] px-6 py-3.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-primary)] transition-colors hover:bg-white/90 w-fit'
                       : 'mt-10 inline-flex items-center gap-2 border border-[var(--color-primary)] bg-[var(--color-primary)] px-6 py-3.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition-colors hover:opacity-90 w-fit'
                   }
                 >

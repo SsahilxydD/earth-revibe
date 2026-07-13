@@ -107,7 +107,7 @@ export function FilterSidebar({ filters, onFilterChange }: FilterSidebarProps) {
               bottom: 0,
               width: '100%',
               maxWidth: 393,
-              backgroundColor: '#FFF',
+              backgroundColor: '#FAF7F0',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',

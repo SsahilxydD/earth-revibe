@@ -104,7 +104,7 @@ export function PaymentMethodModal({
               right: 0,
               bottom: 0,
               zIndex: 81,
-              backgroundColor: '#FFF',
+              backgroundColor: '#FAF7F0',
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               paddingBottom: 'env(safe-area-inset-bottom, 0px)',

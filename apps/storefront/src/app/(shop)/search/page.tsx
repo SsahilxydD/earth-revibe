@@ -146,7 +146,7 @@ function SearchContent() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search products..."
-            className="h-12 w-full border border-[var(--color-border)] bg-white pl-11 pr-10 text-sm outline-none transition-colors focus:border-[var(--color-primary)]"
+            className="h-12 w-full border border-[var(--color-border)] bg-[#FAF7F0] pl-11 pr-10 text-sm outline-none transition-colors focus:border-[var(--color-primary)]"
           />
           {searchInput && (
             <button

@@ -112,7 +112,7 @@ function SizeGuideSheet({ open, onClose }: { open: boolean; onClose: () => void 
           right: 0,
           bottom: 0,
           zIndex: 71,
-          backgroundColor: '#FFF',
+          backgroundColor: '#FAF7F0',
           borderRadius: '16px 16px 0 0',
           transition: 'transform 300ms ease-out',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
@@ -1013,7 +1013,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
       ref={rootRef}
       className="font-[family-name:var(--font-inter)]"
       style={{
-        backgroundColor: '#FFF',
+        backgroundColor: '#FAF7F0',
         position: 'relative',
         touchAction: 'pan-y',
       }}
@@ -1096,7 +1096,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
           position: 'relative',
           zIndex: 1,
           marginTop: -16,
-          backgroundColor: '#FFF',
+          backgroundColor: '#FAF7F0',
           borderTopLeftRadius: 16,
           borderTopRightRadius: 16,
         }}

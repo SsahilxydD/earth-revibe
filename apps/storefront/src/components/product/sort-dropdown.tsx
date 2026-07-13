@@ -62,7 +62,7 @@ export function SortDropdown({ currentSort, onSortChange }: SortDropdownProps) {
       </button>
 
       {isOpen && (
-        <div className="animate-slide-down absolute right-0 top-full z-30 mt-1 min-w-[200px] border border-[var(--color-border)] bg-white shadow-lg">
+        <div className="animate-slide-down absolute right-0 top-full z-30 mt-1 min-w-[200px] border border-[var(--color-border)] bg-[#FAF7F0] shadow-lg">
           {SORT_OPTIONS.map((option) => {
             const value = `${option.sortBy}-${option.sortOrder}`;
             const isSelected = value === `${selectedOption.sortBy}-${selectedOption.sortOrder}`;

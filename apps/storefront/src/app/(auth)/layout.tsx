@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center bg-white px-7 pt-[72px] pb-10 font-[family-name:var(--font-inter)]">
+    <div className="flex min-h-dvh flex-col items-center bg-[#FAF7F0] px-7 pt-[72px] pb-10 font-[family-name:var(--font-inter)]">
       <div className="flex w-full max-w-[337px] flex-1 flex-col items-center">
         {/* Logo — centered, 160×40 matching Pencil */}
         <Link href="/" className="mb-12">
