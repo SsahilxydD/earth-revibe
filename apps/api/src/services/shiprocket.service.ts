@@ -5,6 +5,7 @@ import { APP_CONSTANTS } from '../config/constants';
 import { logger } from '../config/logger';
 import { OrderStatus } from '@earth-revibe/shared';
 import { awardOrderPoints } from './loyalty-award.service';
+import { settleCodPaymentOnDelivery } from './payment-settlement.service';
 
 interface ShiprocketOrderItem {
   name: string;
@@ -63,9 +64,11 @@ const SR_TEXT_TO_STATUS: Record<string, OrderStatus> = {
 // can legitimately move an order through them.
 const CARRIER_OWNED_STATUSES: OrderStatus[] = [OrderStatus.SHIPPING, OrderStatus.DELIVERED];
 
-// Carrier-terminal events that warrant a Discord ping (so ops sees CANCELLED
-// or RETURNED transitions that didn't come from an admin click).
-const CARRIER_NOTIFY_STATUSES = new Set<OrderStatus>([OrderStatus.CANCELLED, OrderStatus.RETURNED]);
+// Carrier-terminal events that warrant a Discord ping (so ops sees RETURNED
+// transitions that didn't come from an admin click). CANCELLED never reaches
+// this set anymore — a Shiprocket "Cancelled" is a SHIPMENT event and takes
+// the detach branch in syncTrackingState instead of touching order.status.
+const CARRIER_NOTIFY_STATUSES = new Set<OrderStatus>([OrderStatus.RETURNED]);
 
 export function isCarrierOwnedStatus(status: OrderStatus): boolean {
   return CARRIER_OWNED_STATUSES.includes(status);
@@ -1012,6 +1015,48 @@ async function syncTrackingState(
   const statusChanged = args.newStatus !== null && args.newStatus !== args.currentStatus;
   const now = new Date();
 
+  // Shiprocket "Cancelled" (ids 8/22) means the SHIPMENT was cancelled — not
+  // the sale. Merchants legitimately cancel an SR shipment to re-ship through
+  // another courier (2026-07: a live paid order was wrongly auto-CANCELLED
+  // this way). Auto-cancelling here also never ran restock/refund/clawback,
+  // so it produced half-cancelled orders even for real cancellations — those
+  // must go through admin cancel. Instead: detach the dead shipment (null the
+  // Shiprocket ids so the sweep and the AWB-reconcile pass can't resurrect
+  // it), keep order.status, leave an audit row, and ping ops to re-ship or
+  // cancel properly.
+  if (args.newStatus === OrderStatus.CANCELLED && args.currentStatus !== OrderStatus.CANCELLED) {
+    const detachOps: any[] = [
+      prisma.order.update({
+        where: { id: orderId },
+        data: {
+          awbCode: null,
+          shiprocketOrderId: null,
+          courierName: null,
+          lastShipmentSyncAt: now,
+        },
+      }),
+      prisma.orderStatusHistory.create({
+        data: {
+          orderId,
+          status: args.currentStatus,
+          note:
+            `Shiprocket shipment cancelled (${args.source}: ` +
+            `${args.shipmentStatusText ?? `status_id=${args.shipmentStatusId ?? '?'}`}) — ` +
+            `shipment detached, order NOT cancelled. Re-ship or update status manually.`,
+        },
+      }),
+    ];
+    await prisma.$transaction(detachOps);
+
+    logger.info(
+      { orderId, orderNumber: args.orderNumber, source: args.source },
+      'Shiprocket shipment cancelled — detached from order, order status kept'
+    );
+    // Fire-and-forget: notification failure should not roll back the detach.
+    void notifyShipmentDetached(args.orderNumber, args.source);
+    return true;
+  }
+
   const orderUpdate = statusChanged
     ? {
         status: args.newStatus as OrderStatus,
@@ -1062,17 +1107,22 @@ async function syncTrackingState(
 
   await prisma.$transaction(ops);
 
-  // Credit cashback when the carrier reports DELIVERED — COD cash is collected
-  // on delivery, so this is when COD points vest. Idempotent (a prepaid order
-  // already credited at capture is skipped) and isolated so a points failure
-  // never rolls back the status sync.
+  // Delivery-time money side effects — both idempotent, isolated so a
+  // failure here never rolls back the status sync:
+  //  - credit cashback (COD points vest when the carrier collects the cash;
+  //    a prepaid order already credited at capture is skipped), and
+  //  - settle the COD payment (PENDING → CAPTURED; prepaid is already
+  //    CAPTURED so it's a no-op).
   if (statusChanged && args.newStatus === OrderStatus.DELIVERED) {
     try {
-      await prisma.$transaction((tx) => awardOrderPoints(tx, orderId));
+      await prisma.$transaction(async (tx) => {
+        await awardOrderPoints(tx, orderId);
+        await settleCodPaymentOnDelivery(tx, orderId);
+      });
     } catch (err) {
       logger.error(
         { err, orderId, orderNumber: args.orderNumber },
-        'Failed to award loyalty points on delivery'
+        'Failed to award loyalty points / settle COD payment on delivery'
       );
     }
   }
@@ -1097,6 +1147,32 @@ async function syncTrackingState(
   }
 
   return statusChanged;
+}
+
+/**
+ * Discord alert when a Shiprocket shipment is cancelled and detached from its
+ * order — ops must either re-ship (any courier) or cancel the order in admin.
+ */
+async function notifyShipmentDetached(
+  orderNumber: string,
+  source: 'tracking-read' | 'cron-refresh' | 'webhook'
+): Promise<void> {
+  const webhookUrl = env.DISCORD_ORDER_WEBHOOK_URL;
+  if (!webhookUrl) return;
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content:
+          `:scissors: Shiprocket shipment for order \`${orderNumber}\` was cancelled ` +
+          `(via ${source}). The shipment was detached — the order is **NOT** cancelled. ` +
+          `Re-ship it (any courier) or cancel it properly in admin.`,
+      }),
+    });
+  } catch (err) {
+    logger.warn({ err, orderNumber }, 'Failed to post shipment-detached Discord alert');
+  }
 }
 
 /**

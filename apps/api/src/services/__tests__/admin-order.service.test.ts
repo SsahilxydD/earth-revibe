@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ---------------------------------------------------------------------------
 
 const {
+  mockPaymentUpdateMany,
   mockOrderFindMany,
   mockOrderCount,
   mockOrderFindUnique,
@@ -29,8 +30,16 @@ const {
   const mockAddressUpdateMany = vi.fn();
   // tx client shares the same mock fns so assertions work whether the call
   // came through prisma.* or the transaction client.
+  const mockPaymentUpdateMany = vi.fn(async () => ({ count: 0 }));
   const txClient = {
-    order: { create: mockOrderCreate, update: mockOrderUpdate },
+    // findUnique: awardOrderPoints' order probe — null short-circuits loyalty
+    // so DELIVERED tests exercise settlement without loyalty writes.
+    order: {
+      create: mockOrderCreate,
+      update: mockOrderUpdate,
+      findUnique: vi.fn(async () => null),
+    },
+    payment: { updateMany: mockPaymentUpdateMany },
     orderStatusHistory: { create: mockOrderStatusHistoryCreate },
     orderNote: { create: mockOrderNoteCreate },
     productVariant: { findMany: mockVariantFindMany, updateMany: mockVariantUpdateMany },
@@ -38,6 +47,7 @@ const {
   };
   const mockTransaction = vi.fn(async (cb: (tx: typeof txClient) => unknown) => cb(txClient));
   return {
+    mockPaymentUpdateMany,
     mockOrderFindMany: vi.fn(),
     mockOrderCount: vi.fn(),
     mockOrderFindUnique: vi.fn(),
@@ -517,6 +527,37 @@ describe('adminOrderService', () => {
       expect(result.status).toBe('RETURNED');
     });
 
+    it('transitions CANCELLED -> CONFIRMED (restore) and detaches the stale shipment', async () => {
+      const result = await performUpdate('CANCELLED', 'CONFIRMED');
+      expect(result.status).toBe('CONFIRMED');
+      expect(mockOrderUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'CONFIRMED',
+            awbCode: null,
+            shiprocketOrderId: null,
+            courierName: null,
+          }),
+        })
+      );
+      const historyArg = mockOrderStatusHistoryCreate.mock.calls[0][0];
+      expect(historyArg.data.note).toContain('restored');
+    });
+
+    it('settles a pending COD payment when marking DELIVERED', async () => {
+      mockPaymentUpdateMany.mockResolvedValueOnce({ count: 1 });
+      await performUpdate('SHIPPING', 'DELIVERED');
+      expect(mockPaymentUpdateMany).toHaveBeenCalledWith({
+        where: { orderId: expect.any(String), status: 'PENDING' },
+        data: { status: 'CAPTURED', paidAt: expect.any(Date) },
+      });
+    });
+
+    it('does not touch payments on non-DELIVERED transitions', async () => {
+      await performUpdate('CONFIRMED', 'SHIPPING');
+      expect(mockPaymentUpdateMany).not.toHaveBeenCalled();
+    });
+
     // --- Invalid transitions ------------------------------------------------
 
     const invalidTransitions: Array<[string, string]> = [
@@ -533,7 +574,6 @@ describe('adminOrderService', () => {
       ['DELIVERED', 'SHIPPING'],
       ['DELIVERED', 'CANCELLED'],
       ['CANCELLED', 'PENDING'],
-      ['CANCELLED', 'CONFIRMED'],
       ['CANCELLED', 'SHIPPING'],
       ['CANCELLED', 'DELIVERED'],
       ['CANCELLED', 'RETURNED'],
@@ -563,8 +603,9 @@ describe('adminOrderService', () => {
       }
     );
 
-    // Terminal states — CANCELLED, RETURNED have no allowed targets
-    it("throws 400 for any transition from CANCELLED and mentions 'none'", async () => {
+    // CANCELLED's only exit is the CONFIRMED restore; everything else 400s
+    // and the error names the one allowed target.
+    it('throws 400 for non-restore transitions from CANCELLED and lists CONFIRMED', async () => {
       const order = makeOrder({ status: 'CANCELLED' });
       mockOrderFindUnique.mockResolvedValue(order);
 
@@ -572,7 +613,7 @@ describe('adminOrderService', () => {
         adminOrderService.updateStatus(order.orderNumber, ADMIN_ID, { status: 'PENDING' as any })
       ).rejects.toMatchObject({
         statusCode: 400,
-        message: expect.stringContaining('none'),
+        message: expect.stringContaining('CONFIRMED'),
       });
     });
 
