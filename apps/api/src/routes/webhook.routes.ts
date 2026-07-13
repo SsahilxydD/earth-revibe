@@ -779,7 +779,11 @@ const shiprocketWebhookHandler = asyncHandler(async (req: any, res: any) => {
   }
 
   try {
-    const result = await shiprocketService.refreshByAwb(awbCode);
+    const srOrderIdHint = Number(body.order_id);
+    const result = await shiprocketService.refreshByAwb(
+      awbCode,
+      Number.isFinite(srOrderIdHint) ? srOrderIdHint : undefined
+    );
     if (!result) {
       // Unknown AWB — likely a test event or an order from before this
       // integration existed. Ack 200 so Shiprocket stops retrying.

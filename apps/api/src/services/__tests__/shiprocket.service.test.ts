@@ -456,43 +456,62 @@ describe('shiprocketService.getTracking', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // refreshAllPendingShipments
 // ─────────────────────────────────────────────────────────────────────────────
-describe('shiprocketService.refreshAllPendingShipments', () => {
+describe('shiprocketService.refreshAllPendingShipments (order-first)', () => {
+  const inflight = (over = {}) => ({
+    id: 'o1',
+    orderNumber: 'ORD-1',
+    awbCode: 'AWB1',
+    shiprocketOrderId: 111,
+    courierName: 'Delhivery Surface',
+    status: 'SHIPPING',
+    ...over,
+  });
+
   it('returns zeros when there are no in-flight orders', async () => {
     mockOrderFindMany.mockResolvedValue([]);
     const result = await shiprocketService.refreshAllPendingShipments({ limit: 10 });
-    expect(result).toMatchObject({ scanned: 0, updated: 0, unchanged: 0, failed: 0 });
+    expect(result).toMatchObject({
+      scanned: 0,
+      updated: 0,
+      unchanged: 0,
+      failed: 0,
+      detached: 0,
+      reassigned: 0,
+    });
     expect(mockShiprocketRequest).not.toHaveBeenCalled();
   });
 
-  it('updates orders whose Shiprocket status advanced and leaves unchanged ones alone', async () => {
-    mockOrderFindMany.mockResolvedValue([
-      { id: 'o1', orderNumber: 'ORD-1', awbCode: 'AWB1', status: 'SHIPPING' },
-      { id: 'o2', orderNumber: 'ORD-2', awbCode: 'AWB2', status: 'SHIPPING' },
-    ]);
+  it('selects in-flight orders by SR order id (AWB no longer gates the sweep)', async () => {
+    mockOrderFindMany.mockResolvedValue([]);
+    await shiprocketService.refreshAllPendingShipments({ limit: 5 });
+    expect(mockOrderFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          shiprocketOrderId: { not: null },
+          status: { in: ['CONFIRMED', 'SHIPPING'] },
+        }),
+        take: 5,
+      })
+    );
+  });
 
+  it('marks DELIVERED from the order-level status via /orders/show', async () => {
+    mockOrderFindMany.mockResolvedValue([inflight()]);
     mockShiprocketRequest
+      // /orders/show — order-level truth, same AWB as ours
       .mockResolvedValueOnce({
-        tracking_data: {
-          shipment_status_id: 7,
-          shipment_status: 'Delivered',
-          shipment_track_activities: [],
+        data: {
+          status: 'DELIVERED',
+          shipments: [{ awb: 'AWB1', courier_name: 'Delhivery Surface' }],
         },
       })
-      .mockResolvedValueOnce({
-        tracking_data: {
-          shipment_status_id: 6,
-          shipment_status: 'Shipped',
-          shipment_track_activities: [],
-        },
-      });
+      // /courier/track — activities enrichment
+      .mockResolvedValueOnce({ tracking_data: { shipment_track_activities: [] } });
 
     const result = await shiprocketService.refreshAllPendingShipments({ limit: 10 });
 
-    expect(result).toMatchObject({ scanned: 2, updated: 1, unchanged: 1, failed: 0 });
-    // Both orders get a $transaction (sync stamp); the one that advanced to
-    // DELIVERED fires a second, separate $transaction to award cashback on
-    // delivery — so 3 total (2 sync stamps + 1 award).
-    expect(mockTransaction).toHaveBeenCalledTimes(3);
+    expect(result).toMatchObject({ scanned: 1, updated: 1, failed: 0, reassigned: 0 });
+    expect(mockShiprocketRequest).toHaveBeenNthCalledWith(1, '/orders/show/111');
     expect(mockOrderUpdate).toHaveBeenCalledWith({
       where: { id: 'o1' },
       data: {
@@ -501,43 +520,87 @@ describe('shiprocketService.refreshAllPendingShipments', () => {
         lastShipmentSyncAt: expect.any(Date),
       },
     });
-    expect(mockOrderUpdate).toHaveBeenCalledWith({
-      where: { id: 'o2' },
-      data: { lastShipmentSyncAt: expect.any(Date) },
-    });
   });
 
-  it('counts failures and keeps going when one AWB lookup throws', async () => {
-    mockOrderFindMany.mockResolvedValue([
-      { id: 'o1', orderNumber: 'ORD-1', awbCode: 'AWB1', status: 'SHIPPING' },
-      { id: 'o2', orderNumber: 'ORD-2', awbCode: 'AWB2', status: 'SHIPPING' },
-    ]);
+  it('re-adopts a reassigned AWB with a history note before syncing status', async () => {
+    mockOrderFindMany.mockResolvedValue([inflight()]);
+    mockShiprocketRequest
+      .mockResolvedValueOnce({
+        data: {
+          status: 'DELIVERED',
+          shipments: [{ awb: 'AWB-NEW', courier_name: 'Amazon Shipping Surface 1kg' }],
+        },
+      })
+      .mockResolvedValueOnce({ tracking_data: { shipment_track_activities: [] } });
 
-    mockShiprocketRequest.mockRejectedValueOnce(new Error('Shiprocket 500')).mockResolvedValueOnce({
-      tracking_data: {
-        shipment_status_id: 7,
-        shipment_status: 'Delivered',
-        shipment_track_activities: [],
-      },
+    const result = await shiprocketService.refreshAllPendingShipments({ limit: 10 });
+
+    expect(result).toMatchObject({ scanned: 1, updated: 1, reassigned: 1 });
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'o1' },
+      data: { awbCode: 'AWB-NEW', courierName: 'Amazon Shipping Surface 1kg' },
+    });
+    expect(mockOrderStatusHistoryCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        orderId: 'o1',
+        note: expect.stringContaining('reassigned (AWB1 → AWB-NEW)'),
+      }),
+    });
+    // Activities enrichment must use the NEW awb
+    expect(mockShiprocketRequest).toHaveBeenNthCalledWith(2, '/courier/track/awb/AWB-NEW');
+  });
+
+  it('detaches when the SR order itself is canceled (order-level text)', async () => {
+    mockOrderFindMany.mockResolvedValue([inflight({ status: 'CONFIRMED' })]);
+    mockShiprocketRequest.mockResolvedValueOnce({
+      data: { status: 'CANCELED', shipments: [{ awb: 'AWB1' }] },
     });
 
     const result = await shiprocketService.refreshAllPendingShipments({ limit: 10 });
 
-    expect(result).toMatchObject({ scanned: 2, updated: 1, unchanged: 0, failed: 1 });
+    expect(result).toMatchObject({ scanned: 1, updated: 1, failed: 0 });
+    // detach keeps the SR order id — only the shipment fields clear
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'o1' },
+      data: {
+        awbCode: null,
+        courierName: null,
+        lastShipmentSyncAt: expect.any(Date),
+      },
+    });
   });
 
-  it('filters to in-flight statuses (CONFIRMED awaiting first scan + SHIPPING)', async () => {
-    mockOrderFindMany.mockResolvedValue([]);
-    await shiprocketService.refreshAllPendingShipments({ limit: 5 });
-    expect(mockOrderFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          awbCode: { not: null },
-          status: { in: ['CONFIRMED', 'SHIPPING'] },
-        }),
-        take: 5,
+  it('does not re-detach an already-detached order on later sweeps', async () => {
+    mockOrderFindMany.mockResolvedValue([
+      inflight({ awbCode: null, courierName: null, status: 'CONFIRMED' }),
+    ]);
+    mockShiprocketRequest.mockResolvedValueOnce({ data: { status: 'CANCELED', shipments: [] } });
+
+    const result = await shiprocketService.refreshAllPendingShipments({ limit: 10 });
+
+    expect(result).toMatchObject({ scanned: 1, unchanged: 1 });
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'o1' },
+      data: { lastShipmentSyncAt: expect.any(Date) },
+    });
+    expect(mockOrderStatusHistoryCreate).not.toHaveBeenCalled();
+  });
+
+  it('counts failures and keeps going when one /orders/show throws', async () => {
+    mockOrderFindMany.mockResolvedValue([
+      inflight(),
+      inflight({ id: 'o2', orderNumber: 'ORD-2', shiprocketOrderId: 222, awbCode: 'AWB2' }),
+    ]);
+    mockShiprocketRequest
+      .mockRejectedValueOnce(new Error('Shiprocket 500'))
+      .mockResolvedValueOnce({
+        data: { status: 'DELIVERED', shipments: [{ awb: 'AWB2', courier_name: 'X' }] },
       })
-    );
+      .mockResolvedValueOnce({ tracking_data: { shipment_track_activities: [] } });
+
+    const result = await shiprocketService.refreshAllPendingShipments({ limit: 10 });
+
+    expect(result).toMatchObject({ scanned: 2, updated: 1, unchanged: 0, failed: 1 });
   });
 });
 
@@ -740,11 +803,12 @@ describe('shiprocketService.refreshByAwb', () => {
 
     expect(result).toEqual({ changed: true, orderId: 'order-2' });
     // Shipment fields cleared, order.status untouched
+    // detach keeps shiprocketOrderId — it's the durable identity the
+    // order-first sweep uses to re-adopt reassigned AWBs
     expect(mockOrderUpdate).toHaveBeenCalledWith({
       where: { id: 'order-2' },
       data: {
         awbCode: null,
-        shiprocketOrderId: null,
         courierName: null,
         lastShipmentSyncAt: expect.any(Date),
       },
@@ -778,7 +842,6 @@ describe('shiprocketService.refreshByAwb', () => {
       where: { id: 'order-4' },
       data: {
         awbCode: null,
-        shiprocketOrderId: null,
         courierName: null,
         lastShipmentSyncAt: expect.any(Date),
       },
