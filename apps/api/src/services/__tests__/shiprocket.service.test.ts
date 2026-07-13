@@ -12,6 +12,7 @@ const {
   mockTransaction,
   mockShiprocketRequest,
   mockFetch,
+  mockPaymentUpdateMany,
 } = vi.hoisted(() => ({
   mockOrderFindUnique: vi.fn(),
   mockOrderFindFirst: vi.fn(),
@@ -23,6 +24,7 @@ const {
   mockTransaction: vi.fn(),
   mockShiprocketRequest: vi.fn(),
   mockFetch: vi.fn(),
+  mockPaymentUpdateMany: vi.fn(),
 }));
 
 vi.mock('@earth-revibe/db', () => ({
@@ -74,10 +76,12 @@ beforeEach(() => {
     if (typeof arg === 'function') {
       return (arg as (tx: unknown) => unknown)({
         order: { findUnique: vi.fn().mockResolvedValue(null) },
+        payment: { updateMany: mockPaymentUpdateMany },
       });
     }
     return Promise.all(arg as Promise<unknown>[]);
   });
+  mockPaymentUpdateMany.mockResolvedValue({ count: 0 });
   mockTrackingActivityFindMany.mockResolvedValue([]);
   // Global fetch (used for Discord notify) — stubbed so tests don't try to
   // hit the network.
@@ -694,6 +698,93 @@ describe('shiprocketService.refreshByAwb', () => {
         lastShipmentSyncAt: expect.any(Date),
       },
     });
+  });
+
+  it('settles a pending COD payment when the carrier reports Delivered', async () => {
+    mockOrderFindFirst.mockResolvedValue({
+      id: 'order-1',
+      orderNumber: 'ORD-1',
+      status: 'SHIPPING',
+    });
+    mockShiprocketRequest.mockResolvedValue({
+      tracking_data: {
+        shipment_status_id: 7,
+        shipment_status: 'Delivered',
+        shipment_track_activities: [],
+      },
+    });
+
+    await shiprocketService.refreshByAwb('AWB123');
+
+    expect(mockPaymentUpdateMany).toHaveBeenCalledWith({
+      where: { orderId: 'order-1', status: 'PENDING' },
+      data: { status: 'CAPTURED', paidAt: expect.any(Date) },
+    });
+  });
+
+  it('detaches the shipment instead of cancelling the order on Shiprocket Cancelled', async () => {
+    mockOrderFindFirst.mockResolvedValue({
+      id: 'order-2',
+      orderNumber: 'ORD-2',
+      status: 'SHIPPING',
+    });
+    mockShiprocketRequest.mockResolvedValue({
+      tracking_data: {
+        shipment_status_id: 8,
+        shipment_status: 'Canceled',
+        shipment_track_activities: [],
+      },
+    });
+
+    const result = await shiprocketService.refreshByAwb('AWB456');
+
+    expect(result).toEqual({ changed: true, orderId: 'order-2' });
+    // Shipment fields cleared, order.status untouched
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'order-2' },
+      data: {
+        awbCode: null,
+        shiprocketOrderId: null,
+        courierName: null,
+        lastShipmentSyncAt: expect.any(Date),
+      },
+    });
+    const updateData = mockOrderUpdate.mock.calls[0][0].data;
+    expect(updateData).not.toHaveProperty('status');
+    // Audit row keeps the CURRENT status and explains the detach
+    expect(mockOrderStatusHistoryCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        orderId: 'order-2',
+        status: 'SHIPPING',
+        note: expect.stringContaining('detached'),
+      }),
+    });
+    // No loyalty/settlement transaction fires for a detach
+    expect(mockPaymentUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it('only stamps lastShipmentSyncAt when an already-CANCELLED order reports Cancelled', async () => {
+    mockOrderFindFirst.mockResolvedValue({
+      id: 'order-3',
+      orderNumber: 'ORD-3',
+      status: 'CANCELLED',
+    });
+    mockShiprocketRequest.mockResolvedValue({
+      tracking_data: {
+        shipment_status_id: 8,
+        shipment_status: 'Canceled',
+        shipment_track_activities: [],
+      },
+    });
+
+    const result = await shiprocketService.refreshByAwb('AWB789');
+
+    expect(result).toEqual({ changed: false, orderId: 'order-3' });
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'order-3' },
+      data: { lastShipmentSyncAt: expect.any(Date) },
+    });
+    expect(mockOrderStatusHistoryCreate).not.toHaveBeenCalled();
   });
 });
 

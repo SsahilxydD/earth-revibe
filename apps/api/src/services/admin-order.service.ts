@@ -4,6 +4,7 @@ import { sendWhatsAppOrderUpdate, sendWhatsAppOtp } from './whatsapp.service';
 import { logger } from '../config/logger';
 import { isCarrierOwnedStatus } from './shiprocket.service';
 import { awardOrderPoints } from './loyalty-award.service';
+import { settleCodPaymentOnDelivery } from './payment-settlement.service';
 import { generateOtp, hashOtp, generateReferralCode } from './auth.service';
 import { generateOrderNumber } from '@earth-revibe/shared';
 import type {
@@ -36,7 +37,12 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   CONFIRMED: ['SHIPPING', 'CANCELLED'],
   SHIPPING: ['DELIVERED', 'RETURNED', 'CANCELLED'],
   DELIVERED: ['RETURNED'],
-  CANCELLED: [],
+  // Restore path for wrongly-cancelled orders (e.g. re-shipped outside
+  // Shiprocket before the shipment-detach fix existed, so the carrier-cancel
+  // sync flipped them to CANCELLED). Restoring also detaches any stale
+  // Shiprocket shipment — see updateStatus — after which the order can be
+  // walked CONFIRMED → SHIPPING → DELIVERED manually.
+  CANCELLED: ['CONFIRMED'],
   RETURNED: [],
 };
 
@@ -144,12 +150,19 @@ export const adminOrderService = {
       );
     }
 
+    // Restoring a cancelled order also detaches whatever Shiprocket shipment
+    // it had: the SR side is dead (that's usually why it was cancelled), and a
+    // lingering awbCode would re-arm the carrier-owned lock and the status
+    // sweep against the restored order.
+    const isRestore = order.status === 'CANCELLED' && data.status === 'CONFIRMED';
+
     await prisma.order.update({
       where: { id: order.id },
       data: {
         status: data.status,
         // Stamp delivery time on the DELIVERED transition — anchors the return window.
         ...(data.status === 'DELIVERED' && !order.deliveredAt ? { deliveredAt: new Date() } : {}),
+        ...(isRestore ? { awbCode: null, shiprocketOrderId: null, courierName: null } : {}),
       },
     });
 
@@ -157,7 +170,11 @@ export const adminOrderService = {
       data: {
         orderId: order.id,
         status: data.status,
-        note: data.note || `Status updated to ${data.status}`,
+        note:
+          data.note ||
+          (isRestore
+            ? 'Order restored from CANCELLED — stale shipment detached. If this order was cancelled via admin/customer flows, verify stock and refunds manually.'
+            : `Status updated to ${data.status}`),
         changedBy: adminId,
       },
     });
@@ -168,9 +185,18 @@ export const adminOrderService = {
     // update itself.
     if (data.status === 'DELIVERED') {
       try {
-        await prisma.$transaction((tx) => awardOrderPoints(tx, order.id));
+        await prisma.$transaction(async (tx) => {
+          await awardOrderPoints(tx, order.id);
+          // COD payments settle when the courier hands over the cash — the
+          // manual DELIVERED click is that signal for externally-shipped
+          // orders. No-op for prepaid (already CAPTURED).
+          await settleCodPaymentOnDelivery(tx, order.id);
+        });
       } catch (err) {
-        logger.error({ err, orderNumber }, 'Failed to award loyalty points on delivery');
+        logger.error(
+          { err, orderNumber },
+          'Failed to award loyalty points / settle COD payment on delivery'
+        );
       }
     }
 
