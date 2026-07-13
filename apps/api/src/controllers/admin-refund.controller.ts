@@ -49,6 +49,16 @@ export const adminRefundController = {
       throw ApiError.badRequest('Cannot refund a cancelled order');
     }
 
+    // COD payments reach CAPTURED via settle-on-delivery (the courier
+    // collected cash) — there is no Razorpay transaction to refund, and the
+    // refund API call would fail with an opaque gateway error. Fail early
+    // with an actionable message instead.
+    if (order.payment.method === 'COD') {
+      throw ApiError.badRequest(
+        'COD payment — the cash was collected by the courier, so there is no Razorpay transaction to refund. Refund the customer manually (bank/UPI) and record it in the order notes.'
+      );
+    }
+
     if (!order.payment.razorpayPaymentId) {
       throw ApiError.badRequest('No Razorpay payment ID found. Cannot process refund.');
     }
