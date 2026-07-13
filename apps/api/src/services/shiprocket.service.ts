@@ -666,13 +666,26 @@ export const shiprocketService = {
     // Prisma schema yet, so referencing it here breaks CI's generated typings.
     const orders = await prisma.order.findMany({
       where: {
-        awbCode: { not: null },
-        // Sweep CONFIRMED orders (AWB assigned, waiting for first carrier scan
-        // to flip to SHIPPING) and SHIPPING orders (in-flight). Anything
-        // DELIVERED/CANCELLED/RETURNED is terminal and we stop refreshing.
+        // ORDER-FIRST: the Shiprocket order id is the durable identity. AWBs
+        // get cancelled + reassigned on re-ship, so selecting by awbCode made
+        // the sweep blind to re-shipped orders (a delivered order sat
+        // CONFIRMED for a month pinned to a dead AWB). Orders with an SR id
+        // but no AWB yet are included — /orders/show adopts the AWB when the
+        // courier assigns one.
+        shiprocketOrderId: { not: null },
+        // Sweep CONFIRMED orders (waiting for pickup/first scan) and SHIPPING
+        // orders (in-flight). Anything DELIVERED/CANCELLED/RETURNED is
+        // terminal and we stop refreshing.
         status: { in: [OrderStatus.CONFIRMED, OrderStatus.SHIPPING] },
       },
-      select: { id: true, orderNumber: true, awbCode: true, status: true },
+      select: {
+        id: true,
+        orderNumber: true,
+        awbCode: true,
+        shiprocketOrderId: true,
+        courierName: true,
+        status: true,
+      },
       orderBy: { updatedAt: 'asc' },
       take: limit,
     });
@@ -681,28 +694,17 @@ export const shiprocketService = {
     let unchanged = 0;
     let failed = 0;
     let detached = 0;
+    let reassigned = 0;
 
     for (const order of orders) {
       try {
-        const result = await shiprocketRequest<any>(`/courier/track/awb/${order.awbCode}`);
-        const trackingData = result.tracking_data || {};
-        const { id: srStatusId, text: srStatusText } = extractCurrentStatus(trackingData);
-        const newStatus = mapShiprocketStatus(srStatusId, srStatusText);
-        const activities = parseActivities(trackingData.shipment_track_activities);
-
-        const changed = await syncTrackingState(order.id, {
-          newStatus,
-          currentStatus: order.status as OrderStatus,
-          activities,
-          shipmentStatusId: typeof srStatusId === 'number' ? srStatusId : undefined,
-          shipmentStatusText: typeof srStatusText === 'string' ? srStatusText : undefined,
-          source: 'cron-refresh',
-          orderNumber: order.orderNumber,
-        });
-        if (changed) updated++;
+        const result = await shiprocketService.refreshOrderFromShiprocket(order, 'cron-refresh');
+        if (result.awbReassigned) reassigned++;
+        if (result.changed) updated++;
         else unchanged++;
       } catch (err) {
         if (isAwbCancelledError(err)) {
+          // The activities call can still hit a cancelled AWB mid-transition.
           try {
             await detachCancelledShipment({
               orderId: order.id,
@@ -738,6 +740,7 @@ export const shiprocketService = {
       unchanged,
       failed,
       detached,
+      reassigned,
       limit,
     };
   },
@@ -760,6 +763,11 @@ export const shiprocketService = {
         status: OrderStatus.CONFIRMED,
         shiprocketOrderId: null,
         createdAt: { lt: cutoff },
+        // Legacy guard: rows detached before order-first sync kept its SR id
+        // had shiprocketOrderId nulled — re-creating a shipment for an order
+        // that already shipped would duplicate a real parcel. Their history
+        // carries the detach note; skip them.
+        NOT: { statusHistory: { some: { note: { contains: 'shipment detached' } } } },
       },
       select: { id: true, orderNumber: true },
       orderBy: { createdAt: 'asc' },
@@ -911,6 +919,82 @@ export const shiprocketService = {
    * order in our DB matches the AWB.
    */
   /**
+   * Order-first refresh: the Shiprocket ORDER is the source of truth; the
+   * AWB is ephemeral (cancelled + reassigned on every re-ship). Reads
+   * /orders/show/{shiprocketOrderId}, re-adopts the current AWB/courier when
+   * it changed (history note), derives status from the order-level TEXT
+   * (order-level status_code numbering differs from shipment ids — never fed
+   * to the id map), enriches activities from the AWB tracking API
+   * best-effort, and persists through syncTrackingState.
+   */
+  async refreshOrderFromShiprocket(
+    order: {
+      id: string;
+      orderNumber: string;
+      status: string;
+      awbCode: string | null;
+      shiprocketOrderId: number | null;
+      courierName?: string | null;
+    },
+    source: 'cron-refresh' | 'webhook' | 'tracking-read'
+  ): Promise<{ changed: boolean; awbReassigned: boolean }> {
+    if (!order.shiprocketOrderId) {
+      throw new Error('refreshOrderFromShiprocket requires shiprocketOrderId');
+    }
+
+    const showResult = await shiprocketRequest<any>(`/orders/show/${order.shiprocketOrderId}`);
+    const current = extractFromOrderShow(showResult);
+
+    // Re-adopt a reassigned (or newly assigned) AWB before status handling so
+    // the webhook can match future events and the customer tracking link works.
+    let awbReassigned = false;
+    if (current.awbCode && current.awbCode !== order.awbCode) {
+      awbReassigned = true;
+      await prisma.$transaction([
+        prisma.order.update({
+          where: { id: order.id },
+          data: { awbCode: current.awbCode, courierName: current.courierName ?? null },
+        }),
+        prisma.orderStatusHistory.create({
+          data: {
+            orderId: order.id,
+            status: order.status as OrderStatus,
+            note: `Shiprocket AWB ${order.awbCode ? `reassigned (${order.awbCode} → ${current.awbCode})` : `assigned (${current.awbCode})`}${current.courierName ? ` via ${current.courierName}` : ''} — picked up by order-first sync`,
+          },
+        }),
+      ]);
+    }
+
+    // Order-level status: TEXT ONLY (see docblock).
+    const newStatus = mapShiprocketStatus(undefined, current.statusText);
+
+    // Activities timeline from the live AWB — best-effort enrichment.
+    let activities: ParsedActivity[] = [];
+    const liveAwb = current.awbCode ?? order.awbCode;
+    if (liveAwb && newStatus !== OrderStatus.CANCELLED) {
+      try {
+        const track = await shiprocketRequest<any>(`/courier/track/awb/${liveAwb}`);
+        activities = parseActivities(track?.tracking_data?.shipment_track_activities);
+      } catch (err) {
+        logger.debug({ err, orderNumber: order.orderNumber }, 'Activities enrichment skipped');
+      }
+    }
+
+    const changed = await syncTrackingState(order.id, {
+      newStatus,
+      currentStatus: order.status as OrderStatus,
+      activities,
+      shipmentStatusId: current.statusId,
+      shipmentStatusText: current.statusText,
+      source,
+      orderNumber: order.orderNumber,
+      hasAwb: Boolean(current.awbCode ?? order.awbCode),
+    });
+
+    return { changed: changed || awbReassigned, awbReassigned };
+  },
+
+  /**
    * Ops diagnostic behind GET /api/v1/internal/sync-state/:orderNumber —
    * answers "why hasn't this order synced" in one read: local sync fields,
    * payment, recent history + carrier activities, a live read-only Shiprocket
@@ -950,14 +1034,50 @@ export const shiprocketService = {
     let order = await load();
     if (!order) return null;
 
-    let refreshed: { changed: boolean } | null = null;
-    if (options.refresh && order.awbCode) {
+    let refreshed: { changed: boolean; awbReassigned?: boolean } | null = null;
+    if (options.refresh && order.shiprocketOrderId) {
+      // Order-first heal: adopts reassigned AWBs and syncs status in one pass.
+      try {
+        refreshed = await shiprocketService.refreshOrderFromShiprocket(
+          { ...order, shiprocketOrderId: order.shiprocketOrderId },
+          'tracking-read'
+        );
+        order = (await load())!;
+      } catch (err) {
+        logger.warn({ err, orderNumber }, 'sync-state: order-first refresh failed — continuing');
+      }
+    } else if (options.refresh && order.awbCode) {
       try {
         const result = await shiprocketService.refreshByAwb(order.awbCode);
         refreshed = result ? { changed: result.changed } : null;
         order = (await load())!;
       } catch (err) {
         logger.warn({ err, orderNumber }, 'sync-state: refresh pass failed — continuing');
+      }
+    }
+
+    // Read-only order-first probe: current shipment truth from /orders/show.
+    let srOrder: {
+      reachable: boolean;
+      statusText?: string;
+      currentAwb?: string;
+      courierName?: string;
+      awbMatchesOurs?: boolean;
+      error?: string;
+    } | null = null;
+    if (order.shiprocketOrderId) {
+      try {
+        const showResult = await shiprocketRequest<any>(`/orders/show/${order.shiprocketOrderId}`);
+        const current = extractFromOrderShow(showResult);
+        srOrder = {
+          reachable: true,
+          statusText: current.statusText,
+          currentAwb: current.awbCode,
+          courierName: current.courierName,
+          awbMatchesOurs: current.awbCode ? current.awbCode === order.awbCode : undefined,
+        };
+      } catch (err) {
+        srOrder = { reachable: false, error: String(err) };
       }
     }
 
@@ -989,30 +1109,62 @@ export const shiprocketService = {
     const diagnosis =
       !order.shiprocketOrderId && !order.awbCode
         ? 'NO_SHIPROCKET_ORDER — post-payment Shiprocket creation failed (daily reconcile retries it; check its logs) or this order ships via another courier. Nothing to sync; drive the status manually if external.'
-        : !order.awbCode
-          ? 'NO_AWB — Shiprocket order exists but no AWB assigned. The 10-min cron backfills AWBs (reconcileMissingAwbs); if this persists, that cron is not running or AWB assignment keeps failing on the Shiprocket side.'
-          : terminal
-            ? `TERMINAL_STATUS — sweeps skip ${order.status} orders by design. If this CANCELLED/RETURNED is wrong, restore it in admin (CANCELLED → CONFIRMED).`
-            : shiprocket && !shiprocket.reachable && /awb.*cancel/i.test(shiprocket.error ?? '')
-              ? 'AWB_CANCELLED — Shiprocket cancelled this AWB (pickup never happened or the shipment was re-created). Re-run with refresh=true to detach it, then re-ship or drive the status manually.'
-              : shiprocket && !shiprocket.reachable
-                ? 'SR_UNREACHABLE — the Shiprocket tracking call failed (auth / rate limit / network). Check SHIPROCKET_EMAIL/PASSWORD and API logs.'
-                : shiprocket && shiprocket.mapped == null
-                  ? 'UNMAPPED_SR_STATUS — Shiprocket reports a pre-transit or unknown status our map deliberately ignores (see SR_ID_TO_STATUS); the order stays as-is until a mapped event arrives.'
-                  : order.lastShipmentSyncAt == null
-                    ? 'NEVER_SWEPT — sweep-eligible but never synced once: the 10-minute refresh cron is almost certainly not running (verify cron-job.org hits /internal/refresh-shipment-status).'
-                    : 'SWEEP_ELIGIBLE — this order syncs normally; compare lastShipmentSyncAt against the 10-minute cadence to judge cron health.';
+        : srOrder?.reachable && srOrder.currentAwb && srOrder.awbMatchesOurs === false
+          ? `AWB_REASSIGNED — Shiprocket's live shipment rides ${srOrder.currentAwb} (${srOrder.courierName ?? 'unknown courier'}) but we hold ${order.awbCode ?? 'none'}. Run with refresh=true (or wait for the order-first sweep) to adopt it.`
+          : !order.awbCode
+            ? 'NO_AWB — Shiprocket order exists but no AWB assigned yet. The order-first sweep adopts the AWB automatically once the courier assigns one; if this persists, check the 10-min cron and Shiprocket-side assignment.'
+            : terminal
+              ? `TERMINAL_STATUS — sweeps skip ${order.status} orders by design. If this CANCELLED/RETURNED is wrong, restore it in admin (CANCELLED → CONFIRMED).`
+              : shiprocket && !shiprocket.reachable && /awb.*cancel/i.test(shiprocket.error ?? '')
+                ? 'AWB_CANCELLED — Shiprocket cancelled this AWB (pickup never happened or the shipment was re-created). Re-run with refresh=true to detach it, then re-ship or drive the status manually.'
+                : shiprocket && !shiprocket.reachable
+                  ? 'SR_UNREACHABLE — the Shiprocket tracking call failed (auth / rate limit / network). Check SHIPROCKET_EMAIL/PASSWORD and API logs.'
+                  : shiprocket && shiprocket.mapped == null
+                    ? 'UNMAPPED_SR_STATUS — Shiprocket reports a pre-transit or unknown status our map deliberately ignores (see SR_ID_TO_STATUS); the order stays as-is until a mapped event arrives.'
+                    : order.lastShipmentSyncAt == null
+                      ? 'NEVER_SWEPT — sweep-eligible but never synced once: the 10-minute refresh cron is almost certainly not running (verify cron-job.org hits /internal/refresh-shipment-status).'
+                      : 'SWEEP_ELIGIBLE — this order syncs normally; compare lastShipmentSyncAt against the 10-minute cadence to judge cron health.';
 
-    return { order, refreshed, shiprocket, diagnosis };
+    return { order, refreshed, srOrder, shiprocket, diagnosis };
   },
 
-  async refreshByAwb(awbCode: string): Promise<{ changed: boolean; orderId: string } | null> {
-    const order = await prisma.order.findFirst({
+  async refreshByAwb(
+    awbCode: string,
+    srOrderIdHint?: number
+  ): Promise<{ changed: boolean; orderId: string } | null> {
+    let order = await prisma.order.findFirst({
       where: { awbCode },
-      select: { id: true, orderNumber: true, status: true },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        awbCode: true,
+        shiprocketOrderId: true,
+        courierName: true,
+      },
     });
+    if (!order && srOrderIdHint) {
+      // Reassigned AWB we haven't adopted yet — the webhook's order_id is the
+      // SR order id, which IS durable. Match on it and run the order-first
+      // refresh (adopts the new AWB + syncs status in one pass).
+      order = await prisma.order.findFirst({
+        where: { shiprocketOrderId: srOrderIdHint },
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          awbCode: true,
+          shiprocketOrderId: true,
+          courierName: true,
+        },
+      });
+      if (order) {
+        const result = await shiprocketService.refreshOrderFromShiprocket(order, 'webhook');
+        return { changed: result.changed, orderId: order.id };
+      }
+    }
     if (!order) {
-      logger.warn({ awbCode }, 'Shiprocket webhook: AWB not found in our DB');
+      logger.warn({ awbCode, srOrderIdHint }, 'Shiprocket webhook: AWB not found in our DB');
       return null;
     }
 
@@ -1081,6 +1233,7 @@ interface RefreshSweepResult {
   failed: number;
   limit: number;
   detached: number;
+  reassigned: number;
 }
 
 interface ReconcileResult {
@@ -1147,12 +1300,16 @@ async function detachCancelledShipment(args: {
   source: 'tracking-read' | 'cron-refresh' | 'webhook';
   detail: string;
 }): Promise<void> {
+  // NOTE: shiprocketOrderId is deliberately KEPT. The SR order is the durable
+  // identity — AWBs get cancelled + reassigned on re-ship, and the order-first
+  // sweep re-adopts the fresh AWB through /orders/show/{id}. Nulling the id
+  // would also make CONFIRMED orders eligible for reconcileMissingShipments'
+  // CREATE pass → duplicate shipments for already-shipped orders.
   await prisma.$transaction([
     prisma.order.update({
       where: { id: args.orderId },
       data: {
         awbCode: null,
-        shiprocketOrderId: null,
         courierName: null,
         lastShipmentSyncAt: new Date(),
       },
@@ -1195,6 +1352,8 @@ async function syncTrackingState(
     shipmentStatusText?: string | number;
     source: 'tracking-read' | 'cron-refresh' | 'webhook';
     orderNumber: string;
+    /** false = the order currently has no AWB (already detached). */
+    hasAwb?: boolean;
   }
 ): Promise<boolean> {
   const statusChanged = args.newStatus !== null && args.newStatus !== args.currentStatus;
@@ -1210,6 +1369,14 @@ async function syncTrackingState(
   // it), keep order.status, leave an audit row, and ping ops to re-ship or
   // cancel properly.
   if (args.newStatus === OrderStatus.CANCELLED && args.currentStatus !== OrderStatus.CANCELLED) {
+    if (args.hasAwb === false) {
+      // Already detached — just stamp the sync time, don't spam history.
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { lastShipmentSyncAt: now },
+      });
+      return false;
+    }
     await detachCancelledShipment({
       orderId,
       currentStatus: args.currentStatus,
