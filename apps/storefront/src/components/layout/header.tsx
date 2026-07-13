@@ -71,7 +71,8 @@ export function Header() {
           // Home: out-of-flow so the covers reach the very top edge; fully
           // transparent until scrolled past them, then solid white.
           isHome ? 'fixed' : 'sticky',
-          transparent ? 'bg-transparent text-white' : 'bg-white text-black',
+          // Solid state matches the homepage paper background (#FAF7F0)
+          transparent ? 'bg-transparent text-white' : 'bg-[#FAF7F0] text-black',
           scrolled && !transparent && 'shadow-md'
         )}
       >
