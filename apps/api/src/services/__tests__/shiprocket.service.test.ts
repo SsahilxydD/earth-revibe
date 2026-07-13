@@ -763,6 +763,35 @@ describe('shiprocketService.refreshByAwb', () => {
     expect(mockPaymentUpdateMany).not.toHaveBeenCalled();
   });
 
+  it('detaches the shipment when Shiprocket rejects the AWB as cancelled (API error)', async () => {
+    mockOrderFindFirst.mockResolvedValue({
+      id: 'order-4',
+      orderNumber: 'ORD-4',
+      status: 'CONFIRMED',
+    });
+    mockShiprocketRequest.mockRejectedValue(new Error('Ohh! This AWB has been cancelled.'));
+
+    const result = await shiprocketService.refreshByAwb('AWB-DEAD');
+
+    expect(result).toEqual({ changed: true, orderId: 'order-4' });
+    expect(mockOrderUpdate).toHaveBeenCalledWith({
+      where: { id: 'order-4' },
+      data: {
+        awbCode: null,
+        shiprocketOrderId: null,
+        courierName: null,
+        lastShipmentSyncAt: expect.any(Date),
+      },
+    });
+    expect(mockOrderStatusHistoryCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        orderId: 'order-4',
+        status: 'CONFIRMED',
+        note: expect.stringContaining('AWB cancelled'),
+      }),
+    });
+  });
+
   it('only stamps lastShipmentSyncAt when an already-CANCELLED order reports Cancelled', async () => {
     mockOrderFindFirst.mockResolvedValue({
       id: 'order-3',
@@ -854,6 +883,19 @@ describe('shiprocketService.getSyncState', () => {
     });
     const state = await shiprocketService.getSyncState('ER-TEST1');
     expect(state?.diagnosis).toContain('NEVER_SWEPT');
+  });
+
+  it('diagnoses AWB_CANCELLED when Shiprocket rejects the AWB as cancelled', async () => {
+    mockOrderFindUnique.mockResolvedValue({
+      ...baseOrder,
+      status: 'CONFIRMED',
+      shiprocketOrderId: 123,
+      awbCode: 'AWB-DEAD',
+      lastShipmentSyncAt: new Date(),
+    });
+    mockShiprocketRequest.mockRejectedValue(new Error('Ohh! This AWB has been cancelled.'));
+    const state = await shiprocketService.getSyncState('ER-TEST1');
+    expect(state?.diagnosis).toContain('AWB_CANCELLED');
   });
 
   it('diagnoses SR_UNREACHABLE when the probe call throws', async () => {
