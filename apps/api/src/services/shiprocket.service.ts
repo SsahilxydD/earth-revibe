@@ -680,6 +680,7 @@ export const shiprocketService = {
     let updated = 0;
     let unchanged = 0;
     let failed = 0;
+    let detached = 0;
 
     for (const order of orders) {
       try {
@@ -701,11 +702,30 @@ export const shiprocketService = {
         if (changed) updated++;
         else unchanged++;
       } catch (err) {
-        failed++;
-        logger.warn(
-          { err, orderId: order.id, awbCode: order.awbCode },
-          'Shiprocket refresh failed for one order — continuing sweep'
-        );
+        if (isAwbCancelledError(err)) {
+          try {
+            await detachCancelledShipment({
+              orderId: order.id,
+              currentStatus: order.status as OrderStatus,
+              orderNumber: order.orderNumber,
+              source: 'cron-refresh',
+              detail: 'AWB cancelled (tracking API error)',
+            });
+            detached++;
+          } catch (detachErr) {
+            failed++;
+            logger.error(
+              { err: detachErr, orderId: order.id, awbCode: order.awbCode },
+              'Failed to detach cancelled AWB — continuing sweep'
+            );
+          }
+        } else {
+          failed++;
+          logger.warn(
+            { err, orderId: order.id, awbCode: order.awbCode },
+            'Shiprocket refresh failed for one order — continuing sweep'
+          );
+        }
       }
 
       // Small inter-call pause to be polite to Shiprocket's rate limiter.
@@ -717,6 +737,7 @@ export const shiprocketService = {
       updated,
       unchanged,
       failed,
+      detached,
       limit,
     };
   },
@@ -972,13 +993,15 @@ export const shiprocketService = {
           ? 'NO_AWB — Shiprocket order exists but no AWB assigned. The 10-min cron backfills AWBs (reconcileMissingAwbs); if this persists, that cron is not running or AWB assignment keeps failing on the Shiprocket side.'
           : terminal
             ? `TERMINAL_STATUS — sweeps skip ${order.status} orders by design. If this CANCELLED/RETURNED is wrong, restore it in admin (CANCELLED → CONFIRMED).`
-            : shiprocket && !shiprocket.reachable
-              ? 'SR_UNREACHABLE — the Shiprocket tracking call failed (auth / rate limit / network). Check SHIPROCKET_EMAIL/PASSWORD and API logs.'
-              : shiprocket && shiprocket.mapped == null
-                ? 'UNMAPPED_SR_STATUS — Shiprocket reports a pre-transit or unknown status our map deliberately ignores (see SR_ID_TO_STATUS); the order stays as-is until a mapped event arrives.'
-                : order.lastShipmentSyncAt == null
-                  ? 'NEVER_SWEPT — sweep-eligible but never synced once: the 10-minute refresh cron is almost certainly not running (verify cron-job.org hits /internal/refresh-shipment-status).'
-                  : 'SWEEP_ELIGIBLE — this order syncs normally; compare lastShipmentSyncAt against the 10-minute cadence to judge cron health.';
+            : shiprocket && !shiprocket.reachable && /awb.*cancel/i.test(shiprocket.error ?? '')
+              ? 'AWB_CANCELLED — Shiprocket cancelled this AWB (pickup never happened or the shipment was re-created). Re-run with refresh=true to detach it, then re-ship or drive the status manually.'
+              : shiprocket && !shiprocket.reachable
+                ? 'SR_UNREACHABLE — the Shiprocket tracking call failed (auth / rate limit / network). Check SHIPROCKET_EMAIL/PASSWORD and API logs.'
+                : shiprocket && shiprocket.mapped == null
+                  ? 'UNMAPPED_SR_STATUS — Shiprocket reports a pre-transit or unknown status our map deliberately ignores (see SR_ID_TO_STATUS); the order stays as-is until a mapped event arrives.'
+                  : order.lastShipmentSyncAt == null
+                    ? 'NEVER_SWEPT — sweep-eligible but never synced once: the 10-minute refresh cron is almost certainly not running (verify cron-job.org hits /internal/refresh-shipment-status).'
+                    : 'SWEEP_ELIGIBLE — this order syncs normally; compare lastShipmentSyncAt against the 10-minute cadence to judge cron health.';
 
     return { order, refreshed, shiprocket, diagnosis };
   },
@@ -993,7 +1016,22 @@ export const shiprocketService = {
       return null;
     }
 
-    const result = await shiprocketRequest<any>(`/courier/track/awb/${awbCode}`);
+    let result: any;
+    try {
+      result = await shiprocketRequest<any>(`/courier/track/awb/${awbCode}`);
+    } catch (err) {
+      if (isAwbCancelledError(err)) {
+        await detachCancelledShipment({
+          orderId: order.id,
+          currentStatus: order.status as OrderStatus,
+          orderNumber: order.orderNumber,
+          source: 'webhook',
+          detail: 'AWB cancelled (tracking API error)',
+        });
+        return { changed: true, orderId: order.id };
+      }
+      throw err;
+    }
     const trackingData = result.tracking_data || {};
     const { id: srStatusId, text: srStatusText } = extractCurrentStatus(trackingData);
     const newStatus = mapShiprocketStatus(srStatusId, srStatusText);
@@ -1042,6 +1080,7 @@ interface RefreshSweepResult {
   unchanged: number;
   failed: number;
   limit: number;
+  detached: number;
 }
 
 interface ReconcileResult {
@@ -1086,6 +1125,58 @@ function parseActivities(raw: unknown): ParsedActivity[] {
 }
 
 /**
+ * Shiprocket rejects tracking calls for cancelled AWBs with an API error
+ * ("Ohh! This AWB has been cancelled.") instead of a status payload, so the
+ * status-8 detach branch never sees it. Recognise it at the error layer.
+ */
+function isAwbCancelledError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /awb.*cancel/i.test(msg);
+}
+
+/**
+ * Detach a dead Shiprocket shipment from its order: null the SR ids (so the
+ * sweep and the AWB-reconcile pass can't resurrect it), keep order.status,
+ * leave an audit row, ping ops. Shared by the status-8/22 branch in
+ * syncTrackingState and the AWB-cancelled error paths.
+ */
+async function detachCancelledShipment(args: {
+  orderId: string;
+  currentStatus: OrderStatus;
+  orderNumber: string;
+  source: 'tracking-read' | 'cron-refresh' | 'webhook';
+  detail: string;
+}): Promise<void> {
+  await prisma.$transaction([
+    prisma.order.update({
+      where: { id: args.orderId },
+      data: {
+        awbCode: null,
+        shiprocketOrderId: null,
+        courierName: null,
+        lastShipmentSyncAt: new Date(),
+      },
+    }),
+    prisma.orderStatusHistory.create({
+      data: {
+        orderId: args.orderId,
+        status: args.currentStatus,
+        note:
+          `Shiprocket shipment cancelled (${args.source}: ${args.detail}) — ` +
+          `shipment detached, order NOT cancelled. Re-ship or update status manually.`,
+      },
+    }),
+  ]);
+
+  logger.info(
+    { orderId: args.orderId, orderNumber: args.orderNumber, source: args.source },
+    'Shiprocket shipment cancelled — detached from order, order status kept'
+  );
+  // Fire-and-forget: notification failure should not roll back the detach.
+  void notifyShipmentDetached(args.orderNumber, args.source);
+}
+
+/**
  * Single point of persistence for every Shiprocket refresh — from
  * getTracking, the cron sweep, AND the webhook. Stamps lastShipmentSyncAt
  * unconditionally, upserts activities, persists status change when applicable,
@@ -1119,35 +1210,13 @@ async function syncTrackingState(
   // it), keep order.status, leave an audit row, and ping ops to re-ship or
   // cancel properly.
   if (args.newStatus === OrderStatus.CANCELLED && args.currentStatus !== OrderStatus.CANCELLED) {
-    const detachOps: any[] = [
-      prisma.order.update({
-        where: { id: orderId },
-        data: {
-          awbCode: null,
-          shiprocketOrderId: null,
-          courierName: null,
-          lastShipmentSyncAt: now,
-        },
-      }),
-      prisma.orderStatusHistory.create({
-        data: {
-          orderId,
-          status: args.currentStatus,
-          note:
-            `Shiprocket shipment cancelled (${args.source}: ` +
-            `${args.shipmentStatusText ?? `status_id=${args.shipmentStatusId ?? '?'}`}) — ` +
-            `shipment detached, order NOT cancelled. Re-ship or update status manually.`,
-        },
-      }),
-    ];
-    await prisma.$transaction(detachOps);
-
-    logger.info(
-      { orderId, orderNumber: args.orderNumber, source: args.source },
-      'Shiprocket shipment cancelled — detached from order, order status kept'
-    );
-    // Fire-and-forget: notification failure should not roll back the detach.
-    void notifyShipmentDetached(args.orderNumber, args.source);
+    await detachCancelledShipment({
+      orderId,
+      currentStatus: args.currentStatus,
+      orderNumber: args.orderNumber,
+      source: args.source,
+      detail: String(args.shipmentStatusText ?? `status_id=${args.shipmentStatusId ?? '?'}`),
+    });
     return true;
   }
 
