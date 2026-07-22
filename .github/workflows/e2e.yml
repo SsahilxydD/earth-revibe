@@ -15,7 +15,7 @@ jobs:
     name: API Integration Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v6
 
@@ -39,7 +39,7 @@ jobs:
       matrix:
         project: [desktop-chrome, tablet, mobile]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v6
 
